@@ -1,0 +1,7 @@
+
+----testtttttttt
+./lpl test
+
+ docker compose run --rm testing sh
+
+    npx cucumber-js

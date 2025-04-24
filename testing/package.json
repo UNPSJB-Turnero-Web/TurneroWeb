@@ -4,13 +4,13 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "cucumber-js"
+    "test": "cucumber-js --require features/step_definitions/*.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cucumber": "^6.0.7",
+    "@cucumber/cucumber": "^11.2.0",
     "json-diff": "^1.0.3",
     "sync-request": "^6.1.0"
   }
