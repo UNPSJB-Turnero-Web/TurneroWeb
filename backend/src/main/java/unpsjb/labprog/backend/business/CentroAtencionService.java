@@ -47,10 +47,31 @@ public class CentroAtencionService {
             if (repository.existsByDireccion(c.getDireccion())) {
                 throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
             }
+        } else {
+            // Validación para edición
+            CentroAtencion existente = repository.findById(c.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("Centro de atención no encontrado");
+            }
+    
+            // Si cambia nombre o dirección, validar duplicados con otros centros
+            if (!existente.getName().equals(c.getName()) || !existente.getDireccion().equals(c.getDireccion())) {
+                if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
+                    throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
+                }
+                if (repository.existsByDireccion(c.getDireccion())) {
+                    throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
+                }
+            }
+    
+            // Validación coordenadas
+            if (c.getLatitud() == null || c.getLongitud() == null || c.getLatitud().isNaN() || c.getLongitud().isNaN()) {
+                throw new IllegalStateException("Las coordenadas son inválidas");
+            }
         }
         return repository.save(c);
     }
-
+    
 
     @Transactional
     public void delete(int id) {

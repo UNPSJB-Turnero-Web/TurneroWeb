@@ -1,8 +1,14 @@
 package unpsjb.labprog.backend.presenter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +44,21 @@ public class CentroAtencionPresenter {
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        logger.info("GET /centros/page - Página: {}, Tamaño: {}", page, size);
-        return Response.ok(service.findByPage(page, size));
+    
+        Page<CentroAtencion> centrosPage = service.findByPage(page, size);
+        List<Map<String, Object>> dtoList = centrosPage.getContent().stream().map(centro -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("nombre", centro.getName());
+            map.put("direccion", centro.getDireccion());
+            map.put("localidad", centro.getLocalidad());
+            map.put("provincia", centro.getProvincia());
+            map.put("coordenadas", centro.getLatitud() + ", " + centro.getLongitud());
+            return map;
+        }).collect(Collectors.toList());
+    
+        return Response.ok(dtoList, "OK");
     }
+    
 
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
     public ResponseEntity<Object> search(@PathVariable("term") String term) {
