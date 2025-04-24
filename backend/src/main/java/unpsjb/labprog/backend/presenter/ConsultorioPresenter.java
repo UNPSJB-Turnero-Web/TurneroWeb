@@ -26,7 +26,7 @@ public class ConsultorioPresenter {
             Consultorio c = service.create(centroNombre, numero, nombre);
             return Response.ok(c, "Consultorio creado exitosamente");
         } catch (IllegalStateException e) {
-            return Response.conflict(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         }
     }
 
