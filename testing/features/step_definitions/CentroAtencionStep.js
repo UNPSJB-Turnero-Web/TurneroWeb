@@ -11,11 +11,12 @@ const request = require('sync-request');
   console.log('Base de datos reseteada correctamente.');
 });*/
 
+
 When(
   'el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string} y {string}',
   function (nombre, direccion, localidad, provincia, coordenadas) {
 
-    let lat = null, lng = null; // Default por si no viene nada
+    let lat = null, lng = null;
 
     if (coordenadas && coordenadas.trim() !== "") {
       const coords = coordenadas.split(',');
@@ -40,11 +41,15 @@ When(
     try {
       const res = request('POST', 'http://backend:8080/centros', { json: centroData });
       this.response = JSON.parse(res.getBody('utf8'));
+      console.log("Respuesta recibida:", this.response);
+
       this.statusCode = res.statusCode;
     } catch (error) {
       if (error.statusCode) {
         this.statusCode = error.statusCode;
-        this.response = JSON.parse(error.response.body.toString('utf8'));
+        const bodyString = error.response && error.response.body && error.response.body.toString('utf8');
+        console.log("Error recibido body:", bodyString);
+        this.response = bodyString ? JSON.parse(bodyString) : {};
       } else {
         throw error;
       }
@@ -53,6 +58,7 @@ When(
     return true;
   }
 );
+
 
 
 Then('el sistema responde con {int} y "{string}"', function (statusEsperado, mensajeEsperado) {
@@ -67,8 +73,3 @@ Then('el sistema responde con {int} y "{string}"', function (statusEsperado, men
     assert.strictEqual(respuesta.status_text.trim(), mensajeEsperado.replace(/"/g, '').trim(),
         `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
 });
-
-
-
-  
-  
