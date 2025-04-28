@@ -39,7 +39,8 @@ When(
     console.log("CentroData que se envía:", centroData);
 
     try {
-      const res = request('POST', 'http://backend:8080/centros', { json: centroData });
+      const res = request('POST', 'http://localhost:8080/centros', { json: centroData });
+
       this.response = JSON.parse(res.getBody('utf8'));
       console.log("Respuesta recibida:", this.response);
 

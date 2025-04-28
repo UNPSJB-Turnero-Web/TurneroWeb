@@ -25,7 +25,4 @@ public class Agenda {
     @ManyToOne
     private CentroAtencion centroAtencion;  // Donde se da el turno
 
-    // Opcional si ya lo tenés en Medico, pero puede usarse para turnos específicos
-    @ManyToOne
-    private Especialidad especialidad;
 }

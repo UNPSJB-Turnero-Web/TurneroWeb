@@ -13,8 +13,8 @@ Característica: Modificar Centro de Atención
   Esquema del escenario: Modificar centro de atención exitosamente
     Cuando el administrador modifica los datos del centro de atención "<Nombre>" con los siguientes atributos:
       | Nombre            | Dirección                                  | Localidad       | Provincia | Coordenadas        |
-      | <NombreNuevo>     | <DirecciónNueva>                           | <LocalidadNueva> | <ProvinciaNueva> | <CoordenadasNuevas> |
-    Entonces el sistema responde con <status_code> y "<status_text>"
+      | "<NombreNuevo>"     | "<DirecciónNueva>"                           | "<LocalidadNueva>" | "<ProvinciaNueva>" | "<CoordenadasNuevas>" |
+    Entonces el sistema responde con "<status_code>" y "<status_text>"
 
     Ejemplos: Modificaciones exitosas
     | Nombre                   | NombreNuevo                | DirecciónNueva                                  | LocalidadNueva  | ProvinciaNueva | Coordenadas        | status_code | status_text                   |
@@ -25,8 +25,8 @@ Característica: Modificar Centro de Atención
   Esquema del escenario: Intentar modificar centro de atención con conflictos
     Cuando el administrador modifica los datos del centro de atención "<Nombre>" con los siguientes atributos:
       | Nombre            | Dirección                                  | Localidad       | Provincia | Coordenadas        |
-      | <NombreNuevo>     | <DirecciónNueva>                           | <LocalidadNueva> | <ProvinciaNueva> | <CoordenadasNuevas> |
-    Entonces el sistema responde con <status_code> y "<status_text>"
+      | "<NombreNuevo>"     | "<DirecciónNueva>"                           | "<LocalidadNueva>" | "<ProvinciaNueva>" | "<CoordenadasNuevas>" |
+    Entonces el sistema responde con "<status_code>" y "<status_text>"
 
     Ejemplos: Modificaciones con conflictos
     | Nombre                   | NombreNuevo              | DirecciónNueva                               | LocalidadNueva  | ProvinciaNueva | Coordenadas        | status_code | status_text                                                        |
