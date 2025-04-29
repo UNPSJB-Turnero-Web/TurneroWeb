@@ -1,73 +1,65 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
-const axios = require('axios');
 
-// Resetear base
+// Resetear base de datos
 Given('que existen centros de atención creados en el sistema', function () {
-  const res = request('DELETE', 'http://localhost:8080/centros/reset');
+  const res = request('DELETE', 'http://backend:8080/centros/reset');
   assert.strictEqual(res.statusCode, 200, 'Error al resetear base');
 });
 
 // Registrar centros de atención base
 Given('los siguientes centros de atención han sido registrados:', function (dataTable) {
+  this.centrosRegistrados = {};
   const centros = dataTable.hashes();
   centros.forEach(centro => {
-    const coords = centro.Coordenadas.split(',');
     const centroData = {
       name: centro.Nombre,
       direccion: centro.Dirección,
       localidad: centro.Localidad,
       provincia: centro.Provincia,
-      latitud: parseFloat(coords[0]),
-      longitud: parseFloat(coords[1])
+      coordenadas: centro.Coordenadas  
     };
-    const res = request('POST', 'http://localhost:8080/centros', { json: centroData });
+    
+    const res = request('POST', 'http://backend:8080/centros', { json: centroData });
     assert.strictEqual(res.statusCode, 200, 'Error al registrar centro');
+    const responseBody = JSON.parse(res.getBody('utf8'));
+    this.centrosRegistrados[centro.Nombre.trim()] = responseBody.data.id;
     console.log('📥 Centro registrado:', centroData);
   });
 });
 
-// Modificar datos del centro
-When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', async function (nombreCentro, dataTable) {
+// Modificar datos de un centro de atención
+When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentro, dataTable) {
   const datos = dataTable.hashes()[0];
   console.log("📊 Datos recibidos:", datos);
 
   // Obtener lista de centros
-  const resFind = await axios.get('http://localhost:8080/centros');
-  assert.strictEqual(resFind.status, 200, "❌ Error al obtener centros.");
-  const centros = resFind.data.data;
+  const resFind = request('GET', 'http://backend:8080/centros');
+  assert.strictEqual(resFind.statusCode, 200, "❌ Error al obtener centros.");
+  const centros = JSON.parse(resFind.getBody('utf8')).data;
   console.log("📋 Centros registrados:", centros.map(c => `"${c.name}"`));
 
   // Buscar el centro por nombre
-  const centro = centros.find(c => c.name.trim() === nombreCentro.trim());
-  assert.ok(centro, `❌ Centro ${nombreCentro} no encontrado`);
+  const idCentro = this.centrosRegistrados[nombreCentro.trim()];
+  const centro = centros.find(c => c.name && c.name.trim() === nombreCentro.trim());
+  assert.ok(centro, `❌ Centro "${nombreCentro}" no encontrado`);
 
-  // Parsear y validar coordenadas mejor
-  const coordsRaw = datos['Coordenadas'].replace(/[<>]/g, '').trim();
-  const [latStr, lngStr] = coordsRaw.split(',').map(s => s.trim());
-  const lat = parseFloat(latStr);
-  const lng = parseFloat(lngStr);
-  console.log(`🧹 Coordenadas procesadas: lat=${lat}, lng=${lng}`);
-  assert.ok(!isNaN(lat) && !isNaN(lng), "❌ Coordenadas inválidas");
-
-  // Preparar modificación
   const datosModificados = {
-    id: centro.id,
-    name: datos['Nombre'],
-    direccion: datos['Dirección'],
-    localidad: datos['Localidad'],
-    provincia: datos['Provincia'],
-    latitud: lat,
-    longitud: lng
+    id: idCentro,
+    name: datos['Nombre'].replace(/^"|"$/g, ''),
+    direccion: datos['Dirección'].replace(/^"|"$/g, ''),
+    localidad: datos['Localidad'].replace(/^"|"$/g, ''),
+    provincia: datos['Provincia'].replace(/^"|"$/g, ''),
+    coordenadas: datos['Coordenadas'].replace(/^"|"$/g, '')
   };
+
   console.log("✏️ Modificando centro:", datosModificados);
 
-  // Ejecutar PUT
-  const resMod = await axios.put(`http://localhost:8080/centros/${centro.id}`, datosModificados);
-  this.response = resMod.data;
-  this.statusCode = resMod.status;
-  console.log("📤 Respuesta de modificación:", resMod.data);
+  const resMod = request('PUT', 'http://backend:8080/centros', { json: datosModificados });
+  this.response = JSON.parse(resMod.getBody('utf8'));
+  this.statusCode = resMod.statusCode;
+  console.log("📤 Respuesta de modificación:", this.response);
 });
 
 // Verificar la respuesta del sistema

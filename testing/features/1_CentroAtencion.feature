@@ -6,7 +6,7 @@ Antecedentes: Dado que existe un sistema de gestión de centros de atención
 
 Esquema del escenario: Crear un centro de atención exitosamente 
 
-Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>" y "<Coordenadas>"
+Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>" y "<Coordenadas>" 
 Entonces el sistema responde con <status_code> y "<status_text>"
 
 Ejemplos: Centros de atención exitosos
@@ -23,7 +23,7 @@ Ejemplos: Centros de atención exitosos
 
 Esquema del escenario: Crear un centro de atención con conflictos 
 
-Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>" y "<Coordenadas>"
+Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>" y "<Coordenadas>" 
 Entonces el sistema responde con <status_code> y "<status_text>"
 
 Ejemplos: Centros de atención con conflictos
