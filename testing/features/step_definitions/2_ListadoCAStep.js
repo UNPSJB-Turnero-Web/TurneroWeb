@@ -4,8 +4,7 @@ const request = require('sync-request');
 
 When('el usuario solicita la lista de centros de atención', function () {
   try {
-    console.log("🌐 Haciendo solicitud a localhost...");
-    const res = request('GET', 'http://backend:8080/centros/page?page=0&size=10');
+        const res = request('GET', 'http://backend:8080/centros/page?page=0&size=10');
     this.statusCode = res.statusCode;
     this.response = JSON.parse(res.getBody('utf8'));
     console.log("✅ Respuesta:", this.response);
@@ -22,10 +21,9 @@ Then('el sistema responde con status_code {int} y status_text {string}', functio
   assert.strictEqual(this.response.status_code, statusEsperado, `Esperado status_code ${statusEsperado} pero fue ${this.response.status_code}`);
   assert.strictEqual(this.response.status_text, textoEsperado, `Esperado status_text "${textoEsperado}" pero fue "${this.response.status_text}"`);
 });
-
 Then('el cuerpo de la respuesta contiene un array JSON con la siguiente estructura:', function (dataTable) {
   const centrosEsperados = dataTable.hashes();
-  const centrosRespuesta = this.response.data;
+  const centrosRespuesta = this.response.data.content;
 
   assert.strictEqual(centrosRespuesta.length, centrosEsperados.length, 'Cantidad de centros no coincide');
 
@@ -33,10 +31,12 @@ Then('el cuerpo de la respuesta contiene un array JSON con la siguiente estructu
     const esperado = centrosEsperados[i];
     const actual = centrosRespuesta[i];
 
-    assert.strictEqual(actual.nombre, esperado.nombre, `Centro ${i} - nombre esperado ${esperado.nombre}, actual ${actual.nombre}`);
+    assert.strictEqual(actual.name, esperado.nombre, `Centro ${i} - nombre esperado ${esperado.nombre}, actual ${actual.name}`);
     assert.strictEqual(actual.direccion, esperado.direccion, `Centro ${i} - direccion esperada ${esperado.direccion}, actual ${actual.direccion}`);
     assert.strictEqual(actual.localidad, esperado.localidad, `Centro ${i} - localidad esperada ${esperado.localidad}, actual ${actual.localidad}`);
     assert.strictEqual(actual.provincia, esperado.provincia, `Centro ${i} - provincia esperada ${esperado.provincia}, actual ${actual.provincia}`);
-    assert.strictEqual(actual.coordenadas.trim(), esperado.coordenadas.trim(), `Centro ${i} - coordenadas esperadas ${esperado.coordenadas}, actual ${actual.coordenadas}`);
+
+    const coordsActual = `${actual.latitud.toFixed(3)}, ${actual.longitud.toFixed(3)}`;
+    assert.strictEqual(coordsActual, esperado.coordenadas, `Centro ${i} - coordenadas esperadas ${esperado.coordenadas}, actual ${coordsActual}`);
   }
 });

@@ -16,14 +16,8 @@ public interface CentroAtencionRepository extends CrudRepository<CentroAtencion,
 
     
 
-
-    CentroAtencion findByNameAndDireccion(String name, String direccion);
-
-    CentroAtencion findByDireccion(String direccion);
-
-    @Query("SELECT c FROM CentroAtencion c WHERE UPPER(c.name) LIKE :term OR UPPER(c.direccion) LIKE :term")
-    List<CentroAtencion> search(@Param("term") String term);
-
+    @Query("SELECT c FROM CentroAtencion c WHERE UPPER(c.name) LIKE ?1")
+    List<CentroAtencion> search(String term);
 
     @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.name = ?1 AND c.direccion = ?2")
     boolean existsByNameAndDireccion(String name, String direccion);
@@ -31,7 +25,12 @@ public interface CentroAtencionRepository extends CrudRepository<CentroAtencion,
     @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.direccion = ?1")
     boolean existsByDireccion(String direccion);
 
+    @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.name = ?1")
+    boolean existsByName(String name);
+
+
     CentroAtencion findByName(String centroNombre);
+
 
 
 }

@@ -36,43 +36,53 @@ public class CentroAtencionService {
     public List<CentroAtencion> search(String term) {
         return repository.search("%" + term.toUpperCase() + "%");
     }
+
     @Transactional
-    public CentroAtencion save(CentroAtencion c) {
-        if (c.getId() == 0) {
-            // CREACIÓN
-            if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
-                throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
-            }
-            if (repository.existsByDireccion(c.getDireccion())) {
-                throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
-            }
-        } else {
-            // MODIFICACIÓN
-            CentroAtencion existente = repository.findById(c.getId()).orElse(null);
-            if (existente == null) {
-                throw new IllegalStateException("Centro de atención no encontrado");
-            }
-    
-            if (!existente.getName().equals(c.getName()) || !existente.getDireccion().equals(c.getDireccion())) {
-                // Si está intentando cambiar name y direccion, chequeamos conflictos
-                if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
+public CentroAtencion save(CentroAtencion c) {
+    if (c.getId() == 0) {
+        // 🚀 CREACIÓN
+
+        if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
+            throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
+        }
+        if (repository.existsByName(c.getName())) {
+            throw new IllegalStateException("Ya existe un centro de atención con ese nombre");
+        }
+        if (repository.existsByDireccion(c.getDireccion())) {
+            throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
+        }
+    } else {
+        // 🛠️ MODIFICACIÓN
+        CentroAtencion existente = repository.findById(c.getId()).orElse(null);
+        if (existente == null) {
+            throw new IllegalStateException("No existe el centro que se intenta modificar");
+        }
+
+        // Verificar si quiere cambiar el nombre o dirección a uno ya usado por OTRO centro
+        List<CentroAtencion> todos = findAll();
+        for (CentroAtencion otro : todos) {
+            if (otro.getId() != c.getId()) {
+                boolean mismoNombre = otro.getName().trim().equalsIgnoreCase(c.getName().trim());
+                boolean mismaDireccion = otro.getDireccion().trim().equalsIgnoreCase(c.getDireccion().trim());
+
+                if (mismoNombre && mismaDireccion) {
                     throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
                 }
-                if (repository.existsByDireccion(c.getDireccion())) {
+
+                if (mismoNombre) {
+                    throw new IllegalStateException("Ya existe un centro de atención con ese nombre");
+                }    
+                if (mismaDireccion) {
                     throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
                 }
             }
-    
-            // Validación de coordenadas
-            if (c.getLatitud() == null || c.getLongitud() == null || c.getLatitud().isNaN() || c.getLongitud().isNaN()) {
-                throw new IllegalStateException("Las coordenadas son inválidas");
-            }
         }
-    
-        return repository.save(c);
     }
-     
-    
+    return repository.save(c);
+}
+
+
+
 
     @Transactional
     public void delete(int id) {

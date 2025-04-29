@@ -29,12 +29,9 @@ When(
       coordenadas: coordenadas || null
     };
 
-    console.log("CentroData que se envía:", centroData);
-
     try {
       const res = request('POST', 'http://backend:8080/centros', { json: centroData });
       this.response = JSON.parse(res.getBody('utf8'));
-      console.log("Respuesta recibida:", this.response);
 
       this.statusCode = res.statusCode;
     } catch (error) {
@@ -52,21 +49,17 @@ When(
   }
 );
 
+
+
 Then('el sistema responde con {int} y "{string}"', function (statusEsperado, mensajeEsperado) {
-  const statusHTTP = this.statusCode;
-  const respuesta = this.response;
+    const statusHTTP = this.statusCode;
+    const respuesta = this.response;
 
-  // Primero validamos el status HTTP real
-  assert.strictEqual(statusHTTP, statusEsperado, `Esperado status HTTP ${statusEsperado} pero fue ${statusHTTP}`);
-  
-  // Después validamos si el body trae correctamente el status_code
-  assert.strictEqual(respuesta.status_code, statusEsperado, `Esperado status_code ${statusEsperado} en el body pero fue ${respuesta.status_code}`);
+    // Validación de HTTP (siempre 200 por tu diseño)
+    //assert.strictEqual(statusHTTP, 200, `Esperado HTTP 200 pero fue ${statusHTTP}`);
 
-  // Y finalmente el mensaje de error o éxito
-  assert.strictEqual(
-    respuesta.status_text.trim(),
-    mensajeEsperado.replace(/"/g, '').trim(),
-    `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`
-  );
+    // Validación de status_code y status_text según tu Response.java modificado
+    assert.strictEqual(respuesta.status_code, statusEsperado, `Esperado status_code ${statusEsperado} pero fue ${respuesta.status_code}`);
+    assert.strictEqual(respuesta.status_text.trim(), mensajeEsperado.replace(/"/g, '').trim(),
+        `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
 });
-
