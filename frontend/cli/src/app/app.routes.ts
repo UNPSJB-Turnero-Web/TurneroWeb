@@ -1,3 +1,35 @@
 import { Routes } from '@angular/router';
+import { HomeComponent } from './home/home.component';
+import { TurnosComponent } from './turnos/turnos.component';
+import { TurnoDetailComponent } from './turnos/turno-detail.component';
+import { AgendasComponent } from './agenda/agendas.component';
+import { AgendaDetailComponent } from './agenda/agenda-detail.component';
+import { PacientesComponent } from './pacientes/pacientes.component';
+import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
+import { EspecialidadesComponent } from './especialidades/especialidades.component';
+import { EspecialidadDetailComponent } from './especialidades/especialidad-detail.component';
+import { CentrosAtencionComponent } from './centrosAtencion/centrosAtencion.component';
+import { ConsultoriosComponent } from './consultorios/consultorios.component';
+import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
+import { MedicosComponent } from './medicos/medicos.component';
 
-export const routes: Routes = [];
+export const routes: Routes = [
+    { path: '', component: HomeComponent },
+    { path: 'turnos', component: TurnosComponent },
+    { path: 'turnos/code/:code', component: TurnoDetailComponent },
+    { path: 'turnos/new', component: TurnoDetailComponent },
+    { path: 'agenda', component: AgendasComponent },
+    { path: 'agenda/:id', component: AgendaDetailComponent },
+    { path: 'agenda/new', component: AgendaDetailComponent },
+    { path: 'pacientes', component: PacientesComponent },
+    { path: 'pacientes/:id', component: PacienteDetailComponent },
+    { path: 'pacientes/new', component: PacienteDetailComponent },
+    { path: 'especialidades', component: EspecialidadesComponent },
+    { path: 'especialidades/new', component: EspecialidadDetailComponent },
+    { path: 'especialidades/:id', component: EspecialidadDetailComponent },
+    { path: 'centros-atencion', component: CentrosAtencionComponent },
+    { path: 'consultorios', component: ConsultoriosComponent },
+    { path: 'consultorios/:id', component: ConsultorioDetailComponent },
+    { path: 'consultorios/new', component: ConsultorioDetailComponent },
+    { path: 'medicos', component: MedicosComponent },
+];
