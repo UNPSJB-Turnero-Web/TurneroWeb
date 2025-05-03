@@ -4,10 +4,13 @@ import { Component } from '@angular/core';
   selector: 'app-home',
   imports: [],
   template: `
-      <div class="px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
-      <h1 class="display-4">Bienvenido a Print The Bill</h1>
-      <p class="lead">Este es el frontend de nuestra aplicacion
-      </div>
+    <div class="d-flex flex-column align-items-center justify-content-center vh-100 bg-light">
+      <h1 class="display-3 text-primary mb-4">Bienvenido a Turnero Web</h1>
+      <p class="lead text-secondary text-center mb-5">
+        Simplifica la gestión de turnos con nuestra plataforma intuitiva y eficiente.
+      </p>
+      <a href="/turnos" class="btn btn-primary btn-lg px-5">Ver Turnos</a>
+    </div>
   `,
   styles: ``
 })
