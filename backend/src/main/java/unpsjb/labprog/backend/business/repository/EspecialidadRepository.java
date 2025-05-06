@@ -1,10 +1,8 @@
 package unpsjb.labprog.backend.business.repository;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import unpsjb.labprog.backend.model.Especialidad;
 
-@Repository
-public interface EspecialidadRepository extends CrudRepository<Especialidad, Integer>, PagingAndSortingRepository<Especialidad, Integer> {
+public interface EspecialidadRepository extends JpaRepository<Especialidad, Integer> {
+    boolean existsByNombre(String nombre);
 }

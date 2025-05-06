@@ -28,6 +28,26 @@ public class PacienteService {
     }
 
     public Paciente save(Paciente paciente) {
+        // Validaciones para evitar duplicados
+        if (paciente.getId() == 0) {
+            // 🚀 CREACIÓN
+            if (repository.existsByDni(paciente.getDni())) {
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            Paciente existente = repository.findById(paciente.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe el paciente que se intenta modificar.");
+            }
+
+            // Verificar si el nuevo DNI ya está siendo usado por otro paciente
+            if (!existente.getDni().equalsIgnoreCase(paciente.getDni()) &&
+                repository.existsByDni(paciente.getDni())) {
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
+            }
+        }
+
         return repository.save(paciente);
     }
 

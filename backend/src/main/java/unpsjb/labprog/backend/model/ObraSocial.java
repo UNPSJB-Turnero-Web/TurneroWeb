@@ -13,7 +13,7 @@ public class ObraSocial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id; // Cambiar de int a Integer
 
     @Column(nullable = false)
     private String nombre;

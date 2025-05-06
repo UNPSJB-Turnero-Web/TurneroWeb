@@ -38,4 +38,11 @@ public class CentroAtencion {
     @OneToMany(mappedBy = "centro", cascade = CascadeType.PERSIST)
     private List<StaffMedico> staffMedico; // Relación con StaffMedico
 
+    public void agregarConsultorio(Consultorio consultorio) {
+        if (this.staffMedico == null) {
+            throw new IllegalStateException("El centro no tiene staff médico asociado.");
+        }
+        consultorio.setCentroAtencion(this);
+        // Aquí podrías agregar lógica adicional, como validaciones
+    }
 }

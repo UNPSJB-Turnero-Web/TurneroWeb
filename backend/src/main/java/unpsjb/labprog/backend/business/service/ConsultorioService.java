@@ -54,4 +54,8 @@ public class ConsultorioService {
 
         return repository.save(consultorio);
     }
+
+    public Consultorio save(Consultorio consultorio) {
+        return repository.save(consultorio);
+    }
 }

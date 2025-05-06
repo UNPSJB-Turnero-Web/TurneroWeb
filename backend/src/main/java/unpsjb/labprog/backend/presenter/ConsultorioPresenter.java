@@ -5,14 +5,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
+import unpsjb.labprog.backend.business.service.CentroAtencionService;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
+import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("consultorios")
 public class ConsultorioPresenter {
+
+    @Autowired
+    private CentroAtencionService centroService;
+
+    @Autowired
+    private ConsultorioService consultorioService;
 
     @Autowired
     private ConsultorioService service;
@@ -28,6 +37,20 @@ public class ConsultorioPresenter {
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         }
+    }
+
+    @PostMapping("/agregar")
+    public ResponseEntity<Object> agregarConsultorio(
+            @RequestParam int centroId,
+            @RequestBody Consultorio consultorio) {
+        Optional<CentroAtencion> centroOpt = centroService.findById(centroId);
+        if (centroOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        CentroAtencion centro = centroOpt.get();
+        centro.agregarConsultorio(consultorio);
+        consultorioService.save(consultorio);
+        return ResponseEntity.ok("Consultorio agregado exitosamente.");
     }
 
     @GetMapping("/listar/{centroNombre}")

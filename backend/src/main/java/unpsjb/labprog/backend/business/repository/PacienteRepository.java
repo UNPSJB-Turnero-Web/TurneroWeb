@@ -1,11 +1,8 @@
 package unpsjb.labprog.backend.business.repository;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.stereotype.Repository;
-
+import org.springframework.data.jpa.repository.JpaRepository;
 import unpsjb.labprog.backend.model.Paciente;
 
-@Repository
-public interface PacienteRepository extends CrudRepository<Paciente, Integer>, PagingAndSortingRepository<Paciente, Integer> {
+public interface PacienteRepository extends JpaRepository<Paciente, Integer> {
+    boolean existsByDni(String dni);
 }

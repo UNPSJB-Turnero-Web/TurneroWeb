@@ -23,11 +23,27 @@ public class MedicoService {
         return result;
     }
 
-    public Medico findById(int id) {
+    public Medico findById(Long id) { // Mantener como Integer
         return repository.findById(id).orElse(null);
     }
 
     public Medico save(Medico medico) {
+        if (medico.getId() == 0) {
+            if (repository.existsByMatricula(medico.getMatricula())) {
+                throw new IllegalStateException("Ya existe un médico con la matrícula: " + medico.getMatricula());
+            }
+        } else {
+            Medico existente = repository.findById(medico.getId()).orElse(null); // Asegúrate de que el id sea Integer
+            if (existente == null) {
+                throw new IllegalStateException("No existe el médico que se intenta modificar.");
+            }
+
+            if (!existente.getMatricula().equalsIgnoreCase(medico.getMatricula()) &&
+                repository.existsByMatricula(medico.getMatricula())) {
+                throw new IllegalStateException("Ya existe un médico con la matrícula: " + medico.getMatricula());
+            }
+        }
+
         return repository.save(medico);
     }
 
@@ -35,7 +51,7 @@ public class MedicoService {
         return repository.findAll(PageRequest.of(page, size));
     }
 
-    public void delete(int id) {
+    public void delete(Long id) { // Mantener como Integer
         repository.deleteById(id);
     }
 }

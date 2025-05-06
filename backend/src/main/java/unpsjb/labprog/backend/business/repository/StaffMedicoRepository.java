@@ -1,12 +1,10 @@
 package unpsjb.labprog.backend.business.repository;
 
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.stereotype.Repository;
-
+import org.springframework.data.jpa.repository.JpaRepository;
 import unpsjb.labprog.backend.model.StaffMedico;
+import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.CentroAtencion;
 
-@Repository
-public interface StaffMedicoRepository extends CrudRepository<StaffMedico, Long>, PagingAndSortingRepository<StaffMedico, Long> {
-    // Puedes agregar métodos personalizados si es necesario
+public interface StaffMedicoRepository extends JpaRepository<StaffMedico, Long> {
+    boolean existsByMedicoAndCentro(Medico medico, CentroAtencion centro);
 }

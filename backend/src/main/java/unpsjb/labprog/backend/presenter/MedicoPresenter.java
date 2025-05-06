@@ -21,7 +21,7 @@ public class MedicoPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+    public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
         Medico medico = service.findById(id);
         return (medico != null)
             ? Response.ok(medico)
@@ -48,7 +48,7 @@ public class MedicoPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") Long id) {
         service.delete(id);
         return Response.ok("Medico " + id + " borrado.");
     }

@@ -27,6 +27,26 @@ public class EsquemaTurnoService {
     }
 
     public EsquemaTurno save(EsquemaTurno esquemaTurno) {
+        // Validaciones para evitar duplicados
+        if (esquemaTurno.getId() == null) {
+            // 🚀 CREACIÓN
+            if (repository.existsByNombre(esquemaTurno.getNombre())) {
+                throw new IllegalStateException("Ya existe un esquema de turno con el nombre: " + esquemaTurno.getNombre());
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            EsquemaTurno existente = repository.findById(esquemaTurno.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe el esquema de turno que se intenta modificar.");
+            }
+
+            // Verificar si el nuevo nombre ya está siendo usado por otro esquema
+            if (!existente.getNombre().equalsIgnoreCase(esquemaTurno.getNombre()) &&
+                repository.existsByNombre(esquemaTurno.getNombre())) {
+                throw new IllegalStateException("Ya existe un esquema de turno con el nombre: " + esquemaTurno.getNombre());
+            }
+        }
+
         return repository.save(esquemaTurno);
     }
 

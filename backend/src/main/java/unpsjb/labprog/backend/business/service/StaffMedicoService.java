@@ -27,6 +27,28 @@ public class StaffMedicoService {
     }
 
     public StaffMedico save(StaffMedico staffMedico) {
+        // Validaciones para evitar duplicados
+        if (staffMedico.getId() == null) {
+            // 🚀 CREACIÓN
+            if (repository.existsByMedicoAndCentro(staffMedico.getMedico(), staffMedico.getCentro())) {
+                throw new IllegalStateException("Ya existe un registro de StaffMedico con el médico y centro especificados.");
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            StaffMedico existente = repository.findById(staffMedico.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe el registro de StaffMedico que se intenta modificar.");
+            }
+
+            // Verificar si los nuevos datos ya están siendo usados por otro registro
+            if (!existente.getMedico().equals(staffMedico.getMedico()) ||
+                !existente.getCentro().equals(staffMedico.getCentro())) {
+                if (repository.existsByMedicoAndCentro(staffMedico.getMedico(), staffMedico.getCentro())) {
+                    throw new IllegalStateException("Ya existe un registro de StaffMedico con el médico y centro especificados.");
+                }
+            }
+        }
+
         return repository.save(staffMedico);
     }
 

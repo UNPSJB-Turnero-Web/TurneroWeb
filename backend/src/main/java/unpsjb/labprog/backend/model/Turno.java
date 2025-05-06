@@ -42,4 +42,18 @@ public class Turno {
 
     @ManyToOne
     private CentroAtencion centroAtencion; // Relación con CentroAtencion
+
+    public void confirmarTurno() {
+        if (this.estado != EstadoTurno.PENDIENTE) {
+            throw new IllegalStateException("Solo se pueden confirmar turnos en estado PENDIENTE.");
+        }
+        this.estado = EstadoTurno.CONFIRMADO;
+    }
+
+    public void cancelarTurno() {
+        if (this.estado == EstadoTurno.CANCELADO) {
+            throw new IllegalStateException("El turno ya está cancelado.");
+        }
+        this.estado = EstadoTurno.CANCELADO;
+    }
 }

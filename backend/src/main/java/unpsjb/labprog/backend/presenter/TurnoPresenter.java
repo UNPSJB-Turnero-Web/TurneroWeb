@@ -8,12 +8,14 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.model.Turno;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("turno")
 public class TurnoPresenter {
 
     @Autowired
-    TurnoService service;
+    private TurnoService service;
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
@@ -21,11 +23,12 @@ public class TurnoPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-        Turno turno = service.findById(id);
-        return (turno != null)
-            ? Response.ok(turno)
-            : Response.notFound();
+    public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
+        Optional<Turno> turnoOpt = service.findById(id);
+        if (turnoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return Response.ok(turnoOpt.get());
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -48,8 +51,43 @@ public class TurnoPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") Long id) {
+        if (service.findById(id).isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         service.delete(id);
         return Response.ok("Turno " + id + " borrado.");
+    }
+
+    @PutMapping("/{id}/confirmar")
+    public ResponseEntity<Object> confirmarTurno(@PathVariable Long id) {
+        Optional<Turno> turnoOpt = service.findById(id);
+        if (turnoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Turno turno = turnoOpt.get();
+        try {
+            turno.confirmarTurno();
+            service.save(turno);
+            return ResponseEntity.ok("Turno confirmado exitosamente.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<Object> cancelarTurno(@PathVariable Long id) {
+        Optional<Turno> turnoOpt = service.findById(id);
+        if (turnoOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Turno turno = turnoOpt.get();
+        try {
+            turno.cancelarTurno();
+            service.save(turno);
+            return ResponseEntity.ok("Turno cancelado exitosamente.");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

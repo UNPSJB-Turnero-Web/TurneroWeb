@@ -14,6 +14,7 @@ import unpsjb.labprog.backend.model.CentroAtencion;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 
 @RestController
@@ -47,11 +48,12 @@ public ResponseEntity<Object> findAll() {
 
 @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
 public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-    CentroAtencion c = service.findById(id);
-    if (c == null) {
+    Optional<CentroAtencion> optionalCentro = service.findById(id);
+    if (optionalCentro.isEmpty()) {
         return Response.notFound("Centro de atención id " + id + " no encontrado");
     }
 
+    CentroAtencion c = optionalCentro.get();
     Map<String, Object> map = objectMapper.convertValue(c, Map.class);
     if (c.getLatitud() != null && c.getLongitud() != null) {
         map.put("coordenadas", c.getLatitud() + ", " + c.getLongitud());

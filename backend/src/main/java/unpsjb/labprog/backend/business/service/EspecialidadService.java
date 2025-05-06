@@ -28,6 +28,26 @@ public class EspecialidadService {
     }
 
     public Especialidad save(Especialidad especialidad) {
+        // Validaciones para evitar duplicados
+        if (especialidad.getId() == 0) {
+            // 🚀 CREACIÓN
+            if (repository.existsByNombre(especialidad.getNombre())) {
+                throw new IllegalStateException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            Especialidad existente = repository.findById(especialidad.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe la especialidad que se intenta modificar.");
+            }
+
+            // Verificar si el nuevo nombre ya está siendo usado por otra especialidad
+            if (!existente.getNombre().equalsIgnoreCase(especialidad.getNombre()) &&
+                repository.existsByNombre(especialidad.getNombre())) {
+                throw new IllegalStateException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
+            }
+        }
+
         return repository.save(especialidad);
     }
 

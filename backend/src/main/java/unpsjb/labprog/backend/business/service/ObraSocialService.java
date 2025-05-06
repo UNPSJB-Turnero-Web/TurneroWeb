@@ -27,6 +27,26 @@ public class ObraSocialService {
     }
 
     public ObraSocial save(ObraSocial obraSocial) {
+        // Validaciones para evitar duplicados
+        if (obraSocial.getId() == null || obraSocial.getId() == 0) {
+            // 🚀 CREACIÓN
+            if (repository.existsByNombre(obraSocial.getNombre())) {
+                throw new IllegalStateException("Ya existe una obra social con el nombre: " + obraSocial.getNombre());
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            ObraSocial existente = repository.findById(obraSocial.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe la obra social que se intenta modificar.");
+            }
+
+            // Verificar si el nuevo nombre ya está siendo usado por otra obra social
+            if (!existente.getNombre().equalsIgnoreCase(obraSocial.getNombre()) &&
+                repository.existsByNombre(obraSocial.getNombre())) {
+                throw new IllegalStateException("Ya existe una obra social con el nombre: " + obraSocial.getNombre());
+            }
+        }
+
         return repository.save(obraSocial);
     }
 
