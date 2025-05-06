@@ -9,20 +9,15 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Turno {
+public class ObraSocial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    @ManyToOne
-    private Paciente paciente;
+    @Column(nullable = false)
+    private String nombre;
 
-    @ManyToOne
-    private Agenda agenda;
-
-    @ManyToOne
-    private EsquemaTurno esquemaTurno; // Relación con EsquemaTurno
-
-    private String estado; // Ej: "pendiente", "confirmado", "cancelado"
+    @Column(unique = true, nullable = false)
+    private String codigo;
 }

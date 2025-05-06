@@ -1,5 +1,7 @@
 package unpsjb.labprog.backend.model;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +34,8 @@ public class CentroAtencion {
 
     @Column(nullable = false)
     private Double longitud;
+
+    @OneToMany(mappedBy = "centro", cascade = CascadeType.PERSIST)
+    private List<StaffMedico> staffMedico; // Relación con StaffMedico
+
 }

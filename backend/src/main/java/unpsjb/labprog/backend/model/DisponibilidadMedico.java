@@ -9,15 +9,16 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Medico extends Persona {
+public class DisponibilidadMedico {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
-    private String matricula;
+    private String diaSemana; // Ej: Lunes, Martes, etc.
+    private String horaInicio;
+    private String horaFin;
 
     @ManyToOne
-    private Especialidad especialidad; // Relación con Especialidad
+    private StaffMedico staffMedico; // Relación con StaffMedico
 }

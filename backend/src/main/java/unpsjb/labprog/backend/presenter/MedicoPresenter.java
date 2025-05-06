@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
-import unpsjb.labprog.backend.business.MedicoService;
+import unpsjb.labprog.backend.business.service.MedicoService;
 import unpsjb.labprog.backend.model.Medico;
 
 @RestController

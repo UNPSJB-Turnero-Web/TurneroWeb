@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
-import unpsjb.labprog.backend.business.ConsultorioService;
+import unpsjb.labprog.backend.business.service.ConsultorioService;
 import unpsjb.labprog.backend.model.Consultorio;
 
 import java.util.List;

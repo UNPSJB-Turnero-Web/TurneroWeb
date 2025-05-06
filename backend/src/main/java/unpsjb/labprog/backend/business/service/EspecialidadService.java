@@ -1,4 +1,4 @@
-package unpsjb.labprog.backend.business;
+package unpsjb.labprog.backend.business.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,29 +8,30 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
+import unpsjb.labprog.backend.model.Especialidad;
 
 @Service
-public class PacienteService {
+public class EspecialidadService {
 
     @Autowired
-    PacienteRepository repository;
+    EspecialidadRepository repository;
 
-    public List<Paciente> findAll() {
-        List<Paciente> result = new ArrayList<>();
+    public List<Especialidad> findAll() {
+        List<Especialidad> result = new ArrayList<>();
         repository.findAll().forEach(result::add);
         return result;
     }
 
-    public Paciente findById(int id) {
+    public Especialidad findById(int id) {
         return repository.findById(id).orElse(null);
     }
 
-    public Paciente save(Paciente paciente) {
-        return repository.save(paciente);
+    public Especialidad save(Especialidad especialidad) {
+        return repository.save(especialidad);
     }
 
-    public Page<Paciente> findByPage(int page, int size) {
+    public Page<Especialidad> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size));
     }
 

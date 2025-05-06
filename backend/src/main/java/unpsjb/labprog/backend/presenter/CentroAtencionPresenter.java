@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
-import unpsjb.labprog.backend.business.CentroAtencionService;
+import unpsjb.labprog.backend.business.service.CentroAtencionService;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 import java.util.List;
