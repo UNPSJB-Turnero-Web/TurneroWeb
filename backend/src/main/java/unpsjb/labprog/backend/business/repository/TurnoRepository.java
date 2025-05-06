@@ -8,5 +8,5 @@ import java.time.LocalTime;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
-    boolean existsByFechaAndHoraAndCentroAtencion(LocalDate fecha, LocalTime hora, CentroAtencion centroAtencion);
+    boolean existsByFechaAndHoraInicioAndCentroAtencion(LocalDate fecha, LocalTime horaInicio, CentroAtencion centroAtencion);
 }

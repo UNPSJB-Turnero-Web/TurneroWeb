@@ -29,7 +29,7 @@ public class TurnoService {
     public Turno save(Turno turno) {
         if (turno.getId() == 0) {
             // 🚀 CREACIÓN
-            if (repository.existsByFechaAndHoraAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
+            if (repository.existsByFechaAndHoraInicioAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
                 throw new IllegalStateException("Ya existe un turno registrado en esta fecha y hora para este centro de atención");
             }
         } else {
@@ -40,7 +40,7 @@ public class TurnoService {
             }
 
             // Verificar conflictos de horarios
-            if (repository.existsByFechaAndHoraAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
+            if (repository.existsByFechaAndHoraInicioAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
                 throw new IllegalStateException("Ya existe un turno registrado en esta fecha y hora para este centro de atención");
             }
         }
