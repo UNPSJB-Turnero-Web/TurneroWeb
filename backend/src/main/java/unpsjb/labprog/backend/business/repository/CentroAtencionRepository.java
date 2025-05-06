@@ -28,6 +28,14 @@ public interface CentroAtencionRepository extends CrudRepository<CentroAtencion,
     @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.name = ?1")
     boolean existsByName(String name);
 
+    @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.direccion = ?1 AND c.id != ?2")
+    boolean existsByDireccionAndIdNot(String direccion, int id);
+
+    @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.name = ?1 AND c.direccion = ?2 AND c.id != ?3")
+    boolean existsByNameAndDireccionAndIdNot(String name, String direccion, int id);
+
+    @Query("SELECT COUNT(c) > 0 FROM CentroAtencion c WHERE c.latitud = ?1 AND c.longitud = ?2 AND c.id != ?3")
+    boolean existsByCoordenadasAndIdNot(Double latitud, Double longitud, int id);
 
     CentroAtencion findByName(String centroNombre);
 

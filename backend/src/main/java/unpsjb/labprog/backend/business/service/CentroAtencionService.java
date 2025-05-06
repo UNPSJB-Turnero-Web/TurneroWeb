@@ -82,4 +82,16 @@ public class CentroAtencionService {
     public void delete(int id) {
         repository.deleteById(id);
     }
+
+    public boolean existsByDireccionAndIdNot(String direccion, int id) {
+        return repository.existsByDireccionAndIdNot(direccion, id);
+    }
+
+    public boolean existsByNameAndDireccionAndIdNot(String name, String direccion, int id) {
+        return repository.existsByNameAndDireccionAndIdNot(name, direccion, id);
+    }
+
+    public boolean existsByCoordenadasAndIdNot(Double latitud, Double longitud, int id) {
+        return repository.existsByCoordenadasAndIdNot(latitud, longitud, id);
+    }
 }

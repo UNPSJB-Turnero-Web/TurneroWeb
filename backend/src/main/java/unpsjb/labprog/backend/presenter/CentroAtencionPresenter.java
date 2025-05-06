@@ -166,13 +166,26 @@ public ResponseEntity<Object> update(@RequestBody JsonNode json) {
             }
         }
 
+        
+        // Validar conflictos de nombre y dirección
+        if (service.existsByNameAndDireccionAndIdNot(centro.getName(), centro.getDireccion(), centro.getId())) {
+            return Response.dbError("Ya existe un centro de atención con ese nombre y dirección");
+        }
+        if (service.existsByDireccionAndIdNot(centro.getDireccion(), centro.getId())) {
+            return Response.dbError("Ya existe un centro de atención con esa dirección");
+        }
+
+        // Validar coordenadas duplicadas
+        if (service.existsByCoordenadasAndIdNot(centro.getLatitud(), centro.getLongitud(), centro.getId())) {
+            return Response.error(null, "Las coordenadas ya están asociadas a otro centro de atención");
+        }
+
         CentroAtencion saved = service.save(centro);
         return Response.ok(saved, "Centro de atención modificado");
 
     } catch (IllegalStateException e) {
         return Response.dbError(e.getMessage());
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
         return Response.error(null, e.getMessage());
     }
 }
