@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -18,7 +19,9 @@ public class EsquemaTurnoPresenter {
 
     @GetMapping
     public List<EsquemaTurno> getAll() {
-        return repository.findAll();
+        List<EsquemaTurno> result = new ArrayList<>();
+        repository.findAll().forEach(result::add);
+        return result;
     }
 
     @GetMapping("/{id}")

@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 @Entity
 @Getter
 @Setter
@@ -13,16 +16,30 @@ public class Turno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
-    @ManyToOne
-    private Paciente paciente;
+    @Column(nullable = false)
+    private LocalDate fecha; // Fecha del turno
 
-    @ManyToOne
-    private Agenda agenda;
+    @Column(nullable = false)
+    private LocalTime horaInicio; // Hora de inicio del turno
+
+    @Column(nullable = false)
+    private LocalTime horaFin; // Hora de fin del turno
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoTurno estado; // Estado del turno (PENDIENTE, CONFIRMADO, CANCELADO)
 
     @ManyToOne
     private EsquemaTurno esquemaTurno; // Relación con EsquemaTurno
 
-    private String estado; // Ej: "pendiente", "confirmado", "cancelado"
+    @ManyToOne
+    private Paciente paciente; // Relación con Paciente
+
+    @ManyToOne
+    private Medico medico; // Relación con Medico
+
+    @ManyToOne
+    private CentroAtencion centroAtencion; // Relación con CentroAtencion
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,9 @@ public class EsquemaTurnoService {
     private EsquemaTurnoRepository repository;
 
     public List<EsquemaTurno> findAll() {
-        return repository.findAll();
+        List<EsquemaTurno> result = new ArrayList<>();
+        repository.findAll().forEach(result::add);
+        return result;
     }
 
     public Optional<EsquemaTurno> findById(Long id) {

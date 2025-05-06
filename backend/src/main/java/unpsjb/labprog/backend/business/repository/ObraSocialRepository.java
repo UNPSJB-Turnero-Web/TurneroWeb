@@ -1,11 +1,11 @@
 package unpsjb.labprog.backend.business.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import unpsjb.labprog.backend.model.ObraSocial;
 
 @Repository
-public interface ObraSocialRepository extends JpaRepository<ObraSocial, Integer> {
-    // Métodos personalizados si son necesarios
+public interface ObraSocialRepository extends CrudRepository<ObraSocial, Integer>, PagingAndSortingRepository<ObraSocial, Integer> {
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,9 @@ public class DisponibilidadMedicoService {
     private DisponibilidadMedicoRepository repository;
 
     public List<DisponibilidadMedico> findAll() {
-        return repository.findAll();
+        List<DisponibilidadMedico> result = new ArrayList<>();
+        repository.findAll().forEach(result::add);
+        return result;
     }
 
     public Optional<DisponibilidadMedico> findById(Long id) {

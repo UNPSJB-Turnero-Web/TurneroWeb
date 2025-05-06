@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.model.StaffMedico;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -18,7 +19,9 @@ public class StaffMedicoPresenter {
 
     @GetMapping
     public List<StaffMedico> getAll() {
-        return repository.findAll();
+        List<StaffMedico> result = new ArrayList<>();
+        repository.findAll().forEach(result::add);
+        return result;
     }
 
     @GetMapping("/{id}")

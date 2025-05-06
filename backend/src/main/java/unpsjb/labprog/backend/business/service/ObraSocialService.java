@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import unpsjb.labprog.backend.model.ObraSocial;
 import unpsjb.labprog.backend.business.repository.ObraSocialRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +17,9 @@ public class ObraSocialService {
     private ObraSocialRepository repository;
 
     public List<ObraSocial> findAll() {
-        return repository.findAll();
+        List<ObraSocial> result = new ArrayList<>();
+        repository.findAll().forEach(result::add);
+        return result;
     }
 
     public Optional<ObraSocial> findById(Integer id) {

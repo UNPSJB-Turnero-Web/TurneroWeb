@@ -16,11 +16,6 @@ public class DisponibilidadMedicoPresenter {
     @Autowired
     private DisponibilidadMedicoRepository repository;
 
-    @GetMapping
-    public List<DisponibilidadMedico> getAll() {
-        return repository.findAll();
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<DisponibilidadMedico> getById(@PathVariable Long id) {
         return repository.findById(id)
