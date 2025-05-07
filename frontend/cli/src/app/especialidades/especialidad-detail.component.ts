@@ -8,7 +8,7 @@ import { Especialidad } from './especialidad';
 @Component({
   selector: 'app-especialidad-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule], // Verifica que estos módulos estén correctamente importados
   template: `
     <div class="container mt-4">
       <h2>{{ especialidad.id ? 'Editar Especialidad' : 'Nueva Especialidad' }}</h2>
@@ -16,8 +16,8 @@ import { Especialidad } from './especialidad';
         <div class="mb-3">
           <label class="form-label">Nombre</label>
           <input
-            [(ngModel)]="especialidad.name"
-            name="name"
+            [(ngModel)]="especialidad.nombre"
+            name="nombre"
             class="form-control"
             required
           />
@@ -29,7 +29,7 @@ import { Especialidad } from './especialidad';
   `,
 })
 export class EspecialidadDetailComponent {
-  especialidad: Especialidad = { id: 0, name: '' };
+  especialidad: Especialidad = { id: 0, nombre: '' };
 
   constructor(
     private route: ActivatedRoute,
@@ -47,8 +47,18 @@ export class EspecialidadDetailComponent {
   }
 
   save(): void {
-    this.especialidadService.save(this.especialidad).subscribe(() => {
-      this.router.navigate(['/especialidades']);
+    this.especialidadService.save(this.especialidad).subscribe({
+      next: () => {
+        this.router.navigate(['/especialidades']);
+      },
+      error: (error) => {
+        console.error('Error al guardar la especialidad:', error);
+        if (error.error && error.error.message) {
+          alert(`Error: ${error.error.message}`); // Muestra el mensaje de error al usuario
+        } else {
+          alert('Error desconocido al guardar la especialidad.');
+        }
+      }
     });
   }
 }

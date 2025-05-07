@@ -28,13 +28,13 @@ import { PaginationComponent } from '../pagination/pagination.component';
     <tbody>
       <tr *ngFor="let especialidad of resultsPage.content; index as i">
         <td>{{ especialidad.id }}</td>
-        <td>{{ especialidad.name }}</td>
+        <td>{{ especialidad.nombre }}</td>
         <td>
           <a [routerLink]="['/especialidades', especialidad.id]" class="btn btn-sm btn-outline-primary">
-            <i class="fa fa-pencil"></i>
+            <i class="fas fa-edit"></i> <!-- Updated icon -->
           </a>
           <a (click)="remove(especialidad.id)" class="btn btn-sm btn-outline-danger ms-1">
-            <i class="fa fa-trash"></i>
+            <i class="fas fa-trash-alt"></i> <!-- Updated icon -->
           </a>
         </td>
       </tr>

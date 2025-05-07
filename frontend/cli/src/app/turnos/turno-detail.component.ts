@@ -154,7 +154,7 @@ export class TurnoDetailComponent {
       )
     );
 
-  formatter = (x: Especialidad) => x.name;
+  formatter = (x: Especialidad) => x.nombre;
 
   onEspecialidadSelected(especialidad: Especialidad): void {
     this.turno.especialidad = especialidad;

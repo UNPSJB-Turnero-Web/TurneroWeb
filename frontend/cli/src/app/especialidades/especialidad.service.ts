@@ -9,7 +9,7 @@ import { DataPackage } from '../data.package';
   providedIn: 'root'
 })
 export class EspecialidadService {
-  private url = 'rest/especialidades';
+  private url = 'rest/especialidad';
 
   constructor(private http: HttpClient) {}
 
