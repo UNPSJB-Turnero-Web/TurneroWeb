@@ -1,0 +1,45 @@
+# language: es
+
+Característica: Gestión de Consultorios
+  Como administrador del sistema,
+  Quiero gestionar los consultorios en un centro de atención,
+  Para ampliar la capacidad de atención médica y mantener la infraestructura actualizada.
+
+  Escenario: Crear un consultorio exitosamente
+    Dado que el centro de atención "Centro Médico Central" existe en el sistema
+    Cuando el administrador crea un consultorio con el número "101" y el nombre "Consultorio General"
+    Entonces el sistema responde con el código de estado 200 y el mensaje "Consultorio creado correctamente"
+
+  Escenario: Intentar crear un consultorio con un número duplicado
+    Dado que el centro de atención "Centro Médico Central" existe en el sistema
+    Y un consultorio con el número "101" ya está registrado en el centro
+    Cuando el administrador intenta crear un consultorio con el número "101" y el nombre "Consultorio Pediátrico"
+    Entonces el sistema responde con el código de estado 409 y el mensaje "El número de consultorio ya está en uso"
+
+  Escenario: Listar consultorios de un centro de atención
+    Dado que el centro de atención "Centro Médico Central" tiene los siguientes consultorios registrados:
+      | número | nombre               |
+      | 101    | Consultorio General  |
+      | 102    | Consultorio Pediátrico |
+    Cuando el administrador solicita la lista de consultorios del centro "Centro Médico Central"
+    Entonces el sistema responde con un JSON:
+    """
+    {
+        "status_code": 200,
+        "data": [
+            { "numero": 101, "nombre": "Consultorio General" },
+            { "numero": 102, "nombre": "Consultorio Pediátrico" }
+        ]
+    }
+    """
+
+  Escenario: Editar un consultorio exitosamente
+    Dado que el consultorio con número "101" existe en el centro de atención "Centro Médico Central"
+    Cuando el administrador edita el consultorio cambiando su número a "103" y su nombre a "Consultorio Avanzado"
+    Entonces el sistema responde con el código de estado 200 y el mensaje "Consultorio editado correctamente"
+
+  Escenario: Intentar editar un consultorio con un número duplicado
+    Dado que el centro de atención "Centro Médico Central" tiene un consultorio con el número "102"
+    Y otro consultorio con el número "101"
+    Cuando el administrador intenta cambiar el número del consultorio "101" a "102"
+    Entonces el sistema responde con el código de estado 409 y el mensaje "El número de consultorio ya está en uso"

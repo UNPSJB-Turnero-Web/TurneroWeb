@@ -43,6 +43,5 @@ public class CentroAtencion {
             throw new IllegalStateException("El centro no tiene staff médico asociado.");
         }
         consultorio.setCentroAtencion(this);
-        // Aquí podrías agregar lógica adicional, como validaciones
     }
 }

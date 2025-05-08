@@ -8,7 +8,7 @@ Característica: Gestión de Especialidades
   # Escenarios para crear especialidades
   Esquema del escenario: Crear una especialidad exitosamente
     Cuando el administrador crea una especialidad con el nombre "<nombre>" y la descripción "<descripcion>"
-    Entonces el sistema responde con <status_code> y "<status_text>"
+    Entonces el sistema responde con <status_code> y "<status_text>" para la especialidad
 
     Ejemplos:
       | nombre                      | descripcion                                                     | status_code | status_text                           |
@@ -17,7 +17,7 @@ Característica: Gestión de Especialidades
 
   Esquema del escenario: Intentar crear una especialidad con nombre duplicado
     Cuando el administrador crea una especialidad con el nombre "<nombre>" y la descripción "<descripcion>"
-    Entonces el sistema responde con <status_code> y "<status_text>"
+    Entonces el sistema responde con <status_code> y "<status_text>" para la especialidad
 
     Ejemplos:
       | nombre         | descripcion                                  | status_code | status_text                            |
@@ -26,7 +26,7 @@ Característica: Gestión de Especialidades
 
   # Escenarios para listar especialidades
   Escenario: Recuperar todas las especialidades registradas en el sistema
-    Dado que existen 50 especialidades registradas en el sistema
+    Dado que no existen especialidades en el sistema
     Cuando un usuario del sistema solicita la lista de especialidades
     Entonces el sistema responde con un JSON:
     """
@@ -44,7 +44,7 @@ Característica: Gestión de Especialidades
   Esquema del escenario: Modificar una especialidad exitosamente
     Dado que la especialidad "<nombre_original>" existe en el sistema con la descripción "<descripcion_original>"
     Cuando el administrador edita la especialidad "<nombre_original>" cambiando su nombre a "<nombre_nuevo>" y su descripción a "<descripcion_nueva>"
-    Entonces el sistema responde con el <status_code> y el "<status_text>"
+    Entonces el sistema responde con el <status_code> y el "<status_text>" para la especialidad
 
     Ejemplos:
       | nombre_original | descripcion_original                         | nombre_nuevo     | descripcion_nueva                           | status_code | status_text                           |

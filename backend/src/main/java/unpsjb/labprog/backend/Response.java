@@ -11,7 +11,7 @@ public class Response {
 public static ResponseEntity<Object> response(HttpStatus status, String message, Object responseObj) {
 System.out.println("DEBUG: response() llamado con status: " + status);
 Map<String, Object> map = new HashMap<>();
-map.put("status_code", status.value());  // Esto deberÃa ser el codigo real
+map.put("status_code", status.value()); 
 map.put("status_text", message);
 map.put("data", responseObj);
 

@@ -14,7 +14,7 @@ Característica: Modificar Centro de Atención
     Cuando el administrador modifica los datos del centro de atención "<Nombre>" con los siguientes atributos:
       | Nombre            | Dirección                                  | Localidad       | Provincia | Coordenadas        |
       | <NombreNuevo>     | <DirecciónNueva>                           | <LocalidadNueva> | <ProvinciaNueva> | <CoordenadasNuevas> |
-    Entonces el sistema responde con <status_code> y "<status_text>"
+    Entonces el sistema responde con <status_code> y "<status_text>" para el centro de atención
 
     Ejemplos: Modificaciones exitosas
     | Nombre                   | NombreNuevo                | DirecciónNueva                                  | LocalidadNueva  | ProvinciaNueva | CoordenadasNuevas        | status_code | status_text                   |
@@ -26,7 +26,7 @@ Característica: Modificar Centro de Atención
     Cuando el administrador modifica los datos del centro de atención "<Nombre>" con los siguientes atributos:
       | Nombre            | Dirección                                  | Localidad       | Provincia | Coordenadas        |
       | <NombreNuevo>     | <DirecciónNueva>                           | <LocalidadNueva> | <ProvinciaNueva> | <CoordenadasNuevas> |
-    Entonces el sistema responde con <status_code> y "<status_text>"
+    Entonces el sistema responde con <status_code> y "<status_text>" para el centro de atención
 
     Ejemplos: Modificaciones con conflictos
     | Nombre                   | NombreNuevo              | DirecciónNueva                               | LocalidadNueva  | ProvinciaNueva | CoordenadasNuevas        | status_code | status_text                                                        |

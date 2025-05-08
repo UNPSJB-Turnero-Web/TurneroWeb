@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.presenter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,10 +29,14 @@ public class EspecialidadPresenter {
             : Response.notFound();
     }
 
-    @RequestMapping(method = RequestMethod.POST)
+    @PostMapping
     public ResponseEntity<Object> create(@RequestBody Especialidad especialidad) {
-        Especialidad saved = service.save(especialidad);
-        return Response.ok(saved);
+        try {
+            Especialidad saved = service.save(especialidad);
+            return ResponseEntity.ok(saved);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @RequestMapping(method = RequestMethod.PUT)

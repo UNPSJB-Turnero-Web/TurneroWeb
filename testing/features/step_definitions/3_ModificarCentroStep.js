@@ -67,7 +67,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
 });
 
 
-Then('el sistema responde con {int} y {string}', function (expectedStatus, expectedText) {
+Then('el sistema responde con {int} y {string} para el centro de atención', function (expectedStatus, expectedText) {
   assert.strictEqual(this.response.status_code, expectedStatus, `Esperado ${expectedStatus}, pero fue ${this.response.status_code}`);
   assert.strictEqual(this.response.status_text.trim(), expectedText.trim(), `Esperado "${expectedText}", pero fue "${this.response.status_text}"`);
 });
