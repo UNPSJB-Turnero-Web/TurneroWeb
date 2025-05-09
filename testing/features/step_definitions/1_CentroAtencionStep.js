@@ -5,7 +5,7 @@ const request = require('sync-request');
 // Ejecuta solo una vez antes de todos los escenarios
 BeforeAll(function () {
   console.log('🚀 Limpiando base de datos de centros...');
-  const res = request('DELETE', 'http://backend:8080/centros/reset');
+  const res = request('DELETE', 'http://backend:8080/centrosAtencion/reset');
   
   if (res.statusCode !== 200) {
     throw new Error('❌ No se pudo resetear la base de datos');
@@ -29,7 +29,7 @@ When(
     };
 
     try {
-      const res = request('POST', 'http://backend:8080/centros', { json: centroData });
+      const res = request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
       this.response = JSON.parse(res.getBody('utf8'));
 
       this.statusCode = res.statusCode;
