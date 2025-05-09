@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.model.Especialidad;
@@ -15,7 +16,7 @@ import unpsjb.labprog.backend.model.Especialidad;
 public class EspecialidadService {
 
     @Autowired
-    EspecialidadRepository repository;
+    private EspecialidadRepository repository;
 
     public List<Especialidad> findAll() {
         return repository.findAll();
@@ -25,50 +26,47 @@ public class EspecialidadService {
         return repository.findById(id).orElse(null);
     }
 
-    public Especialidad save(Especialidad especialidad) {
-        // Validar que el nombre no sea nulo o vacío
-        if (especialidad.getNombre() == null || especialidad.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la especialidad no puede estar vacío.");
-        }
+    @Transactional
+    public Especialidad save(Especialidad esp) {
+        if (esp.getNombre() == null || esp.getNombre().isBlank())
+            throw new IllegalStateException("El nombre es obligatorio");
 
-        if (especialidad.getId() == 0) {
-            // 🚀 CREACIÓN
-            if (repository.existsByNombre(especialidad.getNombre())) {
-                throw new IllegalArgumentException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
-            }
+        if (esp.getDescripcion() == null || esp.getDescripcion().isBlank())
+            throw new IllegalStateException("La descripciÃ³n de la especialidad es obligatoria");
+
+        if (esp.getId() == 0) {
+            if (repository.existsByNombreIgnoreCase(esp.getNombre()))
+                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
         } else {
-            // 🛠️ MODIFICACIÓN
-            Especialidad existente = repository.findById(especialidad.getId()).orElse(null);
-            if (existente == null) {
-                throw new IllegalArgumentException("No existe la especialidad que se intenta modificar.");
-            }
-
-            // Verificar si el nuevo nombre ya está siendo usado por otra especialidad
-            if (!existente.getNombre().equalsIgnoreCase(especialidad.getNombre()) &&
-                repository.existsByNombre(especialidad.getNombre())) {
-                throw new IllegalArgumentException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
-            }
+            if (repository.existsByNombreIgnoreCaseAndIdNot(esp.getNombre(), esp.getId()))
+                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
         }
 
-        if (repository.existsByNombre(especialidad.getNombre())) {
-            throw new IllegalArgumentException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
-        }
-
-        return repository.save(especialidad);
+        return repository.save(esp);
     }
 
     public Page<Especialidad> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size));
     }
 
+    @Transactional
     public void delete(int id) {
         if (!repository.existsById(id)) {
-            throw new IllegalArgumentException("No existe una especialidad con el ID: " + id);
+            throw new IllegalStateException("No existe una especialidad con el ID: " + id);
         }
+
+        // Si necesitas validar si la especialidad está asignada, descomenta y ajusta esta lógica:
+        /*
+        if (repository.estaAsignada(id)) {
+            throw new IllegalStateException("No se puede eliminar una especialidad asignada");
+        }
+        */
+
         repository.deleteById(id);
     }
 
+    @Transactional
     public void deleteAll() {
-        repository.deleteAll(); // Elimina todas las especialidades de la base de datos
+        repository.deleteAll();
     }
 }
