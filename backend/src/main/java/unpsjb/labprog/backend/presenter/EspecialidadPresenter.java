@@ -24,34 +24,44 @@ public class EspecialidadPresenter {
         return Response.ok(service.findAll(), "Especialidades recuperadas correctamente");
     }
 
-    @PostMapping
-    public ResponseEntity<Object> create(@RequestBody JsonNode json) {
+    @GetMapping("/page")
+    public ResponseEntity<Object> getByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         try {
-            Especialidad especialidad = mapper.treeToValue(json, Especialidad.class);
-            if (especialidad.getId() != 0) {
-                return Response.error(null, "No se debe enviar un ID al crear una especialidad");
-            }
-            return Response.ok(service.save(especialidad), "Especialidad creada correctamente");
-        } catch (IllegalArgumentException e) {
-            return Response.error(null, e.getMessage());
+            return Response.ok(service.findByPage(page, size), "Especialidades paginadas recuperadas correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage());
+            return Response.error(null, "Error al recuperar las especialidades paginadas: " + e.getMessage());
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody JsonNode json) {
+    @PostMapping
+    public ResponseEntity<Object> create(@RequestBody JsonNode json) {
         try {
-            Especialidad especialidad = mapper.treeToValue(json, Especialidad.class);
-            if (id <= 0) {
+            Especialidad esp = mapper.treeToValue(json, Especialidad.class);
+            if (esp.getId() != 0) {
+                return Response.error(null, "No se debe enviar un ID al crear una especialidad");
+            }
+            return Response.ok(service.save(esp), "Especialidad creada correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage()); // Devuelve status_code 409
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage()); // Devuelve status_code 400
+        }
+    }
+
+    @PutMapping
+    public ResponseEntity<Object> update(@RequestBody JsonNode json) {
+        try {
+            Especialidad esp = mapper.treeToValue(json, Especialidad.class);
+            if (esp.getId() <= 0) {
                 return Response.error(null, "Debe enviar un ID válido");
             }
-            especialidad.setId(id);
-            return Response.ok(service.save(especialidad), "Especialidad editada exitosamente");
-        } catch (IllegalArgumentException e) {
-            return Response.error(null, e.getMessage());
+            return Response.ok(service.save(esp), "Especialidad editada exitosamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage()); // Devuelve status_code 409
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage());
+            return Response.error(null, "Error inesperado: " + e.getMessage()); // Devuelve status_code 400
         }
     }
 
@@ -60,8 +70,8 @@ public class EspecialidadPresenter {
         try {
             service.delete(id);
             return Response.ok("Especialidad eliminada exitosamente");
-        } catch (IllegalArgumentException e) {
-            return Response.error(null, e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error inesperado: " + e.getMessage());
         }

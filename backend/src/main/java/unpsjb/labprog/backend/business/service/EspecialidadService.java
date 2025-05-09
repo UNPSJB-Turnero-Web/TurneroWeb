@@ -28,20 +28,27 @@ public class EspecialidadService {
 
     @Transactional
     public Especialidad save(Especialidad esp) {
-        if (esp.getNombre() == null || esp.getNombre().isBlank())
+        // Validar campos obligatorios
+        if (esp.getNombre() == null || esp.getNombre().isBlank()) {
             throw new IllegalStateException("El nombre es obligatorio");
-
-        if (esp.getDescripcion() == null || esp.getDescripcion().isBlank())
-            throw new IllegalStateException("La descripciÃ³n de la especialidad es obligatoria");
-
-        if (esp.getId() == 0) {
-            if (repository.existsByNombreIgnoreCase(esp.getNombre()))
-                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
-        } else {
-            if (repository.existsByNombreIgnoreCaseAndIdNot(esp.getNombre(), esp.getId()))
-                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
         }
 
+        if (esp.getDescripcion() == null || esp.getDescripcion().isBlank()) {
+            throw new IllegalStateException("La descripción de la especialidad es obligatoria");
+        }
+
+        // Validar unicidad del nombre
+        if (esp.getId() == 0) { // Creación
+            if (repository.existsByNombreIgnoreCase(esp.getNombre())) {
+                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
+            }
+        } else { // Actualización
+            if (repository.existsByNombreIgnoreCaseAndIdNot(esp.getNombre(), esp.getId())) {
+                throw new IllegalStateException("Ya existe una especialidad con ese nombre");
+            }
+        }
+
+        // Guardar la especialidad
         return repository.save(esp);
     }
 

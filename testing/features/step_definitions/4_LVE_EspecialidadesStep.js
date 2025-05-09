@@ -66,19 +66,10 @@ When('el administrador crea una especialidad con el nombre {string} y la descrip
   const especialidad = { nombre, descripcion };
   try {
     const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
-    this.response = JSON.parse(res.getBody('utf8'));
-    this.statusCode = res.statusCode;
+    this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
   } catch (error) {
-    console.error('Error en la solicitud:', error); // Log de depuración
-    this.statusCode = error.statusCode || 500;
-
-    if (error.response && error.response.body) {
-      const responseBody = error.response.body.toString('utf8');
-      console.log('Cuerpo de la respuesta de error:', responseBody); // Log adicional
-      this.response = JSON.parse(responseBody);
-    } else {
-      this.response = { status_text: 'No se recibió respuesta del servidor' };
-    }
+    console.error('Error en la solicitud:', error);
+    this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : { status_code: 500, status_text: 'Error interno' };
   }
 });
 
@@ -97,12 +88,10 @@ When('el administrador edita la especialidad {string} cambiando su nombre a {str
 
   try {
     const res = request('PUT', `http://backend:8080/especialidad/${especialidadExistente.id}`, { json: especialidadEditada });
-    assert.strictEqual(res.statusCode, 200, `Error al editar la especialidad: ${res.getBody('utf8')}`);
-    this.response = JSON.parse(res.getBody('utf8'));
-    this.statusCode = res.statusCode;
+    this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
   } catch (error) {
-    this.statusCode = error.statusCode || 500;
-    this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : {};
+    console.error('Error en la solicitud:', error);
+    this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : { status_code: 500, status_text: 'Error interno' };
   }
 });
 
@@ -121,11 +110,10 @@ When('el administrador intenta cambiar el nombre de {string} a {string}', functi
 
   try {
     const res = request('PUT', `http://backend:8080/especialidad/${especialidadExistente.id}`, { json: especialidadEditada });
-    this.response = JSON.parse(res.getBody('utf8'));
-    this.statusCode = res.statusCode;
+    this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
   } catch (error) {
-    this.statusCode = error.statusCode || 500;
-    this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : {};
+    console.error('Error en la solicitud:', error);
+    this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : { status_code: 500, status_text: 'Error interno' };
   }
 });
 
@@ -149,9 +137,20 @@ When('un usuario del sistema solicita la lista de especialidades', function () {
 
 Then('el sistema responde con el status code {int} y el status text {string} para la especialidad', function (statusCode, statusText) {
   // Validar el status_code interno en el cuerpo de la respuesta
-  assert.strictEqual(this.response.status_code, statusCode, `Esperado ${statusCode}, pero fue ${this.response.status_code}`);
-  assert.strictEqual(this.response.status_text, statusText, `Esperado "${statusText}", pero fue "${this.response.status_text}"`);
+  assert.strictEqual(
+    this.response.status_code,
+    statusCode,
+    `Esperado status_code ${statusCode}, pero fue ${this.response.status_code}`
+  );
+
+  // Validar el status_text interno en el cuerpo de la respuesta
+  assert.strictEqual(
+    this.response.status_text,
+    statusText,
+    `Esperado status_text "${statusText}", pero fue "${this.response.status_text}"`
+  );
 });
+
 Then('el sistema responde con un JSON para la especialidad:', function (docString) {
   const expectedResponse = JSON.parse(docString);
 
