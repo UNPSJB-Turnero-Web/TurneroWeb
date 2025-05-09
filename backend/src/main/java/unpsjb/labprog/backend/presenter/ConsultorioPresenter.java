@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.presenter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +11,9 @@ import unpsjb.labprog.backend.business.service.ConsultorioService;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -45,12 +48,20 @@ public class ConsultorioPresenter {
             @RequestBody Consultorio consultorio) {
         Optional<CentroAtencion> centroOpt = centroService.findById(centroId);
         if (centroOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("status_code", 404);
+            response.put("status_text", "Centro de atención no encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
         CentroAtencion centro = centroOpt.get();
         centro.agregarConsultorio(consultorio);
         consultorioService.save(consultorio);
-        return ResponseEntity.ok("Consultorio agregado exitosamente.");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status_code", 200);
+        response.put("status_text", "Consultorio agregado exitosamente");
+        response.put("data", consultorio);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/listar/{centroNombre}")

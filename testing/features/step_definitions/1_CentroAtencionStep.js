@@ -15,7 +15,6 @@ BeforeAll(function () {
 
 Given('que existe un sistema de gestión de centros de atención', function () {
   console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
-  // Ya no hacemos nada aquí, porque ya limpiamos en el BeforeAll
 });
 
 When(
@@ -38,7 +37,6 @@ When(
       if (error.statusCode) {
         this.statusCode = error.statusCode;
         const bodyString = error.response && error.response.body && error.response.body.toString('utf8');
-        console.log("Error recibido body:", bodyString);
         this.response = bodyString ? JSON.parse(bodyString) : {};
       } else {
         throw error;

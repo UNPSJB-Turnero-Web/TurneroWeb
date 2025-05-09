@@ -7,7 +7,6 @@ When('el usuario solicita la lista de centros de atención', function () {
         const res = request('GET', 'http://backend:8080/centros/page?page=0&size=10');
     this.statusCode = res.statusCode;
     this.response = JSON.parse(res.getBody('utf8'));
-    console.log("✅ Respuesta:", this.response);
   } catch (error) {
     console.error("❌ Error al hacer la solicitud:", error.message);
     console.error("Detalles:", error);

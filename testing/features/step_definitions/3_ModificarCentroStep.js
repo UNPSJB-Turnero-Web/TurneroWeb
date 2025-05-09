@@ -21,7 +21,6 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
 
     const res = request('POST', 'http://backend:8080/centros', { json: centroData });
     const body = JSON.parse(res.getBody('utf8'));
-    console.log('📤 Respuesta:', body);
   });
 });
 When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentroActual, dataTable) {

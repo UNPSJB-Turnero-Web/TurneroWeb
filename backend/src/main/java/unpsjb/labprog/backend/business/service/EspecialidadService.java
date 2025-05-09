@@ -18,9 +18,7 @@ public class EspecialidadService {
     EspecialidadRepository repository;
 
     public List<Especialidad> findAll() {
-        List<Especialidad> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+        return repository.findAll();
     }
 
     public Especialidad findById(int id) {
@@ -52,6 +50,10 @@ public class EspecialidadService {
             }
         }
 
+        if (repository.existsByNombre(especialidad.getNombre())) {
+            throw new IllegalArgumentException("Ya existe una especialidad con el nombre: " + especialidad.getNombre());
+        }
+
         return repository.save(especialidad);
     }
 
@@ -60,6 +62,13 @@ public class EspecialidadService {
     }
 
     public void delete(int id) {
+        if (!repository.existsById(id)) {
+            throw new IllegalArgumentException("No existe una especialidad con el ID: " + id);
+        }
         repository.deleteById(id);
+    }
+
+    public void deleteAll() {
+        repository.deleteAll(); // Elimina todas las especialidades de la base de datos
     }
 }
