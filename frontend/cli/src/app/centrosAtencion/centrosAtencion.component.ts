@@ -7,6 +7,7 @@ import { ModalService } from '../modal/modal.service';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
 
+
 @Component({
   selector: 'app-centros-atencion',
   standalone: true,
@@ -52,6 +53,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
         </tfoot>
       </table>
     </div>
+
   `,
   styles: ``
 })

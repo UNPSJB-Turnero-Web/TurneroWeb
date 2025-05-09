@@ -11,15 +11,15 @@ Entonces el sistema responde con <status_code> y "<status_text>"
 
 Ejemplos: Centros de atención exitosos
   | Nombre                      | Dirección                                        | Localidad        | Provincia | Coordenadas   | status_code | status_text                   |
-  | Centro Médico Integral      | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765, -65.034 | 200         | "Centro de atención creado"    |
-  | Centro de Salud Rawson      | Avenida Libertad 456                           | Rawson          | Chubut    | -43.305, -65.102 | 200         | "Centro de atención creado"    |
-  | Trelew Salud               | Rivadavia 789, Barrio Centro                   | Trelew          | Chubut    | -43.252, -65.308 | 200         | "Centro de atención creado"    |
-  | Centro Médico Esperanza     | Belgrano 753                                  | Trelew          | Chubut    | -43.272, -65.311 | 200         | "Centro de atención creado"    |
-  | Clinica Rawson             | Mariano Moreno 525                            | Rawson          | Chubut    | -43.310, -65.112 | 200         | "Centro de atención creado"    |
-  | Centro de Rehabilitación   | Hipólito Yrigoyen 852                         | Puerto Madryn   | Chubut    | -42.755, -65.044 | 200         | "Centro de atención creado"    |
-  | Instituto Médico Patagonia | San Martín 1025, 1er Piso                   | Trelew          | Chubut    | -43.248, -65.301 | 200         | "Centro de atención creado"    |
-  | Centro Odontológico Rawson | Gobernador Gallina 789                         | Rawson          | Chubut    | -43.322, -65.123 | 200         | "Centro de atención creado"    |
-  | Centro Médico del Este     | Avenida Fontana 987                          | Puerto Madryn   | Chubut    | -42.777, -65.011 | 200         | "Centro de atención creado"    |
+  | Centro Médico Integral      | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765,-65.034 | 200         | "Centro de atención creado"    |
+  | Centro de Salud Rawson      | Avenida Libertad 456                           | Rawson          | Chubut    | -43.305,-65.102 | 200         | "Centro de atención creado"    |
+  | Trelew Salud               | Rivadavia 789, Barrio Centro                   | Trelew          | Chubut    | -43.252,-65.308 | 200         | "Centro de atención creado"    |
+  | Centro Médico Esperanza     | Belgrano 753                                  | Trelew          | Chubut    | -43.272,-65.311 | 200         | "Centro de atención creado"    |
+  | Clinica Rawson             | Mariano Moreno 525                            | Rawson          | Chubut    | -43.310,-65.112 | 200         | "Centro de atención creado"    |
+  | Centro de Rehabilitación   | Hipólito Yrigoyen 852                         | Puerto Madryn   | Chubut    | -42.755,-65.044 | 200         | "Centro de atención creado"    |
+  | Instituto Médico Patagonia | San Martín 1025, 1er Piso                   | Trelew          | Chubut    | -43.248,-65.301 | 200         | "Centro de atención creado"    |
+  | Centro Odontológico Rawson | Gobernador Gallina 789                         | Rawson          | Chubut    | -43.322,-65.123 | 200         | "Centro de atención creado"    |
+  | Centro Médico del Este     | Avenida Fontana 987                          | Puerto Madryn   | Chubut    | -42.777,-65.011 | 200         | "Centro de atención creado"    |
 
 Esquema del escenario: Crear un centro de atención con conflictos 
 
@@ -28,8 +28,8 @@ Entonces el sistema responde con <status_code> y "<status_text>"
 
 Ejemplos: Centros de atención con conflictos
   | Nombre                  | Dirección                                  | Localidad      | Provincia | Coordenadas   | status_code | status_text                                      |
-  | Centro Médico Integral  | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765, -65.034 | 409         | "Ya existe un centro de atención con ese nombre y dirección" |
-  | Centro Médico Nuevo    | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.795, -65.054 | 409         | "Ya existe un centro de atención con esa dirección"        |
-  |                         | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765, -65.034 | 400        | "El nombre es requerido"                           |
-  | Centro Médico         |                                             | Puerto Madryn   | Chubut    | -42.765, -65.034 | 400        | "La dirección es requerida"                      |
+  | Centro Médico Integral  | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765,-65.034 | 409         | "Ya existe un centro de atención con ese nombre y dirección" |
+  | Centro Médico Nuevo    | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.795,-65.054 | 409         | "Ya existe un centro de atención con esa dirección"        |
+  |                         | Calle 9 de Julio 123, Piso 2, Oficina A       | Puerto Madryn   | Chubut    | -42.765,-65.034 | 400        | "El nombre es requerido"                           |
+  | Centro Médico         |                                             | Puerto Madryn   | Chubut    | -42.765,-65.034 | 400        | "La dirección es requerida"                      |
   | Centro de la Costa    | Belgrano 753                                  | Trelew          | Chubut    | abc, xyz        | 400        | "Las coordenadas son inválidas"                  |

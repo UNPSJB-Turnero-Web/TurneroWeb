@@ -18,7 +18,7 @@ import java.util.Optional;
 
 
 @RestController
-@RequestMapping("centros")
+@RequestMapping("centrosAtencion")
 public class CentroAtencionPresenter {
 
     @Autowired

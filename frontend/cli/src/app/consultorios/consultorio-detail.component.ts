@@ -17,7 +17,7 @@ import { Observable, debounceTime, distinctUntilChanged, switchMap, map } from '
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
   template: `
 <div *ngIf="consultorio">
-  <h2>{{ consultorio.name | uppercase }}</h2>
+  <h2>{{ consultorio.id === 0 ? 'Nuevo Consultorio' : consultorio.name | uppercase }}</h2>
   <form #form="ngForm">
     <div class="form-group">
       <label for="name">Nombre:</label>
@@ -73,9 +73,19 @@ export class ConsultorioDetailComponent {
   }
 
   save(): void {
-    this.consultorioService.save(this.consultorio).subscribe((dataPackage) => {
-      this.consultorio = <Consultorio>dataPackage.data;
-      this.goBack();
+    if (!this.consultorio.centroAtencion || !this.consultorio.centroAtencion.id) {
+      this.modalService.alert('Error', 'Debe seleccionar un Centro de Atención válido.');
+      return;
+    }
+
+    this.consultorioService.save(this.consultorio).subscribe({
+      next: (dataPackage) => {
+        this.consultorio = <Consultorio>dataPackage.data;
+        this.goBack();
+      },
+      error: (err) => {
+        this.modalService.alert('Error', 'No se pudo guardar el consultorio. Intente nuevamente.');
+      }
     });
   }
 
@@ -83,10 +93,15 @@ export class ConsultorioDetailComponent {
     const path = this.route.snapshot.routeConfig?.path;
 
     if (path === 'consultorios/new') {
-      this.consultorio = <Consultorio>{ centroAtencion: {} };
+      this.consultorio = {
+        id: 0,
+        code: '',
+        name: '',
+        centroAtencion: {} as CentroAtencion, // Inicializar con un objeto vacío
+      };
     } else {
       const code = this.route.snapshot.paramMap.get('code')!;
-      this.consultorioService.get(code).subscribe(dataPackage => {
+      this.consultorioService.get(code).subscribe((dataPackage) => {
         this.consultorio = <Consultorio>dataPackage.data;
       });
     }

@@ -22,6 +22,7 @@ export class CentroAtencionService {
   }
 
   save(centroAtencion: CentroAtencion): Observable<DataPackage> {
+    console.log('Objeto enviado al backend:', centroAtencion); // Agrega este log para verificar
     return centroAtencion.id 
       ? this.http.put<DataPackage>(this.centrosAtencionUrl, centroAtencion)
       : this.http.post<DataPackage>(this.centrosAtencionUrl, centroAtencion);

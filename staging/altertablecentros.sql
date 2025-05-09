@@ -1,0 +1,1 @@
+ALTER TABLE centro_atencion DROP COLUMN longitud;

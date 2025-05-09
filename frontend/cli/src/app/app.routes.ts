@@ -9,6 +9,7 @@ import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
 import { EspecialidadesComponent } from './especialidades/especialidades.component';
 import { EspecialidadDetailComponent } from './especialidades/especialidad-detail.component';
 import { CentrosAtencionComponent } from './centrosAtencion/centrosAtencion.component';
+import { CentroAtencionDetailComponent } from './centrosAtencion/centroAtencion-detail.component';
 import { ConsultoriosComponent } from './consultorios/consultorios.component';
 import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
 import { MedicosComponent } from './medicos/medicos.component';
@@ -28,8 +29,11 @@ export const routes: Routes = [
     { path: 'especialidades/new', component: EspecialidadDetailComponent },
     { path: 'especialidades/:id', component: EspecialidadDetailComponent },
     { path: 'centros-atencion', component: CentrosAtencionComponent },
+    { path: 'centrosAtencion', component: CentrosAtencionComponent },
+    { path: 'centrosAtencion/code/:code', component: CentroAtencionDetailComponent },
+    { path: 'centrosAtencion/new', component: CentroAtencionDetailComponent },
     { path: 'consultorios', component: ConsultoriosComponent },
-    { path: 'consultorios/:id', component: ConsultorioDetailComponent },
+    { path: 'consultorios/code/:code', component: ConsultorioDetailComponent }, // Cambiado de :id a code/:code
     { path: 'consultorios/new', component: ConsultorioDetailComponent },
     { path: 'medicos', component: MedicosComponent },
 ];

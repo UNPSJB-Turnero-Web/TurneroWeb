@@ -82,8 +82,11 @@ export class ConsultoriosComponent {
         "Si elimina el consultorio no lo podrá utilizar luego"
       )
       .then(() => {
-        this.consultorioService.delete(consultorio.code).subscribe(() => {
-          this.getConsultorios();
+        this.consultorioService.delete(consultorio.code).subscribe({
+          next: () => this.getConsultorios(),
+          error: () => {
+            this.modalService.alert('Error', 'No se pudo eliminar el consultorio. Intente nuevamente.');
+          }
         });
       });
   }

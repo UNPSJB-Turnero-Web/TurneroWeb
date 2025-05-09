@@ -15,4 +15,12 @@ export class ModalService {
     modal.componentInstance.description = description;
     return modal.result;
   }
+
+  alert(title: string, message: string): void {
+    const modal = this.modalService.open(ModalComponent);
+    modal.componentInstance.title = title;
+    modal.componentInstance.message = message;
+    modal.componentInstance.description = ''; // Opcional, si no necesitas descripción
+    modal.componentInstance.isAlert = true; // Puedes usar esta bandera en el componente para diferenciar entre alert y confirm
+  }
 }

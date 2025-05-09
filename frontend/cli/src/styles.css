@@ -1,14 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
 
-/* Importa Font Awesome directamente */
+
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
-/* Asegúrate de que no haya estilos que sobrescriban los íconos */
 body {
   font-family: Arial, sans-serif;
 }
 
-/* Opcional: Verifica que los íconos de Font Awesome se muestren correctamente */
 .fas, .fa {
   font-family: "Font Awesome 5 Free";
   font-weight: 900;

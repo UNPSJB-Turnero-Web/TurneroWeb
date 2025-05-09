@@ -31,8 +31,16 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class ModalComponent {
   constructor(public modal: NgbActiveModal) {}
 
-  title = "";
-  message = "";
-  description = "";
+  title!: string;
+  message!: string;
+  description!: string;
+  isAlert: boolean = false; // Nueva propiedad para diferenciar alertas
 
+  close(): void {
+    this.modal.close();
+  }
+
+  dismiss(): void {
+    this.modal.dismiss();
+  }
 }

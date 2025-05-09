@@ -4,7 +4,7 @@ const request = require('sync-request');
 
 When('el usuario solicita la lista de centros de atención', function () {
   try {
-        const res = request('GET', 'http://backend:8080/centros/page?page=0&size=10');
+        const res = request('GET', 'http://backend:8080/centrosAtencion/page?page=0&size=10');
     this.statusCode = res.statusCode;
     this.response = JSON.parse(res.getBody('utf8'));
   } catch (error) {

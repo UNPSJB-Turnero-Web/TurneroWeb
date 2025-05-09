@@ -19,14 +19,14 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
     };
     console.log('📥 Centro registrado:', centroData);
 
-    const res = request('POST', 'http://backend:8080/centros', { json: centroData });
+    const res = request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
     const body = JSON.parse(res.getBody('utf8'));
   });
 });
 When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentroActual, dataTable) {
   const atributos = dataTable.hashes()[0];
 
-  const resBuscar = request('GET', 'http://backend:8080/centros');
+  const resBuscar = request('GET', 'http://backend:8080/centrosAtencion');
   const listaCentros = JSON.parse(resBuscar.getBody('utf8')).data;
 
   const centroExistente = listaCentros.find(c => 
@@ -49,7 +49,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
   console.log('✏️ Modificando centro:', centroData);
 
   try {
-    const res = request('PUT', 'http://backend:8080/centros', { json: centroData });
+    const res = request('PUT', 'http://backend:8080/centrosAtencion', { json: centroData });
     this.response = JSON.parse(res.getBody('utf8'));
     this.statusCode = res.statusCode;
     console.log('✅ Modificación exitosa:', this.response);
