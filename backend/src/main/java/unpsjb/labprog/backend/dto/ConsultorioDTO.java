@@ -6,7 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ConsultorioDTO {
-    private int id;
+    private Long id;
     private int numero;
     private String nombre;
     private String centroAtencionNombre; // Solo el nombre del Centro de Atención

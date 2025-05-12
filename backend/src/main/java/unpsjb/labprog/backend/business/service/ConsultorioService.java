@@ -2,6 +2,7 @@ package unpsjb.labprog.backend.business.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
+import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
@@ -21,12 +23,15 @@ public class ConsultorioService {
     @Autowired
     private CentroAtencionRepository centroRepo;
 
-    public List<Consultorio> findAll() {
-        return (List<Consultorio>) repository.findAll();
+    public List<ConsultorioDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Consultorio> findById(int id) {
-        return repository.findById(id);
+    // cambia de int a Long
+    public Optional<ConsultorioDTO> findById(Long id) {
+        return repository.findById(id).map(this::toDTO);
     }
 
     public List<Consultorio> findByCentroAtencion(String centroNombre) {
@@ -42,7 +47,8 @@ public class ConsultorioService {
         CentroAtencion centro = centroRepo.findById(consultorio.getCentroAtencion().getId())
                 .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
 
-        if (consultorio.getId() == 0) {
+        // JPA genera id=null para entidades nuevas
+        if (consultorio.getId() == null) {
             // Validaciones para creación
             if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
                 throw new IllegalStateException("El número de consultorio ya está registrado");
@@ -64,7 +70,18 @@ public class ConsultorioService {
     }
 
     @Transactional
-    public void delete(int id) {
+    // cambia de int a Long
+    public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    private ConsultorioDTO toDTO(Consultorio consultorio) {
+        ConsultorioDTO dto = new ConsultorioDTO();
+        dto.setId(consultorio.getId());
+        dto.setNumero(consultorio.getNumero());
+        dto.setNombre(consultorio.getNombre());
+        // usa getName() en el modelo CentroAtencion
+        dto.setCentroAtencionNombre(consultorio.getCentroAtencion().getName());
+        return dto;
     }
 }
