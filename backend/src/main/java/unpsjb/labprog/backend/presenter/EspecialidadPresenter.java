@@ -1,16 +1,26 @@
 package unpsjb.labprog.backend.presenter;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("especialidad")
@@ -59,9 +69,9 @@ public class EspecialidadPresenter {
             EspecialidadDTO saved = service.save(dto);
             return Response.ok(saved, "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage()); // Devuelve status_code 409
+            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage()); // Devuelve status_code 400
+            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
         }
     }
 
@@ -76,9 +86,9 @@ public class EspecialidadPresenter {
             EspecialidadDTO updated = service.save(dto);
             return Response.ok(updated, "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage()); // Devuelve status_code 409
+            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage()); // Devuelve status_code 400
+            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
         }
     }
 
@@ -88,9 +98,9 @@ public class EspecialidadPresenter {
             service.delete(id);
             return Response.ok(null, "Especialidad eliminada exitosamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage());
+            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage());
+            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
         }
     }
 

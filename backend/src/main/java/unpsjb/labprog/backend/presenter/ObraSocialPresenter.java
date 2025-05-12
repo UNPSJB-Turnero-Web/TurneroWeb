@@ -1,13 +1,20 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.business.service.ObraSocialService;
-import unpsjb.labprog.backend.model.ObraSocial;
-
-import java.util.List;
+import unpsjb.labprog.backend.dto.ObraSocialDTO;
 
 @RestController
 @RequestMapping("/api/obra-social")
@@ -17,31 +24,30 @@ public class ObraSocialPresenter {
     private ObraSocialService service;
 
     @GetMapping
-    public List<ObraSocial> getAll() {
-        return service.findAll();
+    public ResponseEntity<Object> getAll() {
+        List<ObraSocialDTO> obrasSociales = service.findAll();
+        return ResponseEntity.ok(obrasSociales);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ObraSocial> getById(@PathVariable Integer id) {
-        return service.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+public ResponseEntity<ObraSocialDTO> getById(@PathVariable int id) {
+    return service.findById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+}
+
 
     @PostMapping
-    public ObraSocial create(@RequestBody ObraSocial obraSocial) {
-        return service.save(obraSocial);
+    public ResponseEntity<Object> create(@RequestBody ObraSocialDTO obraSocialDTO) {
+        ObraSocialDTO saved = service.save(obraSocialDTO);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ObraSocial> update(@PathVariable Integer id, @RequestBody ObraSocial updatedObraSocial) {
-        return service.findById(id)
-                .map(existingObraSocial -> {
-                    existingObraSocial.setNombre(updatedObraSocial.getNombre());
-                    existingObraSocial.setCodigo(updatedObraSocial.getCodigo());
-                    return ResponseEntity.ok(service.save(existingObraSocial));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ObraSocialDTO updatedObraSocial) {
+        updatedObraSocial.setId(id);
+        ObraSocialDTO saved = service.save(updatedObraSocial);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

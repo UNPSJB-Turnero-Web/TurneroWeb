@@ -1,59 +1,57 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
-import unpsjb.labprog.backend.model.EsquemaTurno;
-
-import java.util.ArrayList;
-import java.util.List;
+import unpsjb.labprog.backend.business.service.EsquemaTurnoService;
+import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 
 @RestController
 @RequestMapping("/api/esquema-turno")
 public class EsquemaTurnoPresenter {
 
     @Autowired
-    private EsquemaTurnoRepository repository;
+    private EsquemaTurnoService service;
 
     @GetMapping
-    public List<EsquemaTurno> getAll() {
-        List<EsquemaTurno> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+    public ResponseEntity<List<EsquemaTurnoDTO>> getAll() {
+        List<EsquemaTurnoDTO> esquemas = service.findAll();
+        return ResponseEntity.ok(esquemas);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EsquemaTurno> getById(@PathVariable Long id) {
-        return repository.findById(id)
+    public ResponseEntity<EsquemaTurnoDTO> getById(@PathVariable Long id) {
+        return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
     @PostMapping
-    public EsquemaTurno create(@RequestBody EsquemaTurno esquemaTurno) {
-        return repository.save(esquemaTurno);
+    public ResponseEntity<Object> create(@RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
+        EsquemaTurnoDTO saved = service.save(esquemaTurnoDTO);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EsquemaTurno> update(@PathVariable Long id, @RequestBody EsquemaTurno updatedEsquema) {
-        return repository.findById(id)
-                .map(existingEsquema -> {
-                    existingEsquema.setNombre(updatedEsquema.getNombre());
-                    existingEsquema.setDescripcion(updatedEsquema.getDescripcion());
-                    existingEsquema.setHoraInicio(updatedEsquema.getHoraInicio());
-                    existingEsquema.setHoraFin(updatedEsquema.getHoraFin());
-                    existingEsquema.setIntervalo(updatedEsquema.getIntervalo());
-                    return ResponseEntity.ok(repository.save(existingEsquema));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
+        esquemaTurnoDTO.setId(id);
+        EsquemaTurnoDTO updated = service.save(esquemaTurnoDTO);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
+        if (service.findById(id).isPresent()) {
+            service.deleteById(id);
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();

@@ -1,14 +1,23 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.TurnoService;
-import unpsjb.labprog.backend.model.Turno;
-
-import java.util.Optional;
+import unpsjb.labprog.backend.dto.TurnoDTO;
 
 @RestController
 @RequestMapping("turno")
@@ -17,77 +26,49 @@ public class TurnoPresenter {
     @Autowired
     private TurnoService service;
 
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<Object> findAll() {
-        return Response.ok(service.findAll());
+    @GetMapping
+    public ResponseEntity<Object> getAll() {
+        List<TurnoDTO> turnos = service.findAll();
+        return Response.ok(turnos, "Turnos recuperados correctamente");
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
-        Optional<Turno> turnoOpt = service.findById(id);
-        if (turnoOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return Response.ok(turnoOpt.get());
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getById(@PathVariable Long id) {
+        return service.findById(id)
+                .map(turno -> Response.ok(turno, "Turno recuperado correctamente"))
+                .orElse(Response.notFound("Turno no encontrado"));
     }
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> create(@RequestBody Turno turno) {
-        Turno saved = service.save(turno);
-        return Response.ok(saved);
+    @PostMapping
+    public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO) {
+        TurnoDTO saved = service.save(turnoDTO);
+        return Response.ok(saved, "Turno creado correctamente");
     }
 
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody Turno turno) {
-        Turno saved = service.save(turno);
-        return Response.ok(saved);
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody TurnoDTO turnoDTO) {
+        turnoDTO.setId(id);
+        TurnoDTO updated = service.save(turnoDTO);
+        return Response.ok(updated, "Turno actualizado correctamente");
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByPage(
+    @GetMapping("/page")
+    public ResponseEntity<Object> getByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return Response.ok(service.findByPage(page, size));
+        var pageResult = service.findByPage(page, size);
+        var response = Map.of(
+                "content", pageResult.getContent(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber()
+        );
+        return Response.ok(response, "Turnos paginados recuperados correctamente");
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") Long id) {
-        if (service.findById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
         service.delete(id);
-        return Response.ok("Turno " + id + " borrado.");
-    }
-
-    @PutMapping("/{id}/confirmar")
-    public ResponseEntity<Object> confirmarTurno(@PathVariable Long id) {
-        Optional<Turno> turnoOpt = service.findById(id);
-        if (turnoOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Turno turno = turnoOpt.get();
-        try {
-            turno.confirmarTurno();
-            service.save(turno);
-            return ResponseEntity.ok("Turno confirmado exitosamente.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PutMapping("/{id}/cancelar")
-    public ResponseEntity<Object> cancelarTurno(@PathVariable Long id) {
-        Optional<Turno> turnoOpt = service.findById(id);
-        if (turnoOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Turno turno = turnoOpt.get();
-        try {
-            turno.cancelarTurno();
-            service.save(turno);
-            return ResponseEntity.ok("Turno cancelado exitosamente.");
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return Response.ok(null, "Turno eliminado correctamente");
     }
 }
