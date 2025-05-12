@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 @Service
@@ -18,8 +19,24 @@ public class CentroAtencionService {
     @Autowired
     private CentroAtencionRepository repository;
 
-    public List<CentroAtencion> findAll() {
-        return (List<CentroAtencion>) repository.findAll();
+    public List<CentroAtencionDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    private CentroAtencionDTO toDTO(CentroAtencion c) {
+        CentroAtencionDTO dto = new CentroAtencionDTO();
+        dto.setId(c.getId());
+        dto.setName(c.getName());
+        dto.setDireccion(c.getDireccion());
+        dto.setLocalidad(c.getLocalidad());
+        dto.setProvincia(c.getProvincia());
+        dto.setTelefono(c.getTelefono());
+        dto.setLatitud(c.getLatitud());
+        dto.setLongitud(c.getLongitud());
+        // mapeo de StaffMedico si lo necesitás
+        return dto;
     }
 
     public Optional<CentroAtencion> findById(int id) {
@@ -36,37 +53,37 @@ public class CentroAtencionService {
 
     @Transactional
     public CentroAtencion save(CentroAtencion c) {
-              // 1. Validaciones de campos obligatorios y formato
-              if (c.getName() == null || c.getName().isBlank()) {
-                throw new IllegalArgumentException("El nombre es requerido");
-            }
-            if (c.getDireccion() == null || c.getDireccion().isBlank()) {
-                throw new IllegalArgumentException("La dirección es requerida");
-            }
-            if (c.getLocalidad() == null || c.getLocalidad().isBlank()) {
-                throw new IllegalArgumentException("La localidad es requerida");
-            }
-            if (c.getProvincia() == null || c.getProvincia().isBlank()) {
-                throw new IllegalArgumentException("La provincia es requerida");
-            }
-            if (c.getTelefono() == null || c.getTelefono().isBlank()) {
-                throw new IllegalArgumentException("El teléfono es requerido");
-            }
-            if (!c.getTelefono().matches("\\d+")) {
-                throw new IllegalArgumentException("El teléfono solo puede contener números.");
-            }
-    
-            // 2. Validación de coordenadas (null y formato)
-            if (c.getLatitud() == null || c.getLongitud() == null) {
-                throw new IllegalArgumentException("Las coordenadas no pueden ser nulas.");
-            }
-            if (c.getLatitud() < -90 || c.getLatitud() > 90) {
-                throw new IllegalArgumentException("La latitud debe estar entre -90 y 90.");
-            }
-            if (c.getLongitud() < -180 || c.getLongitud() > 180) {
-                throw new IllegalArgumentException("La longitud debe estar entre -180 y 180.");
-            }    
-        
+        // 1. Validaciones de campos obligatorios y formato
+        if (c.getName() == null || c.getName().isBlank()) {
+            throw new IllegalArgumentException("El nombre es requerido");
+        }
+        if (c.getDireccion() == null || c.getDireccion().isBlank()) {
+            throw new IllegalArgumentException("La dirección es requerida");
+        }
+        if (c.getLocalidad() == null || c.getLocalidad().isBlank()) {
+            throw new IllegalArgumentException("La localidad es requerida");
+        }
+        if (c.getProvincia() == null || c.getProvincia().isBlank()) {
+            throw new IllegalArgumentException("La provincia es requerida");
+        }
+        if (c.getTelefono() == null || c.getTelefono().isBlank()) {
+            throw new IllegalArgumentException("El teléfono es requerido");
+        }
+        if (!c.getTelefono().matches("\\d+")) {
+            throw new IllegalArgumentException("El teléfono solo puede contener números.");
+        }
+
+        // 2. Validación de coordenadas (null y formato)
+        if (c.getLatitud() == null || c.getLongitud() == null) {
+            throw new IllegalArgumentException("Las coordenadas no pueden ser nulas.");
+        }
+        if (c.getLatitud() < -90 || c.getLatitud() > 90) {
+            throw new IllegalArgumentException("La latitud debe estar entre -90 y 90.");
+        }
+        if (c.getLongitud() < -180 || c.getLongitud() > 180) {
+            throw new IllegalArgumentException("La longitud debe estar entre -180 y 180.");
+        }
+
         if (c.getId() == 0) {
             // 🚀 CREACIÓN
             if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
@@ -85,8 +102,9 @@ public class CentroAtencionService {
                 throw new IllegalStateException("No existe el centro que se intenta modificar");
             }
 
-            // Verificar si quiere cambiar el nombre o dirección a uno ya usado por OTRO centro
-            List<CentroAtencion> todos = findAll();
+            // Verificar si quiere cambiar el nombre o dirección a uno ya usado por OTRO
+            // centro
+            List<CentroAtencion> todos = repository.findAll(); 
             for (CentroAtencion otro : todos) {
                 if (otro.getId() != c.getId()) {
                     boolean mismoNombre = otro.getName().trim().equalsIgnoreCase(c.getName().trim());

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
+import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
 @RestController
@@ -60,7 +61,8 @@ public class ConsultorioPresenter {
             if (consultorio.getNombre() == null || consultorio.getNombre().isBlank()) {
                 return Response.error(null, "El nombre del consultorio es requerido.");
             }
-            if (consultorio.getCentroAtencion() == null || consultorio.getCentroAtencion().getId() <= 0) {
+            if (consultorio.getCentroAtencion() == null 
+                || consultorio.getCentroAtencion().getId() <= 0) {
                 return Response.error(null, "Debe asociar el consultorio a un Centro de Atención válido.");
             }
 
@@ -74,28 +76,47 @@ public class ConsultorioPresenter {
         }
     }
 
+    @RequestMapping(value = "/{centroNombre}", method = RequestMethod.POST)
+    public ResponseEntity<Object> create(
+            @PathVariable("centroNombre") String centroNombre,
+            @RequestBody JsonNode json) {
+        try {
+            Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
+            consultorio.setId(null); // Forzar creación
+            CentroAtencion centro = new CentroAtencion();
+            centro.setName(centroNombre);
+            consultorio.setCentroAtencion(centro);
+
+            Consultorio saved = service.saveByCentroNombre(consultorio, centroNombre);
+            return Response.ok(saved, "Consultorio creado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, e.getMessage());
+        }
+    }
+
     @RequestMapping(method = RequestMethod.PUT)
     public ResponseEntity<Object> update(@RequestBody JsonNode json) {
         try {
             Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
 
-            if (consultorio.getId() <= 0) {
+            if (consultorio.getId() == null || consultorio.getId() <= 0) {
                 return Response.error(consultorio, "Debe tener un id válido (> 0) para actualizar.");
             }
-
-            // Validaciones obligatorias
-            if (consultorio.getNumero() <= 0) {
+            if (consultorio.getNumero() == null || consultorio.getNumero() <= 0) {
                 return Response.error(null, "El número del consultorio es requerido y debe ser mayor a 0.");
             }
             if (consultorio.getNombre() == null || consultorio.getNombre().isBlank()) {
                 return Response.error(null, "El nombre del consultorio es requerido.");
             }
-            if (consultorio.getCentroAtencion() == null || consultorio.getCentroAtencion().getId() <= 0) {
+            if (consultorio.getCentroAtencion() == null 
+                || consultorio.getCentroAtencion().getId() <= 0) {
                 return Response.error(null, "Debe asociar el consultorio a un Centro de Atención válido.");
             }
 
             Consultorio saved = service.save(consultorio);
-            return Response.ok(saved, "Consultorio modificado");
+            return Response.ok(saved, "Consultorio modificado correctamente");
 
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -113,4 +134,5 @@ public class ConsultorioPresenter {
             return Response.dbError(e.getMessage());
         }
     }
+    
 }

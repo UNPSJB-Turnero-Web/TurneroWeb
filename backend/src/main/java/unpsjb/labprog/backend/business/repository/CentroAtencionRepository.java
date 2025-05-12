@@ -1,19 +1,18 @@
 package unpsjb.labprog.backend.business.repository;
 
 import java.util.List;
-import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 @Repository
-public interface CentroAtencionRepository extends CrudRepository<CentroAtencion, Integer>, PagingAndSortingRepository<CentroAtencion, Integer> {
 
+public interface CentroAtencionRepository
+        extends JpaRepository<CentroAtencion, Integer> {
+    // heredas un List<CentroAtencion> findAll()
     
 
     @Query("SELECT c FROM CentroAtencion c WHERE UPPER(c.name) LIKE ?1")

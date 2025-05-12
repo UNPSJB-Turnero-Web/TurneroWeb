@@ -6,11 +6,14 @@ import { RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [RouterOutlet],
   template: `
-    <div class="d-flex flex-column p-3 bg-light shadow" style="height: 100vh; width: 250px; position: fixed;">
-      <a href="/" class="text-decoration-none">
-        <h5 class="my-0 mb-4 font-weight-bold text-primary">Turnero Web</h5>
+    <div
+      class="d-flex flex-row align-items-center p-3 bg-light shadow"
+      style="width: 100%; height: 70px; position: fixed; top: 0; left: 0; z-index: 1000;"
+    >
+      <a href="/" class="text-decoration-none me-4">
+        <h5 class="my-0 font-weight-bold text-primary">Turnero Web</h5>
       </a>
-      <nav class="nav flex-column">
+      <nav class="nav">
         <a class="nav-link text-dark fw-semibold" href="/turnos">Turnos</a>
         <a class="nav-link text-dark fw-semibold" href="/especialidades">Especialidades</a>
         <a class="nav-link text-dark fw-semibold" href="/agenda">Agenda</a>
@@ -20,7 +23,7 @@ import { RouterOutlet } from '@angular/router';
       </nav>
     </div>
 
-    <div class="container" style="margin-left: 270px; padding-top: 20px;">
+    <div class="container" style="margin-top: 90px; padding: 20px;">
       <router-outlet></router-outlet>
     </div>
   `,

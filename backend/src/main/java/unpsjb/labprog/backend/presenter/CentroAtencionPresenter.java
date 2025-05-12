@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.CentroAtencionService;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 @RestController
@@ -30,9 +31,8 @@ public class CentroAtencionPresenter {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
-        List<CentroAtencion> centros = service.findAll();
-
-        List<Map<String, Object>> centrosMapeados = centros.stream().map(c -> {
+ List<CentroAtencionDTO> dtos = service.findAll();
+        List<Map<String, Object>> centrosMapeados = dtos.stream().map(c -> {
             // Map automático con ObjectMapper
             Map<String, Object> map = objectMapper.convertValue(c, Map.class);
 

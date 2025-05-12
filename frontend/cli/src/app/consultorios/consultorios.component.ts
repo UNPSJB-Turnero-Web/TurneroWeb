@@ -1,70 +1,84 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
-import { Consultorio } from './consultorio';
+import { Router, RouterLink } from '@angular/router';
 import { ConsultorioService } from './consultorio.service';
+import { Consultorio } from './consultorio';
 import { ModalService } from '../modal/modal.service';
-import { ResultsPage } from '../results-page';
-import { PaginationComponent } from '../pagination/pagination.component';
 
 @Component({
   selector: 'app-consultorios',
   standalone: true,
-  imports: [CommonModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="container mt-4">
-      <h2>Consultorios</h2>
-      <a routerLink="/consultorios/new" class="btn btn-success mb-3">Nuevo Consultorio</a>
-      <div class="table-responsive">
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Número</th>
-              <th>Nombre</th>
-              <th>Centro de Atención</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let consultorio of consultorios">
-              <td>{{ consultorio.id }}</td>
-              <td>{{ consultorio.numero }}</td>
-              <td>{{ consultorio.name }}</td>
-              <td>{{ consultorio.centroAtencion?.name || 'Sin Centro' }}</td>
-              <td>
-                <a [routerLink]="['/consultorios', consultorio.id]" class="btn btn-primary btn-sm">Editar</a>
-                <button (click)="delete(consultorio.id)" class="btn btn-danger btn-sm">Eliminar</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Listado de Consultorios</h2>
+        <button class="btn btn-primary" (click)="router.navigate(['/consultorios/new'])">
+          + Nuevo Consultorio
+        </button>
       </div>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">N°</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Centro Atención</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of consultorios">
+            <td>{{ c.numero }}</td>
+            <td>{{ c.name | uppercase }}</td>
+            <td>{{ c.centroAtencion.name }}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-secondary me-2"
+                      (click)="router.navigate(['/consultorios', c.id])">
+                Editar
+              </button>
+              <button class="btn btn-sm btn-outline-danger"
+                      (click)="confirmDelete(c.id)">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   `,
-  styles: []
 })
 export class ConsultoriosComponent implements OnInit {
   consultorios: Consultorio[] = [];
 
   constructor(
     private consultorioService: ConsultorioService,
-    private modalService: ModalService
+    public router: Router,
+    private modal: ModalService
   ) {}
 
   ngOnInit(): void {
-    this.loadConsultorios();
+    this.loadAll();
   }
 
-  loadConsultorios(): void {
-    this.consultorioService.getAll().subscribe((response) => {
-      this.consultorios = response.data;
-    });
+  loadAll(): void {
+    this.consultorioService.getAll().subscribe(
+      pkg => this.consultorios = pkg.data,
+      err => this.modal.alert('Error', 'No se pudo cargar la lista de consultorios')
+    );
   }
+
+confirmDelete(id: number): void {
+  this.modal
+    .confirm('Eliminando centro de atencion','Eliminar consultorio', '¿Estás seguro que deseas eliminarlo?')
+    .then(() => this.delete(id))
+    .catch(() => {}); // si cancela, no hacemos nada
+}
 
   delete(id: number): void {
-    if (confirm('¿Está seguro de eliminar este consultorio?')) {
-      this.consultorioService.delete(id).subscribe(() => this.loadConsultorios());
-    }
+    this.consultorioService.delete(id).subscribe(
+      () => this.loadAll(),
+      err => this.modal.alert('Error', 'No se pudo eliminar el consultorio')
+    );
   }
 }
