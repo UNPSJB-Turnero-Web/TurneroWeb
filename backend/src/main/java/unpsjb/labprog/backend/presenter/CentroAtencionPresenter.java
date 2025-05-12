@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Optional;
 
-
 @RestController
 @RequestMapping("centrosAtencion")
 public class CentroAtencionPresenter {
@@ -25,51 +24,70 @@ public class CentroAtencionPresenter {
     CentroAtencionService service;
 
     @RequestMapping(method = RequestMethod.GET)
-public ResponseEntity<Object> findAll() {
-    List<CentroAtencion> centros = service.findAll();
+    public ResponseEntity<Object> findAll() {
+        List<CentroAtencion> centros = service.findAll();
 
-    List<Map<String, Object>> centrosMapeados = centros.stream().map(c -> {
-        // Map automático con ObjectMapper
+        List<Map<String, Object>> centrosMapeados = centros.stream().map(c -> {
+            // Map automático con ObjectMapper
+            Map<String, Object> map = objectMapper.convertValue(c, Map.class);
+
+            // Agregar el campo coordenadas combinando latitud y longitud
+            if (c.getLatitud() != null && c.getLongitud() != null) {
+                map.put("coordenadas", c.getLatitud() + "," + c.getLongitud());
+            } else {
+                map.put("coordenadas", null);
+            }
+
+            return map;
+        }).toList();
+
+        return Response.ok(centrosMapeados);
+    }
+
+    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
+    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+        Optional<CentroAtencion> optionalCentro = service.findById(id);
+        if (optionalCentro.isEmpty()) {
+            return Response.notFound("Centro de atención id " + id + " no encontrado");
+        }
+
+        CentroAtencion c = optionalCentro.get();
         Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-
-        // Agregar el campo coordenadas combinando latitud y longitud
         if (c.getLatitud() != null && c.getLongitud() != null) {
-            map.put("coordenadas", c.getLatitud() + ", " + c.getLongitud());
+            map.put("coordenadas", c.getLatitud() + "," + c.getLongitud());
         } else {
             map.put("coordenadas", null);
         }
-        
-        return map;
-    }).toList();
 
-    return Response.ok(centrosMapeados);
-}
-
-
-@RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
-public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-    Optional<CentroAtencion> optionalCentro = service.findById(id);
-    if (optionalCentro.isEmpty()) {
-        return Response.notFound("Centro de atención id " + id + " no encontrado");
+        return Response.ok(map);
     }
-
-    CentroAtencion c = optionalCentro.get();
-    Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-    if (c.getLatitud() != null && c.getLongitud() != null) {
-        map.put("coordenadas", c.getLatitud() + ", " + c.getLongitud());
-    } else {
-        map.put("coordenadas", null);
-    }
-
-    return Response.ok(map);
-}
-
 
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return Response.ok(service.findByPage(page, size));
+        // Obtener la página de centros de atención
+        var pageResult = service.findByPage(page, size);
+
+        // Mapear el contenido de la página
+        List<Map<String, Object>> centrosMapeados = pageResult.getContent().stream().map(c -> {
+            Map<String, Object> map = objectMapper.convertValue(c, Map.class);
+            if (c.getLatitud() != null && c.getLongitud() != null) {
+                map.put("coordenadas", c.getLatitud() + "," + c.getLongitud());
+            } else {
+                map.put("coordenadas", null);
+            }
+            return map;
+        }).toList();
+
+        // Crear la respuesta con los metadatos de paginación
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", centrosMapeados);
+        response.put("totalPages", pageResult.getTotalPages());
+        response.put("totalElements", pageResult.getTotalElements());
+        response.put("currentPage", pageResult.getNumber());
+
+        return Response.ok(response);
     }
 
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
@@ -79,18 +97,19 @@ public ResponseEntity<Object> findById(@PathVariable("id") int id) {
 
     @Autowired
     private ObjectMapper objectMapper;
-    
+
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> create(@RequestBody JsonNode json) {
         try {
             // Mapeo automático
             CentroAtencion centro = objectMapper.treeToValue(json, CentroAtencion.class);
-    
+
             // ❗ 1. Validación: NO debe tener id
             if (centro.getId() != 0) {
-                return Response.error(centro, "Está intentando crear un centro de atención. Este no puede tener un id definido.");
+                return Response.error(centro,
+                        "Está intentando crear un centro de atención. Este no puede tener un id definido.");
             }
-    
+
             // ❗ 2. Procesar coordenadas si faltan latitud y longitud
             if ((centro.getLatitud() == null || centro.getLongitud() == null) && json.has("coordenadas")) {
                 String coordenadas = json.get("coordenadas").asText();
@@ -110,7 +129,7 @@ public ResponseEntity<Object> findById(@PathVariable("id") int id) {
                     }
                 }
             }
-    
+
             // ❗ 3. Validaciones obligatorias finales
             if (centro.getName() == null || centro.getName().isBlank()) {
                 return Response.error(null, "El nombre es requerido");
@@ -121,75 +140,70 @@ public ResponseEntity<Object> findById(@PathVariable("id") int id) {
             if (centro.getLatitud() == null || centro.getLongitud() == null) {
                 return Response.error(null, "Las coordenadas son inválidas");
             }
-    
+
             // 4. Guardar
             CentroAtencion saved = service.save(centro);
             return Response.ok(saved, "Centro de atención creado");
-    
+
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return Response.error(null, e.getMessage());
         }
-        
-    }
-    
 
+    }
 
     @RequestMapping(method = RequestMethod.PUT)
-public ResponseEntity<Object> update(@RequestBody JsonNode json) {
-    try {
-        CentroAtencion centro = objectMapper.treeToValue(json, CentroAtencion.class);
+    public ResponseEntity<Object> update(@RequestBody JsonNode json) {
+        try {
+            CentroAtencion centro = objectMapper.treeToValue(json, CentroAtencion.class);
 
-        if (centro.getId() <= 0) {
-            return Response.error(centro, "Debe tener un id válido (> 0) para actualizar.");
-        }
+            if (centro.getId() <= 0) {
+                return Response.error(centro, "Debe tener un id válido (> 0) para actualizar.");
+            }
 
-        // Procesar coordenadas si faltan latitud y longitud
-        if ((centro.getLatitud() == null || centro.getLongitud() == null) && json.has("coordenadas")) {
-            String coordenadas = json.get("coordenadas").asText();
-            if (coordenadas != null && !coordenadas.isBlank()) {
-                String[] parts = coordenadas.split(",");
-                if (parts.length == 2) {
-                    try {
-                        Double lat = Double.parseDouble(parts[0].trim());
-                        Double lng = Double.parseDouble(parts[1].trim());
-                        centro.setLatitud(lat);
-                        centro.setLongitud(lng);
-                    } catch (NumberFormatException e) {
-                        return Response.error(null, "Las coordenadas son inválidas");
+            // Procesar coordenadas si faltan latitud y longitud
+            if ((centro.getLatitud() == null || centro.getLongitud() == null) && json.has("coordenadas")) {
+                String coordenadas = json.get("coordenadas").asText();
+                if (coordenadas != null && !coordenadas.isBlank()) {
+                    String[] parts = coordenadas.split(",");
+                    if (parts.length == 2) {
+                        try {
+                            Double lat = Double.parseDouble(parts[0].trim());
+                            Double lng = Double.parseDouble(parts[1].trim());
+                            centro.setLatitud(lat);
+                            centro.setLongitud(lng);
+                        } catch (NumberFormatException e) {
+                            return Response.error(null, "Las coordenadas son inválidas");
+                        }
+                    } else {
+                        return Response.error(null, "Las coordenadas deben tener formato 'latitud, longitud'");
                     }
-                } else {
-                    return Response.error(null, "Las coordenadas deben tener formato 'latitud, longitud'");
                 }
             }
-        }
 
-        
-        // Validar conflictos de nombre y dirección
-        if (service.existsByNameAndDireccionAndIdNot(centro.getName(), centro.getDireccion(), centro.getId())) {
-            return Response.dbError("Ya existe un centro de atención con ese nombre y dirección");
-        }
-        if (service.existsByDireccionAndIdNot(centro.getDireccion(), centro.getId())) {
-            return Response.dbError("Ya existe un centro de atención con esa dirección");
-        }
+            // Validar conflictos de nombre y dirección
+            if (service.existsByNameAndDireccionAndIdNot(centro.getName(), centro.getDireccion(), centro.getId())) {
+                return Response.dbError("Ya existe un centro de atención con ese nombre y dirección");
+            }
+            if (service.existsByDireccionAndIdNot(centro.getDireccion(), centro.getId())) {
+                return Response.dbError("Ya existe un centro de atención con esa dirección");
+            }
 
-        // Validar coordenadas duplicadas
-        if (service.existsByCoordenadasAndIdNot(centro.getLatitud(), centro.getLongitud(), centro.getId())) {
-            return Response.error(null, "Las coordenadas ya están asociadas a otro centro de atención");
+            // Validar coordenadas duplicadas
+            if (service.existsByCoordenadasAndIdNot(centro.getLatitud(), centro.getLongitud(), centro.getId())) {
+                return Response.error(null, "Las coordenadas ya están asociadas a otro centro de atención");
+            }
+
+            CentroAtencion saved = service.save(centro);
+            return Response.ok(saved, "Centro de atención modificado");
+
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, e.getMessage());
         }
-
-        CentroAtencion saved = service.save(centro);
-        return Response.ok(saved, "Centro de atención modificado");
-
-    } catch (IllegalStateException e) {
-        return Response.dbError(e.getMessage());
-    } catch (Exception e) {
-        return Response.error(null, e.getMessage());
     }
-}
-
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Object> delete(@PathVariable("id") int id) {
@@ -202,9 +216,9 @@ public ResponseEntity<Object> update(@RequestBody JsonNode json) {
     }
 
     @RequestMapping(value = "/reset", method = RequestMethod.DELETE)
-public ResponseEntity<Object> resetCentros() {
-    service.findAll().forEach(c -> service.delete(c.getId()));
-    return Response.ok("Reset completo.");
-}
+    public ResponseEntity<Object> resetCentros() {
+        service.findAll().forEach(c -> service.delete(c.getId()));
+        return Response.ok("Reset completo.");
+    }
 
 }

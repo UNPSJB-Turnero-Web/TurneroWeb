@@ -12,9 +12,12 @@ import unpsjb.labprog.backend.model.CentroAtencion;
 @Repository
 public interface ConsultorioRepository extends CrudRepository<Consultorio, Integer>, PagingAndSortingRepository<Consultorio, Integer> {
 
-    List<Consultorio> findByCentroAtencion(CentroAtencion centro);
+        List<Consultorio> findByCentroAtencion(CentroAtencion centro);
 
-    boolean existsByNumeroAndCentroAtencion(int numero, CentroAtencion centro);
+        boolean existsByNumeroAndCentroAtencion(int numero, CentroAtencion centro);
 
-    boolean existsByNombreAndCentroAtencion(String nombre, CentroAtencion centro);
+        boolean existsByNombreAndCentroAtencion(String nombre, CentroAtencion centro);
+
+
+    List<Consultorio> findByNombreContainingIgnoreCase(String nombre);
 }

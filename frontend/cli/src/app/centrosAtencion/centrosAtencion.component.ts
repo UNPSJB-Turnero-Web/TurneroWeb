@@ -19,20 +19,28 @@ import { PaginationComponent } from '../pagination/pagination.component';
         <thead>
           <tr>
             <th>#</th>
-            <th>Código</th>
             <th>Nombre</th>
-            <th>Ubicación</th>
-            <th></th>
+            <th>Dirección</th>
+            <th>Localidad</th>
+            <th>Provincia</th>
+            <th>Teléfono</th>
+            <th>Coordenadas</th>
+
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let centro of resultsPage.content; index as i">
             <td>{{ centro.id }}</td>
-            <td>{{ centro.code }}</td>
             <td>{{ centro.name }}</td>
-            <td>{{ centro.location || 'Sin ubicación' }}</td>
+            <td>{{ centro.direccion }}</td>
+            <td>{{ centro.localidad }}</td>
+            <td>{{ centro.provincia }}</td>
+            <td>{{ centro.telefono }}</td> 
+            <td>{{ centro.coordenadas }}</td>
+
             <td>
-              <a [routerLink]="['/centrosAtencion/code', centro.code]" class="btn btn-sm btn-outline-primary">
+              <a [routerLink]="['/centrosAtencion', centro.id]" class="btn btn-sm btn-outline-primary">
                 <i class="fa fa-pencil"></i>
               </a>
               <a (click)="remove(centro)" class="btn btn-sm btn-outline-danger ms-1">
@@ -73,6 +81,16 @@ export class CentrosAtencionComponent {
   getCentrosAtencion(): void {
     this.centroAtencionService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
+
+      // Asegúrate de que las coordenadas se procesen correctamente
+      this.resultsPage.content.forEach((centro: CentroAtencion) => {
+        if (centro.coordenadas) {
+          const [lat, lng] = centro.coordenadas.split(',').map(coord => parseFloat(coord).toFixed(4));
+          centro.coordenadas = `${lat},${lng}`; // Formato correcto sin espacios
+        } else {
+          centro.coordenadas = 'N/A'; // Manejo de coordenadas faltantes
+        }
+      });
     });
   }
 
@@ -84,7 +102,7 @@ export class CentrosAtencionComponent {
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.code).subscribe(() => {
+        this.centroAtencionService.delete(centro.id).subscribe(() => {
           this.getCentrosAtencion();
         });
       });

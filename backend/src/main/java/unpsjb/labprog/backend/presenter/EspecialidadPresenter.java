@@ -39,9 +39,6 @@ public class EspecialidadPresenter {
     public ResponseEntity<Object> create(@RequestBody JsonNode json) {
         try {
             Especialidad esp = mapper.treeToValue(json, Especialidad.class);
-            if (esp.getId() != 0) {
-                return Response.error(null, "No se debe enviar un ID al crear una especialidad");
-            }
             return Response.ok(service.save(esp), "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Devuelve status_code 409
@@ -50,13 +47,11 @@ public class EspecialidadPresenter {
         }
     }
 
-    @PutMapping
-    public ResponseEntity<Object> update(@RequestBody JsonNode json) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody JsonNode json) {
         try {
             Especialidad esp = mapper.treeToValue(json, Especialidad.class);
-            if (esp.getId() <= 0) {
-                return Response.error(null, "Debe enviar un ID válido");
-            }
+            esp.setId(id); // Asegúrate de que el ID del objeto coincide con el ID de la URL
             return Response.ok(service.save(esp), "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Devuelve status_code 409
@@ -69,7 +64,7 @@ public class EspecialidadPresenter {
     public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
             service.delete(id);
-            return Response.ok("Especialidad eliminada exitosamente");
+            return Response.ok(null, "Especialidad eliminada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
@@ -81,7 +76,7 @@ public class EspecialidadPresenter {
     public ResponseEntity<Object> reset() {
         try {
             service.deleteAll();
-            return Response.ok("Base de datos de especialidades reseteada correctamente");
+            return Response.ok(null, "Base de datos de especialidades reseteada correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
         }

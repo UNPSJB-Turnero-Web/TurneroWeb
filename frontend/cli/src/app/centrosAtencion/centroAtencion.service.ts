@@ -17,19 +17,18 @@ export class CentroAtencionService {
     return this.http.get<DataPackage>(this.centrosAtencionUrl);
   }
 
-  get(code: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.centrosAtencionUrl}/code/${code}`);
+  get(id: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosAtencionUrl}/${id}`);
   }
 
   save(centroAtencion: CentroAtencion): Observable<DataPackage> {
-    console.log('Objeto enviado al backend:', centroAtencion); // Agrega este log para verificar
     return centroAtencion.id 
       ? this.http.put<DataPackage>(this.centrosAtencionUrl, centroAtencion)
       : this.http.post<DataPackage>(this.centrosAtencionUrl, centroAtencion);
   }
 
-  delete(code: string): Observable<void> {
-    return this.http.delete<void>(`${this.centrosAtencionUrl}/code/${code}`);
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.centrosAtencionUrl}/${id}`);
   }
 
   byPage(page: number, size: number): Observable<DataPackage> {

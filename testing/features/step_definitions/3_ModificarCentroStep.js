@@ -15,6 +15,7 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
       direccion: centro.Dirección,
       localidad: centro.Localidad,
       provincia: centro.Provincia,
+      telefono: centro.Teléfono,
       coordenadas: centro.Coordenadas
     };
     console.log('📥 Centro registrado:', centroData);
@@ -23,6 +24,7 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
     const body = JSON.parse(res.getBody('utf8'));
   });
 });
+
 When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentroActual, dataTable) {
   const atributos = dataTable.hashes()[0];
 
@@ -43,6 +45,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
     direccion: atributos.Dirección.replace(/"/g, '').trim(),
     localidad: atributos.Localidad.replace(/"/g, '').trim(),
     provincia: atributos.Provincia.replace(/"/g, '').trim(),
+    telefono: atributos.Teléfono.replace(/"/g, '').trim(),
     coordenadas: atributos.Coordenadas.replace(/"/g, '').trim()
   };
 
@@ -64,7 +67,6 @@ When('el administrador modifica los datos del centro de atención {string} con l
     }
   }
 });
-
 
 Then('el sistema responde con {int} y {string} para el centro de atención', function (expectedStatus, expectedText) {
   assert.strictEqual(this.response.status_code, expectedStatus, `Esperado ${expectedStatus}, pero fue ${this.response.status_code}`);

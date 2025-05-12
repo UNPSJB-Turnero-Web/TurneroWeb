@@ -18,14 +18,15 @@ Given('que existe un sistema de gestión de centros de atención', function () {
 });
 
 When(
-  'el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string} y {string}',
-  function (nombre, direccion, localidad, provincia, coordenadas) {
+  'el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string}, {string} y {string}',
+  function (nombre, direccion, localidad, provincia, telefono, latitud, longitud) {
     const centroData = {
       name: nombre || null,
       direccion: direccion || null,
       localidad: localidad || null,
       provincia: provincia || null,
-      coordenadas: coordenadas || null
+      telefono: telefono || null,
+      coordenadas: `${latitud},${longitud}` || null
     };
 
     try {
@@ -47,17 +48,12 @@ When(
   }
 );
 
-
-
 Then('el sistema responde con {int} y "{string}"', function (statusEsperado, mensajeEsperado) {
-    const statusHTTP = this.statusCode;
-    const respuesta = this.response;
+  const statusHTTP = this.statusCode;
+  const respuesta = this.response;
 
-    // Validación de HTTP (siempre 200 por tu diseño)
-    //assert.strictEqual(statusHTTP, 200, `Esperado HTTP 200 pero fue ${statusHTTP}`);
-
-    // Validación de status_code y status_text según tu Response.java modificado
-    assert.strictEqual(respuesta.status_code, statusEsperado, `Esperado status_code ${statusEsperado} pero fue ${respuesta.status_code}`);
-    assert.strictEqual(respuesta.status_text.trim(), mensajeEsperado.replace(/"/g, '').trim(),
-        `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
+  // Validación de status_code y status_text según tu Response.java modificado
+  assert.strictEqual(respuesta.status_code, statusEsperado, `Esperado status_code ${statusEsperado} pero fue ${respuesta.status_code}`);
+  assert.strictEqual(respuesta.status_text.trim(), mensajeEsperado.replace(/"/g, '').trim(),
+      `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
 });

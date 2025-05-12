@@ -4,11 +4,12 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EspecialidadService } from './especialidad.service';
 import { Especialidad } from './especialidad';
+import { ModalService } from '../modal/modal.service';
 
 @Component({
   selector: 'app-especialidad-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // Verifica que estos módulos estén correctamente importados
+  imports: [CommonModule, FormsModule, RouterModule], // Elimina ModalService de aquí
   template: `
     <div class="container mt-4">
       <h2>{{ especialidad.id ? 'Editar Especialidad' : 'Nueva Especialidad' }}</h2>
@@ -22,6 +23,16 @@ import { Especialidad } from './especialidad';
             required
           />
         </div>
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea
+            [(ngModel)]="especialidad.descripcion"
+            name="descripcion"
+            class="form-control"
+            rows="3"
+            placeholder="Ingrese una descripción"
+          ></textarea>
+        </div>
         <button type="submit" class="btn btn-primary">Guardar</button>
         <a routerLink="/especialidades" class="btn btn-secondary ms-2">Cancelar</a>
       </form>
@@ -29,12 +40,13 @@ import { Especialidad } from './especialidad';
   `,
 })
 export class EspecialidadDetailComponent {
-  especialidad: Especialidad = { id: 0, nombre: '' };
+  especialidad: Especialidad = { id: 0, nombre: '', descripcion: '' };
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private especialidadService: EspecialidadService
+    private especialidadService: EspecialidadService,
+    private modalService: ModalService
   ) {}
 
   ngOnInit(): void {

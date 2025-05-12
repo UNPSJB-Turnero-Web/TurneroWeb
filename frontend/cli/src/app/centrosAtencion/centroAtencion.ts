@@ -5,5 +5,6 @@ export interface CentroAtencion {
   direccion: string; // Dirección o coordenadas combinadas
   localidad: string;
   provincia: string;
+  telefono: string;
   coordenadas: string; // Nueva propiedad para almacenar "latitud,longitud"
 }

@@ -1,42 +1,38 @@
 import { Injectable } from '@angular/core';
-import { Consultorio } from './consultorio';
-import { Observable } from 'rxjs';
-import { DataPackage } from '../data.package';
 import { HttpClient } from '@angular/common/http';
-import { CentroAtencion } from '../centrosAtencion/centroAtencion';
+import { Observable } from 'rxjs';
+import { Consultorio } from './consultorio';
+import { DataPackage } from '../data.package';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ConsultorioService {
-
-  private consultoriosUrl = 'rest/consultorios';
+  private apiUrl = '/consultorios';
 
   constructor(private http: HttpClient) {}
 
-  all(): Observable<DataPackage> {
-    return this.http.get<DataPackage>(this.consultoriosUrl);
+  getAll(): Observable<DataPackage<Consultorio[]>> {
+    return this.http.get<DataPackage<Consultorio[]>>(this.apiUrl);
   }
 
-  get(code: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.consultoriosUrl}/code/${code}`);
+  getById(id: number): Observable<DataPackage<Consultorio>> {
+    return this.http.get<DataPackage<Consultorio>>(`${this.apiUrl}/${id}`);
   }
 
-  save(consultorio: Consultorio): Observable<DataPackage> {
-    return consultorio.id 
-      ? this.http.put<DataPackage>(this.consultoriosUrl, consultorio)
-      : this.http.post<DataPackage>(this.consultoriosUrl, consultorio);
+  create(consultorio: Consultorio): Observable<DataPackage<Consultorio>> {
+    return this.http.post<DataPackage<Consultorio>>(this.apiUrl, consultorio);
   }
 
-  delete(code: string): Observable<void> {
-    return this.http.delete<void>(`${this.consultoriosUrl}/code/${code}`);
+  update(id: number, consultorio: Consultorio): Observable<DataPackage<Consultorio>> {
+    return this.http.put<DataPackage<Consultorio>>(`${this.apiUrl}/${id}`, consultorio);
   }
 
-  byPage(page: number, size: number): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.consultoriosUrl}/page?page=${page-1}&size=${size}`);
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  search(searchTerm: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.consultoriosUrl}/search/${searchTerm}`);
+  searchByCentro(centroNombre: string): Observable<DataPackage<Consultorio[]>> {
+    return this.http.get<DataPackage<Consultorio[]>>(`${this.apiUrl}/byCentro/${centroNombre}`);
   }
 }

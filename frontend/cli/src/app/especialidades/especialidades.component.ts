@@ -22,6 +22,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
       <tr>
         <th>#</th>
         <th>Nombre</th>
+        <th>Descripción</th> 
         <th></th>
       </tr>
     </thead>
@@ -29,12 +30,13 @@ import { PaginationComponent } from '../pagination/pagination.component';
       <tr *ngFor="let especialidad of resultsPage.content; index as i">
         <td>{{ especialidad.id }}</td>
         <td>{{ especialidad.nombre }}</td>
+        <td>{{ especialidad.descripcion }}</td> 
         <td>
           <a [routerLink]="['/especialidades', especialidad.id]" class="btn btn-sm btn-outline-primary">
-            <i class="fas fa-edit"></i> <!-- Updated icon -->
+            <i class="fas fa-edit"></i> 
           </a>
           <a (click)="remove(especialidad.id)" class="btn btn-sm btn-outline-danger ms-1">
-            <i class="fas fa-trash-alt"></i> <!-- Updated icon -->
+            <i class="fas fa-trash-alt"></i> 
           </a>
         </td>
       </tr>
@@ -70,6 +72,7 @@ export class EspecialidadesComponent {
     this.especialidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
     });
+  
   }
 
   onPageChangeRequested(page: number): void {

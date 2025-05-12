@@ -13,9 +13,8 @@ import { RouterOutlet } from '@angular/router';
       <nav class="nav flex-column">
         <a class="nav-link text-dark fw-semibold" href="/turnos">Turnos</a>
         <a class="nav-link text-dark fw-semibold" href="/especialidades">Especialidades</a>
-        <a class="nav-link text-dark fw-semibold" href="/pacientes">Pacientes</a>
         <a class="nav-link text-dark fw-semibold" href="/agenda">Agenda</a>
-        <a class="nav-link text-dark fw-semibold" href="/centros-atencion">Centro de Atención</a>
+        <a class="nav-link text-dark fw-semibold" href="/centrosAtencion">Centro de Atención</a>
         <a class="nav-link text-dark fw-semibold" href="/consultorios">Consultorios</a>
         <a class="nav-link text-dark fw-semibold" href="/medicos">Médicos</a>
       </nav>

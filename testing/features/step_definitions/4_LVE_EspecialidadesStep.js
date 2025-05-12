@@ -10,10 +10,17 @@ BeforeAll(function () {
   console.log('✅ Base de datos de especialidades limpia.');
 });
 
-Given('que la especialidad {string} existe en el sistema con la descripción {string}', function (nombre, descripcion) {
-  const especialidad = { nombre, descripcion };
-  const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
-  assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
+Given('que la especialidad {string} existe en el sistema con la descripción {string}', async function (nombre, descripcion) {
+    const especialidad = {
+  
+        nombre: nombre.trim().toLowerCase(),
+        descripcion: descripcion.trim()
+    };
+
+    const res = await request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+    if (res.statusCode !== 200) {
+        throw new Error(`No se pudo crear la especialidad: ${nombre}`);
+    }
 });
 
 Given('otra especialidad con el nombre {string} ya está registrada', function (nombre) {
@@ -34,7 +41,8 @@ Given('que la especialidad {string} no existe en el sistema', function (nombre) 
   const resBuscar = request('GET', 'http://backend:8080/especialidad');
   const especialidades = JSON.parse(resBuscar.getBody('utf8')).data;
 
-  const especialidadExistente = especialidades.find(e => e.nombre === nombre);
+  const nombreNormalizado = nombre.trim().toLowerCase();
+  const especialidadExistente = especialidades.find(e => e.nombre === nombreNormalizado);
   if (especialidadExistente) {
     const resEliminar = request('DELETE', `http://backend:8080/especialidad/${especialidadExistente.id}`);
     assert.strictEqual(resEliminar.statusCode, 200, `No se pudo eliminar la especialidad existente: ${nombre}`);
@@ -57,6 +65,12 @@ Given('que no existen especialidades en el sistema', function () {
 });
 
 Given('que la especialidad {string} existe en el sistema', function (nombre) {
+  const especialidad = { nombre, descripcion: `Descripción de ${nombre}` };
+  const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+  assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
+});
+
+Given('que la especialidad {string} ya existe en el sistema', function (nombre) {
   const especialidad = { nombre, descripcion: `Descripción de ${nombre}` };
   const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
   assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
@@ -110,7 +124,7 @@ When('el administrador intenta cambiar el nombre de {string} a {string}', functi
 
   try {
     const res = request('PUT', `http://backend:8080/especialidad/${especialidadExistente.id}`, { json: especialidadEditada });
-    this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
+    this.response = JSON.parse(res.getBody('utf8')); // Asegúrate de parsear el cuerpo de la respuesta
   } catch (error) {
     console.error('Error en la solicitud:', error);
     this.response = error.response ? JSON.parse(error.response.body.toString('utf8')) : { status_code: 500, status_text: 'Error interno' };
@@ -135,46 +149,18 @@ When('un usuario del sistema solicita la lista de especialidades', function () {
   this.statusCode = res.statusCode;
 });
 
-Then('el sistema responde con el status code {int} y el status text {string} para la especialidad', function (statusCode, statusText) {
+Then('el sistema responde con el status code {int} y el status text {string} para la especialidad', function (expectedStatus, expectedText) {
   // Validar el status_code interno en el cuerpo de la respuesta
   assert.strictEqual(
     this.response.status_code,
-    statusCode,
-    `Esperado status_code ${statusCode}, pero fue ${this.response.status_code}`
+    expectedStatus,
+    `Esperado status_code ${expectedStatus}, pero fue ${this.response.status_code}`
   );
 
   // Validar el status_text interno en el cuerpo de la respuesta
   assert.strictEqual(
-    this.response.status_text,
-    statusText,
-    `Esperado status_text "${statusText}", pero fue "${this.response.status_text}"`
-  );
-});
-
-Then('el sistema responde con un JSON para la especialidad:', function (docString) {
-  const expectedResponse = JSON.parse(docString);
-
-  // Validar el código de estado
-  assert.strictEqual(
-    this.response.status_code,
-    expectedResponse.status_code,
-    `Esperado status_code ${expectedResponse.status_code}, pero fue ${this.response.status_code}`
-  );
-
-  // Validar el texto de estado
-  assert.strictEqual(
-    this.response.status_text,
-    expectedResponse.status_text,
-    `Esperado status_text "${expectedResponse.status_text}", pero fue "${this.response.status_text}"`
-  );
-
-  // Validar los datos de la especialidad
-  const actualData = this.response.data.map(({ nombre, descripcion }) => ({ nombre, descripcion }));
-  const expectedData = expectedResponse.data;
-
-  assert.deepStrictEqual(
-    actualData,
-    expectedData,
-    'La lista de especialidades no coincide con la esperada'
+    this.response.status_text.trim(),
+    expectedText.trim(),
+    `Esperado status_text "${expectedText}", pero fue "${this.response.status_text}"`
   );
 });

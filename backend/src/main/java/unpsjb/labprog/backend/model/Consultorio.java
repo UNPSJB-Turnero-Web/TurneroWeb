@@ -12,13 +12,16 @@ import lombok.Setter;
 public class Consultorio {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    private int numero;
+    @Column(nullable = false)
+    private Integer numero;
 
+    @Column(nullable = false)
     private String nombre;
 
-    @ManyToOne
-    private CentroAtencion centroAtencion;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "centro_atencion_id", nullable = false)
+    private CentroAtencion centroAtencion; // Relación con CentroAtencion
 }

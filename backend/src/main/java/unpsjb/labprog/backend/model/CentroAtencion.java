@@ -30,6 +30,9 @@ public class CentroAtencion {
     private String provincia;
 
     @Column(nullable = false)
+    private String telefono;
+
+    @Column(nullable = false)
     private Double latitud;
 
     @Column(nullable = false)

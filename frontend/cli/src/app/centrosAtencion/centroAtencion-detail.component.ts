@@ -7,15 +7,15 @@ import { CentroAtencionService } from './centroAtencion.service';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import * as L from 'leaflet';
 import { ModalService } from '../modal/modal.service';
-import { HttpClient } from '@angular/common/http'; // Importar HttpClient para realizar solicitudes HTTP
-
+import { HttpClient } from '@angular/common/http'; 
+import { MapModalComponent } from '../modal/map-modal.component'; 
 @Component({
   selector: 'app-centro-atencion-detail',
   standalone: true,
-  imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
+  imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent],
   template: `
 <div *ngIf="centroAtencion">
-  <h2>{{ centroAtencion.name | uppercase }}</h2>
+  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.name | uppercase }}</h2>
   <form #form="ngForm">
     <div class="form-group">
       <label for="name">Nombre:</label>
@@ -34,26 +34,36 @@ import { HttpClient } from '@angular/common/http'; // Importar HttpClient para r
 
     <div class="form-group">
       <label for="direccion">Dirección:</label>
-      <input name="direccion" placeholder="Dirección" class="form-control" [(ngModel)]="centroAtencion.direccion" [ngModelOptions]="{standalone: true}" readonly>
+      <input name="direccion" required placeholder="Dirección" class="form-control" [(ngModel)]="centroAtencion.direccion" [ngModelOptions]="{standalone: true}">
     </div>
 
     <div class="form-group">
-      <button type="button" class="btn btn-primary" (click)="toggleMap()">Marcar en el mapa</button>
+      <label for="localidad">Localidad:</label>
+      <input name="localidad" required placeholder="Localidad" class="form-control" [(ngModel)]="centroAtencion.localidad" [ngModelOptions]="{standalone: true}">
     </div>
 
-    <div *ngIf="showMap">
-      <div class="form-group">
-        <label for="search">Buscar lugar:</label>
-        <input id="search" type="text" class="form-control" [(ngModel)]="searchQuery" [ngModelOptions]="{standalone: true}" placeholder="Buscar lugar...">
-        <button type="button" class="btn btn-secondary mt-2" (click)="searchLocation()">Buscar</button>
-      </div>
-      <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+    <div class="form-group">
+      <label for="provincia">Provincia:</label>
+      <input name="provincia" required placeholder="Provincia" class="form-control" [(ngModel)]="centroAtencion.provincia" [ngModelOptions]="{standalone: true}">
+    </div>
+    <div class="form-group">
+      <label for="telefono">Teléfono:</label>
+      <input name="telefono" placeholder="Teléfono" class="form-control" [(ngModel)]="centroAtencion.telefono" [ngModelOptions]="{standalone: true}">
+    </div>
+    
+    <div class="form-group">
+      <label for="coordenadas">Coordenadas:</label>
+      <input name="coordenadas" placeholder="Coordenadas" class="form-control" [(ngModel)]="centroAtencion.coordenadas" [ngModelOptions]="{standalone: true}">
+    </div>
+    <div class="form-group">
+      <button type="button" class="btn btn-primary" (click)="toggleMap()">Marcar en el mapa</button>
     </div>
 
     <button (click)="goBack()" class="btn btn-danger">Atrás</button>
     <button (click)="save()" class="btn btn-success" [disabled]="form.invalid">Guardar</button>
   </form>
 </div>
+<app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
   `,
   styles: ``
 })
@@ -79,19 +89,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
 
   toggleMap(): void {
     this.showMap = !this.showMap;
-
-    if (this.showMap) {
-      // Inicializar el mapa si no existe
-      if (!this.map) {
-        setTimeout(() => this.initializeMap(), 0); // Asegurarse de que el DOM esté listo
-      }
-    } else {
-      // Si el mapa se oculta, destruirlo para liberar recursos
-      if (this.map) {
-        this.map.remove();
-        this.map = undefined!;
-      }
-    }
   }
 
   initializeMap(): void {
@@ -103,8 +100,12 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
 
     this.map.on('click', (e: any) => {
       const { lat, lng } = e.latlng;
-      this.centroAtencion.coordenadas = `${lat},${lng}`; // Guardar las coordenadas como una sola variable
-      this.centroAtencion.direccion = `Coordenadas: ${lat}, ${lng}`; // Mostrar en el campo "direccion"
+
+      // Redondear las coordenadas a 4 decimales
+      const latRounded = lat.toFixed(3);
+      const lngRounded = lng.toFixed(3);
+
+      this.centroAtencion.coordenadas = `${latRounded}, ${lngRounded}`; // Guardar las coordenadas redondeadas
       console.log(`Coordenadas seleccionadas: ${this.centroAtencion.coordenadas}`);
       alert(`Ubicación marcada: ${this.centroAtencion.coordenadas}`);
     });
@@ -161,7 +162,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.code).subscribe({
+        this.centroAtencionService.delete(centro.id).subscribe({
           next: () => {
             this.goBack(); // Redirige al usuario a la lista
           },
@@ -175,26 +176,54 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
 
   get(): void {
     const path = this.route.snapshot.routeConfig?.path;
-
+  
     if (path === 'centrosAtencion/new') {
+      // Configuración para un nuevo centro de atención
       this.centroAtencion = {
         id: 0, 
         name: '',
         code: '',
         direccion: '',
         localidad: '',
-        provincia: '',  
+        provincia: '',
         coordenadas: ''
       } as CentroAtencion;
-    } else {
-      const code = this.route.snapshot.paramMap.get('code')!;
-      this.centroAtencionService.get(code).subscribe(dataPackage => {
-        this.centroAtencion = <CentroAtencion>dataPackage.data;
+    } else if (path === 'centrosAtencion/:id') {
+      // Configuración para editar un centro de atención existente
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (!idParam) {
+        console.error('El ID proporcionado no es válido.');
+        return;
+      }
+  
+      const id = Number(idParam);
+      if (isNaN(id)) {
+        console.error('El ID proporcionado no es un número válido.');
+        return;
+      }
+  
+      this.centroAtencionService.get(id).subscribe({
+        next: (dataPackage) => {
+          this.centroAtencion = <CentroAtencion>dataPackage.data;
+        },
+        error: (err) => {
+          console.error('Error al obtener el centro de atención:', err);
+          alert('No se pudo cargar el centro de atención. Intente nuevamente.');
+        }
       });
+    } else {
+      console.error('Ruta no reconocida.');
     }
   }
-
   ngOnInit(): void {
     this.get();
+  }
+
+  onLocationSelected(coordenadas: string | null): void {
+    if (coordenadas) {
+      this.centroAtencion.coordenadas = coordenadas; // Guardar las coordenadas seleccionadas
+      alert(`Ubicación marcada: ${coordenadas}`);
+    }
+    this.showMap = false; // Ocultar el modal
   }
 }
