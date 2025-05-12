@@ -15,11 +15,11 @@ import { MapModalComponent } from '../modal/map-modal.component';
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent],
   template: `
 <div *ngIf="centroAtencion">
-  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.nombre | uppercase }}</h2>
+  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.name | uppercase }}</h2>
   <form #form="ngForm">
     <div class="form-group">
       <label for="name">Nombre:</label>
-      <input name="name" required placeholder="Nombre" class="form-control" [(ngModel)]="centroAtencion.nombre" [ngModelOptions]="{standalone: true}" #name="ngModel">
+      <input name="name" required placeholder="Nombre" class="form-control" [(ngModel)]="centroAtencion.name" [ngModelOptions]="{standalone: true}" #name="ngModel">
       <div *ngIf="name.invalid && (name.dirty || name.touched)" class="alert">
         <div *ngIf="name.errors?.['required']">
           El nombre del centro es requerido
@@ -48,12 +48,29 @@ import { MapModalComponent } from '../modal/map-modal.component';
     </div>
     <div class="form-group">
       <label for="telefono">Teléfono:</label>
-      <input name="telefono" placeholder="Teléfono" class="form-control" [(ngModel)]="centroAtencion.telefono" [ngModelOptions]="{standalone: true}">
+      <input
+        name="telefono"
+        placeholder="Teléfono"
+        class="form-control"
+        [(ngModel)]="centroAtencion.telefono"
+        [ngModelOptions]="{standalone: true}"
+        pattern="^[0-9]*$"
+        #telefono="ngModel"
+        required
+      >
+      <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="alert">
+        <div *ngIf="telefono.errors?.['pattern']">
+          Solo se permiten números en el teléfono.
+        </div>
+        <div *ngIf="telefono.errors?.['required']">
+          El teléfono es requerido.
+        </div>
+      </div>
     </div>
     
     <div class="form-group">
       <label for="coordenadas">Coordenadas:</label>
-      <input name="coordenadas" placeholder="Coordenadas" class="form-control" [(ngModel)]="centroAtencion.coordenadas" [ngModelOptions]="{standalone: true}">
+      <input name="coordenadas" placeholder="latitud,longitud" class="form-control" [(ngModel)]="coordenadas" [ngModelOptions]="{standalone: true}">
     </div>
     <div class="form-group">
       <button type="button" class="btn btn-primary" (click)="toggleMap()">Marcar en el mapa</button>
@@ -61,6 +78,8 @@ import { MapModalComponent } from '../modal/map-modal.component';
 
     <button (click)="goBack()" class="btn btn-danger">Atrás</button>
     <button (click)="save()" class="btn btn-success" [disabled]="form.invalid">Guardar</button>
+    <!-- Solo muestra el botón si el centro ya existe -->
+    <button *ngIf="centroAtencion.id" (click)="remove(centroAtencion)" class="btn btn-danger">Eliminar</button>
   </form>
 </div>
 <app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
@@ -69,6 +88,7 @@ import { MapModalComponent } from '../modal/map-modal.component';
 })
 export class CentroAtencionDetailComponent implements AfterViewInit {
   centroAtencion!: CentroAtencion;
+  coordenadas: string = ''; // <-- Agrega esta línea
   showMap: boolean = false;
   private map!: L.Map;
   searchQuery: string = ''; // Campo para la búsqueda
@@ -100,14 +120,9 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
 
     this.map.on('click', (e: any) => {
       const { lat, lng } = e.latlng;
-
-      // Redondear las coordenadas a 4 decimales
-      const latRounded = lat.toFixed(3);
-      const lngRounded = lng.toFixed(3);
-
-      this.centroAtencion.coordenadas = `${latRounded}, ${lngRounded}`; // Guardar las coordenadas redondeadas
-      console.log(`Coordenadas seleccionadas: ${this.centroAtencion.coordenadas}`);
-      alert(`Ubicación marcada: ${this.centroAtencion.coordenadas}`);
+      this.centroAtencion.latitud = +lat.toFixed(3);
+      this.centroAtencion.longitud = +lng.toFixed(3);
+      alert(`Ubicación marcada: ${this.centroAtencion.latitud}, ${this.centroAtencion.longitud}`);
     });
   }
 
@@ -141,7 +156,12 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
   }
 
   save(): void {
-    console.log('Datos enviados al servicio:', this.centroAtencion);
+    // Si hay coordenadas, separarlas y asignarlas a latitud/longitud
+    if (this.centroAtencion.coordenadas) {
+      const [lat, lng] = this.centroAtencion.coordenadas.split(',').map(c => Number(c.trim()));
+      this.centroAtencion.latitud = lat;
+      this.centroAtencion.longitud = lng;
+    }
     this.centroAtencionService.save(this.centroAtencion).subscribe({
       next: (dataPackage) => {
         this.centroAtencion = <CentroAtencion>dataPackage.data;
@@ -155,6 +175,10 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
   }
 
   remove(centro: CentroAtencion): void {
+    if (centro.id === undefined) {
+      alert('No se puede eliminar: el centro no tiene ID.');
+      return;
+    }
     this.modalService
       .confirm(
         "Eliminar centro de atención",
@@ -162,7 +186,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.id).subscribe({
+        this.centroAtencionService.delete(centro.id!).subscribe({
           next: () => {
             this.goBack(); // Redirige al usuario a la lista
           },
@@ -180,15 +204,16 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
     if (path === 'centrosAtencion/new') {
       // Configuración para un nuevo centro de atención
       this.centroAtencion = {
-        id: 0, 
-        nombre: '',
+        name: '',
         code: '',
         direccion: '',
         localidad: '',
         provincia: '',
         telefono: '', 
-        coordenadas: ''
+        latitud: 0,
+        longitud: 0
       } as CentroAtencion;
+      this.coordenadas = '';
     } else if (path === 'centrosAtencion/:id') {
       // Configuración para editar un centro de atención existente
       const idParam = this.route.snapshot.paramMap.get('id');
@@ -220,11 +245,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
     this.get();
   }
 
-  onLocationSelected(coordenadas: string | null): void {
-    if (coordenadas) {
-      this.centroAtencion.coordenadas = coordenadas; // Guardar las coordenadas seleccionadas
-      alert(`Ubicación marcada: ${coordenadas}`);
+  onLocationSelected(coords: { latitud: number, longitud: number } | null): void {
+    if (coords) {
+      this.centroAtencion.latitud = coords.latitud;
+      this.centroAtencion.longitud = coords.longitud;
+      this.coordenadas = `${coords.latitud},${coords.longitud}`;
+      alert(`Ubicación marcada: ${this.coordenadas}`);
     }
-    this.showMap = false; // Ocultar el modal
+    this.showMap = false;
   }
 }

@@ -30,8 +30,8 @@ import { PaginationComponent } from '../pagination/pagination.component';
             <tr *ngFor="let consultorio of consultorios">
               <td>{{ consultorio.id }}</td>
               <td>{{ consultorio.numero }}</td>
-              <td>{{ consultorio.nombre }}</td>
-              <td>{{ consultorio.centroAtencion?.nombre || 'Sin Centro' }}</td>
+              <td>{{ consultorio.name }}</td>
+              <td>{{ consultorio.centroAtencion?.name || 'Sin Centro' }}</td>
               <td>
                 <a [routerLink]="['/consultorios', consultorio.id]" class="btn btn-primary btn-sm">Editar</a>
                 <button (click)="delete(consultorio.id)" class="btn btn-danger btn-sm">Eliminar</button>

@@ -16,7 +16,7 @@ import { Observable, debounceTime, distinctUntilChanged, switchMap, map } from '
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
   template: `
     <div *ngIf="consultorio">
-      <h2>{{ consultorio.id === 0 ? 'Nuevo Consultorio' : consultorio.nombre | uppercase }}</h2>
+      <h2>{{ consultorio.id === 0 ? 'Nuevo Consultorio' : consultorio.name | uppercase }}</h2>
       <form #form="ngForm">
         <div class="form-group">
           <label for="numero">Número:</label>
@@ -42,7 +42,7 @@ import { Observable, debounceTime, distinctUntilChanged, switchMap, map } from '
             required
             placeholder="Nombre"
             class="form-control"
-            [(ngModel)]="consultorio.nombre"
+            [(ngModel)]="consultorio.name"
             #nombre="ngModel"
           />
           <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="alert">
@@ -77,16 +77,17 @@ export class ConsultorioDetailComponent implements OnInit {
   consultorio: Consultorio = {
     id: 0,
     numero: 0,
-    nombre: '',
+    name: '',
     centroAtencion: {
       id: 0,
-      nombre: '',
+      name: '',
       code: '',
       direccion: '',
       localidad: '',
       provincia: '',
       telefono: '',
-      coordenadas: ''
+      latitud: 0,
+      longitud: 0
     }
   };
   centrosAtencion: CentroAtencion[] = [];
@@ -131,16 +132,17 @@ export class ConsultorioDetailComponent implements OnInit {
       this.consultorio = {
         id: 0,
         numero: 0,
-        nombre: '',
+        name: '',
         centroAtencion: {
           id: 0,
-          nombre: '',
+          name: '',
           code: '',
           direccion: '',
           localidad: '',
           provincia: '',
           telefono: '',
-          coordenadas: ''
+          latitud: 0,
+          longitud: 0
         }
       };
     } else {
@@ -170,7 +172,7 @@ export class ConsultorioDetailComponent implements OnInit {
       )
     );
 
-  formatter = (x: CentroAtencion) => x.nombre;
+  formatter = (x: CentroAtencion) => x.name;
 
   onCentroAtencionSelected(centroAtencion: CentroAtencion): void {
     this.selectedCentroAtencion = centroAtencion;

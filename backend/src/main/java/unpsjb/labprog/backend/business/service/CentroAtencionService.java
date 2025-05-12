@@ -36,6 +36,37 @@ public class CentroAtencionService {
 
     @Transactional
     public CentroAtencion save(CentroAtencion c) {
+              // 1. Validaciones de campos obligatorios y formato
+              if (c.getName() == null || c.getName().isBlank()) {
+                throw new IllegalArgumentException("El nombre es requerido");
+            }
+            if (c.getDireccion() == null || c.getDireccion().isBlank()) {
+                throw new IllegalArgumentException("La dirección es requerida");
+            }
+            if (c.getLocalidad() == null || c.getLocalidad().isBlank()) {
+                throw new IllegalArgumentException("La localidad es requerida");
+            }
+            if (c.getProvincia() == null || c.getProvincia().isBlank()) {
+                throw new IllegalArgumentException("La provincia es requerida");
+            }
+            if (c.getTelefono() == null || c.getTelefono().isBlank()) {
+                throw new IllegalArgumentException("El teléfono es requerido");
+            }
+            if (!c.getTelefono().matches("\\d+")) {
+                throw new IllegalArgumentException("El teléfono solo puede contener números.");
+            }
+    
+            // 2. Validación de coordenadas (null y formato)
+            if (c.getLatitud() == null || c.getLongitud() == null) {
+                throw new IllegalArgumentException("Las coordenadas no pueden ser nulas.");
+            }
+            if (c.getLatitud() < -90 || c.getLatitud() > 90) {
+                throw new IllegalArgumentException("La latitud debe estar entre -90 y 90.");
+            }
+            if (c.getLongitud() < -180 || c.getLongitud() > 180) {
+                throw new IllegalArgumentException("La longitud debe estar entre -180 y 180.");
+            }    
+        
         if (c.getId() == 0) {
             // 🚀 CREACIÓN
             if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {

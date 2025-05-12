@@ -37,7 +37,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             <td>{{ centro.localidad }}</td>
             <td>{{ centro.provincia }}</td>
             <td>{{ centro.telefono }}</td> 
-            <td>{{ centro.coordenadas }}</td>
+            <td>{{ centro.latitud }},{{ centro.longitud }}</td>
 
             <td>
               <a [routerLink]="['/centrosAtencion', centro.id]" class="btn btn-sm btn-outline-primary">
@@ -81,20 +81,14 @@ export class CentrosAtencionComponent {
   getCentrosAtencion(): void {
     this.centroAtencionService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
-
-      // Asegúrate de que las coordenadas se procesen correctamente
-      this.resultsPage.content.forEach((centro: CentroAtencion) => {
-        if (centro.coordenadas) {
-          const [lat, lng] = centro.coordenadas.split(',').map(coord => parseFloat(coord).toFixed(4));
-          centro.coordenadas = `${lat},${lng}`; // Formato correcto sin espacios
-        } else {
-          centro.coordenadas = 'N/A'; // Manejo de coordenadas faltantes
-        }
-      });
     });
   }
 
   remove(centro: CentroAtencion): void {
+    if (centro.id === undefined) {
+      alert('No se puede eliminar: el centro no tiene ID.');
+      return;
+    }
     this.modalService
       .confirm(
         "Eliminar centro de atención",
@@ -102,7 +96,7 @@ export class CentrosAtencionComponent {
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.id).subscribe(() => {
+        this.centroAtencionService.delete(centro.id!).subscribe(() => {
           this.getCentrosAtencion();
         });
       });

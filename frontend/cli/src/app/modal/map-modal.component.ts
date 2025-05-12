@@ -59,7 +59,7 @@ import { FormsModule } from '@angular/forms'; // Importar FormsModule
   `]
 })
 export class MapModalComponent {
-  @Output() locationSelected = new EventEmitter<string | null>();
+  @Output() locationSelected = new EventEmitter<{ latitud: number, longitud: number } | null>();
   @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
   private map!: L.Map;
   searchQuery: string = ''; // Campo para la búsqueda
@@ -84,7 +84,7 @@ export class MapModalComponent {
       const latRounded = lat.toFixed(3);
       const lngRounded = lng.toFixed(3);
 
-      const coordenadas = `${latRounded},${lngRounded}`;
+      const coordenadas = { latitud: +latRounded, longitud: +lngRounded };
       this.locationSelected.emit(coordenadas); // Emitir las coordenadas seleccionadas
       this.close(); // Cerrar el modal automáticamente
     });

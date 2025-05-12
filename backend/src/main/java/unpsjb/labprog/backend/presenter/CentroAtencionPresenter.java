@@ -211,7 +211,7 @@ public class CentroAtencionPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
         try {
             service.delete(id);
             return Response.ok("Centro de atención " + id + " borrado con éxito.");
