@@ -43,4 +43,8 @@ export class ConsultorioService {
       `${this.baseUrl}/${encodeURIComponent(centroNombre)}/listar`
     );
   }
+  getPage(page: number, size: number): Observable<{content: Consultorio[], totalElements: number}> {
+    return this.http.get<{content: Consultorio[], totalElements: number}>(`/rest/consultorios/page?page=${page}&size=${size}`);
+  }
+  
 }

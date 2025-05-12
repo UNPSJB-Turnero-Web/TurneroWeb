@@ -7,7 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.EspecialidadService;
-import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.dto.EspecialidadDTO;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("especialidad")
@@ -21,7 +24,8 @@ public class EspecialidadPresenter {
 
     @GetMapping
     public ResponseEntity<Object> getAll() {
-        return Response.ok(service.findAll(), "Especialidades recuperadas correctamente");
+        List<EspecialidadDTO> especialidades = service.findAll();
+        return Response.ok(especialidades, "Especialidades recuperadas correctamente");
     }
 
     @GetMapping("/page")
@@ -29,7 +33,17 @@ public class EspecialidadPresenter {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            return Response.ok(service.findByPage(page, size), "Especialidades paginadas recuperadas correctamente");
+            var pageResult = service.findByPage(page, size);
+
+            // Crear la respuesta con los metadatos de paginación
+            var response = Map.of(
+                    "content", pageResult.getContent(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements(),
+                    "currentPage", pageResult.getNumber()
+            );
+
+            return Response.ok(response, "Especialidades paginadas recuperadas correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al recuperar las especialidades paginadas: " + e.getMessage());
         }
@@ -38,8 +52,12 @@ public class EspecialidadPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody JsonNode json) {
         try {
-            Especialidad esp = mapper.treeToValue(json, Especialidad.class);
-            return Response.ok(service.save(esp), "Especialidad creada correctamente");
+            // Convertir el JSON a DTO
+            EspecialidadDTO dto = mapper.treeToValue(json, EspecialidadDTO.class);
+
+            // Guardar la especialidad
+            EspecialidadDTO saved = service.save(dto);
+            return Response.ok(saved, "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Devuelve status_code 409
         } catch (Exception e) {
@@ -50,9 +68,13 @@ public class EspecialidadPresenter {
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@PathVariable int id, @RequestBody JsonNode json) {
         try {
-            Especialidad esp = mapper.treeToValue(json, Especialidad.class);
-            esp.setId(id); // Asegúrate de que el ID del objeto coincide con el ID de la URL
-            return Response.ok(service.save(esp), "Especialidad editada exitosamente");
+            // Convertir el JSON a DTO
+            EspecialidadDTO dto = mapper.treeToValue(json, EspecialidadDTO.class);
+            dto.setId(id); // Asegurarse de que el ID coincide con el de la URL
+
+            // Actualizar la especialidad
+            EspecialidadDTO updated = service.save(dto);
+            return Response.ok(updated, "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Devuelve status_code 409
         } catch (Exception e) {

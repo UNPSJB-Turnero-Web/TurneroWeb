@@ -1,16 +1,27 @@
-const { Given, When, Then } = require('@cucumber/cucumber');
+const { Given, When, Then, BeforeAll } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
 const BASE_URL = 'http://backend:8080';
 
-Given('que existe un centro de atención llamado {string}', function (nombreCentro) {
+BeforeAll(function() {
+  try {
+    const res = request('DELETE', 'http://backend:8080/consultorios/reset');
+    console.log(`🔄 [BeforeAll] reset consultorios status=${res.statusCode}`);
+  } catch (err) {
+    console.warn(`⚠️ [BeforeAll] no se pudo resetear consultorios: ${err.message}`);
+    // no throw, para que no mate el runner
+  }
+});
+
+
+Given('que existe un centro de atención llamado {string}', function(nombreCentro) {
+  this.centroNombre = nombreCentro;
   const res = request('GET', `${BASE_URL}/centrosAtencion`);
-  const body = JSON.parse(res.getBody('utf8'));
-  const centros = body.data;                        
-  const centro = centros.find(c => c.name === nombreCentro);
-  if (!centro) throw new Error(`No se encontró el centro: ${nombreCentro}`);
-  this.centroId = centro.id;
+  const centros = JSON.parse(res.getBody('utf8')).data;
+  const c = centros.find(x => x.name === nombreCentro);
+  if (!c) throw new Error(`No se encontró el centro: ${nombreCentro}`);
+  this.centroId = c.id; 
 });
 Given('que existen múltiples centros de atención registrados', function () {
   // LA BD SE POPULA EN LOS TEST ANTERIORES
@@ -21,7 +32,7 @@ When('se registra un consultorio con el número {string} y el nombre {string}', 
   // POST a /consultorios/{centroNombre}
   const payload = {
     numero: parseInt(numero, 10),
-    nombre: nombreConsultorio
+    name: nombreConsultorio
   };
   const url = `${BASE_URL}/consultorios/${encodeURIComponent(this.centroNombre)}`;
   const res = request('POST', url, { json: payload });

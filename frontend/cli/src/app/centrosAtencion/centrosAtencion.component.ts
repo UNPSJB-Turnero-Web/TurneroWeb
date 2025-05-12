@@ -13,9 +13,14 @@ import { PaginationComponent } from '../pagination/pagination.component';
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
-    <h2>Centros de Atención</h2>&nbsp;<a routerLink="/centrosAtencion/new" class="btn btn-success">Nuevo Centro</a> 
-    <div class="table-responsive">
-      <table class="table table-striped table-sm">
+      <div class="container mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Centros de Atencion</h2>
+        <button class="btn btn-primary" (click)="router.navigate(['/centrosAtencion/new'])">
+          + Nuevo Centro
+        </button>
+      </div>
+      <table class="table table-striped">
         <thead>
           <tr>
             <th>#</th>
@@ -68,6 +73,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 export class CentrosAtencionComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
+router: any;
 
   constructor(
     private centroAtencionService: CentroAtencionService,

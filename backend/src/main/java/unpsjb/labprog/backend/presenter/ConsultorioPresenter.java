@@ -1,13 +1,19 @@
 package unpsjb.labprog.backend.presenter;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
@@ -28,51 +35,57 @@ public class ConsultorioPresenter {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public ResponseEntity<Object> findAll() {
         List<ConsultorioDTO> consultorios = service.findAll();
-        return Response.ok(consultorios);
+        return Response.ok(consultorios, "Consultorios recuperados correctamente");
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
-        var opt = service.findById(id);
-        if (opt.isEmpty()) {
-            return Response.notFound("Consultorio id " + id + " no encontrado");
-        }
-        return Response.ok(opt.get());
+    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    public ResponseEntity<Object> findByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Obtener la página de consultorios
+        var pageResult = service.findByPage(page, size);
+
+        // Mapear el contenido de la página
+        List<Map<String, Object>> consultoriosMapeados = pageResult.getContent().stream().map(c -> {
+            Map<String, Object> map = objectMapper.convertValue(c, Map.class);
+            if (c.getCentroAtencion() != null) {
+                map.put("centroAtencion", c.getCentroAtencion().getName());
+            } else {
+                map.put("centroAtencion", null);
+            }
+            return map;
+        }).toList();
+
+        // Crear la respuesta con los metadatos de paginación
+        Map<String, Object> response = Map.of(
+                "content", consultoriosMapeados,
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber()
+        );
+
+        return Response.ok(response);
     }
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> create(@RequestBody JsonNode json) {
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> findById(@PathVariable Long id) {
+        return service.findById(id)
+                .map(consultorio -> Response.ok(consultorio, "Consultorio encontrado"))
+                .orElse(Response.notFound("Consultorio con id " + id + " no encontrado"));
+    }
+
+    @PostMapping
+    public ResponseEntity<Object> create(@RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
-
-            // Validación: No debe tener ID
-            if (consultorio.getId() != 0) {
-                return Response.error(consultorio,
-                        "Está intentando crear un consultorio. Este no puede tener un id definido.");
-            }
-
-            // Validaciones obligatorias
-            if (consultorio.getNumero() <= 0) {
-                return Response.error(null, "El número del consultorio es requerido y debe ser mayor a 0.");
-            }
-            if (consultorio.getName() == null || consultorio.getName().isBlank()) {
-                return Response.error(null, "El nombre del consultorio es requerido.");
-            }
-            if (consultorio.getCentroAtencion() == null 
-                || consultorio.getCentroAtencion().getId() <= 0) {
-                return Response.error(null, "Debe asociar el consultorio a un Centro de Atención válido.");
-            }
-
-            Consultorio saved = service.save(consultorio);
-            return Response.ok(saved, "Consultorio creado");
-
+            ConsultorioDTO saved = service.save(consultorioDTO);
+            return Response.ok(saved, "Consultorio creado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, e.getMessage());
+            return Response.error(null, "Error al crear el consultorio: " + e.getMessage());
         }
     }
 
@@ -96,43 +109,50 @@ public class ConsultorioPresenter {
         }
     }
 
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody JsonNode json) {
+    @PutMapping
+    public ResponseEntity<Object> update(@RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
-
-            if (consultorio.getId() == null || consultorio.getId() <= 0) {
-                return Response.error(consultorio, "Debe tener un id válido (> 0) para actualizar.");
+            if (consultorioDTO.getId() == null || consultorioDTO.getId() <= 0) {
+                return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            if (consultorio.getNumero() == null || consultorio.getNumero() <= 0) {
-                return Response.error(null, "El número del consultorio es requerido y debe ser mayor a 0.");
-            }
-            if (consultorio.getName() == null || consultorio.getName().isBlank()) {
-                return Response.error(null, "El nombre del consultorio es requerido.");
-            }
-            if (consultorio.getCentroAtencion() == null 
-                || consultorio.getCentroAtencion().getId() <= 0) {
-                return Response.error(null, "Debe asociar el consultorio a un Centro de Atención válido.");
-            }
-
-            Consultorio saved = service.save(consultorio);
-            return Response.ok(saved, "Consultorio modificado correctamente");
-
+            ConsultorioDTO updated = service.save(consultorioDTO);
+            return Response.ok(updated, "Consultorio actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, e.getMessage());
+            return Response.error(null, "Error al actualizar el consultorio: " + e.getMessage());
         }
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
         try {
             service.delete(id);
-            return Response.ok("Consultorio " + id + " borrado con éxito.");
+            return Response.ok(null, "Consultorio eliminado correctamente");
         } catch (Exception e) {
-            return Response.dbError(e.getMessage());
+            return Response.error(null, "Error al eliminar el consultorio: " + e.getMessage());
         }
     }
-    
+
+    @DeleteMapping("/reset")
+    public ResponseEntity<Object> resetConsultorios() {
+        service.findAll().forEach(c -> service.delete(c.getId()));
+        return Response.ok("Reset completo.");
+    }
+
+    private ConsultorioDTO toDTO(Consultorio c) {
+        ConsultorioDTO dto = new ConsultorioDTO();
+        dto.setId(c.getId());
+        dto.setNumero(c.getNumero());
+        dto.setName(c.getName());
+        // mapeo centro…
+        CentroAtencion centro = c.getCentroAtencion();
+        CentroAtencionDTO cdto = new CentroAtencionDTO();
+        cdto.setId(centro.getId());
+        cdto.setName(centro.getName());
+        // …
+        dto.setCentroAtencion(cdto);
+        return dto;
+    }
+
 }

@@ -25,6 +25,66 @@ public class CentroAtencionService {
                 .toList();
     }
 
+    public Optional<CentroAtencionDTO> findById(int id) {
+        return repository.findById(id).map(this::toDTO);
+    }
+
+    public Page<CentroAtencionDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
+    public List<CentroAtencionDTO> search(String term) {
+        return repository.search("%" + term.toUpperCase() + "%").stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Transactional
+    public CentroAtencionDTO save(CentroAtencionDTO dto) {
+        CentroAtencion centro = toEntity(dto);
+
+        // Validaciones de campos obligatorios y formato
+        validateCentroAtencion(centro);
+
+        // Validaciones de creación o modificación
+        if (centro.getId() == 0) {
+            // 🚀 CREACIÓN
+            if (repository.existsByNameAndDireccion(centro.getName(), centro.getDireccion())) {
+                throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
+            }
+        } else {
+            // 🛠️ MODIFICACIÓN
+            CentroAtencion existente = repository.findById(centro.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe el centro que se intenta modificar");
+            }
+
+            if (repository.existsByNameAndDireccionAndIdNot(centro.getName(), centro.getDireccion(), centro.getId())) {
+                throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
+            }
+        }
+
+        return toDTO(repository.save(centro));
+    }
+
+    @Transactional
+    public void delete(int id) {
+        repository.deleteById(id);
+    }
+
+    public boolean existsByDireccionAndIdNot(String direccion, int id) {
+        return repository.existsByDireccionAndIdNot(direccion, id);
+    }
+
+    public boolean existsByNameAndDireccionAndIdNot(String name, String direccion, int id) {
+        return repository.existsByNameAndDireccionAndIdNot(name, direccion, id);
+    }
+
+    public boolean existsByCoordenadasAndIdNot(Double latitud, Double longitud, int id) {
+        return repository.existsByCoordenadasAndIdNot(latitud, longitud, id);
+    }
+
     private CentroAtencionDTO toDTO(CentroAtencion c) {
         CentroAtencionDTO dto = new CentroAtencionDTO();
         dto.setId(c.getId());
@@ -35,25 +95,23 @@ public class CentroAtencionService {
         dto.setTelefono(c.getTelefono());
         dto.setLatitud(c.getLatitud());
         dto.setLongitud(c.getLongitud());
-        // mapeo de StaffMedico si lo necesitás
         return dto;
     }
 
-    public Optional<CentroAtencion> findById(int id) {
-        return repository.findById(id);
+    private CentroAtencion toEntity(CentroAtencionDTO dto) {
+        CentroAtencion centro = new CentroAtencion();
+        centro.setId(dto.getId());
+        centro.setName(dto.getName());
+        centro.setDireccion(dto.getDireccion());
+        centro.setLocalidad(dto.getLocalidad());
+        centro.setProvincia(dto.getProvincia());
+        centro.setTelefono(dto.getTelefono());
+        centro.setLatitud(dto.getLatitud());
+        centro.setLongitud(dto.getLongitud());
+        return centro;
     }
 
-    public Page<CentroAtencion> findByPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size));
-    }
-
-    public List<CentroAtencion> search(String term) {
-        return repository.search("%" + term.toUpperCase() + "%");
-    }
-
-    @Transactional
-    public CentroAtencion save(CentroAtencion c) {
-        // 1. Validaciones de campos obligatorios y formato
+    private void validateCentroAtencion(CentroAtencion c) {
         if (c.getName() == null || c.getName().isBlank()) {
             throw new IllegalArgumentException("El nombre es requerido");
         }
@@ -72,8 +130,6 @@ public class CentroAtencionService {
         if (!c.getTelefono().matches("\\d+")) {
             throw new IllegalArgumentException("El teléfono solo puede contener números.");
         }
-
-        // 2. Validación de coordenadas (null y formato)
         if (c.getLatitud() == null || c.getLongitud() == null) {
             throw new IllegalArgumentException("Las coordenadas no pueden ser nulas.");
         }
@@ -83,63 +139,5 @@ public class CentroAtencionService {
         if (c.getLongitud() < -180 || c.getLongitud() > 180) {
             throw new IllegalArgumentException("La longitud debe estar entre -180 y 180.");
         }
-
-        if (c.getId() == 0) {
-            // 🚀 CREACIÓN
-            if (repository.existsByNameAndDireccion(c.getName(), c.getDireccion())) {
-                throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
-            }
-            if (repository.existsByName(c.getName())) {
-                throw new IllegalStateException("Ya existe un centro de atención con ese nombre");
-            }
-            if (repository.existsByDireccion(c.getDireccion())) {
-                throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
-            }
-        } else {
-            // 🛠️ MODIFICACIÓN
-            CentroAtencion existente = repository.findById(c.getId()).orElse(null);
-            if (existente == null) {
-                throw new IllegalStateException("No existe el centro que se intenta modificar");
-            }
-
-            // Verificar si quiere cambiar el nombre o dirección a uno ya usado por OTRO
-            // centro
-            List<CentroAtencion> todos = repository.findAll(); 
-            for (CentroAtencion otro : todos) {
-                if (otro.getId() != c.getId()) {
-                    boolean mismoNombre = otro.getName().trim().equalsIgnoreCase(c.getName().trim());
-                    boolean mismaDireccion = otro.getDireccion().trim().equalsIgnoreCase(c.getDireccion().trim());
-
-                    if (mismoNombre && mismaDireccion) {
-                        throw new IllegalStateException("Ya existe un centro de atención con ese nombre y dirección");
-                    }
-
-                    if (mismoNombre) {
-                        throw new IllegalStateException("Ya existe un centro de atención con ese nombre");
-                    }
-                    if (mismaDireccion) {
-                        throw new IllegalStateException("Ya existe un centro de atención con esa dirección");
-                    }
-                }
-            }
-        }
-        return repository.save(c);
-    }
-
-    @Transactional
-    public void delete(int id) {
-        repository.deleteById(id);
-    }
-
-    public boolean existsByDireccionAndIdNot(String direccion, int id) {
-        return repository.existsByDireccionAndIdNot(direccion, id);
-    }
-
-    public boolean existsByNameAndDireccionAndIdNot(String name, String direccion, int id) {
-        return repository.existsByNameAndDireccionAndIdNot(name, direccion, id);
-    }
-
-    public boolean existsByCoordenadasAndIdNot(Double latitud, Double longitud, int id) {
-        return repository.existsByCoordenadasAndIdNot(latitud, longitud, id);
     }
 }

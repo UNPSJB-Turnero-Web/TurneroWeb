@@ -1,14 +1,15 @@
 package unpsjb.labprog.backend.business.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
-import unpsjb.labprog.backend.model.StaffMedico;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
+import unpsjb.labprog.backend.dto.StaffMedicoDTO;
+import unpsjb.labprog.backend.model.StaffMedico;
 
 @Service
 public class StaffMedicoService {
@@ -16,43 +17,38 @@ public class StaffMedicoService {
     @Autowired
     private StaffMedicoRepository repository;
 
-    public List<StaffMedico> findAll() {
-        List<StaffMedico> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+    public List<StaffMedicoDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public Optional<StaffMedico> findById(Long id) {
-        return repository.findById(id);
+    public Optional<StaffMedicoDTO> findById(Long id) {
+        return repository.findById(id).map(this::toDTO);
     }
 
-    public StaffMedico save(StaffMedico staffMedico) {
-        // Validaciones para evitar duplicados
-        if (staffMedico.getId() == null) {
-            // 🚀 CREACIÓN
-            if (repository.existsByMedicoAndCentro(staffMedico.getMedico(), staffMedico.getCentro())) {
-                throw new IllegalStateException("Ya existe un registro de StaffMedico con el médico y centro especificados.");
-            }
-        } else {
-            // 🛠️ MODIFICACIÓN
-            StaffMedico existente = repository.findById(staffMedico.getId()).orElse(null);
-            if (existente == null) {
-                throw new IllegalStateException("No existe el registro de StaffMedico que se intenta modificar.");
-            }
-
-            // Verificar si los nuevos datos ya están siendo usados por otro registro
-            if (!existente.getMedico().equals(staffMedico.getMedico()) ||
-                !existente.getCentro().equals(staffMedico.getCentro())) {
-                if (repository.existsByMedicoAndCentro(staffMedico.getMedico(), staffMedico.getCentro())) {
-                    throw new IllegalStateException("Ya existe un registro de StaffMedico con el médico y centro especificados.");
-                }
-            }
-        }
-
-        return repository.save(staffMedico);
+    @Transactional
+    public StaffMedicoDTO save(StaffMedicoDTO dto) {
+        StaffMedico staffMedico = toEntity(dto);
+        return toDTO(repository.save(staffMedico));
     }
 
+    @Transactional
     public void deleteById(Long id) {
         repository.deleteById(id);
+    }
+
+    private StaffMedicoDTO toDTO(StaffMedico staff) {
+        StaffMedicoDTO dto = new StaffMedicoDTO();
+        dto.setId(staff.getId());
+        // Mapear otras propiedades y relaciones
+        return dto;
+    }
+
+    private StaffMedico toEntity(StaffMedicoDTO dto) {
+        StaffMedico staff = new StaffMedico();
+        staff.setId(dto.getId());
+        // Mapear otras propiedades y relaciones
+        return staff;
     }
 }

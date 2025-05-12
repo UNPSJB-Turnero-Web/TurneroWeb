@@ -51,6 +51,10 @@ import { ModalService } from '../modal/modal.service';
 export class ConsultoriosComponent implements OnInit {
   consultorios: Consultorio[] = [];
 
+  page = 0;
+  size = 10;
+  totalElements = 0;
+
   constructor(
     private consultorioService: ConsultorioService,
     public router: Router,
@@ -58,15 +62,18 @@ export class ConsultoriosComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadAll();
+    this.loadPage();
   }
 
-  loadAll(): void {
-    this.consultorioService.getAll().subscribe(
-      pkg => this.consultorios = pkg.data,
-      err => this.modal.alert('Error', 'No se pudo cargar la lista de consultorios')
-    );
+  loadPage(page = 0, size = 10) {
+    this.consultorioService
+      .getPage(page, size)
+      .subscribe(pkg => {
+        this.consultorios = pkg.content;
+        this.totalElements = pkg.totalElements;
+      }, err => this.modal.alert('Error', 'No se pudo cargar'));
   }
+  
 
 confirmDelete(id: number): void {
   this.modal
@@ -77,8 +84,8 @@ confirmDelete(id: number): void {
 
   delete(id: number): void {
     this.consultorioService.delete(id).subscribe(
-      () => this.loadAll(),
-      err => this.modal.alert('Error', 'No se pudo eliminar el consultorio')
+      () => this.loadPage(),              // recarga la página actual
+      () => this.modal.alert('Error', 'No se pudo eliminar el consultorio')
     );
   }
 }

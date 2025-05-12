@@ -11,17 +11,17 @@ Esquema del escenario: Creación de consultorios exitosos
 
 Ejemplos: Consultorios exitosos
   | centro_atencion               | numero | nombre_consultorio        | status_code | status_text                         |
-  | Centro Médico Integral        | 101    | Consultorio Norte         | 200         | Consultorio creado exitosamente   |
-  | Centro Médico Integral        | 102    | Consultorio Sur           | 200         | Consultorio creado exitosamente   |
-  | Centro Médico Integral        | 103    | Consultorio Este          | 200         | Consultorio creado exitosamente   |
-  | Centro de Salud Rawson        | 201    | Consultorio Cardiología   | 200         | Consultorio creado exitosamente   |
-  | Trelew Salud                  | 301    | Consultorio 1             | 200         | Consultorio creado exitosamente   |
-  | Centro Médico Esperanza       | 506    | Consultorio 6             | 200         | Consultorio creado exitosamente   |
-  | Clínica Rawson                | 607    | Consultorio 7             | 200         | Consultorio creado exitosamente   |
-  | Centro de Rehabilitación      | 705    | Consultorio 5             | 200         | Consultorio creado exitosamente   |
-  | Instituto Médico Patagonia    | 805    | Consultorio 5             | 200         | Consultorio creado exitosamente   |
-  | Centro Odontológico Rawson    | 905    | Consultorio 5             | 200         | Consultorio creado exitosamente   |
-  | Centro Médico del Este        | 1007   | Consultorio 7             | 200         | Consultorio creado exitosamente   |
+  | Centro Médico Integral        | 101    | Consultorio Norte         | 200         | OK   |
+  | Centro Médico Integral        | 102    | Consultorio Sur           | 200         | OK   |
+  | Centro Médico Integral        | 103    | Consultorio Este          | 200         | OK   |
+  | Clinica Rawson                | 201    | Consultorio Cardiología   | 200         | OK   |
+  | Trelew Salud                  | 301    | Consultorio 1             | 200         | OK   |
+  | Centro Médico Esperanza       | 506    | Consultorio 6             | 200         | OK   |
+  | Clinica Rawson                | 607    | Consultorio 7             | 200         | OK   |
+  | Centro de Rehabilitación      | 705    | Consultorio 5             | 200         | OK   |
+  | Instituto Médico Patagonia    | 805    | Consultorio 5             | 200         | OK   |
+  | Centro Odontológico Rawson    | 905    | Consultorio 5             | 200         | OK   |
+  | Centro Médico del Este        | 1007   | Consultorio 7             | 200         | OK   |
 
 Esquema del escenario: Creación de consultorios con conflicto
   Dado que existe un centro de atención llamado "<centro_atencion>"
@@ -41,7 +41,7 @@ Escenario: Listar consultorios de un centro de atención
     """
     {
       "status_code": 200,
-      "status_text": "Consulta exitosa",
+      "status_text": "OK",
       "data": [
         { "numero": 501, "nombre_consultorio": "Consultorio 1" },
         { "numero": 502, "nombre_consultorio": "Consultorio 2" },
@@ -60,7 +60,7 @@ Escenario: Listar todos los centros con sus consultorios
     """
     {
       "status_code": 200,
-      "status_text": "Consulta exitosa",
+      "status_text": "OK",
       "data": [
         {
           "centro_atencion": "Centro Médico Integral",

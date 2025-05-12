@@ -1,61 +1,103 @@
 package unpsjb.labprog.backend.business.service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.PacienteRepository;
+import unpsjb.labprog.backend.dto.ObraSocialDTO;
+import unpsjb.labprog.backend.dto.PacienteDTO;
+import unpsjb.labprog.backend.model.ObraSocial;
 import unpsjb.labprog.backend.model.Paciente;
 
 @Service
 public class PacienteService {
 
     @Autowired
-    PacienteRepository repository;
+    private PacienteRepository repository;
 
-    public List<Paciente> findAll() {
-        List<Paciente> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+    public List<PacienteDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public Paciente findById(int id) {
-        return repository.findById(id).orElse(null);
+    public Optional<PacienteDTO> findById(int id) {
+        return repository.findById(id).map(this::toDTO);
     }
 
-    public Paciente save(Paciente paciente) {
+    @Transactional
+    public PacienteDTO save(PacienteDTO dto) {
+        Paciente paciente = toEntity(dto);
+
         // Validaciones para evitar duplicados
         if (paciente.getId() == 0) {
-            // 🚀 CREACIÓN
             if (repository.existsByDni(paciente.getDni())) {
                 throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
         } else {
-            // 🛠️ MODIFICACIÓN
             Paciente existente = repository.findById(paciente.getId()).orElse(null);
             if (existente == null) {
                 throw new IllegalStateException("No existe el paciente que se intenta modificar.");
             }
 
-            // Verificar si el nuevo DNI ya está siendo usado por otro paciente
             if (!existente.getDni().equalsIgnoreCase(paciente.getDni()) &&
-                repository.existsByDni(paciente.getDni())) {
+                    repository.existsByDni(paciente.getDni())) {
                 throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
         }
 
-        return repository.save(paciente);
+        return toDTO(repository.save(paciente));
     }
 
-    public Page<Paciente> findByPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size));
+    public Page<PacienteDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
     }
 
+    @Transactional
     public void delete(int id) {
         repository.deleteById(id);
+    }
+
+    private PacienteDTO toDTO(Paciente paciente) {
+        PacienteDTO dto = new PacienteDTO();
+        dto.setId(paciente.getId());
+        dto.setNombre(paciente.getNombre());
+        dto.setApellido(paciente.getApellido());
+        dto.setDNI(paciente.getDNI());
+        dto.setFechaNacimiento(paciente.getFechaNacimiento());
+        // Mapear la relación con ObraSocial
+        if (paciente.getObraSocial() != null) {
+            ObraSocialDTO obraSocialDTO = new ObraSocialDTO();
+            obraSocialDTO.setId(paciente.getObraSocial().getId());
+            obraSocialDTO.setNombre(paciente.getObraSocial().getNombre());
+            obraSocialDTO.setCodigo(paciente.getObraSocial().getCodigo());
+            dto.setObraSocial(obraSocialDTO);
+        }
+        return dto;
+    }
+
+    private Paciente toEntity(PacienteDTO dto) {
+        Paciente paciente = new Paciente();
+        paciente.setId(dto.getId());
+        paciente.setNombre(dto.getNombre());
+        paciente.setApellido(dto.getApellido());
+        paciente.setDNI(dto.getDNI());
+        paciente.setFechaNacimiento(dto.getFechaNacimiento());
+        if (dto.getObraSocial() != null) {
+            ObraSocial obraSocial = new ObraSocial();
+            obraSocial.setId(dto.getObraSocial().getId());
+            obraSocial.setNombre(dto.getObraSocial().getNombre());
+            obraSocial.setCodigo(dto.getObraSocial().getCodigo());
+            paciente.setObraSocial(obraSocial);
+        }
+        return paciente;
     }
 }

@@ -1,14 +1,16 @@
 package unpsjb.labprog.backend.business.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
-import unpsjb.labprog.backend.model.DisponibilidadMedico;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
+import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO;
+import unpsjb.labprog.backend.model.DisponibilidadMedico;
 
 @Service
 public class DisponibilidadMedicoService {
@@ -16,20 +18,22 @@ public class DisponibilidadMedicoService {
     @Autowired
     private DisponibilidadMedicoRepository repository;
 
-    public List<DisponibilidadMedico> findAll() {
-        List<DisponibilidadMedico> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+    public List<DisponibilidadMedicoDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<DisponibilidadMedico> findById(Long id) {
-        return repository.findById(id);
+    public Optional<DisponibilidadMedicoDTO> findById(Long id) {
+        return repository.findById(id).map(this::toDTO);
     }
 
-    public DisponibilidadMedico save(DisponibilidadMedico disponibilidadMedico) {
+    @Transactional
+    public DisponibilidadMedicoDTO save(DisponibilidadMedicoDTO dto) {
+        DisponibilidadMedico disponibilidadMedico = toEntity(dto);
+
         // Validaciones para evitar duplicados
         if (disponibilidadMedico.getId() == null) {
-            // 🚀 CREACIÓN
             if (repository.existsByStaffMedicoAndDiaSemanaAndHoraInicioAndHoraFin(
                     disponibilidadMedico.getStaffMedico(),
                     disponibilidadMedico.getDiaSemana(),
@@ -38,13 +42,11 @@ public class DisponibilidadMedicoService {
                 throw new IllegalStateException("Ya existe una disponibilidad para este staff médico en el mismo día y horario.");
             }
         } else {
-            // 🛠️ MODIFICACIÓN
             DisponibilidadMedico existente = repository.findById(disponibilidadMedico.getId()).orElse(null);
             if (existente == null) {
                 throw new IllegalStateException("No existe la disponibilidad que se intenta modificar.");
             }
 
-            // Verificar si los nuevos datos ya están siendo usados por otro registro
             if (repository.existsByStaffMedicoAndDiaSemanaAndHoraInicioAndHoraFin(
                     disponibilidadMedico.getStaffMedico(),
                     disponibilidadMedico.getDiaSemana(),
@@ -54,10 +56,31 @@ public class DisponibilidadMedicoService {
             }
         }
 
-        return repository.save(disponibilidadMedico);
+        return toDTO(repository.save(disponibilidadMedico));
     }
 
+    @Transactional
     public void deleteById(Long id) {
         repository.deleteById(id);
+    }
+
+    private DisponibilidadMedicoDTO toDTO(DisponibilidadMedico disponibilidad) {
+        DisponibilidadMedicoDTO dto = new DisponibilidadMedicoDTO();
+        dto.setId(disponibilidad.getId());
+        dto.setDiaSemana(disponibilidad.getDiaSemana());
+        dto.setHoraInicio(disponibilidad.getHoraInicio());
+        dto.setHoraFin(disponibilidad.getHoraFin());
+        // Mapear relaciones si es necesario
+        return dto;
+    }
+
+    private DisponibilidadMedico toEntity(DisponibilidadMedicoDTO dto) {
+        DisponibilidadMedico disponibilidad = new DisponibilidadMedico();
+        disponibilidad.setId(dto.getId());
+        disponibilidad.setDiaSemana(dto.getDiaSemana());
+        disponibilidad.setHoraInicio(dto.getHoraInicio());
+        disponibilidad.setHoraFin(dto.getHoraFin());
+        // Mapear relaciones si es necesario
+        return disponibilidad;
     }
 }

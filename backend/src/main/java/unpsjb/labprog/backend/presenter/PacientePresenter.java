@@ -1,55 +1,88 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.PacienteService;
-import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.dto.PacienteDTO;
 
 @RestController
-@RequestMapping("paciente")
+@RequestMapping("pacientes")
 public class PacientePresenter {
 
     @Autowired
-    PacienteService service;
+    private PacienteService service;
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public ResponseEntity<Object> findAll() {
-        return Response.ok(service.findAll());
+        List<PacienteDTO> pacientes = service.findAll();
+        return Response.ok(pacientes, "Pacientes recuperados correctamente");
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-        Paciente paciente = service.findById(id);
-        return (paciente != null)
-            ? Response.ok(paciente)
-            : Response.notFound();
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> findById(@PathVariable int id) {
+        return service.findById(id)
+                .map(paciente -> Response.ok(paciente, "Paciente encontrado"))
+                .orElse(Response.notFound("Paciente con id " + id + " no encontrado"));
     }
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> create(@RequestBody Paciente paciente) {
-        Paciente saved = service.save(paciente);
-        return Response.ok(saved);
+    @PostMapping
+    public ResponseEntity<Object> create(@RequestBody PacienteDTO pacienteDTO) {
+        try {
+            PacienteDTO saved = service.save(pacienteDTO);
+            return Response.ok(saved, "Paciente creado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al crear el paciente: " + e.getMessage());
+        }
     }
 
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody Paciente paciente) {
-        Paciente saved = service.save(paciente);
-        return Response.ok(saved);
+    @PutMapping
+    public ResponseEntity<Object> update(@RequestBody PacienteDTO pacienteDTO) {
+        try {
+            if (pacienteDTO.getId() <= 0) {
+                return Response.error(null, "Debe proporcionar un ID válido para actualizar");
+            }
+            PacienteDTO updated = service.save(pacienteDTO);
+            return Response.ok(updated, "Paciente actualizado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar el paciente: " + e.getMessage());
+        }
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> delete(@PathVariable int id) {
+        try {
+            service.delete(id);
+            return Response.ok(null, "Paciente eliminado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al eliminar el paciente: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/page")
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return Response.ok(service.findByPage(page, size));
-    }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
-        service.delete(id);
-        return Response.ok("Paciente " + id + " borrado.");
+        try {
+            return Response.ok(service.findByPage(page, size), "Pacientes paginados recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los pacientes paginados: " + e.getMessage());
+        }
     }
 }

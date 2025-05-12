@@ -1,15 +1,17 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unpsjb.labprog.backend.business.repository.TurnoRepository;
-import unpsjb.labprog.backend.model.Turno;
 
-import java.util.List;
-import java.util.Optional;
+import unpsjb.labprog.backend.business.repository.TurnoRepository;
+import unpsjb.labprog.backend.dto.TurnoDTO;
+import unpsjb.labprog.backend.model.Turno;
 
 @Service
 public class TurnoService {
@@ -17,41 +19,63 @@ public class TurnoService {
     @Autowired
     private TurnoRepository repository;
 
-    public List<Turno> findAll() {
-        return (List<Turno>) repository.findAll();
+    public List<TurnoDTO> findAll() {
+        return repository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
     }
 
-    public Optional<Turno> findById(Long id) {
-        return repository.findById(id);
+    public Optional<TurnoDTO> findById(Long id) {
+        return repository.findById(id).map(this::toDTO);
     }
 
     @Transactional
-    public Turno save(Turno turno) {
-        if (turno.getId() == 0) {
-            // 🚀 CREACIÓN
-            if (repository.existsByFechaAndHoraInicioAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
+    public TurnoDTO save(TurnoDTO dto) {
+        Turno turno = toEntity(dto);
+
+        // Validaciones
+        if (turno.getId() == null || turno.getId() == 0) {
+            if (repository.existsByFechaAndHoraInicioAndCentroAtencion(
+                    turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
                 throw new IllegalStateException("Ya existe un turno registrado en esta fecha y hora para este centro de atención");
             }
         } else {
-            // 🛠️ MODIFICACIÓN
             Turno existente = repository.findById(turno.getId()).orElse(null);
             if (existente == null) {
                 throw new IllegalStateException("No existe el turno que se intenta modificar");
             }
-
-            // Verificar conflictos de horarios
-            if (repository.existsByFechaAndHoraInicioAndCentroAtencion(turno.getFecha(), turno.getHoraInicio(), turno.getCentroAtencion())) {
-                throw new IllegalStateException("Ya existe un turno registrado en esta fecha y hora para este centro de atención");
-            }
         }
-        return repository.save(turno);
+
+        return toDTO(repository.save(turno));
     }
 
     public void delete(Long id) {
         repository.deleteById(id);
     }
 
-    public Page<Turno> findByPage(int page, int size) {
-        return repository.findAll(PageRequest.of(page, size));
+    public Page<TurnoDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
+    private TurnoDTO toDTO(Turno turno) {
+        TurnoDTO dto = new TurnoDTO();
+        dto.setId(turno.getId());
+        dto.setFecha(turno.getFecha());
+        dto.setHoraInicio(turno.getHoraInicio());
+        dto.setHoraFin(turno.getHoraFin());
+        dto.setEstado(turno.getEstado().name());
+        // Mapear relaciones (EsquemaTurno, Paciente, etc.)
+        return dto;
+    }
+
+    private Turno toEntity(TurnoDTO dto) {
+        Turno turno = new Turno();
+        turno.setId(dto.getId());
+        turno.setFecha(dto.getFecha());
+        turno.setHoraInicio(dto.getHoraInicio());
+        turno.setHoraFin(dto.getHoraFin());
+        // Mapear relaciones (EsquemaTurno, Paciente, etc.)
+        return turno;
     }
 }

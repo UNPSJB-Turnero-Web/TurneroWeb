@@ -1,51 +1,76 @@
 package unpsjb.labprog.backend.presenter;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
-import unpsjb.labprog.backend.model.DisponibilidadMedico;
-
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import unpsjb.labprog.backend.Response;
+import unpsjb.labprog.backend.business.service.DisponibilidadMedicoService;
+import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO;
+
 @RestController
-@RequestMapping("/api/disponibilidad-medico")
+@RequestMapping("/disponibilidades-medico")
 public class DisponibilidadMedicoPresenter {
 
     @Autowired
-    private DisponibilidadMedicoRepository repository;
+    private DisponibilidadMedicoService service;
+
+    @GetMapping
+    public ResponseEntity<Object> findAll() {
+        List<DisponibilidadMedicoDTO> disponibilidades = service.findAll();
+        return Response.ok(disponibilidades, "Disponibilidades recuperadas correctamente");
+    }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DisponibilidadMedico> getById(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> findById(@PathVariable Long id) {
+        return service.findById(id)
+                .map(disponibilidad -> Response.ok(disponibilidad, "Disponibilidad encontrada"))
+                .orElse(Response.notFound("Disponibilidad con id " + id + " no encontrada"));
     }
 
     @PostMapping
-    public DisponibilidadMedico create(@RequestBody DisponibilidadMedico disponibilidad) {
-        return repository.save(disponibilidad);
+    public ResponseEntity<Object> create(@RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
+        try {
+            DisponibilidadMedicoDTO saved = service.save(disponibilidadDTO);
+            return Response.ok(saved, "Disponibilidad creada correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al crear la disponibilidad: " + e.getMessage());
+        }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<DisponibilidadMedico> update(@PathVariable Long id, @RequestBody DisponibilidadMedico updatedDisponibilidad) {
-        return repository.findById(id)
-                .map(existingDisponibilidad -> {
-                    existingDisponibilidad.setDiaSemana(updatedDisponibilidad.getDiaSemana());
-                    existingDisponibilidad.setHoraInicio(updatedDisponibilidad.getHoraInicio());
-                    existingDisponibilidad.setHoraFin(updatedDisponibilidad.getHoraFin());
-                    return ResponseEntity.ok(repository.save(existingDisponibilidad));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    @PutMapping
+    public ResponseEntity<Object> update(@RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
+        try {
+            if (disponibilidadDTO.getId() == null || disponibilidadDTO.getId() <= 0) {
+                return Response.error(null, "Debe proporcionar un ID válido para actualizar");
+            }
+            DisponibilidadMedicoDTO updated = service.save(disponibilidadDTO);
+            return Response.ok(updated, "Disponibilidad actualizada correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar la disponibilidad: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
+        try {
+            service.deleteById(id);
+            return Response.ok(null, "Disponibilidad eliminada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al eliminar la disponibilidad: " + e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 }
