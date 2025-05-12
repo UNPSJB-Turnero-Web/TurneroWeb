@@ -38,4 +38,8 @@ export class CentroAtencionService {
   search(searchTerm: string): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.centrosAtencionUrl}/search/${searchTerm}`);
   }
+
+  getAll(): Observable<{ data: CentroAtencion[] }> {
+    return this.http.get<{ data: CentroAtencion[] }>(this.centrosAtencionUrl);
+  }
 }

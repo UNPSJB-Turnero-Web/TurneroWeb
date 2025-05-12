@@ -74,7 +74,21 @@ import { Observable, debounceTime, distinctUntilChanged, switchMap, map } from '
   styles: []
 })
 export class ConsultorioDetailComponent implements OnInit {
-  consultorio: Consultorio = { id: 0, numero: 0, nombre: '', centroAtencion: { id: 0, nombre: '' } };
+  consultorio: Consultorio = {
+    id: 0,
+    numero: 0,
+    nombre: '',
+    centroAtencion: {
+      id: 0,
+      nombre: '',
+      code: '',
+      direccion: '',
+      localidad: '',
+      provincia: '',
+      telefono: '',
+      coordenadas: ''
+    }
+  };
   centrosAtencion: CentroAtencion[] = [];
   selectedCentroAtencion!: CentroAtencion;
 
@@ -114,18 +128,32 @@ export class ConsultorioDetailComponent implements OnInit {
     const path = this.route.snapshot.routeConfig?.path;
 
     if (path === 'consultorios/new') {
-      this.consultorio = { id: 0, numero: 0, nombre: '', centroAtencion: { id: 0, nombre: '' } };
+      this.consultorio = {
+        id: 0,
+        numero: 0,
+        nombre: '',
+        centroAtencion: {
+          id: 0,
+          nombre: '',
+          code: '',
+          direccion: '',
+          localidad: '',
+          provincia: '',
+          telefono: '',
+          coordenadas: ''
+        }
+      };
     } else {
       const id = this.route.snapshot.paramMap.get('id')!;
-      this.consultorioService.getById(+id).subscribe((data) => {
-        this.consultorio = data; // Asignar el objeto completo
-        this.selectedCentroAtencion = data.centroAtencion; // Asignar el Centro de Atención seleccionado
+      this.consultorioService.getById(+id).subscribe((dataPackage) => {
+        this.consultorio = dataPackage.data;
+        this.selectedCentroAtencion = this.consultorio.centroAtencion;
       });
     }
   }
 
   getCentrosAtencion(): void {
-    this.centroAtencionService.getAll().subscribe((res) => {
+    this.centroAtencionService.getAll().subscribe((res: any) => {
       this.centrosAtencion = res.data as CentroAtencion[];
     });
   }
@@ -142,7 +170,7 @@ export class ConsultorioDetailComponent implements OnInit {
       )
     );
 
-  formatter = (x: CentroAtencion) => x.name;
+  formatter = (x: CentroAtencion) => x.nombre;
 
   onCentroAtencionSelected(centroAtencion: CentroAtencion): void {
     this.selectedCentroAtencion = centroAtencion;

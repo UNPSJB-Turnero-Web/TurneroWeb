@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { ConsultorioService, Consultorio } from './consultorio.service';
+import { Consultorio } from './consultorio';
+import { ConsultorioService } from './consultorio.service';
 import { ModalService } from '../modal/modal.service';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';

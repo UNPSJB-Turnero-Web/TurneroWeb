@@ -15,11 +15,11 @@ import { MapModalComponent } from '../modal/map-modal.component';
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent],
   template: `
 <div *ngIf="centroAtencion">
-  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.name | uppercase }}</h2>
+  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.nombre | uppercase }}</h2>
   <form #form="ngForm">
     <div class="form-group">
       <label for="name">Nombre:</label>
-      <input name="name" required placeholder="Nombre" class="form-control" [(ngModel)]="centroAtencion.name" [ngModelOptions]="{standalone: true}" #name="ngModel">
+      <input name="name" required placeholder="Nombre" class="form-control" [(ngModel)]="centroAtencion.nombre" [ngModelOptions]="{standalone: true}" #name="ngModel">
       <div *ngIf="name.invalid && (name.dirty || name.touched)" class="alert">
         <div *ngIf="name.errors?.['required']">
           El nombre del centro es requerido
@@ -181,11 +181,12 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
       // Configuración para un nuevo centro de atención
       this.centroAtencion = {
         id: 0, 
-        name: '',
+        nombre: '',
         code: '',
         direccion: '',
         localidad: '',
         provincia: '',
+        telefono: '', 
         coordenadas: ''
       } as CentroAtencion;
     } else if (path === 'centrosAtencion/:id') {

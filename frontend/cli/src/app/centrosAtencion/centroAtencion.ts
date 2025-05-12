@@ -1,6 +1,6 @@
 export interface CentroAtencion {
   id: number;
-  name: string;
+  nombre: string;
   code: string;
   direccion: string; // Dirección o coordenadas combinadas
   localidad: string;
