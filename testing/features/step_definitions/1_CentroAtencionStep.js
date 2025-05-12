@@ -19,14 +19,15 @@ Given('que existe un sistema de gestión de centros de atención', function () {
 
 When(
   'el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string}, {string} y {string}',
-  function (nombre, direccion, localidad, provincia, telefono, latitud, longitud) {
+  function (name, direccion, localidad, provincia, telefono, latitud, longitud) {
     const centroData = {
-      name: nombre || null,
+      name: name || null,
       direccion: direccion || null,
       localidad: localidad || null,
       provincia: provincia || null,
       telefono: telefono || null,
-      coordenadas: `${latitud},${longitud}` || null
+      latitud: parseFloat(latitud) || null, 
+      longitud: parseFloat(longitud) || null 
     };
 
     try {

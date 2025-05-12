@@ -19,7 +19,7 @@ Cuando el usuario solicita la lista de centros de atención
 Entonces el sistema responde con status_code 200 y status_text "OK" 
 Y el cuerpo de la respuesta contiene un array JSON con la siguiente estructura:
 
-       | nombre                      | direccion                               | localidad      | provincia | coordenadas       |
+  | Nombre                      | Direccion                               | Localidad      | Provincia | Coordenadas       |
   | Centro Médico Integral      | Calle 9 de Julio 123, Piso 2, Oficina A | Puerto Madryn  | Chubut    | -42.765, -65.034  |
   | Centro de Salud Rawson      | Avenida Libertad 456                    | Rawson         | Chubut    | -43.305, -65.102  |
   | Trelew Salud                | Rivadavia 789, Barrio Centro            | Trelew         | Chubut    | -43.252, -65.308  |

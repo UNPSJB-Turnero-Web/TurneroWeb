@@ -38,8 +38,8 @@ public class PacienteService {
 
         // Validaciones para evitar duplicados
         if (paciente.getId() == 0) {
-            if (repository.existsByDni(paciente.getDNI())) { 
-                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDNI());
+            if (repository.existsByDni(paciente.getDni())) { 
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
         } else {
             Paciente existente = repository.findById(paciente.getId()).orElse(null);
@@ -47,9 +47,9 @@ public class PacienteService {
                 throw new IllegalStateException("No existe el paciente que se intenta modificar.");
             }
 
-            if (!existente.getDNI().equals(paciente.getDNI()) && 
-                    repository.existsByDni(paciente.getDNI())) { 
-                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDNI());
+            if (!existente.getDni().equals(paciente.getDni()) && 
+                    repository.existsByDni(paciente.getDni())) { 
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
         }
 
@@ -71,7 +71,7 @@ public class PacienteService {
         dto.setId(paciente.getId());
         dto.setNombre(paciente.getNombre());
         dto.setApellido(paciente.getApellido());
-        dto.setDNI(paciente.getDNI()); 
+        dto.setDni(paciente.getDni()); 
         dto.setFechaNacimiento(paciente.getFechaNacimiento());
         // Mapear la relación con ObraSocial
         if (paciente.getObraSocial() != null) {
@@ -89,7 +89,7 @@ public class PacienteService {
         paciente.setId(dto.getId());
         paciente.setNombre(dto.getNombre());
         paciente.setApellido(dto.getApellido());
-        paciente.setDNI(dto.getDNI()); 
+        paciente.setDni(dto.getDni()); 
         paciente.setFechaNacimiento(dto.getFechaNacimiento());
         if (dto.getObraSocial() != null) {
             ObraSocial obraSocial = new ObraSocial();

@@ -19,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AttributeOverride(name = "DNI", column = @Column(name = "DNI", unique = true, nullable = false))
+@AttributeOverride(name = "dni", column = @Column(name = "dni", unique = true, nullable = false))
 public class Paciente extends Persona {
 
     @Id

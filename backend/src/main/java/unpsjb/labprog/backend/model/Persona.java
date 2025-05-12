@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,5 +16,5 @@ public abstract class Persona {
     private String apellido;
 
     @Column(unique = true, nullable = false)
-    private Long DNI;
+    private Long dni;
 }

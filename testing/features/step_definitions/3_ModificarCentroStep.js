@@ -8,16 +8,21 @@ Given('que existen centros de atención creados en el sistema', function () {
 
 Given('los siguientes centros de atención han sido registrados:', function (dataTable) {
   const centros = dataTable.hashes();
-  
+
   centros.forEach(centro => {
     const centroData = {
-      name: centro.Nombre,
-      direccion: centro.Dirección,
-      localidad: centro.Localidad,
-      provincia: centro.Provincia,
-      telefono: centro.Teléfono,
-      coordenadas: centro.Coordenadas
+      name: centro.Nombre ? centro.Nombre.trim() : null,
+      direccion: centro.Dirección ? centro.Dirección.trim() : null,
+      localidad: centro.Localidad ? centro.Localidad.trim() : null,
+      provincia: centro.Provincia ? centro.Provincia.trim() : null,
+      telefono: centro.Teléfono ? centro.Teléfono.trim() : null,
+      coordenadas: centro.Coordenadas ? centro.Coordenadas.trim() : null
     };
+
+    if (!centroData.name || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || !centroData.coordenadas) {
+      throw new Error('Faltan datos obligatorios para registrar el centro de atención.');
+    }
+
     console.log('📥 Centro registrado:', centroData);
 
     const res = request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
@@ -28,29 +33,59 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
 When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentroActual, dataTable) {
   const atributos = dataTable.hashes()[0];
 
+  const name = atributos.Nombre ? atributos.Nombre.trim() : null;
+  const direccion = atributos.Dirección ? atributos.Dirección.trim() : null;
+  const localidad = atributos.Localidad ? atributos.Localidad.trim() : null;
+  const provincia = atributos.Provincia ? atributos.Provincia.trim() : null;
+  const telefono = atributos.Teléfono ? atributos.Teléfono.trim() : null;
+  const coordenadas = atributos.Coordenadas ? atributos.Coordenadas.trim() : null;
+
+  if (!name || !direccion || !localidad || !provincia || !telefono || !coordenadas) {
+    throw new Error('Faltan datos obligatorios para modificar el centro de atención.');
+  }
+
+  // Separar latitud y longitud
+  const [latitud, longitud] = coordenadas.split(',').map(coord => parseFloat(coord.trim()));
+
+  if (isNaN(latitud) || isNaN(longitud)) {
+    throw new Error(`Las coordenadas "${coordenadas}" no tienen un formato válido.`);
+  }
+
+  // Buscar el centro de atención existente
   const resBuscar = request('GET', 'http://backend:8080/centrosAtencion');
   const listaCentros = JSON.parse(resBuscar.getBody('utf8')).data;
 
-  const centroExistente = listaCentros.find(c => 
-    c.name.trim().toLowerCase() === nombreCentroActual.replace(/"/g, '').trim().toLowerCase()
+  console.log('📋 Lista de centros devuelta por el backend:', listaCentros);
+
+  const centroExistente = listaCentros.find(c =>
+    c.Nombre.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
   );
 
   if (!centroExistente) {
-    throw new Error(`No se encontró el centro con nombre: ${nombreCentroActual}`);
+    console.error('❌ No se encontró el centro en la lista:', nombreCentroActual);
+    throw new Error(`No se encontró el centro con Nombre: ${nombreCentroActual}`);
   }
 
+  if (!centroExistente.id) {
+    console.error('❌ El centro encontrado no tiene un ID válido:', centroExistente);
+    throw new Error('El centro encontrado no tiene un ID válido.');
+  }
+
+  // Preparar los datos para la actualización
   const centroData = {
     id: centroExistente.id,
-    name: atributos.Nombre.replace(/"/g, '').trim(),
-    direccion: atributos.Dirección.replace(/"/g, '').trim(),
-    localidad: atributos.Localidad.replace(/"/g, '').trim(),
-    provincia: atributos.Provincia.replace(/"/g, '').trim(),
-    telefono: atributos.Teléfono.replace(/"/g, '').trim(),
-    coordenadas: atributos.Coordenadas.replace(/"/g, '').trim()
+    name,
+    direccion,
+    localidad,
+    provincia,
+    telefono,
+    latitud, // Enviar latitud como campo separado
+    longitud // Enviar longitud como campo separado
   };
 
   console.log('✏️ Modificando centro:', centroData);
 
+  // Enviar la solicitud al backend
   try {
     const res = request('PUT', 'http://backend:8080/centrosAtencion', { json: centroData });
     this.response = JSON.parse(res.getBody('utf8'));
@@ -69,6 +104,9 @@ When('el administrador modifica los datos del centro de atención {string} con l
 });
 
 Then('el sistema responde con {int} y {string} para el centro de atención', function (expectedStatus, expectedText) {
-  assert.strictEqual(this.response.status_code, expectedStatus, `Esperado ${expectedStatus}, pero fue ${this.response.status_code}`);
+  if (this.statusCode !== expectedStatus) {
+    console.error('❌ Error del backend:', this.response);
+  }
+  assert.strictEqual(this.statusCode, expectedStatus, `Esperado ${expectedStatus}, pero fue ${this.statusCode}`);
   assert.strictEqual(this.response.status_text.trim(), expectedText.trim(), `Esperado "${expectedText}", pero fue "${this.response.status_text}"`);
 });
