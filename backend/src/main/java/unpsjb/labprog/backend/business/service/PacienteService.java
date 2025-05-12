@@ -28,7 +28,7 @@ public class PacienteService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<PacienteDTO> findById(int id) {
+    public Optional<PacienteDTO> findById(Long id) {
         return repository.findById(id).map(this::toDTO);
     }
 
@@ -38,8 +38,8 @@ public class PacienteService {
 
         // Validaciones para evitar duplicados
         if (paciente.getId() == 0) {
-            if (repository.existsByDni(paciente.getDni())) {
-                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
+            if (repository.existsByDni(paciente.getDNI())) { 
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDNI());
             }
         } else {
             Paciente existente = repository.findById(paciente.getId()).orElse(null);
@@ -47,9 +47,9 @@ public class PacienteService {
                 throw new IllegalStateException("No existe el paciente que se intenta modificar.");
             }
 
-            if (!existente.getDni().equalsIgnoreCase(paciente.getDni()) &&
-                    repository.existsByDni(paciente.getDni())) {
-                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
+            if (!existente.getDNI().equals(paciente.getDNI()) && 
+                    repository.existsByDni(paciente.getDNI())) { 
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDNI());
             }
         }
 
@@ -62,7 +62,7 @@ public class PacienteService {
     }
 
     @Transactional
-    public void delete(int id) {
+    public void delete(Long id) {
         repository.deleteById(id);
     }
 
@@ -71,7 +71,7 @@ public class PacienteService {
         dto.setId(paciente.getId());
         dto.setNombre(paciente.getNombre());
         dto.setApellido(paciente.getApellido());
-        dto.setDNI(paciente.getDNI());
+        dto.setDNI(paciente.getDNI()); 
         dto.setFechaNacimiento(paciente.getFechaNacimiento());
         // Mapear la relación con ObraSocial
         if (paciente.getObraSocial() != null) {
@@ -89,7 +89,7 @@ public class PacienteService {
         paciente.setId(dto.getId());
         paciente.setNombre(dto.getNombre());
         paciente.setApellido(dto.getApellido());
-        paciente.setDNI(dto.getDNI());
+        paciente.setDNI(dto.getDNI()); 
         paciente.setFechaNacimiento(dto.getFechaNacimiento());
         if (dto.getObraSocial() != null) {
             ObraSocial obraSocial = new ObraSocial();

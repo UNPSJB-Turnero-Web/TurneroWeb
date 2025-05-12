@@ -15,5 +15,5 @@ public abstract class Persona {
     private String apellido;
 
     @Column(unique = true, nullable = false)
-    private String dni;
+    private Long DNI;
 }

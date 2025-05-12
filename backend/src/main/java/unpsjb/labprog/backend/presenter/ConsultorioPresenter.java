@@ -45,10 +45,8 @@ public class ConsultorioPresenter {
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        // Obtener la página de consultorios
         var pageResult = service.findByPage(page, size);
 
-        // Mapear el contenido de la página
         List<Map<String, Object>> consultoriosMapeados = pageResult.getContent().stream().map(c -> {
             Map<String, Object> map = objectMapper.convertValue(c, Map.class);
             if (c.getCentroAtencion() != null) {
@@ -59,7 +57,6 @@ public class ConsultorioPresenter {
             return map;
         }).toList();
 
-        // Crear la respuesta con los metadatos de paginación
         Map<String, Object> response = Map.of(
                 "content", consultoriosMapeados,
                 "totalPages", pageResult.getTotalPages(),
@@ -145,13 +142,12 @@ public class ConsultorioPresenter {
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
         dto.setName(c.getName());
-        // mapeo centro…
-        CentroAtencion centro = c.getCentroAtencion();
-        CentroAtencionDTO cdto = new CentroAtencionDTO();
-        cdto.setId(centro.getId());
-        cdto.setName(centro.getName());
-        // …
-        dto.setCentroAtencion(cdto);
+        if (c.getCentroAtencion() != null) {
+            CentroAtencionDTO cdto = new CentroAtencionDTO();
+            cdto.setId(c.getCentroAtencion().getId());
+            cdto.setName(c.getCentroAtencion().getName());
+            dto.setCentroAtencion(cdto);
+        }
         return dto;
     }
 

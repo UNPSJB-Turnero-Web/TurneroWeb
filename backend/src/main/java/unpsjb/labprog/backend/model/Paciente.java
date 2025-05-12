@@ -2,6 +2,7 @@ package unpsjb.labprog.backend.model;
 
 import java.util.Date;
 
+import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,14 +19,13 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AttributeOverride(name = "DNI", column = @Column(name = "DNI", unique = true, nullable = false))
 public class Paciente extends Persona {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
-    @Column(unique = true)
-    private int DNI;
 
     private String nombre;
     private String apellido;

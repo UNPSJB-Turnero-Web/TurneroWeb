@@ -11,15 +11,13 @@ import lombok.Setter;
 public class TurnoDTO {
     private Long id;
     private LocalDate fecha;
-    private LocalTime horaInicio;
-    private LocalTime horaFin;
-    private int pacienteId; // Campo para el ID del paciente
-    private int medicoId;
-    private String estado; // PENDIENTE, CONFIRMADO, CANCELADO
+    private LocalTime horaInicio; // Hora de inicio del turno
+    private LocalTime horaFin;    // Hora de fin del turno
+    private Long pacienteId;      // ID del paciente
+    private Long medicoId;        // ID del médico
+    private String estado;        // Estado del turno (PENDIENTE, CONFIRMADO, CANCELADO)
     private EsquemaTurnoDTO esquemaTurno;
     private PacienteDTO paciente;
     private MedicoDTO medico;
     private CentroAtencionDTO centroAtencion;
-
-    // Getters y Setters
 }

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Turno;
+import unpsjb.labprog.backend.model.EstadoTurno;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,9 +58,11 @@ public class TurnoService {
         TurnoDTO dto = new TurnoDTO();
         dto.setId(turno.getId());
         dto.setFecha(turno.getFecha());
-        dto.setHora(turno.getHora());
+        dto.setHoraInicio(turno.getHoraInicio());
+        dto.setHoraFin(turno.getHoraFin());
         dto.setPacienteId(turno.getPaciente().getId());
         dto.setMedicoId(turno.getMedico().getId());
+        dto.setEstado(turno.getEstado().name());
         return dto;
     }
 
@@ -67,8 +70,9 @@ public class TurnoService {
         Turno turno = new Turno();
         turno.setId(dto.getId());
         turno.setFecha(dto.getFecha());
-        turno.setHora(dto.getHora());
-        // Aquí debes cargar las entidades relacionadas (Paciente y Medico) si es necesario
+        turno.setHoraInicio(dto.getHoraInicio());
+        turno.setHoraFin(dto.getHoraFin());
+        turno.setEstado(EstadoTurno.valueOf(dto.getEstado()));
         return turno;
     }
 }

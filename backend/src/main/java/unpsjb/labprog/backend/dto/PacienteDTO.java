@@ -8,8 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PacienteDTO {
-    private int id;
-    private int DNI;
+    private Long id;
+    private Long DNI;
     private String nombre;
     private String apellido;
     private String email;
