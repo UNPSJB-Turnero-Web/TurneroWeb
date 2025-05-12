@@ -14,12 +14,12 @@ import { RouterOutlet } from '@angular/router';
         <h5 class="my-0 font-weight-bold text-primary">Turnero Web</h5>
       </a>
       <nav class="nav">
-        <a class="nav-link text-dark fw-semibold" href="/turnos">Turnos</a>
-        <a class="nav-link text-dark fw-semibold" href="/especialidades">Especialidades</a>
-        <a class="nav-link text-dark fw-semibold" href="/agenda">Agenda</a>
-        <a class="nav-link text-dark fw-semibold" href="/centrosAtencion">Centro de Atención</a>
-        <a class="nav-link text-dark fw-semibold" href="/consultorios">Consultorios</a>
-        <a class="nav-link text-dark fw-semibold" href="/medicos">Médicos</a>
+      <a class="nav-link text-dark fw-semibold" href="/centrosAtencion">Centro de Atención</a>
+      <a class="nav-link text-dark fw-semibold" href="/consultorios">Consultorios</a>
+      <a class="nav-link text-dark fw-semibold" href="/especialidades">Especialidades</a>
+      <a class="nav-link text-dark fw-semibold" href="/agenda">Agenda</a>
+      <a class="nav-link text-dark fw-semibold" href="/medicos">Médicos</a>
+      <a class="nav-link text-dark fw-semibold" href="/turnos">Turnos</a>
       </nav>
     </div>
 

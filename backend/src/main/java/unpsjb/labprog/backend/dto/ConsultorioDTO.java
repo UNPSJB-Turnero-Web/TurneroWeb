@@ -9,6 +9,6 @@ import lombok.Setter;
 public class ConsultorioDTO {
   private Long   id;
   private int    numero;
-  private String nombre;
+  private String name;
   private CentroAtencionDTO centroAtencion;
 }

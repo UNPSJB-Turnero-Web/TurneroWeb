@@ -3,7 +3,6 @@ package unpsjb.labprog.backend.business.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -40,7 +39,7 @@ public class ConsultorioService {
         ConsultorioDTO dto = new ConsultorioDTO();
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
-        dto.setNombre(c.getNombre());
+        dto.setName(c.getName());
         // Mapeo del Centro de Atención
         CentroAtencion centro = c.getCentroAtencion();
         CentroAtencionDTO centroDto = new CentroAtencionDTO();
@@ -80,7 +79,7 @@ public class ConsultorioService {
             if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
                 throw new IllegalStateException("El número de consultorio ya está registrado");
             }
-            if (repository.existsByNombreAndCentroAtencion(consultorio.getNombre(), centro)) {
+            if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
                 throw new IllegalStateException("El nombre del consultorio ya está registrado");
             }
         } else {
@@ -95,8 +94,8 @@ public class ConsultorioService {
                     throw new IllegalStateException("El número de consultorio ya está en uso");
                 }
             }
-            if (!existente.getNombre().equals(consultorio.getNombre())) {
-                if (repository.existsByNombreAndCentroAtencion(consultorio.getNombre(), centro)) {
+            if (!existente.getName().equals(consultorio.getName())) {
+                if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
                     throw new IllegalStateException("El nombre del consultorio ya está registrado");
                 }
             }
@@ -130,7 +129,7 @@ public class ConsultorioService {
         try {
             List<Consultorio> consultorios = findByCentroAtencion(centroNombre);
             var data = consultorios.stream()
-                .map(c -> Map.of("numero", c.getNumero(), "nombre", c.getNombre()))
+                .map(c -> Map.of("numero", c.getNumero(), "nombre", c.getName()))
                 .toList();
             return ResponseEntity.ok(Map.of("status_code", 200, "data", data));
         } catch (Exception e) {

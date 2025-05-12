@@ -15,7 +15,7 @@ public interface ConsultorioRepository extends JpaRepository<Consultorio, Long> 
 
     boolean existsByNumeroAndCentroAtencion(int numero, CentroAtencion centro);
 
-    boolean existsByNombreAndCentroAtencion(String nombre, CentroAtencion centro);
+    boolean existsByNameAndCentroAtencion(String name, CentroAtencion centro);
 
-    List<Consultorio> findByNombreContainingIgnoreCase(String nombre);
+    List<Consultorio> findByNameContainingIgnoreCase(String term);
 }

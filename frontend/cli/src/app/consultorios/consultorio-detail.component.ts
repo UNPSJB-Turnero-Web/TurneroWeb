@@ -1,36 +1,64 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule, Location, UpperCasePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, debounceTime, distinctUntilChanged, switchMap, map } from 'rxjs';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule, Location, UpperCasePipe } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import { NgbTypeaheadModule } from "@ng-bootstrap/ng-bootstrap";
+import {
+  Observable,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  map,
+} from "rxjs";
 
-import { Consultorio } from './consultorio';
-import { CentroAtencion } from '../centrosAtencion/centroAtencion';
-import { ConsultorioService } from './consultorio.service';
-import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
-import { ModalService } from '../modal/modal.service';
+import { Consultorio } from "./consultorio";
+import { CentroAtencion } from "../centrosAtencion/centroAtencion";
+import { ConsultorioService } from "./consultorio.service";
+import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service";
+import { ModalService } from "../modal/modal.service";
 
 @Component({
-  selector: 'app-consultorio-detail',
+  selector: "app-consultorio-detail",
   standalone: true,
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
   template: `
     <div *ngIf="consultorio">
-      <h2>{{ consultorio.id === 0 ? 'Nuevo Consultorio' : (consultorio.name | uppercase) }}</h2>
+      <h2>
+        {{
+          consultorio.id === 0
+            ? "Nuevo Consultorio"
+            : (consultorio.name | uppercase)
+        }}
+      </h2>
       <form #form="ngForm">
         <!-- Número -->
         <div class="form-group">
           <label for="numero">Número:</label>
           <input
+            type="number"
             name="numero"
             required
             placeholder="Número"
             class="form-control"
             [(ngModel)]="consultorio.numero"
             #numero="ngModel"
+            min="1"
           />
-          <div *ngIf="numero.invalid && (numero.dirty || numero.touched)" class="alert">
+          <div
+            *ngIf="numero.invalid && (numero.dirty || numero.touched)"
+            class="alert"
+          >
+            <div *ngIf="numero.errors?.['required']">
+              El número del consultorio es requerido
+            </div>
+            <div *ngIf="numero.errors?.['min']">
+              El número debe ser mayor o igual a 1
+            </div>
+          </div>
+          <div
+            *ngIf="numero.invalid && (numero.dirty || numero.touched)"
+            class="alert"
+          >
             <div *ngIf="numero.errors?.['required']">
               El número del consultorio es requerido
             </div>
@@ -48,7 +76,10 @@ import { ModalService } from '../modal/modal.service';
             [(ngModel)]="consultorio.name"
             #nombre="ngModel"
           />
-          <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="alert">
+          <div
+            *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)"
+            class="alert"
+          >
             <div *ngIf="nombre.errors?.['required']">
               El nombre del consultorio es requerido
             </div>
@@ -72,20 +103,24 @@ import { ModalService } from '../modal/modal.service';
 
         <!-- Botones -->
         <button (click)="goBack()" class="btn btn-danger me-2">Atrás</button>
-        <button (click)="save()" class="btn btn-success" [disabled]="form.invalid">
+        <button
+          (click)="save()"
+          class="btn btn-success"
+          [disabled]="form.invalid"
+        >
           Guardar
         </button>
       </form>
     </div>
   `,
-  styles: []
+  styles: [],
 })
 export class ConsultorioDetailComponent implements OnInit {
   consultorio: Consultorio = {
     id: 0,
     numero: 0,
-    name: '',
-    centroAtencion: {} as CentroAtencion
+    name: "",
+    centroAtencion: {} as CentroAtencion,
   };
   centrosAtencion: CentroAtencion[] = [];
   selectedCentroAtencion!: CentroAtencion;
@@ -110,7 +145,10 @@ export class ConsultorioDetailComponent implements OnInit {
 
   save(): void {
     if (!this.selectedCentroAtencion?.id) {
-      this.modalService.alert('Error', 'Debe seleccionar un Centro de Atención válido.');
+      this.modalService.alert(
+        "Error",
+        "Debe seleccionar un Centro de Atención válido."
+      );
       return;
     }
 
@@ -121,20 +159,26 @@ export class ConsultorioDetailComponent implements OnInit {
       : this.consultorioService.create(this.consultorio);
 
     op.subscribe({
-      next: () => this.router.navigate(['/consultorios']),
-      error: () => this.modalService.alert('Error', 'No se pudo guardar el consultorio.')
+      next: () => this.router.navigate(["/consultorios"]),
+      error: () =>
+        this.modalService.alert("Error", "No se pudo guardar el consultorio."),
     });
   }
 
   private loadConsultorio(): void {
     const path = this.route.snapshot.routeConfig?.path;
-    if (path === 'consultorios/new') {
+    if (path === "consultorios/new") {
       // Nuevo
-      this.consultorio = { id: 0, numero: 0, name: '', centroAtencion: {} as CentroAtencion };
+      this.consultorio = {
+        id: 0,
+        numero: 0,
+        name: "",
+        centroAtencion: {} as CentroAtencion,
+      };
     } else {
       // Edición
-      const id = Number(this.route.snapshot.paramMap.get('id'));
-      this.consultorioService.getById(id).subscribe(pkg => {
+      const id = Number(this.route.snapshot.paramMap.get("id"));
+      this.consultorioService.getById(id).subscribe((pkg) => {
         this.consultorio = pkg.data;
         this.selectedCentroAtencion = this.consultorio.centroAtencion;
       });
@@ -142,7 +186,7 @@ export class ConsultorioDetailComponent implements OnInit {
   }
 
   private getCentrosAtencion(): void {
-    this.centroAtencionService.getAll().subscribe(res => {
+    this.centroAtencionService.getAll().subscribe((res) => {
       this.centrosAtencion = res.data;
     });
   }
@@ -152,10 +196,8 @@ export class ConsultorioDetailComponent implements OnInit {
     text$.pipe(
       debounceTime(300),
       distinctUntilChanged(),
-      switchMap(term =>
-        this.centroAtencionService.search(term).pipe(
-          map(resp => resp.data)
-        )
+      switchMap((term) =>
+        this.centroAtencionService.search(term).pipe(map((resp) => resp.data))
       )
     );
 

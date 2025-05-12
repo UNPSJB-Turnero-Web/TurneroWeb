@@ -31,7 +31,7 @@ public class CentroAtencionPresenter {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
- List<CentroAtencionDTO> dtos = service.findAll();
+        List<CentroAtencionDTO> dtos = service.findAll();
         List<Map<String, Object>> centrosMapeados = dtos.stream().map(c -> {
             // Map automático con ObjectMapper
             Map<String, Object> map = objectMapper.convertValue(c, Map.class);

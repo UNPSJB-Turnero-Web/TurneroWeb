@@ -58,7 +58,7 @@ public class ConsultorioPresenter {
             if (consultorio.getNumero() <= 0) {
                 return Response.error(null, "El número del consultorio es requerido y debe ser mayor a 0.");
             }
-            if (consultorio.getNombre() == null || consultorio.getNombre().isBlank()) {
+            if (consultorio.getName() == null || consultorio.getName().isBlank()) {
                 return Response.error(null, "El nombre del consultorio es requerido.");
             }
             if (consultorio.getCentroAtencion() == null 
@@ -107,7 +107,7 @@ public class ConsultorioPresenter {
             if (consultorio.getNumero() == null || consultorio.getNumero() <= 0) {
                 return Response.error(null, "El número del consultorio es requerido y debe ser mayor a 0.");
             }
-            if (consultorio.getNombre() == null || consultorio.getNombre().isBlank()) {
+            if (consultorio.getName() == null || consultorio.getName().isBlank()) {
                 return Response.error(null, "El nombre del consultorio es requerido.");
             }
             if (consultorio.getCentroAtencion() == null 
