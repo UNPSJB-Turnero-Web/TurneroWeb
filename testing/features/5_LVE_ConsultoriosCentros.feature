@@ -3,6 +3,16 @@ Característica: Gestión de Consultorios en Centros de Atención
 
 Antecedentes:
   Dado que existe un sistema de gestión de centros de atención
+  Y los siguientes centros de atención han sido registrados test5:
+    | Nombre                     | Dirección                               | Localidad     | Provincia | Teléfono   | Coordenadas      |
+    | Centro Médico Integral     | Calle 9 de Julio 123, Piso 2, Oficina A | Puerto Madryn | Chubut    | 1234567890 | -42.765,-65.034  |
+    | Clinica Rawson             | Avenida Libertad 456                    | Rawson        | Chubut    | 9876543210 | -43.305,-65.102  |
+    | Trelew Salud               | Rivadavia 789, Barrio Centro            | Trelew        | Chubut    | 1122334455 | -43.252,-65.308  |
+    | Centro Médico Esperanza    | Belgrano 753                            | Trelew        | Chubut    | 2233445566 | -43.272,-65.311  |
+    | Centro de Rehabilitación   | Hipólito Yrigoyen 852                   | Puerto Madryn | Chubut    | 3344556677 | -42.755,-65.044  |
+    | Instituto Médico Patagonia | San Martín 1025, 1er Piso               | Trelew        | Chubut    | 4455667788 | -43.248,-65.301  |
+    | Centro Odontológico Rawson | Gobernador Gallina 789                  | Rawson        | Chubut    | 5566778899 | -43.322,-65.123  |
+    | Centro Médico del Este     | Avenida Fontana 987                     | Puerto Madryn | Chubut    | 6677889900 | -42.777,-65.011  |
 
 Esquema del escenario: Creación de consultorios exitosos
   Dado que existe un centro de atención llamado "<centro_atencion>"
@@ -11,17 +21,17 @@ Esquema del escenario: Creación de consultorios exitosos
 
 Ejemplos: Consultorios exitosos
   | centro_atencion               | numero | nombre_consultorio        | status_code | status_text                         |
-  | Centro Médico Integral        | 101    | Consultorio Norte         | 200         | OK   |
-  | Centro Médico Integral        | 102    | Consultorio Sur           | 200         | OK   |
-  | Centro Médico Integral        | 103    | Consultorio Este          | 200         | OK   |
-  | Clinica Rawson                | 201    | Consultorio Cardiología   | 200         | OK   |
-  | Trelew Salud                  | 301    | Consultorio 1             | 200         | OK   |
-  | Centro Médico Esperanza       | 506    | Consultorio 6             | 200         | OK   |
-  | Clinica Rawson                | 607    | Consultorio 7             | 200         | OK   |
-  | Centro de Rehabilitación      | 705    | Consultorio 5             | 200         | OK   |
-  | Instituto Médico Patagonia    | 805    | Consultorio 5             | 200         | OK   |
-  | Centro Odontológico Rawson    | 905    | Consultorio 5             | 200         | OK   |
-  | Centro Médico del Este        | 1007   | Consultorio 7             | 200         | OK   |
+  | Centro Médico Integral        | 101    | Consultorio Norte         | 200         | Consultorios creados correctamente   |
+  | Centro Médico Integral        | 102    | Consultorio Sur           | 200         | Consultorios creados correctamente   |
+  | Centro Médico Integral        | 103    | Consultorio Este          | 200         | Consultorios creados correctamente   |
+  | Clinica Rawson                | 201    | Consultorio Cardiología   | 200         | Consultorios creados correctamente   |
+  | Trelew Salud                  | 301    | Consultorio 1             | 200         | Consultorios creados correctamente   |
+  | Centro Médico Esperanza       | 506    | Consultorio 6             | 200         | Consultorios creados correctamente   |
+  | Clinica Rawson                | 607    | Consultorio 7             | 200         | Consultorios creados correctamente   |
+  | Centro de Rehabilitación      | 705    | Consultorio 5             | 200         | Consultorios creados correctamente   |
+  | Instituto Médico Patagonia    | 805    | Consultorio 5             | 200         | Consultorios creados correctamente   |
+  | Centro Odontológico Rawson    | 905    | Consultorio 5             | 200         | Consultorios creados correctamente   |
+  | Centro Médico del Este        | 1007   | Consultorio 7             | 200         | Consultorios creados correctamente   |
 
 Esquema del escenario: Creación de consultorios con conflicto
   Dado que existe un centro de atención llamado "<centro_atencion>"
@@ -41,7 +51,7 @@ Escenario: Listar consultorios de un centro de atención
     """
     {
       "status_code": 200,
-      "status_text": "OK",
+      "status_text": "Consultorios recuperados correctamente",
       "data": [
         { "numero": 501, "nombre_consultorio": "Consultorio 1" },
         { "numero": 502, "nombre_consultorio": "Consultorio 2" },
@@ -60,7 +70,7 @@ Escenario: Listar todos los centros con sus consultorios
     """
     {
       "status_code": 200,
-      "status_text": "OK",
+      "status_text": "Consultorios recuperados correctamente",
       "data": [
         {
           "centro_atencion": "Centro Médico Integral",

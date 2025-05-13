@@ -14,15 +14,56 @@ BeforeAll(function() {
   }
 });
 
+// Step para poblar centros desde tabla (usalo en el Antecedente del feature)
+Given('los siguientes centros de atención han sido registrados test5:', function (dataTable) {
+  const centros = dataTable.hashes();
+
+  centros.forEach(centro => {
+    // Separar latitud y longitud si viene en "coordenadas"
+    let latitud = null, longitud = null;
+    if (centro.Coordenadas) {
+      const coords = centro.Coordenadas.split(',').map(x => parseFloat(x.trim()));
+      latitud = coords[0];
+      longitud = coords[1];
+    }
+
+    const centroData = {
+      name: centro.Nombre ? centro.Nombre.trim() : null,
+      direccion: centro.Dirección ? centro.Dirección.trim() : null,
+      localidad: centro.Localidad ? centro.Localidad.trim() : null,
+      provincia: centro.Provincia ? centro.Provincia.trim() : null,
+      telefono: centro.Teléfono ? centro.Teléfono.trim() : null,
+      latitud,
+      longitud
+    };
+
+    if (!centroData.name || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || latitud === null || longitud === null) {
+      throw new Error('Faltan datos obligatorios para registrar el centro de atención.');
+    }
+
+    const res = request('POST', `${BASE_URL}/centrosAtencion`, { json: centroData });
+    if (![200, 409].includes(res.statusCode)) {
+      throw new Error(`No se pudo crear el centro: ${centroData.name} (status ${res.statusCode})`);
+    }
+  });
+});
 
 Given('que existe un centro de atención llamado {string}', function(nombreCentro) {
-  this.centroNombre = nombreCentro;
+  // Intenta buscar el centro
   const res = request('GET', `${BASE_URL}/centrosAtencion`);
-  const centros = JSON.parse(res.getBody('utf8')).data;
-  const c = centros.find(x => x.name === nombreCentro);
+  let centros = [];
+  try {
+    centros = JSON.parse(res.getBody('utf8')).data;
+  } catch (e) {
+    throw new Error('No se pudo obtener la lista de centros');
+  }
+  let c = centros.find(x => x.name && x.name.trim().toLowerCase() === nombreCentro.trim().toLowerCase());
+
   if (!c) throw new Error(`No se encontró el centro: ${nombreCentro}`);
-  this.centroId = c.id; 
+  this.centroId = c.id;
+  this.centroNombre = nombreCentro;
 });
+
 Given('que existen múltiples centros de atención registrados', function () {
   // LA BD SE POPULA EN LOS TEST ANTERIORES
   return true;

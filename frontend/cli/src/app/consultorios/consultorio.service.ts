@@ -8,43 +8,43 @@ import { Consultorio } from './consultorio';
   providedIn: 'root'
 })
 export class ConsultorioService {
-  private baseUrl = 'rest/consultorios';
+  private consultoriosUrl = 'rest/consultorios';
 
   constructor(private http: HttpClient) {}
 
   /** Obtiene todos los consultorios */
   getAll(): Observable<DataPackage<Consultorio[]>> {
-    return this.http.get<DataPackage<Consultorio[]>>(this.baseUrl);
+    return this.http.get<DataPackage<Consultorio[]>>(this.consultoriosUrl);
   }
 
   /** Consulta un consultorio por ID */
   getById(id: number): Observable<DataPackage<Consultorio>> {
-    return this.http.get<DataPackage<Consultorio>>(`${this.baseUrl}/${id}`);
+    return this.http.get<DataPackage<Consultorio>>(`${this.consultoriosUrl}/${id}`);
   }
 
   /** Crea un nuevo consultorio */
   create(consultorio: Consultorio): Observable<DataPackage<Consultorio>> {
-    return this.http.post<DataPackage<Consultorio>>(this.baseUrl, consultorio);
+    return this.http.post<DataPackage<Consultorio>>(this.consultoriosUrl, consultorio);
   }
 
   /** Actualiza un consultorio existente */
   update(id: number, consultorio: Consultorio): Observable<DataPackage<Consultorio>> {
-    return this.http.put<DataPackage<Consultorio>>(`${this.baseUrl}/${id}`, consultorio);
+    return this.http.put<DataPackage<Consultorio>>(`${this.consultoriosUrl}/${id}`, consultorio);
   }
 
   /** Elimina un consultorio */
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.consultoriosUrl}/${id}`);
   }
 
   /** Lista los consultorios de un Centro de Atención específico */
   listByCentro(centroNombre: string): Observable<DataPackage<Consultorio[]>> {
     return this.http.get<DataPackage<Consultorio[]>>(
-      `${this.baseUrl}/${encodeURIComponent(centroNombre)}/listar`
+      `${this.consultoriosUrl}/${encodeURIComponent(centroNombre)}/listar`
     );
   }
-  getPage(page: number, size: number): Observable<{content: Consultorio[], totalElements: number}> {
-    return this.http.get<{content: Consultorio[], totalElements: number}>(`/rest/consultorios/page?page=${page}&size=${size}`);
+
+  byPage(page: number, size: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.consultoriosUrl}/page?page=${page-1}&size=${size}`);
   }
-  
 }
