@@ -29,16 +29,21 @@ import { PaginationComponent } from '../pagination/pagination.component';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let c of resultsPage.content">
+          <tr *ngFor="let c of resultsPage.content" 
+              (click)="goToDetail(c.id)" 
+              style="cursor:pointer;">
             <td>{{ c.numero }}</td>
             <td>{{ c.centroAtencion }}</td>
             <td>{{ c.name | uppercase }}</td>
-
             <td>
-              <a [routerLink]="['/consultorios', c.id]" class="btn btn-sm btn-outline-primary">
+              <a 
+                (click)="goToEdit(c.id); $event.stopPropagation()" 
+                class="btn btn-sm btn-outline-primary">
                 <i class="fa fa-pencil"></i>
               </a>
-              <a (click)="confirmDelete(c.id)" class="btn btn-sm btn-outline-danger ms-1">
+              <a 
+                (click)="confirmDelete(c.id); $event.stopPropagation()" 
+                class="btn btn-sm btn-outline-danger ms-1">
                 <i class="fa fa-remove"></i>
               </a>
             </td>
@@ -100,5 +105,13 @@ export class ConsultoriosComponent implements OnInit {
       () => this.getConsultorios(),              // recarga la página actual
       () => this.modal.alert('Error', 'No se pudo eliminar el consultorio')
     );
+  }
+
+  goToDetail(id: number): void {
+    this.router.navigate(['/consultorios', id]);
+  }
+
+  goToEdit(id: number): void {
+    this.router.navigate(['/consultorios', id], { queryParams: { edit: true } });
   }
 }

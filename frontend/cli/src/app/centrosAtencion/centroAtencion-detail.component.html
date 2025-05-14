@@ -1,0 +1,104 @@
+<div *ngIf="centroAtencion">
+
+  <!-- MODO VISTA -->
+  <div *ngIf="!modoEdicion">
+    <h2>Centro de Atención: {{ centroAtencion.name }}</h2>
+    <p><b>Código:</b> {{ centroAtencion.code }}</p>
+    <p><b>Dirección:</b> {{ centroAtencion.direccion }}</p>
+    <p><b>Localidad:</b> {{ centroAtencion.localidad }}</p>
+    <p><b>Provincia:</b> {{ centroAtencion.provincia }}</p>
+    <p><b>Teléfono:</b> {{ centroAtencion.telefono }}</p>
+    <p><b>Coordenadas:</b> {{ centroAtencion.latitud }},{{ centroAtencion.longitud }}</p>
+    <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
+    <button type="button" class="btn btn-secondary" (click)="goBack()">Cancelar</button>
+  </div>
+
+  <!-- MODO EDICIÓN -->
+  <form *ngIf="modoEdicion" #form="ngForm">
+    <h2>
+      <ng-container *ngIf="!centroAtencion.id || centroAtencion.id === 0; else editando">
+        Nuevo Centro de Atención
+      </ng-container>
+      <ng-template #editando>
+        Editando: {{ centroAtencion.name }}
+      </ng-template>
+    </h2>
+    <div class="form-group">
+      <label for="name">Nombre:</label>
+      <input name="name" required placeholder="Nombre" class="form-control" [(ngModel)]="centroAtencion.name"
+        [ngModelOptions]="{standalone: true}" #name="ngModel">
+      <div *ngIf="name.invalid && (name.dirty || name.touched)" class="alert">
+        <div *ngIf="name.errors?.['required']">
+          El nombre del centro es requerido
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="code">Código:</label>
+      <input name="code" placeholder="Código" class="form-control" [(ngModel)]="centroAtencion.code"
+        [ngModelOptions]="{standalone: true}">
+    </div>
+
+    <div class="form-group">
+      <label for="direccion">Dirección:</label>
+      <input name="direccion" required placeholder="Dirección" class="form-control"
+        [(ngModel)]="centroAtencion.direccion" [ngModelOptions]="{standalone: true}">
+    </div>
+
+    <div class="form-group">
+      <label for="localidad">Localidad:</label>
+      <input name="localidad" required placeholder="Localidad" class="form-control"
+        [(ngModel)]="centroAtencion.localidad" [ngModelOptions]="{standalone: true}">
+    </div>
+
+    <div class="form-group">
+      <label for="provincia">Provincia:</label>
+      <input name="provincia" required placeholder="Provincia" class="form-control"
+        [(ngModel)]="centroAtencion.provincia" [ngModelOptions]="{standalone: true}">
+    </div>
+    <div class="form-group">
+      <label for="telefono">Teléfono:</label>
+      <input name="telefono" placeholder="Teléfono" class="form-control" [(ngModel)]="centroAtencion.telefono"
+        [ngModelOptions]="{standalone: true}" pattern="^[0-9]*$" #telefono="ngModel" required>
+      <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="alert">
+        <div *ngIf="telefono.errors?.['pattern']">
+          Solo se permiten números en el teléfono.
+        </div>
+        <div *ngIf="telefono.errors?.['required']">
+          El teléfono es requerido.
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="coordenadas">Coordenadas:</label>
+      <input name="coordenadas" placeholder="latitud,longitud" class="form-control" [(ngModel)]="coordenadas"
+        [ngModelOptions]="{standalone: true}">
+    </div>
+    <div class="form-group mt-2 ">
+      <button type="button" class="btn btn-primary" (click)="toggleMap()">Marcar en el mapa</button>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button type="button" class="btn btn-secondary" (click)="goBack()">Cancelar</button> <button type="button"
+        (click)="save()" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">
+        Guardar
+      </button>
+      <!-- Solo muestra el botón si el centro ya existe -->
+      <button *ngIf="centroAtencion.id" type="button" (click)="remove(centroAtencion)" class="btn btn-outline-danger">
+        Eliminar
+      </button>
+    </div>
+  </form>
+</div>
+<app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
+
+<div *ngIf="consultorios.length > 0">
+  <h3>Consultorios asociados</h3>
+  <ul>
+    <li *ngFor="let c of consultorios">
+      {{ c.name }} (N° {{ c.numero }})
+    </li>
+  </ul>
+</div>

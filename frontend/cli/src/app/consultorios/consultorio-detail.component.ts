@@ -21,100 +21,7 @@ import { ModalService } from "../modal/modal.service";
   selector: "app-consultorio-detail",
   standalone: true,
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
-  template: `
-    <div *ngIf="consultorio">
-      <h2>
-        <ng-container *ngIf="consultorio.id && consultorio.id !== 0; else nuevo">
-          Editando consultorio: {{ consultorio.name }}
-        </ng-container>
-        <ng-template #nuevo>
-          Nuevo Consultorio
-        </ng-template>
-      </h2>
-      <form #form="ngForm">
-        <!-- Número -->
-        <div class="form-group">
-          <label for="numero">Número:</label>
-          <input
-            type="number"
-            name="numero"
-            required
-            placeholder="Número"
-            class="form-control"
-            [(ngModel)]="consultorio.numero"
-            #numero="ngModel"
-            min="1"
-          />
-          <div
-            *ngIf="numero.invalid && (numero.dirty || numero.touched)"
-            class="alert"
-          >
-            <div *ngIf="numero.errors?.['required']">
-              El número del consultorio es requerido
-            </div>
-            <div *ngIf="numero.errors?.['min']">
-              El número debe ser mayor o igual a 1
-            </div>
-          </div>
-          <div
-            *ngIf="numero.invalid && (numero.dirty || numero.touched)"
-            class="alert"
-          >
-            <div *ngIf="numero.errors?.['required']">
-              El número del consultorio es requerido
-            </div>
-          </div>
-        </div>
-
-        <!-- Nombre -->
-        <div class="form-group">
-          <label for="nombre">Nombre:</label>
-          <input
-            name="nombre"
-            required
-            placeholder="Nombre"
-            class="form-control"
-            [(ngModel)]="consultorio.name"
-            #nombre="ngModel"
-          />
-          <div
-            *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)"
-            class="alert"
-          >
-            <div *ngIf="nombre.errors?.['required']">
-              El nombre del consultorio es requerido
-            </div>
-          </div>
-        </div>
-
-        <!-- Centro de Atención (typeahead) -->
-        <div class="form-group">
-          <label for="centroAtencion">Centro de Atención:</label>
-          <input
-            name="centroAtencion"
-            required
-            class="form-control"
-            [ngbTypeahead]="searchCentrosAtencion"
-            [inputFormatter]="formatter"
-            [resultFormatter]="formatter"
-            [(ngModel)]="selectedCentroAtencion"
-            (selectItem)="onCentroAtencionSelected($event.item)"
-          />
-        </div>
-
-        <!-- Botones -->
-        <button (click)="goBack()" class="btn btn-danger me-2">Atrás</button>
-        <button
-          (click)="save()"
-          class="btn btn-success"
-          [disabled]="form.invalid || allFieldsEmpty()"
-        >
-          Guardar
-        </button>
-        <button *ngIf="consultorio.id" (click)="remove(consultorio)" class="btn btn-outline-danger">Eliminar</button>
-      </form>
-    </div>
-  `,
+  templateUrl: './consultorio-detail.component.html',
   styles: [],
 })
 export class ConsultorioDetailComponent implements OnInit {
@@ -137,8 +44,25 @@ export class ConsultorioDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const path = this.route.snapshot.routeConfig?.path;
+    if (path === "consultorios/new") {
+      // Nuevo consultorio
+      this.modoEdicion = true;
+      this.consultorio = {
+        id: 0,
+        numero: 0,
+        name: "",
+        centroAtencion: {} as CentroAtencion,
+      };
+      this.selectedCentroAtencion = undefined!;
+    } else {
+      // Edición o vista
+      this.route.queryParams.subscribe(params => {
+        this.modoEdicion = params['edit'] === 'true';
+      });
+      this.loadConsultorio();
+    }
     this.getCentrosAtencion();
-    this.loadConsultorio();
   }
 
   goBack(): void {
@@ -238,4 +162,11 @@ export class ConsultorioDetailComponent implements OnInit {
         });
       });
   }
+  modoEdicion = false;
+
+activarEdicion() {
+  this.modoEdicion = true;
+}
+
+
 }

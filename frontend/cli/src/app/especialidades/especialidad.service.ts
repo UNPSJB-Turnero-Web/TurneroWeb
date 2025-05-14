@@ -1,7 +1,7 @@
 // src/app/play-type/play-type.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Especialidad } from './especialidad';
 import { DataPackage } from '../data.package';
 
@@ -13,28 +13,38 @@ export class EspecialidadService {
 
   constructor(private http: HttpClient) {}
 
-  all(): Observable<DataPackage> {
-    return this.http.get<DataPackage>(this.url);
+  /** Obtiene todas las especialidades */
+  all(): Observable<DataPackage<Especialidad[]>> {
+    return this.http.get<DataPackage<Especialidad[]>>(this.url);
   }
 
-  get(id: number): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.url}/${id}`);
+  /** Obtiene una especialidad por ID */
+  get(id: number): Observable<DataPackage<Especialidad>> {
+    return this.http.get<DataPackage<Especialidad>>(`${this.url}/${id}`);
   }
 
-  save(especialidad: Especialidad): Observable<DataPackage> {
-    return especialidad.id
-      ? this.http.put<DataPackage>(this.url, especialidad)
-      : this.http.post<DataPackage>(this.url, especialidad);
+  /** Crea una nueva especialidad */
+  create(especialidad: Especialidad): Observable<DataPackage<Especialidad>> {
+    return this.http.post<DataPackage<Especialidad>>(this.url, especialidad);
   }
 
+  /** Actualiza una especialidad existente */
+  update(id: number, especialidad: Especialidad): Observable<DataPackage<Especialidad>> {
+    return this.http.put<DataPackage<Especialidad>>(`${this.url}/${id}`, especialidad);
+  }
+
+  /** Elimina una especialidad por ID */
   remove(id: number): Observable<any> {
     return this.http.delete(`${this.url}/${id}`);
   }
 
+  /** Paginación de especialidades */
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
   }
 
+
+  /** Búsqueda de especialidades */
   search(term: string): Observable<DataPackage<Especialidad[]>> {
     return this.http.get<DataPackage<Especialidad[]>>(`${this.url}/search/${term}`);
   }

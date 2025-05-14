@@ -30,15 +30,21 @@ import { PaginationComponent } from '../pagination/pagination.component';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let especialidad of resultsPage.content">
-            <td>{{ especialidad.id }}</td>
-            <td>{{ especialidad.nombre }}</td>
-            <td>{{ especialidad.descripcion }}</td>
+          <tr *ngFor="let c of resultsPage.content" 
+              (click)="goToDetail(c.id)" 
+              style="cursor:pointer;">
+            <td>{{ c.id }}</td>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.descripcion }}</td>
             <td>
-              <a [routerLink]="['/especialidades', especialidad.id]" class="btn btn-sm btn-outline-primary">
+              <a 
+                (click)="goToEdit(c.id); $event.stopPropagation()" 
+                class="btn btn-sm btn-outline-primary">
                 <i class="fa fa-pencil"></i>
               </a>
-              <a (click)="remove(especialidad.id)" class="btn btn-sm btn-outline-danger ms-1">
+              <a 
+                (click)="remove(c); $event.stopPropagation()" 
+                class="btn btn-sm btn-outline-danger ms-1">
                 <i class="fa fa-remove"></i>
               </a>
             </td>
@@ -75,7 +81,7 @@ export class EspecialidadesComponent {
 
   getEspecialidades(): void {
     this.especialidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = <ResultsPage>dataPackage.data;
+      this.resultsPage = dataPackage.data; // data debe ser ResultsPage, no Especialidad[]
     });
   }
 
@@ -84,11 +90,42 @@ export class EspecialidadesComponent {
     this.getEspecialidades();
   }
 
-  remove(id: number): void {
+  goToDetail(id: number): void {
+    this.router.navigate(['/especialidades', id]);
+  }
+
+  goToEdit(id: number): void {
+    this.router.navigate(['/especialidades', id], { queryParams: { edit: true } });
+  }
+
+  remove(especialidad: Especialidad): void {
+    if (!especialidad.id) {
+      alert('No se puede eliminar: la especialidad no tiene ID.');
+      return;
+    }
     this.modalService
-      .confirm("Eliminar especialidad", "¿Está seguro que desea eliminar esta especialidad?", "Esta acción no se puede deshacer")
+      .confirm(
+        "Eliminar especialidad",
+        "¿Está seguro que desea eliminar esta especialidad?",
+        "Esta acción no se puede deshacer"
+      )
       .then(() => {
-        this.especialidadService.remove(id).subscribe(() => this.getEspecialidades());
+        this.especialidadService.remove(especialidad.id).subscribe({
+          next: (response: any) => {
+            if (response?.status_code === 400) {
+              alert('No se puede eliminar la especialidad porque tiene dependencias asociadas.');
+            } else {
+              this.getEspecialidades();
+            }
+          },
+          error: (err) => {
+            if (err?.status === 400) {
+              alert('No se puede eliminar la especialidad porque tiene dependencias asociadas.');
+            } else {
+              alert('No se pudo eliminar la especialidad. Intente nuevamente.');
+            }
+          }
+        });
       });
   }
 }

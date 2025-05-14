@@ -45,7 +45,9 @@ public class EspecialidadService {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         } else { // Actualización
-            if (repository.existsByNombreIgnoreCase(especialidad.getNombre())) {
+            // Buscá por nombre
+            Especialidad existente = repository.findByNombreIgnoreCase(especialidad.getNombre());
+            if (existente != null && existente.getId() != especialidad.getId()) {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         }
