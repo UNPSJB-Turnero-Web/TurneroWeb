@@ -82,9 +82,9 @@ public class ConsultorioPresenter {
         }
     }
 
-    @GetMapping("/centro/{centroId}")
-    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Long centroId) {
-        List<ConsultorioDTO> consultorios = service.findByCentroAtencionId(centroId);
+    @GetMapping("/centrosAtencion/{centroId}/consultorios")
+    public ResponseEntity<Object> getConsultoriosByCentro(@PathVariable int centroId) {
+        List<ConsultorioDTO> consultorios = service.findByCentroAtencionId((long) centroId);
         return Response.ok(consultorios, "Consultorios recuperados correctamente");
     }
 
@@ -100,6 +100,22 @@ public class ConsultorioPresenter {
             return Response.error(null, "Error al actualizar el consultorio: " + e.getMessage());
         }
     }
+    @PostMapping("/centro/{centroId}")
+public ResponseEntity<Object> createInCentro(@PathVariable int centroId, @RequestBody ConsultorioDTO consultorioDTO) {
+    try {
+        // Setea el centro de atención en el DTO
+        CentroAtencionDTO centro = new CentroAtencionDTO();
+        centro.setId(centroId);
+        consultorioDTO.setCentroAtencion(centro);
+
+        ConsultorioDTO saved = service.save(consultorioDTO);
+        return Response.ok(saved, "Consultorio creado correctamente");
+    } catch (IllegalStateException e) {
+        return Response.dbError(e.getMessage());
+    } catch (Exception e) {
+        return Response.error(null, "Error al crear el consultorio: " + e.getMessage());
+    }
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable int id) {

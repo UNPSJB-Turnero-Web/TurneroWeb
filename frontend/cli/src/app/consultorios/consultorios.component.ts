@@ -34,7 +34,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
               style="cursor:pointer;">
             <td>{{ c.numero }}</td>
             <td>{{ c.centroAtencion }}</td>
-            <td>{{ c.name | uppercase }}</td>
+            <td>{{ c.name  }}</td>
             <td>
               <a 
                 (click)="goToEdit(c.id); $event.stopPropagation()" 

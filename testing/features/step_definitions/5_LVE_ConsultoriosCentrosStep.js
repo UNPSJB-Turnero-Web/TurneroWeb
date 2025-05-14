@@ -20,7 +20,7 @@ Given('que existe un centro de atención llamado {string}', function(nombreCentr
       .toLowerCase();
   }
 
-  let c = centros.find(x => x.Nombre && normalize(x.Nombre) === normalize(nombreCentro));
+  let c = centros.find(x => x.name && normalize(x.name) === normalize(nombreCentro));
 
   if (!c) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   this.centroId = c.id;
@@ -53,8 +53,8 @@ Then('el sistema responde con status_code {string} y status_text {string}', func
 });
 
 When('se solicita la lista de consultorios del centro', function () {
-  // GET a /consultorios/centro/{this.centroId}/listar
-  const url = `http://backend:8080/consultorios/centrosAtencion/${this.centroId}/listar`;
+  // GET a /consultorios/centrosAtencion/{centroId}/consultorios
+  const url = `http://backend:8080/consultorios/centrosAtencion/${this.centroId}/consultorios`;
   const res = request('GET', url);
   this.httpStatus = res.statusCode;
   this.response = JSON.parse(res.getBody('utf8'));

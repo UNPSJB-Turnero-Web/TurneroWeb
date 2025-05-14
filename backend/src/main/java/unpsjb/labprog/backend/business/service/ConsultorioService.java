@@ -123,6 +123,7 @@ public class ConsultorioService {
             return ResponseEntity.status(500).body(Map.of("status_code", 500, "error", e.getMessage()));
         }
     }
+    
 
     @Transactional
     public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto) {
