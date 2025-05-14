@@ -12,18 +12,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
 import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
-import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
 @RestController
@@ -41,7 +38,7 @@ public class ConsultorioPresenter {
         return Response.ok(consultorios, "Consultorios recuperados correctamente");
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    @GetMapping("/page")
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -61,8 +58,7 @@ public class ConsultorioPresenter {
                 "content", consultoriosMapeados,
                 "totalPages", pageResult.getTotalPages(),
                 "totalElements", pageResult.getTotalElements(),
-                "currentPage", pageResult.getNumber()
-        );
+                "currentPage", pageResult.getNumber());
 
         return Response.ok(response);
     }
@@ -86,35 +82,16 @@ public class ConsultorioPresenter {
         }
     }
 
-    @RequestMapping(value = "/{centroNombre}", method = RequestMethod.POST)
-    public ResponseEntity<Object> create(
-            @PathVariable("centroNombre") String centroNombre,
-            @RequestBody JsonNode json) {
-        try {
-            Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
-            consultorio.setId(0); // Forzar creación
-            CentroAtencion centro = new CentroAtencion();
-            centro.setName(centroNombre);
-            consultorio.setCentroAtencion(centro);
-
-            // Convertir a DTO
-            ConsultorioDTO dto = toDTO(consultorio);
-
-            ConsultorioDTO saved = service.save(dto);
-            return Response.ok(saved, "Consultorio creado correctamente");
-        } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage());
-        } catch (Exception e) {
-            return Response.error(null, e.getMessage());
-        }
+    @GetMapping("/centro/{centroId}")
+    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Long centroId) {
+        List<ConsultorioDTO> consultorios = service.findByCentroAtencionId(centroId);
+        return Response.ok(consultorios, "Consultorios recuperados correctamente");
     }
 
-    @PutMapping
-    public ResponseEntity<Object> update(@RequestBody ConsultorioDTO consultorioDTO) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            if (consultorioDTO.getId() == 0 || consultorioDTO.getId() <= 0) {
-                return Response.error(null, "Debe proporcionar un ID válido para actualizar");
-            }
+            consultorioDTO.setId(id);
             ConsultorioDTO updated = service.save(consultorioDTO);
             return Response.ok(updated, "Consultorio actualizado correctamente");
         } catch (IllegalStateException e) {

@@ -91,7 +91,12 @@ public class ConsultorioService {
         return repository.findByCentroAtencion(centro);
     }
 
-
+    public List<ConsultorioDTO> findByCentroAtencionId(Long centroId) {
+        return repository.findByCentroAtencionId(centroId)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
     @Transactional
     public Consultorio saveByCentroNombre(Consultorio consultorio, String centroNombre) {
@@ -111,8 +116,8 @@ public class ConsultorioService {
         try {
             List<Consultorio> consultorios = findByCentroAtencion(centroNombre);
             var data = consultorios.stream()
-                .map(c -> Map.of("numero", c.getNumero(), "nombre_consultorio", c.getName()))
-                .toList();
+                    .map(c -> Map.of("numero", c.getNumero(), "nombre_consultorio", c.getName()))
+                    .toList();
             return ResponseEntity.ok(Map.of("status_code", 200, "data", data));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("status_code", 500, "error", e.getMessage()));
@@ -164,7 +169,7 @@ public class ConsultorioService {
     }
 
     private void validateConsultorio(Consultorio consultorio) {
-         String nombre = consultorio.getName();
+        String nombre = consultorio.getName();
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del consultorio es obligatorio");
         }
@@ -174,7 +179,7 @@ public class ConsultorioService {
         if (consultorio.getNumero() <= 0) {
             throw new IllegalArgumentException("El número del consultorio debe ser positivo");
         }
-       
+
         if (nombre.length() > 50) {
             throw new IllegalArgumentException("El nombre del consultorio no puede superar los 50 caracteres");
         }
@@ -184,6 +189,6 @@ public class ConsultorioService {
         if (consultorio.getCentroAtencion() == null || consultorio.getCentroAtencion().getId() == 0) {
             throw new IllegalArgumentException("El centro de atención es obligatorio");
         }
-        
+
     }
 }

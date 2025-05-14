@@ -1,12 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CentroAtencionService } from './centroAtencion.service';
 import { CentroAtencion } from './centroAtencion';
 import { ModalService } from '../modal/modal.service';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
-
 
 @Component({
   selector: 'app-centros-atencion',
@@ -30,12 +29,15 @@ import { PaginationComponent } from '../pagination/pagination.component';
             <th>Provincia</th>
             <th>Teléfono</th>
             <th>Coordenadas</th>
-
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let centro of resultsPage.content; index as i">
+          <tr 
+            *ngFor="let centro of resultsPage.content; index as i"
+            (click)="goToDetail(centro.id)"
+            style="cursor:pointer"
+          >
             <td>{{ centro.id }}</td>
             <td>{{ centro.name }}</td>
             <td>{{ centro.direccion }}</td>
@@ -43,12 +45,11 @@ import { PaginationComponent } from '../pagination/pagination.component';
             <td>{{ centro.provincia }}</td>
             <td>{{ centro.telefono }}</td> 
             <td>{{ centro.latitud }},{{ centro.longitud }}</td>
-
             <td>
-              <a [routerLink]="['/centrosAtencion', centro.id]" class="btn btn-sm btn-outline-primary">
+              <a [routerLink]="['/centrosAtencion', centro.id]" class="btn btn-sm btn-outline-primary" (click)="$event.stopPropagation()">
                 <i class="fa fa-pencil"></i>
               </a>
-              <a (click)="remove(centro)" class="btn btn-sm btn-outline-danger ms-1">
+              <a (click)="remove(centro); $event.stopPropagation()" class="btn btn-sm btn-outline-danger ms-1">
                 <i class="fa fa-remove"></i>
               </a>
             </td>
@@ -66,18 +67,17 @@ import { PaginationComponent } from '../pagination/pagination.component';
         </tfoot>
       </table>
     </div>
-
   `,
   styles: ``
 })
 export class CentrosAtencionComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
-router: any;
 
   constructor(
     private centroAtencionService: CentroAtencionService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    public router: Router
   ) {}
 
   ngOnInit() {
@@ -102,8 +102,17 @@ router: any;
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.id!).subscribe(() => {
-          this.getCentrosAtencion();
+        this.centroAtencionService.delete(centro.id!).subscribe({
+          next: (response: any) => {
+            if (response?.status_code === 400) {
+              alert('No se puede eliminar el centro porque tiene dependencias asociadas.');
+            } else {
+              this.getCentrosAtencion();
+            }
+          },
+          error: (err) => {
+            alert('No se pudo eliminar el centro. Intente nuevamente.');
+          }
         });
       });
   }
@@ -111,5 +120,9 @@ router: any;
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
     this.getCentrosAtencion();
+  }
+
+  goToDetail(id: number): void {
+    this.router.navigate(['/centrosAtencion', id]);
   }
 }

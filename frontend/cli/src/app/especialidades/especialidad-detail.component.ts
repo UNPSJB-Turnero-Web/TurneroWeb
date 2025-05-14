@@ -12,7 +12,14 @@ import { ModalService } from '../modal/modal.service';
   imports: [CommonModule, FormsModule, RouterModule], // Elimina ModalService de aquí
   template: `
     <div class="container mt-4">
-      <h2>{{ especialidad.id ? 'Editar Especialidad' : 'Nueva Especialidad' }}</h2>
+      <h2>
+        <ng-container *ngIf="especialidad.id && especialidad.id !== 0; else nueva">
+          Editando especialidad: {{ especialidad.nombre }}
+        </ng-container>
+        <ng-template #nueva>
+          Nueva Especialidad
+        </ng-template>
+      </h2>
       <form (ngSubmit)="save()" #form="ngForm">
         <div class="mb-3">
           <label class="form-label">Nombre</label>
@@ -49,13 +56,46 @@ export class EspecialidadDetailComponent {
     private modalService: ModalService
   ) {}
 
-  ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.especialidadService.get(id).subscribe((dataPackage) => {
-        this.especialidad = dataPackage.data as Especialidad;
+  get(): void {
+    const path = this.route.snapshot.routeConfig?.path;
+
+    if (path === 'especialidades/new') {
+      // Configuración para una nueva especialidad
+      this.especialidad = {
+        id: 0,
+        nombre: '',
+        descripcion: ''
+      } as Especialidad;
+    } else if (path === 'especialidades/:id') {
+      // Configuración para editar una especialidad existente
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (!idParam) {
+        console.error('El ID proporcionado no es válido.');
+        return;
+      }
+
+      const id = Number(idParam);
+      if (isNaN(id)) {
+        console.error('El ID proporcionado no es un número válido.');
+        return;
+      }
+
+      this.especialidadService.get(id).subscribe({
+        next: (dataPackage) => {
+          this.especialidad = <Especialidad>dataPackage.data;
+        },
+        error: (err) => {
+          console.error('Error al obtener la especialidad:', err);
+          alert('No se pudo cargar la especialidad. Intente nuevamente.');
+        }
       });
+    } else {
+      console.error('Ruta no reconocida.');
     }
+  }
+
+  ngOnInit(): void {
+    this.get();
   }
 
   save(): void {

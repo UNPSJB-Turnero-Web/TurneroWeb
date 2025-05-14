@@ -24,11 +24,12 @@ import { ModalService } from "../modal/modal.service";
   template: `
     <div *ngIf="consultorio">
       <h2>
-        {{
-          consultorio.id === 0
-            ? "Nuevo Consultorio"
-            : (consultorio.name | uppercase)
-        }}
+        <ng-container *ngIf="consultorio.id && consultorio.id !== 0; else nuevo">
+          Editando consultorio: {{ consultorio.name }}
+        </ng-container>
+        <ng-template #nuevo>
+          Nuevo Consultorio
+        </ng-template>
       </h2>
       <form #form="ngForm">
         <!-- Número -->
@@ -110,6 +111,7 @@ import { ModalService } from "../modal/modal.service";
         >
           Guardar
         </button>
+        <button *ngIf="consultorio.id" (click)="remove(consultorio)" class="btn btn-outline-danger">Eliminar</button>
       </form>
     </div>
   `,
@@ -211,5 +213,29 @@ export class ConsultorioDetailComponent implements OnInit {
     return !this.consultorio?.numero &&
            !this.consultorio?.name &&
            !this.selectedCentroAtencion;
+  }
+
+  remove(consultorio: Consultorio): void {
+    if (consultorio.id === undefined) {
+      alert('No se puede eliminar: el consultorio no tiene ID.');
+      return;
+    }
+    this.modalService
+      .confirm(
+        "Eliminar consultorio",
+        "¿Está seguro que desea eliminar el consultorio?",
+        "Si elimina el consultorio no lo podrá utilizar luego"
+      )
+      .then(() => {
+        this.consultorioService.delete(consultorio.id!).subscribe({
+          next: () => {
+            this.goBack(); // Redirige al usuario a la lista
+          },
+          error: (err) => {
+            console.error('Error al eliminar el consultorio:', err);
+            alert('No se pudo eliminar el consultorio. Intente nuevamente.');
+          }
+        });
+      });
   }
 }

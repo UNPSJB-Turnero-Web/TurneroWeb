@@ -2,7 +2,6 @@ const { Given, When, Then, BeforeAll } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
-
 Given('que existe un centro de atención llamado {string}', function(nombreCentro) {
   // Intenta buscar el centro
   const res = request('GET', `http://backend:8080/centrosAtencion`);
@@ -34,12 +33,12 @@ Given('que existen múltiples centros de atención registrados', function () {
 });
 
 When('se registra un consultorio con el número {string} y el nombre {string}', function (numero, nombreConsultorio) {
-  // POST a /consultorios/{centroNombre}
+  // POST a /consultorios/centro/{centroId}
   const payload = {
     numero: parseInt(numero, 10),
     name: nombreConsultorio
   };
-  const url = `http://backend:8080/consultorios/${encodeURIComponent(this.centroNombre)}`;
+  const url = `http://backend:8080/consultorios/centro/${this.centroId}`;
   const res = request('POST', url, { json: payload });
   this.httpStatus = res.statusCode;
   this.response = JSON.parse(res.getBody('utf8'));
@@ -54,11 +53,12 @@ Then('el sistema responde con status_code {string} y status_text {string}', func
 });
 
 When('se solicita la lista de consultorios del centro', function () {
-  // GET a /consultorios/{centroNombre}/listar
-  const url = `http://backend:8080/consultorios/${encodeURIComponent(this.centroNombre)}/listar`;
+  // GET a /consultorios/centro/{this.centroId}/listar
+  const url = `http://backend:8080/consultorios/centrosAtencion/${this.centroId}/listar`;
   const res = request('GET', url);
   this.httpStatus = res.statusCode;
   this.response = JSON.parse(res.getBody('utf8'));
+  console.log(JSON.stringify(this.response, null, 2));
 });
 
 Then('el sistema responde con el siguiente JSON:', function (docString) {
@@ -68,9 +68,9 @@ Then('el sistema responde con el siguiente JSON:', function (docString) {
   // Agrupar consultorios por centro
   const agrupados = {};
   for (const c of this.response.data) {
-    const nombreCentro = c.centroAtencion.name;
+    const nombreCentro = c.centroAtencion.Nombre;
     if (!agrupados[nombreCentro]) agrupados[nombreCentro] = [];
-    agrupados[nombreCentro].push({ numero: c.numero, nombre: c.name });
+    agrupados[nombreCentro].push({ numero: c.numero, nombre: c.Nombre });
   }
   const dataTransformada = Object.entries(agrupados).map(([centro_atencion, consultorios]) => ({
     centro_atencion,

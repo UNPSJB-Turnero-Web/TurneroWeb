@@ -13,6 +13,8 @@ public interface ConsultorioRepository extends JpaRepository<Consultorio, Intege
 
     List<Consultorio> findByCentroAtencion(CentroAtencion centro);
 
+    List<Consultorio> findByCentroAtencionId(Long centroAtencionId);
+
     boolean existsByNumeroAndCentroAtencion(int numero, CentroAtencion centro);
 
     boolean existsByNameAndCentroAtencion(String name, CentroAtencion centro);

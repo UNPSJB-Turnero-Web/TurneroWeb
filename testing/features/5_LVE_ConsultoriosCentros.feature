@@ -5,12 +5,12 @@ Antecedentes:
   Dado que existe un sistema de gestión de centros de atención
   
 Esquema del escenario: Creación de consultorios exitosos
-  Dado que existe un centro de atención llamado "<centro_atencion>"
-  Cuando se registra un consultorio con el número "<numero>" y el nombre "<nombre_consultorio>"
+  Dado que existe un centro de atención llamado "<Nombre>"
+  Cuando se registra un consultorio con el número "<Numero>" y el nombre "<Nombre_consultorio>"
   Entonces el sistema responde con status_code "<status_code>" y status_text "<status_text>"
 
 Ejemplos: Consultorios exitosos
-  | centro_atencion               | numero | nombre_consultorio        | status_code | status_text                         |
+  | Nombre                        | Numero | Nombre_consultorio        | status_code | status_text                         |
   | Centro Médico Integral        | 101    | Consultorio Norte         | 200         | Consultorio creado correctamente   |
   | Centro Médico Integral        | 102    | Consultorio Sur           | 200         | Consultorio creado correctamente   |
   | Centro Médico Integral        | 103    | Consultorio Este          | 200         | Consultorio creado correctamente   |
@@ -24,12 +24,12 @@ Ejemplos: Consultorios exitosos
   | Centro Médico del Este        | 1007   | Consultorio 7             | 200         | Consultorio creado correctamente   |
 
 Esquema del escenario: Creación de consultorios con conflicto
-  Dado que existe un centro de atención llamado "<centro_atencion>"
-  Cuando se registra un consultorio con el número "<numero>" y el nombre "<nombre_consultorio>"
+  Dado que existe un centro de atención llamado "<Nombre>"
+  Cuando se registra un consultorio con el número "<Numero>" y el nombre "<Nombre_consultorio>"
   Entonces el sistema responde con status_code "<status_code>" y status_text "<status_text>"
 
 Ejemplos: Consultorios con conflicto
-  | centro_atencion            | numero | nombre_consultorio         | status_code | status_text                                                       |
+  | Nombre                     | Numero | Nombre_consultorio         | status_code | status_text                                                       |
   | Centro Médico Integral     | 101    | Consultorio Repetido       | 409         |  El número de consultorio ya está en uso                 |
   | Centro Médico Integral     | 108    |                            | 409         |  El nombre del consultorio es obligatorio                    |
   | Trelew Salud               | 317    | Consultorio #Especial      | 409         |  El nombre del consultorio contiene caracteres no permitidos |
@@ -43,12 +43,12 @@ Escenario: Listar consultorios de un centro de atención
       "status_code": 200,
       "status_text": "Consultorios recuperados correctamente",
       "data": [
-        { "numero": 501, "nombre_consultorio": "Consultorio 1" },
-        { "numero": 502, "nombre_consultorio": "Consultorio 2" },
-        { "numero": 503, "nombre_consultorio": "Consultorio 3" },
-        { "numero": 504, "nombre_consultorio": "Consultorio 4" },
-        { "numero": 505, "nombre_consultorio": "Consultorio 5" },
-        { "numero": 506, "nombre_consultorio": "Consultorio 6" }
+        { "numero": 501, "Nombre_consultorio": "Consultorio 1" },
+        { "numero": 502, "Nombre_consultorio": "Consultorio 2" },
+        { "numero": 503, "Nombre_consultorio": "Consultorio 3" },
+        { "numero": 504, "Nombre_consultorio": "Consultorio 4" },
+        { "numero": 505, "Nombre_consultorio": "Consultorio 5" },
+        { "numero": 506, "Nombre_consultorio": "Consultorio 6" }
       ]
     }
     """
@@ -65,51 +65,51 @@ Escenario: Listar todos los centros con sus consultorios
         {
           "centro_atencion": "Centro Médico Integral",
           "consultorios": [
-            { "numero": 101, "nombre": "Consultorio Norte" },
-            { "numero": 102, "nombre": "Consultorio Sur" }
+            { "numero": 101, "Nombre": "Consultorio Norte" },
+            { "numero": 102, "Nombre": "Consultorio Sur" }
           ]
         },
         {
           "centro_atencion": "Clinica Rawson",
           "consultorios": [
-            { "numero": 201, "nombre": "Consultorio Cardiología" },
-            { "numero": 607, "nombre": "Consultorio 7" }
+            { "numero": 201, "Nombre": "Consultorio Cardiología" },
+            { "numero": 607, "Nombre": "Consultorio 7" }
           ]
         },
         {
           "centro_atencion": "Trelew Salud",
           "consultorios": [
-            { "numero": 301, "nombre": "Consultorio 1" }
+            { "numero": 301, "Nombre": "Consultorio 1" }
           ]
         },
         {
           "centro_atencion": "Centro Médico Esperanza",
           "consultorios": [
-            { "numero": 506, "nombre": "Consultorio 6" }
+            { "numero": 506, "Nombre": "Consultorio 6" }
           ]
         },
         {
           "centro_atencion": "Centro de Rehabilitación",
           "consultorios": [
-            { "numero": 705, "nombre": "Consultorio 5" }
+            { "numero": 705, "Nombre": "Consultorio 5" }
           ]
         },
         {
           "centro_atencion": "Instituto Médico Patagonia",
           "consultorios": [
-            { "numero": 805, "nombre": "Consultorio 5" }
+            { "numero": 805, "Nombre": "Consultorio 5" }
           ]
         },
         {
           "centro_atencion": "Centro Odontológico Rawson",
           "consultorios": [
-            { "numero": 905, "nombre": "Consultorio 5" }
+            { "numero": 905, "Nombre": "Consultorio 5" }
           ]
         },
         {
           "centro_atencion": "Centro Médico del Este",
           "consultorios": [
-            { "numero": 1007, "nombre": "Consultorio 7" }
+            { "numero": 1007, "Nombre": "Consultorio 7" }
           ]
         }
       ]

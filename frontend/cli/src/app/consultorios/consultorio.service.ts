@@ -44,6 +44,13 @@ export class ConsultorioService {
     );
   }
 
+  /** Obtiene los consultorios asociados a un centro de atención por ID */
+  getByCentroAtencion(centroId: number) {
+    return this.http.get<DataPackage<Consultorio[]>>(
+      `${this.consultoriosUrl}/centro/${centroId}`
+    );
+  }
+
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.consultoriosUrl}/page?page=${page-1}&size=${size}`);
   }

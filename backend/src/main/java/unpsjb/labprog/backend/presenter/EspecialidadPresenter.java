@@ -59,6 +59,19 @@ public class EspecialidadPresenter {
         }
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getById(@PathVariable int id) {
+        try {
+            EspecialidadDTO dto = service.findById(id);
+            if (dto == null) {
+                return Response.notFound("No se encontró la especialidad con id " + id);
+            }
+            return Response.ok(dto, "Especialidad recuperada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar la especialidad: " + e.getMessage());
+        }
+    }
+
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody JsonNode json) {
         try {

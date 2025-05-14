@@ -1,4 +1,4 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CentroAtencion } from './centroAtencion';
@@ -9,13 +9,23 @@ import * as L from 'leaflet';
 import { ModalService } from '../modal/modal.service';
 import { HttpClient } from '@angular/common/http'; 
 import { MapModalComponent } from '../modal/map-modal.component'; 
+import { ConsultorioService } from '../consultorios/consultorio.service';
+import { Consultorio } from '../consultorios/consultorio';
+
 @Component({
   selector: 'app-centro-atencion-detail',
   standalone: true,
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent],
   template: `
 <div *ngIf="centroAtencion">
-  <h2>{{ centroAtencion.id === 0 ? 'Agregando Centro de Atención' : centroAtencion.name | uppercase }}</h2>
+  <h2>
+    <ng-container *ngIf="centroAtencion.id && centroAtencion.id !== 0; else nuevo">
+      Editando: {{ centroAtencion.name }}
+    </ng-container>
+    <ng-template #nuevo>
+      Agregando Centro de Atención
+    </ng-template>
+  </h2>
   <form #form="ngForm">
     <div class="form-group">
       <label for="name">Nombre:</label>
@@ -97,22 +107,33 @@ import { MapModalComponent } from '../modal/map-modal.component';
   </form>
 </div>
 <app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
+
+<div *ngIf="consultorios.length > 0">
+  <h3>Consultorios asociados</h3>
+  <ul>
+    <li *ngFor="let c of consultorios">
+      {{ c.name }} (N° {{ c.numero }})
+    </li>
+  </ul>
+</div>
   `,
   styles: ``
 })
-export class CentroAtencionDetailComponent implements AfterViewInit {
+export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   centroAtencion!: CentroAtencion;
   coordenadas: string = ''; // <-- Agrega esta línea
   showMap: boolean = false;
   private map!: L.Map;
   searchQuery: string = ''; // Campo para la búsqueda
+  consultorios: Consultorio[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private centroAtencionService: CentroAtencionService,
     private location: Location,
     private modalService: ModalService,
-    private http: HttpClient // Inyectar HttpClient
+    private http: HttpClient, // Inyectar HttpClient
+    private consultorioService: ConsultorioService
   ) {}
 
   ngAfterViewInit(): void {
@@ -171,10 +192,14 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
 
   save(): void {
     // Si hay coordenadas, separarlas y asignarlas a latitud/longitud
-    if (this.centroAtencion.coordenadas) {
-      const [lat, lng] = this.centroAtencion.coordenadas.split(',').map(c => Number(c.trim()));
+    if (this.coordenadas) {
+      const [lat, lng] = this.coordenadas.split(',').map(c => Number(c.trim()));
       this.centroAtencion.latitud = lat;
       this.centroAtencion.longitud = lng;
+    }
+    // El código siempre es el id (si existe)
+    if (this.centroAtencion.id) {
+      this.centroAtencion.code = String(this.centroAtencion.id);
     }
     this.centroAtencionService.save(this.centroAtencion).subscribe({
       next: (dataPackage) => {
@@ -216,7 +241,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
     const path = this.route.snapshot.routeConfig?.path;
   
     if (path === 'centrosAtencion/new') {
-      // Configuración para un nuevo centro de atención
       this.centroAtencion = {
         name: '',
         code: '',
@@ -229,7 +253,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
       } as CentroAtencion;
       this.coordenadas = '';
     } else if (path === 'centrosAtencion/:id') {
-      // Configuración para editar un centro de atención existente
       const idParam = this.route.snapshot.paramMap.get('id');
       if (!idParam) {
         console.error('El ID proporcionado no es válido.');
@@ -245,6 +268,18 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
       this.centroAtencionService.get(id).subscribe({
         next: (dataPackage) => {
           this.centroAtencion = <CentroAtencion>dataPackage.data;
+          this.centroAtencion.code = String(this.centroAtencion.id);
+          if (
+            this.centroAtencion.latitud !== undefined &&
+            this.centroAtencion.longitud !== undefined &&
+            this.centroAtencion.latitud !== 0 &&
+            this.centroAtencion.longitud !== 0
+          ) {
+            this.coordenadas = `${this.centroAtencion.latitud},${this.centroAtencion.longitud}`;
+          } else {
+            this.coordenadas = '';
+          }
+          this.getConsultorios();
         },
         error: (err) => {
           console.error('Error al obtener el centro de atención:', err);
@@ -255,6 +290,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
       console.error('Ruta no reconocida.');
     }
   }
+
   ngOnInit(): void {
     this.get();
   }
@@ -270,11 +306,20 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
   }
 
   allFieldsEmpty(): boolean {
-    return !this.centroAtencion?.name &&
-           !this.centroAtencion?.direccion &&
-           !this.centroAtencion?.localidad &&
-           !this.centroAtencion?.provincia &&
-           !this.centroAtencion?.telefono &&
-           !this.coordenadas;
+    return !this.centroAtencion?.name?.trim() &&
+           !this.centroAtencion?.direccion?.trim() &&
+           !this.centroAtencion?.localidad?.trim() &&
+           !this.centroAtencion?.provincia?.trim() &&
+           !this.centroAtencion?.telefono?.trim() &&
+           !this.coordenadas?.trim();
+  }
+
+  getConsultorios(): void {
+    if (this.centroAtencion?.id) {
+      this.consultorioService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+        next: (data: any) => this.consultorios = data.data,
+        error: () => this.consultorios = []
+      });
+    }
   }
 }
