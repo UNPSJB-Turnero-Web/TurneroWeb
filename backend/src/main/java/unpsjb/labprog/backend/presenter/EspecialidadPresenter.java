@@ -15,22 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 
 @RestController
-@RequestMapping("especialidad")
+@RequestMapping("especialidades")
 public class EspecialidadPresenter {
 
     @Autowired
     EspecialidadService service;
-
-    @Autowired
-    ObjectMapper mapper;
 
     @GetMapping
     public ResponseEntity<Object> getAll() {
@@ -45,7 +39,6 @@ public class EspecialidadPresenter {
         try {
             var pageResult = service.findByPage(page, size);
 
-            // Crear la respuesta con los metadatos de paginación
             var response = Map.of(
                     "content", pageResult.getContent(),
                     "totalPages", pageResult.getTotalPages(),
@@ -73,35 +66,27 @@ public class EspecialidadPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody JsonNode json) {
+    public ResponseEntity<Object> create(@RequestBody EspecialidadDTO dto) {
         try {
-            // Convertir el JSON a DTO
-            EspecialidadDTO dto = mapper.treeToValue(json, EspecialidadDTO.class);
-
-            // Guardar la especialidad
             EspecialidadDTO saved = service.saveOrUpdate(dto);
             return Response.ok(saved, "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
+            return Response.error(null, "Error inesperado: " + e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody JsonNode json) {
+    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody EspecialidadDTO dto) {
         try {
-            // Convertir el JSON a DTO
-            EspecialidadDTO dto = mapper.treeToValue(json, EspecialidadDTO.class);
-            dto.setId(id); // Asegurarse de que el ID coincide con el de la URL
-
-            // Actualizar la especialidad
+            dto.setId(id);
             EspecialidadDTO updated = service.saveOrUpdate(dto);
             return Response.ok(updated, "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
+            return Response.error(null, "Error inesperado: " + e.getMessage());
         }
     }
 
@@ -111,9 +96,9 @@ public class EspecialidadPresenter {
             service.delete(id);
             return Response.ok(null, "Especialidad eliminada exitosamente");
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error inesperado: " + e.getMessage()); // Manejo genérico para otras excepciones
+            return Response.error(null, "Error inesperado: " + e.getMessage());
         }
     }
 

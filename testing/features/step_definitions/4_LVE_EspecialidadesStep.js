@@ -5,7 +5,7 @@ const request = require('sync-request');
 // Ejecuta solo una vez antes de todos los escenarios
 BeforeAll(function () {
   console.log('🚀 Limpiando base de datos de especialidades...');
-  const res = request('DELETE', 'http://backend:8080/especialidad/reset');
+  const res = request('DELETE', 'http://backend:8080/especialidades/reset');
   assert.strictEqual(res.statusCode, 200, 'No se pudo resetear la base de datos de especialidades');
   console.log('✅ Base de datos de especialidades limpia.');
 });
@@ -17,7 +17,7 @@ Given('que la especialidad {string} existe en el sistema con la descripción {st
         descripcion: descripcion.trim()
     };
 
-    const res = await request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+    const res = await request('POST', 'http://backend:8080/especialidades', { json: especialidad });
     if (res.statusCode !== 200) {
         throw new Error(`No se pudo crear la especialidad: ${nombre}`);
     }
@@ -25,32 +25,32 @@ Given('que la especialidad {string} existe en el sistema con la descripción {st
 
 Given('otra especialidad con el nombre {string} ya está registrada', function (nombre) {
   const especialidad = { nombre,};
-  const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+  const res = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
   assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
 });
 
 Given('que existen {int} especialidades registradas en el sistema', function (cantidad) {
   for (let i = 1; i <= cantidad; i++) {
     const especialidad = { nombre: `Especialidad ${i}`, descripcion: `Descripción ${i}` };
-    const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+    const res = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
     assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad ${i}`);
   }
 });
 
 Given('que la especialidad {string} no existe en el sistema', function (nombre) {
-  const resBuscar = request('GET', 'http://backend:8080/especialidad');
+  const resBuscar = request('GET', 'http://backend:8080/especialidades');
   const especialidades = JSON.parse(resBuscar.getBody('utf8')).data;
 
   const nombreNormalizado = nombre.trim().toLowerCase();
   const especialidadExistente = especialidades.find(e => e.nombre === nombreNormalizado);
   if (especialidadExistente) {
-    const resEliminar = request('DELETE', `http://backend:8080/especialidad/${especialidadExistente.id}`);
+    const resEliminar = request('DELETE', `http://backend:8080/especialidades/${especialidadExistente.id}`);
     assert.strictEqual(resEliminar.statusCode, 200, `No se pudo eliminar la especialidad existente: ${nombre}`);
   }
 });
 
 Given('que no existen especialidades en el sistema', function () {
-  const res = request('DELETE', 'http://backend:8080/especialidad/reset');
+  const res = request('DELETE', 'http://backend:8080/especialidades/reset');
   assert.strictEqual(res.statusCode, 200, 'No se pudo resetear la base de datos de especialidades');
 
   // Crear especialidades necesarias para la prueba
@@ -59,27 +59,27 @@ Given('que no existen especialidades en el sistema', function () {
     { nombre: 'Cardiología', descripcion: 'Diagnóstico y tratamiento de enfermedades del corazón y el sistema circulatorio.' }
   ];
   especialidades.forEach(especialidad => {
-    const resCrear = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+    const resCrear = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
     assert.strictEqual(resCrear.statusCode, 200, `No se pudo crear la especialidad: ${especialidad.nombre}`);
   });
 });
 
 Given('que la especialidad {string} existe en el sistema', function (nombre) {
   const especialidad = { nombre, descripcion: `Descripción de ${nombre}` };
-  const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+  const res = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
   assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
 });
 
 Given('que la especialidad {string} ya existe en el sistema', function (nombre) {
   const especialidad = { nombre, descripcion: `Descripción de ${nombre}` };
-  const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+  const res = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
   assert.strictEqual(res.statusCode, 200, `No se pudo crear la especialidad: ${nombre}`);
 });
 
 When('el administrador crea una especialidad con el nombre {string} y la descripción {string}', function (nombre, descripcion) {
   const especialidad = { nombre, descripcion };
   try {
-    const res = request('POST', 'http://backend:8080/especialidad', { json: especialidad });
+    const res = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
     this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
   } catch (error) {
     console.error('Error en la solicitud:', error);
@@ -88,7 +88,7 @@ When('el administrador crea una especialidad con el nombre {string} y la descrip
 });
 
 When('el administrador edita la especialidad {string} cambiando su nombre a {string} y su descripción a {string}', function (nombreOriginal, nombreNuevo, descripcionNueva) {
-  const resBuscar = request('GET', 'http://backend:8080/especialidad');
+  const resBuscar = request('GET', 'http://backend:8080/especialidades');
   const especialidades = JSON.parse(resBuscar.getBody('utf8')).data;
 
   const especialidadExistente = especialidades.find(e => e.nombre === nombreOriginal);
@@ -101,7 +101,7 @@ When('el administrador edita la especialidad {string} cambiando su nombre a {str
   };
 
   try {
-    const res = request('PUT', `http://backend:8080/especialidad/${especialidadExistente.id}`, { json: especialidadEditada });
+    const res = request('PUT', `http://backend:8080/especialidades/${especialidadExistente.id}`, { json: especialidadEditada });
     this.response = JSON.parse(res.getBody('utf8')); // Asegurarse de parsear el cuerpo de la respuesta
   } catch (error) {
     console.error('Error en la solicitud:', error);
@@ -110,7 +110,7 @@ When('el administrador edita la especialidad {string} cambiando su nombre a {str
 });
 
 When('el administrador intenta cambiar el nombre de {string} a {string}', function (nombreOriginal, nombreNuevo) {
-  const resBuscar = request('GET', 'http://backend:8080/especialidad');
+  const resBuscar = request('GET', 'http://backend:8080/especialidades');
   const especialidades = JSON.parse(resBuscar.getBody('utf8')).data;
 
   const especialidadExistente = especialidades.find(e => e.nombre === nombreOriginal);
@@ -123,7 +123,7 @@ When('el administrador intenta cambiar el nombre de {string} a {string}', functi
   };
 
   try {
-    const res = request('PUT', `http://backend:8080/especialidad/${especialidadExistente.id}`, { json: especialidadEditada });
+    const res = request('PUT', `http://backend:8080/especialidades/${especialidadExistente.id}`, { json: especialidadEditada });
     this.response = JSON.parse(res.getBody('utf8')); // Asegúrate de parsear el cuerpo de la respuesta
   } catch (error) {
     console.error('Error en la solicitud:', error);
@@ -132,19 +132,19 @@ When('el administrador intenta cambiar el nombre de {string} a {string}', functi
 });
 
 When('el administrador elimina la especialidad {string}', function (nombre) {
-  const resBuscar = request('GET', 'http://backend:8080/especialidad');
+  const resBuscar = request('GET', 'http://backend:8080/especialidades');
   const especialidades = JSON.parse(resBuscar.getBody('utf8')).data;
 
   const especialidadExistente = especialidades.find(e => e.nombre === nombre);
   assert.ok(especialidadExistente, `No se encontró la especialidad con nombre: ${nombre}`);
 
-  const res = request('DELETE', `http://backend:8080/especialidad/${especialidadExistente.id}`);
+  const res = request('DELETE', `http://backend:8080/especialidades/${especialidadExistente.id}`);
   this.statusCode = res.statusCode;
   this.response = res.statusCode === 200 ? JSON.parse(res.getBody('utf8')) : {}; // Captura el cuerpo de la respuesta si es exitoso
 });
 
 When('un usuario del sistema solicita la lista de especialidades', function () {
-  const res = request('GET', 'http://backend:8080/especialidad');
+  const res = request('GET', 'http://backend:8080/especialidades');
   this.response = JSON.parse(res.getBody('utf8'));
   this.statusCode = res.statusCode;
 });
