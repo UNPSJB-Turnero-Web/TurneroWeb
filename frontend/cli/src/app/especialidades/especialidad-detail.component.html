@@ -3,8 +3,8 @@
   <div *ngIf="!modoEdicion">
     <h2>Especialidad: {{ especialidad.nombre }}</h2>
     <p><b>Descripción:</b> {{ especialidad.descripcion }}</p>
+    <button class="btn btn-danger" (click)="goBack()">Atrás</button>
     <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
-<button type="button" class="btn btn-secondary ms-2" (click)="goBack()">Cancelar</button> 
   </div>
 
   <!-- MODO EDICIÓN -->

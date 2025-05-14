@@ -47,7 +47,7 @@ export class ConsultorioService {
   /** Obtiene los consultorios asociados a un centro de atención por ID */
   getByCentroAtencion(centroId: number) {
     return this.http.get<DataPackage<Consultorio[]>>(
-      `${this.consultoriosUrl}/centro/${centroId}`
+    `${this.consultoriosUrl}/centrosAtencion/${centroId}/consultorios`
     );
   }
 

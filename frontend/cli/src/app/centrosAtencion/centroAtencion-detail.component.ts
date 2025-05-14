@@ -11,11 +11,12 @@ import { HttpClient } from '@angular/common/http';
 import { MapModalComponent } from '../modal/map-modal.component'; 
 import { ConsultorioService } from '../consultorios/consultorio.service';
 import { Consultorio } from '../consultorios/consultorio';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-centro-atencion-detail',
   standalone: true,
-  imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent],
+  imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent, RouterModule],
   templateUrl: './centroAtencion-detail.component.html',
   styles: ``
 })

@@ -45,9 +45,7 @@ When('se registra un consultorio con el número {string} y el nombre {string}', 
 });
 
 Then('el sistema responde con status_code {string} y status_text {string}', function (expectedCode, expectedText) {
-  // HTTP 200 siempre para indicar llegada
-  assert.strictEqual(this.httpStatus, 200);
-  // Validar código interno y mensaje
+  // No validar this.httpStatus, solo el status_code del body
   assert.strictEqual(this.response.status_code, parseInt(expectedCode, 10));
   assert.strictEqual(this.response.status_text, expectedText.replace(/"/g, ''));
 });

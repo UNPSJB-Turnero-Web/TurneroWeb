@@ -4,8 +4,9 @@
     <h2>Consultorio: {{ consultorio.name }}</h2>
     <p><b>Número:</b> {{ consultorio.numero }}</p>
     <p><b>Centro de Atención:</b> {{ consultorio.centroAtencion?.name }}</p>
-    <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
     <button class="btn btn-danger" (click)="goBack()">Atrás</button>
+    <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
+    
   </div>
 
   <!-- MODO EDICIÓN -->
