@@ -41,7 +41,7 @@ public class ConsultorioService {
                 .map(this::toDTO);
     }
 
-    public Optional<ConsultorioDTO> findById(Long id) {
+    public Optional<ConsultorioDTO> findById(int id) {
         return repository.findById(id).map(this::toDTO);
     }
 
@@ -55,7 +55,7 @@ public class ConsultorioService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(int id) {
         repository.deleteById(id);
     }
 
@@ -91,41 +91,7 @@ public class ConsultorioService {
         return repository.findByCentroAtencion(centro);
     }
 
-    @Transactional
-    public Consultorio save(Consultorio consultorio) {
-        CentroAtencion centro = centroRepo.findById(consultorio.getCentroAtencion().getId())
-                .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
 
-        if (consultorio.getId() == null) {
-            // CREACIÓN
-            if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
-                throw new IllegalStateException("El número de consultorio ya está registrado");
-            }
-            if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
-                throw new IllegalStateException("El nombre del consultorio ya está registrado");
-            }
-        } else {
-            // EDICIÓN
-            Consultorio existente = repository.findById(consultorio.getId())
-                    .orElseThrow(() -> new IllegalStateException("Consultorio no encontrado"));
-            if (!existente.getCentroAtencion().equals(centro)) {
-                throw new IllegalStateException("No se puede cambiar el Centro de Atención del consultorio");
-            }
-            if (!existente.getNumero().equals(consultorio.getNumero())) {
-                if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
-                    throw new IllegalStateException("El número de consultorio ya está en uso");
-                }
-            }
-            if (!existente.getName().equals(consultorio.getName())) {
-                if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
-                    throw new IllegalStateException("El nombre del consultorio ya está registrado");
-                }
-            }
-        }
-
-        consultorio.setCentroAtencion(centro);
-        return repository.save(consultorio);
-    }
 
     @Transactional
     public Consultorio saveByCentroNombre(Consultorio consultorio, String centroNombre) {
@@ -151,5 +117,73 @@ public class ConsultorioService {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("status_code", 500, "error", e.getMessage()));
         }
+    }
+
+    @Transactional
+    public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto) {
+        Consultorio consultorio = toEntity(dto);
+
+        // Validar datos
+        validateConsultorio(consultorio);
+
+        CentroAtencion centro = centroRepo.findById(consultorio.getCentroAtencion().getId())
+                .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
+        consultorio.setCentroAtencion(centro);
+
+        if (consultorio.getId() == 0) {
+            // CREACIÓN
+            if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
+                throw new IllegalStateException("El número de consultorio ya está registrado");
+            }
+            if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
+                throw new IllegalStateException("El nombre del consultorio ya está registrado");
+            }
+        } else {
+            // MODIFICACIÓN
+            Consultorio existente = repository.findById(consultorio.getId())
+                    .orElseThrow(() -> new IllegalStateException("Consultorio no encontrado"));
+            if (!existente.getCentroAtencion().equals(centro)) {
+                throw new IllegalStateException("No se puede cambiar el Centro de Atención del consultorio");
+            }
+            if (!existente.getNumero().equals(consultorio.getNumero())) {
+                if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
+                    throw new IllegalStateException("El número de consultorio ya está en uso");
+                }
+            }
+            if (!existente.getName().equals(consultorio.getName())) {
+                if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
+                    throw new IllegalStateException("El nombre del consultorio ya está registrado");
+                }
+            }
+            existente.setNumero(consultorio.getNumero());
+            existente.setName(consultorio.getName());
+            consultorio = existente;
+        }
+
+        return toDTO(repository.save(consultorio));
+    }
+
+    private void validateConsultorio(Consultorio consultorio) {
+         String nombre = consultorio.getName();
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del consultorio es obligatorio");
+        }
+        if (consultorio.getNumero() == null) {
+            throw new IllegalArgumentException("El número del consultorio es obligatorio");
+        }
+        if (consultorio.getNumero() <= 0) {
+            throw new IllegalArgumentException("El número del consultorio debe ser positivo");
+        }
+       
+        if (nombre.length() > 50) {
+            throw new IllegalArgumentException("El nombre del consultorio no puede superar los 50 caracteres");
+        }
+        if (!nombre.matches("^[\\p{L}0-9\\sáéíóúÁÉÍÓÚüÜñÑ]+$")) {
+            throw new IllegalArgumentException("El nombre del consultorio contiene caracteres no permitidos");
+        }
+        if (consultorio.getCentroAtencion() == null || consultorio.getCentroAtencion().getId() == 0) {
+            throw new IllegalArgumentException("El centro de atención es obligatorio");
+        }
+        
     }
 }

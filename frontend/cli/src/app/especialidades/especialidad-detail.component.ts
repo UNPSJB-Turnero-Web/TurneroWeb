@@ -13,7 +13,7 @@ import { ModalService } from '../modal/modal.service';
   template: `
     <div class="container mt-4">
       <h2>{{ especialidad.id ? 'Editar Especialidad' : 'Nueva Especialidad' }}</h2>
-      <form (ngSubmit)="save()">
+      <form (ngSubmit)="save()" #form="ngForm">
         <div class="mb-3">
           <label class="form-label">Nombre</label>
           <input
@@ -33,7 +33,7 @@ import { ModalService } from '../modal/modal.service';
             placeholder="Ingrese una descripción"
           ></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || allFieldsEmpty()">Guardar</button>
         <a routerLink="/especialidades" class="btn btn-secondary ms-2">Cancelar</a>
       </form>
     </div>
@@ -72,5 +72,9 @@ export class EspecialidadDetailComponent {
         }
       }
     });
+  }
+
+  allFieldsEmpty(): boolean {
+    return !this.especialidad?.nombre && !this.especialidad?.descripcion;
   }
 }

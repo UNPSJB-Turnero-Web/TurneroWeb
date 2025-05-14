@@ -30,6 +30,7 @@ public class StaffMedicoService {
     @Transactional
     public StaffMedicoDTO save(StaffMedicoDTO dto) {
         StaffMedico staffMedico = toEntity(dto);
+
         return toDTO(repository.save(staffMedico));
     }
 
@@ -41,14 +42,15 @@ public class StaffMedicoService {
     private StaffMedicoDTO toDTO(StaffMedico staff) {
         StaffMedicoDTO dto = new StaffMedicoDTO();
         dto.setId(staff.getId());
-        // Mapear otras propiedades y relaciones
+     
         return dto;
     }
 
     private StaffMedico toEntity(StaffMedicoDTO dto) {
         StaffMedico staff = new StaffMedico();
         staff.setId(dto.getId());
-        // Mapear otras propiedades y relaciones
+
         return staff;
     }
+
 }

@@ -3,7 +3,7 @@ const assert = require('assert');
 const request = require('sync-request');
 
 Given('que existen centros de atención creados en el sistema', function () {
-  console.log('🌟 Base de datos inicializada.');
+ // console.log('🌟 Base de datos inicializada.');
 });
 
 Given('los siguientes centros de atención han sido registrados:', function (dataTable) {
@@ -23,7 +23,7 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
       throw new Error('Faltan datos obligatorios para registrar el centro de atención.');
     }
 
-    console.log('📥 Centro registrado:', centroData);
+   // console.log('📥 Centro registrado:', centroData);
 
     const res = request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
     const body = JSON.parse(res.getBody('utf8'));
@@ -55,19 +55,19 @@ When('el administrador modifica los datos del centro de atención {string} con l
   const resBuscar = request('GET', 'http://backend:8080/centrosAtencion');
   const listaCentros = JSON.parse(resBuscar.getBody('utf8')).data;
 
-  console.log('📋 Lista de centros devuelta por el backend:', listaCentros);
+  //console.log('📋 Lista de centros devuelta por el backend:', listaCentros);
 
   const centroExistente = listaCentros.find(c =>
     c.Nombre.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
   );
 
   if (!centroExistente) {
-    console.error('❌ No se encontró el centro en la lista:', nombreCentroActual);
+   // console.error('❌ No se encontró el centro en la lista:', nombreCentroActual);
     throw new Error(`No se encontró el centro con Nombre: ${nombreCentroActual}`);
   }
 
   if (!centroExistente.id) {
-    console.error('❌ El centro encontrado no tiene un ID válido:', centroExistente);
+    //console.error('❌ El centro encontrado no tiene un ID válido:', centroExistente);
     throw new Error('El centro encontrado no tiene un ID válido.');
   }
 
@@ -83,14 +83,14 @@ When('el administrador modifica los datos del centro de atención {string} con l
     longitud // Enviar longitud como campo separado
   };
 
-  console.log('✏️ Modificando centro:', centroData);
+//  console.log('✏️ Modificando centro:', centroData);
 
   // Enviar la solicitud al backend
   try {
     const res = request('PUT', 'http://backend:8080/centrosAtencion', { json: centroData });
     this.response = JSON.parse(res.getBody('utf8'));
     this.statusCode = res.statusCode;
-    console.log('✅ Modificación exitosa:', this.response);
+  //  console.log('✅ Modificación exitosa:', this.response);
   } catch (error) {
     if (error.statusCode) {
       this.statusCode = error.statusCode;

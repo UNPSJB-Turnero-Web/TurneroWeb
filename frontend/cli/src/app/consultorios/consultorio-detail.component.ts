@@ -106,7 +106,7 @@ import { ModalService } from "../modal/modal.service";
         <button
           (click)="save()"
           class="btn btn-success"
-          [disabled]="form.invalid"
+          [disabled]="form.invalid || allFieldsEmpty()"
         >
           Guardar
         </button>
@@ -205,5 +205,11 @@ export class ConsultorioDetailComponent implements OnInit {
 
   onCentroAtencionSelected(c: CentroAtencion): void {
     this.selectedCentroAtencion = c;
+  }
+
+  allFieldsEmpty(): boolean {
+    return !this.consultorio?.numero &&
+           !this.consultorio?.name &&
+           !this.selectedCentroAtencion;
   }
 }

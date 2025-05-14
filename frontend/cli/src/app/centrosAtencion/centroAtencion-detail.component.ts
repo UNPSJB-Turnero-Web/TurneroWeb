@@ -72,14 +72,28 @@ import { MapModalComponent } from '../modal/map-modal.component';
       <label for="coordenadas">Coordenadas:</label>
       <input name="coordenadas" placeholder="latitud,longitud" class="form-control" [(ngModel)]="coordenadas" [ngModelOptions]="{standalone: true}">
     </div>
-    <div class="form-group">
+    <div class="form-group mt-2 ">
       <button type="button" class="btn btn-primary" (click)="toggleMap()">Marcar en el mapa</button>
     </div>
 
-    <button (click)="goBack()" class="btn btn-danger">Atrás</button>
-    <button (click)="save()" class="btn btn-success" [disabled]="form.invalid">Guardar</button>
-    <!-- Solo muestra el botón si el centro ya existe -->
-    <button *ngIf="centroAtencion.id" (click)="remove(centroAtencion)" class="btn btn-danger">Eliminar</button>
+    <div class="d-flex gap-2 mt-3">
+      <button type="button" (click)="goBack()" class="btn btn-danger">Atrás</button>
+      <button 
+        type="button"
+        (click)="save()" 
+        class="btn btn-success" 
+        [disabled]="form.invalid || allFieldsEmpty()">
+        Guardar
+      </button>
+      <!-- Solo muestra el botón si el centro ya existe -->
+      <button 
+        *ngIf="centroAtencion.id" 
+        type="button"
+        (click)="remove(centroAtencion)" 
+        class="btn btn-outline-danger">
+        Eliminar
+      </button>
+    </div>
   </form>
 </div>
 <app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
@@ -253,5 +267,14 @@ export class CentroAtencionDetailComponent implements AfterViewInit {
       alert(`Ubicación marcada: ${this.coordenadas}`);
     }
     this.showMap = false;
+  }
+
+  allFieldsEmpty(): boolean {
+    return !this.centroAtencion?.name &&
+           !this.centroAtencion?.direccion &&
+           !this.centroAtencion?.localidad &&
+           !this.centroAtencion?.provincia &&
+           !this.centroAtencion?.telefono &&
+           !this.coordenadas;
   }
 }

@@ -41,7 +41,7 @@ public class PacientePresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody PacienteDTO pacienteDTO) {
         try {
-            PacienteDTO saved = service.save(pacienteDTO);
+            PacienteDTO saved = service.saveOrUpdate(pacienteDTO);
             return Response.ok(saved, "Paciente creado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -56,7 +56,7 @@ public class PacientePresenter {
             if (pacienteDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            PacienteDTO updated = service.save(pacienteDTO);
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
             return Response.ok(updated, "Paciente actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());

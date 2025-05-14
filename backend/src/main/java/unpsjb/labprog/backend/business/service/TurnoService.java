@@ -1,18 +1,19 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.TurnoDTO;
-import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.EstadoTurno;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import unpsjb.labprog.backend.model.Turno;
 
 @Service
 public class TurnoService {
@@ -34,7 +35,11 @@ public class TurnoService {
 
     @Transactional
     public TurnoDTO save(TurnoDTO dto) {
+
         Turno turno = toEntity(dto);
+
+        validarTurno(turno);
+
         Turno saved = repository.save(turno);
         return toDTO(saved);
     }
@@ -75,4 +80,28 @@ public class TurnoService {
         turno.setEstado(EstadoTurno.valueOf(dto.getEstado()));
         return turno;
     }
+
+private void validarTurno(Turno turno) {
+    if (turno.getFecha() == null) {
+        throw new IllegalArgumentException("La fecha del turno es obligatoria");
+    }
+    if (turno.getHoraInicio() == null) {
+        throw new IllegalArgumentException("La hora de inicio es obligatoria");
+    }
+    if (turno.getHoraFin() == null) {
+        throw new IllegalArgumentException("La hora de fin es obligatoria");
+    }
+    if (turno.getHoraFin().isBefore(turno.getHoraInicio())) {
+        throw new IllegalArgumentException("La hora de fin no puede ser anterior a la hora de inicio");
+    }
+    if (turno.getPaciente() == null || turno.getPaciente().getId() == null) {
+        throw new IllegalArgumentException("El paciente es obligatorio");
+    }
+    if (turno.getMedico() == null || turno.getMedico().getId() == null) {
+        throw new IllegalArgumentException("El médico es obligatorio");
+    }
+    if (turno.getEstado() == null) {
+        throw new IllegalArgumentException("El estado del turno es obligatorio");
+    }
+}
 }

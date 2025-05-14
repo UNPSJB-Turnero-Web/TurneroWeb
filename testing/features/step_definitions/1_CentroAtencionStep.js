@@ -5,16 +5,21 @@ const request = require('sync-request');
 // Ejecuta solo una vez antes de todos los escenarios
 BeforeAll(function () {
   console.log('🚀 Limpiando base de datos de centros...');
+    const res1 = request('DELETE', 'http://backend:8080/consultorios/reset');//LIMPIA PRIMERO CONSULTORIOS POR KEY CONSTRAINS
   const res = request('DELETE', 'http://backend:8080/centrosAtencion/reset');
-  
+
+  if (res1.statusCode !== 200) {
+    throw new Error('❌ No se pudo resetear la base de datos de consultorios');
+  }
+  console.log('✅ Base de datos limpia.');
   if (res.statusCode !== 200) {
-    throw new Error('❌ No se pudo resetear la base de datos');
+    throw new Error('❌ No se pudo resetear la base de datos de centros de atención');
   }
   console.log('✅ Base de datos limpia.');
 });
 
 Given('que existe un sistema de gestión de centros de atención', function () {
-  console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
+ // console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
 });
 
 When(

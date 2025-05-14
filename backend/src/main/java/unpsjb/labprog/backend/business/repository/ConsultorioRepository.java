@@ -9,7 +9,7 @@ import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 
 @Repository
-public interface ConsultorioRepository extends JpaRepository<Consultorio, Long> {
+public interface ConsultorioRepository extends JpaRepository<Consultorio, Integer> {
 
     List<Consultorio> findByCentroAtencion(CentroAtencion centro);
 

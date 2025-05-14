@@ -33,39 +33,41 @@ public class EspecialidadService {
     }
 
     @Transactional
-    public EspecialidadDTO save(EspecialidadDTO dto) {
+    public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto) {
         Especialidad especialidad = toEntity(dto);
 
-        System.out.println("DEBUG: Guardando especialidad: " + especialidad);
-
-        // Validar campos obligatorios
-        if (especialidad.getNombre() == null || especialidad.getNombre().isBlank()) {
-            System.out.println("DEBUG: El nombre es obligatorio");
-            throw new IllegalStateException("El nombre es obligatorio");
-        }
-
-        if (especialidad.getDescripcion() == null || especialidad.getDescripcion().isBlank()) {
-            System.out.println("DEBUG: La descripción es obligatoria");
-            throw new IllegalStateException("La descripción de la especialidad es obligatoria");
-        }
+        // Validar datos
+        validarEspecialidad(especialidad);
 
         // Validar unicidad del nombre
         if (especialidad.getId() == 0) { // Creación
             if (repository.existsByNombreIgnoreCase(especialidad.getNombre())) {
-                System.out.println("DEBUG: Conflicto de nombre en creación");
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         } else { // Actualización
             if (repository.existsByNombreIgnoreCase(especialidad.getNombre())) {
-                System.out.println("DEBUG: Conflicto de nombre en actualización");
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         }
 
         // Guardar la especialidad
         Especialidad saved = repository.save(especialidad);
-        System.out.println("DEBUG: Especialidad guardada correctamente");
         return toDTO(saved);
+    }
+
+    private void validarEspecialidad(Especialidad especialidad) {
+        if (especialidad.getNombre() == null || especialidad.getNombre().isBlank()) {
+            throw new IllegalStateException("El nombre es obligatorio");
+        }
+        if (especialidad.getNombre().length() > 50) {
+            throw new IllegalStateException("El nombre no puede superar los 50 caracteres");
+        }
+        if (especialidad.getDescripcion() == null || especialidad.getDescripcion().isBlank()) {
+            throw new IllegalStateException("La descripción de la especialidad es obligatoria");
+        }
+        if (especialidad.getDescripcion().length() > 200) {
+            throw new IllegalStateException("La descripción no puede superar los 200 caracteres");
+        }
     }
 
     // Método para obtener especialidades paginadas como DTOs

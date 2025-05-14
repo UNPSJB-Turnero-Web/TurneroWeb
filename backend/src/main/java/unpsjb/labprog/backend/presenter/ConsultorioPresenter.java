@@ -68,7 +68,7 @@ public class ConsultorioPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> findById(@PathVariable Long id) {
+    public ResponseEntity<Object> findById(@PathVariable int id) {
         return service.findById(id)
                 .map(consultorio -> Response.ok(consultorio, "Consultorio encontrado"))
                 .orElse(Response.notFound("Consultorio con id " + id + " no encontrado"));
@@ -92,12 +92,15 @@ public class ConsultorioPresenter {
             @RequestBody JsonNode json) {
         try {
             Consultorio consultorio = objectMapper.treeToValue(json, Consultorio.class);
-            consultorio.setId(null); // Forzar creación
+            consultorio.setId(0); // Forzar creación
             CentroAtencion centro = new CentroAtencion();
             centro.setName(centroNombre);
             consultorio.setCentroAtencion(centro);
 
-            Consultorio saved = service.saveByCentroNombre(consultorio, centroNombre);
+            // Convertir a DTO
+            ConsultorioDTO dto = toDTO(consultorio);
+
+            ConsultorioDTO saved = service.save(dto);
             return Response.ok(saved, "Consultorio creado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -109,7 +112,7 @@ public class ConsultorioPresenter {
     @PutMapping
     public ResponseEntity<Object> update(@RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            if (consultorioDTO.getId() == null || consultorioDTO.getId() <= 0) {
+            if (consultorioDTO.getId() == 0 || consultorioDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
             ConsultorioDTO updated = service.save(consultorioDTO);
@@ -122,7 +125,7 @@ public class ConsultorioPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable int id) {
         try {
             service.delete(id);
             return Response.ok(null, "Consultorio eliminado correctamente");

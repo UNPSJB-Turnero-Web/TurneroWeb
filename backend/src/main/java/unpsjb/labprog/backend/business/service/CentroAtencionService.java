@@ -50,7 +50,6 @@ public class CentroAtencionService {
 
         // Validar los campos obligatorios y formato
         validateCentroAtencion(centro);
-        validarCoordenadas(centro.getLatitud(), centro.getLongitud()); 
 
         if (centro.getId() == 0) {
             // 🚀 CREACIÓN
@@ -142,16 +141,22 @@ public class CentroAtencionService {
     private void validateCentroAtencion(CentroAtencion c) {
         if (c.getName() == null || c.getName().isBlank()) {
             throw new IllegalArgumentException("El nombre es requerido");
+        
         }
         if (c.getDireccion() == null || c.getDireccion().isBlank()) {
             throw new IllegalArgumentException("La dirección es requerida");
         }
+    
         if (c.getLocalidad() == null || c.getLocalidad().isBlank()) {
             throw new IllegalArgumentException("La localidad es requerida");
+        
         }
+
         if (c.getProvincia() == null || c.getProvincia().isBlank()) {
             throw new IllegalArgumentException("La provincia es requerida");
+        
         }
+
         if (c.getTelefono() == null || c.getTelefono().isBlank()) {
             throw new IllegalArgumentException("El teléfono es requerido");
         }
@@ -169,10 +174,4 @@ public class CentroAtencionService {
         }
     }
 
-    private boolean validarCoordenadas(Double latitud, Double longitud) {
-        if (latitud == null || longitud == null) {
-            return false; // Coordenadas no pueden ser nulas
-        }
-        return latitud >= -90 && latitud <= 90 && longitud >= -180 && longitud <= 180;
-    }
 }

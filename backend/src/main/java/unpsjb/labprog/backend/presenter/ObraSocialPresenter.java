@@ -39,14 +39,14 @@ public ResponseEntity<ObraSocialDTO> getById(@PathVariable int id) {
 
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody ObraSocialDTO obraSocialDTO) {
-        ObraSocialDTO saved = service.save(obraSocialDTO);
+        ObraSocialDTO saved = service.saveOrUpdate(obraSocialDTO);
         return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ObraSocialDTO updatedObraSocial) {
         updatedObraSocial.setId(id);
-        ObraSocialDTO saved = service.save(updatedObraSocial);
+        ObraSocialDTO saved = service.saveOrUpdate(updatedObraSocial);
         return ResponseEntity.ok(saved);
     }
 

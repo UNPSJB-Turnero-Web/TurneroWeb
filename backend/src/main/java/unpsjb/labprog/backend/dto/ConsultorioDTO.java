@@ -5,7 +5,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ConsultorioDTO {
-    private Long id;
+    private int id;
     private Integer numero;
     private String name;
     private CentroAtencionDTO centroAtencion;

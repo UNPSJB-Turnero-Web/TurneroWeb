@@ -34,6 +34,9 @@ public class MedicoService {
     public MedicoDTO save(MedicoDTO dto) {
         Medico medico = toEntity(dto);
 
+        // Validar datos antes de guardar
+        validarMedico(medico);
+
         if (medico.getId() == null || medico.getId() == 0) {
             if (repository.existsByMatricula(medico.getMatricula())) {
                 throw new IllegalStateException("Ya existe un médico con la matrícula: " + medico.getMatricula());
@@ -81,5 +84,26 @@ public class MedicoService {
         medico.setMatricula(dto.getMatricula());
         // Mapear relaciones si es necesario
         return medico;
+    }
+
+    private void validarMedico(Medico medico) {
+        if (medico.getNombre() == null || medico.getNombre().isBlank()) {
+            throw new IllegalArgumentException("El nombre es obligatorio");
+        }
+        if (medico.getNombre().length() > 50) {
+            throw new IllegalArgumentException("El nombre no puede superar los 50 caracteres");
+        }
+        if (medico.getApellido() == null || medico.getApellido().isBlank()) {
+            throw new IllegalArgumentException("El apellido es obligatorio");
+        }
+        if (medico.getApellido().length() > 50) {
+            throw new IllegalArgumentException("El apellido no puede superar los 50 caracteres");
+        }
+        if (medico.getMatricula() == null || medico.getMatricula().isBlank()) {
+            throw new IllegalArgumentException("La matrícula es obligatoria");
+        }
+        if (medico.getMatricula().length() > 20) {
+            throw new IllegalArgumentException("La matrícula no puede superar los 20 caracteres");
+        }
     }
 }

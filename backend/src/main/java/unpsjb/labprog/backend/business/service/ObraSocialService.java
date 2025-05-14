@@ -29,8 +29,9 @@ public class ObraSocialService {
     }
 
     @Transactional
-    public ObraSocialDTO save(ObraSocialDTO dto) {
+    public ObraSocialDTO saveOrUpdate(ObraSocialDTO dto) {
         ObraSocial obraSocial = toEntity(dto);
+    validarObraSocial(obraSocial);
 
         // Validaciones para evitar duplicados
         if (obraSocial.getId() == null || obraSocial.getId() == 0) {
@@ -72,4 +73,23 @@ public class ObraSocialService {
         obraSocial.setCodigo(dto.getCodigo());
         return obraSocial;
     }
+
+    private void validarObraSocial(ObraSocial obraSocial) {
+    if (obraSocial.getNombre() == null || obraSocial.getNombre().isBlank()) {
+        throw new IllegalArgumentException("El nombre de la obra social es obligatorio");
+    }
+    if (obraSocial.getNombre().length() > 50) {
+        throw new IllegalArgumentException("El nombre no puede superar los 50 caracteres");
+    }
+    if (obraSocial.getCodigo() == null || obraSocial.getCodigo().isBlank()) {
+        throw new IllegalArgumentException("El código de la obra social es obligatorio");
+    }
+    if (!obraSocial.getCodigo().matches("^[A-Za-z0-9]+$")) {
+        throw new IllegalArgumentException("El código solo puede contener letras y números");
+    }
+    if (obraSocial.getCodigo().length() > 20) {
+        throw new IllegalArgumentException("El código no puede superar los 20 caracteres");
+    }
 }
+}
+

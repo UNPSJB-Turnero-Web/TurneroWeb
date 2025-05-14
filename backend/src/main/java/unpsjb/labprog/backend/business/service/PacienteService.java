@@ -33,8 +33,9 @@ public class PacienteService {
     }
 
     @Transactional
-    public PacienteDTO save(PacienteDTO dto) {
+    public PacienteDTO saveOrUpdate(PacienteDTO dto) {
         Paciente paciente = toEntity(dto);
+        validarPaciente(paciente);
 
         // Validaciones para evitar duplicados
         if (paciente.getId() == 0) {
@@ -100,4 +101,29 @@ public class PacienteService {
         }
         return paciente;
     }
+    private void validarPaciente(Paciente paciente) {
+    if (paciente.getNombre() == null || paciente.getNombre().isBlank()) {
+        throw new IllegalArgumentException("El nombre es obligatorio");
+    }
+    if (paciente.getNombre().length() > 50) {
+        throw new IllegalArgumentException("El nombre no puede superar los 50 caracteres");
+    }
+    if (paciente.getApellido() == null || paciente.getApellido().isBlank()) {
+        throw new IllegalArgumentException("El apellido es obligatorio");
+    }
+    if (paciente.getApellido().length() > 50) {
+        throw new IllegalArgumentException("El apellido no puede superar los 50 caracteres");
+    }
+    if (paciente.getDni() == null) {
+        throw new IllegalArgumentException("El DNI es obligatorio");
+    }
+    String dniStr = String.valueOf(paciente.getDni());
+    if (!dniStr.matches("^\\d{7,10}$")) {
+        throw new IllegalArgumentException("El DNI debe tener entre 7 y 10 dígitos");
+    }
+    if (paciente.getFechaNacimiento() == null) {
+        throw new IllegalArgumentException("La fecha de nacimiento es obligatoria");
+    }
 }
+}
+

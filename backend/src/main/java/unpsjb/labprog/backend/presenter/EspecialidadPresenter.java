@@ -66,7 +66,7 @@ public class EspecialidadPresenter {
             EspecialidadDTO dto = mapper.treeToValue(json, EspecialidadDTO.class);
 
             // Guardar la especialidad
-            EspecialidadDTO saved = service.save(dto);
+            EspecialidadDTO saved = service.saveOrUpdate(dto);
             return Response.ok(saved, "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
@@ -83,7 +83,7 @@ public class EspecialidadPresenter {
             dto.setId(id); // Asegurarse de que el ID coincide con el de la URL
 
             // Actualizar la especialidad
-            EspecialidadDTO updated = service.save(dto);
+            EspecialidadDTO updated = service.saveOrUpdate(dto);
             return Response.ok(updated, "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage()); // Manejo específico para IllegalStateException
