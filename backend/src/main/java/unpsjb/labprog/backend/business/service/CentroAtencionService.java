@@ -76,10 +76,10 @@ public class CentroAtencionService {
             if (repository.existsByDireccionAndIdNot(centro.getDireccion(), centro.getId())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección");
             }
-            if (repository.existsByNameAndIdNot(centro.getDireccion(), centro.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre");    
+            if (repository.existsByNameAndIdNot(centro.getName(), centro.getId())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre");
+            }
         }
-    }
      // Actualizar los datos
      centro.setName(dto.getName());
      centro.setDireccion(dto.getDireccion());

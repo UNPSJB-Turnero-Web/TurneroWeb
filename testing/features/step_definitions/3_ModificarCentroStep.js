@@ -58,7 +58,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
   //console.log('📋 Lista de centros devuelta por el backend:', listaCentros);
 
   const centroExistente = listaCentros.find(c =>
-    c.Nombre.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
+    c.name && c.name.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
   );
 
   if (!centroExistente) {

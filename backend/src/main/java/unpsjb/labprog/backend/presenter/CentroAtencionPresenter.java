@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
@@ -36,22 +35,7 @@ public class CentroAtencionPresenter {
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
         List<CentroAtencionDTO> dtos = service.findAll();
-        List<Map<String, Object>> centrosMapeados = dtos.stream().map(c -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", c.getId()); 
-            map.put("Nombre", c.getName());
-            map.put("Direccion", c.getDireccion());
-            map.put("Localidad", c.getLocalidad());
-            map.put("Provincia", c.getProvincia());
-            if (c.getLatitud() != null && c.getLongitud() != null) {
-                map.put("Coordenadas", c.getLatitud() + "," + c.getLongitud());
-            } else {
-                map.put("Coordenadas", null);
-            }
-            return map;
-        }).toList();
-
-        return Response.ok(centrosMapeados);
+        return Response.ok(dtos, "Centros de atención recuperados correctamente");
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
@@ -60,16 +44,7 @@ public class CentroAtencionPresenter {
         if (optionalCentro.isEmpty()) {
             return Response.notFound("Centro de atención id " + id + " no encontrado");
         }
-
-        CentroAtencionDTO c = optionalCentro.get();
-        Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-        if (c.getLatitud() != null && c.getLongitud() != null) {
-            map.put("coordenadas", c.getLatitud() + "," + c.getLongitud());
-        } else {
-            map.put("coordenadas", null);
-        }
-
-        return Response.ok(map);
+        return Response.ok(optionalCentro.get(), "Centro de atención encontrado");
     }
 
     @RequestMapping(value = "/page", method = RequestMethod.GET)
@@ -78,18 +53,8 @@ public class CentroAtencionPresenter {
             @RequestParam(defaultValue = "10") int size) {
         var pageResult = service.findByPage(page, size);
 
-        List<Map<String, Object>> centrosMapeados = pageResult.getContent().stream().map(c -> {
-            Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-            if (c.getLatitud() != null && c.getLongitud() != null) {
-                map.put("coordenadas", c.getLatitud() + "," + c.getLongitud());
-            } else {
-                map.put("coordenadas", null);
-            }
-            return map;
-        }).toList();
-
         Map<String, Object> response = new HashMap<>();
-        response.put("content", centrosMapeados);
+        response.put("content", pageResult.getContent());
         response.put("totalPages", pageResult.getTotalPages());
         response.put("totalElements", pageResult.getTotalElements());
         response.put("currentPage", pageResult.getNumber());
@@ -99,21 +64,18 @@ public class CentroAtencionPresenter {
 
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
     public ResponseEntity<Object> search(@PathVariable("term") String term) {
-        return Response.ok(service.search(term));
+        List<CentroAtencionDTO> results = service.search(term);
+        return Response.ok(results, "Resultados de búsqueda");
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> create(@RequestBody JsonNode json) {
+    public ResponseEntity<Object> create(@RequestBody CentroAtencionDTO dto) {
         try {
-            CentroAtencionDTO dto = objectMapper.treeToValue(json, CentroAtencionDTO.class);
-
             if (dto.getId() != 0) {
                 return Response.error(dto, "El centro de atención no puede tener un ID definido al crearse.");
             }
-
             CentroAtencionDTO saved = service.saveOrUpdate(dto);
             return Response.ok(saved, "Centro de atención creado correctamente");
-
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
                 return Response.dbError(e.getReason());
@@ -125,17 +87,13 @@ public class CentroAtencionPresenter {
     }
 
     @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody JsonNode json) {
+    public ResponseEntity<Object> update(@RequestBody CentroAtencionDTO dto) {
         try {
-            CentroAtencionDTO dto = objectMapper.treeToValue(json, CentroAtencionDTO.class);
-
             if (dto.getId() <= 0) {
                 return Response.error(dto, "Debe proporcionar un ID válido para actualizar.");
             }
-
             CentroAtencionDTO saved = service.saveOrUpdate(dto);
             return Response.ok(saved, "Centro de atención modificado correctamente");
-
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
                 return Response.dbError(e.getReason());
