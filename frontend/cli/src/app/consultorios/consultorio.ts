@@ -4,5 +4,8 @@ export interface Consultorio {
     id: number;
     numero: number;
     name: string;
+    especialidad: string;
+    medicoAsignado: string;
+    telefono: string;
     centroAtencion: CentroAtencion; // Relación con Centro de Atención
 }

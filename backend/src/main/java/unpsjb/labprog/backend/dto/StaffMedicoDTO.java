@@ -11,6 +11,7 @@ public class StaffMedicoDTO {
     private Long id;
     private CentroAtencionDTO centro;
     private MedicoDTO medico;
+    private EspecialidadDTO especialidad;
     private List<DisponibilidadMedicoDTO> disponibilidad;
 
     // Getters y Setters

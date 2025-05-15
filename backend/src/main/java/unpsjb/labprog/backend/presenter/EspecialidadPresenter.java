@@ -111,4 +111,14 @@ public class EspecialidadPresenter {
             return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
         }
     }
+        
+    @GetMapping("/centrosAtencion/{centroId}/especialidades")
+    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Long centroId) {
+        try {
+            List<EspecialidadDTO> especialidades = service.findByCentroAtencionId(centroId);
+            return Response.ok(especialidades, "Especialidades asociadas recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar especialidades asociadas: " + e.getMessage());
+        }
+    }
 }

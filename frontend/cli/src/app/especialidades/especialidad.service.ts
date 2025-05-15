@@ -48,4 +48,11 @@ export class EspecialidadService {
   search(term: string): Observable<DataPackage<Especialidad[]>> {
     return this.http.get<DataPackage<Especialidad[]>>(`${this.url}/search/${term}`);
   }
+
+    /** Obtiene los consultorios asociados a un centro de atención por ID */
+    getByCentroAtencion(centroId: number) {
+      return this.http.get<DataPackage<Especialidad[]>>(
+      `${this.url}/centrosAtencion/${centroId}/especialidades`
+      );
+    }
 }

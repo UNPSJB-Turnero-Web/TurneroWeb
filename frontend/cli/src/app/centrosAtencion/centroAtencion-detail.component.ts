@@ -12,6 +12,8 @@ import { MapModalComponent } from '../modal/map-modal.component';
 import { ConsultorioService } from '../consultorios/consultorio.service';
 import { Consultorio } from '../consultorios/consultorio';
 import { RouterModule } from '@angular/router';
+import { Especialidad } from '../especialidades/especialidad';
+import { EspecialidadService } from '../especialidades/especialidad.service';
 
 @Component({
   selector: 'app-centro-atencion-detail',
@@ -28,6 +30,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   searchQuery: string = ''; // Campo para la búsqueda
   consultorios: Consultorio[] = [];
   modoEdicion = false;
+  expandedConsultorio: number | null = null;
+  especialidadesAsociadas: Especialidad[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -35,7 +39,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private location: Location,
     private modalService: ModalService,
     private http: HttpClient, // Inyectar HttpClient
-    private consultorioService: ConsultorioService
+    private consultorioService: ConsultorioService,
+    private especialidadService: EspecialidadService
     
   ) {}
 
@@ -217,6 +222,14 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   getConsultorios(): void {
     if (this.centroAtencion?.id) {
       this.consultorioService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+        next: (data: any) => this.consultorios = data.data,
+        error: () => this.consultorios = []
+      });
+    }
+  }
+    getEspecialidades(): void {
+    if (this.centroAtencion?.id) {
+      this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
         next: (data: any) => this.consultorios = data.data,
         error: () => this.consultorios = []
       });

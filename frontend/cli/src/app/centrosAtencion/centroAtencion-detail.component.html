@@ -10,15 +10,20 @@
         </h2>
         <div class="row mb-2">
           <div class="col-md-6">
-            <p class="mb-1"><span class="fw-semibold text-secondary">Código:</span> <span class="fw-bold">{{ centroAtencion.code }}</span></p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Dirección:</span> {{ centroAtencion.direccion }}</p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Localidad:</span> {{ centroAtencion.localidad }}</p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Provincia:</span> {{ centroAtencion.provincia }}</p>
+            <p class="mb-1"><span class="fw-semibold text-secondary">Código:</span> <span class="fw-bold">{{
+                centroAtencion.code }}</span></p>
+            <p class="mb-1"><span class="fw-semibold text-secondary">Dirección:</span> {{ centroAtencion.direccion }}
+            </p>
+            <p class="mb-1"><span class="fw-semibold text-secondary">Localidad:</span> {{ centroAtencion.localidad }}
+            </p>
+            <p class="mb-1"><span class="fw-semibold text-secondary">Provincia:</span> {{ centroAtencion.provincia }}
+            </p>
           </div>
           <div class="col-md-6">
             <p class="mb-1"><span class="fw-semibold text-secondary">Teléfono:</span> {{ centroAtencion.telefono }}</p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Coordenadas:</span> 
-              <span class="badge bg-light text-dark border">{{ centroAtencion.latitud }}, {{ centroAtencion.longitud }}</span>
+            <p class="mb-1"><span class="fw-semibold text-secondary">Coordenadas:</span>
+              <span class="badge bg-light text-dark border">{{ centroAtencion.latitud }}, {{ centroAtencion.longitud
+                }}</span>
             </p>
           </div>
         </div>
@@ -83,7 +88,8 @@
             <label for="telefono" class="form-label">Teléfono:</label>
             <input name="telefono" placeholder="Teléfono" class="form-control" [(ngModel)]="centroAtencion.telefono"
               [ngModelOptions]="{standalone: true}" pattern="^[0-9]*$" #telefono="ngModel" required>
-            <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="alert alert-warning py-1 mt-1 mb-0">
+            <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)"
+              class="alert alert-warning py-1 mt-1 mb-0">
               <div *ngIf="telefono.errors?.['pattern']">
                 Solo se permiten números en el teléfono.
               </div>
@@ -107,11 +113,11 @@
           <button type="button" class="btn btn-secondary" (click)="goBack()">
             <i class="fa fa-times me-1"></i> Cancelar
           </button>
-          <button type="button" (click)="save()" class="btn btn-success"
-            [disabled]="form.invalid || allFieldsEmpty()">
+          <button type="button" (click)="save()" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">
             <i class="fa fa-save me-1"></i> Guardar
           </button>
-          <button *ngIf="centroAtencion.id" type="button" (click)="remove(centroAtencion)" class="btn btn-outline-danger">
+          <button *ngIf="centroAtencion.id" type="button" (click)="remove(centroAtencion)"
+            class="btn btn-outline-danger">
             <i class="fa fa-trash me-1"></i> Eliminar
           </button>
         </div>
@@ -123,25 +129,59 @@
 
 <div *ngIf="consultorios.length > 0" class="mt-5">
   <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header bg-primary text-white"
+      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
       <h4 class="mb-0"><i class="fa fa-stethoscope me-2"></i>Consultorios asociados</h4>
     </div>
     <ul class="list-group list-group-flush">
-      <li 
-        *ngFor="let c of consultorios"
-        class="list-group-item d-flex justify-content-between align-items-center"
-      >
-        <div>
-          <i class="fa fa-hospital-o text-secondary me-2"></i>
-          <b>{{ c.name }}</b>
-          <span class="text-muted ms-2">(N° {{ c.numero }})</span>
+      <li *ngFor="let c of consultorios; let i = index" class="list-group-item p-0" style="border: none;">
+        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="cursor:pointer;"
+          (click)="expandedConsultorio === i ? expandedConsultorio = null : expandedConsultorio = i">
+          <div>
+            <i class="fa fa-hospital-o text-secondary me-2"></i>
+            <b>{{ c.name }}</b>
+            <span class="text-muted ms-2">(N° {{ c.numero }})</span>
+          </div>
+          <i class="fa" [ngClass]="expandedConsultorio === i ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </div>
-        <a 
-          [routerLink]="['/consultorios', c.id]"
-          class="btn btn-outline-primary btn-sm"
-        >
-          <i class="fa fa-search me-1"></i> Ver detalle
-        </a>
+        <div *ngIf="expandedConsultorio === i" class="bg-light px-4 py-3 border-top">
+
+          <div><b>ID:</b> {{ c.id }}</div>
+          <div><b>Numero:</b> {{ c.numero }}</div>
+          <div><b>Nombre:</b> {{ c.name }}</div>
+
+
+          <div><b>Médico asignado:</b> {{ c.medicoAsignado }}</div>
+          <div><b>Especialidad:</b> {{ c.especialidad }}</div>
+          <div><b>Teléfono:</b> {{ c.telefono }}</div>
+          <!-- Agrega aquí más campos si lo necesitas -->
+          <div class="mt-2">
+            <a [routerLink]="['/consultorios', c.id]" class="btn btn-outline-primary btn-sm">
+              <i class="fa fa-search me-1"></i> Ver detalle
+            </a>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div *ngIf="especialidadesAsociadas.length > 0" class="mt-5">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white"
+      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
+      <h4 class="mb-0"><i class="fa fa-user-md me-2"></i>Especialidades asociadas</h4>
+    </div>
+    <ul class="list-group list-group-flush">
+      <li *ngFor="let e of especialidadesAsociadas" class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+          <i class="fa fa-medkit text-secondary me-2"></i>
+          <b>{{ e.nombre }}</b>
+        </span>
+        <!-- Puedes agregar aquí botones para desasociar, ver detalles, etc. -->
+        <button class="btn btn-outline-danger btn-sm" (click)="(e)">
+          <i class="fa fa-unlink me-1"></i> Quitar
+        </button>
       </li>
     </ul>
   </div>

@@ -1,0 +1,8 @@
+falta relacion de esquema turno con staff medico.
+
+disponibilidad turno va a ser para seleccionar el turno -> lado pacientes
+esquema turno va a ser para que los medicos diagramen su disponibilidad
+AGENDA DE TURNOS CON SLOTLESS
+
+Centro -> staff -> consultorios
+

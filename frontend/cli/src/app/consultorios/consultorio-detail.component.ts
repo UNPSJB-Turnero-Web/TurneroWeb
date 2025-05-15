@@ -29,6 +29,9 @@ export class ConsultorioDetailComponent implements OnInit {
     id: 0,
     numero: 0,
     name: "",
+    especialidad: "",
+    medicoAsignado: "",
+    telefono: "",
     centroAtencion: {} as CentroAtencion,
   };
   centrosAtencion: CentroAtencion[] = [];
@@ -41,7 +44,7 @@ export class ConsultorioDetailComponent implements OnInit {
     private consultorioService: ConsultorioService,
     private centroAtencionService: CentroAtencionService,
     private modalService: ModalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     const path = this.route.snapshot.routeConfig?.path;
@@ -52,6 +55,9 @@ export class ConsultorioDetailComponent implements OnInit {
         id: 0,
         numero: 0,
         name: "",
+        especialidad: "",
+        medicoAsignado: "",
+        telefono: "",
         centroAtencion: {} as CentroAtencion,
       };
       this.selectedCentroAtencion = undefined!;
@@ -99,6 +105,9 @@ export class ConsultorioDetailComponent implements OnInit {
         id: 0,
         numero: 0,
         name: "",
+        especialidad: "",
+        medicoAsignado: "",
+        telefono: "",
         centroAtencion: {} as CentroAtencion,
       };
     } else {
@@ -135,8 +144,8 @@ export class ConsultorioDetailComponent implements OnInit {
 
   allFieldsEmpty(): boolean {
     return !this.consultorio?.numero &&
-           !this.consultorio?.name &&
-           !this.selectedCentroAtencion;
+      !this.consultorio?.name &&
+      !this.selectedCentroAtencion;
   }
 
   remove(consultorio: Consultorio): void {
@@ -164,9 +173,9 @@ export class ConsultorioDetailComponent implements OnInit {
   }
   modoEdicion = false;
 
-activarEdicion() {
-  this.modoEdicion = true;
-}
+  activarEdicion() {
+    this.modoEdicion = true;
+  }
 
 
 }

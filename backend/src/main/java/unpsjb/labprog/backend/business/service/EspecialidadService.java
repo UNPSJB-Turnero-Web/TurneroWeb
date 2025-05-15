@@ -32,6 +32,17 @@ public class EspecialidadService {
         return especialidad != null ? toDTO(especialidad) : null;
     }
 
+
+    // Obtener especialidades asociadas a un centro de atención por su ID
+    public List<EspecialidadDTO> findByCentroAtencionId(Long centroId) {
+        List<Especialidad> especialidades = repository.findByCentroAtencionId(centroId);
+        return especialidades.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+// ...existing code...
+
     @Transactional
     public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto) {
         Especialidad especialidad = toEntity(dto);
