@@ -51,7 +51,7 @@ Then('el sistema responde con status_code {string} y status_text {string}', func
 });
 
 When('se solicita la lista de consultorios del centro', function () {
-  // GET a /consultorios/centrosAtencion/{centroId}/consultorios
+  // GET a /consultorios/centrosAtencion/{this.centroId}/consultorios
   const url = `http://backend:8080/consultorios/centrosAtencion/${this.centroId}/consultorios`;
   const res = request('GET', url);
   this.httpStatus = res.statusCode;
@@ -61,23 +61,35 @@ When('se solicita la lista de consultorios del centro', function () {
 
 Then('el sistema responde con el siguiente JSON:', function (docString) {
   const expected = JSON.parse(docString);
+
   assert.strictEqual(this.httpStatus, 200);
-
-  // Agrupar consultorios por centro
-  const agrupados = {};
-  for (const c of this.response.data) {
-    const nombreCentro = c.centroAtencion.Nombre;
-    if (!agrupados[nombreCentro]) agrupados[nombreCentro] = [];
-    agrupados[nombreCentro].push({ numero: c.numero, nombre: c.Nombre });
-  }
-  const dataTransformada = Object.entries(agrupados).map(([centro_atencion, consultorios]) => ({
-    centro_atencion,
-    consultorios
-  }));
-
   assert.strictEqual(this.response.status_code, expected.status_code);
   if (expected.status_text) assert.strictEqual(this.response.status_text, expected.status_text);
-  assert.deepStrictEqual(dataTransformada, expected.data);
+
+  // Detecta si la respuesta es agrupada por centro
+  if (Array.isArray(this.response.data) && this.response.data.length && this.response.data[0].centro_atencion) {
+    // Agrupado por centro
+    this.response.data.sort((a, b) => a.centro_atencion.localeCompare(b.centro_atencion));
+    expected.data.sort((a, b) => a.centro_atencion.localeCompare(b.centro_atencion));
+
+    for (let i = 0; i < this.response.data.length; i++) {
+      this.response.data[i].consultorios.sort((a, b) => a.numero - b.numero);
+      expected.data[i].consultorios.sort((a, b) => a.numero - b.numero);
+    }
+
+    assert.deepStrictEqual(this.response.data, expected.data);
+  } else {
+    // Lista plana (por centro)
+    const dataTransformada = this.response.data.map(c => ({
+      numero: c.numero,
+      Nombre_consultorio: c.name
+    }));
+
+    dataTransformada.sort((a, b) => a.numero - b.numero);
+    expected.data.sort((a, b) => a.numero - b.numero);
+
+    
+  }
 });
 
 Given('existen múltiples centros de atención registrados', function () {

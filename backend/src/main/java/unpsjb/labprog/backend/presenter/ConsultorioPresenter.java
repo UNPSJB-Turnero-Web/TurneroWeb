@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -73,8 +75,15 @@ public class ConsultorioPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            ConsultorioDTO saved = service.save(consultorioDTO);
+            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO); 
             return Response.ok(saved, "Consultorio creado correctamente");
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                return Response.dbError(e.getReason());
+            }
+            return Response.error(null, e.getReason());
+        } catch (IllegalArgumentException e) {
+            return Response.dbError(e.getMessage());
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
@@ -92,30 +101,39 @@ public class ConsultorioPresenter {
     public ResponseEntity<Object> update(@PathVariable int id, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
             consultorioDTO.setId(id);
-            ConsultorioDTO updated = service.save(consultorioDTO);
+            ConsultorioDTO updated = service.saveOrUpdate(consultorioDTO); 
             return Response.ok(updated, "Consultorio actualizado correctamente");
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                return Response.dbError(e.getReason());
+            }
+            return Response.error(null, e.getReason());
+        } catch (IllegalArgumentException e) {
+            return Response.dbError(e.getMessage());
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error al actualizar el consultorio: " + e.getMessage());
         }
     }
-    @PostMapping("/centro/{centroId}")
-public ResponseEntity<Object> createInCentro(@PathVariable int centroId, @RequestBody ConsultorioDTO consultorioDTO) {
-    try {
-        // Setea el centro de atención en el DTO
-        CentroAtencionDTO centro = new CentroAtencionDTO();
-        centro.setId(centroId);
-        consultorioDTO.setCentroAtencion(centro);
 
-        ConsultorioDTO saved = service.save(consultorioDTO);
-        return Response.ok(saved, "Consultorio creado correctamente");
-    } catch (IllegalStateException e) {
-        return Response.dbError(e.getMessage());
-    } catch (Exception e) {
-        return Response.error(null, "Error al crear el consultorio: " + e.getMessage());
+    @PostMapping("/centro/{centroId}")
+    public ResponseEntity<Object> createInCentro(@PathVariable int centroId, @RequestBody ConsultorioDTO consultorioDTO) {
+        try {
+            CentroAtencionDTO centro = new CentroAtencionDTO();
+            centro.setId(centroId);
+            consultorioDTO.setCentroAtencion(centro);
+
+            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO); // <--- usa saveOrUpdate
+            return Response.ok(saved, "Consultorio creado correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.dbError(e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al crear el consultorio: " + e.getMessage());
+        }
     }
-}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable int id) {

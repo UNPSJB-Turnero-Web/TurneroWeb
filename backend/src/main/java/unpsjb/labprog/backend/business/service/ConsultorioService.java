@@ -45,14 +45,7 @@ public class ConsultorioService {
         return repository.findById(id).map(this::toDTO);
     }
 
-    @Transactional
-    public ConsultorioDTO save(ConsultorioDTO dto) {
-        Consultorio consultorio = toEntity(dto);
-        CentroAtencion centro = centroRepo.findById(consultorio.getCentroAtencion().getId())
-                .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
-        consultorio.setCentroAtencion(centro);
-        return toDTO(repository.save(consultorio));
-    }
+   
 
     @Transactional
     public void delete(int id) {
@@ -139,10 +132,10 @@ public class ConsultorioService {
         if (consultorio.getId() == 0) {
             // CREACIÓN
             if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
-                throw new IllegalStateException("El número de consultorio ya está registrado");
+                throw new IllegalStateException("El número de consultorio ya está en uso");
             }
             if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
-                throw new IllegalStateException("El nombre del consultorio ya está registrado");
+                throw new IllegalStateException("El nombre del consultorio ya está en uso");
             }
         } else {
             // MODIFICACIÓN
@@ -158,7 +151,7 @@ public class ConsultorioService {
             }
             if (!existente.getName().equals(consultorio.getName())) {
                 if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
-                    throw new IllegalStateException("El nombre del consultorio ya está registrado");
+                    throw new IllegalStateException("El nombre del consultorio ya está en uso");
                 }
             }
             existente.setNumero(consultorio.getNumero());
