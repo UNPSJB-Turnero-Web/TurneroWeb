@@ -1,6 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.model.Especialidad;
 
@@ -18,6 +22,8 @@ public class EspecialidadService {
 
     @Autowired
     private EspecialidadRepository repository;
+    @Autowired
+    private CentroAtencionService centroAtencionService;
 
     // Método para obtener todas las especialidades como DTOs
     public List<EspecialidadDTO> findAll() {
@@ -32,16 +38,27 @@ public class EspecialidadService {
         return especialidad != null ? toDTO(especialidad) : null;
     }
 
-
     // Obtener especialidades asociadas a un centro de atención por su ID
     public List<EspecialidadDTO> findByCentroAtencionId(Long centroId) {
         List<Especialidad> especialidades = repository.findByCentroAtencionId(centroId);
         return especialidades.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+
     }
 
-// ...existing code...
+    public List<Map<String, Object>> findEspecialidadesAgrupadasPorCentro() {
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        List<CentroAtencionDTO> centros = centroAtencionService.findAll();
+        for (CentroAtencionDTO centro : centros) {
+            List<EspecialidadDTO> especialidades = findByCentroAtencionId((long) centro.getId());
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("centro_de_atencion", centro.getName());
+            entry.put("especialidades", especialidades.stream().map(EspecialidadDTO::getNombre).toList());
+            resultado.add(entry);
+        }
+        return resultado;
+    }
 
     @Transactional
     public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto) {
@@ -95,12 +112,14 @@ public class EspecialidadService {
             throw new IllegalStateException("No existe una especialidad con el ID: " + id);
         }
 
-        // Si necesitas validar si la especialidad está asignada, descomenta y ajusta esta lógica:
+        // Si necesitas validar si la especialidad está asignada, descomenta y ajusta
+        // esta lógica:
         /*
-        if (repository.estaAsignada(id)) {
-            throw new IllegalStateException("No se puede eliminar una especialidad asignada");
-        }
-        */
+         * if (repository.estaAsignada(id)) {
+         * throw new
+         * IllegalStateException("No se puede eliminar una especialidad asignada");
+         * }
+         */
 
         repository.deleteById(id);
     }

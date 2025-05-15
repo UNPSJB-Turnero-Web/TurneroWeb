@@ -121,4 +121,15 @@ public class EspecialidadPresenter {
             return Response.error(null, "Error al recuperar especialidades asociadas: " + e.getMessage());
         }
     }
+
+@GetMapping("/centrosAtencion/especialidades")
+public ResponseEntity<Object> getEspecialidadesAgrupadasPorCentro() {
+    try {
+        List<Map<String, Object>> agrupado = service.findEspecialidadesAgrupadasPorCentro();
+        return Response.ok(agrupado, "especialidades asociadas a centros recuperadas correctamente");
+    } catch (Exception e) {
+        return Response.error(null, "Error al recuperar especialidades agrupadas: " + e.getMessage());
+    }
+}
+
 }

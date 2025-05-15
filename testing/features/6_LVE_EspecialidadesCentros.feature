@@ -16,13 +16,13 @@ Característica: LVE EspecialidadesCentros
 | Centro Odontológico Rawson |
 | Centro Médico del Este |
 
-  Esquema del escenario: Asociar una especialidad a un centro de atención exitosamente
+Esquema del escenario: Asociar una especialidad a un centro de atención exitosamente 
 
-    Cuando el administrador asocia la especialidad "<especialidad>" al centro de atención "<centro_de_atencion>"
-    Entonces el sistema responde con <status_code> y "<status_text>"
+Cuando el administrador asocia la especialidad "<Especialidad>" al centro de atención "<Centro_De_Atencion>" para especialidadesCentro
+  Entonces el sistema responde con status_code "<status_code>" y status_text "<status_text>"
 
   Ejemplos:
-| Centro de Atención | Especialidad | Status Code | Status Text |
+| Centro_De_Atencion | Especialidad | Status Code | Status Text |
 | Centro Médico Integral | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
 | Centro Médico Integral | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
 | Centro Médico Integral | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
@@ -168,8 +168,8 @@ Característica: LVE EspecialidadesCentros
 
   Escenario: Recuperar todas las especialidades asociadas a todos los centros
     Dado que existen especialidades asociadas a centros médicos en el sistema
-    Cuando un usuario del sistema solicita la lista de especialidades asociadas 
-    Entonces el sistema responde con un JSON:
+    Cuando un usuario del sistema solicita la lista de especialidades asociadas
+    Entonces el sistema responde con un JSON para especialidadesCentro:
    
      """
 {
@@ -354,29 +354,29 @@ Característica: LVE EspecialidadesCentros
 
  Escenario: Recuperar las especialidades asociadas a un centros médico
     Dado que existen especialidades asociadas a centros médicos en el sistema
-    Cuando un usuario del sistema solicita la lista de especialidades asociadas al centro "Centro Médico Integral"
-    Entonces el sistema responde con un JSON:
+    Cuando un usuario del sistema solicita la lista de especialidades asociadas al centro "Centro Médico Integral" para especialidadesCentro
+    Entonces el sistema responde con un JSON para especialidadesCentro:
    
      """
    {
     "status_code": 200,
-    "status_text": "especialidades asociadas a centros recuperadas correctamente",
+    "status_text": "Especialidades asociadas recuperadas correctamente",
     "data": [
-            "Odontología",
-            "Oftalmología",
-            "Pediatría",
-            "Traumatología",
+            "Angiología",
+            "Cirugía General",
             "Clínica Médica",
-            "Medicina del Deporte",
-            "Medicina General",
             "Diabetología",
             "Endoscopía Digestiva",
             "Ginecología",
-            "Urología",
-            "Angiología",
+            "Medicina Estética",
+            "Medicina General",
+            "Medicina del Deporte",
+            "Odontología",
+            "Oftalmología",
             "Otorrinolaringología",
-            "Cirugía General",
-            "Medicina Estética"
+            "Pediatría",
+            "Traumatología",
+            "Urología"
         ]
     }
    """
