@@ -56,7 +56,7 @@ When('se solicita la lista de consultorios del centro', function () {
   const res = request('GET', url);
   this.httpStatus = res.statusCode;
   this.response = JSON.parse(res.getBody('utf8'));
-  console.log(JSON.stringify(this.response, null, 2));
+ // console.log(JSON.stringify(this.response, null, 2));
 });
 
 Then('el sistema responde con el siguiente JSON:', function (docString) {

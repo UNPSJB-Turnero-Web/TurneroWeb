@@ -1,33 +1,61 @@
 <div *ngIf="centroAtencion">
 
   <!-- MODO VISTA -->
-  <div *ngIf="!modoEdicion" class="mb-4">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="card-title mb-4">
-          <i class="fa fa-hospital-o text-primary me-2"></i>
-          Centro de Atención: <span class="fw-bold">{{ centroAtencion.name }}</span>
+  <div *ngIf="centroAtencion && !modoEdicion" class="mb-4">
+    <div class="card shadow-sm" style="overflow: hidden;">
+      <!-- Barra azul como header con DropDown -->
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+        style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem; cursor:pointer;"
+        (click)="expandedDetailPanel = !expandedDetailPanel">
+        <div class="d-flex align-items-center">
+          <i class="fa fa-hospital-o me-2"></i>
+          <span class="fs-4 fw-bold">Centro de Atención</span>
+        </div>
+        <i class="fa" [ngClass]="expandedDetailPanel ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </div>
+      <div *ngIf="expandedDetailPanel" class="card-body">
+        <h2 class="display-6 fw-bold mb-4">
+          <i class="fa fa-map-marker-alt me-2"></i>{{ centroAtencion.name }}
         </h2>
-        <div class="row mb-2">
+        <div class="row g-4">
           <div class="col-md-6">
-            <p class="mb-1"><span class="fw-semibold text-secondary">Código:</span> <span class="fw-bold">{{
-                centroAtencion.code }}</span></p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Dirección:</span> {{ centroAtencion.direccion }}
-            </p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Localidad:</span> {{ centroAtencion.localidad }}
-            </p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Provincia:</span> {{ centroAtencion.provincia }}
-            </p>
+            <div class="mb-2">
+              <i class="fa fa-barcode text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Código:</span>
+              <span class="fw-bold">{{ centroAtencion.code }}</span>
+            </div>
+            <div class="mb-2">
+              <i class="fa fa-road text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Dirección:</span>
+              {{ centroAtencion.direccion }}
+            </div>
+            <div class="mb-2">
+              <i class="fa fa-map-marker text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Localidad:</span>
+              {{ centroAtencion.localidad }}
+            </div>
+            <div class="mb-2">
+              <i class="fa fa-flag text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Provincia:</span>
+              {{ centroAtencion.provincia }}
+            </div>
           </div>
           <div class="col-md-6">
-            <p class="mb-1"><span class="fw-semibold text-secondary">Teléfono:</span> {{ centroAtencion.telefono }}</p>
-            <p class="mb-1"><span class="fw-semibold text-secondary">Coordenadas:</span>
-              <span class="badge bg-light text-dark border">{{ centroAtencion.latitud }}, {{ centroAtencion.longitud
-                }}</span>
-            </p>
+            <div class="mb-2">
+              <i class="fa fa-phone text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Teléfono:</span>
+              {{ centroAtencion.telefono }}
+            </div>
+            <div class="mb-2">
+              <i class="fa fa-globe text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Coordenadas:</span>
+              <span class="badge bg-light text-dark border">
+                {{ centroAtencion.latitud }}, {{ centroAtencion.longitud }}
+              </span>
+            </div>
           </div>
         </div>
-        <div class="mt-3">
+        <div class="mt-4">
           <button class="btn btn-danger me-2" (click)="goBack()">
             <i class="fa fa-arrow-left me-1"></i> Atrás
           </button>
@@ -35,6 +63,7 @@
             <i class="fa fa-pencil me-1"></i> Editar
           </button>
         </div>
+
       </div>
     </div>
   </div>
@@ -110,7 +139,7 @@
           </div>
         </div>
         <div class="d-flex gap-2 mt-4 justify-content-end">
-          <button type="button" class="btn btn-secondary" (click)="goBack()">
+          <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()">
             <i class="fa fa-times me-1"></i> Cancelar
           </button>
           <button type="button" (click)="save()" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">
@@ -128,61 +157,89 @@
 <app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
 
 <div *ngIf="consultorios.length > 0" class="mt-5">
-  <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white"
-      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
-      <h4 class="mb-0"><i class="fa fa-stethoscope me-2"></i>Consultorios asociados</h4>
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem; cursor:pointer; border-bottom: 2px solid #1565c0;"
+      (click)="expandedConsultoriosPanel = !expandedConsultoriosPanel">
+      <h4 class="mb-0">
+        <i class="fa fa-stethoscope me-2"></i>Consultorios
+      </h4>
+      <i class="fa" [ngClass]="expandedConsultoriosPanel ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
     </div>
-    <ul class="list-group list-group-flush">
-      <li *ngFor="let c of consultorios; let i = index" class="list-group-item p-0" style="border: none;">
-        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="cursor:pointer;"
-          (click)="expandedConsultorio === i ? expandedConsultorio = null : expandedConsultorio = i">
-          <div>
-            <i class="fa fa-hospital-o text-secondary me-2"></i>
-            <b>{{ c.name }}</b>
-            <span class="text-muted ms-2">(N° {{ c.numero }})</span>
-          </div>
-          <i class="fa" [ngClass]="expandedConsultorio === i ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+    <div *ngIf="expandedConsultoriosPanel" class="card-body p-3">
+      <button *ngIf="!modoCrearConsultorio" class="btn btn-outline-primary w-100 mb-3" (click)="modoCrearConsultorio = true">
+        <i class="fa fa-plus"></i> Nuevo Consultorio
+      </button>
+      <form class="row g-2 align-items-end mb-3" (ngSubmit)="crearConsultorio()" *ngIf="modoCrearConsultorio">
+        <div class="col-12 col-md-4">
+          <input type="number" class="form-control" placeholder="Número" [(ngModel)]="nuevoConsultorio.numero" name="numero" required min="1">
         </div>
-        <div *ngIf="expandedConsultorio === i" class="bg-light px-4 py-3 border-top">
-
-          <div><b>ID:</b> {{ c.id }}</div>
-          <div><b>Numero:</b> {{ c.numero }}</div>
-          <div><b>Nombre:</b> {{ c.name }}</div>
-
-
-          <div><b>Médico asignado:</b> {{ c.medicoAsignado }}</div>
-          <div><b>Especialidad:</b> {{ c.especialidad }}</div>
-          <div><b>Teléfono:</b> {{ c.telefono }}</div>
-          <!-- Agrega aquí más campos si lo necesitas -->
-          <div class="mt-2">
-            <a [routerLink]="['/consultorios', c.id]" class="btn btn-outline-primary btn-sm">
-              <i class="fa fa-search me-1"></i> Ver detalle
-            </a>
-          </div>
+        <div class="col-12 col-md-5">
+          <input type="text" class="form-control" placeholder="Nombre" [(ngModel)]="nuevoConsultorio.name" name="name" required>
         </div>
-      </li>
-    </ul>
+        <div class="col-12 col-md-3 d-flex gap-2">
+          <button class="btn btn-success flex-fill" type="submit"><i class="fa fa-plus"></i> Crear</button>
+          <button class="btn btn-secondary flex-fill" type="button" (click)="modoCrearConsultorio = false">Cancelar</button>
+        </div>
+      </form>
+      <div *ngIf="mensajeConsultorio" class="alert alert-success py-2 mb-3">{{ mensajeConsultorio }}</div>
+      <ul class="list-group list-group-flush">
+        <li *ngFor="let c of consultorios; let i = index" class="list-group-item d-flex align-items-center justify-content-between">
+          <div *ngIf="editConsultorioIndex !== i">
+            <b>N° {{ c.numero }}</b> - {{ c.name }}
+            <button class="btn btn-sm btn-outline-primary ms-2" (click)="editarConsultorio(i)">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </div>
+          <form *ngIf="editConsultorioIndex === i" class="row g-2 align-items-end w-100" (ngSubmit)="guardarEdicionConsultorio(i)">
+            <div class="col-4">
+              <input type="number" class="form-control" [(ngModel)]="c.numero" name="numero{{i}}" required min="1">
+            </div>
+            <div class="col-5">
+              <input type="text" class="form-control" [(ngModel)]="c.name" name="name{{i}}" required>
+            </div>
+            <div class="col-3 d-flex gap-2">
+              <button class="btn btn-success flex-fill" type="submit"><i class="fa fa-save"></i></button>
+              <button class="btn btn-secondary flex-fill" type="button" (click)="cancelarEdicionConsultorio()">Cancelar</button>
+            </div>
+          </form>
+        </li>
+      </ul>
+      <div class="text-end text-muted small mt-3">
+        Total de consultorios: {{ consultorios.length }}
+      </div>
+    </div>
   </div>
 </div>
-
-<div *ngIf="especialidadesAsociadas.length > 0" class="mt-5">
-  <div class="card shadow-sm">
-    <div class="card-header bg-primary text-white"
-      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
-      <h4 class="mb-0"><i class="fa fa-user-md me-2"></i>Especialidades asociadas</h4>
-    </div>
-    <ul class="list-group list-group-flush">
-      <li *ngFor="let e of especialidadesAsociadas" class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-          <i class="fa fa-medkit text-secondary me-2"></i>
-          <b>{{ e.nombre }}</b>
-        </span>
-        <!-- Puedes agregar aquí botones para desasociar, ver detalles, etc. -->
-        <button class="btn btn-outline-danger btn-sm" (click)="(e)">
-          <i class="fa fa-unlink me-1"></i> Quitar
+<div class="card mt-4" style="overflow: hidden;">
+ <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+      style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem; cursor:pointer;"
+      (click)="expandedEspecialidadesPanel = !expandedEspecialidadesPanel">
+      <h4 class="mb-0">
+        <i class="fa fa-user me-2"></i>Especialidades
+      </h4>
+    <i class="fa" [ngClass]="expandedEspecialidadesPanel ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+  </div>
+  <div *ngIf="expandedEspecialidadesPanel" class="card-body">
+    <ul class="list-group mb-3">
+      <li *ngFor="let esp of especialidadesAsociadas"
+        class="list-group-item d-flex justify-content-between align-items-center">
+        {{ esp.nombre }}
+        <button class="btn btn-outline-danger btn-sm" (click)="desasociarEspecialidad(esp)"
+          [disabled]="esp.tieneMedicosActivos || esp.tieneTurnosProgramados" title="Desasociar">
+          <i class="fa fa-trash"></i>
         </button>
       </li>
     </ul>
+    <form class="d-flex gap-2 align-items-center" (ngSubmit)="asociarEspecialidad()">
+      <select class="form-select" [(ngModel)]="especialidadSeleccionada" name="especialidadSeleccionada" required>
+        <option [ngValue]="null" disabled selected>Seleccionar especialidad...</option>
+        <option *ngFor="let esp of especialidadesDisponibles" [ngValue]="esp">{{ esp.nombre }}</option>
+      </select>
+      <button class="btn btn-success" type="submit" [disabled]="!especialidadSeleccionada">
+        <i class="fa fa-plus"></i> Asociar
+      </button>
+    </form>
+    <div *ngIf="mensaje" class="alert alert-info mt-2">{{ mensaje }}</div>
   </div>
 </div>

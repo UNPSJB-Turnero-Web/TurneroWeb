@@ -1,6 +1,6 @@
 # language: es
 
-Característica: Asociar una Especialidad a un Centro de Atención
+Característica: LVE EspecialidadesCentros
 
   Antecedentes: 
     Dado que existe un sistema de gestión de centros de atención
@@ -165,7 +165,6 @@ Característica: Asociar una Especialidad a un Centro de Atención
 | Centro Médico del Este | Cirugía Vascular | 200 | Asociación de especialidad en centro realizada correctamente |
 | Centro Médico del Este | Alergia e Inmunología | 200 | Asociación de especialidad en centro realizada correctamente |
 
-Característica: Listar Especialidades asociadas a todos los centros médicos
 
   Escenario: Recuperar todas las especialidades asociadas a todos los centros
     Dado que existen especialidades asociadas a centros médicos en el sistema

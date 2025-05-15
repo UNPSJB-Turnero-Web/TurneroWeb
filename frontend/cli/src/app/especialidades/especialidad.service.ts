@@ -43,16 +43,35 @@ export class EspecialidadService {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
   }
 
-
   /** Búsqueda de especialidades */
   search(term: string): Observable<DataPackage<Especialidad[]>> {
     return this.http.get<DataPackage<Especialidad[]>>(`${this.url}/search/${term}`);
   }
 
-    /** Obtiene los consultorios asociados a un centro de atención por ID */
-    getByCentroAtencion(centroId: number) {
-      return this.http.get<DataPackage<Especialidad[]>>(
+  /** Obtiene los consultorios asociados a un centro de atención por ID */
+  getByCentroAtencion(centroId: number) {
+    return this.http.get<DataPackage<Especialidad[]>>(
       `${this.url}/centrosAtencion/${centroId}/especialidades`
-      );
-    }
+    );
+  }
+
+  /** Especialidades asociadas a un centro de atención */
+  getAsociadas(centroId: number) {
+    return this.http.get<Especialidad[]>(`rest/centrosAtencion/${centroId}/especialidades`);
+  }
+
+  /** Especialidades NO asociadas a un centro de atención */
+  getDisponibles(centroId: number) {
+    return this.http.get<Especialidad[]>(`rest/centrosAtencion/${centroId}/especialidades/disponibles`);
+  }
+
+  /** Asociar especialidad a centro de atención */
+  asociar(centroId: number, especialidadId: number) {
+    return this.http.post(`rest/centrosAtencion/${centroId}/especialidades/${especialidadId}`, {});
+  }
+
+  /** Desasociar especialidad de centro de atención */
+  desasociar(centroId: number, especialidadId: number) {
+    return this.http.delete(`rest/centrosAtencion/${centroId}/especialidades/${especialidadId}`);
+  }
 }

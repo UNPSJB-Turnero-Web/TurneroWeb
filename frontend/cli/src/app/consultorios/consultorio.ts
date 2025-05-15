@@ -1,11 +1,11 @@
 import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 
 export interface Consultorio {
-    id: number;
+    id?: number;
     numero: number;
     name: string;
-    especialidad: string;
-    medicoAsignado: string;
-    telefono: string;
+    especialidad?: string;
+    medicoAsignado?: string;
+    telefono?: string;
     centroAtencion: CentroAtencion; // Relación con Centro de Atención
 }

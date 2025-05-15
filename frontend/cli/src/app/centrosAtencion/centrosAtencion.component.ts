@@ -87,25 +87,37 @@ import { PaginationComponent } from '../pagination/pagination.component';
       min-width: 32px;
     }
     .card {
-      border-radius: 1rem;
+      border-radius: 1.15rem;
       overflow: hidden;
     }
     .card-header {
       border-top-left-radius: 1rem !important;
       border-top-right-radius: 1rem !important;
-      padding-top: 1rem;
-      padding-bottom: 1rem;
-      padding-right: 2rem;
+      padding-top: 0.75rem;      
+      padding-bottom: 0.75rem;  
+      padding-right: 0.7rem!important;
+      padding-left: 0.7rem!important;  
+      overflow: hidden;
     }
     .nuevo-centro-btn {
       border-radius: 0.7rem !important;
-      padding: 0.5rem 1.2rem !important;
+      padding: 0.3rem 1rem !important;
       font-size: 1rem;
       font-weight: 500;
       box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-      transition: background 0.2s;
+      transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+      background-color: #f8f9fa;
+      color: #0d6efd;
+
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;    
+      
+      
     }
     .nuevo-centro-btn:active, .nuevo-centro-btn:focus {
+
       outline: none;
       box-shadow: 0 0 0 0.15rem #0d6efd33;
     }

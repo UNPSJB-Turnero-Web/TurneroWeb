@@ -7,8 +7,8 @@ import { CentroAtencionService } from './centroAtencion.service';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import * as L from 'leaflet';
 import { ModalService } from '../modal/modal.service';
-import { HttpClient } from '@angular/common/http'; 
-import { MapModalComponent } from '../modal/map-modal.component'; 
+import { HttpClient } from '@angular/common/http';
+import { MapModalComponent } from '../modal/map-modal.component';
 import { ConsultorioService } from '../consultorios/consultorio.service';
 import { Consultorio } from '../consultorios/consultorio';
 import { RouterModule } from '@angular/router';
@@ -20,29 +20,44 @@ import { EspecialidadService } from '../especialidades/especialidad.service';
   standalone: true,
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent, RouterModule],
   templateUrl: './centroAtencion-detail.component.html',
-  styles: ``
+  styles: `
+  .card {
+      border-radius: 1rem;
+      overflow: hidden;
+  `
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   centroAtencion!: CentroAtencion;
-  coordenadas: string = ''; // <-- Agrega esta línea
+  coordenadas: string = ''; 
   showMap: boolean = false;
   private map!: L.Map;
-  searchQuery: string = ''; // Campo para la búsqueda
+  searchQuery: string = ''; 
   consultorios: Consultorio[] = [];
   modoEdicion = false;
+  expandedDetailPanel: boolean = true;
   expandedConsultorio: number | null = null;
+  expandedConsultoriosPanel: boolean = false;
+  expandedEspecialidadesPanel: boolean = true;
   especialidadesAsociadas: Especialidad[] = [];
+  especialidadesDisponibles: Especialidad[] = [];
+  especialidadSeleccionada: Especialidad | null = null;
+  
+  mensaje: string = '';
+  modoCrearConsultorio = false;
+  nuevoConsultorio = { numero: null, name: '' };
+  mensajeConsultorio = '';
+  editConsultorioIndex: number | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private centroAtencionService: CentroAtencionService,
     private location: Location,
     private modalService: ModalService,
-    private http: HttpClient, // Inyectar HttpClient
+    private http: HttpClient, 
     private consultorioService: ConsultorioService,
     private especialidadService: EspecialidadService
-    
-  ) {}
+
+  ) { }
 
   ngAfterViewInit(): void {
     if (this.showMap) {
@@ -112,7 +127,9 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.centroAtencionService.save(this.centroAtencion).subscribe({
       next: (dataPackage) => {
         this.centroAtencion = <CentroAtencion>dataPackage.data;
-        this.goBack();
+        this.modoEdicion = false; 
+        this.getConsultorios();   
+
       },
       error: (err) => {
         console.error('Error al guardar el centro de atención:', err);
@@ -135,7 +152,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       .then(() => {
         this.centroAtencionService.delete(centro.id!).subscribe({
           next: () => {
-            this.goBack(); // Redirige al usuario a la lista
+            this.goBack(); 
           },
           error: (err) => {
             console.error('Error al eliminar el centro de atención:', err);
@@ -198,6 +215,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   ngOnInit(): void {
     this.get();
+    this.cargarEspecialidades();
   }
 
   onLocationSelected(coords: { latitud: number, longitud: number } | null): void {
@@ -212,11 +230,11 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   allFieldsEmpty(): boolean {
     return !this.centroAtencion?.name?.trim() &&
-           !this.centroAtencion?.direccion?.trim() &&
-           !this.centroAtencion?.localidad?.trim() &&
-           !this.centroAtencion?.provincia?.trim() &&
-           !this.centroAtencion?.telefono?.trim() &&
-           !this.coordenadas?.trim();
+      !this.centroAtencion?.direccion?.trim() &&
+      !this.centroAtencion?.localidad?.trim() &&
+      !this.centroAtencion?.provincia?.trim() &&
+      !this.centroAtencion?.telefono?.trim() &&
+      !this.coordenadas?.trim();
   }
 
   getConsultorios(): void {
@@ -227,13 +245,52 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       });
     }
   }
-    getEspecialidades(): void {
+  getEspecialidades(): void {
     if (this.centroAtencion?.id) {
       this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
         next: (data: any) => this.consultorios = data.data,
         error: () => this.consultorios = []
       });
     }
+  }
+
+  cargarEspecialidades() {
+    if (!this.centroAtencion?.id) return;
+    this.especialidadService.getAsociadas(this.centroAtencion.id!).subscribe(asoc => {
+      this.especialidadesAsociadas = asoc;
+      this.especialidadService.getDisponibles(this.centroAtencion.id!).subscribe(disp => {
+        this.especialidadesDisponibles = disp;
+      });
+    });
+  }
+
+  asociarEspecialidad() {
+    if (!this.especialidadSeleccionada || !this.centroAtencion?.id) return;
+    this.especialidadService.asociar(this.centroAtencion.id!, this.especialidadSeleccionada.id!)
+      .subscribe({
+        next: () => {
+          this.mensaje = 'Especialidad asociada correctamente';
+          this.cargarEspecialidades();
+          this.especialidadSeleccionada = null;
+        },
+        error: err => {
+          this.mensaje = err.error?.status_text || 'No se pudo asociar la especialidad';
+        }
+      });
+  }
+
+  desasociarEspecialidad(esp: Especialidad) {
+    if (!this.centroAtencion?.id || !esp.id) return;
+    this.especialidadService.desasociar(this.centroAtencion.id!, esp.id!)
+      .subscribe({
+        next: () => {
+          this.mensaje = 'Especialidad desasociada correctamente';
+          this.cargarEspecialidades();
+        },
+        error: err => {
+          this.mensaje = err.error?.status_text || 'No se pudo desasociar la especialidad';
+        }
+      });
   }
 
   activarEdicion() {
@@ -243,5 +300,69 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   cancelarEdicion() {
     this.modoEdicion = false;
     // Opcional: recargar datos originales
+  }
+
+  crearConsultorio() {
+    if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.name) return;
+    if (this.consultorios.some(c => c.numero === this.nuevoConsultorio.numero)) {
+      this.mensajeConsultorio = 'Ya existe un consultorio con ese número en este centro.';
+      setTimeout(() => this.mensajeConsultorio = '', 3000); 
+      return;
+    }
+    const consultorio: Consultorio = {
+      numero: this.nuevoConsultorio.numero,
+      name: this.nuevoConsultorio.name,
+      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
+     
+    };
+    this.consultorioService.create(consultorio)
+      .subscribe({
+        next: () => {
+          this.mensajeConsultorio = 'Consultorio creado correctamente';
+          setTimeout(() => this.mensajeConsultorio = '', 3000); 
+          this.getConsultorios();
+          this.nuevoConsultorio = { numero: null, name: '' };
+          this.modoCrearConsultorio = false;
+        },
+        error: (err: any) => {
+          this.mensajeConsultorio = err.error?.status_text || 'No se pudo crear el consultorio';
+          setTimeout(() => this.mensajeConsultorio = '', 3000); 
+        }
+      });
+  }
+
+  editarConsultorio(i: number) {
+    this.editConsultorioIndex = i;
+  }
+
+  guardarEdicionConsultorio(i: number) {
+    const c = this.consultorios[i];
+    if (this.consultorios.some((x, idx) => x.numero === c.numero && idx !== i)) {
+      this.mensajeConsultorio = 'Ya existe un consultorio con ese número.';
+      return;
+    }
+    if (!c.id) {
+      this.mensajeConsultorio = 'No se puede actualizar un consultorio sin ID.';
+      return;
+    }
+    this.consultorioService.update(c.id, {
+      ...c,
+      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
+    }).subscribe({
+      next: () => {
+        this.mensajeConsultorio = 'Consultorio actualizado correctamente';
+        this.getConsultorios();
+        this.editConsultorioIndex = null;
+      },
+      error: (err: any) => {
+        this.mensajeConsultorio = err.error?.status_text || 'No se pudo actualizar el consultorio';
+      }
+    });
+  }
+
+  cancelarEdicionConsultorio() {
+    this.editConsultorioIndex = null;
+    this.getConsultorios(); 
+    
   }
 }
