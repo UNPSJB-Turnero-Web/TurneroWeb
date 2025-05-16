@@ -6,3 +6,4 @@ AGENDA DE TURNOS CON SLOTLESS
 
 Centro -> staff -> consultorios
 
+checkear que la lista de especialidades asociadadas a centros sea la asociada con los medicos

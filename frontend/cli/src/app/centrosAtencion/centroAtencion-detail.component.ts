@@ -24,24 +24,47 @@ import { EspecialidadService } from '../especialidades/especialidad.service';
   .card {
       border-radius: 1rem;
       overflow: hidden;
+      }
+
+.custom-tabs .nav-link {
+  font-weight: 500;
+  color: #1565c0;
+  border: none;
+  background: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  margin-right: 0.2rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.08rem;
+  box-shadow: none;
+}
+
+.custom-tabs .nav-link.active {
+  color: #fff !important;
+  background: linear-gradient(90deg, #1976d2 80%, #42a5f5 100%);
+  box-shadow: 0 4px 16px -8px #1976d2;
+  border: none;
+}
+
+.custom-tabs .nav-link:hover:not(.active) {
+  background: #e3f2fd;
+  color: #1976d2;
+}
   `
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   centroAtencion!: CentroAtencion;
-  coordenadas: string = ''; 
+  coordenadas: string = '';
   showMap: boolean = false;
   private map!: L.Map;
-  searchQuery: string = ''; 
+  searchQuery: string = '';
   consultorios: Consultorio[] = [];
   modoEdicion = false;
-  expandedDetailPanel: boolean = true;
-  expandedConsultorio: number | null = null;
-  expandedConsultoriosPanel: boolean = false;
-  expandedEspecialidadesPanel: boolean = true;
   especialidadesAsociadas: Especialidad[] = [];
   especialidadesDisponibles: Especialidad[] = [];
   especialidadSeleccionada: Especialidad | null = null;
-  
+  activeTab: string = 'detalle';
+
   mensaje: string = '';
   modoCrearConsultorio = false;
   nuevoConsultorio = { numero: null, name: '' };
@@ -53,7 +76,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private centroAtencionService: CentroAtencionService,
     private location: Location,
     private modalService: ModalService,
-    private http: HttpClient, 
+    private http: HttpClient,
     private consultorioService: ConsultorioService,
     private especialidadService: EspecialidadService
 
@@ -127,8 +150,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.centroAtencionService.save(this.centroAtencion).subscribe({
       next: (dataPackage) => {
         this.centroAtencion = <CentroAtencion>dataPackage.data;
-        this.modoEdicion = false; 
-        this.getConsultorios();   
+        this.modoEdicion = false;
+        this.getConsultorios();
 
       },
       error: (err) => {
@@ -152,7 +175,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       .then(() => {
         this.centroAtencionService.delete(centro.id!).subscribe({
           next: () => {
-            this.goBack(); 
+            this.goBack();
           },
           error: (err) => {
             console.error('Error al eliminar el centro de atención:', err);
@@ -306,27 +329,27 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.name) return;
     if (this.consultorios.some(c => c.numero === this.nuevoConsultorio.numero)) {
       this.mensajeConsultorio = 'Ya existe un consultorio con ese número en este centro.';
-      setTimeout(() => this.mensajeConsultorio = '', 3000); 
+      setTimeout(() => this.mensajeConsultorio = '', 5000);
       return;
     }
     const consultorio: Consultorio = {
       numero: this.nuevoConsultorio.numero,
       name: this.nuevoConsultorio.name,
       centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
-     
+
     };
     this.consultorioService.create(consultorio)
       .subscribe({
         next: () => {
           this.mensajeConsultorio = 'Consultorio creado correctamente';
-          setTimeout(() => this.mensajeConsultorio = '', 3000); 
+          setTimeout(() => this.mensajeConsultorio = '', 3000);
           this.getConsultorios();
           this.nuevoConsultorio = { numero: null, name: '' };
           this.modoCrearConsultorio = false;
         },
         error: (err: any) => {
           this.mensajeConsultorio = err.error?.status_text || 'No se pudo crear el consultorio';
-          setTimeout(() => this.mensajeConsultorio = '', 3000); 
+          setTimeout(() => this.mensajeConsultorio = '', 5000);
         }
       });
   }
@@ -362,7 +385,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   cancelarEdicionConsultorio() {
     this.editConsultorioIndex = null;
-    this.getConsultorios(); 
-    
+    this.getConsultorios();
+
   }
 }
