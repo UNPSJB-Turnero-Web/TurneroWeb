@@ -1,3 +1,7 @@
+import { Consultorio } from "../consultorios/consultorio";
+import { Especialidad } from "../especialidades/especialidad";
+import { StaffMedico } from "../staffMedicos/staffmedico";
+
 export interface CentroAtencion {
   id?: number;
   name: string;
@@ -9,4 +13,7 @@ export interface CentroAtencion {
   coordenadas?: string;
   latitud: number;
   longitud: number;
+  consultorios?: Consultorio[];
+  especialidades?: Especialidad[];
+  staffMedico?: StaffMedico[];
 }

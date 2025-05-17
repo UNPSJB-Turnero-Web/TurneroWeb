@@ -11,7 +11,7 @@ import { RouterOutlet } from '@angular/router';
       style="width: 100%; height: 70px; position: fixed; top: 0; left: 0; z-index: 1000;"
     >
       <a href="/" class="text-decoration-none me-5">
-        <h5 class="my-0 fw-bold text-primary">Turnero Web</h5>
+        <h5 class="my-0 fw-bold text-primary">CheTurno</h5>
       </a>
       <nav class="nav flex-row gap-2">
         <!-- Primer grupo -->

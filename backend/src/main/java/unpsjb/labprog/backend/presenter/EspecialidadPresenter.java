@@ -43,8 +43,7 @@ public class EspecialidadPresenter {
                     "content", pageResult.getContent(),
                     "totalPages", pageResult.getTotalPages(),
                     "totalElements", pageResult.getTotalElements(),
-                    "currentPage", pageResult.getNumber()
-            );
+                    "currentPage", pageResult.getNumber());
 
             return Response.ok(response, "Especialidades paginadas recuperadas correctamente");
         } catch (Exception e) {
@@ -111,9 +110,21 @@ public class EspecialidadPresenter {
             return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
         }
     }
-        
+
+    // Get especialidades no asociadas a un centro de atencion
+    @GetMapping("/centrosAtencion/{centroId}/especialidades/disponibles")
+    public ResponseEntity<Object> getEspecialidadesNoAsociadas(@PathVariable int centroId) {
+        try {
+            List<EspecialidadDTO> disponibles = service.findEspecialidadesNoAsociadas(centroId);
+            return Response.ok(disponibles, "Especialidades no asociadas recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar especialidades no asociadas: " + e.getMessage());
+        }
+    }
+
+    // get especialidades asociadas a un centro de atencion
     @GetMapping("/centrosAtencion/{centroId}/especialidades")
-    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Long centroId) {
+    public ResponseEntity<Object> getByCentroAtencion(@PathVariable int centroId) {
         try {
             List<EspecialidadDTO> especialidades = service.findByCentroAtencionId(centroId);
             return Response.ok(especialidades, "Especialidades asociadas recuperadas correctamente");
@@ -122,15 +133,38 @@ public class EspecialidadPresenter {
         }
     }
 
-@GetMapping("/centrosAtencion/especialidades")
-public ResponseEntity<Object> getEspecialidadesAgrupadasPorCentro() {
-    try {
-        List<Map<String, Object>> agrupado = service.findEspecialidadesAgrupadasPorCentro();
-        return Response.ok(agrupado, "especialidades asociadas a centros recuperadas correctamente");
-    } catch (Exception e) {
-        return Response.error(null, "Error al recuperar especialidades agrupadas: " + e.getMessage());
+    // get especialidades agrupadas por centro de atencion
+    @GetMapping("/centrosAtencion/especialidades")
+    public ResponseEntity<Object> getEspecialidadesAgrupadasPorCentro() {
+        try {
+            List<Map<String, Object>> agrupado = service.findEspecialidadesAgrupadasPorCentro();
+            return Response.ok(agrupado, "especialidades asociadas a centros recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar especialidades agrupadas: " + e.getMessage());
+        }
     }
-}
 
+    @PostMapping("/centrosAtencion/{centroId}/especialidades/{especialidadId}")
+    public ResponseEntity<Object> asociarEspecialidadExistenteACentro(
+            @PathVariable int centroId,
+            @PathVariable int especialidadId) {
+        try {
+            EspecialidadDTO result = service.asociarEspecialidadACentro(especialidadId, centroId);
+            return Response.ok(result, "Especialidad asociada correctamente al centro");
+        } catch (Exception e) {
+            return Response.error(null, "Error al asociar especialidad al centro: " + e.getMessage());
+        }
+    }
 
+    @DeleteMapping("/centrosAtencion/{centroId}/especialidades/{especialidadId}")
+    public ResponseEntity<Object> desasociarEspecialidadDeCentro(
+            @PathVariable int centroId,
+            @PathVariable int especialidadId) {
+        try {
+            service.desasociarEspecialidadDeCentro(especialidadId, centroId);
+            return Response.ok(null, "Especialidad desasociada correctamente del centro");
+        } catch (Exception e) {
+            return Response.error(null, "No se pudo desasociar la especialidad: " + e.getMessage());
+        }
+    }
 }

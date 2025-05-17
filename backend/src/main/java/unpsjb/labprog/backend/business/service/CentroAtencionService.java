@@ -33,6 +33,10 @@ public class CentroAtencionService {
         return repository.findById(id).map(this::toDTO);
     }
 
+    public CentroAtencion findEntityById(int id) {
+        return repository.findById(id).orElse(null);
+    }
+
     public Page<CentroAtencionDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
@@ -54,15 +58,18 @@ public class CentroAtencionService {
         if (centro.getId() == 0) {
             // 🚀 CREACIÓN
             if (repository.existsByNameAndDireccion(centro.getName(), centro.getDireccion())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección");
-                
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con ese nombre y dirección");
+
             }
             if (repository.existsByDireccion(centro.getDireccion())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con esa dirección");
             }
             if (repository.existsByName(centro.getName())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre");  
-            }  
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con ese nombre");
+            }
         } else {
             // 🛠️ MODIFICACIÓN
             CentroAtencion existente = repository.findById(centro.getId()).orElse(null);
@@ -71,28 +78,36 @@ public class CentroAtencionService {
             }
 
             if (repository.existsByNameAndDireccionAndIdNot(centro.getName(), centro.getDireccion(), centro.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con ese nombre y dirección");
             }
             if (repository.existsByDireccionAndIdNot(centro.getDireccion(), centro.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con esa dirección");
             }
             if (repository.existsByNameAndIdNot(centro.getName(), centro.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre");
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Ya existe un centro de atención con ese nombre");
             }
         }
-     // Actualizar los datos
-     centro.setName(dto.getName());
-     centro.setDireccion(dto.getDireccion());
-     centro.setLocalidad(dto.getLocalidad());
-     centro.setProvincia(dto.getProvincia());
-     centro.setTelefono(dto.getTelefono());
-     centro.setLatitud(dto.getLatitud());
-     centro.setLongitud(dto.getLongitud());
- 
-     repository.save(centro);
+        // Actualizar los datos
+        centro.setName(dto.getName());
+        centro.setDireccion(dto.getDireccion());
+        centro.setLocalidad(dto.getLocalidad());
+        centro.setProvincia(dto.getProvincia());
+        centro.setTelefono(dto.getTelefono());
+        centro.setLatitud(dto.getLatitud());
+        centro.setLongitud(dto.getLongitud());
+
+        repository.save(centro);
 
         // Guardar el centro y devolver el DTO
         return toDTO(repository.save(centro));
+    }
+
+    @Transactional
+    public void save(CentroAtencion centro) {
+        repository.save(centro);
     }
 
     @Transactional
@@ -141,20 +156,20 @@ public class CentroAtencionService {
     private void validateCentroAtencion(CentroAtencion c) {
         if (c.getName() == null || c.getName().isBlank()) {
             throw new IllegalArgumentException("El nombre es requerido");
-        
+
         }
         if (c.getDireccion() == null || c.getDireccion().isBlank()) {
             throw new IllegalArgumentException("La dirección es requerida");
         }
-    
+
         if (c.getLocalidad() == null || c.getLocalidad().isBlank()) {
             throw new IllegalArgumentException("La localidad es requerida");
-        
+
         }
 
         if (c.getProvincia() == null || c.getProvincia().isBlank()) {
             throw new IllegalArgumentException("La provincia es requerida");
-        
+
         }
 
         if (c.getTelefono() == null || c.getTelefono().isBlank()) {

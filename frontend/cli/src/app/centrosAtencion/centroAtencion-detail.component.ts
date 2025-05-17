@@ -225,6 +225,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
             this.coordenadas = '';
           }
           this.getConsultorios();
+          this.cargarEspecialidades();
+          this.cargarEspecialidadesAsociadas();
         },
         error: (err) => {
           alert('No se pudo cargar el centro de atención. Intente nuevamente.');
@@ -238,7 +240,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   ngOnInit(): void {
     this.get();
-    this.cargarEspecialidades();
   }
 
   onLocationSelected(coords: { latitud: number, longitud: number } | null): void {
@@ -277,13 +278,24 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     }
   }
 
+  // Inicialización de variables
+
+  // Método para cargar especialidades disponibles
   cargarEspecialidades() {
     if (!this.centroAtencion?.id) return;
-    this.especialidadService.getAsociadas(this.centroAtencion.id!).subscribe(asoc => {
-      this.especialidadesAsociadas = asoc;
-      this.especialidadService.getDisponibles(this.centroAtencion.id!).subscribe(disp => {
-        this.especialidadesDisponibles = disp;
-      });
+    this.especialidadService.getDisponibles(this.centroAtencion.id!).subscribe(disp => {
+      this.especialidadesDisponibles = Array.isArray(disp) ? disp : [];
+    });
+  }
+
+  cargarEspecialidadesAsociadas() {
+    if (!this.centroAtencion?.id) return;
+    this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+      next: (data: any) => {
+        // Si tu backend responde { data: [...] }
+        this.especialidadesAsociadas = Array.isArray(data.data) ? data.data : [];
+      },
+      error: () => this.especialidadesAsociadas = []
     });
   }
 
@@ -294,6 +306,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         next: () => {
           this.mensaje = 'Especialidad asociada correctamente';
           this.cargarEspecialidades();
+          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
           this.especialidadSeleccionada = null;
         },
         error: err => {
@@ -309,6 +322,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         next: () => {
           this.mensaje = 'Especialidad desasociada correctamente';
           this.cargarEspecialidades();
+          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
         },
         error: err => {
           this.mensaje = err.error?.status_text || 'No se pudo desasociar la especialidad';

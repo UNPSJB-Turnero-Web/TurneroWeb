@@ -9,5 +9,5 @@ public class EspecialidadDTO {
     private String nombre;
     private String descripcion;
 
-    // Getters y Setters
+
 }

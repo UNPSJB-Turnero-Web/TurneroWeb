@@ -22,148 +22,131 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
   Entonces el sistema responde con status_code "<status_code>" y status_text "<status_text>"
 
   Ejemplos:
-| Centro_De_Atencion | Especialidad | Status Code | Status Text |
-| Centro Médico Integral | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Clínica Médica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Medicina del Deporte | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Medicina General | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Diabetología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Endoscopía Digestiva | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Urología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Angiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Otorrinolaringología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Cirugía General | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Medicina Estética | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Integral | Medicina Estética | 409 | Especialidad ya se encuentra asociada|
-| Centro Médico Integggggral | Medicina Estética | 409 | No existe el Centro Médico |
-| Centro Médico Integral | Medicina Estéééééética | 409 | No existe la especialidad |
-| Centro de Salud Rawson | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Clínica Médica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Fisiatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Medicina Interna | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Angiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Neonatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Cirugía Vascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Obstetricia | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Medicina Familiar | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Genética Médica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Urología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Medicina Forense | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Salud Rawson | Urología | 409 | Especialidad ya se encuentra asociada|
-| Centro de Salud Rawsonnnnnnnn | Medicina Estética | 409 | No existe el Centro Médico |
-| Centro de Salud Rawson | xxx | 409 | No existe la especialidad |
-| Trelew Salud | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Dermatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Ortopedia y Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Urología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Hepatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Geriatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Fisiatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Nutrición | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Otorrinolaringología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Endoscopía Digestiva | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Infectología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Trelew Salud | Cirugía Cardiovascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Urología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Medicina Materno-Fetal | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Ortopedia y Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Neumonología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Cirugía Plástica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Endoscopía Digestiva | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Emergentología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Neonatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Fisiatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico Esperanza | Medicina del Trabajo | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Dermatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Hematología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Hepatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Neurología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Medicina Familiar | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Anatomía Patológica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Cirugía Cardiovascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Medicina Estética | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Diabetología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Medicina Forense | 200 | Asociación de especialidad en centro realizada correctamente |
-| Clinica Rawson | Cirugía Plástica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Psiquiatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Medicina del Deporte | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Anestesiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Cirugía Vascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Ortopedia y Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Cirugía Cardiovascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Medicina General | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Nefrología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Medicina Forense | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro de Rehabilitación | Hematología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Clínica Médica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Otorrinolaringología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Medicina Familiar | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Medicina Estética | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Anatomía Patológica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Infectología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Medicina General | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Cirugía Cardiovascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Urología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Diabetología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Instituto Médico Patagonia | Hematología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Dermatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Odontología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Neurocirugía | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Gastroenterología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Infectología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Neumonología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Pediatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Fisiatría | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Genética Médica | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Radiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Medicina del Deporte | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Odontológico Rawson | Diabetología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Cardiología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Traumatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Dermatología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Oftalmología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Ginecología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Emergentología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Nefrología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Infectología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Otorrinolaringología | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Medicina Estética | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Nutrición | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Medicina del Deporte | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Medicina Interna | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Cirugía Vascular | 200 | Asociación de especialidad en centro realizada correctamente |
-| Centro Médico del Este | Alergia e Inmunología | 200 | Asociación de especialidad en centro realizada correctamente |
+| Centro_De_Atencion         | Especialidad           | status_code | status_text                                   |
+| Centro Médico Integral     | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Oftalmología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Pediatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Traumatología         | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Clínica Médica        | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Medicina Del Deporte  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Medicina General      | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Diabetología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Endoscopía Digestiva  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Urología              | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Angiología            | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Otorrinolaringología  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Cirugía General       | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Medicina Estética     | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Integral     | Medicina Estética     | 400         | Error al asociar especialidad al centro: La especialidad ya está asociada a este centro|
+| Centro Médico Integggggral | Medicina Estética     | 409         | No existe el Centro Médico                     |
+| Centro Médico Integral     | Medicina Estéééééética| 409         | No existe la especialidad                      |
+| Trelew Salud               | Oftalmología          | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Dermatología          | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Ortopedia y Traumatología | 200     | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Urología              | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Hepatología           | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Geriatría             | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Fisiatría             | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Nutrición             | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Otorrinolaringología  | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Endoscopía Digestiva  | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Infectología          | 200         | Especialidad asociada correctamente al centro  |
+| Trelew Salud               | Cirugía Cardiovascular| 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Traumatología         | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Pediatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Urología              | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Medicina Materno-Fetal| 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Ortopedia y Traumatología | 200     | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Neumonología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Cirugía Plástica      | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Endoscopía Digestiva  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Emergentología        | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Neonatología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Fisiatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico Esperanza    | Medicina del Trabajo  | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Dermatología          | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Pediatría             | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Hematología           | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Hepatología           | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Neurología            | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Medicina Familiar     | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Anatomía Patológica   | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Cirugía Cardiovascular| 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Medicina Estética     | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Diabetología          | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Medicina Forense      | 200         | Especialidad asociada correctamente al centro  |
+| Clinica Rawson             | Cirugía Plástica      | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Pediatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Traumatología         | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Oftalmología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Psiquiatría           | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Medicina Del Deporte  | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Anestesiología        | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Cirugía Vascular      | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Ortopedia y Traumatología | 200     | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Cirugía Cardiovascular| 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Medicina General      | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Nefrología            | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Medicina Forense      | 200         | Especialidad asociada correctamente al centro  |
+| Centro de Rehabilitación   | Hematología           | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Clínica Médica        | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Traumatología         | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Otorrinolaringología  | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Medicina Familiar     | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Medicina Estética     | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Anatomía Patológica   | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Infectología          | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Medicina General      | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Cirugía Cardiovascular| 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Urología              | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Diabetología          | 200         | Especialidad asociada correctamente al centro  |
+| Instituto Médico Patagonia | Hematología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Dermatología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Odontología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Oftalmología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Neurocirugía          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Gastroenterología     | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Infectología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Neumonología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Pediatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Fisiatría             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Genética Médica       | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Radiología            | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Medicina Del Deporte  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Odontológico Rawson | Diabetología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Cardiología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Traumatología         | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Dermatología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Oftalmología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Ginecología           | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Emergentología        | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Nefrología            | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Infectología          | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Otorrinolaringología  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Medicina Estética     | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Nutrición             | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Medicina Del Deporte  | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Medicina Interna      | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Cirugía Vascular      | 200         | Especialidad asociada correctamente al centro  |
+| Centro Médico del Este     | Alergia e Inmunología | 200         | Especialidad asociada correctamente al centro  |
+
 
 
   Escenario: Recuperar todas las especialidades asociadas a todos los centros
@@ -176,64 +159,28 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
     "status_code": 200,
     "status_text": "especialidades asociadas a centros recuperadas correctamente",
     "data": [
-    {
-        "centro_de_atencion": "Centro Médico Integral",
+
+        {
+        "centro_de_atencion": "Centro Médico del Este",
         "especialidades": [
-            "Odontología",
-            "Oftalmología",
-            "Pediatría",
-            "Traumatología",
-            "Clínica Médica",
-            "Medicina del Deporte",
-            "Medicina General",
-            "Diabetología",
-            "Endoscopía Digestiva",
-            "Ginecología",
-            "Urología",
-            "Angiología",
-            "Otorrinolaringología",
-            "Cirugía General",
-            "Medicina Estética"
-        ]
-    }, {
-        "centro_de_atencion": "Centro de Salud Rawson",
-        "especialidades": [
-            "Oftalmología",
-            "Traumatología",
-            "Odontología",
-            "Clínica Médica",
-            "Pediatría",
-            "Fisiatría",
-            "Medicina Interna",
-            "Angiología",
-            "Neonatología",
-            "Cirugía Vascular",
-            "Obstetricia",
-            "Medicina Familiar",
-            "Genética Médica",
-            "Urología",
-            "Medicina Forense"
-        ]
-    }, {
-        "centro_de_atencion": "Trelew Salud",
-        "especialidades": [
-            "Oftalmología",
             "Cardiología",
-            "Odontología",
+            "Traumatología",
             "Dermatología",
+            "Oftalmología",
             "Ginecología",
-            "Ortopedia y Traumatología",
-            "Urología",
-            "Hepatología",
-            "Geriatría",
-            "Fisiatría",
-            "Nutrición",
-            "Otorrinolaringología",
-            "Endoscopía Digestiva",
+            "Emergentología",
+            "Nefrología",
             "Infectología",
-            "Cirugía Cardiovascular"
+            "Otorrinolaringología",
+            "Medicina Estética",
+            "Nutrición",
+            "Medicina Del Deporte",
+            "Medicina Interna",
+            "Cirugía Vascular",
+            "Alergia e Inmunología"
         ]
-    }, {
+    },
+    {
         "centro_de_atencion": "Centro Médico Esperanza",
         "especialidades": [
             "Cardiología",
@@ -252,7 +199,68 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Fisiatría",
             "Medicina del Trabajo"
         ]
-    }, {
+    },
+    {
+        "centro_de_atencion": "Centro Médico Integral",
+        "especialidades": [
+            "Odontología",
+            "Oftalmología",
+            "Pediatría",
+            "Traumatología",
+            "Clínica Médica",
+            "Medicina Del Deporte",
+            "Medicina General",
+            "Diabetología",
+            "Endoscopía Digestiva",
+            "Ginecología",
+            "Urología",
+            "Angiología",
+            "Otorrinolaringología",
+            "Cirugía General",
+            "Medicina Estética"
+        ]
+    },
+    {
+        "centro_de_atencion": "Centro Odontológico Rawson",
+        "especialidades": [
+            "Dermatología",
+            "Cardiología",
+            "Odontología",
+            "Oftalmología",
+            "Ginecología",
+            "Neurocirugía",
+            "Gastroenterología",
+            "Infectología",
+            "Neumonología",
+            "Pediatría",
+            "Fisiatría",
+            "Genética Médica",
+            "Radiología",
+            "Medicina Del Deporte",
+            "Diabetología"
+        ]
+    },  
+    {
+        "centro_de_atencion": "Trelew Salud",
+        "especialidades": [
+            "Oftalmología",
+            "Cardiología",
+            "Odontología",
+            "Dermatología",
+            "Ginecología",
+            "Ortopedia y Traumatología",
+            "Urología",
+            "Hepatología",
+            "Geriatría",
+            "Fisiatría",
+            "Nutrición",
+            "Otorrinolaringología",
+            "Endoscopía Digestiva",
+            "Infectología",
+            "Cirugía Cardiovascular"
+        ]
+    },  
+    {
         "centro_de_atencion": "Clinica Rawson",
         "especialidades": [
             "Dermatología",
@@ -271,7 +279,8 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Medicina Forense",
             "Cirugía Plástica"
         ]
-    }, {
+    }, 
+    {
         "centro_de_atencion": "Centro de Rehabilitación",
         "especialidades": [
             "Pediatría",
@@ -280,7 +289,7 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Oftalmología",
             "Ginecología",
             "Psiquiatría",
-            "Medicina del Deporte",
+            "Medicina Del Deporte",
             "Anestesiología",
             "Cirugía Vascular",
             "Ortopedia y Traumatología",
@@ -290,7 +299,8 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Medicina Forense",
             "Hematología"
         ]
-    }, {
+    }, 
+    {
         "centro_de_atencion": "Instituto Médico Patagonia",
         "especialidades": [
             "Clínica Médica",
@@ -308,44 +318,6 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Urología",
             "Diabetología",
             "Hematología"
-        ]
-    }, {
-        "centro_de_atencion": "Centro Odontológico Rawson",
-        "especialidades": [
-            "Dermatología",
-            "Cardiología",
-            "Odontología",
-            "Oftalmología",
-            "Ginecología",
-            "Neurocirugía",
-            "Gastroenterología",
-            "Infectología",
-            "Neumonología",
-            "Pediatría",
-            "Fisiatría",
-            "Genética Médica",
-            "Radiología",
-            "Medicina del Deporte",
-            "Diabetología"
-        ]
-    }, {
-        "centro_de_atencion": "Centro Médico del Este",
-        "especialidades": [
-            "Cardiología",
-            "Traumatología",
-            "Dermatología",
-            "Oftalmología",
-            "Ginecología",
-            "Emergentología",
-            "Nefrología",
-            "Infectología",
-            "Otorrinolaringología",
-            "Medicina Estética",
-            "Nutrición",
-            "Medicina del Deporte",
-            "Medicina Interna",
-            "Cirugía Vascular",
-            "Alergia e Inmunología"
         ]
     }
     ]
@@ -368,9 +340,9 @@ Cuando el administrador asocia la especialidad "<Especialidad>" al centro de ate
             "Diabetología",
             "Endoscopía Digestiva",
             "Ginecología",
+            "Medicina Del Deporte",
             "Medicina Estética",
             "Medicina General",
-            "Medicina del Deporte",
             "Odontología",
             "Oftalmología",
             "Otorrinolaringología",

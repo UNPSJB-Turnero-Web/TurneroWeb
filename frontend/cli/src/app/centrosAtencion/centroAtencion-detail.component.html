@@ -267,21 +267,30 @@
             <i class="fa fa-user me-2"></i>Especialidades
           </div>
           <div class="card-body">
-            <ul class="list-group mb-3">
-              <li *ngFor="let esp of especialidadesAsociadas"
-                class="list-group-item d-flex justify-content-between align-items-center">
-                {{ esp.nombre }}
-                <button class="btn btn-outline-danger btn-sm" (click)="desasociarEspecialidad(esp)"
-                  [disabled]="esp.tieneMedicosActivos || esp.tieneTurnosProgramados" title="Desasociar">
-                  <i class="fa fa-trash"></i>
+            <ul class="list-group mt-3" *ngIf="especialidadesAsociadas.length > 0">
+              <li class="list-group-item d-flex justify-content-between align-items-center"
+                  *ngFor="let esp of especialidadesAsociadas">
+                <span>
+                  <b>{{ esp.nombre }}</b>
+                  <span class="text-muted small ms-2">{{ esp.descripcion }}</span>
+                </span>
+                <button class="btn btn-danger btn-sm"
+                        (click)="desasociarEspecialidad(esp)">
+                  <i class="fa fa-trash"></i> Quitar
                 </button>
               </li>
             </ul>
+            <div *ngIf="especialidadesAsociadas.length === 0" class="text-muted mt-3">
+              No hay especialidades asociadas a este centro.
+            </div>
             <form class="d-flex gap-2 align-items-center" (ngSubmit)="asociarEspecialidad()">
-              <select class="form-select" [(ngModel)]="especialidadSeleccionada" name="especialidadSeleccionada"
-                required>
-                <option [ngValue]="null" disabled selected>Seleccionar especialidad...</option>
-                <option *ngFor="let esp of especialidadesDisponibles" [ngValue]="esp">{{ esp.nombre }}</option>
+              <select class="form-control"
+                [(ngModel)]="especialidadSeleccionada"
+                [ngModelOptions]="{standalone: true}">
+                <option [ngValue]="null">Seleccionar especialidad...</option>
+                <option *ngFor="let esp of especialidadesDisponibles || []" [ngValue]="esp">
+                  {{ esp.nombre }}
+                </option>
               </select>
               <button class="btn btn-success" type="submit" [disabled]="!especialidadSeleccionada">
                 <i class="fa fa-plus"></i> Asociar

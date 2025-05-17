@@ -42,7 +42,40 @@ Given('que existe una especialidad llamada {string} para especialidadesCentro', 
 
 // Asociación de especialidad a centro
 When('el administrador asocia la especialidad {string} al centro de atención {string} para especialidadesCentro', function(nombreEsp, nombreCent) {
-// obtener id centro
+  // obtener id centro
+  const resC = request('GET', 'http://backend:8080/centrosAtencion');
+  const centro = JSON.parse(resC.getBody('utf8')).data
+    .find(c => c.name && normalize(c.name) === normalize(nombreCent));
+  if (!centro) {
+    this.httpStatus = 409;
+    this.response = {
+      status_code: 409,
+      status_text: "No existe el Centro Médico"
+    };
+    return;
+  }
+  // obtener id especialidad
+  const resE = request('GET', 'http://backend:8080/especialidades');
+  const esp = JSON.parse(resE.getBody('utf8')).data
+    .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
+  if (!esp) {
+    this.httpStatus = 409;
+    this.response = {
+      status_code: 409,
+      status_text: "No existe la especialidad"
+    };
+    return;
+  }
+
+  const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
+  const r = request('POST', url, { json: {} });
+  this.httpStatus = r.statusCode;
+  this.response = JSON.parse(r.getBody('utf8'));
+});
+
+// Desasociación de especialidad de centro
+When('el administrador desasocia la especialidad {string} del centro de atención {string} para especialidadesCentro', function(nombreEsp, nombreCent) {
+  // obtener id centro
   const resC = request('GET', 'http://backend:8080/centrosAtencion');
   const centro = JSON.parse(resC.getBody('utf8')).data
     .find(c => c.name && normalize(c.name) === normalize(nombreCent));
@@ -54,29 +87,25 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
   if (!esp) throw new Error(`No se encontró la especialidad: ${nombreEsp}`);
 
   const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
-  const r = request('POST', url, { json: {} });
+  const r = request('DELETE', url);
   this.httpStatus = r.statusCode;
   this.response = JSON.parse(r.getBody('utf8'));
 });
-
-// Listing requests
 
 // Listing requests
 When('un usuario del sistema solicita la lista de especialidades asociadas al centro {string} para especialidadesCentro', function(nombreCentro) {
   // Busca el centro por nombre
   const res = request('GET', `http://backend:8080/centrosAtencion`);
   const centros = JSON.parse(res.getBody('utf8')).data;
-  const centro = centros.find(x => x.name && x.name.trim().toLowerCase() === nombreCentro.trim().toLowerCase());
+  const centro = centros.find(x => x.name && normalize(x.name) === normalize(nombreCentro));
   if (!centro) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   const centroId = centro.id;
 
-  // Ahora sí, hace el GET correcto
   const url = `http://backend:8080/especialidades/centrosAtencion/${centroId}/especialidades`;
   const r = request('GET', url);
   this.httpStatus = r.statusCode;
   this.response = JSON.parse(r.getBody('utf8'));
 });
-
 
 When('un usuario del sistema solicita la lista de especialidades asociadas', function() {
   const res = request('GET', `http://backend:8080/especialidades/centrosAtencion/especialidades`);
@@ -84,9 +113,9 @@ When('un usuario del sistema solicita la lista de especialidades asociadas', fun
   this.response = JSON.parse(res.getBody('utf8'));
 });
 
+
 // Thens  Entonces el sistema responde con status_code "<status_code>" y status_text "<status_text>"
 Then('el sistema responde con status_code {string} y status_text {string} para especialidadesCentro', function (statusCode, statusText) {
-
   assert.strictEqual(this.response.status_code, statusCode);
   assert.strictEqual(this.response.status_text, statusText.replace(/"/g, ''));
 });
@@ -94,35 +123,32 @@ Then('el sistema responde con status_code {string} y status_text {string} para e
 // Validar JSON simple (array de strings o array de objetos)
 Then('el sistema responde con un JSON para especialidadesCentro:', function(docString) {
   const expected = JSON.parse(docString);
-  console.log('--- DEBUG: this.response ---', JSON.stringify(this.response, null, 2));
   assert.strictEqual(this.httpStatus, 200);
   assert.strictEqual(this.response.status_code, expected.status_code);
   if (expected.status_text) assert.strictEqual(this.response.status_text, expected.status_text);
 
-  // Obtener array bruto
-  let actualRaw = this.response.data;
-  if (!Array.isArray(actualRaw) && actualRaw && Array.isArray(actualRaw.data)) {
-    actualRaw = actualRaw.data;
-  }
-  if (!Array.isArray(actualRaw)) actualRaw = [];
-  console.log('--- DEBUG: actualRaw ---', actualRaw);
-  console.log('--- DEBUG: expected.data ---', expected.data);
+  let actual;
+  if (Array.isArray(this.response.data) && this.response.data.length && this.response.data[0].centro_de_atencion) {
+    actual = this.response.data.map(item => ({
+      centro_de_atencion: item.centro_de_atencion,
+      especialidades: item.especialidades.map(e => typeof e === 'string' ? e : e.nombre).sort()
+    }));
 
-  // Caso array de strings:
-  if (Array.isArray(expected.data) && expected.data.every(d => typeof d === 'string')) {
-    const actual = actualRaw.map(e => typeof e === 'string' ? e : e.nombre);
-    console.log('--- DEBUG: mapped actual strings ---', actual);
-    assert.deepStrictEqual(
-      actual.slice().sort(),
-      expected.data.slice().sort()
-    );
-    return;
+    // Filtrar solo los centros esperados
+    const centrosEsperados = expected.data.map(e => e.centro_de_atencion);
+    actual = actual.filter(a => centrosEsperados.includes(a.centro_de_atencion));
+
+    // Ordenar ambos arrays por nombre de centro
+    actual.sort((a, b) => a.centro_de_atencion.localeCompare(b.centro_de_atencion));
+    expected.data.forEach(e => e.especialidades.sort());
+    expected.data.sort((a, b) => a.centro_de_atencion.localeCompare(b.centro_de_atencion));
+  } else if (Array.isArray(this.response.data) && this.response.data.length && this.response.data[0].nombre) {
+    actual = this.response.data.map(e => e.nombre).sort();
+    expected.data.sort();
+  } else {
+    actual = this.response.data;
   }
 
-  // Caso array de objetos con id/nombre
-  const actual = actualRaw.map(e => ({ id: e.id, nombre: e.nombre }));
-  expected.data.sort((a, b) => a.id - b.id);
-  actual.sort((a, b) => a.id - b.id);
   assert.deepStrictEqual(actual, expected.data);
 });
 

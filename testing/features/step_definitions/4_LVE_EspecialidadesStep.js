@@ -49,20 +49,26 @@ Given('que la especialidad {string} no existe en el sistema', function (nombre) 
   }
 });
 
-Given('que no existen especialidades en el sistema', function () {
+
+
+
+Given('que existen especialidades en el sistema', function (dataTable) {
   const res = request('DELETE', 'http://backend:8080/especialidades/reset');
   assert.strictEqual(res.statusCode, 200, 'No se pudo resetear la base de datos de especialidades');
 
-  // Crear especialidades necesarias para la prueba
-  const especialidades = [
-    { nombre: 'Alergia e Inmunología', descripcion: 'Diagnóstico y tratamiento de enfermedades alérgicas e inmunológicas.' },
-    { nombre: 'Cardiología', descripcion: 'Diagnóstico y tratamiento de enfermedades del corazón y el sistema circulatorio.' }
-  ];
+  const especialidades = dataTable.hashes();
   especialidades.forEach(especialidad => {
-    const resCrear = request('POST', 'http://backend:8080/especialidades', { json: especialidad });
+    const resCrear = request('POST', 'http://backend:8080/especialidades', {
+      json: {
+        nombre: especialidad.nombre,
+        descripcion: especialidad.descripcion
+      }
+    });
     assert.strictEqual(resCrear.statusCode, 200, `No se pudo crear la especialidad: ${especialidad.nombre}`);
   });
 });
+
+
 
 Given('que la especialidad {string} existe en el sistema', function (nombre) {
   const especialidad = { nombre, descripcion: `Descripción de ${nombre}` };
