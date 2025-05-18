@@ -43,6 +43,7 @@ public interface CentroAtencionRepository
     @Query("SELECT e FROM CentroAtencion c JOIN c.especialidades e WHERE c.id = :centroId")
     List<Especialidad> findEspecialidadesByCentroId(@Param("centroId") Integer centroId);
 
-    CentroAtencion findByName(String centroNombre);
+    @Query("SELECT c FROM CentroAtencion c WHERE c.name = ?1")
+    CentroAtencion findByName(String name);
 
 }

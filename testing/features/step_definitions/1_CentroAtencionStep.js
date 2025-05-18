@@ -5,11 +5,14 @@ const request = require('sync-request');
 // Ejecuta solo una vez antes de todos los escenarios
 BeforeAll(function () {
   console.log('🚀 Limpiando base de datos de centros...');
+  const res3 = request('DELETE', 'http://backend:8080/staff-medico/reset');
   const res2 = request('DELETE', 'http://backend:8080/medicos/reset');
   const res1 = request('DELETE', 'http://backend:8080/consultorios/reset');//LIMPIA PRIMERO CONSULTORIOS POR KEY CONSTRAINS
   const res = request('DELETE', 'http://backend:8080/centrosAtencion/reset');
   
-
+if (res3.statusCode !== 200) {
+    throw new Error('❌ No se pudo resetear la base de datos de staffmedicos');
+  }
   if (res2.statusCode !== 200) {
     throw new Error('❌ No se pudo resetear la base de datos de medicos');
   }

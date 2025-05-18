@@ -66,7 +66,7 @@ public class TurnoService {
         dto.setHoraInicio(turno.getHoraInicio());
         dto.setHoraFin(turno.getHoraFin());
         dto.setPacienteId(turno.getPaciente().getId());
-        dto.setMedicoId(turno.getMedico().getId());
+        dto.setMedicoId(turno.getStaffMedico().getId());
         dto.setEstado(turno.getEstado().name());
         return dto;
     }
@@ -97,7 +97,7 @@ private void validarTurno(Turno turno) {
     if (turno.getPaciente() == null || turno.getPaciente().getId() == null) {
         throw new IllegalArgumentException("El paciente es obligatorio");
     }
-    if (turno.getMedico() == null || turno.getMedico().getId() == null) {
+    if (turno.getStaffMedico() == null || turno.getStaffMedico().getId() == null) {
         throw new IllegalArgumentException("El médico es obligatorio");
     }
     if (turno.getEstado() == null) {

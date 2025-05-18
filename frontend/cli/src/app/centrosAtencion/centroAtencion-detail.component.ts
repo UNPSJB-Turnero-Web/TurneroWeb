@@ -14,6 +14,10 @@ import { Consultorio } from '../consultorios/consultorio';
 import { RouterModule } from '@angular/router';
 import { Especialidad } from '../especialidades/especialidad';
 import { EspecialidadService } from '../especialidades/especialidad.service';
+import { StaffMedico } from '../staffMedicos/staffmedico';
+import { StaffMedicoService } from '../staffMedicos/staffmedico.service';
+import { Medico } from '../medicos/medico';
+import { MedicoService } from '../medicos/medico.service';
 
 @Component({
   selector: 'app-centro-atencion-detail',
@@ -59,17 +63,29 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   private map!: L.Map;
   searchQuery: string = '';
   consultorios: Consultorio[] = [];
+  staffMedicoCentro: StaffMedico[] = [];
+  medicosDisponibles: Medico[] = [];
+
   modoEdicion = false;
   especialidadesAsociadas: Especialidad[] = [];
-  especialidadesDisponibles: Especialidad[] = [];
   especialidadSeleccionada: Especialidad | null = null;
   activeTab: string = 'detalle';
 
   mensaje: string = '';
+  tipoMensaje: 'info' | 'danger' | 'success' = 'info';
+
+  mensajeStaff: string = '';
+  tipoMensajeStaff: 'info' | 'danger' | 'success' = 'info';
+
   modoCrearConsultorio = false;
   nuevoConsultorio = { numero: null, name: '' };
-  mensajeConsultorio = '';
+  mensajeConsultorio: string = '';
+  tipoMensajeConsultorio: 'info' | 'danger' | 'success' = 'info';
   editConsultorioIndex: number | null = null;
+
+  // Nuevas variables para médicos y especialidades
+  medicoSeleccionado: Medico | null = null;
+  especialidadesDisponibles: Especialidad[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -78,7 +94,9 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private modalService: ModalService,
     private http: HttpClient,
     private consultorioService: ConsultorioService,
-    private especialidadService: EspecialidadService
+    private especialidadService: EspecialidadService,
+    private staffMedicoService: StaffMedicoService,
+    private medicoService: MedicoService // Inyectar el servicio de médicos
 
   ) { }
 
@@ -227,6 +245,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
           this.getConsultorios();
           this.cargarEspecialidades();
           this.cargarEspecialidadesAsociadas();
+          this.loadStaffMedico();
+          this.cargarMedicosYEspecialidades(); // Cargar médicos y especialidades disponibles
         },
         error: (err) => {
           alert('No se pudo cargar el centro de atención. Intente nuevamente.');
@@ -304,13 +324,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.especialidadService.asociar(this.centroAtencion.id!, this.especialidadSeleccionada.id!)
       .subscribe({
         next: () => {
-          this.mensaje = 'Especialidad asociada correctamente';
+          this.mostrarMensaje('Especialidad asociada correctamente.', 'success');
           this.cargarEspecialidades();
           this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
           this.especialidadSeleccionada = null;
         },
         error: err => {
-          this.mensaje = err.error?.status_text || 'No se pudo asociar la especialidad';
+          this.mostrarMensaje('No se pudo asociar la especialidad.', 'danger');
         }
       });
   }
@@ -401,5 +421,100 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.editConsultorioIndex = null;
     this.getConsultorios();
 
+  }
+
+  loadStaffMedico() {
+    if (!this.centroAtencion?.id) return;
+    this.staffMedicoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+      next: (dp) => this.staffMedicoCentro = dp.data as StaffMedico[],
+      error: (err) => {
+        this.staffMedicoCentro = [];
+        console.error('Error al cargar staff médico:', err);
+      }
+    });
+  }
+
+  cargarMedicosYEspecialidades() {
+    this.medicoService.getAll().subscribe(dp => this.medicosDisponibles = dp.data as Medico[]);
+    this.especialidadService.all().subscribe(dp => this.especialidadesDisponibles = dp.data as Especialidad[]);
+  }
+
+  medicoYaAsociado(): boolean {
+    return !!this.staffMedicoCentro.find(staff =>
+      staff.medico?.id === this.medicoSeleccionado?.id
+    );
+  }
+
+  asociarMedico() {
+    if (!this.centroAtencion?.id || !this.medicoSeleccionado || !this.especialidadSeleccionada) return;
+    if (this.medicoYaAsociado()) {
+      this.mensajeStaff = 'El médico ya está asociado a este centro.';
+      return;
+    }
+    const nuevoStaff: StaffMedico = {
+      id: 0,
+      centro: {
+        id: this.centroAtencion.id,
+        name: this.centroAtencion.name,
+        code: this.centroAtencion.code,
+        direccion: this.centroAtencion.direccion,
+        localidad: this.centroAtencion.localidad,
+        provincia: this.centroAtencion.provincia,
+        telefono: this.centroAtencion.telefono,
+        latitud: this.centroAtencion.latitud,
+        longitud: this.centroAtencion.longitud
+      }, // todos los campos requeridos
+      medico: this.medicoSeleccionado, // pasar el objeto completo que cumple con la interfaz Medico
+      especialidad: { 
+        id: this.especialidadSeleccionada.id, 
+        nombre: this.especialidadSeleccionada.nombre, 
+        descripcion: this.especialidadSeleccionada.descripcion 
+      } // id, nombre y descripcion
+    };
+    console.log('Enviando staff médico:', nuevoStaff); // <-- Agregado para debug
+    this.staffMedicoService.create(nuevoStaff).subscribe({
+      next: () => {
+        this.mensajeStaff = 'Médico asociado correctamente.';
+        this.loadStaffMedico();
+        this.medicoSeleccionado = null;
+        this.especialidadSeleccionada = null;
+      },
+      error: (err) => {
+        this.mensajeStaff = err?.error?.message || 'Error al asociar médico.';
+      }
+    });
+  }
+
+  desasociarMedico(staff: StaffMedico) {
+    if (!staff.id) return;
+    if (!confirm('¿Está seguro que desea desasociar este médico?')) return;
+    this.staffMedicoService.remove(staff.id).subscribe({
+      next: () => {
+        this.mensajeStaff = 'Médico desasociado correctamente.';
+        this.loadStaffMedico();
+      },
+      error: (err) => {
+        // El backend debe devolver un mensaje claro si hay turnos activos
+        this.mensajeStaff = err?.error?.status_text || 'No se puede desasociar: el médico tiene turnos activos o hubo un error.';
+      }
+    });
+  }
+
+  mostrarMensaje(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
+    this.mensaje = mensaje;
+    this.tipoMensaje = tipo;
+    setTimeout(() => this.mensaje = '', ms);
+  }
+
+  mostrarMensajeStaff(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
+    this.mensajeStaff = mensaje;
+    this.tipoMensajeStaff = tipo;
+    setTimeout(() => this.mensajeStaff = '', ms);
+  }
+
+  mostrarMensajeConsultorio(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
+    this.mensajeConsultorio = mensaje;
+    this.tipoMensajeConsultorio = tipo;
+    setTimeout(() => this.mensajeConsultorio = '', ms);
   }
 }

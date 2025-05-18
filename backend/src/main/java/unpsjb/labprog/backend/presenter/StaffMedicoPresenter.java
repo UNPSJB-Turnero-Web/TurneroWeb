@@ -1,7 +1,8 @@
 package unpsjb.labprog.backend.presenter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,81 +13,124 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
-import unpsjb.labprog.backend.business.repository.TurnoRepository;
+import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.StaffMedicoService;
 import unpsjb.labprog.backend.dto.StaffMedicoDTO;
-import unpsjb.labprog.backend.model.CentroAtencion;
-import unpsjb.labprog.backend.model.Medico;
-import unpsjb.labprog.backend.model.StaffMedico;
 
 @RestController
-@RequestMapping("/api/staff-medico")
+@RequestMapping("staff-medico")
 public class StaffMedicoPresenter {
 
     @Autowired
-    private StaffMedicoRepository repository;
-
-    @Autowired
-    private TurnoRepository turnoRepository;
-    @Autowired
     private StaffMedicoService service;
 
+    // Listar todos los staff médicos (con DTO y respuesta estructurada)
     @GetMapping
-    public List<StaffMedico> getAll() {
-        List<StaffMedico> result = new ArrayList<>();
-        repository.findAll().forEach(result::add);
-        return result;
+    public ResponseEntity<Object> getAll() {
+        List<StaffMedicoDTO> lista = service.findAll();
+        return Response.ok(lista, "Staff médico recuperado correctamente");
     }
 
+    // Obtener staff médico por ID
     @GetMapping("/{id}")
-    public ResponseEntity<StaffMedico> getById(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> getById(@PathVariable Long id) {
+        Optional<StaffMedicoDTO> dtoOpt = service.findById(id);
+        if (!dtoOpt.isPresent()) {
+            return Response.notFound("No se encontró el staff médico con id " + id);
+        }
+        return Response.ok(dtoOpt.get(), "Staff médico recuperado correctamente");
     }
 
+    @GetMapping("/centrosAtencion/{centroId}/staffMedico")
+    public ResponseEntity<Object> getStaffMedicoByCentro(@PathVariable Long centroId) {
+        List<StaffMedicoDTO> staff = service.findByCentroId(centroId);
+        return Response.ok(staff, "Staff médico recuperado correctamente");
+    }
+
+    // Listar médicos con paginación
+    @GetMapping("/page")
+    public ResponseEntity<Object> getByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            var pageResult = service.findByPage(page, size);
+
+            var response = Map.of(
+                    "content", pageResult.getContent(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements(),
+                    "number", pageResult.getNumber(),
+                    "size", pageResult.getSize(),
+                    "first", pageResult.isFirst(),
+                    "last", pageResult.isLast(),
+                    "numberOfElements", pageResult.getNumberOfElements());
+
+            return Response.ok(response, "Staff médico paginado recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el staff médico paginado: " + e.getMessage());
+        }
+    }
+
+    // Asociar médico a centro
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody StaffMedicoDTO dto) {
-        // Validar que el médico y el centro existen
-        if (dto.getMedico() == null || dto.getCentro() == null) {
-            return ResponseEntity.badRequest().body("Debe seleccionar médico y centro.");
+    public ResponseEntity<Object> create(@RequestBody StaffMedicoDTO dto) {
+        try {
+            StaffMedicoDTO saved = service.saveOrUpdate(dto);
+            return Response.ok(saved, "Médico asociado correctamente al centro");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage());
         }
-        // Verificar que no exista la asociación
-        Medico medico = new Medico();
-        medico.setId(dto.getMedico().getId());
-        CentroAtencion centro = new CentroAtencion();
-        centro.setId(dto.getCentro().getId());
-        boolean exists = repository.existsByMedicoAndCentro(medico, centro);
-        if (exists) {
-            return ResponseEntity.badRequest().body("El médico ya está asociado a este centro.");
-        }
-        // Guardar
-        service.save(dto);
-        return ResponseEntity.ok("Médico asociado correctamente.");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<StaffMedico> update(@PathVariable Long id, @RequestBody StaffMedico updatedStaff) {
-        return repository.findById(id)
-                .map(existingStaff -> {
-                    existingStaff.setCentro(updatedStaff.getCentro());
-                    existingStaff.setMedico(updatedStaff.getMedico());
-                    existingStaff.setDisponibilidad(updatedStaff.getDisponibilidad());
-                    return ResponseEntity.ok(repository.save(existingStaff));
-                })
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody StaffMedicoDTO dto) {
+        try {
+            dto.setId(id);
+            StaffMedicoDTO updated = service.saveOrUpdate(dto);
+            return Response.ok(updated, "Staff médico editado exitosamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage());
+        }
     }
 
+    // Eliminar asociación
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        // Verificar si hay turnos activos
-        if (turnoRepository.existsByStaffMedicoIdAndActivoTrue(id)) {
-            return ResponseEntity.badRequest().body("No se puede desasociar: hay turnos activos.");
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
+        try {
+            service.deleteById(id);
+            return Response.ok(null, "Asociación eliminada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al eliminar la asociación: " + e.getMessage());
         }
-        service.deleteById(id);
-        return ResponseEntity.ok("Médico desasociado correctamente.");
     }
+
+    // Listar médicos asociados a un centro
+    @GetMapping("/centro/{centroId}")
+    public ResponseEntity<Object> getByCentro(@PathVariable Long centroId) {
+        try {
+            List<StaffMedicoDTO> lista = service.findByCentroId(centroId);
+            return Response.ok(lista, "Médicos asociados recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar médicos asociados: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/reset")
+    public ResponseEntity<Object> reset() {
+        try {
+            service.deleteAll();
+            return Response.ok(null, "Base de datos de especialidades reseteada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
+        }
+    }
+
+    // Otros endpoints según necesidad...
 }

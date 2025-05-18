@@ -18,6 +18,6 @@ public class TurnoDTO {
     private String estado;        // Estado del turno (PENDIENTE, CONFIRMADO, CANCELADO)
     private EsquemaTurnoDTO esquemaTurno;
     private PacienteDTO paciente;
-    private MedicoDTO medico;
+    private StaffMedicoDTO staffMedico;
     private CentroAtencionDTO centroAtencion;
 }

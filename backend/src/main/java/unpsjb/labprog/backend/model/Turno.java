@@ -1,12 +1,19 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -38,7 +45,7 @@ public class Turno {
     private Paciente paciente; // Relación con Paciente
 
     @ManyToOne
-    private Medico medico; // Relación con Medico
+    private StaffMedico staffMedico;
 
     @ManyToOne
     private CentroAtencion centroAtencion; // Relación con CentroAtencion

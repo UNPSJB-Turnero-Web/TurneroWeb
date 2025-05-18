@@ -81,7 +81,7 @@ export class EspecialidadesComponent {
 
   getEspecialidades(): void {
     this.especialidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = dataPackage.data; // data debe ser ResultsPage, no Especialidad[]
+      this.resultsPage = dataPackage.data; 
     });
   }
 

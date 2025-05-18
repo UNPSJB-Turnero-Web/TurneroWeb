@@ -19,7 +19,7 @@ import { RouterOutlet } from '@angular/router';
           <a class="nav-link text-dark fw-semibold px-3" href="/centrosAtencion">Centro de Atención</a>
           <a class="nav-link text-dark fw-semibold px-3" href="/consultorios">Consultorios</a>
           <a class="nav-link text-dark fw-semibold px-3" href="/especialidades">Especialidades</a>
-          <a class="nav-link text-dark fw-semibold px-3" href="/staffMedicos">Staff Médico</a>
+          <a class="nav-link text-dark fw-semibold px-3" href="/staffMedico">Staff Médico</a>
           <a class="nav-link text-dark fw-semibold px-3" href="/medicos">Médicos</a>
           <a class="nav-link text-dark fw-semibold px-3" href="/pacientes">Pacientes</a>
         </div>
