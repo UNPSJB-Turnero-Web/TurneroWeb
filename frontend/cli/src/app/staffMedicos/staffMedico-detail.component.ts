@@ -46,7 +46,7 @@ import { DataPackage } from '../data.package';
             name="medico"
           >
             <option *ngFor="let medico of medicos" [ngValue]="medico">
-              {{ medico.name }} {{ medico.apellido }}
+              {{ medico.nombre }} {{ medico.apellido }}
             </option>
           </select>
         </div>

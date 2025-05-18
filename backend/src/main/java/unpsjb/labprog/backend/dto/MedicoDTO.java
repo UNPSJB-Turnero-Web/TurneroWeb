@@ -8,8 +8,7 @@ public class MedicoDTO {
     private Long id;
     private String nombre;
     private String apellido;
+    private String dni; // CAMBIAR A STRING
     private String matricula;
     private EspecialidadDTO especialidad;
-
-    // Getters y Setters
 }

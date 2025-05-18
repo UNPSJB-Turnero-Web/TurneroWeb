@@ -124,7 +124,7 @@ public class ConsultorioPresenter {
             centro.setId(centroId);
             consultorioDTO.setCentroAtencion(centro);
 
-            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO); // <--- usa saveOrUpdate
+            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO);
             return Response.ok(saved, "Consultorio creado correctamente");
         } catch (IllegalArgumentException e) {
             return Response.dbError(e.getMessage());

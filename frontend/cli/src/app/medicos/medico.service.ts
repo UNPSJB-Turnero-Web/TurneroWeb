@@ -12,28 +12,37 @@ export class MedicoService {
 
   constructor(private http: HttpClient) {}
 
-  all(): Observable<DataPackage> {
-    return this.http.get<DataPackage>(this.medicosUrl);
+  /** Obtiene todos los médicos */
+  getAll(): Observable<DataPackage<Medico[]>> {
+    return this.http.get<DataPackage<Medico[]>>(this.medicosUrl);
   }
 
-  get(id: number): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.medicosUrl}/${id}`);
+  /** Consulta un médico por ID */
+  getById(id: number): Observable<DataPackage<Medico>> {
+    return this.http.get<DataPackage<Medico>>(`${this.medicosUrl}/${id}`);
   }
 
-  save(medico: Medico): Observable<DataPackage> {
-    return medico.id
-      ? this.http.put<DataPackage>(this.medicosUrl, medico)
-      : this.http.post<DataPackage>(this.medicosUrl, medico);
+  /** Crea un nuevo médico */
+  create(medico: Medico): Observable<DataPackage<Medico>> {
+    return this.http.post<DataPackage<Medico>>(this.medicosUrl, medico);
   }
 
-  remove(id: number): Observable<DataPackage> {
-    return this.http.delete<DataPackage>(`${this.medicosUrl}/${id}`);
+  /** Actualiza un médico existente */
+  update(id: number, medico: Medico): Observable<DataPackage<Medico>> {
+    return this.http.put<DataPackage<Medico>>(`${this.medicosUrl}/${id}`, medico);
   }
 
-  search(term: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.medicosUrl}/search/${term}`);
+  /** Elimina un médico */
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.medicosUrl}/${id}`);
   }
 
+  /** Busca médicos por término */
+  search(term: string): Observable<DataPackage<Medico[]>> {
+    return this.http.get<DataPackage<Medico[]>>(`${this.medicosUrl}/search/${term}`);
+  }
+
+  /** Paginación */
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.medicosUrl}/page?page=${page - 1}&size=${size}`);
   }

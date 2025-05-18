@@ -14,6 +14,7 @@ import { ConsultoriosComponent } from './consultorios/consultorios.component';
 import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
 import { MedicosComponent } from './medicos/medicos.component';
 import { StaffMedicosComponent } from './staffMedicos/staffMedicos.component';
+import { MedicoDetailComponent } from './medicos/medico-detail.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -37,8 +38,8 @@ export const routes: Routes = [
     { path: 'consultorios/new', component: ConsultorioDetailComponent },
     { path: 'consultorios/:id', component: ConsultorioDetailComponent },
     { path: 'medicos', component: MedicosComponent },
-    { path: 'medicos/new', component: MedicosComponent },
-    { path: 'medicos/:id', component: MedicosComponent },
+    { path: 'medicos/new', component: MedicoDetailComponent },
+    { path: 'medicos/:id', component: MedicoDetailComponent },
     { path: 'staffMedicos', component: StaffMedicosComponent },
     { path: 'staffMedicos/new', component: StaffMedicosComponent },
     { path: 'staffMedicos/:id', component: StaffMedicosComponent },

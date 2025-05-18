@@ -5,9 +5,14 @@ const request = require('sync-request');
 // Ejecuta solo una vez antes de todos los escenarios
 BeforeAll(function () {
   console.log('🚀 Limpiando base de datos de centros...');
-    const res1 = request('DELETE', 'http://backend:8080/consultorios/reset');//LIMPIA PRIMERO CONSULTORIOS POR KEY CONSTRAINS
+  const res2 = request('DELETE', 'http://backend:8080/medicos/reset');
+  const res1 = request('DELETE', 'http://backend:8080/consultorios/reset');//LIMPIA PRIMERO CONSULTORIOS POR KEY CONSTRAINS
   const res = request('DELETE', 'http://backend:8080/centrosAtencion/reset');
+  
 
+  if (res2.statusCode !== 200) {
+    throw new Error('❌ No se pudo resetear la base de datos de medicos');
+  }
   if (res1.statusCode !== 200) {
     throw new Error('❌ No se pudo resetear la base de datos de consultorios');
   }
@@ -19,7 +24,7 @@ BeforeAll(function () {
 });
 
 Given('que existe un sistema de gestión de centros de atención', function () {
- // console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
+  // console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
 });
 
 When(
@@ -31,8 +36,8 @@ When(
       localidad: localidad || null,
       provincia: provincia || null,
       telefono: telefono || null,
-      latitud: parseFloat(latitud) || null, 
-      longitud: parseFloat(longitud) || null 
+      latitud: parseFloat(latitud) || null,
+      longitud: parseFloat(longitud) || null
     };
 
     try {
@@ -61,5 +66,5 @@ Then('el sistema responde con {int} y "{string}"', function (statusEsperado, men
   // Validación de status_code y status_text según tu Response.java modificado
   assert.strictEqual(respuesta.status_code, statusEsperado, `Esperado status_code ${statusEsperado} pero fue ${respuesta.status_code}`);
   assert.strictEqual(respuesta.status_text.trim(), mensajeEsperado.replace(/"/g, '').trim(),
-      `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
+    `Esperado status_text "${mensajeEsperado}" pero fue "${respuesta.status_text}"`);
 });
