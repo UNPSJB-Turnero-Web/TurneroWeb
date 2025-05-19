@@ -328,7 +328,7 @@
           <div class="card-body">
             <form class="row g-2 align-items-end mb-3" (ngSubmit)="asociarMedico()" *ngIf="activeTab === 'staff'">
               <div class="col-12 col-md-5">
-                <select class="form-control" [(ngModel)]="medicoSeleccionado" name="medicoSeleccionado" required>
+                <select class="form-control" [(ngModel)]="medicoSeleccionado" name="medicoSeleccionado" required (change)="onMedicoSeleccionado()">
                   <option [ngValue]="null">Seleccionar médico...</option>
                   <option *ngFor="let medico of medicosDisponibles" [ngValue]="medico">
                     {{ medico.nombre }} {{ medico.apellido }}

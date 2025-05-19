@@ -517,4 +517,20 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.tipoMensajeConsultorio = tipo;
     setTimeout(() => this.mensajeConsultorio = '', ms);
   }
+
+  onMedicoSeleccionado() {
+    if (
+      this.medicoSeleccionado &&
+      this.medicoSeleccionado.especialidad &&
+      typeof this.medicoSeleccionado.especialidad === 'object' &&
+      'id' in this.medicoSeleccionado.especialidad
+    ) {
+      // Busca la especialidad por id en el array de especialidades disponibles
+      this.especialidadSeleccionada = (this.especialidadesDisponibles || []).find(
+        esp => esp.id === (this.medicoSeleccionado!.especialidad as Especialidad).id
+      ) || null;
+    } else {
+      this.especialidadSeleccionada = null;
+    }
+  }
 }

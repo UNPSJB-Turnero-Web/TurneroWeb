@@ -26,7 +26,7 @@ Cuando el administrador asocia el médico con "<nombre>", "<apellido>", <dni>, "
 | Centro Médico Integral            | Martín     | Pérez       | 31105782  | 20735-0   | Infectología              | 200         | Médico asociado correctamente al centro|
 | Centro de Salud Dr. Juan Perez    | Pedro      | López       | 40830678  | 87698-3   | Cardiología               | 200         | Médico asociado correctamente al centro|
 | Trelew Salud                      | Martín     | López       | 41496804  | 52188-5   | Geriatría                 | 200         | Médico asociado correctamente al centro|
-| Centro Médico Esperanza           | Cecilia    | Morales     | 28771160  | 99281-1   | Medicina General          | 200         | Médico asociado correctamente al centro|
+| Centro Médico Esperanza           | Cecilia    | Morales     | 28771160  | 99281-1   | Medicina Estética          | 200         | Médico asociado correctamente al centro|
 | Clinica Rawson                    | Ricardo    | Rojas       | 43223623  | 47904-3   | Medicina Materno-Fetal    | 200         | Médico asociado correctamente al centro|
 | Centro de Rehabilitación          | Gabriela   | Martínez    | 43137018  | 19123-8   | Emergentología            | 200         | Médico asociado correctamente al centro|
 | Instituto Médico Patagonia        | Laura      | González    | 22640574  | 13311-4   | Cardiología               | 200         | Médico asociado correctamente al centro|
