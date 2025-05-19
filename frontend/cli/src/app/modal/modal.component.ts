@@ -26,7 +26,35 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
       <button type="button" class="btn btn-success" (click)="modal.close()">Aceptar</button>
     </div>
   `,
-  styles: ``
+  styles: `
+  .modal-header {
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: 1px solid #e9ecef;
+    background: #f8f9fa;
+  }
+
+  .modal-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+
+  .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .btn-close:hover {
+    opacity: 1;
+  }
+
+  .modal-footer {
+    border-radius: 0 0 1rem 1rem;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+  }
+  `
 })
 export class ModalComponent {
   constructor(public modal: NgbActiveModal) {}

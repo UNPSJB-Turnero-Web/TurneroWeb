@@ -13,43 +13,53 @@ import { PaginationComponent } from '../pagination/pagination.component';
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
     <div class="container mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Staff Médico</h2>
-        <button class="btn btn-success" (click)="router.navigate(['/staffMedico/new'])">
-          + Nuevo Staff Médico
-        </button>
-      </div>
-      <table class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Centro</th>
-            <th>Médico</th>
-            <th>Especialidad</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let staff of resultsPage.content">
-            <td>{{ staff.id }}</td>
-            <td>{{ staff.centro?.name }}</td>
-            <td>{{ staff.medico?.name }} {{ staff.medico?.apellido }}</td>
-            <td>{{ staff.especialidad?.nombre }}</td>
-            <td>
-              <a 
-                (click)="goToEdit(staff.id); $event.stopPropagation()" 
-                class="btn btn-sm btn-outline-primary">
-                <i class="fa fa-pencil"></i>
-              </a>
-              <a 
-                (click)="remove(staff.id); $event.stopPropagation()" 
-                class="btn btn-sm btn-outline-danger ms-1">
-                <i class="fa fa-trash"></i>
-              </a>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-user-md me-2"></i>
+            <h2 class="fw-bold mb-0 fs-4">Staff Médico</h2>
+          </div>
+          <button 
+            class="btn btn-light btn-sm"
+            (click)="router.navigate(['/staffMedico/new'])"
+          >
+            <i class="fa fa-plus me-1"></i> Nuevo Staff Médico
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Centro</th>
+                <th>Médico</th>
+                <th>Especialidad</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                *ngFor="let staff of resultsPage.content"
+                (click)="goToDetail(staff.id)"
+                style="cursor:pointer"
+              >
+                <td>{{ staff.id }}</td>
+                <td>{{ staff.centro?.name }}</td>
+                <td>{{ staff.medico?.name }} {{ staff.medico?.apellido }}</td>
+                <td>{{ staff.especialidad?.nombre }}</td>
+                <td class="text-center">
+                  <button (click)="goToEdit(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button (click)="remove(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-white">
           <app-pagination
             [totalPages]="resultsPage.totalPages"
             [currentPage]="currentPage"
@@ -57,11 +67,31 @@ import { PaginationComponent } from '../pagination/pagination.component';
             [number]="resultsPage.number"
             [hidden]="resultsPage.numberOfElements < 1"
           ></app-pagination>
-        </tfoot>
-      </table>
+        </div>
+      </div>
     </div>
   `,
-  styles: ``
+  styles: [`
+    .table-hover tbody tr:hover {
+      background-color: #f5f7fa;
+    }
+    .btn-outline-primary, .btn-outline-danger {
+      min-width: 32px;
+    }
+    .card {
+      border-radius: 1.15rem;
+      overflow: hidden;
+    }
+    .card-header {
+      border-top-left-radius: 1rem !important;
+      border-top-right-radius: 1rem !important;
+      padding-top: 0.75rem;      
+      padding-bottom: 0.75rem;  
+      padding-right: 0.7rem!important;
+      padding-left: 0.7rem!important;  
+      overflow: hidden;
+    }
+  `]
 })
 export class StaffMedicosComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
@@ -92,6 +122,10 @@ export class StaffMedicosComponent {
 
   goToEdit(id: number): void {
     this.router.navigate(['/staffMedico', id], { queryParams: { edit: true } });
+  }
+
+  goToDetail(id: number): void {
+    this.router.navigate(['/staffMedico', id]);
   }
 
   remove(id: number): void {

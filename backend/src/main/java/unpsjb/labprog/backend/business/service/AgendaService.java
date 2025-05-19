@@ -166,7 +166,7 @@ public class AgendaService {
             throw new IllegalArgumentException("Agenda no encontrada");
 
         // Buscar turnos pendientes de la agenda
-        List<Turno> turnos = turnoRepository.findByAgendaIdAndEstado(agendaId, EstadoTurno.PENDIENTE);
+        List<Turno> turnos = turnoRepository.findByAgenda_IdAndEstado(agendaId, EstadoTurno.PENDIENTE);
 
         // Notificar a cada paciente y sugerir alternativas
         for (Turno turno : turnos) {

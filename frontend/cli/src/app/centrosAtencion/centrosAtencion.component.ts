@@ -16,7 +16,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
       <div class="card shadow-sm">
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
           <div class="d-flex align-items-center">
-            <i class="fa fa-hospital-o me-2"></i>
+            <i class="fa fa-hospital me-2"></i>
             <h2 class="fw-bold mb-0 fs-4">Centros de Atención</h2>
           </div>
           <button 

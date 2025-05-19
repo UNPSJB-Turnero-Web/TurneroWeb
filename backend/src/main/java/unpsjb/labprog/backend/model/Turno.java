@@ -49,6 +49,8 @@ public class Turno {
 
     @ManyToOne
     private CentroAtencion centroAtencion; // Relación con CentroAtencion
+    @ManyToOne
+    private Agenda agenda;
 
     public void confirmarTurno() {
         if (this.estado != EstadoTurno.PENDIENTE) {

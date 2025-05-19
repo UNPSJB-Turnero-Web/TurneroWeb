@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { TurnoService } from './turno.service';
 import { Turno } from './turno';
 import { ModalService } from '../modal/modal.service';
@@ -12,54 +12,91 @@ import { PaginationComponent } from '../pagination/pagination.component';
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
-    <h2>Turnos</h2>&nbsp;<a routerLink="/turnos/new" class="btn btn-success">Nuevo Turno</a> 
-    <div class="table-responsive">
-      <table class="table table-striped table-sm">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Especialidad</th>
-            <th>Paciente</th>
-            <th>Agenda</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let turno of resultsPage.content; index as i">
-            <td>{{ turno.id }}</td>
-            <td>{{ turno.code }}</td>
-            <td>{{ turno.name }}</td>
-            <td>{{ turno.especialidad?.name || 'Sin especialidad' }}</td>
-            <td>{{ turno.paciente?.name || 'Sin paciente' }}</td>
-            <td>{{ turno.agenda?.fechaHora || 'Sin agenda' }}</td>
-            <td>{{ turno.estado || 'Sin estado' }}</td>
-            <td>
-              <a [routerLink]="['/turnos/code', turno.code]" class="btn btn-sm btn-outline-primary">
-                <i class="fa fa-pencil"></i>
-              </a>
-              <a (click)="remove(turno)" class="btn btn-sm btn-outline-danger ms-1">
-                <i class="fa fa-remove"></i>
-              </a>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
+    <div class="container mt-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4"
+             style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-calendar-check me-2"></i>
+            <h2 class="fw-bold mb-0 fs-4">Turnos</h2>
+          </div>
+          <button class="btn btn-light btn-sm" (click)="router.navigate(['/turnos/new'])">
+            <i class="fa fa-plus me-1"></i> Nuevo Turno
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Especialidad</th>
+                <th>Paciente</th>
+                <th>Agenda</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let turno of resultsPage.content"
+                  (click)="goToDetail(turno.code)"
+                  style="cursor:pointer;">
+                <td>{{ turno.id }}</td>
+                <td>{{ turno.code }}</td>
+                <td>{{ turno.name }}</td>
+                <td>{{ turno.especialidad?.name || 'Sin especialidad' }}</td>
+                <td>{{ turno.paciente?.name || 'Sin paciente' }}</td>
+                <td>{{ turno.agenda?.fechaHora || 'Sin agenda' }}</td>
+                <td>{{ turno.estado || 'Sin estado' }}</td>
+                <td class="text-center">
+                  <button (click)="goToEdit(turno.code); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button (click)="remove(turno); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
+                <td colspan="8" class="text-center text-muted py-4">No hay turnos para mostrar.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-white">
           <app-pagination
-          [totalPages]="resultsPage.totalPages"
-          [currentPage]="currentPage"
-          (pageChangeRequested)="onPageChangeRequested($event)"
-          [number]="resultsPage.number"
-          [hidden]="resultsPage.numberOfElements < 1"
-          >
-          </app-pagination> 
-        </tfoot>
-      </table>
+            [totalPages]="resultsPage.totalPages"
+            [currentPage]="currentPage"
+            (pageChangeRequested)="onPageChangeRequested($event)"
+            [number]="resultsPage.number"
+            [hidden]="resultsPage.numberOfElements < 1"
+          ></app-pagination>
+        </div>
+      </div>
     </div>
   `,
-  styles: ``
+  styles: [`
+    .table-hover tbody tr:hover {
+      background-color: #f5f7fa;
+    }
+    .btn-outline-primary, .btn-outline-danger {
+      min-width: 32px;
+    }
+    .card {
+      border-radius: 1.15rem;
+      overflow: hidden;
+    }
+    .card-header {
+      border-top-left-radius: 1rem !important;
+      border-top-right-radius: 1rem !important;
+      padding-top: 0.75rem;      
+      padding-bottom: 0.75rem;  
+      padding-right: 0.7rem!important;
+      padding-left: 0.7rem!important;  
+      overflow: hidden;
+    }
+  `]
 })
 export class TurnosComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
@@ -67,7 +104,9 @@ export class TurnosComponent {
 
   constructor(
     private turnoService: TurnoService,
-    private modalService: ModalService) { }
+    private modalService: ModalService,
+    public router: Router
+  ) { }
 
   ngOnInit() {
     this.getTurnos();
@@ -80,17 +119,27 @@ export class TurnosComponent {
   }
 
   remove(turno: Turno): void {
-    let that = this;
-    this.modalService.confirm("Eliminar turno", "¿Estás seguro de eliminar el turno?", "Si elimina el turno será irrecuperable")
-      .then(function () {
-        that.turnoService.delete(turno.code).subscribe(() => {
-          that.getTurnos();
-        });
+    this.modalService.confirm(
+      "Eliminar turno",
+      "¿Estás seguro de eliminar el turno?",
+      "Si elimina el turno será irrecuperable"
+    ).then(() => {
+      this.turnoService.delete(turno.code).subscribe(() => {
+        this.getTurnos();
       });
+    });
   }
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
     this.getTurnos();
+  }
+
+  goToDetail(code: string): void {
+    this.router.navigate(['/turnos/code', code]);
+  }
+
+  goToEdit(code: string): void {
+    this.router.navigate(['/turnos/code', code], { queryParams: { edit: true } });
   }
 }

@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
@@ -42,6 +43,7 @@ public class Agenda {
 
     @ManyToOne
     private Especialidad especialidad;
+    @ManyToMany
     private List<Especialidad> especialidadesPermitidas; // solo estas especialidades pueden atender ese día/bloque
     @OneToMany(mappedBy = "agenda", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BloqueHorario> bloquesReservados;

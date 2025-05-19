@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { TurnosComponent } from './turnos/turnos.component';
 import { TurnoDetailComponent } from './turnos/turno-detail.component';
-import { AgendasComponent } from './agenda/agendas.component';
+import { AgendaComponent } from './agenda/agenda.component';
 import { AgendaDetailComponent } from './agenda/agenda-detail.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
 import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
@@ -23,7 +23,7 @@ export const routes: Routes = [
     { path: 'turnos/new', component: TurnoDetailComponent },
 
     { path: 'turnos/:id', component: TurnoDetailComponent },
-    { path: 'agenda', component: AgendasComponent },
+    { path: 'agenda', component: AgendaComponent },
     { path: 'agenda/new', component: AgendaDetailComponent },
     { path: 'agenda/:id', component: AgendaDetailComponent },
     { path: 'pacientes', component: PacientesComponent },

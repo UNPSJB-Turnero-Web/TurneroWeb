@@ -20,4 +20,5 @@ public class TurnoDTO {
     private PacienteDTO paciente;
     private StaffMedicoDTO staffMedico;
     private CentroAtencionDTO centroAtencion;
+    private AgendaDTO agenda;
 }

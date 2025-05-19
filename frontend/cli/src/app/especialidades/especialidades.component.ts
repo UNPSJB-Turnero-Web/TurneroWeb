@@ -14,56 +14,79 @@ import { PaginationComponent } from '../pagination/pagination.component';
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
     <div class="container mt-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Especialidades</h2>
-        <button class="btn btn-primary" (click)="router.navigate(['/especialidades/new'])">
-          + Nueva Especialidad
-        </button>
-      </div>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Descripción</th>
-            <th scope="col">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of resultsPage.content" 
-              (click)="goToDetail(c.id)" 
-              style="cursor:pointer;">
-            <td>{{ c.id }}</td>
-            <td>{{ c.nombre }}</td>
-            <td>{{ c.descripcion }}</td>
-            <td>
-              <a 
-                (click)="goToEdit(c.id); $event.stopPropagation()" 
-                class="btn btn-sm btn-outline-primary">
-                <i class="fa fa-pencil"></i>
-              </a>
-              <a 
-                (click)="remove(c); $event.stopPropagation()" 
-                class="btn btn-sm btn-outline-danger ms-1">
-                <i class="fa fa-remove"></i>
-              </a>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4"
+             style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+          <div class="d-flex align-items-center">
+            <i class="fa fa-stethoscope me-2"></i>
+            <h2 class="fw-bold mb-0 fs-4">Especialidades</h2>
+          </div>
+          <button class="btn btn-light btn-sm" (click)="router.navigate(['/especialidades/new'])">
+            <i class="fa fa-plus me-1"></i> Nueva Especialidad
+          </button>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of resultsPage.content"
+                  (click)="goToDetail(c.id)"
+                  style="cursor:pointer;">
+                <td>{{ c.id }}</td>
+                <td>{{ c.nombre }}</td>
+                <td>{{ c.descripcion }}</td>
+                <td class="text-center">
+                  <button (click)="goToEdit(c.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                    <i class="fa fa-pencil"></i>
+                  </button>
+                  <button (click)="remove(c); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer bg-white">
           <app-pagination
             [totalPages]="resultsPage.totalPages"
             [currentPage]="currentPage"
             (pageChangeRequested)="onPageChangeRequested($event)"
             [number]="resultsPage.number"
             [hidden]="resultsPage.numberOfElements < 1"
-          >
-          </app-pagination>
-        </tfoot>
-      </table>
+          ></app-pagination>
+        </div>
+      </div>
     </div>
   `,
-  styles: ``
+  styles: [`
+    .table-hover tbody tr:hover {
+      background-color: #f5f7fa;
+    }
+    .btn-outline-primary, .btn-outline-danger {
+      min-width: 32px;
+    }
+    .card {
+      border-radius: 1.15rem;
+      overflow: hidden;
+    }
+    .card-header {
+      border-top-left-radius: 1rem !important;
+      border-top-right-radius: 1rem !important;
+      padding-top: 0.75rem;      
+      padding-bottom: 0.75rem;  
+      padding-right: 0.7rem!important;
+      padding-left: 0.7rem!important;  
+      overflow: hidden;
+    }
+  `]
 })
 export class EspecialidadesComponent {
   resultsPage: ResultsPage = <ResultsPage>{};

@@ -14,8 +14,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     boolean existsByFechaAndHoraInicioAndCentroAtencion(LocalDate fecha, LocalTime horaInicio,
             CentroAtencion centroAtencion);
 
+    boolean existsByStaffMedico_IdAndEstado(Long staffMedicoId, EstadoTurno estado);
 
-boolean existsByStaffMedico_IdAndEstado(Long staffMedicoId, EstadoTurno estado);
-    List<Turno> findByAgendaIdAndEstado(Integer agendaId, EstadoTurno estado);
-
+    List<Turno> findByAgenda_IdAndEstado(Integer agendaId, EstadoTurno estado);
 }

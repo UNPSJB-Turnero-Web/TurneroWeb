@@ -33,4 +33,31 @@ export class AgendaService {
   search(term: string): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/search/${term}`);
   }
+
+  // --- Métodos adicionales útiles ---
+
+  // Obtener agendas por médico
+  byMedico(medicoId: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.url}/medico/${medicoId}`);
+  }
+
+  // Obtener agendas por especialidad
+  byEspecialidad(especialidadId: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.url}/especialidad/${especialidadId}`);
+  }
+
+  // Obtener agendas por centro de atención
+  byCentro(centroId: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.url}/centro/${centroId}`);
+  }
+
+  // Cambiar estado de una agenda (ejemplo)
+  cambiarEstado(id: number, estado: string): Observable<DataPackage> {
+    return this.http.patch<DataPackage>(`${this.url}/${id}/estado`, { estado });
+  }
+
+  // Obtener todas las agendas (sin paginar)
+  getAll(): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.url}/all`);
+  }
 }
