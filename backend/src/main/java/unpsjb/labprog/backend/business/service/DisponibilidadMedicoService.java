@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
+import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 
@@ -17,6 +18,9 @@ public class DisponibilidadMedicoService {
 
     @Autowired
     private DisponibilidadMedicoRepository repository;
+
+    @Autowired
+    private StaffMedicoRepository staffMedicoRepository;
 
     public List<DisponibilidadMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -29,7 +33,7 @@ public class DisponibilidadMedicoService {
     }
 
     @Transactional
-    public DisponibilidadMedicoDTO save(DisponibilidadMedicoDTO dto) {
+    public DisponibilidadMedicoDTO saveOrUpdate(DisponibilidadMedicoDTO dto) {
         DisponibilidadMedico disponibilidadMedico = toEntity(dto);
 
         // Validaciones para evitar duplicados
@@ -70,7 +74,9 @@ public class DisponibilidadMedicoService {
         dto.setDiaSemana(disponibilidad.getDiaSemana());
         dto.setHoraInicio(disponibilidad.getHoraInicio());
         dto.setHoraFin(disponibilidad.getHoraFin());
-        // Mapear relaciones si es necesario
+        if (disponibilidad.getStaffMedico() != null) {
+            dto.setStaffMedicoId(disponibilidad.getStaffMedico().getId());
+        }
         return dto;
     }
 
@@ -80,7 +86,11 @@ public class DisponibilidadMedicoService {
         disponibilidad.setDiaSemana(dto.getDiaSemana());
         disponibilidad.setHoraInicio(dto.getHoraInicio());
         disponibilidad.setHoraFin(dto.getHoraFin());
-        // Mapear relaciones si es necesario
+        if (dto.getStaffMedicoId() != null) {
+            disponibilidad.setStaffMedico(
+                staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null)
+            );
+        }
         return disponibilidad;
     }
 }

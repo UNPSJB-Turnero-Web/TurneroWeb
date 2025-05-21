@@ -7,3 +7,15 @@ AGENDA DE TURNOS CON SLOTLESS
 Centro -> staff -> consultorios
 
 checkear que la lista de especialidades asociadadas a centros sea la asociada con los medicos
+
+
+
+los medicos van a poner la disponibilidad en Disponibilidad Medico
+en donde la vamos a enviar a EsquemaTurno, donde esta mas ligado a como el
+Centro de antencion decidira manejar o disponer de los turnos, en donde
+se intentara, acomodar el medico segun los horarios disponibles que tenga
+EsquemaTurno va a ser el que se va a mostrar finalmente en agenda
+
+Agenda va a tener una "grilla" de los dias de la semana
+y bloques por horario, marcando los intervalos de los medicos
+con hora de inicio en cada turno y la duracion

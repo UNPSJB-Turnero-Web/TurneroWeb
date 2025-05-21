@@ -519,17 +519,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   onMedicoSeleccionado() {
-    if (
-      this.medicoSeleccionado &&
-      this.medicoSeleccionado.especialidad &&
-      typeof this.medicoSeleccionado.especialidad === 'object' &&
-      'id' in this.medicoSeleccionado.especialidad
-    ) {
-      // Busca la especialidad por id en el array de especialidades disponibles
-      this.especialidadSeleccionada = (this.especialidadesDisponibles || []).find(
-        esp => esp.id === (this.medicoSeleccionado!.especialidad as Especialidad).id
-      ) || null;
+    if (this.medicoSeleccionado && this.medicoSeleccionado.especialidades) {
+      this.especialidadesDisponibles = Array.isArray(this.medicoSeleccionado.especialidades)
+        ? this.medicoSeleccionado.especialidades
+        : [this.medicoSeleccionado.especialidades];
+      this.especialidadSeleccionada = null; // Limpiar selección previa
     } else {
+      this.especialidadesDisponibles = [];
       this.especialidadSeleccionada = null;
     }
   }

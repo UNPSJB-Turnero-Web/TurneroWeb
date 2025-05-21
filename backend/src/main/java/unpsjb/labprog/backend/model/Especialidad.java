@@ -28,4 +28,8 @@ public class Especialidad {
 
     @ManyToMany(mappedBy = "especialidades")
     private Set<CentroAtencion> centrosAtencion = new HashSet<>();
+
+    @ManyToMany(mappedBy = "especialidades")
+    private Set<Medico> medicos = new HashSet<>();
+
 }

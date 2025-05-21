@@ -1,4 +1,6 @@
 package unpsjb.labprog.backend.dto;
+import java.util.Set;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,5 +12,5 @@ public class MedicoDTO {
     private String apellido;
     private String dni; // CAMBIAR A STRING
     private String matricula;
-    private EspecialidadDTO especialidad;
+    private Set<EspecialidadDTO> especialidades;
 }

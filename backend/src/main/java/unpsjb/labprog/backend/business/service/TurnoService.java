@@ -58,6 +58,10 @@ public class TurnoService {
         repository.deleteById(id);
     }
 
+    public void deleteAll() {
+        repository.deleteAll();
+    }
+
     // Métodos de conversión entre entidad y DTO
     private TurnoDTO toDTO(Turno turno) {
         TurnoDTO dto = new TurnoDTO();
@@ -81,27 +85,27 @@ public class TurnoService {
         return turno;
     }
 
-private void validarTurno(Turno turno) {
-    if (turno.getFecha() == null) {
-        throw new IllegalArgumentException("La fecha del turno es obligatoria");
+    private void validarTurno(Turno turno) {
+        if (turno.getFecha() == null) {
+            throw new IllegalArgumentException("La fecha del turno es obligatoria");
+        }
+        if (turno.getHoraInicio() == null) {
+            throw new IllegalArgumentException("La hora de inicio es obligatoria");
+        }
+        if (turno.getHoraFin() == null) {
+            throw new IllegalArgumentException("La hora de fin es obligatoria");
+        }
+        if (turno.getHoraFin().isBefore(turno.getHoraInicio())) {
+            throw new IllegalArgumentException("La hora de fin no puede ser anterior a la hora de inicio");
+        }
+        if (turno.getPaciente() == null || turno.getPaciente().getId() == null) {
+            throw new IllegalArgumentException("El paciente es obligatorio");
+        }
+        if (turno.getStaffMedico() == null || turno.getStaffMedico().getId() == null) {
+            throw new IllegalArgumentException("El médico es obligatorio");
+        }
+        if (turno.getEstado() == null) {
+            throw new IllegalArgumentException("El estado del turno es obligatorio");
+        }
     }
-    if (turno.getHoraInicio() == null) {
-        throw new IllegalArgumentException("La hora de inicio es obligatoria");
-    }
-    if (turno.getHoraFin() == null) {
-        throw new IllegalArgumentException("La hora de fin es obligatoria");
-    }
-    if (turno.getHoraFin().isBefore(turno.getHoraInicio())) {
-        throw new IllegalArgumentException("La hora de fin no puede ser anterior a la hora de inicio");
-    }
-    if (turno.getPaciente() == null || turno.getPaciente().getId() == null) {
-        throw new IllegalArgumentException("El paciente es obligatorio");
-    }
-    if (turno.getStaffMedico() == null || turno.getStaffMedico().getId() == null) {
-        throw new IllegalArgumentException("El médico es obligatorio");
-    }
-    if (turno.getEstado() == null) {
-        throw new IllegalArgumentException("El estado del turno es obligatorio");
-    }
-}
 }

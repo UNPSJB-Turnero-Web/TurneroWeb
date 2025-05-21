@@ -1,6 +1,12 @@
-const { When, Then, Given } = require('@cucumber/cucumber');
+const { When, Then, Given, BeforeAll } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
+
+BeforeAll(function () {
+  // Limpiar solo médicos y dependencias mínimas antes de cada escenario
+  request('DELETE', 'http://backend:8080/staff-medico/reset');
+  request('DELETE', 'http://backend:8080/medicos/reset');
+});
 
 Given('que existen {int} medicos registrados en el sistema', function (cantidad) {
     // Trae la lista actual de médicos y guarda la cantidad real en el contexto
@@ -19,7 +25,7 @@ When(
       apellido,
       dni: dni && !isNaN(Number(dni)) ? Number(dni) : dni,
       matricula,
-      especialidad: { nombre: especialidad }
+      especialidades: [{ nombre: especialidad }]//
     };
     try {
       const res = request('POST', 'http://backend:8080/medicos', { json: medico });

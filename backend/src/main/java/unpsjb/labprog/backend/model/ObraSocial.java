@@ -1,6 +1,10 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,7 +17,7 @@ public class ObraSocial {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id; // Cambiar de int a Integer
+    private Integer id; 
 
     @Column(nullable = false)
     private String nombre;

@@ -36,5 +36,5 @@ public class Paciente extends Persona {
     private Date fechaNacimiento;
 
     @ManyToOne
-    private ObraSocial obraSocial; // Relación con ObraSocial
+    private ObraSocial obraSocial; 
 }

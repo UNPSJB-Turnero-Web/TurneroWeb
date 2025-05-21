@@ -12,6 +12,8 @@ public class DisponibilidadMedicoDTO {
     private String diaSemana;
     private LocalTime horaInicio;
     private LocalTime horaFin;
+    private int intervalo;
+    private Long staffMedicoId;
 
     // Getters y Setters
 }

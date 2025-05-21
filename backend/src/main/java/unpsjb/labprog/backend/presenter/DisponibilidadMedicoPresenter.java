@@ -40,7 +40,7 @@ public class DisponibilidadMedicoPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
         try {
-            DisponibilidadMedicoDTO saved = service.save(disponibilidadDTO);
+            DisponibilidadMedicoDTO saved = service.saveOrUpdate(disponibilidadDTO);
             return Response.ok(saved, "Disponibilidad creada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -55,7 +55,7 @@ public class DisponibilidadMedicoPresenter {
             if (disponibilidadDTO.getId() == null || disponibilidadDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            DisponibilidadMedicoDTO updated = service.save(disponibilidadDTO);
+            DisponibilidadMedicoDTO updated = service.saveOrUpdate(disponibilidadDTO);
             return Response.ok(updated, "Disponibilidad actualizada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());

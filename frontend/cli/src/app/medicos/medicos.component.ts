@@ -46,7 +46,14 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 <td>{{ medico.apellido }}</td>
                 <td>{{ medico.dni }}</td>
                 <td>{{ medico.matricula }}</td>
-                <td>{{ medico.especialidad?.nombre || 'Sin especialidad' }}</td>
+                <td>
+                  <ng-container *ngIf="medico.especialidades?.length > 0; else sinEsp">
+                    <span *ngFor="let esp of medico.especialidades; let last = last">
+                      {{ esp.nombre }}<span *ngIf="!last">, </span>
+                    </span>
+                  </ng-container>
+                  <ng-template #sinEsp>Sin especialidad</ng-template>
+                </td>
                 <td class="text-center">
                   <button (click)="goToEdit(medico.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Ver/Editar">
                     <i class="fa fa-pencil"></i>

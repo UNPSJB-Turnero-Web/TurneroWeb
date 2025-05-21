@@ -4,7 +4,6 @@ import java.time.LocalTime;
 import java.util.List;
 
 import lombok.Data;
-import unpsjb.labprog.backend.model.Especialidad;
 
 @Data
 public class AgendaDTO {
@@ -21,5 +20,5 @@ public class AgendaDTO {
     private String motivoInhabilitacion; // mantenimiento, sanitización, etc.
     private Integer tiempoTolerancia; // minutos entre turnos
     private List<BloqueHorarioDTO> bloquesReservados; // para cirugías, etc.
-    private List<Especialidad> especialidadesPermitidas; // solo estas especialidades pueden atender ese día/bloque
+    
 }

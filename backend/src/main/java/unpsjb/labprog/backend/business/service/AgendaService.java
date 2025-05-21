@@ -1,7 +1,11 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +22,7 @@ import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.BloqueHorario;
 import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
@@ -133,6 +138,10 @@ public class AgendaService {
         repository.deleteById(id);
     }
 
+    public void deleteAll() {
+    repository.deleteAll();
+}
+
     public Agenda saveFromDTO(AgendaDTO dto) {
         Agenda agenda = (dto.getId() != null) ? findById(dto.getId()) : new Agenda();
         // Mapear campos simples
@@ -190,4 +199,46 @@ public class AgendaService {
                 consultorioId,
                 especialidadId);
     }
+
+    public List<Agenda> generarAgendaDesdeEsquemaTurno(EsquemaTurno esquemaTurno, int semanas) {
+        List<Agenda> agendas = new ArrayList<>();
+        LocalDate hoy = LocalDate.now();
+
+        for (String diaSemana : esquemaTurno.getDiasSemana()) {
+            DayOfWeek dayOfWeek = parseDiaSemana(diaSemana);
+            // Buscar el próximo día correspondiente
+            LocalDate fecha = hoy.with(TemporalAdjusters.nextOrSame(dayOfWeek));
+            for (int i = 0; i < semanas; i++) {
+                Agenda agenda = new Agenda();
+                agenda.setHoraInicio(esquemaTurno.getHoraInicio());
+                agenda.setHoraFin(esquemaTurno.getHoraFin());
+                agenda.setConsultorio(esquemaTurno.getStaffMedico().getConsultorio());
+                agenda.setMedico(esquemaTurno.getStaffMedico().getMedico());
+                agenda.setEspecialidad(esquemaTurno.getStaffMedico().getEspecialidad());
+                agenda.setHabilitado(true);
+                agenda.setMotivoInhabilitacion(null);
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(java.sql.Date.valueOf(fecha.plusWeeks(i)));
+                agenda.setFechaHora(cal);
+                agendas.add(agenda);
+            }
+        }
+        // Guardar todas las agendas generadas
+        List<Agenda> saved = new ArrayList<>();
+        repository.saveAll(agendas).forEach(saved::add);
+        return saved;
+    }
+
+    private static DayOfWeek parseDiaSemana(String dia) {
+    switch (dia.toUpperCase()) {
+        case "LUNES": return DayOfWeek.MONDAY;
+        case "MARTES": return DayOfWeek.TUESDAY;
+        case "MIERCOLES": return DayOfWeek.WEDNESDAY;
+        case "JUEVES": return DayOfWeek.THURSDAY;
+        case "VIERNES": return DayOfWeek.FRIDAY;
+        case "SABADO": return DayOfWeek.SATURDAY;
+        case "DOMINGO": return DayOfWeek.SUNDAY;
+        default: throw new IllegalArgumentException("Día de semana inválido: " + dia);
+    }
+}
 }

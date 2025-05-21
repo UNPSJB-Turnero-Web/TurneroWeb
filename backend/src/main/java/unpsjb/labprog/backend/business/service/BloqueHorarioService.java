@@ -1,12 +1,13 @@
 package unpsjb.labprog.backend.business.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import unpsjb.labprog.backend.business.repository.BloqueHorarioRepository;
-import unpsjb.labprog.backend.model.BloqueHorario;
-
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import unpsjb.labprog.backend.business.repository.BloqueHorarioRepository;
+import unpsjb.labprog.backend.model.BloqueHorario;
 
 @Service
 public class BloqueHorarioService {
@@ -32,5 +33,9 @@ public class BloqueHorarioService {
 
     public void delete(Long id) {
         repository.deleteById(id);
+    }
+
+    public void deleteAll() {
+        repository.deleteAll();
     }
 }

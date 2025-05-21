@@ -61,8 +61,7 @@ public class TurnoPresenter {
                 "content", pageResult.getContent(),
                 "totalPages", pageResult.getTotalPages(),
                 "totalElements", pageResult.getTotalElements(),
-                "currentPage", pageResult.getNumber()
-        );
+                "currentPage", pageResult.getNumber());
         return Response.ok(response, "Turnos paginados recuperados correctamente");
     }
 
@@ -70,5 +69,11 @@ public class TurnoPresenter {
     public ResponseEntity<Object> delete(@PathVariable Long id) {
         service.delete(id);
         return Response.ok(null, "Turno eliminado correctamente");
+    }
+
+    @DeleteMapping("/reset")
+    public ResponseEntity<Object> resetTurnos() {
+        service.deleteAll();
+        return ResponseEntity.ok("Todos los turnos fueron eliminados.");
     }
 }

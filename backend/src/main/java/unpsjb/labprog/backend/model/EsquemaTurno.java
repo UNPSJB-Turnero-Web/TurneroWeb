@@ -1,11 +1,18 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.*;
+import java.time.LocalTime;
+import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -18,11 +25,6 @@ public class EsquemaTurno {
     private Long id;
 
     @Column(nullable = false)
-    private String nombre;
-
-    private String descripcion;
-
-    @Column(nullable = false)
     private LocalTime horaInicio;
 
     @Column(nullable = false)
@@ -30,4 +32,18 @@ public class EsquemaTurno {
 
     @Column(nullable = false)
     private int intervalo; // Duración del turno en minutos
+
+    @ManyToOne
+    private StaffMedico staffMedico;
+
+    @ElementCollection
+    private List<String> diasSemana;
+    @ManyToOne
+    private DisponibilidadMedico disponibilidadMedico; // ID de la disponibilidad médica asociada
+    @ManyToOne
+    private CentroAtencion centroAtencion;
+
+    @ManyToOne
+    private Consultorio consultorio;
+
 }
