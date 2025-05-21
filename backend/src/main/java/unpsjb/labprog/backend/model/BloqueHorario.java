@@ -3,6 +3,8 @@ package unpsjb.labprog.backend.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,5 +34,6 @@ public class BloqueHorario {
     private String motivo; // Ej: "Cirugía", "Sanitización", "Feriado", etc.
 
     @ManyToOne
+    @JsonBackReference
     private Agenda agenda;
 }

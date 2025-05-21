@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,11 @@ public class DisponibilidadMedicoService {
 
     public Optional<DisponibilidadMedicoDTO> findById(Long id) {
         return repository.findById(id).map(this::toDTO);
+    }
+
+    public Page<DisponibilidadMedicoDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
     }
 
     @Transactional
@@ -66,6 +73,9 @@ public class DisponibilidadMedicoService {
     @Transactional
     public void deleteById(Long id) {
         repository.deleteById(id);
+    }
+      public void deleteAll() {
+        repository.deleteAll();
     }
 
     private DisponibilidadMedicoDTO toDTO(DisponibilidadMedico disponibilidad) {

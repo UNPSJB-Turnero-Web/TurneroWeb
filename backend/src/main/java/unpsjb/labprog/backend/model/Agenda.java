@@ -3,6 +3,9 @@ package unpsjb.labprog.backend.model;
 import java.util.Calendar;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,9 +45,13 @@ public class Agenda {
 
     @ManyToOne
     private Especialidad especialidad;
-    
+
+    @ManyToOne
+    @JsonBackReference
+    private EsquemaTurno esquemaTurno;
     
     @OneToMany(mappedBy = "agenda", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<BloqueHorario> bloquesReservados;
 
 }

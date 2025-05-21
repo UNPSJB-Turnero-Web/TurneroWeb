@@ -16,6 +16,10 @@ import { MedicosComponent } from './medicos/medicos.component';
 import { StaffMedicosComponent } from './staffMedicos/staffMedicos.component';
 import { StaffMedicoDetailComponent } from './staffMedicos/staffMedico-detail.component';
 import { MedicoDetailComponent } from './medicos/medico-detail.component';
+import { DisponibilidadMedicoComponent } from './disponibilidadMedicos/disponibilidadMedico.component';
+import { DisponibilidadMedicoDetailComponent } from './disponibilidadMedicos/disponibilidadMedico-detail.component';
+import { EsquemaTurnoComponent } from './esquemaTurno/esquemaTurno.component';
+import { EsquemaTurnoDetailComponent } from './esquemaTurno/esquemaTurno-detail.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -44,4 +48,11 @@ export const routes: Routes = [
     { path: 'staffMedico', component: StaffMedicosComponent },
     { path: 'staffMedico/new', component: StaffMedicoDetailComponent },
     { path: 'staffMedico/:id', component: StaffMedicoDetailComponent },
+    { path: 'disponibilidades-medico', component: DisponibilidadMedicoComponent },
+    { path: 'disponibilidades-medico/new', component: DisponibilidadMedicoDetailComponent },
+    { path: 'disponibilidades-medico/:id', component: DisponibilidadMedicoDetailComponent },
+    { path: 'esquema-turno', component: EsquemaTurnoComponent },
+    { path: 'esquema-turno/new', component: EsquemaTurnoDetailComponent },
+    { path: 'esquema-turno/:id', component: EsquemaTurnoDetailComponent },
+
 ];

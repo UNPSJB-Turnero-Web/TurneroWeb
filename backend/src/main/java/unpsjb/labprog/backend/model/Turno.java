@@ -3,6 +3,8 @@ package unpsjb.labprog.backend.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +52,7 @@ public class Turno {
     @ManyToOne
     private CentroAtencion centroAtencion; // Relación con CentroAtencion
     @ManyToOne
+    @JsonIgnore
     private Agenda agenda;
 
     public void confirmarTurno() {

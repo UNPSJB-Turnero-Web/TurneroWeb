@@ -14,8 +14,8 @@ import { Consultorio } from '../consultorios/consultorio';
 import { RouterModule } from '@angular/router';
 import { Especialidad } from '../especialidades/especialidad';
 import { EspecialidadService } from '../especialidades/especialidad.service';
-import { StaffMedico } from '../staffMedicos/staffmedico';
-import { StaffMedicoService } from '../staffMedicos/staffmedico.service';
+import { StaffMedico } from '../staffMedicos/staffMedico';
+import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 import { Medico } from '../medicos/medico';
 import { MedicoService } from '../medicos/medico.service';
 
@@ -26,7 +26,7 @@ import { MedicoService } from '../medicos/medico.service';
   templateUrl: './centroAtencion-detail.component.html',
   styles: `
   .card {
-      border-radius: 1rem;
+      border-radius: 1rem ;
       overflow: hidden;
       }
 

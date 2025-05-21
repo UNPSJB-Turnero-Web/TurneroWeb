@@ -22,7 +22,37 @@ import { ModalService } from "../modal/modal.service";
   standalone: true,
   imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule],
   templateUrl: './consultorio-detail.component.html',
-  styles: [],
+  styles: `
+  .card {
+      border-radius: 1rem ;
+      overflow: hidden;
+      }
+
+.custom-tabs .nav-link {
+  font-weight: 500;
+  color: #1565c0;
+  border: none;
+  background: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  margin-right: 0.2rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.08rem;
+  box-shadow: none;
+}
+
+.custom-tabs .nav-link.active {
+  color: #fff !important;
+  background: linear-gradient(90deg, #1976d2 80%, #42a5f5 100%);
+  box-shadow: 0 4px 16px -8px #1976d2;
+  border: none;
+}
+
+.custom-tabs .nav-link:hover:not(.active) {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+  `
 })
 export class ConsultorioDetailComponent implements OnInit {
   consultorio: Consultorio = {

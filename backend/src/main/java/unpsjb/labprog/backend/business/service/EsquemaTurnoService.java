@@ -5,12 +5,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -35,6 +38,11 @@ public class EsquemaTurnoService {
 
     public Optional<EsquemaTurnoDTO> findById(Long id) {
         return esquemaTurnoRepository.findById(id).map(this::toDTO);
+    }
+
+    public Page<EsquemaTurnoDTO> findByPage(int page, int size) {
+        return esquemaTurnoRepository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
     }
 
     @Transactional
