@@ -47,10 +47,7 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
                 style="cursor:pointer"
               >
                 <td>{{ disp.id }}</td>
-                <td>
-                  {{ disp.staffMedico?.medico?.nombre }} {{ disp.staffMedico?.medico?.apellido }}
-                  ({{ disp.staffMedico?.especialidad?.nombre }})
-                </td>
+                <td>{{ getStaffMedicoNombre(disp.staffMedicoId) }}</td>
                 <td>{{ disp.diaSemana }}</td>
                 <td>{{ disp.horaInicio }}</td>
                 <td>{{ disp.horaFin }}</td>
@@ -74,6 +71,7 @@ export class DisponibilidadMedicoComponent {
   disponibilidades: DisponibilidadMedico[] = [];
   currentPage: number = 1; // Initialize currentPage to 1
   resultsPage!: ResultsPage; // Declare the resultsPage property
+  staffMedicos: StaffMedico[] = []; // Agregado para almacenar el listado de médicos
 
   constructor(
     private disponibilidadService: DisponibilidadMedicoService,
@@ -84,12 +82,13 @@ export class DisponibilidadMedicoComponent {
 
   ngOnInit() {
     this.getDisponibilidades();
+    this.getStaffMedicos(); // Obtener el listado de médicos al iniciar
   }
 
   getDisponibilidades(): void {
     this.disponibilidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
-      this.disponibilidades = this.resultsPage.content; 
+      this.disponibilidades = this.resultsPage.content;
 
       // Por cada disponibilidad, traemos el staff médico completo
       this.disponibilidades.forEach(disp => {
@@ -102,7 +101,12 @@ export class DisponibilidadMedicoComponent {
     });
   }
 
-
+  // Nuevo método para obtener el listado de médicos
+  getStaffMedicos(): void {
+    this.staffMedicoService.all().subscribe(dataPackage => {
+      this.staffMedicos = dataPackage.data as StaffMedico[];
+    });
+  }
 
   goToEdit(id: number): void {
     this.router.navigate(['/disponibilidades-medico', id], { queryParams: { edit: true } });
@@ -129,5 +133,10 @@ export class DisponibilidadMedicoComponent {
           }
         });
       });
+  }
+
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    return staff ? `${staff.medicoNombre} (${staff.especialidadNombre})` : 'Sin asignar';
   }
 }

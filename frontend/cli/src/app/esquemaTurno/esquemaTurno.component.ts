@@ -9,6 +9,8 @@ import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { EsquemaTurnoService } from './esquemaTurno.service';
 import { EsquemaTurno } from './esquemaTurno';
+import { ConsultorioService } from '../consultorios/consultorio.service';
+import { Consultorio } from '../consultorios/consultorio';
 @Component({
   selector: 'app-esquema-turno',
   standalone: true,
@@ -49,11 +51,8 @@ import { EsquemaTurno } from './esquemaTurno';
                 style="cursor:pointer"
               >
                 <td>{{ esquema.id }}</td>
-                <td>
-                  {{ esquema.staffMedico?.medico?.nombre }} {{ esquema.staffMedico?.medico?.apellido }}
-                  ({{ esquema.staffMedico?.especialidad?.nombre }})
-                </td>
-                <td>{{ esquema.consultorio?.nombre }}</td>
+                <td>{{ getStaffMedicoNombre(esquema.staffMedicoId) }}</td>
+                <td>{{ getConsultorioNombre(esquema.consultorioId) }}</td>
                 <td>{{ esquema.diasSemana?.join(', ') }}</td>
                 <td>{{ esquema.horaInicio }}</td>
                 <td>{{ esquema.horaFin }}</td>
@@ -107,17 +106,26 @@ import { EsquemaTurno } from './esquemaTurno';
 export class EsquemaTurnoComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
+  staffMedicos: StaffMedico[] = [];
+  consultorios: Consultorio[] = [];
 
   constructor(
     private esquemaTurnoService: EsquemaTurnoService,
     private disponibilidadService: DisponibilidadMedicoService,
     private staffMedicoService: StaffMedicoService,
     public router: Router,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private consultorioService: ConsultorioService
   ) {}
 
   ngOnInit() {
     this.getEsquemas();
+    this.staffMedicoService.all().subscribe(dp => {
+      this.staffMedicos = dp.data as StaffMedico[];
+    });
+    this.consultorioService.getAll().subscribe(dp => {
+      this.consultorios = dp.data as Consultorio[];
+    });
   }
 
 
@@ -171,5 +179,18 @@ export class EsquemaTurnoComponent {
           }
         });
       });
+  }
+
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    if (!this.staffMedicos) return '';
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    if (!staff) return '';
+    return `${staff.medicoNombre} (${staff.especialidadNombre})`;
+  }
+
+  getConsultorioNombre(consultorioId: number): string {
+    if (!consultorioId || !this.consultorios) return '';
+    const consultorio = this.consultorios.find(c => c.id === consultorioId);
+    return consultorio ? consultorio.name : '';
   }
 }

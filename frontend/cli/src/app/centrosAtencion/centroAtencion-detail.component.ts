@@ -512,12 +512,12 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       this.especialidadSeleccionada = null;
       return;
     }
-    // IDs de especialidades ya asociadas a este médico en este centro
+    // IDs de especialidades YA asociadas a este médico en este centro
     const especialidadesAsociadasIds = this.staffMedicoCentro
       .filter(s => s.medicoId === this.medicoSeleccionado!.id)
       .map(s => s.especialidadId);
 
-    // Mostrar solo las especialidades que NO están asociadas aún
+    // Mostrar solo las especialidades del centro que NO están asociadas aún a este médico
     this.especialidadesDisponibles = this.especialidadesAsociadas
       .filter(e => !especialidadesAsociadasIds.includes(e.id));
     this.especialidadSeleccionada = null;
