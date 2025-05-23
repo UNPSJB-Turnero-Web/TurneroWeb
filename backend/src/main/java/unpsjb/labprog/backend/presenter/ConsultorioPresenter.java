@@ -21,7 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
+import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
+import unpsjb.labprog.backend.model.Consultorio;
 
 @RestController
 @RequestMapping("consultorios")
@@ -46,8 +48,8 @@ public class ConsultorioPresenter {
 
         List<Map<String, Object>> consultoriosMapeados = pageResult.getContent().stream().map(c -> {
             Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-            if (c.getCentroAtencionId() != 0) {
-                map.put("centroAtencion", c.getCentroAtencionName());
+            if (c.getCentroAtencion() != null) {
+                map.put("centroAtencion", c.getCentroAtencion().getName());
             } else {
                 map.put("centroAtencion", null);
             }
@@ -118,7 +120,9 @@ public class ConsultorioPresenter {
     @PostMapping("/centro/{centroId}")
     public ResponseEntity<Object> createInCentro(@PathVariable int centroId, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            consultorioDTO.setCentroAtencionId(centroId);
+            CentroAtencionDTO centro = new CentroAtencionDTO();
+            centro.setId(centroId);
+            consultorioDTO.setCentroAtencion(centro);
 
             ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO);
             return Response.ok(saved, "Consultorio creado correctamente");
@@ -145,6 +149,20 @@ public class ConsultorioPresenter {
     public ResponseEntity<Object> resetConsultorios() {
         service.findAll().forEach(c -> service.delete(c.getId()));
         return Response.ok("Reset completo.");
+    }
+
+    private ConsultorioDTO toDTO(Consultorio c) {
+        ConsultorioDTO dto = new ConsultorioDTO();
+        dto.setId(c.getId());
+        dto.setNumero(c.getNumero());
+        dto.setName(c.getName());
+        if (c.getCentroAtencion() != null) {
+            CentroAtencionDTO cdto = new CentroAtencionDTO();
+            cdto.setId(c.getCentroAtencion().getId());
+            cdto.setName(c.getCentroAtencion().getName());
+            dto.setCentroAtencion(cdto);
+        }
+        return dto;
     }
 
 }

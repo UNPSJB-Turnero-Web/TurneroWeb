@@ -8,8 +8,7 @@ public class ConsultorioDTO {
     private int id;
     private Integer numero;
     private String name;
-    private int centroAtencionId;
-    private String centroAtencionName;
+    private CentroAtencionDTO centroAtencion;
 
     // Getters y Setters
 }

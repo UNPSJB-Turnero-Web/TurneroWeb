@@ -212,9 +212,9 @@ public class AgendaService {
                 Agenda agenda = new Agenda();
                 agenda.setHoraInicio(esquemaTurno.getHoraInicio());
                 agenda.setHoraFin(esquemaTurno.getHoraFin());
-                agenda.setConsultorio(esquemaTurno.getDisponibilidadMedico().getStaffMedico().getConsultorio());
-                agenda.setMedico(esquemaTurno.getDisponibilidadMedico().getStaffMedico().getMedico());
-                agenda.setEspecialidad(esquemaTurno.getDisponibilidadMedico().getStaffMedico().getEspecialidad());
+                agenda.setConsultorio(esquemaTurno.getStaffMedico().getConsultorio());
+                agenda.setMedico(esquemaTurno.getStaffMedico().getMedico());
+                agenda.setEspecialidad(esquemaTurno.getStaffMedico().getEspecialidad());
                 agenda.setHabilitado(true);
                 agenda.setMotivoInhabilitacion(null);
                 Calendar cal = Calendar.getInstance();

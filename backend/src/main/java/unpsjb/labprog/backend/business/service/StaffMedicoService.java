@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
-import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
@@ -20,7 +19,6 @@ import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.dto.StaffMedicoDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
-import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
@@ -37,8 +35,6 @@ public class StaffMedicoService {
     private CentroAtencionRepository centroRepository;
     @Autowired
     private EspecialidadRepository especialidadRepository;
-    @Autowired
-    private ConsultorioRepository consultorioRepository;
 
     public List<StaffMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -49,18 +45,17 @@ public class StaffMedicoService {
     public Optional<StaffMedicoDTO> findById(Long id) {
         return repository.findById(id).map(this::toDTO);
     }
-
     public List<StaffMedicoDTO> findByCentroId(Long centroId) {
         return repository.findByCentroId(centroId).stream()
                 .map(this::toDTO)
                 .toList();
-    }
-
-    // Obtener especialidades paginadas como DTOs
+    }   
+        // Obtener especialidades paginadas como DTOs
     public Page<StaffMedicoDTO> findByPage(int page, int size) {
         Page<StaffMedico> pageResult = repository.findAll(PageRequest.of(page, size));
         return pageResult.map(this::toDTO);
     }
+
 
     @Transactional
     public StaffMedicoDTO saveOrUpdate(StaffMedicoDTO dto) {
@@ -91,30 +86,19 @@ public class StaffMedicoService {
     public void deleteById(Long id) {
         repository.deleteById(id);
     }
-
-    @Transactional
+      @Transactional
     public void deleteAll() {
         repository.deleteAll();
     }
 
+
     private StaffMedicoDTO toDTO(StaffMedico staff) {
         StaffMedicoDTO dto = new StaffMedicoDTO();
         dto.setId(staff.getId());
-        dto.setCentroAtencionId(staff.getCentro().getId());
-        dto.setCentroAtencionName(staff.getCentro().getName());
-        dto.setMedicoId(staff.getMedico().getId());
-        dto.setMedicoNombre(staff.getMedico().getNombre() + " " + staff.getMedico().getApellido());
-        dto.setEspecialidadId((long) staff.getEspecialidad().getId());
-        dto.setEspecialidadNombre(staff.getEspecialidad().getNombre());
-        dto.setConsultorioId(staff.getConsultorio() != null ? Long.valueOf(staff.getConsultorio().getId()) : null);
-        dto.setConsultorioNombre(staff.getConsultorio() != null ? staff.getConsultorio().getName() : null);
-        // Si necesitás disponibilidades, solo los IDs
-        if (staff.getDisponibilidades() != null) {
-            dto.setDisponibilidadIds(
-                    staff.getDisponibilidades().stream()
-                            .map(d -> d.getId())
-                            .toList());
-        }
+        dto.setCentro(toCentroAtencionDTO(staff.getCentro()));
+        dto.setMedico(toMedicoDTO(staff.getMedico()));
+        dto.setEspecialidad(toEspecialidadDTO(staff.getEspecialidad()));
+        dto.setDisponibilidad(toDisponibilidadDTOList(staff.getDisponibilidad()));
         return dto;
     }
 
@@ -122,30 +106,31 @@ public class StaffMedicoService {
         StaffMedico staff = new StaffMedico();
         staff.setId(dto.getId());
 
-        // Buscar médico por ID
-        Medico medico = medicoRepository.findById(dto.getMedicoId())
-                .orElseThrow(() -> new IllegalStateException("Médico no existe con el id indicado"));
+        // Buscar médico por DNI y matrícula
+        Long dni = Long.valueOf(dto.getMedico().getDni());
+        Optional<Medico> medicoOpt = medicoRepository.findByDni(dni);
+        if (medicoOpt.isEmpty()) {
+            throw new IllegalStateException("Médico no existe con el dni indicado");
+        }
+        Medico medico = medicoOpt.get();
+        if (!medico.getMatricula().equals(dto.getMedico().getMatricula())) {
+            throw new IllegalStateException("Médico no existe con la matrícula indicada");
+        }
         staff.setMedico(medico);
 
-        // Buscar centro por ID
-        CentroAtencion centro = centroRepository.findById(dto.getCentroAtencionId().intValue())
-                .orElseThrow(() -> new IllegalStateException("Centro de atención no existe con el id indicado"));
+        // Buscar centro por nombre
+        CentroAtencion centro = centroRepository.findByName(dto.getCentro().getName());
+        if (centro == null) {
+            throw new IllegalStateException("Centro de atención no existe con el nombre indicado");
+        }
         staff.setCentro(centro);
 
-        // Buscar especialidad por ID
-        Especialidad especialidad = especialidadRepository.findById(dto.getEspecialidadId().intValue())
-                .orElseThrow(() -> new IllegalStateException("La especialidad no existe con el id indicado"));
-        staff.setEspecialidad(especialidad);
-
-        // Consultorio (opcional)
-        if (dto.getConsultorioId() != null) {
-            Consultorio consultorio = consultorioRepository.findById(dto.getConsultorioId().intValue()).orElse(null);
-            staff.setConsultorio(consultorio);
-        } else {
-            staff.setConsultorio(null);
+        // Buscar especialidad por nombre
+        Especialidad especialidad = especialidadRepository.findByNombreIgnoreCase(dto.getEspecialidad().getNombre());
+        if (especialidad == null) {
+            throw new IllegalStateException("La especialidad del médico no se encuentra disponible para el centro de salud");
         }
-
-        // Disponibilidades (opcional)
+        staff.setEspecialidad(especialidad);
 
         return staff;
     }
@@ -164,8 +149,7 @@ public class StaffMedicoService {
     }
 
     private CentroAtencionDTO toCentroAtencionDTO(CentroAtencion centro) {
-        if (centro == null)
-            return null;
+        if (centro == null) return null;
         CentroAtencionDTO dto = new CentroAtencionDTO();
         dto.setId(centro.getId());
         dto.setName(centro.getName());
@@ -174,8 +158,7 @@ public class StaffMedicoService {
     }
 
     private MedicoDTO toMedicoDTO(Medico medico) {
-        if (medico == null)
-            return null;
+        if (medico == null) return null;
         MedicoDTO dto = new MedicoDTO();
         dto.setId(medico.getId());
         dto.setNombre(medico.getNombre());
@@ -187,8 +170,7 @@ public class StaffMedicoService {
     }
 
     private EspecialidadDTO toEspecialidadDTO(Especialidad especialidad) {
-        if (especialidad == null)
-            return null;
+        if (especialidad == null) return null;
         EspecialidadDTO dto = new EspecialidadDTO();
         dto.setId(especialidad.getId());
         dto.setNombre(especialidad.getNombre());
@@ -197,8 +179,7 @@ public class StaffMedicoService {
     }
 
     private List<DisponibilidadMedicoDTO> toDisponibilidadDTOList(List<DisponibilidadMedico> lista) {
-        if (lista == null)
-            return null;
+        if (lista == null) return null;
         return lista.stream().map(d -> {
             DisponibilidadMedicoDTO dto = new DisponibilidadMedicoDTO();
             dto.setId(d.getId());

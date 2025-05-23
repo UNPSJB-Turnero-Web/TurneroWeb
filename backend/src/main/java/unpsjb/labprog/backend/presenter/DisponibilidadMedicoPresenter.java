@@ -78,19 +78,6 @@ public class DisponibilidadMedicoPresenter {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Object> update(
-            @PathVariable Long id,
-            @RequestBody DisponibilidadMedicoDTO dto) {
-        try {
-            dto.setId(id); // Set the ID in the DTO
-            DisponibilidadMedicoDTO updated = service.saveOrUpdate(dto);
-            return Response.ok(updated, "Disponibilidad actualizada correctamente");
-        } catch (Exception e) {
-            return Response.error(null, "Error al actualizar la disponibilidad: " + e.getMessage());
-        }
-    }
-
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,

@@ -2,13 +2,6 @@ const { Given, When, Then, BeforeAll } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
-// Ejecuta solo una vez antes de todos los escenarios
-BeforeAll(function () {
-  console.log('🚀 Limpiando base de datos de especialidades...');
-  const res = request('DELETE', 'http://backend:8080/especialidades/reset');
-  assert.strictEqual(res.statusCode, 200, 'No se pudo resetear la base de datos de especialidades');
-  console.log('✅ Base de datos de especialidades limpia.');
-});
 
 Given('que la especialidad {string} existe en el sistema con la descripción {string}', async function (nombre, descripcion) {
     const especialidad = {
