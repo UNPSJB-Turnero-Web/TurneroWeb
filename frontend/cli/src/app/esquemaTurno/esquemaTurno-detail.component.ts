@@ -249,12 +249,15 @@ export class EsquemaTurnoDetailComponent {
   onDisponibilidadChange(): void {
     const disp = this.disponibilidadesMedico.find(d => d.id === this.selectedDisponibilidadId);
     if (disp) {
-      this.esquema.staffMedicoId = disp.staffMedicoId;
-      this.esquema.diasSemana = Array.isArray(disp.diaSemana) ? disp.diaSemana : [disp.diaSemana];
-      this.esquema.horaInicio = disp.horaInicio;
-      this.esquema.horaFin = disp.horaFin;
-      this.esquema.disponibilidadMedicoId = disp.id;
-      // Cargar consultorios del staff
+      // Solo actualizar campos si es un esquema nuevo
+      if (this.esNuevo) {
+        this.esquema.staffMedicoId = disp.staffMedicoId;
+        this.esquema.diasSemana = Array.isArray(disp.diaSemana) ? disp.diaSemana : [disp.diaSemana];
+        this.esquema.horaInicio = disp.horaInicio;
+        this.esquema.horaFin = disp.horaFin;
+        this.esquema.disponibilidadMedicoId = disp.id;
+      }
+      // Siempre actualizar consultorios según staff
       const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
       if (staff && staff.centroAtencionId) {
         this.consultorioService.getByCentroAtencion(staff.centroAtencionId).subscribe(dp => {
