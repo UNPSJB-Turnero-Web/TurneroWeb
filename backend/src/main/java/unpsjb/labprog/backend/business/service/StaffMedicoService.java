@@ -146,7 +146,6 @@ public class StaffMedicoService {
         }
 
         // Disponibilidades (opcional)
-        // Si necesitás mapear disponibilidades, hacelo por IDs
 
         return staff;
     }

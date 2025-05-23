@@ -1,139 +1,156 @@
 import { Component } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
-import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormsModule, NgForm } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 import { EsquemaTurnoService } from './esquemaTurno.service';
-import { EsquemaTurno } from './esquemaTurno';
 import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
-import { StaffMedico } from '../staffMedicos/staffMedico';
-import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
-import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { ConsultorioService } from '../consultorios/consultorio.service';
+import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
+import { EsquemaTurno } from './esquemaTurno';
+import { StaffMedico } from '../staffMedicos/staffMedico';
 import { Consultorio } from '../consultorios/consultorio';
-import { DataPackage } from '../data.package';
-import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
-import { CentroAtencion } from '../centrosAtencion/centroAtencion';
+import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 
 @Component({
   selector: 'app-esquema-turno-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="container mt-4">
-      <!-- MODO VISTA -->
-      <div *ngIf="!modoEdicion">
-        <h2>Esquema de Turno #{{ esquema.id }}</h2>
-        <p><b>Staff Médico:</b> {{ getMedicoNombre() }} ({{ getEspecialidadNombre() }})</p>
-        <p><b>Consultorio:</b> {{ getConsultorioNombre() }}</p>
-        <p><b>Días:</b> {{ esquema?.diasSemana?.join(', ') }}</p>
-        <p><b>Hora Inicio:</b> {{ esquema?.horaInicio }}</p>
-        <p><b>Hora Fin:</b> {{ esquema?.horaFin }}</p>
-        <p><b>Intervalo:</b> {{ esquema?.intervalo }} min</p>
-        <button class="btn btn-danger" (click)="goBack()">Atrás</button>
-        <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
+    <div class="container mt-4 d-flex justify-content-center" *ngIf="esquema">
+      <div class="card shadow-sm p-4" style="max-width: 600px; width: 100%; border-radius: 1rem;">
+        <h2 class="mb-4 text-center">
+          {{ esNuevo ? 'Nuevo Esquema de Turno' : 'Editando Esquema #' + esquema.id }}
+        </h2>
+        <form (ngSubmit)="save()" #form="ngForm">
+          <!-- Selección de Disponibilidad Médica -->
+          <div class="mb-3">
+            <label class="form-label">Disponibilidad Médica</label>
+            <select
+              [(ngModel)]="selectedDisponibilidadId"
+              name="disponibilidadMedicoId"
+              class="form-select"
+              [disabled]="!modoEdicion"
+              required
+              (change)="onDisponibilidadChange()"
+            >
+              <option [ngValue]="null">Seleccione una disponibilidad...</option>
+              <option *ngFor="let disp of disponibilidadesMedico" [ngValue]="disp.id">
+                {{ getDisponibilidadLabel(disp) }}
+              </option>
+            </select>
+          </div>
+          <!-- El resto del formulario -->
+          <div class="mb-3">
+            <label class="form-label">Staff Médico</label>
+            <input
+              class="form-control"
+              [value]="getStaffMedicoNombre(esquema.staffMedicoId)"
+              disabled
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Días de la Semana</label>
+            <input
+              class="form-control"
+              [value]="esquema.diasSemana?.join(', ')"
+              disabled
+            />
+          </div>
+          <div class="mb-3 row">
+            <div class="col">
+              <label class="form-label">Hora Inicio</label>
+              <input
+                type="time"
+                class="form-control"
+                [(ngModel)]="esquema.horaInicio"
+                name="horaInicio"
+                [disabled]="true"
+                required
+              />
+            </div>
+            <div class="col">
+              <label class="form-label">Hora Fin</label>
+              <input
+                type="time"
+                class="form-control"
+                [(ngModel)]="esquema.horaFin"
+                name="horaFin"
+                [disabled]="true"
+                required
+              />
+            </div>
+          </div>
+          <!-- Consultorio editable -->
+          <div class="mb-3">
+            <label class="form-label">Consultorio</label>
+            <select
+              [(ngModel)]="esquema.consultorio"
+              name="consultorioId"
+              class="form-select"
+              [disabled]="!modoEdicion"
+              required
+            >
+              <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
+                {{ consultorio.name }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Intervalo (minutos)</label>
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="esquema.intervalo"
+              name="intervalo"
+              [disabled]="!modoEdicion"
+              required
+              min="1"
+            />
+          </div>
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-secondary" (click)="goBack()">
+              <i class="fa fa-arrow-left me-1"></i> Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="btn btn-success px-4" 
+              [disabled]="form.invalid" 
+              *ngIf="modoEdicion"
+            >
+              <i class="fa fa-save me-1"></i> Guardar
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary px-4" 
+              *ngIf="!modoEdicion"
+              (click)="activarEdicion()"
+            >
+              <i class="fa fa-pencil me-1"></i> Editar
+            </button>
+          </div>
+        </form>
       </div>
-
-      <!-- MODO EDICIÓN -->
-      <form *ngIf="modoEdicion" (ngSubmit)="save()" #form="ngForm">
-        <div class="mb-3">
-          <label class="form-label">Disponibilidad Médica</label>
-          <select
-            class="form-control"
-            [(ngModel)]="selectedDisponibilidad"
-            name="disponibilidadMedico"
-            (change)="onDisponibilidadChange()"
-            required
-          >
-            <option [ngValue]="null">Seleccione una disponibilidad</option>
-            <option *ngFor="let disp of disponibilidades" [ngValue]="disp">
-              {{ disp.staffMedicoNombre }} - {{ disp.especialidadNombre }} - {{ disp.centroAtencionNombre }} - {{ disp.diaSemana.join(', ') }} - {{ disp.horaInicio }} a {{ disp.horaFin }}
-            </option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Staff Médico</label>
-          <input class="form-control"
-  [value]="selectedDisponibilidad?.staffMedicoNombre + ' (' + selectedDisponibilidad?.especialidadNombre + ')'"
-          readonly
-          />
-        </div>
-        <div class="mb-3">
-  <label class="form-label">Centro Médico</label>
-  <select class="form-control"
-          [(ngModel)]="esquema.centroAtencion"
-          name="centroAtencion"
-          required>
-    <option [ngValue]="null">Seleccione un centro médico</option>
-    <option *ngFor="let centro of centrosMedicosFiltrados" [ngValue]="centro">
-      {{ centro.name }}
-    </option>
-  </select>
-</div>
-        <div class="mb-3">
-          <label class="form-label">Consultorio</label>
-          <select class="form-control"
-  [(ngModel)]="esquema.consultorio"
-  name="consultorio"
-  required>
-  <option [ngValue]="null">Seleccione un consultorio</option>
-  <option *ngFor="let cons of consultoriosFiltrados" [ngValue]="cons">
-    {{ cons.name }}
-  </option>
-</select>
-        </div>
-        
-        <div class="mb-3">
-          <label class="form-label">Días de la Semana</label>
-          <input class="form-control" [value]="selectedDisponibilidad?.diaSemana?.join(', ')" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Hora Inicio</label>
-          <input class="form-control" [value]="selectedDisponibilidad?.horaInicio" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Hora Fin</label>
-          <input class="form-control" [value]="selectedDisponibilidad?.horaFin" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Intervalo (minutos)</label>
-          <input
-            type="number"
-            class="form-control"
-            [(ngModel)]="esquema.intervalo"
-            name="intervalo"
-            required
-            min="1"
-          />
-        </div>
-
-        <button type="submit" class="btn btn-success" [disabled]="form.invalid">Guardar</button>
-        <button type="button" class="btn btn-secondary ms-2" (click)="goBack()">Cancelar</button>
-      </form>
     </div>
-  `,
+  `
 })
 export class EsquemaTurnoDetailComponent {
-  esquema: any = {
-    consultorio: null,
-    disponibilidadMedicoId: null,
+  esquema: EsquemaTurno = {
+    id: 0,
+    staffMedicoId: null as any,
+    consultorioId: null as any,
+    disponibilidadMedicoId: null as any,
     diasSemana: [],
     horaInicio: '',
     horaFin: '',
-    intervalo: null,
-  };
+    intervalo: 15
+  } as EsquemaTurno;
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
-  disponibilidades: any[] = [];
-  selectedDisponibilidad: any = null;
-  centrosMedicos: CentroAtencion[] = [];
-  centrosMedicosFiltrados: CentroAtencion[] = [];
-  consultoriosFiltrados: Consultorio[] = [];
-  selectedCentroMedicoId: number | null = null;
-  loading: boolean = true;
+  disponibilidadesMedico: DisponibilidadMedico[] = [];
+  selectedDisponibilidadId: number | null = null;
   modoEdicion = false;
   esNuevo = false;
-  diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
 
   constructor(
     private route: ActivatedRoute,
@@ -141,156 +158,134 @@ export class EsquemaTurnoDetailComponent {
     private esquemaTurnoService: EsquemaTurnoService,
     private staffMedicoService: StaffMedicoService,
     private consultorioService: ConsultorioService,
-    private location: Location,
     private disponibilidadMedicoService: DisponibilidadMedicoService,
-    private centroAtencionService: CentroAtencionService
+    private location: Location
   ) { }
 
   ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
+    this.loadDisponibilidadesMedico();
+    this.get();
+    
+    this.loadStaffMedicos();
+    
+  }
+
+  get(): void {
+    const path = this.route.snapshot.routeConfig?.path;
+
+    if (path === 'esquema-turno/new') {
+      this.modoEdicion = true;
+      this.esNuevo = true;
+      this.esquema = {
+        id: 0,
+        staffMedicoId: null as any,
+        consultorioId: null as any,
+        disponibilidadMedicoId: null as any,
+        diasSemana: [],
+        horaInicio: '',
+        horaFin: '',
+        intervalo: 15
+      } as EsquemaTurno;
+      this.loadStaffMedicos();
+      this.loadDisponibilidadesMedico();
+    } else if (path === 'esquema-turno/:id') {
+      this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
+      this.esNuevo = false;
+
+      const idParam = this.route.snapshot.paramMap.get('id');
+      if (!idParam) {
+        console.error('El ID proporcionado no es válido.');
+        return;
+      }
+
       const id = Number(idParam);
-      this.esquemaTurnoService.get(id).subscribe({
-        next: (dataPackage) => {
-          this.esquema = dataPackage.data;
+      if (isNaN(id)) {
+        console.error('El ID proporcionado no es un número válido.');
+        return;
+      }
 
-          // Cargar staff médicos y disponibilidades en paralelo
-          this.staffMedicoService.all().subscribe({
-            next: (dp) => {
-              this.staffMedicos = dp.data as StaffMedico[];
-
-              this.disponibilidadMedicoService.all().subscribe({
-                next: (disponibilidades) => {
-                  // Cruzar staffMedicoId con staffMedicos para armar los textos
-                  this.disponibilidades = disponibilidades.data.map((disp: any) => {
-                    const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-                    return {
-                      ...disp,
-                      staffMedicoNombre: staff ? staff.medicoNombre : '',
-                      especialidadNombre: staff ? staff.especialidadNombre : '',
-                      centroAtencionNombre: staff ? staff.centroAtencionName : '',
-                    };
-                  });
-
-                  // Seleccionar la disponibilidad actual si existe
-                  this.selectedDisponibilidad = this.disponibilidades.find(
-                    (disp: any) => disp.id === this.esquema.disponibilidadMedicoId
-                  );
-                  if (this.selectedDisponibilidad) {
-                    this.onDisponibilidadChange();
-                  }
-                },
-                error: (err) => {
-                  console.error('Error al cargar disponibilidades:', err);
-                },
-              });
-            },
-            error: (err) => {
-              console.error('Error al cargar staff médicos:', err);
+      // Primero cargar staff y disponibilidades, luego el esquema
+      Promise.all([
+        new Promise<void>(resolve => this.loadStaffMedicos(resolve)),
+        new Promise<void>(resolve => this.loadDisponibilidadesMedico(resolve))
+      ]).then(() => {
+        this.esquemaTurnoService.get(id).subscribe({
+          next: (resp) => {
+            console.log(resp.data)
+            if (!resp.data) {
+              alert('No se encontró el esquema de turno.');
+              return;
             }
-          });
-
-          // Cargar consultorios
-          this.consultorioService.getAll().subscribe({
-            next: (dp) => {
-              this.consultorios = dp.data as Consultorio[];
-              console.log('Consultorios cargados:', this.consultorios); // <-- Agrega esto
-              if (this.esquema.consultorio) {
-                const found = this.consultorios.find(c => c.id === this.esquema.consultorio.id);
-                if (found) this.esquema.consultorio = found;
-              }
-            },
-            error: (err) => {
-              console.error('Error al cargar consultorios:', err);
-            },
-          });
-
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Error al cargar el esquema:', err);
-          this.loading = false;
-        },
+            this.esquema = resp.data as EsquemaTurno;
+            // Solo asigna si existe la propiedad
+            this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
+            this.onDisponibilidadChange();
+          },
+          error: () => {
+            alert('No se pudo cargar el esquema de turno.');
+          }
+        });
       });
     } else {
-      // MODO NUEVO: cargar staff y disponibilidades
-      this.esNuevo = true;
-      this.staffMedicoService.all().subscribe({
-        next: (dp) => {
-          this.staffMedicos = dp.data as StaffMedico[];
-          this.disponibilidadMedicoService.all().subscribe({
-            next: (disponibilidades) => {
-              this.disponibilidades = disponibilidades.data.map((disp: any) => {
-                const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-                return {
-                  ...disp,
-                  staffMedicoNombre: staff ? staff.medicoNombre : '',
-                  especialidadNombre: staff ? staff.especialidadNombre : '',
-                  centroAtencionNombre: staff ? staff.centroAtencionName : '',
-                };
-              });
-            },
-            error: (err) => {
-              console.error('Error al cargar disponibilidades:', err);
-            },
-          });
-        },
-        error: (err) => {
-          console.error('Error al cargar staff médicos:', err);
-        }
-      });
-
-      // Consultorios (opcional, si querés que ya estén cargados)
-      this.consultorioService.getAll().subscribe({
-        next: (dp) => {
-          this.consultorios = dp.data as Consultorio[];
-        },
-        error: (err) => {
-          console.error('Error al cargar consultorios:', err);
-        },
-      });
-
-      this.loading = false;
+      console.error('Ruta no reconocida.');
     }
   }
 
-  save(): void {
-    if (this.selectedDisponibilidad) {
-      this.esquema.diasSemana = [...this.selectedDisponibilidad.diaSemana];
-      this.esquema.horaInicio = this.selectedDisponibilidad.horaInicio;
-      this.esquema.horaFin = this.selectedDisponibilidad.horaFin;
-      this.esquema.disponibilidadMedicoId = this.selectedDisponibilidad.id;
-      this.esquema.staffMedicoId = this.selectedDisponibilidad.staffMedicoId;
+  // Modifica los métodos para aceptar un callback opcional:
+  loadDisponibilidadesMedico(callback?: () => void): void {
+    this.disponibilidadMedicoService.all().subscribe(dp => {
+      this.disponibilidadesMedico = dp.data as DisponibilidadMedico[];
+      if (callback) callback();
+    });
+  }
 
-      // Asegurá que el centro de atención esté bien seteado
-      if (this.esquema.consultorio && this.esquema.consultorio.centroAtencion) {
-        this.esquema.centroAtencion = this.esquema.consultorio.centroAtencion;
-      } else if (this.centrosMedicosFiltrados.length > 0) {
-        this.esquema.centroAtencion = this.centrosMedicosFiltrados[0];
+  loadStaffMedicos(callback?: () => void): void {
+    this.staffMedicoService.all().subscribe(dp => {
+      this.staffMedicos = dp.data as StaffMedico[];
+      if (callback) callback();
+    });
+  }
+
+  onDisponibilidadChange(): void {
+    const disp = this.disponibilidadesMedico.find(d => d.id === this.selectedDisponibilidadId);
+    if (disp) {
+      this.esquema.staffMedicoId = disp.staffMedicoId;
+      this.esquema.diasSemana = Array.isArray(disp.diaSemana) ? disp.diaSemana : [disp.diaSemana];
+      this.esquema.horaInicio = disp.horaInicio;
+      this.esquema.horaFin = disp.horaFin;
+      this.esquema.disponibilidadMedicoId = disp.id;
+      // Cargar consultorios del staff
+      const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
+      if (staff && staff.centroAtencionId) {
+        this.consultorioService.getByCentroAtencion(staff.centroAtencionId).subscribe(dp => {
+          this.consultorios = dp.data as Consultorio[];
+        });
       } else {
-        this.esquema.centroAtencion = null;
+        this.consultorios = [];
       }
+    }
+  }
 
-      console.log('selectedDisponibilidad:', this.selectedDisponibilidad);
-      console.log('esquema a enviar:', this.esquema);
-    }
-    if (this.esNuevo) {
-      this.esquemaTurnoService.create(this.esquema).subscribe({
-        next: () => this.router.navigate(['/esquema-turno']),
-        error: (error) => {
-          console.error('Error al crear el esquema de turno:', error);
-          alert('Error al crear el esquema de turno.');
-        }
-      });
-    } else {
-      this.esquemaTurnoService.update(this.esquema.id!, this.esquema).subscribe({
-        next: () => this.router.navigate(['/esquema-turno']),
-        error: (error) => {
-          console.error('Error al actualizar el esquema de turno:', error);
-          alert('Error al actualizar el esquema de turno.');
-        }
-      });
-    }
+  getDisponibilidadLabel(disp: DisponibilidadMedico): string {
+    const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
+    return staff
+      ? `${staff.medicoNombre} (${staff.especialidadNombre}) - ${disp.diaSemana?.join(', ')} ${disp.horaInicio}-${disp.horaFin}`
+      : `ID ${disp.id}`;
+  }
+
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    return staff ? `${staff.medicoNombre} (${staff.especialidadNombre})` : '';
+  }
+
+  save(): void {
+    const payload = { ...this.esquema };
+    this.esquemaTurnoService.create(payload).subscribe({
+      next: () => this.router.navigate(['/esquema-turno']),
+      error: (error) => {
+        alert('Error al guardar el esquema de turno.');
+      }
+    });
   }
 
   activarEdicion() {
@@ -299,120 +294,5 @@ export class EsquemaTurnoDetailComponent {
 
   goBack(): void {
     this.location.back();
-  }
-
-  loadStaffMedicos(): void {
-    this.staffMedicoService.all().subscribe({
-      next: (dp) => {
-        this.staffMedicos = dp.data as StaffMedico[];
-        // Ahora sí podés mapear las disponibilidades con los datos completos
-        this.disponibilidades = this.disponibilidades.map((disp) => {
-          const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-          return {
-            ...disp,
-            staffMedicoNombre: staff ? `${staff.medicoNombre} (${staff.especialidadNombre})` : '',
-            centroAtencionNombre: staff?.centroAtencionName ?? '',
-          };
-        });
-      }
-    });
-  }
-
-  loadConsultorios(): void {
-    this.consultorioService.getAll().subscribe((dp: DataPackage) => {
-      this.consultorios = dp.data as Consultorio[];
-      if (this.esquema.consultorio) {
-        const found = this.consultorios.find(c => c.id === this.esquema.consultorio.id);
-        if (found) this.esquema.consultorio = found;
-      }
-    });
-  }
-
-  onStaffMedicoChange() {
-    if (this.esquema.staffMedicoId) {
-      this.disponibilidadMedicoService.byStaffMedico(this.esquema.staffMedicoId).subscribe((dp: DataPackage) => {
-        this.disponibilidades = dp.data;
-      });
-    } else {
-      this.disponibilidades = [];
-    }
-  }
-
-  onDisponibilidadChange() {
-    if (this.selectedDisponibilidad) {
-      this.esquema.disponibilidadMedicoId = this.selectedDisponibilidad.id;
-      this.esquema.staffMedicoId = this.selectedDisponibilidad.staffMedicoId;
-      this.esquema.diasSemana = this.selectedDisponibilidad.diaSemana;
-      this.esquema.horaInicio = this.selectedDisponibilidad.horaInicio;
-      this.esquema.horaFin = this.selectedDisponibilidad.horaFin;
-
-      // Buscar el staff médico seleccionado
-      const staff = this.staffMedicos.find(s => s.id === this.selectedDisponibilidad.staffMedicoId);
-      if (staff && staff.centroAtencionId) {
-        // Consultar consultorios del centro de atención desde el backend
-        this.consultorioService.getByCentroAtencion(staff.centroAtencionId).subscribe({
-          next: (dp) => {
-            this.consultoriosFiltrados = dp.data as Consultorio[];
-            // Limpiar consultorio si no pertenece al nuevo centro
-            if (!this.consultoriosFiltrados.some(c => c.id === this.esquema.consultorio?.id)) {
-              this.esquema.consultorio = null;
-            }
-          },
-          error: () => {
-            this.consultoriosFiltrados = [];
-            this.esquema.consultorio = null;
-          }
-        });
-
-        // Consultar el centro de atención desde el backend
-        this.centroAtencionService.get(staff.centroAtencionId).subscribe({
-          next: (centro) => {
-            this.centrosMedicosFiltrados = [centro.data];
-            this.esquema.centroAtencion = centro.data;
-          },
-          error: () => {
-            this.centrosMedicosFiltrados = [];
-            this.esquema.centroAtencion = null;
-          }
-        });
-      } else {
-        this.consultoriosFiltrados = [];
-        this.centrosMedicosFiltrados = [];
-        this.esquema.centroAtencion = null;
-        this.esquema.consultorio = null;
-      }
-    }
-  }
-
-  getMedicoNombre(): string {
-    // Si hay una disponibilidad seleccionada, usá sus campos
-    if (this.selectedDisponibilidad) {
-      return `${this.selectedDisponibilidad.medicoNombre ?? ''} ${this.selectedDisponibilidad.medicoApellido ?? ''}`.trim();
-    }
-    // Si no, buscá la disponibilidad por ID
-    const disp = this.disponibilidades.find(d => d.id === this.esquema.disponibilidadMedicoId);
-    if (disp) {
-      return `${disp.medicoNombre ?? ''} ${disp.medicoApellido ?? ''}`.trim();
-    }
-    return '';
-  }
-
-  getEspecialidadNombre(): string {
-    if (this.selectedDisponibilidad) {
-      return this.selectedDisponibilidad.especialidadNombre ?? '';
-    }
-    const disp = this.disponibilidades.find(d => d.id === this.esquema.disponibilidadMedicoId);
-    return disp ? disp.especialidadNombre ?? '' : '';
-  }
-
-  getConsultorioNombre(): string {
-    if (this.esquema.consultorio && typeof this.esquema.consultorio === 'object' && this.esquema.consultorio.name) {
-      return this.esquema.consultorio.name;
-    }
-    if (this.esquema.consultorio && this.consultorios.length) {
-      const cons = this.consultorios.find(c => c.id === this.esquema.consultorio.id);
-      return cons ? cons.name : '';
-    }
-    return '';
   }
 }
