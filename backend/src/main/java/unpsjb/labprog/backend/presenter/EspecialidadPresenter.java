@@ -167,4 +167,14 @@ public class EspecialidadPresenter {
             return Response.error(null, "No se pudo desasociar la especialidad: " + e.getMessage());
         }
     }
+
+@GetMapping("/medicos/{medicoId}/especialidades")
+public ResponseEntity<Object> getEspecialidadesByMedico(@PathVariable int medicoId) {
+    try {
+        List<EspecialidadDTO> especialidades = service.findEspecialidadesByMedicoId(medicoId);
+        return Response.ok(especialidades, "Especialidades del médico recuperadas correctamente");
+    } catch (Exception e) {
+        return Response.error(null, "Error al recuperar especialidades del médico: " + e.getMessage());
+    }
+}
 }

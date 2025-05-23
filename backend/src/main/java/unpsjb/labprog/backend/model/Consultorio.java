@@ -30,4 +30,5 @@ public class Consultorio {
     @ManyToOne(optional = false)
     @JoinColumn(name = "centro_atencion_id", nullable = false)
     private CentroAtencion centroAtencion; // Relación con CentroAtencion
+    
 }

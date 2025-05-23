@@ -5,10 +5,11 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 
 
 export interface DisponibilidadMedico {
-    id: number;
-    staffMedico: StaffMedico;
-    diaSemana: string;         // Ej: "LUNES"
-    horaInicio: string;        // Ej: "08:00"
-    horaFin: string;           // Ej: "12:00"
-    
+  id: number;
+  staffMedicoId: number;
+  diaSemana: string[];
+  horaInicio: string;
+  horaFin: string;
+  staffMedico?: any;
+
 }

@@ -64,7 +64,7 @@ export class EspecialidadService {
   getDisponibles(centroId: number) {
     return this.http.get<any>(`${this.url}/centrosAtencion/${centroId}/especialidades/disponibles`)
       .pipe(
-        map(res => res.data || []) 
+        map(res => res.data || [])
       );
   }
   /** Asociar especialidad a centro de atención */
@@ -75,5 +75,8 @@ export class EspecialidadService {
   /** Desasociar especialidad de centro de atención */
   desasociar(centroId: number, especialidadId: number) {
     return this.http.delete(`${this.url}/centrosAtencion/${centroId}/especialidades/${especialidadId}`);
+  }
+  getByMedico(medicoId: number) {
+    return this.http.get<any>(`/especialidades/medicos/${medicoId}/especialidades`);
   }
 }

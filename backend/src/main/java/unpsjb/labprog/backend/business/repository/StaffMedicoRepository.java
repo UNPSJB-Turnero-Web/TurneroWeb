@@ -17,5 +17,7 @@ public interface StaffMedicoRepository extends JpaRepository<StaffMedico, Long> 
     boolean existsByMedicoAndCentroAndEspecialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
 
     StaffMedico findByMedicoAndCentroAndEspecialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
+    
+    List<StaffMedico> findByMedicoId(Long medicoId);
 
 }

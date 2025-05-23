@@ -1,7 +1,5 @@
 package unpsjb.labprog.backend.dto;
 
-import java.util.List;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +14,5 @@ public class CentroAtencionDTO {
     private String telefono;
     private Double latitud;
     private Double longitud;
-    private List<StaffMedicoDTO> staffMedico;
 }
 

@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
-import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
@@ -57,11 +56,10 @@ public class ConsultorioService {
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
         dto.setName(c.getName());
-        CentroAtencion centro = c.getCentroAtencion();
-        CentroAtencionDTO centroDto = new CentroAtencionDTO();
-        centroDto.setId(centro.getId());
-        centroDto.setName(centro.getName());
-        dto.setCentroAtencion(centroDto);
+        if (c.getCentroAtencion() != null) {
+            dto.setCentroAtencionId(c.getCentroAtencion().getId());
+            dto.setCentroAtencionName(c.getCentroAtencion().getName());
+        }
         return dto;
     }
 
@@ -70,9 +68,11 @@ public class ConsultorioService {
         consultorio.setId(dto.getId());
         consultorio.setNumero(dto.getNumero());
         consultorio.setName(dto.getName());
-        CentroAtencion centro = new CentroAtencion();
-        centro.setId(dto.getCentroAtencion().getId());
-        consultorio.setCentroAtencion(centro);
+        if (dto.getCentroAtencionId() != 0) {
+            CentroAtencion centro = centroRepo.findById(dto.getCentroAtencionId())
+                .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
+            consultorio.setCentroAtencion(centro);
+        }
         return consultorio;
     }
 

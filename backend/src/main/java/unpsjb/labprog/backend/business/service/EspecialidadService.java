@@ -14,10 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
+import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.StaffMedico;
 
 @Service
 public class EspecialidadService {
@@ -28,6 +30,8 @@ public class EspecialidadService {
     private CentroAtencionRepository centroAtencionRepository;
     @Autowired
     private CentroAtencionService centroAtencionService;
+    @Autowired
+    private StaffMedicoRepository staffMedicoRepository;
 
     // Obtener todas las especialidades como DTOs
     public List<EspecialidadDTO> findAll() {
@@ -145,6 +149,18 @@ public class EspecialidadService {
         // especialidad.getCentrosAtencion().remove(centro);
 
         centroAtencionService.save(centro);
+    }
+
+    // Obtener especialidades asociadas a un médico por su ID mediante StaffMedico
+    public List<EspecialidadDTO> findEspecialidadesByMedicoId(int medicoId) {
+        // Busca todos los StaffMedico de ese médico
+        List<StaffMedico> staffList = staffMedicoRepository.findByMedicoId((long) medicoId);
+        // Obtiene las especialidades únicas
+        return staffList.stream()
+                .map(StaffMedico::getEspecialidad)
+                .distinct()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     // Métodos de conversión entre entidad y DTO

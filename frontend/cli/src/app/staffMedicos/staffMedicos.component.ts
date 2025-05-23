@@ -44,9 +44,9 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 style="cursor:pointer"
               >
                 <td>{{ staff.id }}</td>
-                <td>{{ staff.centro?.name }}</td>
-                <td>{{ staff.medico?.name }} {{ staff.medico?.apellido }}</td>
-                <td>{{ staff.especialidad?.nombre }}</td>
+                <td>{{ staff.centroAtencionName }}</td>
+                <td>{{ staff.medicoNombre }}</td>
+                <td>{{ staff.especialidadNombre }}</td>
                 <td class="text-center">
                   <button (click)="goToEdit(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>

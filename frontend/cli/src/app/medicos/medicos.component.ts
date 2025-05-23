@@ -49,7 +49,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 <td>
                   <ng-container *ngIf="medico.especialidades?.length > 0; else sinEsp">
                     <span *ngFor="let esp of medico.especialidades; let last = last">
-                      {{ esp.nombre }}<span *ngIf="!last">, </span>
+                      {{ esp }}<span *ngIf="!last">, </span>
                     </span>
                   </ng-container>
                   <ng-template #sinEsp>Sin especialidad</ng-template>

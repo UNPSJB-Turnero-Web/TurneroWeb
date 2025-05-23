@@ -2,6 +2,8 @@ package unpsjb.labprog.backend.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,16 +26,19 @@ public class StaffMedico {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     private CentroAtencion centro; // Relación con CentroAtencion
 
     @ManyToOne
     private Medico medico; // Relación con Medico
 
     @ManyToOne
-    private Especialidad especialidad; 
+    private Especialidad especialidad;
     @ManyToOne
-    private Consultorio consultorio; 
+    private Consultorio consultorio;
 
     @OneToMany(mappedBy = "staffMedico", cascade = CascadeType.PERSIST)
-    private List<DisponibilidadMedico> disponibilidad; // Relación con DisponibilidadMedico
+
+    private List<DisponibilidadMedico> disponibilidades;
+
 }

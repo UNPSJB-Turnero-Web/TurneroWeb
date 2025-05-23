@@ -13,84 +13,105 @@ import { DataPackage } from '../data.package';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="container mt-4">
-      <!-- MODO VISTA -->
-      <div *ngIf="!modoEdicion">
-        <h2>Disponibilidad #{{ disponibilidad.id }}</h2>
-        <p><b>Staff Médico:</b> 
-          {{ disponibilidad.staffMedico?.medico?.nombre }} {{ disponibilidad.staffMedico?.medico?.apellido }}
-          ({{ disponibilidad.staffMedico?.especialidad?.nombre }})
-        </p>
-        <p><b>Día:</b> {{ disponibilidad.diaSemana }}</p>
-        <p><b>Hora Inicio:</b> {{ disponibilidad.horaInicio }}</p>
-        <p><b>Hora Fin:</b> {{ disponibilidad.horaFin }}</p>
-        <button class="btn btn-danger" (click)="goBack()">Atrás</button>
-        <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
-      </div>
-
-      <!-- MODO EDICIÓN -->
-      <form *ngIf="modoEdicion" (ngSubmit)="save()" #form="ngForm">
-        <h2>
-          <ng-container *ngIf="disponibilidad.id && disponibilidad.id !== 0; else nuevo">
-            Editando Disponibilidad #{{ disponibilidad.id }}
-          </ng-container>
-          <ng-template #nuevo>
-            Nueva Disponibilidad
-          </ng-template>
+    <div class="container mt-4 d-flex justify-content-center">
+      <div class="card shadow-sm p-4" style="max-width: 600px; width: 100%; border-radius: 1rem;">
+        <h2 class="mb-4 text-center">
+          {{ esNuevo ? 'Nueva Disponibilidad' : 'Editando Disponibilidad #' + disponibilidad.id }}
         </h2>
-        <div class="mb-3">
-          <label class="form-label">Staff Médico</label>
-          <select
-            [(ngModel)]="disponibilidad.staffMedico"
-            name="staffMedico"
-            class="form-control"
-            required
-          >
-            <option *ngFor="let staff of staffMedicos" [ngValue]="staff">
-              {{ staff.medico?.nombre }} {{ staff.medico?.apellido }} ({{ staff.especialidad?.nombre }})
-            </option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Día de la Semana</label>
-          <select
-            [(ngModel)]="disponibilidad.diaSemana"
-            name="diaSemana"
-            class="form-control"
-            required
-          >
-            <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Hora Inicio</label>
-          <input
-            type="time"
-            class="form-control"
-            [(ngModel)]="disponibilidad.horaInicio"
-            name="horaInicio"
-            required
-          />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Hora Fin</label>
-          <input
-            type="time"
-            class="form-control"
-            [(ngModel)]="disponibilidad.horaFin"
-            name="horaFin"
-            required
-          />
-        </div>
-        <button type="submit" class="btn btn-success" [disabled]="form.invalid">Guardar</button>
-        <button type="button" class="btn btn-secondary ms-2" (click)="goBack()">Cancelar</button>
-      </form>
+        <form (ngSubmit)="save()" #form="ngForm">
+          <div class="mb-3">
+            <label class="form-label">Staff Médico</label>
+            <select
+              [(ngModel)]="disponibilidad.staffMedicoId"
+              name="staffMedicoId"
+              class="form-select"
+              [disabled]="!modoEdicion"
+              required
+            >
+              <option *ngFor="let staff of staffMedicos" [value]="staff.id">
+                {{ staff.medicoNombre }} ({{ staff.especialidadNombre }})
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Días de la Semana</label>
+            <div class="d-flex flex-wrap gap-2">
+              <div class="form-check form-check-inline" *ngFor="let dia of diasSemana">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [value]="dia"
+                  [checked]="disponibilidad.diaSemana.includes(dia)"
+                  (change)="onDiaSemanaChange($event, dia)"
+                  id="dia-{{dia}}"
+                  [disabled]="!modoEdicion"
+                />
+                <label class="form-check-label" [for]="'dia-' + dia">
+                  {{ dia }}
+                </label>
+              </div>
+            </div>
+            <div class="mt-2" *ngIf="disponibilidad.diaSemana?.length">
+              <b>Días seleccionados:</b>
+              <span class="badge bg-primary me-1" *ngFor="let dia of disponibilidad.diaSemana">
+                {{ dia }}
+              </span>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Hora Inicio</label>
+            <input
+              type="time"
+              class="form-control"
+              [(ngModel)]="disponibilidad.horaInicio"
+              name="horaInicio"
+              [disabled]="!modoEdicion"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Hora Fin</label>
+            <input
+              type="time"
+              class="form-control"
+              [(ngModel)]="disponibilidad.horaFin"
+              name="horaFin"
+              required
+            />
+          </div>
+          <div class="d-flex justify-content-end mt-4 gap-2">
+            <button 
+              type="button" 
+              class="btn btn-secondary px-4" 
+              (click)="goBack()"
+            >
+              <i class="fa fa-arrow-left me-1"></i> Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="btn btn-success px-4" 
+              [disabled]="form.invalid" 
+              *ngIf="modoEdicion"
+            >
+              <i class="fa fa-save me-1"></i> Guardar
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-primary px-4" 
+              *ngIf="!modoEdicion"
+              (click)="activarEdicion()"
+            >
+              <i class="fa fa-pencil me-1"></i> Editar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   `,
 })
 export class DisponibilidadMedicoDetailComponent {
-  disponibilidad: DisponibilidadMedico = { id: 0, staffMedico: null as any, diaSemana: '', horaInicio: '', horaFin: '' };
-  staffMedicos: StaffMedico[] = [];
+disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '' };  staffMedicos: StaffMedico[] = [];
+  
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   modoEdicion = false;
   esNuevo = false;
@@ -121,6 +142,13 @@ export class DisponibilidadMedicoDetailComponent {
       this.disponibilidadService.get(id).subscribe({
         next: (dataPackage) => {
           this.disponibilidad = <DisponibilidadMedico>dataPackage.data;
+          // Forzar a array si viene como string
+          if (typeof this.disponibilidad.diaSemana === 'string') {
+            this.disponibilidad.diaSemana = [this.disponibilidad.diaSemana];
+          }
+          if (!Array.isArray(this.disponibilidad.diaSemana)) {
+            this.disponibilidad.diaSemana = [];
+          }
           this.loadStaffMedicos();
         },
         error: (err) => {
@@ -132,33 +160,24 @@ export class DisponibilidadMedicoDetailComponent {
       // Modo nuevo
       this.modoEdicion = true;
       this.esNuevo = true;
-      this.disponibilidad = { id: 0, staffMedico: null as any, diaSemana: '', horaInicio: '', horaFin: '', };
+      this.disponibilidad = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '', };
       this.loadStaffMedicos();
     }
   }
 
   save(): void {
-    if (this.esNuevo) {
-      this.disponibilidadService.create(this.disponibilidad).subscribe({
-        next: () => {
-          this.router.navigate(['/disponibilidadMedico']);
-        },
-        error: (error) => {
-          console.error('Error al crear la disponibilidad:', error);
-          alert('Error al crear la disponibilidad.');
-        }
-      });
-    } else {
-      this.disponibilidadService.update(this.disponibilidad.id!, this.disponibilidad).subscribe({
-        next: () => {
-          this.router.navigate(['/disponibilidadMedico']);
-        },
-        error: (error) => {
-          console.error('Error al actualizar la disponibilidad:', error);
-          alert('Error al actualizar la disponibilidad.');
-        }
-      });
-    }
+    // Al guardar o actualizar
+    const payload = { ...this.disponibilidad };
+    delete payload.staffMedico;
+    this.disponibilidadService.create(payload).subscribe({
+      next: () => {
+        this.router.navigate(['/disponibilidades-medico']); // <-- usa la ruta correcta
+      },
+      error: (error) => {
+        console.error('Error al crear la disponibilidad:', error);
+        alert('Error al crear la disponibilidad.');
+      }
+    });
   }
 
   activarEdicion() {
@@ -172,11 +191,26 @@ export class DisponibilidadMedicoDetailComponent {
   loadStaffMedicos(): void {
     this.staffMedicoService.all().subscribe((dp: DataPackage) => {
       this.staffMedicos = dp.data as StaffMedico[];
-      // Reasignar el staff seleccionado si ya hay uno
-      if (this.disponibilidad.staffMedico) {
-        const found = this.staffMedicos.find(s => s.id === this.disponibilidad.staffMedico.id);
+      // Si ya hay un staffMedicoId, asignar el objeto completo
+      if (this.disponibilidad.staffMedicoId) {
+        const found = this.staffMedicos.find(s => s.id === this.disponibilidad.staffMedicoId);
         if (found) this.disponibilidad.staffMedico = found;
       }
     });
+  }
+
+  onDiaSemanaChange(event: Event, dia: string) {
+    // Asegura que siempre sea array
+    if (!Array.isArray(this.disponibilidad.diaSemana)) {
+      this.disponibilidad.diaSemana = [];
+    }
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      if (!this.disponibilidad.diaSemana.includes(dia)) {
+        this.disponibilidad.diaSemana.push(dia);
+      }
+    } else {
+      this.disponibilidad.diaSemana = this.disponibilidad.diaSemana.filter(d => d !== dia);
+    }
   }
 }

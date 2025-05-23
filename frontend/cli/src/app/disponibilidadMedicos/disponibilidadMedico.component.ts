@@ -6,6 +6,8 @@ import { DisponibilidadMedico } from './disponibilidadMedico';
 import { ModalService } from '../modal/modal.service';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
+import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
+import { StaffMedico } from '../staffMedicos/staffMedico';
 
 @Component({
   selector: 'app-disponibilidad-medico',
@@ -75,6 +77,7 @@ export class DisponibilidadMedicoComponent {
 
   constructor(
     private disponibilidadService: DisponibilidadMedicoService,
+    private staffMedicoService: StaffMedicoService, // <--- Agrega el servicio
     public router: Router,
     private modalService: ModalService
   ) { }
@@ -87,6 +90,15 @@ export class DisponibilidadMedicoComponent {
     this.disponibilidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
       this.disponibilidades = this.resultsPage.content; 
+
+      // Por cada disponibilidad, traemos el staff médico completo
+      this.disponibilidades.forEach(disp => {
+        if (disp.staffMedicoId) {
+          this.staffMedicoService.get(disp.staffMedicoId).subscribe(staffDP => {
+            disp.staffMedico = staffDP.data as StaffMedico;
+          });
+        }
+      });
     });
   }
 

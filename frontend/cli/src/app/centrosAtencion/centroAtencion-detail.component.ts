@@ -441,7 +441,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   medicoYaAsociado(): boolean {
     return !!this.staffMedicoCentro.find(staff =>
-      staff.medico?.id === this.medicoSeleccionado?.id
+      staff.medicoId === this.medicoSeleccionado?.id
     );
   }
 
@@ -453,25 +453,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     }
     const nuevoStaff: StaffMedico = {
       id: 0,
-      centro: {
-        id: this.centroAtencion.id,
-        name: this.centroAtencion.name,
-        code: this.centroAtencion.code,
-        direccion: this.centroAtencion.direccion,
-        localidad: this.centroAtencion.localidad,
-        provincia: this.centroAtencion.provincia,
-        telefono: this.centroAtencion.telefono,
-        latitud: this.centroAtencion.latitud,
-        longitud: this.centroAtencion.longitud
-      }, // todos los campos requeridos
-      medico: this.medicoSeleccionado, // pasar el objeto completo que cumple con la interfaz Medico
-      especialidad: { 
-        id: this.especialidadSeleccionada.id, 
-        nombre: this.especialidadSeleccionada.nombre, 
-        descripcion: this.especialidadSeleccionada.descripcion 
-      } // id, nombre y descripcion
+      centroAtencionId: this.centroAtencion.id,
+      medicoId: this.medicoSeleccionado.id,
+      especialidadId: this.especialidadSeleccionada.id,
+      medicoNombre: this.medicoSeleccionado.nombre,
+      especialidadNombre: this.especialidadSeleccionada.nombre,
+      centroAtencionName: this.centroAtencion.name
     };
-    console.log('Enviando staff médico:', nuevoStaff); // <-- Agregado para debug
     this.staffMedicoService.create(nuevoStaff).subscribe({
       next: () => {
         this.mensajeStaff = 'Médico asociado correctamente.';
@@ -519,14 +507,19 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   onMedicoSeleccionado() {
-    if (this.medicoSeleccionado && this.medicoSeleccionado.especialidades) {
-      this.especialidadesDisponibles = Array.isArray(this.medicoSeleccionado.especialidades)
-        ? this.medicoSeleccionado.especialidades
-        : [this.medicoSeleccionado.especialidades];
-      this.especialidadSeleccionada = null; // Limpiar selección previa
-    } else {
+    if (!this.medicoSeleccionado) {
       this.especialidadesDisponibles = [];
       this.especialidadSeleccionada = null;
+      return;
     }
+    // IDs de especialidades ya asociadas a este médico en este centro
+    const especialidadesAsociadasIds = this.staffMedicoCentro
+      .filter(s => s.medicoId === this.medicoSeleccionado!.id)
+      .map(s => s.especialidadId);
+
+    // Mostrar solo las especialidades que NO están asociadas aún
+    this.especialidadesDisponibles = this.especialidadesAsociadas
+      .filter(e => !especialidadesAsociadasIds.includes(e.id));
+    this.especialidadSeleccionada = null;
   }
 }

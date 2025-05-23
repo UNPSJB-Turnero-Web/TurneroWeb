@@ -3,6 +3,7 @@ package unpsjb.labprog.backend.model;
 import java.time.LocalTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
@@ -36,9 +37,7 @@ public class EsquemaTurno {
     @Column(nullable = false)
     private int intervalo; // Duración del turno en minutos
 
-    @ManyToOne
-    private StaffMedico staffMedico;
-    
+   
     @OneToMany(mappedBy = "esquemaTurno")
     @JsonManagedReference
     private List<Agenda> agendas;
@@ -46,7 +45,8 @@ public class EsquemaTurno {
     @ElementCollection
     private List<String> diasSemana;
     @ManyToOne
-    private DisponibilidadMedico disponibilidadMedico; // ID de la disponibilidad médica asociada
+    @JsonIgnoreProperties("esquemasTurno")
+    private DisponibilidadMedico disponibilidadMedico; 
     @ManyToOne
     private CentroAtencion centroAtencion;
 

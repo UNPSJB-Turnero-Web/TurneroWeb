@@ -69,12 +69,13 @@ import { RouterOutlet } from '@angular/router';
             >Agenda</a
           >
           <ul class="dropdown-menu">
+                        <li>
+              <a class="dropdown-item" href="/disponibilidades-medico">Disponibilidades Médico</a>
+            </li>
             <li>
               <a class="dropdown-item" href="/esquema-turno">Esquema Turno</a>
             </li>
-            <li>
-              <a class="dropdown-item" href="/disponibilidades-medico">Disponibilidades Médico</a>
-            </li>
+
             <li>
               <a class="dropdown-item" href="/agenda">Agenda</a>
             </li>

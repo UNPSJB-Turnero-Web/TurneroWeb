@@ -21,9 +21,9 @@ import { DataPackage } from '../data.package';
       <!-- MODO VISTA -->
       <div *ngIf="!modoEdicion">
         <h2>Staff Médico #{{ staffMedico.id }}</h2>
-        <p><b>Centro:</b> {{ staffMedico.centro?.name }}</p>
-        <p><b>Médico:</b> {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}</p>
-        <p><b>Especialidad:</b> {{ staffMedico.especialidad?.nombre }}</p>
+        <p><b>Centro:</b> {{ getCentroNombre() }}</p>
+        <p><b>Médico:</b> {{ getMedicoNombre() }}</p>
+        <p><b>Especialidad:</b> {{ getEspecialidadNombre() }}</p>
         <button class="btn btn-danger" (click)="goBack()">Atrás</button>
         <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
       </div>
@@ -41,12 +41,12 @@ import { DataPackage } from '../data.package';
         <div class="mb-3">
           <label class="form-label">Centro de Atención</label>
           <select
-            [(ngModel)]="staffMedico.centro"
-            name="centro"
+            [(ngModel)]="staffMedico.centroAtencionId"
+            name="centroAtencionId"
             class="form-control"
             required
           >
-            <option *ngFor="let centro of centros" [ngValue]="centro">
+            <option *ngFor="let centro of centros" [value]="centro.id">
               {{ centro.name }}
             </option>
           </select>
@@ -54,12 +54,12 @@ import { DataPackage } from '../data.package';
         <div class="mb-3">
           <label class="form-label">Médico</label>
           <select
-            [(ngModel)]="staffMedico.medico"
-            name="medico"
+            [(ngModel)]="staffMedico.medicoId"
+            name="medicoId"
             class="form-control"
             required
           >
-            <option *ngFor="let medico of medicos" [ngValue]="medico">
+            <option *ngFor="let medico of medicos" [value]="medico.id">
               {{ medico.nombre }} {{ medico.apellido }}
             </option>
           </select>
@@ -67,12 +67,12 @@ import { DataPackage } from '../data.package';
         <div class="mb-3">
           <label class="form-label">Especialidad</label>
           <select
-            [(ngModel)]="staffMedico.especialidad"
-            name="especialidad"
+            [(ngModel)]="staffMedico.especialidadId"
+            name="especialidadId"
             class="form-control"
             required
           >
-            <option *ngFor="let especialidad of especialidades" [ngValue]="especialidad">
+            <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
               {{ especialidad.nombre }}
             </option>
           </select>
@@ -84,7 +84,7 @@ import { DataPackage } from '../data.package';
   `,
 })
 export class StaffMedicoDetailComponent {
-  staffMedico: StaffMedico = { id: 0, centro: null as any, medico: null as any, especialidad: null as any };
+  staffMedico: StaffMedico = { id: 0, centroAtencionId: 0, medicoId: 0, especialidadId: 0 };
   centros: CentroAtencion[] = [];
   medicos: Medico[] = [];
   especialidades: Especialidad[] = [];
@@ -132,7 +132,7 @@ export class StaffMedicoDetailComponent {
       // Modo nuevo
       this.modoEdicion = true;
       this.esNuevo = true;
-      this.staffMedico = { id: 0, centro: null as any, medico: null as any, especialidad: null as any };
+      this.staffMedico = { id: 0, centroAtencionId: 0, medicoId: 0, especialidadId: 0 };
       this.loadCentros();
       this.loadMedicos();
       this.loadEspecialidades();
@@ -168,7 +168,7 @@ export class StaffMedicoDetailComponent {
   }
 
   allFieldsEmpty(): boolean {
-    return !this.staffMedico?.centro && !this.staffMedico?.medico && !this.staffMedico?.especialidad;
+    return !this.staffMedico?.centroAtencionId && !this.staffMedico?.medicoId && !this.staffMedico?.especialidadId;
   }
 
   goBack(): void {
@@ -178,33 +178,33 @@ export class StaffMedicoDetailComponent {
   loadCentros(): void {
     this.centroAtencionService.all().subscribe((dp: DataPackage) => {
       this.centros = dp.data as CentroAtencion[];
-      // Reasignar el centro seleccionado si ya hay uno
-      if (this.staffMedico.centro) {
-        const found = this.centros.find(c => c.id === this.staffMedico.centro.id);
-        if (found) this.staffMedico.centro = found;
-      }
     });
   }
 
   loadMedicos(): void {
     this.medicoService.getAll().subscribe((dp: DataPackage) => {
       this.medicos = dp.data as Medico[];
-      // Reasignar el médico seleccionado si ya hay uno
-      if (this.staffMedico.medico) {
-        const found = this.medicos.find(m => m.id === this.staffMedico.medico.id);
-        if (found) this.staffMedico.medico = found;
-      }
     });
   }
 
   loadEspecialidades(): void {
     this.especialidadService.all().subscribe((dp: DataPackage) => {
       this.especialidades = dp.data as Especialidad[];
-      // Reasignar la especialidad seleccionada si ya hay una
-      if (this.staffMedico.especialidad) {
-        const found = this.especialidades.find(e => e.id === this.staffMedico.especialidad.id);
-        if (found) this.staffMedico.especialidad = found;
-      }
     });
+  }
+
+  getMedicoNombre(): string {
+    const medico = this.medicos.find(m => m.id === this.staffMedico.medicoId);
+    return medico ? `${medico.nombre} ${medico.apellido}` : '';
+  }
+
+  getCentroNombre(): string {
+    const centro = this.centros.find(c => c.id === this.staffMedico.centroAtencionId);
+    return centro ? centro.name : '';
+  }
+
+  getEspecialidadNombre(): string {
+    const esp = this.especialidades.find(e => e.id === this.staffMedico.especialidadId);
+    return esp ? esp.nombre : '';
   }
 }

@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.business.repository.MedicoRepository;
-import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
@@ -120,18 +119,13 @@ public class MedicoService {
         dto.setDni(medico.getDni() != null ? String.valueOf(medico.getDni()) : null);
         dto.setMatricula(medico.getMatricula());
 
-        // Mapear especialidades
-        Set<EspecialidadDTO> especialidadesDTO = new HashSet<>();
-        if (medico.getEspecialidades() != null) {
-            for (Especialidad esp : medico.getEspecialidades()) {
-                EspecialidadDTO espDTO = new EspecialidadDTO();
-                espDTO.setId(esp.getId());
-                espDTO.setNombre(esp.getNombre());
-                espDTO.setDescripcion(esp.getDescripcion());
-                especialidadesDTO.add(espDTO);
-            }
-        }
-        dto.setEspecialidades(especialidadesDTO);
+        // Mapear solo los nombres de las especialidades
+        List<String> especialidadesNombres = medico.getEspecialidades() != null
+            ? medico.getEspecialidades().stream()
+                .map(Especialidad::getNombre)
+                .collect(Collectors.toList())
+            : List.of();
+        dto.setEspecialidades(especialidadesNombres);
 
         return dto;
     }
@@ -148,14 +142,12 @@ public class MedicoService {
         }
         medico.setMatricula(dto.getMatricula());
 
-        // Asignar especialidades
+        // Asignar especialidades solo por nombre
         Set<Especialidad> especialidades = new HashSet<>();
         if (dto.getEspecialidades() != null) {
-            for (EspecialidadDTO espDto : dto.getEspecialidades()) {
+            for (String nombreEsp : dto.getEspecialidades()) {
                 Especialidad esp = new Especialidad();
-                esp.setId(espDto.getId());
-                esp.setNombre(espDto.getNombre());
-                esp.setDescripcion(espDto.getDescripcion());
+                esp.setNombre(nombreEsp);
                 especialidades.add(esp);
             }
         }

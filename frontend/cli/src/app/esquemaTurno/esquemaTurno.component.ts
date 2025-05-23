@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 import { StaffMedico } from '../staffMedicos/staffMedico';
 import { ModalService } from '../modal/modal.service';
@@ -18,7 +19,7 @@ import { EsquemaTurno } from './esquemaTurno';
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4" style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
           <div class="d-flex align-items-center">
             <i class="fa fa-calendar-check me-2"></i>
-            <h2 class="fw-bold mb-0 fs-4">Esquemas de Turno</h2>
+            <h2 class="fw-bold mb-0 fs-4">Esquemas de Agenda</h2>
           </div>
           <button 
             class="btn btn-light btn-sm"
@@ -109,6 +110,8 @@ export class EsquemaTurnoComponent {
 
   constructor(
     private esquemaTurnoService: EsquemaTurnoService,
+    private disponibilidadService: DisponibilidadMedicoService,
+    private staffMedicoService: StaffMedicoService,
     public router: Router,
     private modalService: ModalService
   ) {}
@@ -121,6 +124,20 @@ export class EsquemaTurnoComponent {
   getEsquemas(): void {
     this.esquemaTurnoService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
+      // Por cada esquema, traemos la disponibilidad y el staff
+      this.resultsPage.content.forEach((esquema: EsquemaTurno) => {
+        if (esquema.disponibilidadMedicoId) {
+          this.disponibilidadService.get(esquema.disponibilidadMedicoId).subscribe(dp => {
+            esquema.disponibilidadMedico = dp.data;
+            // Ahora traemos el staff médico
+            if (esquema.disponibilidadMedico.staffMedicoId) {
+              this.staffMedicoService.get(esquema.disponibilidadMedico.staffMedicoId).subscribe(staffDP => {
+                esquema.staffMedico = staffDP.data;
+              });
+            }
+          });
+        }
+      });
     });
   }
 

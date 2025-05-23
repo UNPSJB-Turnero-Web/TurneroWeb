@@ -9,11 +9,15 @@ import lombok.Setter;
 @Setter
 public class StaffMedicoDTO {
     private Long id;
-    private CentroAtencionDTO centro;
-    private MedicoDTO medico;
-    private EspecialidadDTO especialidad;
-    private ConsultorioDTO consultorio; 
-    private List<DisponibilidadMedicoDTO> disponibilidad;
+    private Integer centroAtencionId; 
+    private String centroAtencionName;
+    private Long medicoId;
+    private String medicoNombre;
+    private Long especialidadId;
+    private String especialidadNombre;
+    private Long consultorioId;
+    private String consultorioNombre;
+    private List<Long> disponibilidadIds; // O los campos simples que necesites
 
     // Getters y Setters
 }
