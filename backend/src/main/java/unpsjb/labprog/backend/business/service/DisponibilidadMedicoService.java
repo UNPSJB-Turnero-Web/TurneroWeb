@@ -43,27 +43,31 @@ public class DisponibilidadMedicoService {
     public DisponibilidadMedicoDTO saveOrUpdate(DisponibilidadMedicoDTO dto) {
         DisponibilidadMedico disponibilidadMedico = toEntity(dto);
 
-        // Validaciones para evitar duplicados
-        if (disponibilidadMedico.getId() == null) {
+        if (disponibilidadMedico.getId() == null || disponibilidadMedico.getId() == 0) {
+            // Caso de nueva disponibilidad
             if (repository.existsByStaffMedicoAndDiaSemanaAndHoraInicioAndHoraFin(
                     disponibilidadMedico.getStaffMedico(),
                     disponibilidadMedico.getDiaSemana(),
                     disponibilidadMedico.getHoraInicio(),
                     disponibilidadMedico.getHoraFin())) {
-                throw new IllegalStateException("Ya existe una disponibilidad para este staff médico en el mismo día y horario.");
+                throw new IllegalStateException(
+                        "Ya existe una disponibilidad para este staff médico en el mismo día y horario.");
             }
         } else {
+            // Caso de actualización
             DisponibilidadMedico existente = repository.findById(disponibilidadMedico.getId()).orElse(null);
             if (existente == null) {
                 throw new IllegalStateException("No existe la disponibilidad que se intenta modificar.");
             }
 
-            if (repository.existsByStaffMedicoAndDiaSemanaAndHoraInicioAndHoraFin(
-                    disponibilidadMedico.getStaffMedico(),
-                    disponibilidadMedico.getDiaSemana(),
-                    disponibilidadMedico.getHoraInicio(),
-                    disponibilidadMedico.getHoraFin())) {
-                throw new IllegalStateException("Ya existe una disponibilidad para este staff médico en el mismo día y horario.");
+            if (!existente.equals(disponibilidadMedico) &&
+                    repository.existsByStaffMedicoAndDiaSemanaAndHoraInicioAndHoraFin(
+                            disponibilidadMedico.getStaffMedico(),
+                            disponibilidadMedico.getDiaSemana(),
+                            disponibilidadMedico.getHoraInicio(),
+                            disponibilidadMedico.getHoraFin())) {
+                throw new IllegalStateException(
+                        "Ya existe una disponibilidad para este staff médico en el mismo día y horario.");
             }
         }
 
@@ -74,7 +78,8 @@ public class DisponibilidadMedicoService {
     public void deleteById(Integer id) {
         repository.deleteById(id);
     }
-      public void deleteAll() {
+
+    public void deleteAll() {
         repository.deleteAll();
     }
 
@@ -98,8 +103,7 @@ public class DisponibilidadMedicoService {
         disponibilidad.setHoraFin(dto.getHoraFin());
         if (dto.getStaffMedicoId() != null) {
             disponibilidad.setStaffMedico(
-                staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null)
-            );
+                    staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null));
         }
         return disponibilidad;
     }

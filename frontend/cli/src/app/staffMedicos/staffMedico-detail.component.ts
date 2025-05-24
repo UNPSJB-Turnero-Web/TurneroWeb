@@ -118,7 +118,10 @@ export class StaffMedicoDetailComponent {
       }
       this.staffMedicoService.get(id).subscribe({
         next: (dataPackage) => {
+          console.log('Staff Médico cargado:', dataPackage.data);
           this.staffMedico = <StaffMedico>dataPackage.data;
+
+          // Cargar listas de opciones
           this.loadCentros();
           this.loadMedicos();
           this.loadEspecialidades();

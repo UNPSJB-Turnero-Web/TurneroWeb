@@ -6,5 +6,5 @@ export interface Medico {
   apellido: string;
   dni: string;
   matricula: string;
-  especialidades: Especialidad;
+  especialidad: Especialidad; 
 }

@@ -19,7 +19,7 @@ import { DataPackage } from '../data.package';
         <h2>Médico: {{ medico.nombre }} {{ medico.apellido }}</h2>
         <p><b>DNI:</b> {{ medico.dni }}</p>
         <p><b>Matrícula:</b> {{ medico.matricula }}</p>
-        <p><b>Especialidad:</b> {{ medico.especialidades.nombre }}</p>
+        <p><b>Especialidad:</b> {{ medico.especialidad.nombre }}</p>
         <button class="btn btn-danger" (click)="goBack()">Atrás</button>
         <button class="btn btn-primary ms-2" (click)="activarEdicion()">Editar</button>
       </div>
@@ -115,7 +115,7 @@ import { DataPackage } from '../data.package';
   styles: []
 })
 export class MedicoDetailComponent implements OnInit {
-  medico: Medico = { id: 0, nombre: '', apellido: 'ASDASD', dni: '', matricula: '', especialidades: { id: 0, nombre: '', descripcion: '' } };
+  medico: Medico = { id: 0, nombre: '', apellido: 'ASDASD', dni: '', matricula: '', especialidad: { id: 0, nombre: '', descripcion: '' } };
   especialidades: Especialidad[] = [];
   selectedEspecialidad!: Especialidad;
   modoEdicion = false;
@@ -140,7 +140,7 @@ export class MedicoDetailComponent implements OnInit {
           apellido: "",
           dni: '',
           matricula: "",
-          especialidades: this.selectedEspecialidad
+          especialidad: this.selectedEspecialidad
         };
       });
     } else {
@@ -157,17 +157,17 @@ export class MedicoDetailComponent implements OnInit {
           this.medico = resp.data;
           console.log('Medico:', this.medico);
           // --- CRÍTICO: Verificación robusta ---
-          if (!this.medico.especialidades) {
+          if (!this.medico.especialidad) {
             this.selectedEspecialidad = this.especialidades[0];
-            this.medico.especialidades = this.selectedEspecialidad;
+            this.medico.especialidad = this.selectedEspecialidad;
           } else {
             // Solo buscar si especialidad existe y tiene id
-            const especialidadId = this.medico.especialidades?.id;
+            const especialidadId = this.medico.especialidad?.id;
             const especialidadEncontrada = especialidadId
               ? this.especialidades.find(e => e.id === especialidadId)
               : undefined;
             this.selectedEspecialidad = especialidadEncontrada || this.especialidades[0];
-            this.medico.especialidades = this.selectedEspecialidad;
+            this.medico.especialidad = this.selectedEspecialidad;
           }
         });
         this.route.queryParams.subscribe(params => {
@@ -182,7 +182,7 @@ export class MedicoDetailComponent implements OnInit {
       alert("Debe seleccionar una especialidad válida.");
       return;
     }
-    this.medico.especialidades= this.selectedEspecialidad;
+    this.medico.especialidad= this.selectedEspecialidad;
     const op = this.medico.id
       ? this.medicoService.update(this.medico.id, this.medico)
       : this.medicoService.create(this.medico);

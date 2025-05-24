@@ -42,7 +42,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   style="cursor:pointer;">
                 <td>{{ c.numero }}</td>
                 <td>{{ c.centroAtencion }}</td>
-                <td>{{ c.name }}</td>
+                <td>{{ c.nombre }}</td>
                 <td class="text-center">
                   <button (click)="goToEdit(c.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>

@@ -85,8 +85,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   // Nuevas variables para médicos y especialidades
   medicoSeleccionado: Medico | null = null;
-  especialidadesDisponibles: Especialidad[] = [];
-
+  especialidadesDisponibles: Especialidad[] = []; // Para el tab de Especialidades
+  especialidadesMedico: Especialidad[] = []; // Para el tab de Staff Médico
   constructor(
     private route: ActivatedRoute,
     private centroAtencionService: CentroAtencionService,
@@ -303,19 +303,31 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   // Método para cargar especialidades disponibles
   cargarEspecialidades() {
     if (!this.centroAtencion?.id) return;
-    this.especialidadService.getDisponibles(this.centroAtencion.id!).subscribe(disp => {
-      this.especialidadesDisponibles = Array.isArray(disp) ? disp : [];
+
+    this.especialidadService.all().subscribe({
+      next: (todasEspecialidades) => {
+        const especialidadesAsociadasIds = this.especialidadesAsociadas.map(e => e.id);
+        this.especialidadesDisponibles = todasEspecialidades.data.filter(
+          (esp: Especialidad) => !especialidadesAsociadasIds.includes(esp.id)
+        );
+      },
+      error: () => {
+        this.especialidadesDisponibles = [];
+      }
     });
   }
-
   cargarEspecialidadesAsociadas() {
     if (!this.centroAtencion?.id) return;
+
     this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
       next: (data: any) => {
-        // Si tu backend responde { data: [...] }
         this.especialidadesAsociadas = Array.isArray(data.data) ? data.data : [];
+        console.log('Especialidades asociadas al centro:', this.especialidadesAsociadas);
       },
-      error: () => this.especialidadesAsociadas = []
+      error: () => {
+        this.especialidadesAsociadas = [];
+        console.log('Error al cargar las especialidades asociadas al centro.');
+      }
     });
   }
 
@@ -361,31 +373,35 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   crearConsultorio() {
     if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.nombre) return;
+
+    // Verificar si ya existe un consultorio con el mismo número
     if (this.consultorios.some(c => c.numero === this.nuevoConsultorio.numero)) {
       this.mensajeConsultorio = 'Ya existe un consultorio con ese número en este centro.';
       setTimeout(() => this.mensajeConsultorio = '', 5000);
       return;
     }
+
+    // Crear el objeto consultorio con la referencia al centro de atención
     const consultorio: Consultorio = {
       numero: this.nuevoConsultorio.numero,
       nombre: this.nuevoConsultorio.nombre,
-      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
-
+      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion // Asignar el ID del centro
     };
-    this.consultorioService.create(consultorio)
-      .subscribe({
-        next: () => {
-          this.mensajeConsultorio = 'Consultorio creado correctamente';
-          setTimeout(() => this.mensajeConsultorio = '', 3000);
-          this.getConsultorios();
-          this.nuevoConsultorio = { numero: null, nombre: '' };
-          this.modoCrearConsultorio = false;
-        },
-        error: (err: any) => {
-          this.mensajeConsultorio = err.error?.status_text || 'No se pudo crear el consultorio';
-          setTimeout(() => this.mensajeConsultorio = '', 5000);
-        }
-      });
+
+    // Enviar el consultorio al backend
+    this.consultorioService.create(consultorio).subscribe({
+      next: () => {
+        this.mensajeConsultorio = 'Consultorio creado correctamente';
+        setTimeout(() => this.mensajeConsultorio = '', 3000);
+        this.getConsultorios(); // Recargar la lista de consultorios
+        this.nuevoConsultorio = { numero: null, nombre: '' }; // Limpiar el formulario
+        this.modoCrearConsultorio = false; // Salir del modo de creación
+      },
+      error: (err: any) => {
+        this.mensajeConsultorio = err.error?.status_text || 'No se pudo crear el consultorio';
+        setTimeout(() => this.mensajeConsultorio = '', 5000);
+      }
+    });
   }
 
   editarConsultorio(i: number) {
@@ -447,41 +463,40 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   asociarMedico() {
     if (!this.centroAtencion?.id || !this.medicoSeleccionado || !this.especialidadSeleccionada) return;
-    if (this.medicoYaAsociado()) {
-      this.mensajeStaff = 'El médico ya está asociado a este centro.';
+
+    // Validar si la especialidad seleccionada está asociada al centro
+    const especialidadAsociada = this.especialidadesAsociadas.some(
+      e => e.id === this.especialidadSeleccionada!.id
+    );
+
+    if (!especialidadAsociada) {
+      this.mostrarMensajeStaff(
+        `La especialidad "${this.especialidadSeleccionada.nombre}" no está asociada al centro.`,
+        'danger'
+      );
       return;
     }
+
     const nuevoStaff: StaffMedico = {
-      
       id: 0,
       centroAtencionId: this.centroAtencion.id,
       medicoId: this.medicoSeleccionado.id,
       especialidadId: this.especialidadSeleccionada.id,
-      medico: {
-        id: this.medicoSeleccionado.id,
-        nombre: this.medicoSeleccionado.nombre,
-        apellido: this.medicoSeleccionado.apellido,
-        dni: this.medicoSeleccionado.dni,
-        matricula: this.medicoSeleccionado.matricula
-      },
-      especialidad: {
-        id: this.especialidadSeleccionada.id,
-        nombre: this.especialidadSeleccionada.nombre
-      },
-      centro: {
-        id: this.centroAtencion.id,
-        nombre: this.centroAtencion.nombre
-      }
+      medico: this.medicoSeleccionado,
+      especialidad: this.especialidadSeleccionada,
+      centro: { id: this.centroAtencion.id, nombre: this.centroAtencion.nombre }
     };
+
     this.staffMedicoService.create(nuevoStaff).subscribe({
       next: () => {
-        this.mensajeStaff = 'Médico asociado correctamente.';
+        this.mostrarMensajeStaff('Médico asociado correctamente.', 'success');
         this.loadStaffMedico();
         this.medicoSeleccionado = null;
         this.especialidadSeleccionada = null;
       },
       error: (err) => {
-        this.mensajeStaff = err?.error?.message || 'Error al asociar médico.';
+        const mensajeError = err?.error?.message || 'Error al asociar médico.';
+        this.mostrarMensajeStaff(mensajeError, 'danger');
       }
     });
   }
@@ -519,20 +534,62 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     setTimeout(() => this.mensajeConsultorio = '', ms);
   }
 
-  onMedicoSeleccionado() {
-    if (!this.medicoSeleccionado) {
-      this.especialidadesDisponibles = [];
-      this.especialidadSeleccionada = null;
-      return;
-    }
-    // IDs de especialidades YA asociadas a este médico en este centro
-    const especialidadesAsociadasIds = this.staffMedicoCentro
-      .filter(s => s.medicoId === this.medicoSeleccionado!.id)
-      .map(s => s.especialidadId);
-
-    // Mostrar solo las especialidades del centro que NO están asociadas aún a este médico
-    this.especialidadesDisponibles = this.especialidadesAsociadas
-      .filter(e => !especialidadesAsociadasIds.includes(e.id));
+onMedicoSeleccionado() {
+  if (!this.medicoSeleccionado) {
+    // Si no hay médico seleccionado, limpiar las especialidades del médico
+    console.log('No hay médico seleccionado.');
+    this.especialidadesMedico = [];
     this.especialidadSeleccionada = null;
+    return;
   }
+
+  // Obtener la especialidad del médico seleccionado directamente del objeto
+  const especialidadMedico = this.medicoSeleccionado.especialidad;
+
+  if (!especialidadMedico) {
+    // Si el médico no tiene especialidad, limpiar las especialidades del médico
+    console.log('El médico seleccionado no tiene especialidad.');
+    this.especialidadesMedico = [];
+    this.especialidadSeleccionada = null;
+    return;
+  }
+
+  console.log('Especialidad del médico seleccionado:', especialidadMedico);
+
+  // Asignar la especialidad del médico al desplegable
+  this.especialidadesMedico = [especialidadMedico];
+  this.especialidadSeleccionada = especialidadMedico;
+
+  // IDs de especialidades asociadas al centro
+  const especialidadesCentroIds = this.especialidadesAsociadas.map(e => e.id);
+
+  // Validar si la especialidad del médico está asociada al centro
+  if (!especialidadesCentroIds.includes(especialidadMedico.id)) {
+    // Si no está asociada, mostrar mensaje de confirmación
+    console.log('La especialidad del médico no está asociada al centro.');
+    const confirmar = confirm(`La especialidad "${especialidadMedico.nombre}" no está asociada al centro. ¿Desea agregarla?`);
+    if (confirmar) {
+      this.asociarEspecialidadAlCentro(especialidadMedico);
+    }
+  } else {
+    console.log('La especialidad del médico está asociada al centro.');
+  }
+}
+asociarEspecialidadAlCentro(especialidad: Especialidad) {
+  if (!this.centroAtencion?.id || !especialidad.id) return;
+
+  this.especialidadService.asociar(this.centroAtencion.id, especialidad.id).subscribe({
+    next: () => {
+      this.mostrarMensaje(`Especialidad "${especialidad.nombre}" asociada al centro correctamente.`, 'success');
+      // Recargar las especialidades asociadas
+      this.cargarEspecialidadesAsociadas();
+      // Actualizar las especialidades disponibles
+      this.cargarEspecialidades();
+    },
+    error: (err) => {
+      const mensajeError = err?.error?.status_text || 'No se pudo asociar la especialidad al centro.';
+      this.mostrarMensaje(mensajeError, 'danger');
+    }
+  });
+}
 }

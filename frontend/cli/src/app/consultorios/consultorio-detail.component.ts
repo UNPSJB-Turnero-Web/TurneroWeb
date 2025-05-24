@@ -127,28 +127,21 @@ export class ConsultorioDetailComponent implements OnInit {
     });
   }
 
-  private loadConsultorio(): void {
-    const path = this.route.snapshot.routeConfig?.path;
-    if (path === "consultorios/new") {
-      // Nuevo
-      this.consultorio = {
-        id: 0,
-        numero: 0,
-        nombre: "",
-        especialidad: "",
-        medicoAsignado: "",
-        telefono: "",
-        centroAtencion: {} as CentroAtencion,
-      };
-    } else {
-      // Edición
-      const id = Number(this.route.snapshot.paramMap.get("id"));
-      this.consultorioService.getById(id).subscribe((pkg) => {
-        this.consultorio = pkg.data;
-        this.selectedCentroAtencion = this.consultorio.centroAtencion;
-      });
-    }
-  }
+private loadConsultorio(): void {
+  const id = Number(this.route.snapshot.paramMap.get("id"));
+  this.consultorioService.getById(id).subscribe((pkg) => {
+    console.log('Consultorio cargado:', pkg.data);
+    this.consultorio = pkg.data;
+
+    // Asignar el nombre del centro al modelo consultorio
+    this.consultorio.centroAtencion = {
+      id: this.consultorio.centroId,
+      nombre: this.consultorio.nombreCentro,
+    } as CentroAtencion;
+
+    this.selectedCentroAtencion = this.consultorio.centroAtencion;
+  });
+}
 
   private getCentrosAtencion(): void {
     this.centroAtencionService.getAll().subscribe((res) => {
