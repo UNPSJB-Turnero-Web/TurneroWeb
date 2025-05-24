@@ -10,10 +10,11 @@ import unpsjb.labprog.backend.model.Agenda;
 
 @Repository
 public interface AgendaRepository extends CrudRepository<Agenda, Integer>, PagingAndSortingRepository<Agenda, Integer> {
-    List<Agenda> findByConsultorioId(Long consultorioId);
+    List<Agenda> findByEsquemaTurno_StaffMedico_Consultorio_Id(Integer consultorioId);
 
-    List<Agenda> findByMedicoId(Long medicoId);
+    List<Agenda> findByEsquemaTurno_StaffMedico_Medico_Id(Integer medicoId);
 
-    List<Agenda> findByConsultorioIdAndEspecialidadIdAndHabilitadoTrue(Long consultorioId, Long especialidadId);
-
+    List<Agenda> findByEsquemaTurno_StaffMedico_Consultorio_IdAndEsquemaTurno_StaffMedico_Medico_Especialidad_IdAndHabilitadoTrue(
+        Integer consultorioId, Integer especialidadId
+    );
 }

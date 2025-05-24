@@ -10,11 +10,11 @@ import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
-public interface TurnoRepository extends JpaRepository<Turno, Long> {
-    boolean existsByFechaAndHoraInicioAndCentroAtencion(LocalDate fecha, LocalTime horaInicio,
-            CentroAtencion centroAtencion);
+public interface TurnoRepository extends JpaRepository<Turno, Integer> {
+    boolean existsByFechaAndHoraInicioAndStaffMedico_Consultorio_CentroAtencion(
+            LocalDate fecha, LocalTime horaInicio, CentroAtencion centroAtencion);
 
-    boolean existsByStaffMedico_IdAndEstado(Long staffMedicoId, EstadoTurno estado);
+    boolean existsByStaffMedico_IdAndEstado(Integer staffMedicoId, EstadoTurno estado);
 
     List<Turno> findByAgenda_IdAndEstado(Integer agendaId, EstadoTurno estado);
 }

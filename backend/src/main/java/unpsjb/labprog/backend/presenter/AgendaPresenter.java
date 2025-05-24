@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,7 +35,7 @@ public class AgendaPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+    public ResponseEntity<Object> findById(@PathVariable("id") Integer id) {
         Agenda agenda = service.findById(id);
         return (agenda != null)
                 ? Response.ok(agenda)
@@ -63,13 +62,13 @@ public class AgendaPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
         service.delete(id);
         return Response.ok("Agenda " + id + " borrada.");
     }
 
     @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
-    public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") int id) {
+    public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") Integer id) {
         try {
             service.cancelarAgendaYNotificarPacientes(id);
             return Response.ok("Agenda cancelada y pacientes notificados.");
@@ -79,7 +78,7 @@ public class AgendaPresenter {
     }
 
     @RequestMapping(value = "/alternativas/{turnoId}", method = RequestMethod.GET)
-    public ResponseEntity<Object> sugerirAlternativas(@PathVariable("turnoId") int turnoId) {
+    public ResponseEntity<Object> sugerirAlternativas(@PathVariable("turnoId") Integer turnoId) {
         // Busca el turno y llama al método del service
         Turno turno = service.findTurnoById(turnoId);
         if (turno == null)
@@ -88,13 +87,13 @@ public class AgendaPresenter {
     }
 
     @RequestMapping(value = "/consultorio/{consultorioId}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByConsultorio(@PathVariable("consultorioId") Long consultorioId) {
+    public ResponseEntity<Object> findByConsultorio(@PathVariable("consultorioId") Integer consultorioId) {
         return Response.ok(service.findByConsultorio(consultorioId));
     }
 
     @RequestMapping(value = "/generar-desde-esquema/{esquemaTurnoId}", method = RequestMethod.POST)
     public ResponseEntity<List<Agenda>> generarAgenda(
-            @PathVariable Long esquemaTurnoId,
+            @PathVariable Integer esquemaTurnoId,
             @RequestParam int semanas) {
         EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
                 .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
@@ -102,9 +101,5 @@ public class AgendaPresenter {
         return ResponseEntity.ok(agendas);
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetAgendas() {
-        service.deleteAll(); // Este método debe borrar todas las agendas (y turnos si corresponde)
-        return Response.ok("Todas las agendas fueron eliminadas.");
-    }
+
 }

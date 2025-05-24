@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.model;
 
-import java.util.Calendar;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -25,33 +26,21 @@ public class Agenda {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
 
-    private Calendar fechaHora; // Día y hora del turno
-    private Integer tiempoTolerancia;
-    private java.time.LocalTime horaInicio;
-    private java.time.LocalTime horaFin;
+    private LocalDate fecha;              // Día de la agenda
+    private LocalTime horaInicio;         // Hora real de inicio
+    private LocalTime horaFin;            // Hora real de fin
+    private Integer tiempoTolerancia;     // Minutos permitidos de atraso
 
-    private boolean habilitado = true; // mantenimiento/sanitización
-    private String motivoInhabilitacion; // mantenimiento, sanit
-    @ManyToOne
-    private Medico medico;
-
-    @ManyToOne
-    private CentroAtencion centroAtencion;
-
-    @ManyToOne
-    private Consultorio consultorio;
-
-    @ManyToOne
-    private Especialidad especialidad;
+    private boolean habilitado = true;
+    private String motivoInhabilitacion;
 
     @ManyToOne
     @JsonBackReference
     private EsquemaTurno esquemaTurno;
-    
+
     @OneToMany(mappedBy = "agenda", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<BloqueHorario> bloquesReservados;
-
 }

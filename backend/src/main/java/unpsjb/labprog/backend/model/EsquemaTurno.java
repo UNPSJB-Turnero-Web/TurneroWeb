@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -25,7 +26,7 @@ public class EsquemaTurno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private LocalTime horaInicio;
@@ -34,23 +35,21 @@ public class EsquemaTurno {
     private LocalTime horaFin;
 
     @Column(nullable = false)
-    private int intervalo; // Duración del turno en minutos
-
-    @ManyToOne
-    private StaffMedico staffMedico;
-    
-    @OneToMany(mappedBy = "esquemaTurno")
-    @JsonManagedReference
-    private List<Agenda> agendas;
+    private int intervalo;
 
     @ElementCollection
     private List<String> diasSemana;
-    @ManyToOne
-    private DisponibilidadMedico disponibilidadMedico; // ID de la disponibilidad médica asociada
-    @ManyToOne
+
+    @ManyToOne(optional = false)
+    private StaffMedico staffMedico;
+
+    @ManyToOne(optional = false)
     private CentroAtencion centroAtencion;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private Consultorio consultorio;
 
+    @OneToMany(mappedBy = "esquemaTurno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Agenda> agendas;
 }

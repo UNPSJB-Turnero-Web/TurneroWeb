@@ -13,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
-import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
-import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.StaffMedico;
 
@@ -36,7 +34,7 @@ public class EsquemaTurnoService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<EsquemaTurnoDTO> findById(Long id) {
+    public Optional<EsquemaTurnoDTO> findById(Integer id) {
         return esquemaTurnoRepository.findById(id).map(this::toDTO);
     }
 
@@ -87,7 +85,7 @@ public class EsquemaTurnoService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(Integer id) {
         esquemaTurnoRepository.deleteById(id);
     }
 
@@ -95,7 +93,7 @@ public class EsquemaTurnoService {
         esquemaTurnoRepository.deleteAll();
     }
 
-    public List<EsquemaTurnoDTO> findByStaffMedico(Long staffMedicoId) {
+    public List<EsquemaTurnoDTO> findByStaffMedico(Integer staffMedicoId) {
         return esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId)
                 .stream()
                 .map(this::toDTO)
@@ -112,10 +110,7 @@ public class EsquemaTurnoService {
         if (esquema.getStaffMedico() != null) {
             dto.setStaffMedicoId(esquema.getStaffMedico().getId());
         }
-
-        if (esquema.getDisponibilidadMedico() != null) {
-            dto.setDisponibilidadMedicoId(esquema.getDisponibilidadMedico().getId());
-        }
+        // Elimina cualquier referencia a DisponibilidadMedico
         return dto;
     }
 
@@ -130,12 +125,7 @@ public class EsquemaTurnoService {
             StaffMedico staff = staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null);
             esquema.setStaffMedico(staff);
         }
-        // Si usás DisponibilidadMedico:
-        if (dto.getDisponibilidadMedicoId() != null) {
-            DisponibilidadMedico disp = disponibilidadMedicoRepository.findById(dto.getDisponibilidadMedicoId())
-                    .orElse(null);
-            esquema.setDisponibilidadMedico(disp);
-        }
+        // Elimina cualquier referencia a DisponibilidadMedico
         return esquema;
     }
 }

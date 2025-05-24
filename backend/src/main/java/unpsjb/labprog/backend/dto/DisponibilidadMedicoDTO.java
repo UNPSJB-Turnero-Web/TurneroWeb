@@ -8,12 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class DisponibilidadMedicoDTO {
-    private Long id;
+    private Integer id;
     private String diaSemana;
     private LocalTime horaInicio;
     private LocalTime horaFin;
-    private int intervalo;
-    private Long staffMedicoId;
-
-    // Getters y Setters
+    private Integer staffMedicoId;
 }

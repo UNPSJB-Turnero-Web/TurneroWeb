@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ConsultorioService;
-import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.model.Consultorio;
 
@@ -48,11 +47,7 @@ public class ConsultorioPresenter {
 
         List<Map<String, Object>> consultoriosMapeados = pageResult.getContent().stream().map(c -> {
             Map<String, Object> map = objectMapper.convertValue(c, Map.class);
-            if (c.getCentroAtencion() != null) {
-                map.put("centroAtencion", c.getCentroAtencion().getName());
-            } else {
-                map.put("centroAtencion", null);
-            }
+            map.put("centroAtencion", c.getNombreCentro());
             return map;
         }).toList();
 
@@ -66,7 +61,7 @@ public class ConsultorioPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> findById(@PathVariable int id) {
+    public ResponseEntity<Object> findById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(consultorio -> Response.ok(consultorio, "Consultorio encontrado"))
                 .orElse(Response.notFound("Consultorio con id " + id + " no encontrado"));
@@ -92,13 +87,13 @@ public class ConsultorioPresenter {
     }
 
     @GetMapping("/centrosAtencion/{centroId}/consultorios")
-    public ResponseEntity<Object> getConsultoriosByCentro(@PathVariable int centroId) {
-        List<ConsultorioDTO> consultorios = service.findByCentroAtencionId((long) centroId);
+    public ResponseEntity<Object> getConsultoriosByCentro(@PathVariable Integer centroId) {
+        List<ConsultorioDTO> consultorios = service.findByCentroAtencionId(centroId);
         return Response.ok(consultorios, "Consultorios recuperados correctamente");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody ConsultorioDTO consultorioDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
             consultorioDTO.setId(id);
             ConsultorioDTO updated = service.saveOrUpdate(consultorioDTO); 
@@ -118,11 +113,9 @@ public class ConsultorioPresenter {
     }
 
     @PostMapping("/centro/{centroId}")
-    public ResponseEntity<Object> createInCentro(@PathVariable int centroId, @RequestBody ConsultorioDTO consultorioDTO) {
+    public ResponseEntity<Object> createInCentro(@PathVariable Integer centroId, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            CentroAtencionDTO centro = new CentroAtencionDTO();
-            centro.setId(centroId);
-            consultorioDTO.setCentroAtencion(centro);
+            consultorioDTO.setCentroId(centroId);
 
             ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO);
             return Response.ok(saved, "Consultorio creado correctamente");
@@ -136,7 +129,7 @@ public class ConsultorioPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable int id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
             service.delete(id);
             return Response.ok(null, "Consultorio eliminado correctamente");
@@ -145,22 +138,16 @@ public class ConsultorioPresenter {
         }
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetConsultorios() {
-        service.findAll().forEach(c -> service.delete(c.getId()));
-        return Response.ok("Reset completo.");
-    }
+
 
     private ConsultorioDTO toDTO(Consultorio c) {
         ConsultorioDTO dto = new ConsultorioDTO();
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
-        dto.setName(c.getName());
+        dto.setNombre(c.getNombre());
         if (c.getCentroAtencion() != null) {
-            CentroAtencionDTO cdto = new CentroAtencionDTO();
-            cdto.setId(c.getCentroAtencion().getId());
-            cdto.setName(c.getCentroAtencion().getName());
-            dto.setCentroAtencion(cdto);
+            dto.setCentroId(c.getCentroAtencion().getId());
+            dto.setNombreCentro(c.getCentroAtencion().getNombre());
         }
         return dto;
     }

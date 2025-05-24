@@ -29,43 +29,38 @@ public class EspecialidadService {
     @Autowired
     private CentroAtencionService centroAtencionService;
 
-    // Obtener todas las especialidades como DTOs
     public List<EspecialidadDTO> findAll() {
         return repository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // Obtener una especialidad por ID como DTO
-    public EspecialidadDTO findById(int id) {
+    public EspecialidadDTO findById(Integer id) {
         Especialidad especialidad = repository.findById(id).orElse(null);
         return especialidad != null ? toDTO(especialidad) : null;
     }
 
-    // Obtener especialidades asociadas a un centro de atención por su ID
-    public List<EspecialidadDTO> findByCentroAtencionId(int centroId) {
+    public List<EspecialidadDTO> findByCentroAtencionId(Integer centroId) {
         List<Especialidad> especialidades = centroAtencionRepository.findEspecialidadesByCentroId(centroId);
         return especialidades.stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    // Obtener especialidades no asociadas a un centro de atención
-    public List<EspecialidadDTO> findEspecialidadesNoAsociadas(int centroId) {
+    public List<EspecialidadDTO> findEspecialidadesNoAsociadas(Integer centroId) {
         List<Especialidad> todas = repository.findAll();
         List<Especialidad> asociadas = centroAtencionRepository.findEspecialidadesByCentroId(centroId);
         todas.removeAll(asociadas);
         return todas.stream().map(this::toDTO).toList();
     }
 
-    // Agrupar especialidades por centro
     public List<Map<String, Object>> findEspecialidadesAgrupadasPorCentro() {
         List<Map<String, Object>> resultado = new ArrayList<>();
         List<CentroAtencionDTO> centros = centroAtencionService.findAll();
         for (CentroAtencionDTO centro : centros) {
             List<EspecialidadDTO> especialidades = findByCentroAtencionId(centro.getId());
             Map<String, Object> entry = new HashMap<>();
-            entry.put("centro_de_atencion", centro.getName());
+            entry.put("centro_de_atencion", centro.getNombre());
             entry.put("especialidades", especialidades.stream().map(EspecialidadDTO::getNombre).toList());
             resultado.add(entry);
         }
@@ -76,17 +71,15 @@ public class EspecialidadService {
     public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto) {
         Especialidad especialidad = toEntity(dto);
 
-        // Validar datos
         validarEspecialidad(especialidad);
 
-        // Validar unicidad del nombre
-        if (especialidad.getId() == 0) { // Creación
+        if (especialidad.getId() == null || especialidad.getId() == 0) { // Creación
             if (repository.existsByNombreIgnoreCase(especialidad.getNombre())) {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         } else { // Actualización
             Especialidad existente = repository.findByNombreIgnoreCase(especialidad.getNombre());
-            if (existente != null && existente.getId() != especialidad.getId()) {
+            if (existente != null && !existente.getId().equals(especialidad.getId())) {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         }
@@ -110,14 +103,13 @@ public class EspecialidadService {
         }
     }
 
-    // Obtener especialidades paginadas como DTOs
     public Page<EspecialidadDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
     }
 
     @Transactional
-    public void delete(int id) {
+    public void delete(Integer id) {
         if (!repository.existsById(id)) {
             throw new IllegalStateException("No existe una especialidad con el ID: " + id);
         }
@@ -130,7 +122,7 @@ public class EspecialidadService {
     }
 
     @Transactional
-    public void desasociarEspecialidadDeCentro(int especialidadId, int centroId) {
+    public void desasociarEspecialidadDeCentro(Integer especialidadId, Integer centroId) {
         CentroAtencion centro = centroAtencionService.findEntityById(centroId);
         Especialidad especialidad = repository.findById(especialidadId)
                 .orElseThrow(() -> new IllegalStateException("No existe la especialidad con id " + especialidadId));
@@ -141,13 +133,10 @@ public class EspecialidadService {
             throw new IllegalStateException("La especialidad no está asociada a este centro");
         }
         centro.getEspecialidades().remove(especialidad);
-        // Si la relación es bidireccional:
-        // especialidad.getCentrosAtencion().remove(centro);
 
         centroAtencionService.save(centro);
     }
 
-    // Métodos de conversión entre entidad y DTO
     private EspecialidadDTO toDTO(Especialidad especialidad) {
         EspecialidadDTO dto = new EspecialidadDTO();
         dto.setId(especialidad.getId());
@@ -165,19 +154,20 @@ public class EspecialidadService {
     }
 
     @Transactional
-    public EspecialidadDTO asociarEspecialidadACentro(int especialidadId, int centroId) {
+    public EspecialidadDTO asociarEspecialidadACentro(Integer especialidadId, Integer centroId) {
         Especialidad especialidad = repository.findById(especialidadId)
                 .orElseThrow(() -> new IllegalStateException("No existe la especialidad con id " + especialidadId));
-        CentroAtencion centro = centroAtencionService.findEntityById(centroId);
-        if (centro == null)
-            throw new IllegalStateException("No existe el centro con id " + centroId);
 
-        if (centro.getEspecialidades().contains(especialidad)) {
+        CentroAtencion centro = centroAtencionService.findEntityById(centroId);
+        if (centro == null) 
+            throw new IllegalStateException("No existe el centro con id " + centroId);
+        
+
+        if (centroAtencionRepository.existsEspecialidadInCentro(centroId, especialidadId)) {
             throw new IllegalStateException("La especialidad ya está asociada a este centro");
         }
+
         centro.getEspecialidades().add(especialidad);
-        // Si la relación es bidireccional, también:
-        // especialidad.getCentrosAtencion().add(centro);
 
         centroAtencionService.save(centro);
 

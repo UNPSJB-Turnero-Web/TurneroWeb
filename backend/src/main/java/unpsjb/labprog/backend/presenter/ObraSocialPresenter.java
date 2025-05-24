@@ -30,7 +30,7 @@ public class ObraSocialPresenter {
     }
 
     @GetMapping("/{id}")
-public ResponseEntity<ObraSocialDTO> getById(@PathVariable int id) {
+public ResponseEntity<ObraSocialDTO> getById(@PathVariable Integer id) {
     return service.findById(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());

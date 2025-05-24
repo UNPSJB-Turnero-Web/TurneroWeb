@@ -35,7 +35,7 @@ public class MedicoPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getById(@PathVariable Long id) {
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(medico -> Response.ok(medico, "Médico recuperado correctamente"))
                 .orElse(ResponseEntity.notFound().build());
@@ -67,7 +67,7 @@ public class MedicoPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody MedicoDTO medicoDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody MedicoDTO medicoDTO) {
         try {
             if (id == null || id <= 0) {
                 return Response.error(medicoDTO, "Debe proporcionar un ID válido para actualizar.");
@@ -103,14 +103,10 @@ public class MedicoPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable("id") Long id) {
+    public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
         service.delete(id);
         return Response.ok("Médico " + id + " eliminado correctamente");
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetMedicos() {
-        service.findAll().forEach(c -> service.delete(c.getId()));
-        return Response.ok("Reset completo.");
-    }
+   
 }

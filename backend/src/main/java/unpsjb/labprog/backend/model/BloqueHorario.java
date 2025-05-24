@@ -22,7 +22,7 @@ public class BloqueHorario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Integer id;
 
     private LocalDate fecha; // Puede ser null si es recurrente semanalmente
 

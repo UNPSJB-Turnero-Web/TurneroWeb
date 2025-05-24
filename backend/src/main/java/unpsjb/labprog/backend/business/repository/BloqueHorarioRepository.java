@@ -6,6 +6,6 @@ import org.springframework.data.repository.CrudRepository;
 
 import unpsjb.labprog.backend.model.BloqueHorario;
 
-public interface BloqueHorarioRepository extends CrudRepository<BloqueHorario, Long> {
-    List<BloqueHorario> findByAgendaId(Long agendaId);
+public interface BloqueHorarioRepository extends CrudRepository<BloqueHorario, Integer> {
+    List<BloqueHorario> findByAgendaId(Integer agendaId);
 }

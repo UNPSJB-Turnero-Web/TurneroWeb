@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
@@ -21,19 +22,23 @@ public class StaffMedico {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Integer id;
 
     @ManyToOne
-    private CentroAtencion centro; // Relación con CentroAtencion
+    @JoinColumn(name = "centro_atencion_id", nullable = false)
+    private CentroAtencion centroAtencion;
 
     @ManyToOne
-    private Medico medico; // Relación con Medico
-
-    @ManyToOne
-    private Especialidad especialidad; 
-    @ManyToOne
-    private Consultorio consultorio; 
+    @JoinColumn(name = "medico_id", nullable = false)
+    private Medico medico;
 
     @OneToMany(mappedBy = "staffMedico", cascade = CascadeType.PERSIST)
-    private List<DisponibilidadMedico> disponibilidad; // Relación con DisponibilidadMedico
+    private List<DisponibilidadMedico> disponibilidad;
+
+    
+
+
+    @ManyToOne
+    private Consultorio consultorio;
+
 }

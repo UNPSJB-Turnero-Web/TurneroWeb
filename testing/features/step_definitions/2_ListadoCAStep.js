@@ -30,7 +30,7 @@ Then('el cuerpo de la respuesta contiene un array JSON con la siguiente estructu
         const esperado = centrosEsperados[i];
         const actual = centrosRespuesta[i];
 
-        assert.strictEqual(actual.name, esperado.Nombre, `Centro ${i} - name esperado ${esperado.Nombre}, actual ${actual.name}`);
+        assert.strictEqual(actual.nombre, esperado.Nombre, `Centro ${i} - nombre esperado ${esperado.Nombre}, actual ${actual.nombre}`);
         assert.strictEqual(actual.direccion, esperado.Direccion, `Centro ${i} - direccion esperada ${esperado.Direccion}, actual ${actual.direccion}`);
         assert.strictEqual(actual.localidad, esperado.Localidad, `Centro ${i} - localidad esperada ${esperado.Localidad}, actual ${actual.localidad}`);
         assert.strictEqual(actual.provincia, esperado.Provincia, `Centro ${i} - provincia esperada ${esperado.Provincia}, actual ${actual.provincia}`);

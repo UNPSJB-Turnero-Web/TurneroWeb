@@ -19,15 +19,15 @@ public class Consultorio {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(nullable = false)
     private Integer numero;
 
     @Column(nullable = false)
-    private String name;
+    private String nombre; 
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "centro_atencion_id", nullable = false)
-    private CentroAtencion centroAtencion; // Relación con CentroAtencion
+    private CentroAtencion centroAtencion;
 }

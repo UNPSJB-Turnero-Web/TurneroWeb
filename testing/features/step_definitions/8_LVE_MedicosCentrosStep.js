@@ -38,7 +38,7 @@ When(
         matricula
       },
       especialidad: { nombre: especialidad },
-      centro: { name: centro }
+      centro: { nombre: centro }
     };
     try {
       const res = request('POST', 'http://backend:8080/staff-medico', {

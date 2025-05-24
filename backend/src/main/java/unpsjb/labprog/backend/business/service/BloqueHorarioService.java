@@ -19,11 +19,11 @@ public class BloqueHorarioService {
         return (List<BloqueHorario>) repository.findAll();
     }
 
-    public Optional<BloqueHorario> findById(Long id) {
+    public Optional<BloqueHorario> findById(Integer id) {
         return repository.findById(id);
     }
 
-    public List<BloqueHorario> findByAgenda(Long agendaId) {
+    public List<BloqueHorario> findByAgenda(Integer agendaId) {
         return repository.findByAgendaId(agendaId);
     }
 
@@ -31,7 +31,7 @@ public class BloqueHorarioService {
         return repository.save(bloque);
     }
 
-    public void delete(Long id) {
+    public void delete(Integer id) {
         repository.deleteById(id);
     }
 

@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StaffMedicoDTO {
-    private Long id;
+    private Integer id;
     private CentroAtencionDTO centro;
     private MedicoDTO medico;
     private EspecialidadDTO especialidad;

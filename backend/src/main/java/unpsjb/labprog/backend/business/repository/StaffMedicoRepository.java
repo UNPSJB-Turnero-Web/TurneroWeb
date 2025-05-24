@@ -9,13 +9,16 @@ import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
 import unpsjb.labprog.backend.model.StaffMedico;
 
-public interface StaffMedicoRepository extends JpaRepository<StaffMedico, Long> {
-    boolean existsByMedicoAndCentro(Medico medico, CentroAtencion centro);
+public interface StaffMedicoRepository extends JpaRepository<StaffMedico, Integer> {
+boolean existsByMedicoAndConsultorio_CentroAtencionAndMedico_Especialidad(
+    Medico medico,
+    CentroAtencion centroAtencion,
+    Especialidad especialidad
+);
+List<StaffMedico> findByCentroAtencionId(Integer centroId);
 
-    List<StaffMedico> findByCentroId(Long centroId);
+boolean existsByMedicoAndCentroAtencionAndMedico_Especialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
 
-    boolean existsByMedicoAndCentroAndEspecialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
-
-    StaffMedico findByMedicoAndCentroAndEspecialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
+StaffMedico findByMedicoAndCentroAtencionAndMedico_Especialidad(Medico medico, CentroAtencion centroAtencion, Especialidad especialidad);
 
 }

@@ -11,7 +11,7 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
 
   centros.forEach(centro => {
     const centroData = {
-      name: centro.Nombre ? centro.Nombre.trim() : null,
+      nombre: centro.Nombre ? centro.Nombre.trim() : null,
       direccion: centro.Dirección ? centro.Dirección.trim() : null,
       localidad: centro.Localidad ? centro.Localidad.trim() : null,
       provincia: centro.Provincia ? centro.Provincia.trim() : null,
@@ -19,7 +19,7 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
       coordenadas: centro.Coordenadas ? centro.Coordenadas.trim() : null
     };
 
-    if (!centroData.name || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || !centroData.coordenadas) {
+    if (!centroData.nombre || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || !centroData.coordenadas) {
       throw new Error('Faltan datos obligatorios para registrar el centro de atención.');
     }
 
@@ -33,14 +33,14 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
 When('el administrador modifica los datos del centro de atención {string} con los siguientes atributos:', function (nombreCentroActual, dataTable) {
   const atributos = dataTable.hashes()[0];
 
-  const name = atributos.Nombre ? atributos.Nombre.trim() : null;
+  const nombre = atributos.Nombre ? atributos.Nombre.trim() : null;
   const direccion = atributos.Dirección ? atributos.Dirección.trim() : null;
   const localidad = atributos.Localidad ? atributos.Localidad.trim() : null;
   const provincia = atributos.Provincia ? atributos.Provincia.trim() : null;
   const telefono = atributos.Teléfono ? atributos.Teléfono.trim() : null;
   const coordenadas = atributos.Coordenadas ? atributos.Coordenadas.trim() : null;
 
-  if (!name || !direccion || !localidad || !provincia || !telefono || !coordenadas) {
+  if (!nombre || !direccion || !localidad || !provincia || !telefono || !coordenadas) {
     throw new Error('Faltan datos obligatorios para modificar el centro de atención.');
   }
 
@@ -58,7 +58,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
   //console.log('📋 Lista de centros devuelta por el backend:', listaCentros);
 
   const centroExistente = listaCentros.find(c =>
-    c.name && c.name.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
+    c.nombre && c.nombre.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
   );
 
   if (!centroExistente) {
@@ -74,7 +74,7 @@ When('el administrador modifica los datos del centro de atención {string} con l
   // Preparar los datos para la actualización
   const centroData = {
     id: centroExistente.id,
-    name,
+    nombre,
     direccion,
     localidad,
     provincia,

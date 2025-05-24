@@ -15,7 +15,7 @@ public interface EspecialidadRepository extends JpaRepository<Especialidad, Inte
 
     // Verifica si existe una especialidad con el nombre (ignorando
     // mayúsculas/minúsculas) excluyendo un ID específico
-    boolean existsByNombreIgnoreCaseAndIdNot(String nombre, int id);
+    boolean existsByNombreIgnoreCaseAndIdNot(String nombre, Integer id);
     
 
 

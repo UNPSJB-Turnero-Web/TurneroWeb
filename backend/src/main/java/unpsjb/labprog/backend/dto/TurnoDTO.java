@@ -9,16 +9,28 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TurnoDTO {
-    private Long id;
+    private Integer id;
+
     private LocalDate fecha;
-    private LocalTime horaInicio; // Hora de inicio del turno
-    private LocalTime horaFin;    // Hora de fin del turno
-    private Long pacienteId;      // ID del paciente
-    private Long medicoId;        // ID del médico
-    private String estado;        // Estado del turno (PENDIENTE, CONFIRMADO, CANCELADO)
-    private EsquemaTurnoDTO esquemaTurno;
-    private PacienteDTO paciente;
-    private StaffMedicoDTO staffMedico;
-    private CentroAtencionDTO centroAtencion;
-    private AgendaDTO agenda;
+    private LocalTime horaInicio;
+    private LocalTime horaFin;
+
+    private String estado; // PENDIENTE, CONFIRMADO, CANCELADO
+
+    // Datos del paciente (resumidos)
+    private Integer pacienteId;
+    private String nombrePaciente;
+    private String apellidoPaciente;
+
+    // Datos del médico (resumidos
+    private Integer staffMedicoId;
+    private String nombreStaffMedico;
+    private String especialidadStaffMedico;
+
+    // Datos del centro y consultorio
+    private String nombreCentro;
+    private String nombreConsultorio;
+
+    // Datos de agenda
+    private Integer agendaId;
 }

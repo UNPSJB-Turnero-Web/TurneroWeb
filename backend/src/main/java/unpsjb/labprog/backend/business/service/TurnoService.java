@@ -29,7 +29,7 @@ public class TurnoService {
     }
 
     // Obtener un turno por ID como DTO
-    public Optional<TurnoDTO> findById(Long id) {
+    public Optional<TurnoDTO> findById(Integer id) {
         return repository.findById(id).map(this::toDTO);
     }
 
@@ -51,7 +51,7 @@ public class TurnoService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Integer id) {
         if (!repository.existsById(id)) {
             throw new IllegalStateException("No existe un turno con el ID: " + id);
         }
@@ -70,7 +70,7 @@ public class TurnoService {
         dto.setHoraInicio(turno.getHoraInicio());
         dto.setHoraFin(turno.getHoraFin());
         dto.setPacienteId(turno.getPaciente().getId());
-        dto.setMedicoId(turno.getStaffMedico().getId());
+        dto.setStaffMedicoId(turno.getStaffMedico().getId());
         dto.setEstado(turno.getEstado().name());
         return dto;
     }

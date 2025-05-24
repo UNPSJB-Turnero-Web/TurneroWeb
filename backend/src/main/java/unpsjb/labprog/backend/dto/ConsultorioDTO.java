@@ -1,14 +1,15 @@
 package unpsjb.labprog.backend.dto;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class ConsultorioDTO {
-    private int id;
+    private Integer id;
     private Integer numero;
-    private String name;
-    private CentroAtencionDTO centroAtencion;
-
+    private String nombre;
+    private Integer centroId;
+    private String nombreCentro;
     // Getters y Setters
 }

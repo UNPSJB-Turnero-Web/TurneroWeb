@@ -14,11 +14,13 @@ import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.dto.CentroAtencionDTO;
+import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.dto.StaffMedicoDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
+import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
@@ -42,20 +44,20 @@ public class StaffMedicoService {
                 .toList();
     }
 
-    public Optional<StaffMedicoDTO> findById(Long id) {
+    public Optional<StaffMedicoDTO> findById(Integer id) {
         return repository.findById(id).map(this::toDTO);
     }
-    public List<StaffMedicoDTO> findByCentroId(Long centroId) {
-        return repository.findByCentroId(centroId).stream()
+
+    public List<StaffMedicoDTO> findByCentroId(Integer centroId) {
+        return repository.findByCentroAtencionId(centroId).stream()
                 .map(this::toDTO)
                 .toList();
-    }   
-        // Obtener especialidades paginadas como DTOs
+    }
+
     public Page<StaffMedicoDTO> findByPage(int page, int size) {
         Page<StaffMedico> pageResult = repository.findAll(PageRequest.of(page, size));
         return pageResult.map(this::toDTO);
     }
-
 
     @Transactional
     public StaffMedicoDTO saveOrUpdate(StaffMedicoDTO dto) {
@@ -65,14 +67,15 @@ public class StaffMedicoService {
         validarStaffMedico(staffMedico);
 
         // Validar unicidad de la asociación médico-centro-especialidad
+        Especialidad especialidad = staffMedico.getMedico().getEspecialidad();
         if (staffMedico.getId() == null || staffMedico.getId() == 0) { // Creación
-            if (repository.existsByMedicoAndCentroAndEspecialidad(
-                    staffMedico.getMedico(), staffMedico.getCentro(), staffMedico.getEspecialidad())) {
+            if (repository.existsByMedicoAndCentroAtencionAndMedico_Especialidad(
+                    staffMedico.getMedico(), staffMedico.getCentroAtencion(), especialidad)) {
                 throw new IllegalStateException("El médico ya está asociado a este centro con esa especialidad");
             }
         } else { // Actualización
-            StaffMedico existente = repository.findByMedicoAndCentroAndEspecialidad(
-                    staffMedico.getMedico(), staffMedico.getCentro(), staffMedico.getEspecialidad());
+            StaffMedico existente = repository.findByMedicoAndCentroAtencionAndMedico_Especialidad(
+                    staffMedico.getMedico(), staffMedico.getCentroAtencion(), especialidad);
             if (existente != null && !existente.getId().equals(staffMedico.getId())) {
                 throw new IllegalStateException("El médico ya está asociado a este centro con esa especialidad");
             }
@@ -83,22 +86,26 @@ public class StaffMedicoService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(Integer id) {
         repository.deleteById(id);
     }
-      @Transactional
+
+    @Transactional
     public void deleteAll() {
         repository.deleteAll();
     }
 
-
     private StaffMedicoDTO toDTO(StaffMedico staff) {
         StaffMedicoDTO dto = new StaffMedicoDTO();
         dto.setId(staff.getId());
-        dto.setCentro(toCentroAtencionDTO(staff.getCentro()));
+        dto.setCentro(toCentroAtencionDTO(staff.getCentroAtencion()));
         dto.setMedico(toMedicoDTO(staff.getMedico()));
-        dto.setEspecialidad(toEspecialidadDTO(staff.getEspecialidad()));
+        // Accede a la especialidad a través del médico
+        if (staff.getMedico() != null && staff.getMedico().getEspecialidad() != null) {
+            dto.setEspecialidad(toEspecialidadDTO(staff.getMedico().getEspecialidad()));
+        }
         dto.setDisponibilidad(toDisponibilidadDTOList(staff.getDisponibilidad()));
+        dto.setConsultorio(toConsultorioDTO(staff.getConsultorio()));
         return dto;
     }
 
@@ -119,30 +126,33 @@ public class StaffMedicoService {
         staff.setMedico(medico);
 
         // Buscar centro por nombre
-        CentroAtencion centro = centroRepository.findByName(dto.getCentro().getName());
+        CentroAtencion centro = centroRepository.findByNombre(dto.getCentro().getNombre());
         if (centro == null) {
             throw new IllegalStateException("Centro de atención no existe con el nombre indicado");
         }
-        staff.setCentro(centro);
+        staff.setCentroAtencion(centro);
 
-        // Buscar especialidad por nombre
-        Especialidad especialidad = especialidadRepository.findByNombreIgnoreCase(dto.getEspecialidad().getNombre());
-        if (especialidad == null) {
-            throw new IllegalStateException("La especialidad del médico no se encuentra disponible para el centro de salud");
+        // Consultorio (opcional)
+        if (dto.getConsultorio() != null && dto.getConsultorio().getId() != null) {
+            Consultorio consultorio = new Consultorio();
+            consultorio.setId(dto.getConsultorio().getId());
+            staff.setConsultorio(consultorio);
         }
-        staff.setEspecialidad(especialidad);
+
+        // No se setea especialidad en StaffMedico, se accede por staff.getMedico().getEspecialidad()
 
         return staff;
     }
 
     private void validarStaffMedico(StaffMedico staff) {
-        if (staff.getMedico() == null || staff.getMedico().getId() <= 0) {
+        if (staff.getMedico() == null || staff.getMedico().getId() == null || staff.getMedico().getId() <= 0) {
             throw new IllegalStateException("Debe seleccionar un médico válido.");
         }
-        if (staff.getCentro() == null || staff.getCentro().getId() <= 0) {
+        if (staff.getCentroAtencion() == null || staff.getCentroAtencion().getId() == null || staff.getCentroAtencion().getId() <= 0) {
             throw new IllegalStateException("Debe seleccionar un centro de atención válido.");
         }
-        if (staff.getEspecialidad() == null || staff.getEspecialidad().getId() <= 0) {
+        // Validar especialidad a través del médico
+        if (staff.getMedico().getEspecialidad() == null || staff.getMedico().getEspecialidad().getId() == null || staff.getMedico().getEspecialidad().getId() <= 0) {
             throw new IllegalStateException("Debe seleccionar una especialidad válida.");
         }
         // Podés agregar más validaciones según tu modelo
@@ -152,7 +162,7 @@ public class StaffMedicoService {
         if (centro == null) return null;
         CentroAtencionDTO dto = new CentroAtencionDTO();
         dto.setId(centro.getId());
-        dto.setName(centro.getName());
+        dto.setNombre(centro.getNombre());
         // agrega otros campos si es necesario
         return dto;
     }
@@ -163,7 +173,7 @@ public class StaffMedicoService {
         dto.setId(medico.getId());
         dto.setNombre(medico.getNombre());
         dto.setApellido(medico.getApellido());
-        dto.setDni(String.valueOf(medico.getDni())); // <-- conversión aquí
+        dto.setDni(String.valueOf(medico.getDni()));
         dto.setMatricula(medico.getMatricula());
         // agrega otros campos si es necesario
         return dto;
@@ -174,6 +184,14 @@ public class StaffMedicoService {
         EspecialidadDTO dto = new EspecialidadDTO();
         dto.setId(especialidad.getId());
         dto.setNombre(especialidad.getNombre());
+        // agrega otros campos si es necesario
+        return dto;
+    }
+
+    private ConsultorioDTO toConsultorioDTO(Consultorio consultorio) {
+        if (consultorio == null) return null;
+        ConsultorioDTO dto = new ConsultorioDTO();
+        dto.setId(consultorio.getId());
         // agrega otros campos si es necesario
         return dto;
     }

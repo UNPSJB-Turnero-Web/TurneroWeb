@@ -30,13 +30,13 @@ public class BloqueHorarioPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BloqueHorario> getById(@PathVariable Long id) {
+    public ResponseEntity<BloqueHorario> getById(@PathVariable Integer id) {
         Optional<BloqueHorario> bloque = service.findById(id);
         return bloque.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/agenda/{agendaId}")
-    public List<BloqueHorario> getByAgenda(@PathVariable Long agendaId) {
+    public List<BloqueHorario> getByAgenda(@PathVariable Integer agendaId) {
         return service.findByAgenda(agendaId);
     }
 
@@ -46,7 +46,7 @@ public class BloqueHorarioPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BloqueHorario> update(@PathVariable Long id, @RequestBody BloqueHorario bloque) {
+    public ResponseEntity<BloqueHorario> update(@PathVariable Integer id, @RequestBody BloqueHorario bloque) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
@@ -55,16 +55,12 @@ public class BloqueHorarioPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         if (!service.findById(id).isPresent()) {
             return ResponseEntity.notFound().build();
         }
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetBloques() {
-        service.deleteAll();
-        return ResponseEntity.ok("Todos los bloques horarios fueron eliminados.");
-    }
+
 }

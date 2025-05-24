@@ -30,7 +30,7 @@ public class DisponibilidadMedicoService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<DisponibilidadMedicoDTO> findById(Long id) {
+    public Optional<DisponibilidadMedicoDTO> findById(Integer id) {
         return repository.findById(id).map(this::toDTO);
     }
 
@@ -71,7 +71,7 @@ public class DisponibilidadMedicoService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(Integer id) {
         repository.deleteById(id);
     }
       public void deleteAll() {

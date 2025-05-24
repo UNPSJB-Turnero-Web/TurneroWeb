@@ -1,11 +1,16 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.*;
+import java.time.LocalTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -15,7 +20,7 @@ public class DisponibilidadMedico {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private String diaSemana; // Ej: Lunes, Martes, etc.

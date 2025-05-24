@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PacienteDTO {
-    private Long id;
+    private Integer id;
     private Long dni;
     private String nombre;
     private String apellido;

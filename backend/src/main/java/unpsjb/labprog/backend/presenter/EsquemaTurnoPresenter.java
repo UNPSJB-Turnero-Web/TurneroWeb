@@ -35,14 +35,14 @@ public class EsquemaTurnoPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EsquemaTurnoDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<EsquemaTurnoDTO> getById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/staff/{staffMedicoId}")
-    public ResponseEntity<List<EsquemaTurnoDTO>> getByStaffMedico(@PathVariable Long staffMedicoId) {
+    public ResponseEntity<List<EsquemaTurnoDTO>> getByStaffMedico(@PathVariable Integer staffMedicoId) {
         List<EsquemaTurnoDTO> esquemas = service.findByStaffMedico(staffMedicoId);
         return ResponseEntity.ok(esquemas);
     }
@@ -54,14 +54,14 @@ public class EsquemaTurnoPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
         esquemaTurnoDTO.setId(id);
         EsquemaTurnoDTO updated = service.saveOrUpdate(esquemaTurnoDTO);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
         if (service.findById(id).isPresent()) {
             service.deleteById(id);
             return ResponseEntity.noContent().build();
@@ -84,10 +84,5 @@ public class EsquemaTurnoPresenter {
         return Response.ok(response);
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetEsquemas() {
-        service.deleteAll();
-        return ResponseEntity.ok("Todos los esquemas de turno fueron eliminados.");
-    }
-
+    
 }

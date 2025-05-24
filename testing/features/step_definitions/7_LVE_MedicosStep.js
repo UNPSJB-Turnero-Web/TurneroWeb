@@ -19,7 +19,7 @@ When(
       apellido,
       dni: dni && !isNaN(Number(dni)) ? Number(dni) : dni,
       matricula,
-      especialidades: [{ nombre: especialidad }]//
+      especialidad: { nombre: especialidad }//
     };
     try {
       const res = request('POST', 'http://backend:8080/medicos', { json: medico });

@@ -35,7 +35,7 @@ public class DisponibilidadMedicoPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> findById(@PathVariable Long id) {
+    public ResponseEntity<Object> findById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(disponibilidad -> Response.ok(disponibilidad, "Disponibilidad encontrada"))
                 .orElse(Response.notFound("Disponibilidad con id " + id + " no encontrada"));
@@ -69,7 +69,7 @@ public class DisponibilidadMedicoPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
             service.deleteById(id);
             return Response.ok(null, "Disponibilidad eliminada correctamente");
@@ -91,15 +91,5 @@ public class DisponibilidadMedicoPresenter {
         response.put("currentPage", pageResult.getNumber());
 
         return Response.ok(response);
-    }
-
-    @PostMapping("/reset")
-    public ResponseEntity<Object> reset() {
-        try {
-            service.deleteAll();
-            return Response.ok(null, "Todas las disponibilidades fueron eliminadas correctamente");
-        } catch (Exception e) {
-            return Response.error(null, "Error al resetear las disponibilidades: " + e.getMessage());
-        }
     }
 }

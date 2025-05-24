@@ -20,7 +20,7 @@ Given('que existe un centro de atención llamado {string}', function(nombreCentr
       .toLowerCase();
   }
 
-  let c = centros.find(x => x.name && normalize(x.name) === normalize(nombreCentro));
+  let c = centros.find(x => x.nombre && normalize(x.nombre) === normalize(nombreCentro));
 
   if (!c) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   this.centroId = c.id;
@@ -36,7 +36,7 @@ When('se registra un consultorio con el número {string} y el nombre {string}', 
   // POST a /consultorios/centro/{centroId}
   const payload = {
     numero: parseInt(numero, 10),
-    name: nombreConsultorio
+    nombre: nombreConsultorio
   };
   const url = `http://backend:8080/consultorios/centro/${this.centroId}`;
   const res = request('POST', url, { json: payload });
@@ -82,7 +82,7 @@ Then('el sistema responde con el siguiente JSON:', function (docString) {
     // Lista plana (por centro)
     const dataTransformada = this.response.data.map(c => ({
       numero: c.numero,
-      Nombre_consultorio: c.name
+      Nombre_consultorio: c.nombre
     }));
 
     dataTransformada.sort((a, b) => a.numero - b.numero);

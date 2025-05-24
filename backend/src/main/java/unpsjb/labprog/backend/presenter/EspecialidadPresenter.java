@@ -52,7 +52,7 @@ public class EspecialidadPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getById(@PathVariable int id) {
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
         try {
             EspecialidadDTO dto = service.findById(id);
             if (dto == null) {
@@ -77,7 +77,7 @@ public class EspecialidadPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable int id, @RequestBody EspecialidadDTO dto) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody EspecialidadDTO dto) {
         try {
             dto.setId(id);
             EspecialidadDTO updated = service.saveOrUpdate(dto);
@@ -90,7 +90,7 @@ public class EspecialidadPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable int id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
             service.delete(id);
             return Response.ok(null, "Especialidad eliminada exitosamente");
@@ -101,19 +101,10 @@ public class EspecialidadPresenter {
         }
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> reset() {
-        try {
-            service.deleteAll();
-            return Response.ok(null, "Base de datos de especialidades reseteada correctamente");
-        } catch (Exception e) {
-            return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
-        }
-    }
 
     // Get especialidades no asociadas a un centro de atencion
     @GetMapping("/centrosAtencion/{centroId}/especialidades/disponibles")
-    public ResponseEntity<Object> getEspecialidadesNoAsociadas(@PathVariable int centroId) {
+    public ResponseEntity<Object> getEspecialidadesNoAsociadas(@PathVariable Integer centroId) {
         try {
             List<EspecialidadDTO> disponibles = service.findEspecialidadesNoAsociadas(centroId);
             return Response.ok(disponibles, "Especialidades no asociadas recuperadas correctamente");
@@ -124,7 +115,7 @@ public class EspecialidadPresenter {
 
     // get especialidades asociadas a un centro de atencion
     @GetMapping("/centrosAtencion/{centroId}/especialidades")
-    public ResponseEntity<Object> getByCentroAtencion(@PathVariable int centroId) {
+    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Integer centroId) {
         try {
             List<EspecialidadDTO> especialidades = service.findByCentroAtencionId(centroId);
             return Response.ok(especialidades, "Especialidades asociadas recuperadas correctamente");
@@ -146,8 +137,8 @@ public class EspecialidadPresenter {
 
     @PostMapping("/centrosAtencion/{centroId}/especialidades/{especialidadId}")
     public ResponseEntity<Object> asociarEspecialidadExistenteACentro(
-            @PathVariable int centroId,
-            @PathVariable int especialidadId) {
+            @PathVariable Integer centroId,
+            @PathVariable Integer especialidadId) {
         try {
             EspecialidadDTO result = service.asociarEspecialidadACentro(especialidadId, centroId);
             return Response.ok(result, "Especialidad asociada correctamente al centro");
@@ -158,8 +149,8 @@ public class EspecialidadPresenter {
 
     @DeleteMapping("/centrosAtencion/{centroId}/especialidades/{especialidadId}")
     public ResponseEntity<Object> desasociarEspecialidadDeCentro(
-            @PathVariable int centroId,
-            @PathVariable int especialidadId) {
+            @PathVariable Integer centroId,
+            @PathVariable Integer especialidadId) {
         try {
             service.desasociarEspecialidadDeCentro(especialidadId, centroId);
             return Response.ok(null, "Especialidad desasociada correctamente del centro");

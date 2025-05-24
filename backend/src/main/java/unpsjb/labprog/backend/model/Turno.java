@@ -3,8 +3,6 @@ package unpsjb.labprog.backend.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 @Entity
 @Getter
 @Setter
@@ -25,34 +24,28 @@ public class Turno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
-    private LocalDate fecha; // Fecha del turno
+    private LocalDate fecha;
 
     @Column(nullable = false)
-    private LocalTime horaInicio; // Hora de inicio del turno
+    private LocalTime horaInicio;
 
     @Column(nullable = false)
-    private LocalTime horaFin; // Hora de fin del turno
+    private LocalTime horaFin;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EstadoTurno estado; // Estado del turno (PENDIENTE, CONFIRMADO, CANCELADO)
+    private EstadoTurno estado;
 
-    @ManyToOne
-    private EsquemaTurno esquemaTurno; // Relación con EsquemaTurno
+    @ManyToOne(optional = false)
+    private Paciente paciente;
 
-    @ManyToOne
-    private Paciente paciente; // Relación con Paciente
-
-    @ManyToOne
+    @ManyToOne(optional = false)
     private StaffMedico staffMedico;
 
-    @ManyToOne
-    private CentroAtencion centroAtencion; // Relación con CentroAtencion
-    @ManyToOne
-    @JsonIgnore
+    @ManyToOne(optional = false)
     private Agenda agenda;
 
     public void confirmarTurno() {

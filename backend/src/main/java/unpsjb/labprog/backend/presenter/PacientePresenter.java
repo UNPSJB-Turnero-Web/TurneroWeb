@@ -32,7 +32,7 @@ public class PacientePresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> findById(@PathVariable Long id) {
+    public ResponseEntity<Object> findById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(paciente -> Response.ok(paciente, "Paciente encontrado"))
                 .orElse(Response.notFound("Paciente con id " + id + " no encontrado"));
@@ -66,7 +66,7 @@ public class PacientePresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
             service.delete(id);
             return Response.ok(null, "Paciente eliminado correctamente");

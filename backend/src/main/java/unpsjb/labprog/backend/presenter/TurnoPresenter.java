@@ -33,7 +33,7 @@ public class TurnoPresenter {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getById(@PathVariable Long id) {
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
         return service.findById(id)
                 .map(turno -> Response.ok(turno, "Turno recuperado correctamente"))
                 .orElse(Response.notFound("Turno no encontrado"));
@@ -46,7 +46,7 @@ public class TurnoPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody TurnoDTO turnoDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody TurnoDTO turnoDTO) {
         turnoDTO.setId(id);
         TurnoDTO updated = service.save(turnoDTO);
         return Response.ok(updated, "Turno actualizado correctamente");
@@ -66,14 +66,10 @@ public class TurnoPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         service.delete(id);
         return Response.ok(null, "Turno eliminado correctamente");
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> resetTurnos() {
-        service.deleteAll();
-        return ResponseEntity.ok("Todos los turnos fueron eliminados.");
-    }
+   
 }

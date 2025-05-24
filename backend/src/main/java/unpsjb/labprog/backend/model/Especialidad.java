@@ -20,16 +20,11 @@ public class Especialidad {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
 
     private String nombre;
-
     private String descripcion;
 
     @ManyToMany(mappedBy = "especialidades")
-    private Set<CentroAtencion> centrosAtencion = new HashSet<>();
-
-    @ManyToMany(mappedBy = "especialidades")
-    private Set<Medico> medicos = new HashSet<>();
-
+    private Set<CentroAtencion> centros = new HashSet<>();
 }

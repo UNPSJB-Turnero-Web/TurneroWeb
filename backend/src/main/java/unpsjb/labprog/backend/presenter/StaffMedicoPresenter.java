@@ -36,7 +36,7 @@ public class StaffMedicoPresenter {
 
     // Obtener staff médico por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getById(@PathVariable Long id) {
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
         Optional<StaffMedicoDTO> dtoOpt = service.findById(id);
         if (!dtoOpt.isPresent()) {
             return Response.notFound("No se encontró el staff médico con id " + id);
@@ -45,7 +45,7 @@ public class StaffMedicoPresenter {
     }
 
     @GetMapping("/centrosAtencion/{centroId}/staffMedico")
-    public ResponseEntity<Object> getStaffMedicoByCentro(@PathVariable Long centroId) {
+    public ResponseEntity<Object> getStaffMedicoByCentro(@PathVariable Integer centroId) {
         List<StaffMedicoDTO> staff = service.findByCentroId(centroId);
         return Response.ok(staff, "Staff médico recuperado correctamente");
     }
@@ -88,7 +88,7 @@ public class StaffMedicoPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Long id, @RequestBody StaffMedicoDTO dto) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody StaffMedicoDTO dto) {
         try {
             dto.setId(id);
             StaffMedicoDTO updated = service.saveOrUpdate(dto);
@@ -102,7 +102,7 @@ public class StaffMedicoPresenter {
 
     // Eliminar asociación
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
             service.deleteById(id);
             return Response.ok(null, "Asociación eliminada correctamente");
@@ -113,7 +113,7 @@ public class StaffMedicoPresenter {
 
     // Listar médicos asociados a un centro
     @GetMapping("/centro/{centroId}")
-    public ResponseEntity<Object> getByCentro(@PathVariable Long centroId) {
+    public ResponseEntity<Object> getByCentro(@PathVariable Integer centroId) {
         try {
             List<StaffMedicoDTO> lista = service.findByCentroId(centroId);
             return Response.ok(lista, "Médicos asociados recuperados correctamente");
@@ -122,15 +122,7 @@ public class StaffMedicoPresenter {
         }
     }
 
-    @DeleteMapping("/reset")
-    public ResponseEntity<Object> reset() {
-        try {
-            service.deleteAll();
-            return Response.ok(null, "Base de datos de especialidades reseteada correctamente");
-        } catch (Exception e) {
-            return Response.error(null, "Error al resetear la base de datos: " + e.getMessage());
-        }
-    }
+    
 
     // Otros endpoints según necesidad...
 }

@@ -8,9 +8,9 @@ Given('que existe un sistema de gestión de centros de atención', function () {
 
 When(
   'el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string}, {string} y {string}',
-  function (name, direccion, localidad, provincia, telefono, latitud, longitud) {
+  function (nombre, direccion, localidad, provincia, telefono, latitud, longitud) {
     const centroData = {
-      name: name || null,
+      nombre: nombre || null,
       direccion: direccion || null,
       localidad: localidad || null,
       provincia: provincia || null,

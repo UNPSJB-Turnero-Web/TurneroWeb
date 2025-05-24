@@ -27,7 +27,7 @@ Given('que existen especialidades asociadas a centros médicos en el sistema', f
 Given('que existe un centro de atención llamado {string} para especialidadesCentro', function(nombreCentro) {
   const res = request('GET', `http://backend:8080/centrosAtencion`);
   const centros = JSON.parse(res.getBody('utf8')).data;
-  const centro = centros.find(x => x.name && normalize(x.name) === normalize(nombreCentro));
+  const centro = centros.find(x => x.nombre && normalize(x.nombre) === normalize(nombreCentro));
   if (!centro) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   this.centroId = centro.id;
 });
@@ -45,7 +45,7 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
   // obtener id centro
   const resC = request('GET', 'http://backend:8080/centrosAtencion');
   const centro = JSON.parse(resC.getBody('utf8')).data
-    .find(c => c.name && normalize(c.name) === normalize(nombreCent));
+    .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
   if (!centro) {
     this.httpStatus = 409;
     this.response = {
@@ -78,7 +78,7 @@ When('el administrador desasocia la especialidad {string} del centro de atenció
   // obtener id centro
   const resC = request('GET', 'http://backend:8080/centrosAtencion');
   const centro = JSON.parse(resC.getBody('utf8')).data
-    .find(c => c.name && normalize(c.name) === normalize(nombreCent));
+    .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
   if (!centro) throw new Error(`No se encontró el centro: ${nombreCent}`);
   // obtener id especialidad
   const resE = request('GET', 'http://backend:8080/especialidades');
@@ -97,7 +97,7 @@ When('un usuario del sistema solicita la lista de especialidades asociadas al ce
   // Busca el centro por nombre
   const res = request('GET', `http://backend:8080/centrosAtencion`);
   const centros = JSON.parse(res.getBody('utf8')).data;
-  const centro = centros.find(x => x.name && normalize(x.name) === normalize(nombreCentro));
+  const centro = centros.find(x => x.nombre && normalize(x.nombre) === normalize(nombreCentro));
   if (!centro) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   const centroId = centro.id;
 

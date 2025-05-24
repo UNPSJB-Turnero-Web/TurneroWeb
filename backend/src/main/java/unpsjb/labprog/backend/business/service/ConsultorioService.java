@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
-import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
@@ -41,14 +40,12 @@ public class ConsultorioService {
                 .map(this::toDTO);
     }
 
-    public Optional<ConsultorioDTO> findById(int id) {
+    public Optional<ConsultorioDTO> findById(Integer id) {
         return repository.findById(id).map(this::toDTO);
     }
 
-   
-
     @Transactional
-    public void delete(int id) {
+    public void delete(Integer id) {
         repository.deleteById(id);
     }
 
@@ -56,12 +53,11 @@ public class ConsultorioService {
         ConsultorioDTO dto = new ConsultorioDTO();
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
-        dto.setName(c.getName());
-        CentroAtencion centro = c.getCentroAtencion();
-        CentroAtencionDTO centroDto = new CentroAtencionDTO();
-        centroDto.setId(centro.getId());
-        centroDto.setName(centro.getName());
-        dto.setCentroAtencion(centroDto);
+        dto.setNombre(c.getNombre());
+        if (c.getCentroAtencion() != null) {
+            dto.setCentroId(c.getCentroAtencion().getId());
+            dto.setNombreCentro(c.getCentroAtencion().getNombre());
+        }
         return dto;
     }
 
@@ -69,22 +65,24 @@ public class ConsultorioService {
         Consultorio consultorio = new Consultorio();
         consultorio.setId(dto.getId());
         consultorio.setNumero(dto.getNumero());
-        consultorio.setName(dto.getName());
-        CentroAtencion centro = new CentroAtencion();
-        centro.setId(dto.getCentroAtencion().getId());
-        consultorio.setCentroAtencion(centro);
+        consultorio.setNombre(dto.getNombre());
+        if (dto.getCentroId() != null) {
+            CentroAtencion centro = new CentroAtencion();
+            centro.setId(dto.getCentroId());
+            consultorio.setCentroAtencion(centro);
+        }
         return consultorio;
     }
 
     public List<Consultorio> findByCentroAtencion(String centroNombre) {
-        CentroAtencion centro = centroRepo.findByName(centroNombre);
+        CentroAtencion centro = centroRepo.findByNombre(centroNombre);
         if (centro == null) {
             throw new IllegalStateException("Centro no encontrado");
         }
         return repository.findByCentroAtencion(centro);
     }
 
-    public List<ConsultorioDTO> findByCentroAtencionId(Long centroId) {
+    public List<ConsultorioDTO> findByCentroAtencionId(Integer centroId) {
         return repository.findByCentroAtencionId(centroId)
                 .stream()
                 .map(this::toDTO)
@@ -93,7 +91,7 @@ public class ConsultorioService {
 
     @Transactional
     public Consultorio saveByCentroNombre(Consultorio consultorio, String centroNombre) {
-        CentroAtencion centro = centroRepo.findByName(centroNombre);
+        CentroAtencion centro = centroRepo.findByNombre(centroNombre);
         if (centro == null) {
             throw new IllegalStateException("Centro de Atención no encontrado");
         }
@@ -109,14 +107,13 @@ public class ConsultorioService {
         try {
             List<Consultorio> consultorios = findByCentroAtencion(centroNombre);
             var data = consultorios.stream()
-                    .map(c -> Map.of("numero", c.getNumero(), "nombre_consultorio", c.getName()))
+                    .map(c -> Map.of("numero", c.getNumero(), "nombre_consultorio", c.getNombre()))
                     .toList();
             return ResponseEntity.ok(Map.of("status_code", 200, "data", data));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("status_code", 500, "error", e.getMessage()));
         }
     }
-    
 
     @Transactional
     public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto) {
@@ -129,12 +126,11 @@ public class ConsultorioService {
                 .orElseThrow(() -> new IllegalStateException("Centro de Atención no encontrado"));
         consultorio.setCentroAtencion(centro);
 
-        if (consultorio.getId() == 0) {
-            // CREACIÓN
+        if (consultorio.getId() == null || consultorio.getId() == 0) { // CREACIÓN
             if (repository.existsByNumeroAndCentroAtencion(consultorio.getNumero(), centro)) {
                 throw new IllegalStateException("El número de consultorio ya está en uso");
             }
-            if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
+            if (repository.existsByNombreAndCentroAtencion(consultorio.getNombre(), centro)) {
                 throw new IllegalStateException("El nombre del consultorio ya está en uso");
             }
         } else {
@@ -149,13 +145,13 @@ public class ConsultorioService {
                     throw new IllegalStateException("El número de consultorio ya está en uso");
                 }
             }
-            if (!existente.getName().equals(consultorio.getName())) {
-                if (repository.existsByNameAndCentroAtencion(consultorio.getName(), centro)) {
+            if (!existente.getNombre().equals(consultorio.getNombre())) {
+                if (repository.existsByNombreAndCentroAtencion(consultorio.getNombre(), centro)) {
                     throw new IllegalStateException("El nombre del consultorio ya está en uso");
                 }
             }
             existente.setNumero(consultorio.getNumero());
-            existente.setName(consultorio.getName());
+            existente.setNombre(consultorio.getNombre());
             consultorio = existente;
         }
 
@@ -163,7 +159,7 @@ public class ConsultorioService {
     }
 
     private void validateConsultorio(Consultorio consultorio) {
-        String nombre = consultorio.getName();
+        String nombre = consultorio.getNombre();
         if (nombre == null || nombre.trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del consultorio es obligatorio");
         }

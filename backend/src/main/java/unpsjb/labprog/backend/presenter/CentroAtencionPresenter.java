@@ -39,7 +39,7 @@ public class CentroAtencionPresenter {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+    public ResponseEntity<Object> findById(@PathVariable("id") Integer id) {
         Optional<CentroAtencionDTO> optionalCentro = service.findById(id);
         if (optionalCentro.isEmpty()) {
             return Response.notFound("Centro de atención id " + id + " no encontrado");
@@ -71,7 +71,7 @@ public class CentroAtencionPresenter {
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> create(@RequestBody CentroAtencionDTO dto) {
         try {
-            if (dto.getId() != 0) {
+            if (dto.getId() != null && dto.getId() != 0) {
                 return Response.error(dto, "El centro de atención no puede tener un ID definido al crearse.");
             }
             CentroAtencionDTO saved = service.saveOrUpdate(dto);
@@ -89,7 +89,7 @@ public class CentroAtencionPresenter {
     @RequestMapping(method = RequestMethod.PUT)
     public ResponseEntity<Object> update(@RequestBody CentroAtencionDTO dto) {
         try {
-            if (dto.getId() <= 0) {
+            if (dto.getId() == null || dto.getId() <= 0) {
                 return Response.error(dto, "Debe proporcionar un ID válido para actualizar.");
             }
             CentroAtencionDTO saved = service.saveOrUpdate(dto);
@@ -119,18 +119,4 @@ public class CentroAtencionPresenter {
         }
     }
 
-    @RequestMapping(value = "/reset", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> resetCentros() {
-        try {
-            service.findAll().forEach(c -> service.delete(c.getId()));
-            return Response.ok("Reset completo.");
-        } catch (ResponseStatusException e) {
-            if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                return Response.dbError(e.getReason());
-            }
-            return Response.error(null, e.getReason());
-        } catch (Exception e) {
-            return Response.error(null, e.getMessage());
-        }
-    }
 }

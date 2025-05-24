@@ -26,10 +26,10 @@ public class CentroAtencion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
 
     @Column(unique = true, nullable = false)
-    private String name;
+    private String nombre;
 
     @Column(nullable = false)
     private String direccion;
@@ -50,7 +50,7 @@ public class CentroAtencion {
     private Double longitud;
 
     // Relación uno a muchos con StaffMedico
-    @OneToMany(mappedBy = "centro", cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "centroAtencion", cascade = CascadeType.PERSIST)
     private List<StaffMedico> staffMedico;
 
     // Relación uno a muchos con Consultorio
@@ -59,10 +59,6 @@ public class CentroAtencion {
 
     // Relación muchos a muchos con Especialidad
     @ManyToMany
-    @JoinTable(
-        name = "centro_especialidad",
-        joinColumns = @JoinColumn(name = "centro_id"),
-        inverseJoinColumns = @JoinColumn(name = "especialidad_id")
-    )
+    @JoinTable(name = "centro_especialidad", joinColumns = @JoinColumn(name = "centro_id"), inverseJoinColumns = @JoinColumn(name = "especialidad_id"))
     private Set<Especialidad> especialidades = new HashSet<>();
 }

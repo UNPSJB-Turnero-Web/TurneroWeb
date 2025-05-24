@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class BloqueHorarioDTO {
-    private Long id;
+    private Integer id;
     private LocalDate fecha;
     private String diaSemana;
     private LocalTime horaInicio;
