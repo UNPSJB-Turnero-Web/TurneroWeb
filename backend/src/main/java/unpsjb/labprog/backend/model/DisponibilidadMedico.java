@@ -1,8 +1,10 @@
 package unpsjb.labprog.backend.model;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,8 +24,8 @@ public class DisponibilidadMedico {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @Column(nullable = false)
-    private String diaSemana; // Ej: Lunes, Martes, etc.
+     @ElementCollection
+    private List<String> diaSemana; // Cambiado de String a List<String>
 
     @Column(nullable = false)
     private LocalTime horaInicio; // Hora de inicio

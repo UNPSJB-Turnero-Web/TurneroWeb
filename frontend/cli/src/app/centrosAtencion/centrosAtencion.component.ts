@@ -48,7 +48,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 [class.table-active]="centro.id === selectedId"
               >
                 <td class="fw-semibold">{{ centro.id }}</td>
-                <td>{{ centro.name }}</td>
+                <td>{{ centro.nombre }}</td>
                 <td>{{ centro.direccion }}</td>
                 <td>{{ centro.localidad }}</td>
                 <td>{{ centro.provincia }}</td>

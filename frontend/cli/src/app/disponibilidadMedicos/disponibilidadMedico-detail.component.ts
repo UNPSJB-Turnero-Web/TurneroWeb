@@ -29,7 +29,7 @@ import { DataPackage } from '../data.package';
               required
             >
               <option *ngFor="let staff of staffMedicos" [value]="staff.id">
-                {{ staff.medicoNombre }} ({{ staff.especialidadNombre }})
+                {{ staff.medico?.nombre }} {{ staff.medico?.apellido }} ({{ staff.especialidad?.nombre }})
               </option>
             </select>
           </div>

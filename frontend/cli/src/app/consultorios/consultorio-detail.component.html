@@ -1,9 +1,9 @@
 <div *ngIf="consultorio">
   <!-- MODO VISTA -->
   <div *ngIf="!modoEdicion">
-    <h2>Consultorio: {{ consultorio.name }}</h2>
+    <h2>Consultorio: {{ consultorio.nombre }}</h2>
     <p><b>Número:</b> {{ consultorio.numero }}</p>
-    <p><b>Centro de Atención:</b> {{ consultorio.centroAtencion?.name }}</p>
+    <p><b>Centro de Atención:</b> {{ consultorio.centroAtencion?.nombre }}</p>
     <button class="btn btn-danger" (click)="goBack()">Atrás</button>
     <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
     
@@ -13,7 +13,7 @@
   <form *ngIf="modoEdicion" #form="ngForm">
     <h2>
       <ng-container *ngIf="consultorio.id && consultorio.id !== 0; else nuevo">
-        Editando consultorio: {{ consultorio.name }}
+        Editando consultorio: {{ consultorio.nombre }}
       </ng-container>
       <ng-template #nuevo>
         Nuevo Consultorio
@@ -61,7 +61,7 @@
         required
         placeholder="Nombre"
         class="form-control"
-        [(ngModel)]="consultorio.name"
+        [(ngModel)]="consultorio.nombre"
         #nombre="ngModel"
       />
       <div

@@ -3,7 +3,7 @@ import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 export interface Consultorio {
     id?: number;
     numero: number;
-    name: string;
+    nombre: string;
     especialidad?: string;
     medicoAsignado?: string;
     telefono?: string;

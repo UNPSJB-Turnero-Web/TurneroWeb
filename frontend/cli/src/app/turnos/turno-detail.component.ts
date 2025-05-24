@@ -200,7 +200,7 @@ export class TurnoDetailComponent {
       )
     );
 
-  formatterAgenda = (x: Agenda) => `${x.date} - ${x.centroAtencion?.name || 'Sin centro'}`;
+  formatterAgenda = (x: Agenda) => `${x.date} - ${x.centroAtencion?.nombre || 'Sin centro'}`;
 
   onAgendaSelected(agenda: Agenda): void {
     this.turno.agenda = agenda;

@@ -181,16 +181,17 @@ export class EsquemaTurnoComponent {
       });
   }
 
-  getStaffMedicoNombre(staffMedicoId: number): string {
-    if (!this.staffMedicos) return '';
-    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-    if (!staff) return '';
-    return `${staff.medicoNombre} (${staff.especialidadNombre})`;
-  }
-
+getStaffMedicoNombre(staffMedicoId: number): string {
+  if (!this.staffMedicos) return '';
+  const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+  if (!staff) return '';
+  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+  return `${medicoNombre} (${especialidadNombre})`;
+}
   getConsultorioNombre(consultorioId: number): string {
     if (!consultorioId || !this.consultorios) return '';
     const consultorio = this.consultorios.find(c => c.id === consultorioId);
-    return consultorio ? consultorio.name : '';
+    return consultorio ? consultorio.nombre : '';
   }
 }

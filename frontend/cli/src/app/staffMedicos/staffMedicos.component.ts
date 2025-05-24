@@ -44,14 +44,14 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 style="cursor:pointer"
               >
                 <td>{{ staff.id }}</td>
-                <td>{{ staff.centroAtencionName }}</td>
-                <td>{{ staff.medicoNombre }}</td>
-                <td>{{ staff.especialidadNombre }}</td>
+                <td>{{ staff.centro?.nombre || 'Sin centro' }}</td>
+                <td>{{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</td>
+                <td>{{ staff.especialidad?.nombre || 'Sin especialidad' }}</td>
                 <td class="text-center">
                   <button (click)="goToEdit(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>
                   </button>
-                  <button (click)="remove(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <button (click)="confirmDelete(staff.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
                     <i class="fa fa-trash"></i>
                   </button>
                 </td>
@@ -128,7 +128,7 @@ export class StaffMedicosComponent {
     this.router.navigate(['/staffMedico', id]);
   }
 
-  remove(id: number): void {
+  confirmDelete(id: number): void {
     this.modalService
       .confirm(
         "Eliminar Staff Médico",

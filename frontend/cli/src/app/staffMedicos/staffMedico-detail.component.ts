@@ -47,7 +47,7 @@ import { DataPackage } from '../data.package';
             required
           >
             <option *ngFor="let centro of centros" [value]="centro.id">
-              {{ centro.name }}
+              {{ centro.nombre }}
             </option>
           </select>
         </div>
@@ -193,18 +193,16 @@ export class StaffMedicoDetailComponent {
     });
   }
 
-  getMedicoNombre(): string {
-    const medico = this.medicos.find(m => m.id === this.staffMedico.medicoId);
-    return medico ? `${medico.nombre} ${medico.apellido}` : '';
-  }
+getCentroNombre(): string {
+  return this.staffMedico.centro?.nombre || 'Sin centro';
+}
 
-  getCentroNombre(): string {
-    const centro = this.centros.find(c => c.id === this.staffMedico.centroAtencionId);
-    return centro ? centro.name : '';
-  }
+getMedicoNombre(): string {
+  const medico = this.staffMedico.medico;
+  return medico ? `${medico.nombre} ${medico.apellido}` : 'Sin médico';
+}
 
-  getEspecialidadNombre(): string {
-    const esp = this.especialidades.find(e => e.id === this.staffMedico.especialidadId);
-    return esp ? esp.nombre : '';
-  }
+getEspecialidadNombre(): string {
+  return this.staffMedico.especialidad?.nombre || 'Sin especialidad';
+}
 }

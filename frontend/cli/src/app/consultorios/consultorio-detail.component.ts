@@ -58,7 +58,7 @@ export class ConsultorioDetailComponent implements OnInit {
   consultorio: Consultorio = {
     id: 0,
     numero: 0,
-    name: "",
+    nombre: "",
     especialidad: "",
     medicoAsignado: "",
     telefono: "",
@@ -84,7 +84,7 @@ export class ConsultorioDetailComponent implements OnInit {
       this.consultorio = {
         id: 0,
         numero: 0,
-        name: "",
+        nombre: "",
         especialidad: "",
         medicoAsignado: "",
         telefono: "",
@@ -134,7 +134,7 @@ export class ConsultorioDetailComponent implements OnInit {
       this.consultorio = {
         id: 0,
         numero: 0,
-        name: "",
+        nombre: "",
         especialidad: "",
         medicoAsignado: "",
         telefono: "",
@@ -166,7 +166,7 @@ export class ConsultorioDetailComponent implements OnInit {
       )
     );
 
-  formatter = (c: CentroAtencion) => c.name;
+  formatter = (c: CentroAtencion) => c.nombre;
 
   onCentroAtencionSelected(c: CentroAtencion): void {
     this.selectedCentroAtencion = c;
@@ -174,7 +174,7 @@ export class ConsultorioDetailComponent implements OnInit {
 
   allFieldsEmpty(): boolean {
     return !this.consultorio?.numero &&
-      !this.consultorio?.name &&
+      !this.consultorio?.nombre &&
       !this.selectedCentroAtencion;
   }
 

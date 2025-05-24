@@ -92,7 +92,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
               required
             >
               <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
-                {{ consultorio.name }}
+                {{ consultorio.nombre }}
               </option>
             </select>
           </div>
@@ -268,18 +268,24 @@ export class EsquemaTurnoDetailComponent {
       }
     }
   }
+getDisponibilidadLabel(disp: DisponibilidadMedico): string {
+  const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
+  if (!staff) return `ID ${disp.id}`;
 
-  getDisponibilidadLabel(disp: DisponibilidadMedico): string {
-    const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-    return staff
-      ? `${staff.medicoNombre} (${staff.especialidadNombre}) - ${disp.diaSemana?.join(', ')} ${disp.horaInicio}-${disp.horaFin}`
-      : `ID ${disp.id}`;
-  }
+  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
 
-  getStaffMedicoNombre(staffMedicoId: number): string {
-    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-    return staff ? `${staff.medicoNombre} (${staff.especialidadNombre})` : '';
-  }
+  return `${medicoNombre} (${especialidadNombre}) - ${disp.diaSemana?.join(', ')} ${disp.horaInicio}-${disp.horaFin}`;
+}
+getStaffMedicoNombre(staffMedicoId: number): string {
+  const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+  if (!staff) return '';
+
+  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+
+  return `${medicoNombre} (${especialidadNombre})`;
+}
 
   save(): void {
     const payload = { ...this.esquema };

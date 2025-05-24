@@ -78,7 +78,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   tipoMensajeStaff: 'info' | 'danger' | 'success' = 'info';
 
   modoCrearConsultorio = false;
-  nuevoConsultorio = { numero: null, name: '' };
+  nuevoConsultorio = { numero: null, nombre: '' };
   mensajeConsultorio: string = '';
   tipoMensajeConsultorio: 'info' | 'danger' | 'success' = 'info';
   editConsultorioIndex: number | null = null;
@@ -210,7 +210,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       // Nuevo centro
       this.modoEdicion = true;
       this.centroAtencion = {
-        name: '',
+        nombre: '',
         code: '',
         direccion: '',
         localidad: '',
@@ -273,7 +273,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   allFieldsEmpty(): boolean {
-    return !this.centroAtencion?.name?.trim() &&
+    return !this.centroAtencion?.nombre?.trim() &&
       !this.centroAtencion?.direccion?.trim() &&
       !this.centroAtencion?.localidad?.trim() &&
       !this.centroAtencion?.provincia?.trim() &&
@@ -360,7 +360,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   crearConsultorio() {
-    if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.name) return;
+    if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.nombre) return;
     if (this.consultorios.some(c => c.numero === this.nuevoConsultorio.numero)) {
       this.mensajeConsultorio = 'Ya existe un consultorio con ese número en este centro.';
       setTimeout(() => this.mensajeConsultorio = '', 5000);
@@ -368,7 +368,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     }
     const consultorio: Consultorio = {
       numero: this.nuevoConsultorio.numero,
-      name: this.nuevoConsultorio.name,
+      nombre: this.nuevoConsultorio.nombre,
       centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
 
     };
@@ -378,7 +378,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
           this.mensajeConsultorio = 'Consultorio creado correctamente';
           setTimeout(() => this.mensajeConsultorio = '', 3000);
           this.getConsultorios();
-          this.nuevoConsultorio = { numero: null, name: '' };
+          this.nuevoConsultorio = { numero: null, nombre: '' };
           this.modoCrearConsultorio = false;
         },
         error: (err: any) => {
@@ -452,13 +452,26 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       return;
     }
     const nuevoStaff: StaffMedico = {
+      
       id: 0,
       centroAtencionId: this.centroAtencion.id,
       medicoId: this.medicoSeleccionado.id,
       especialidadId: this.especialidadSeleccionada.id,
-      medicoNombre: this.medicoSeleccionado.nombre,
-      especialidadNombre: this.especialidadSeleccionada.nombre,
-      centroAtencionName: this.centroAtencion.name
+      medico: {
+        id: this.medicoSeleccionado.id,
+        nombre: this.medicoSeleccionado.nombre,
+        apellido: this.medicoSeleccionado.apellido,
+        dni: this.medicoSeleccionado.dni,
+        matricula: this.medicoSeleccionado.matricula
+      },
+      especialidad: {
+        id: this.especialidadSeleccionada.id,
+        nombre: this.especialidadSeleccionada.nombre
+      },
+      centro: {
+        id: this.centroAtencion.id,
+        nombre: this.centroAtencion.nombre
+      }
     };
     this.staffMedicoService.create(nuevoStaff).subscribe({
       next: () => {

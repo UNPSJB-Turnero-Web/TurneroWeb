@@ -137,6 +137,11 @@ export class DisponibilidadMedicoComponent {
 
   getStaffMedicoNombre(staffMedicoId: number): string {
     const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-    return staff ? `${staff.medicoNombre} (${staff.especialidadNombre})` : 'Sin asignar';
+    if (!staff) return 'Sin asignar';
+  
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+  
+    return `${medicoNombre} (${especialidadNombre})`;
   }
 }

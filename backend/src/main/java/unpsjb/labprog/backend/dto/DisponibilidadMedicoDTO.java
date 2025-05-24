@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.dto;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class DisponibilidadMedicoDTO {
     private Integer id;
-    private String diaSemana;
+    private List<String> diaSemana; 
     private LocalTime horaInicio;
     private LocalTime horaFin;
     private Integer staffMedicoId;

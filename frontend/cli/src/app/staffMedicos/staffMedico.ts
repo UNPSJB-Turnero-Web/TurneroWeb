@@ -1,14 +1,35 @@
-import { Especialidad } from '../especialidades/especialidad';
-import { Medico } from '../medicos/medico';
-import { CentroAtencion } from '../centrosAtencion/centroAtencion';
-
 export interface StaffMedico {
   id: number;
-  centroAtencionId: number;
-  medicoId: number;
-  especialidadId: number;
-  // Opcionalmente, para mostrar nombres:
-  centroAtencionName?: string;
-  medicoNombre?: string;
-  especialidadNombre?: string;
+  centroAtencionId?: number; // Agregado
+  medicoId?: number;         // Agregado
+  especialidadId?: number;
+  centro?: {
+    id: number;
+    nombre: string;
+    direccion?: string;
+    localidad?: string;
+    provincia?: string;
+    telefono?: string;
+    latitud?: number;
+    longitud?: number;
+  };
+  medico?: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    dni: string;
+    matricula: string;
+    especialidad?: {
+      id: number;
+      nombre: string;
+      descripcion?: string;
+    };
+  };
+  especialidad?: {
+    id: number;
+    nombre: string;
+    descripcion?: string;
+  };
+  consultorio?: any;
+  disponibilidad?: any[];
 }
