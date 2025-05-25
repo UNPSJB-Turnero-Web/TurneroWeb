@@ -21,11 +21,11 @@ import { DataPackage } from '../data.package';
         <form (ngSubmit)="save()" #form="ngForm">
           <div class="mb-3">
             <label class="form-label">Staff Médico</label>
+            <!-- Deshabilitar si ya hay un ID -->
             <select
               [(ngModel)]="disponibilidad.staffMedicoId"
               name="staffMedicoId"
               class="form-select"
-              [disabled]="!modoEdicion"
               required
             >
               <option *ngFor="let staff of staffMedicos" [value]="staff.id">
@@ -125,7 +125,27 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
   ) {}
 
   ngOnInit(): void {
-    this.get();
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      // Modo edición
+      this.get();
+    } else {
+      // Modo nuevo
+      this.modoEdicion = true;
+      this.esNuevo = true;
+      this.disponibilidad = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '' };
+      this.loadStaffMedicos(() => {
+        const staffMedicoId = this.route.snapshot.queryParamMap.get('staffMedicoId');
+        if (staffMedicoId) {
+          this.disponibilidad.staffMedicoId = +staffMedicoId;
+          const found = this.staffMedicos.some(s => s.id === this.disponibilidad.staffMedicoId);
+          if (!found) {
+            alert('El Staff Médico proporcionado no es válido.');
+            this.goBack();
+          }
+        }
+      });
+    }
   }
 
   get(): void {
@@ -142,7 +162,6 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
       this.disponibilidadService.get(id).subscribe({
         next: (dataPackage) => {
           this.disponibilidad = <DisponibilidadMedico>dataPackage.data;
-          // Forzar a array si viene como string
           if (typeof this.disponibilidad.diaSemana === 'string') {
             this.disponibilidad.diaSemana = [this.disponibilidad.diaSemana];
           }
@@ -156,22 +175,23 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
           alert('No se pudo cargar la disponibilidad. Intente nuevamente.');
         }
       });
-    } else {
-      // Modo nuevo
-      this.modoEdicion = true;
-      this.esNuevo = true;
-      this.disponibilidad = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '', };
-      this.loadStaffMedicos();
     }
   }
 
   save(): void {
-    // Al guardar o actualizar
+    // Validación extra
+    if (!Array.isArray(this.disponibilidad.diaSemana) || this.disponibilidad.diaSemana.length === 0) {
+      alert('Debe seleccionar al menos un día de la semana.');
+      return;
+    }
     const payload = { ...this.disponibilidad };
     delete payload.staffMedico;
+    // Forzar staffMedicoId a número
+    payload.staffMedicoId = Number(payload.staffMedicoId);
+
     this.disponibilidadService.create(payload).subscribe({
       next: () => {
-        this.router.navigate(['/disponibilidades-medico']); // <-- usa la ruta correcta
+        this.router.navigate(['/disponibilidades-medico']);
       },
       error: (error) => {
         console.error('Error al crear la disponibilidad:', error);
@@ -188,13 +208,16 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
     this.location.back();
   }
 
-  loadStaffMedicos(): void {
-    this.staffMedicoService.all().subscribe((dp: DataPackage) => {
-      this.staffMedicos = dp.data as StaffMedico[];
-      // Si ya hay un staffMedicoId, asignar el objeto completo
-      if (this.disponibilidad.staffMedicoId) {
-        const found = this.staffMedicos.find(s => s.id === this.disponibilidad.staffMedicoId);
-        if (found) this.disponibilidad.staffMedico = found;
+  loadStaffMedicos(callback?: () => void): void {
+    this.staffMedicoService.all().subscribe({
+      next: (dp: DataPackage) => {
+        this.staffMedicos = dp.data as StaffMedico[];
+        console.log('Staff Médicos cargados:', this.staffMedicos); // Verificar los datos cargados
+        if (callback) callback();
+      },
+      error: (err) => {
+        console.error('Error al cargar Staff Médicos:', err);
+        alert('No se pudieron cargar los datos del Staff Médico.');
       }
     });
   }

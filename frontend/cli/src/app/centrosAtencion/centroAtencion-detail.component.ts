@@ -2,7 +2,7 @@ import { Component, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule, Location, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CentroAtencion } from './centroAtencion';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CentroAtencionService } from './centroAtencion.service';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import * as L from 'leaflet';
@@ -54,6 +54,122 @@ import { MedicoService } from '../medicos/medico.service';
   background: #e3f2fd;
   color: #1976d2;
 }
+
+.table {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.table-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.table-primary th {
+  border: none;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.text-center {
+  text-align: center;
+}
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+}
+
+.card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.list-group-item {
+  border: none;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+  background-color: #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.text-muted {
+  font-size: 0.875rem;
+}
+.btn-light {
+  background-color: #f8f9fa;
+  border-color: #ced4da;
+  color: #495057;
+}
+
+.btn-light:hover {
+  background-color: #e2e6ea;
+  border-color: #dae0e5;
+  color: #212529;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+}
   `
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
@@ -96,7 +212,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private consultorioService: ConsultorioService,
     private especialidadService: EspecialidadService,
     private staffMedicoService: StaffMedicoService,
-    private medicoService: MedicoService // Inyectar el servicio de médicos
+    private medicoService: MedicoService, // Inyectar el servicio de médicos
+    private router: Router // Inyectar el servicio de Router
 
   ) { }
 
@@ -385,7 +502,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     const consultorio: Consultorio = {
       numero: this.nuevoConsultorio.numero,
       nombre: this.nuevoConsultorio.nombre,
-      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion // Asignar el ID del centro
+      centroId: this.centroAtencion.id // Asignar el ID del centro
     };
 
     // Enviar el consultorio al backend
@@ -515,6 +632,31 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       }
     });
   }
+
+  eliminarConsultorio(consultorio: Consultorio): void {
+  if (!consultorio.id) {
+    alert('No se puede eliminar un consultorio sin ID.');
+    return;
+  }
+
+  const confirmar = confirm(`¿Está seguro que desea eliminar el consultorio "${consultorio.nombre}"?`);
+  if (!confirmar) return;
+
+  this.consultorioService.delete(consultorio.id).subscribe({
+    next: () => {
+      this.mostrarMensajeConsultorio('Consultorio eliminado correctamente.', 'success');
+      this.getConsultorios(); // Recargar la lista de consultorios
+    },
+    error: (err) => {
+      const mensajeError = err?.error?.status_text || 'No se pudo eliminar el consultorio.';
+      this.mostrarMensajeConsultorio(mensajeError, 'danger');
+    }
+  });
+}
+agregarDisponibilidad(staff: any): void {
+  this.router.navigate(['/disponibilidades-medico/new'], { queryParams: { staffMedicoId: staff.id } });
+  this.router.navigate(['/disponibilidades-medico/new'], { queryParams: { staffMedicoId: staff.id } });
+}
 
   mostrarMensaje(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
     this.mensaje = mensaje;

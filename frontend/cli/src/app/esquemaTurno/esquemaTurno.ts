@@ -12,6 +12,8 @@ export interface EsquemaTurno {
   disponibilidadMedicoId: number;
   staffMedicoId: number;
   centroAtencion?: any;
+  consultorioId?: number;
+  consultorioNombre?: string;
   consultorio?: any;
   // Agregamos opcionalmente los objetos completos:
   disponibilidadMedico?: DisponibilidadMedico;

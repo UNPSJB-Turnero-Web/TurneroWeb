@@ -85,7 +85,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
           <div class="mb-3">
             <label class="form-label">Consultorio</label>
             <select
-              [(ngModel)]="esquema.consultorio"
+              [(ngModel)]="esquema.consultorioId"
               name="consultorioId"
               class="form-select"
               [disabled]="!modoEdicion"
@@ -165,10 +165,12 @@ export class EsquemaTurnoDetailComponent {
   ngOnInit(): void {
     this.loadDisponibilidadesMedico();
     this.get();
-    
+
     this.loadStaffMedicos();
+
     
   }
+
 
   get(): void {
     const path = this.route.snapshot.routeConfig?.path;
@@ -247,9 +249,10 @@ export class EsquemaTurnoDetailComponent {
   }
 
   onDisponibilidadChange(): void {
+    // console.log('onDisponibilidadChange ejecutado', this.selectedDisponibilidadId);
     const disp = this.disponibilidadesMedico.find(d => d.id === this.selectedDisponibilidadId);
+    // console.log('Disponibilidad seleccionada:', disp);
     if (disp) {
-      // Solo actualizar campos si es un esquema nuevo
       if (this.esNuevo) {
         this.esquema.staffMedicoId = disp.staffMedicoId;
         this.esquema.diasSemana = Array.isArray(disp.diaSemana) ? disp.diaSemana : [disp.diaSemana];
@@ -259,33 +262,38 @@ export class EsquemaTurnoDetailComponent {
       }
       // Siempre actualizar consultorios según staff
       const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-      if (staff && staff.centroAtencionId) {
-        this.consultorioService.getByCentroAtencion(staff.centroAtencionId).subscribe(dp => {
+      // console.log('Staff encontrado:', staff);
+      const centroAtencionId = staff?.centroAtencionId || staff?.centro?.id;
+      if (staff && centroAtencionId) {
+        // console.log('Centro de atención ID:', centroAtencionId);
+        this.consultorioService.getByCentroAtencion(centroAtencionId).subscribe(dp => {
           this.consultorios = dp.data as Consultorio[];
+          //console.log('Consultorios cargados:', this.consultorios);
         });
       } else {
         this.consultorios = [];
+        //console.log('No se encontró staff o centroAtencionId');
       }
     }
   }
-getDisponibilidadLabel(disp: DisponibilidadMedico): string {
-  const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
-  if (!staff) return `ID ${disp.id}`;
+  getDisponibilidadLabel(disp: DisponibilidadMedico): string {
+    const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);
+    if (!staff) return `ID ${disp.id}`;
 
-  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
-  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
 
-  return `${medicoNombre} (${especialidadNombre}) - ${disp.diaSemana?.join(', ')} ${disp.horaInicio}-${disp.horaFin}`;
-}
-getStaffMedicoNombre(staffMedicoId: number): string {
-  const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-  if (!staff) return '';
+    return `${medicoNombre} (${especialidadNombre}) - ${disp.diaSemana?.join(', ')} ${disp.horaInicio}-${disp.horaFin}`;
+  }
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    if (!staff) return '';
 
-  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
-  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
 
-  return `${medicoNombre} (${especialidadNombre})`;
-}
+    return `${medicoNombre} (${especialidadNombre})`;
+  }
 
   save(): void {
     const payload = { ...this.esquema };

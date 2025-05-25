@@ -118,8 +118,20 @@ export class StaffMedicoDetailComponent {
       }
       this.staffMedicoService.get(id).subscribe({
         next: (dataPackage) => {
-          console.log('Staff Médico cargado:', dataPackage.data);
-          this.staffMedico = <StaffMedico>dataPackage.data;
+          const data = dataPackage.data;
+
+          // Mapear los datos del backend al modelo StaffMedico
+   // Asignar los datos del backend al modelo StaffMedico
+        this.staffMedico = {
+          id: data.id,
+          centroAtencionId: data.centro?.id || 0,
+          medicoId: data.medico?.id || 0,
+          especialidadId: data.especialidad?.id || 0,
+          centro: data.centro || undefined, // Objeto completo del centro
+          medico: data.medico || undefined, // Objeto completo del médico
+          especialidad: data.especialidad || undefined, // Objeto completo de la especialidad
+        };
+
 
           // Cargar listas de opciones
           this.loadCentros();
