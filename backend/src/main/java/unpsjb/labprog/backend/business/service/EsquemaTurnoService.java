@@ -10,10 +10,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
+import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
+import unpsjb.labprog.backend.model.CentroAtencion;
+import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.StaffMedico;
 
@@ -27,6 +31,10 @@ public class EsquemaTurnoService {
 
     @Autowired
     private StaffMedicoRepository staffMedicoRepository;
+    @Autowired
+    private CentroAtencionRepository centroAtencionRepository;
+    @Autowired
+    private ConsultorioRepository consultorioRepository;
 
     public List<EsquemaTurnoDTO> findAll() {
         return esquemaTurnoRepository.findAll().stream()
@@ -110,6 +118,7 @@ public class EsquemaTurnoService {
         esquema.setHoraFin(dto.getHoraFin());
         esquema.setIntervalo(dto.getIntervalo());
         esquema.setDiasSemana(dto.getDiasSemana());
+
         if (dto.getStaffMedicoId() != null) {
             StaffMedico staff = staffMedicoRepository.findById(dto.getStaffMedicoId())
                     .orElseThrow(() -> new IllegalArgumentException("StaffMedico no encontrado con ID: " + dto.getStaffMedicoId()));
@@ -117,6 +126,23 @@ public class EsquemaTurnoService {
         } else {
             throw new IllegalArgumentException("El campo staffMedicoId es obligatorio");
         }
+
+        if (dto.getCentroId() != null) {
+            CentroAtencion centro = centroAtencionRepository.findById(dto.getCentroId())
+                    .orElseThrow(() -> new IllegalArgumentException("CentroAtencion no encontrado con ID: " + dto.getCentroId()));
+            esquema.setCentroAtencion(centro);
+        } else {
+            throw new IllegalArgumentException("El campo centroId es obligatorio");
+        }
+
+        if (dto.getConsultorioId() != null) {
+            Consultorio consultorio = consultorioRepository.findById(dto.getConsultorioId())
+                    .orElseThrow(() -> new IllegalArgumentException("Consultorio no encontrado con ID: " + dto.getConsultorioId()));
+            esquema.setConsultorio(consultorio);
+        } else {
+            throw new IllegalArgumentException("El campo consultorioId es obligatorio");
+        }
+
         return esquema;
     }
 }

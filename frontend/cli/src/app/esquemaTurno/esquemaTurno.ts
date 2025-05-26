@@ -11,6 +11,7 @@ export interface EsquemaTurno {
   diasSemana: string[];
   disponibilidadMedicoId: number;
   staffMedicoId: number;
+  centroId: number;
   centroAtencion?: any;
   consultorioId?: number;
   consultorioNombre?: string;

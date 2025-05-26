@@ -140,6 +140,7 @@ export class EsquemaTurnoDetailComponent {
     staffMedicoId: null as any,
     consultorioId: null as any,
     disponibilidadMedicoId: null as any,
+    centroId: null as any,
     diasSemana: [],
     horaInicio: '',
     horaFin: '',
@@ -183,6 +184,7 @@ export class EsquemaTurnoDetailComponent {
         staffMedicoId: null as any,
         consultorioId: null as any,
         disponibilidadMedicoId: null as any,
+        centroId: null as any,
         diasSemana: [],
         horaInicio: '',
         horaFin: '',
@@ -265,14 +267,12 @@ export class EsquemaTurnoDetailComponent {
       // console.log('Staff encontrado:', staff);
       const centroAtencionId = staff?.centroAtencionId || staff?.centro?.id;
       if (staff && centroAtencionId) {
-        // console.log('Centro de atención ID:', centroAtencionId);
+        this.esquema.centroId = centroAtencionId; // Asignar el centroId al esquema
         this.consultorioService.getByCentroAtencion(centroAtencionId).subscribe(dp => {
           this.consultorios = dp.data as Consultorio[];
-          //console.log('Consultorios cargados:', this.consultorios);
         });
       } else {
         this.consultorios = [];
-        //console.log('No se encontró staff o centroAtencionId');
       }
     }
   }
@@ -296,7 +296,8 @@ export class EsquemaTurnoDetailComponent {
   }
 
   save(): void {
-    const payload = { ...this.esquema };
+    const payload = { ...this.esquema }; // Crear el payload basado en el objeto esquema
+    console.log('Payload enviado:', payload); // Depurar el payload para verificar el centroId
     this.esquemaTurnoService.create(payload).subscribe({
       next: () => this.router.navigate(['/esquema-turno']),
       error: (error) => {
