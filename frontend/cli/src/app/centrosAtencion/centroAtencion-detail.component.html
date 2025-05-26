@@ -188,10 +188,11 @@
       [class.active]="activeTab === 'consultorios'">
       <div *ngIf="consultorios.length > 0" class="mt-3">
         <div class="card shadow-sm mb-4">
-          <!-- Header sin dropdown -->
+          <!-- Header con nombre del centro -->
           <div class="card-header bg-primary text-white d-flex align-items-center"
             style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem; border-bottom: 2px solid #1565c0;">
-            <i class="fa fa-stethoscope me-2"></i>Consultorios
+            <i class="fa fa-stethoscope me-2"></i>
+            Consultorios en <b class="ms-1">{{ centroAtencion.nombre }}</b>
           </div>
           <div class="card-body p-3">
             <button *ngIf="!modoCrearConsultorio" class="btn btn-outline-primary w-100 mb-3"
@@ -260,7 +261,8 @@
         <div class="card mt-4 shadow-sm">
           <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
             <div>
-              <i class="fa fa-user-md me-2"></i> Especialidades
+              <i class="fa fa-user-md me-2"></i>
+              Especialidades en <b class="ms-1">{{ centroAtencion.nombre }}</b>
             </div>
           </div>
           <div class="card-body">
@@ -311,7 +313,8 @@
         <div class="card mt-4" style="overflow: hidden;">
           <div class="card-header bg-primary text-white d-flex align-items-center"
             style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
-            <i class="fa fa-users me-2"></i>Staff Médico
+            <i class="fa fa-users me-2"></i>
+            Staff Médico en <b class="ms-1">{{ centroAtencion.nombre }}</b>
           </div>
           <div class="card-body">
             <form class="row g-2 align-items-end mb-3" (ngSubmit)="asociarMedico()" *ngIf="activeTab === 'staff'">

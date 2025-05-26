@@ -53,17 +53,7 @@ public class EsquemaTurnoService {
             throw new IllegalStateException("Debe asociar un staff médico al esquema de turno.");
         }
 
-        // --- VALIDACIÓN DE DISPONIBILIDAD ---
-        boolean disponible = staff.getDisponibilidad().stream()
-                .anyMatch(disp -> esquemaTurno.getDiasSemana().contains(disp.getDiaSemana()) &&
-                        !esquemaTurno.getHoraInicio().isBefore(disp.getHoraInicio()) &&
-                        !esquemaTurno.getHoraFin().isAfter(disp.getHoraFin()));
-        if (!disponible) {
-            throw new IllegalStateException(
-                    "El horario y días del esquema de turno no están dentro de la disponibilidad del médico.");
-        }
-
-        // --- VALIDACIÓN DE SUPERPOSICIÓN DE ESQUEMAS ---
+        // --- VALIDACIÓN DE SUPERPOSICIÓN DE ESQUEMAS EN EL MISMO CONSULTORIO ---
         List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(staff.getId());
         for (EsquemaTurno existente : existentes) {
             if (esquemaTurno.getId() != null && existente.getId().equals(esquemaTurno.getId())) {
@@ -75,7 +65,7 @@ public class EsquemaTurnoService {
                             !esquemaTurno.getHoraInicio().isAfter(existente.getHoraFin());
                     if (seSuperpone) {
                         throw new IllegalStateException(
-                                "Ya existe un esquema de turno para el staff médico en el mismo día y horario.");
+                                "Ya existe un esquema de turno para el staff médico en el mismo día y horario en el consultorio.");
                     }
                 }
             }
@@ -110,7 +100,6 @@ public class EsquemaTurnoService {
         if (esquema.getStaffMedico() != null) {
             dto.setStaffMedicoId(esquema.getStaffMedico().getId());
         }
-        // Elimina cualquier referencia a DisponibilidadMedico
         return dto;
     }
 
@@ -122,10 +111,12 @@ public class EsquemaTurnoService {
         esquema.setIntervalo(dto.getIntervalo());
         esquema.setDiasSemana(dto.getDiasSemana());
         if (dto.getStaffMedicoId() != null) {
-            StaffMedico staff = staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null);
+            StaffMedico staff = staffMedicoRepository.findById(dto.getStaffMedicoId())
+                    .orElseThrow(() -> new IllegalArgumentException("StaffMedico no encontrado con ID: " + dto.getStaffMedicoId()));
             esquema.setStaffMedico(staff);
+        } else {
+            throw new IllegalArgumentException("El campo staffMedicoId es obligatorio");
         }
-        // Elimina cualquier referencia a DisponibilidadMedico
         return esquema;
     }
 }

@@ -68,5 +68,4 @@ Then('el sistema responde con un JSON:', function (docString) {
     `status_text incorrecto: esperado "${expected.status_text}", recibido "${this.response.status_text}"`
   );
   assert.ok(Array.isArray(this.response.data), 'data no es un array');
-  // Si querés comparar los médicos, podés hacer un assert.deepStrictEqual aquí
-});
+});  // Si querés comparar los médicos, podés hacer un assert.deepStrictEqual aquí

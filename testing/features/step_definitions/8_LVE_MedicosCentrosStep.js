@@ -3,16 +3,12 @@ const assert = require('assert');
 const request = require('sync-request');
 
 Given('que existe un sistema de gestión de centros de atención para MedicosCentro', function () {
-  // Podés limpiar la base o inicializar datos si hace falta
 });
 
 Given('existen {int} centros de atención registrados en el sistema para MedicosCentro:', function (cantidad, dataTable) {
-  // Podés iterar la tabla y crear los centros en la base de test si lo necesitás
-  // Ejemplo:
-  // dataTable.raw().slice(1).forEach(row => { ... });
-});
+  });
 Given('que existen médicos asociados a centros médicos en el sistema para MedicosCentro', function () {
-  // Podés inicializar datos de prueba si hace falta, o dejarlo vacío si ya están cargados
+
 });
 When('un usuario del sistema solicita la lista de especialidades asociadas al centro {string} para MedicosCentro', function (centro) {
   try {
@@ -90,6 +86,5 @@ Then('el sistema responde con un JSON para MedicosCentro:', function (docString)
     `status_text incorrecto: esperado "${expected.status_text}", recibido "${this.response.status_text}"`
   );
   assert.ok(Array.isArray(this.response.data), 'data no es un array');
-  // Si querés comparar los médicos, podés hacer un assert.deepStrictEqual aquí
 });
 

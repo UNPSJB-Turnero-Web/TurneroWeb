@@ -2,9 +2,89 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
+When('el administrador crea una disponibilidad médica con {string}, {string}, {string}, {string}', function (staffMedicoId, horaInicio, horaFin, dias) {
+  assert(staffMedicoId, `El staffMedicoId es obligatorio`);
+
+  const disponibilidadConfig = {
+    staffMedicoId: staffMedicoId,
+    horaInicio: horaInicio,
+    horaFin: horaFin,
+    diaSemana: dias.split(',').map(d => d.trim().toUpperCase()) // Lista de días
+  };
+
+  try {
+    const res = request('POST', 'http://backend:8080/disponibilidades-medico', { json: disponibilidadConfig });
+    this.response = JSON.parse(res.getBody('utf8'));
+    this.statusCode = res.statusCode;
+    this.disponibil
+    idadId = this.response.id; // Guardar el ID para usarlo en EsquemaTurno
+  } catch (error) {
+    this.response = error.response
+      ? JSON.parse(error.response.body.toString('utf8'))
+      : { status_code: 500, status_text: 'Error interno' };
+    this.statusCode = error.statusCode || 500;
+  }
+});
+
+When('el administrador crea un esquema de turno con {string}, {string}, {string}, {string}, {string}', function (medico, horaInicio, horaFin, intervalo, dias) {
+  const [nombre, ...apellidoArr] = medico.split(' ');
+  const apellido = apellidoArr.join(' ');
+  const medicoId = getMedicoIdPorNombreCompleto(nombre, apellido);
+  assert(medicoId, `No se encontró médico con nombre ${medico}`);
+
+  const esquemaConfig = {
+    staffMedicoId: medicoId,
+    horaInicio: horaInicio,
+    horaFin: horaFin,
+    intervalo: intervalo,
+    diasSemana: dias.split(',').map(d => d.trim().toUpperCase())
+  };
+
+  try {
+    const res = request('POST', 'http://backend:8080/esquema-turno', { json: esquemaConfig });
+    this.response = JSON.parse(res.getBody('utf8'));
+    this.statusCode = res.statusCode;
+    this.esquemaTurnoId = this.response.id; // Guardar el ID para usarlo en Agenda
+  } catch (error) {
+    this.response = error.response
+      ? JSON.parse(error.response.body.toString('utf8'))
+      : { status_code: 500, status_text: 'Error interno' };
+    this.statusCode = error.statusCode || 500;
+  }
+});
+
+
+
+When('el administrador crea una agenda basada en el esquema de turno', function () {
+  const agendaConfig = {
+    esquemaTurnoId: this.esquemaTurnoId,
+    fecha: "2025-05-26", // Fecha de ejemplo, puede ser dinámica
+    horaInicio: "08:00",
+    horaFin: "12:00",
+    habilitado: true
+  };
+
+  try {
+    const res = request('POST', 'http://backend:8080/agenda', { json: agendaConfig });
+    this.response = JSON.parse(res.getBody('utf8'));
+    this.statusCode = res.statusCode;
+  } catch (error) {
+    this.response = error.response
+      ? JSON.parse(error.response.body.toString('utf8'))
+      : { status_code: 500, status_text: 'Error interno' };
+    this.statusCode = error.statusCode || 500;
+  }
+});
+
+
+// ----- agenda
 let agendaConfig = {};
 let agendaConfig2 = {};
-
+function getStaffMedicoIdPorMedicoId(medicoId) {
+  const res = request('GET', `http://backend:8080/staff-medico?medicoId=${medicoId}`);
+  const data = JSON.parse(res.getBody('utf8'));
+  return data.length > 0 ? data[0].id : null; // Asume que el primer resultado es válido
+}
 function getIdByNombre(url, nombreCampo, valor) {
   const res = request('GET', url);
   const data = JSON.parse(res.getBody('utf8'));
@@ -23,7 +103,7 @@ function getMedicoIdPorNombreCompleto(nombre, apellido) {
   );
   return obj ? obj.id : null;
 }
-
+/*
 // Consultorio
 Given('que el administrador configura la agenda del {string}', function (consultorioNombre) {
   const consultorioId = getIdByNombre('http://backend:8080/consultorios', 'name', consultorioNombre);
@@ -203,16 +283,16 @@ Then('el sistema notifica a los pacientes afectados', function () {
 Then('ofrece opciones de reprogramación', function () {
   assert.ok(true, "Opciones de reprogramación simuladas");
 });
+*/
 
 Then('el sistema responde con status_code {int} y status_text {string} para agenda', function (expectedStatus, expectedText) {
-  console.log('RESPUESTA:', this.response);
   assert.strictEqual(
-    Number(this.response.status_code),
+    this.statusCode,
     expectedStatus,
-    `Status esperado: ${expectedStatus}, recibido: ${this.response.status_code}`
+    `Se esperaba status_code ${expectedStatus}, pero se recibió ${this.statusCode}`
   );
   assert.ok(
     (this.response.status_text || '').toLowerCase().includes(expectedText.toLowerCase()),
-    `Esperado status_text que contenga "${expectedText}", pero fue "${this.response.status_text}"`
+    `Se esperaba status_text que contenga "${expectedText}", pero se recibió "${this.response.status_text}"`
   );
 });

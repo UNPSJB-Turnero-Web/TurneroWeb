@@ -44,6 +44,9 @@ public class DisponibilidadMedicoPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
         try {
+            if (disponibilidadDTO.getStaffMedicoId() == null) {
+                return Response.error(null, "El campo staffMedicoId es obligatorio");
+            }
             DisponibilidadMedicoDTO saved = service.saveOrUpdate(disponibilidadDTO);
             return Response.ok(saved, "Disponibilidad creada correctamente");
         } catch (IllegalStateException e) {

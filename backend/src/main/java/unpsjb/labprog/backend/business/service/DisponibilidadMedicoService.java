@@ -103,7 +103,10 @@ public class DisponibilidadMedicoService {
         disponibilidad.setHoraFin(dto.getHoraFin());
         if (dto.getStaffMedicoId() != null) {
             disponibilidad.setStaffMedico(
-                    staffMedicoRepository.findById(dto.getStaffMedicoId()).orElse(null));
+                    staffMedicoRepository.findById(dto.getStaffMedicoId())
+                            .orElseThrow(() -> new IllegalArgumentException("StaffMedico no encontrado con ID: " + dto.getStaffMedicoId())));
+        } else {
+            throw new IllegalArgumentException("El campo staffMedicoId es obligatorio");
         }
         return disponibilidad;
     }
