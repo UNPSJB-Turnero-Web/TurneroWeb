@@ -13,18 +13,14 @@ import unpsjb.labprog.backend.model.StaffMedico;
 @Repository
 public interface DisponibilidadMedicoRepository extends JpaRepository<DisponibilidadMedico, Integer> {
 
-    @Query("SELECT COUNT(d) > 0 FROM DisponibilidadMedico d " +
-           "JOIN d.horarios h " +
-           "WHERE d.staffMedico = :staffMedico " +
-           "AND h.dia = :dia " +
-           "AND h.horaInicio = :horaInicio " +
-           "AND h.horaFin = :horaFin")
-    boolean existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin(
+
+    @Query("SELECT COUNT(d) > 0 FROM DisponibilidadMedico d JOIN d.horarios h " +
+       "WHERE d.staffMedico = :staffMedico AND h.dia = :dia AND h.horaInicio = :horaInicio AND h.horaFin = :horaFin")
+boolean existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin(
         @Param("staffMedico") StaffMedico staffMedico,
         @Param("dia") String dia,
         @Param("horaInicio") LocalTime horaInicio,
-        @Param("horaFin") LocalTime horaFin
-    );
+        @Param("horaFin") LocalTime horaFin);
 
 
     @Query("SELECT COUNT(d) > 0 FROM DisponibilidadMedico d " +

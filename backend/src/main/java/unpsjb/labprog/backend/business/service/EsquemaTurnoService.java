@@ -55,25 +55,28 @@ public class EsquemaTurnoService {
 
     @Transactional
     public EsquemaTurnoDTO saveOrUpdate(EsquemaTurnoDTO dto) {
-        // Validar que los IDs requeridos no sean null
-        if (dto.getDisponibilidadMedicoId() == null) {
-            throw new IllegalArgumentException("El ID de DisponibilidadMedico no puede ser null.");
+        if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {
+            throw new IllegalArgumentException("Los días son obligatorios");
         }
-        if (dto.getConsultorioId() == null) {
-            throw new IllegalArgumentException("El ID de Consultorio no puede ser null.");
+
+        for (DiaHorarioDTO horario : dto.getHorarios()) {
+            if (horario.getHoraInicio().isAfter(horario.getHoraFin())) {
+                throw new IllegalArgumentException("Hora de inicio no puede ser mayor a hora de fin");
+            }
+        }
+
+        if (dto.getIntervalo() <= 0) {
+            throw new IllegalArgumentException("El intervalo debe ser positivo");
         }
 
         EsquemaTurno esquemaTurno = toEntity(dto);
 
-        // Validación de superposición de esquemas en el mismo consultorio
+        // Validar conflictos de esquemas
         List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
         for (EsquemaTurno existente : existentes) {
-            if (esquemaTurno.getId() != null && existente.getId().equals(esquemaTurno.getId())) {
-                continue; // Ignorar el mismo esquema si es edición
-            }
-            if (esquemaTurno.getDisponibilidadMedico().getId().equals(existente.getDisponibilidadMedico().getId())) {
-                throw new IllegalStateException(
-                        "Ya existe un esquema de turno para esta disponibilidad médica en el mismo consultorio.");
+            if (!esquemaTurno.getId().equals(existente.getId()) &&
+                esquemaTurno.getDisponibilidadMedico().getId().equals(existente.getDisponibilidadMedico().getId())) {
+                throw new IllegalStateException("Conflicto: Esquema ya existe");
             }
         }
 

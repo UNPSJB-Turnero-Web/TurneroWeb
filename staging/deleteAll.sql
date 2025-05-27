@@ -1,6 +1,6 @@
 DELETE FROM agenda;
 DELETE FROM bloque_horario;
-DELETE FROM esquema_turno_dias_semana;
+
 DELETE FROM esquema_turno;
 DELETE FROM disponibilidad_medico_horarios;
 DELETE FROM disponibilidad_medico;

@@ -2,22 +2,24 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
-When('el administrador crea una disponibilidad médica con {string}, {string}, {string}, {string}', function (staffMedicoId, horaInicio, horaFin, dias) {
-  assert(staffMedicoId, `El staffMedicoId es obligatorio`);
+When('el administrador crea una disponibilidad médica con {string}, {string}', function (medico, horariosJson) {
+  // Parsear los horarios desde el string JSON
+  const horarios = JSON.parse(horariosJson.replace(/\\"/g, '"')); // Reemplazar \" por "
+  assert(Array.isArray(horarios), 'El formato de horarios debe ser una lista de objetos');
+
+  const staffMedicoId = getStaffMedicoIdPorNombre(medico); // Obtener el ID del médico
+  assert(staffMedicoId, `No se encontró médico con nombre ${medico}`);
 
   const disponibilidadConfig = {
     staffMedicoId: staffMedicoId,
-    horaInicio: horaInicio,
-    horaFin: horaFin,
-    diaSemana: dias.split(',').map(d => d.trim().toUpperCase()) // Lista de días
+    horarios: horarios
   };
 
   try {
     const res = request('POST', 'http://backend:8080/disponibilidades-medico', { json: disponibilidadConfig });
     this.response = JSON.parse(res.getBody('utf8'));
     this.statusCode = res.statusCode;
-    this.disponibil
-    idadId = this.response.id; // Guardar el ID para usarlo en EsquemaTurno
+    this.disponibilidadId = this.response.id; // Guardar el ID para usarlo en otros tests
   } catch (error) {
     this.response = error.response
       ? JSON.parse(error.response.body.toString('utf8'))
@@ -26,25 +28,44 @@ When('el administrador crea una disponibilidad médica con {string}, {string}, {
   }
 });
 
-When('el administrador crea un esquema de turno con {string}, {string}, {string}, {string}, {string}', function (medico, horaInicio, horaFin, intervalo, dias) {
-  const [nombre, ...apellidoArr] = medico.split(' ');
+function getStaffMedicoIdPorNombre(nombreCompleto) {
+  const [nombre, ...apellidoArr] = nombreCompleto.split(' ');
   const apellido = apellidoArr.join(' ');
-  const medicoId = getMedicoIdPorNombreCompleto(nombre, apellido);
-  assert(medicoId, `No se encontró médico con nombre ${medico}`);
 
-  const esquemaConfig = {
-    staffMedicoId: medicoId,
-    horaInicio: horaInicio,
-    horaFin: horaFin,
-    intervalo: intervalo,
-    diasSemana: dias.split(',').map(d => d.trim().toUpperCase())
+  const res = request('GET', 'http://backend:8080/staff-medico');
+  const responseData = JSON.parse(res.getBody('utf8'));
+
+  // Acceder a la propiedad "data" de la respuesta
+  const data = Array.isArray(responseData) ? responseData : responseData.data;
+
+  assert(Array.isArray(data), 'La respuesta del backend no contiene un array de staff médico');
+
+  const staffMedico = data.find(
+    (staff) =>
+      staff.medico.nombre.trim().toLowerCase() === nombre.trim().toLowerCase() &&
+      staff.medico.apellido.trim().toLowerCase() === apellido.trim().toLowerCase()
+  );
+
+  return staffMedico ? staffMedico.id : null;
+}
+When('el administrador crea un esquema de turno con {string}, {string}, {int}', function (medico, horariosJson, intervalo) {
+ // Parsear los horarios desde el string JSON
+  const horarios = JSON.parse(horariosJson.replace(/\\"/g, '"')); // Reemplazar \" por "
+  assert(Array.isArray(horarios), 'El formato de horarios debe ser una lista de objetos');
+
+  const staffMedicoId = getStaffMedicoIdPorNombre(medico); // Obtener el ID del médico
+  assert(staffMedicoId, `No se encontró médico con nombre ${medico}`);
+
+  const esquemaTurnoConfig = {
+    staffMedicoId: staffMedicoId,
+    horarios: horarios,
+    intervalo: intervalo
   };
 
   try {
-    const res = request('POST', 'http://backend:8080/esquema-turno', { json: esquemaConfig });
+    const res = request('POST', 'http://backend:8080/esquema-turno', { json: esquemaTurnoConfig });
     this.response = JSON.parse(res.getBody('utf8'));
     this.statusCode = res.statusCode;
-    this.esquemaTurnoId = this.response.id; // Guardar el ID para usarlo en Agenda
   } catch (error) {
     this.response = error.response
       ? JSON.parse(error.response.body.toString('utf8'))
@@ -52,7 +73,6 @@ When('el administrador crea un esquema de turno con {string}, {string}, {string}
     this.statusCode = error.statusCode || 500;
   }
 });
-
 
 
 When('el administrador crea una agenda basada en el esquema de turno', function () {
@@ -103,7 +123,7 @@ function getMedicoIdPorNombreCompleto(nombre, apellido) {
   );
   return obj ? obj.id : null;
 }
-/*
+
 // Consultorio
 Given('que el administrador configura la agenda del {string}', function (consultorioNombre) {
   const consultorioId = getIdByNombre('http://backend:8080/consultorios', 'name', consultorioNombre);
@@ -283,16 +303,19 @@ Then('el sistema notifica a los pacientes afectados', function () {
 Then('ofrece opciones de reprogramación', function () {
   assert.ok(true, "Opciones de reprogramación simuladas");
 });
-*/
+
 
 Then('el sistema responde con status_code {int} y status_text {string} para agenda', function (expectedStatus, expectedText) {
+  // Verificar el campo status_code del cuerpo de la respuesta
   assert.strictEqual(
-    this.statusCode,
+    this.response.status_code,
     expectedStatus,
-    `Se esperaba status_code ${expectedStatus}, pero se recibió ${this.statusCode}`
+    `Status esperado: ${expectedStatus}, recibido: ${this.response.status_code}`
   );
+
+  // Verificar el texto del campo status_text
   assert.ok(
     (this.response.status_text || '').toLowerCase().includes(expectedText.toLowerCase()),
-    `Se esperaba status_text que contenga "${expectedText}", pero se recibió "${this.response.status_text}"`
+    `Esperado status_text que contenga "${expectedText}", pero fue "${this.response.status_text || ''}"`
   );
 });

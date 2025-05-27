@@ -41,10 +41,20 @@ public class DisponibilidadMedicoService {
 
     @Transactional
     public DisponibilidadMedicoDTO saveOrUpdate(DisponibilidadMedicoDTO dto) {
+        if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar al menos un día y horario.");
+        }
+
+        for (DisponibilidadMedicoDTO.DiaHorarioDTO horario : dto.getHorarios()) {
+            if (horario.getHoraInicio().isAfter(horario.getHoraFin())) {
+                throw new IllegalArgumentException("La hora de inicio no puede ser mayor a la hora de fin.");
+            }
+        }
+
         DisponibilidadMedico disponibilidadMedico = toEntity(dto);
 
         if (disponibilidadMedico.getId() == null || disponibilidadMedico.getId() == 0) {
-            // Caso de nueva disponibilidad
+            // Validar duplicados para nueva disponibilidad
             for (DisponibilidadMedico.DiaHorario horario : disponibilidadMedico.getHorarios()) {
                 if (repository.existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin(
                         disponibilidadMedico.getStaffMedico(),
@@ -56,12 +66,11 @@ public class DisponibilidadMedicoService {
                 }
             }
         } else {
-            // Caso de actualización
+            // Validar duplicados para actualización
             DisponibilidadMedico existente = repository.findById(disponibilidadMedico.getId())
                     .orElseThrow(() -> new IllegalStateException("No existe la disponibilidad que se intenta modificar."));
 
             for (DisponibilidadMedico.DiaHorario horario : disponibilidadMedico.getHorarios()) {
-                // Excluir la propia disponibilidad de la verificación
                 if (repository.existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFinExcludingId(
                         disponibilidadMedico.getStaffMedico(),
                         horario.getDia(),

@@ -3,37 +3,35 @@ Característica: Configuración de Agendas
 
 
 Esquema del escenario: Crear disponibilidad médica
-Cuando el administrador crea una disponibilidad médica con "<medico>", "<horaInicio>", "<horaFin>", "<diaSemana>"
+Cuando el administrador crea una disponibilidad médica con "<medico>", "<horarios>"
     Entonces el sistema responde con status_code <status_code> y status_text "<status_text>" para agenda
 
 Ejemplos:
-    | medico             | horaInicio | horaFin | diaSemana                     | status_code | status_text                          |
-    | Cecilia Morales    | 08:00      | 16:00   | LUNES, MARTES, MIERCOLES | 200         | Disponibilidad creada correctamente  |
-    | Gustavo González   | 09:00      | 13:00   | LUNES, MIERCOLES         | 200         | Disponibilidad creada correctamente  |
-    | Gabriela Torres    | 10:00      | 12:00   | MARTES, JUEVES           | 200         | Disponibilidad creada correctamente  |
-    | Mario Rodríguez    | 08:00      | 12:00   | VIERNES                  | 200         | Disponibilidad creada correctamente  |
-    | Cecilia Morales    | 08:00      | 16:00   | LUNES, MARTES, MIERCOLES | 409         | Conflicto: Disponibilidad ya existe  |
-    | Gabriela Torres    | 10:00      | 09:00   | MARTES                   | 400         | Hora de inicio no puede ser mayor a hora de fin |
-    | Cecilia Morales    | 08:00      | 16:00   |                          | 400         | Los días son obligatorios            |
-
+    | medico             | horarios                                                                                     | status_code | status_text                          |
+    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"}] | 200         | Disponibilidad creada correctamente  |
+    | Gustavo González   | [{\"dia\":\"LUNES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"}] | 200         | Disponibilidad creada correctamente  |
+    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"},{\"dia\":\"JUEVES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"}] | 200         | Disponibilidad creada correctamente  |
+    | Carlos López    | [{\"dia\":\"VIERNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"12:00\"}]                                   | 200         | Disponibilidad creada correctamente  |
+    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"16:00\"}] | 409         | Ya existe una disponibilidad para este staff médico en el mismo día y horario.  |
+    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"09:00\"}]                                    | 400         | Error al crear la disponibilidad: La hora de inicio no puede ser mayor a la hora de fin. |
+    | Cecilia Morales    | []                                                                                           | 400         | Error al crear la disponibilidad: Debe proporcionar al menos un día y horario.            |
 
 
 
 Esquema del escenario: Crear esquema de turno
-Cuando el administrador crea un esquema de turno con "<medico>", "<horaInicio>", "<horaFin>", "<intervalo>", "<diaSemana>"
+Cuando el administrador crea un esquema de turno con "<medico>", "<horarios>", <intervalo>
     Entonces el sistema responde con status_code <status_code> y status_text "<status_text>" para agenda
 
 Ejemplos:
-    | medico             | horaInicio | horaFin | intervalo | diaSemana                     | status_code | status_text                          |
-    | Cecilia Morales    | 08:00      | 14:00   | 30        | LUNES, MARTES, MIERCOLES | 200         | Esquema de turno creado correctamente |
-    | Gustavo González   | 09:00      | 13:00   | 20        | LUNES, MIERCOLES         | 200         | Esquema de turno creado correctamente |
-    | Gabriela Torres    | 10:00      | 12:00   | 15        | MARTES, JUEVES           | 200         | Esquema de turno creado correctamente |
-    | Mario Rodríguez    | 08:00      | 12:00   | 60        | VIERNES                  | 200         | Esquema de turno creado correctamente |
-    | Cecilia Morales    | 08:00      | 14:00   | 30        | LUNES, MARTES, MIERCOLES | 409         | Conflicto: Esquema ya existe         |
-    | Gabriela Torres    | 10:00      | 09:00   | 15        | MARTES                   | 400         | Hora de inicio no puede ser mayor a hora de fin |
-    | Cecilia Morales    | 08:00      | 14:00   | 30        |                          | 400         | Los días son obligatorios            |
-    | Cecilia Morales    | 08:00      | 14:00   | -10       | LUNES, MARTES            | 400         | El intervalo debe ser positivo       |
-
+    | medico             | horarios                                                                                     | intervalo | status_code | status_text                          |
+    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | 30        | 200         | Esquema de turno creado correctamente |
+    | Gustavo González   | [{\"dia\":\"LUNES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"}] | 20        | 200         | Esquema de turno creado correctamente |
+    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"},{\"dia\":\"JUEVES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"}] | 15        | 200         | Esquema de turno creado correctamente |
+    | Carlos López       | [{\"dia\":\"VIERNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"12:00\"}]                                   | 60        | 200         | Esquema de turno creado correctamente |
+    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | 30        | 409         | Conflicto: Esquema ya existe         |
+    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"09:00\"}]                                    | 15        | 400         | Hora de inicio no puede ser mayor a hora de fin |
+    | Cecilia Morales    | []                                                                                           | 30        | 400         | Los días son obligatorios            |
+    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | -10       | 400         | El intervalo debe ser positivo       |
 
 Esquema del escenario: Crear una agenda sin conflictos
 Dado que el administrador configura la agenda del "<consultorio>"
@@ -57,7 +55,6 @@ Ejemplos:
     
     Ejemplos:
         | consultorio    | horaInicio | horaFin | medico           | medicoConflicto  | horaInicioConflicto | horaFinConflicto | status_code | status_text                           |
-        | Consultorio 2  | 09:00      | 13:00   | Gustavo González | Gabriela Torres  | 10:00               | 12:00            | 409         | Conflicto de horarios en el consultorio |
         | Consultorio 3  | 08:00      | 12:00   | Mario Rodríguez  | Cecilia Morales  | 09:00               | 11:00            | 409         | Conflicto de horarios en el consultorio |
 
                 Esquema del escenario: Intentar asignar a un médico en dos consultorios a la misma hora
