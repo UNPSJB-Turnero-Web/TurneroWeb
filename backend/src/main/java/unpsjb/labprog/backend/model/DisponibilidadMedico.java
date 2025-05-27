@@ -1,10 +1,11 @@
 package unpsjb.labprog.backend.model;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,15 +25,19 @@ public class DisponibilidadMedico {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-     @ElementCollection
-    private List<String> diaSemana; // Cambiado de String a List<String>
-
-    @Column(nullable = false)
-    private LocalTime horaInicio; // Hora de inicio
-
-    @Column(nullable = false)
-    private LocalTime horaFin; // Hora de fin
+    @ElementCollection
+    private List<DiaHorario> horarios = new ArrayList<>(); // Lista de días con horarios
 
     @ManyToOne(optional = false)
     private StaffMedico staffMedico; // Relación con StaffMedico
+    
+    @Embeddable
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class DiaHorario {
+        private String dia; // Día de la semana (LUNES, MARTES, etc.)
+        private LocalTime horaInicio; // Hora de inicio
+        private LocalTime horaFin; // Hora de fin
+    }
 }

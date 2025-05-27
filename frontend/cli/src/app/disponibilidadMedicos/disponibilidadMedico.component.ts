@@ -34,9 +34,7 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
               <tr>
                 <th>#</th>
                 <th>Staff Médico</th>
-                <th>Día</th>
-                <th>Hora Inicio</th>
-                <th>Hora Fin</th>
+                <th>Horarios</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
@@ -48,9 +46,13 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
               >
                 <td>{{ disp.id }}</td>
                 <td>{{ getStaffMedicoNombre(disp.staffMedicoId) }}</td>
-                <td>{{ disp.diaSemana }}</td>
-                <td>{{ disp.horaInicio }}</td>
-                <td>{{ disp.horaFin }}</td>
+                <td>
+                  <ul class="list-unstyled mb-0">
+                    <li *ngFor="let horario of disp.horarios">
+                      {{ horario.dia }}: {{ horario.horaInicio }} - {{ horario.horaFin }}
+                    </li>
+                  </ul>
+                </td>
                 <td class="text-center">
                   <button (click)="goToEdit(disp.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>
@@ -69,51 +71,48 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 })
 export class DisponibilidadMedicoComponent {
   disponibilidades: DisponibilidadMedico[] = [];
-  currentPage: number = 1; // Initialize currentPage to 1
-  resultsPage!: ResultsPage; // Declare the resultsPage property
-  staffMedicos: StaffMedico[] = []; // Agregado para almacenar el listado de médicos
+  staffMedicos: StaffMedico[] = [];
 
   constructor(
     private disponibilidadService: DisponibilidadMedicoService,
-    private staffMedicoService: StaffMedicoService, // <--- Agrega el servicio
+    private staffMedicoService: StaffMedicoService,
     public router: Router,
     private modalService: ModalService
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.getDisponibilidades();
-    this.getStaffMedicos(); // Obtener el listado de médicos al iniciar
+    this.getStaffMedicos();
   }
 
   getDisponibilidades(): void {
-    this.disponibilidadService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = <ResultsPage>dataPackage.data;
-      this.disponibilidades = this.resultsPage.content;
-
-      // Por cada disponibilidad, traemos el staff médico completo
-      this.disponibilidades.forEach(disp => {
-        if (disp.staffMedicoId) {
-          this.staffMedicoService.get(disp.staffMedicoId).subscribe(staffDP => {
-            disp.staffMedico = staffDP.data as StaffMedico;
-          });
-        }
-      });
+    this.disponibilidadService.all().subscribe(dataPackage => {
+      this.disponibilidades = dataPackage.data as DisponibilidadMedico[];
     });
   }
 
-  // Nuevo método para obtener el listado de médicos
   getStaffMedicos(): void {
     this.staffMedicoService.all().subscribe(dataPackage => {
       this.staffMedicos = dataPackage.data as StaffMedico[];
     });
   }
 
-  goToEdit(id: number): void {
-    this.router.navigate(['/disponibilidades-medico', id], { queryParams: { edit: true } });
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    if (!staff) return 'Sin asignar';
+
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+
+    return `${medicoNombre} (${especialidadNombre})`;
   }
 
   goToDetail(id: number): void {
     this.router.navigate(['/disponibilidades-medico', id]);
+  }
+
+  goToEdit(id: number): void {
+    this.router.navigate(['/disponibilidades-medico', id], { queryParams: { edit: true } });
   }
 
   remove(id: number): void {
@@ -124,24 +123,7 @@ export class DisponibilidadMedicoComponent {
         "Si elimina la disponibilidad no podrá asignar turnos en ese horario"
       )
       .then(() => {
-        this.disponibilidadService.remove(id).subscribe({
-          next: () => this.getDisponibilidades(),
-          error: (err) => {
-            const msg = err?.error?.message || "Error al eliminar la disponibilidad.";
-            alert(msg);
-            console.error("Error al eliminar Disponibilidad:", err);
-          }
-        });
+        this.disponibilidadService.remove(id).subscribe(() => this.getDisponibilidades());
       });
-  }
-
-  getStaffMedicoNombre(staffMedicoId: number): string {
-    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-    if (!staff) return 'Sin asignar';
-  
-    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
-    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
-  
-    return `${medicoNombre} (${especialidadNombre})`;
   }
 }

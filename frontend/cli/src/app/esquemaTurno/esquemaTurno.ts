@@ -5,18 +5,17 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
 
 export interface EsquemaTurno {
   id: number;
-  horaInicio: string;
-  horaFin: string;
   intervalo: number;
-  diasSemana: string[];
   disponibilidadMedicoId: number;
   staffMedicoId: number;
   centroId: number;
-  centroAtencion?: any;
   consultorioId?: number;
   consultorioNombre?: string;
-  consultorio?: any;
+  diasSemana?: string[]; // Opcional si se usa en otro contexto
+  horarios: { dia: string; horaInicio: string; horaFin: string }[]; // Horarios específicos por día
   // Agregamos opcionalmente los objetos completos:
   disponibilidadMedico?: DisponibilidadMedico;
   staffMedico?: StaffMedico;
+  centroAtencion?: CentroAtencion;
+  consultorio?: Consultorio;
 }

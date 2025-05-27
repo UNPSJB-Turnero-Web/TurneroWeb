@@ -14,14 +14,41 @@ import { DataPackage } from '../data.package';
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="container mt-4 d-flex justify-content-center">
-      <div class="card shadow-sm p-4" style="max-width: 600px; width: 100%; border-radius: 1rem;">
+      <div class="card shadow-sm p-4" style="max-width: 700px; width: 100%; border-radius: 1rem;">
         <h2 class="mb-4 text-center">
           {{ esNuevo ? 'Nueva Disponibilidad' : 'Editando Disponibilidad #' + disponibilidad.id }}
         </h2>
-        <form (ngSubmit)="save()" #form="ngForm">
+        <div *ngIf="!modoEdicion">
+          <p><strong>Staff Médico:</strong> {{ getStaffMedicoNombre(disponibilidad.staffMedicoId) }}</p>
+          <p><strong>Horarios:</strong></p>
+          <table class="table table-bordered table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>Día</th>
+                <th>Hora Inicio</th>
+                <th>Hora Fin</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let horario of disponibilidad.horarios">
+                <td>{{ horario.dia }}</td>
+                <td>{{ horario.horaInicio }}</td>
+                <td>{{ horario.horaFin }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="d-flex justify-content-end mt-4 gap-2">
+            <button class="btn btn-primary" (click)="activarEdicion()">
+              <i class="fa fa-pencil me-1"></i> Editar
+            </button>
+            <button class="btn btn-secondary" (click)="goBack()">
+              <i class="fa fa-arrow-left me-1"></i> Volver
+            </button>
+          </div>
+        </div>
+        <form *ngIf="modoEdicion" (ngSubmit)="save()" #form="ngForm">
           <div class="mb-3">
             <label class="form-label">Staff Médico</label>
-            <!-- Deshabilitar si ya hay un ID -->
             <select
               [(ngModel)]="disponibilidad.staffMedicoId"
               name="staffMedicoId"
@@ -34,50 +61,51 @@ import { DataPackage } from '../data.package';
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label">Días de la Semana</label>
-            <div class="d-flex flex-wrap gap-2">
-              <div class="form-check form-check-inline" *ngFor="let dia of diasSemana">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  [value]="dia"
-                  [checked]="disponibilidad.diaSemana.includes(dia)"
-                  (change)="onDiaSemanaChange($event, dia)"
-                  id="dia-{{dia}}"
-                  [disabled]="!modoEdicion"
-                />
-                <label class="form-check-label" [for]="'dia-' + dia">
-                  {{ dia }}
-                </label>
+            <label class="form-label">Horarios por Día</label>
+            <div *ngFor="let horario of disponibilidad.horarios; let i = index" class="mb-3">
+              <div class="row g-2">
+                <div class="col-4">
+                  <select
+                    [(ngModel)]="horario.dia"
+                    name="dia-{{ i }}"
+                    class="form-select"
+                    required
+                  >
+                    <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
+                  </select>
+                </div>
+                <div class="col-3">
+                  <input
+                    type="time"
+                    class="form-control"
+                    [(ngModel)]="horario.horaInicio"
+                    name="horaInicio-{{ i }}"
+                    required
+                  />
+                </div>
+                <div class="col-3">
+                  <input
+                    type="time"
+                    class="form-control"
+                    [(ngModel)]="horario.horaFin"
+                    name="horaFin-{{ i }}"
+                    required
+                  />
+                </div>
+                <div class="col-2">
+                  <button
+                    type="button"
+                    class="btn btn-danger w-100"
+                    (click)="removeHorario(i)"
+                  >
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="mt-2" *ngIf="disponibilidad.diaSemana?.length">
-              <b>Días seleccionados:</b>
-              <span class="badge bg-primary me-1" *ngFor="let dia of disponibilidad.diaSemana">
-                {{ dia }}
-              </span>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Hora Inicio</label>
-            <input
-              type="time"
-              class="form-control"
-              [(ngModel)]="disponibilidad.horaInicio"
-              name="horaInicio"
-              [disabled]="!modoEdicion"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Hora Fin</label>
-            <input
-              type="time"
-              class="form-control"
-              [(ngModel)]="disponibilidad.horaFin"
-              name="horaFin"
-              required
-            />
+            <button type="button" class="btn btn-primary mt-2" (click)="addHorario()">
+              <i class="fa fa-plus me-1"></i> Agregar Día
+            </button>
           </div>
           <div class="d-flex justify-content-end mt-4 gap-2">
             <button 
@@ -90,28 +118,23 @@ import { DataPackage } from '../data.package';
             <button 
               type="submit" 
               class="btn btn-success px-4" 
-              [disabled]="form.invalid" 
-              *ngIf="modoEdicion"
+              [disabled]="form.invalid"
             >
               <i class="fa fa-save me-1"></i> Guardar
-            </button>
-            <button 
-              type="button" 
-              class="btn btn-primary px-4" 
-              *ngIf="!modoEdicion"
-              (click)="activarEdicion()"
-            >
-              <i class="fa fa-pencil me-1"></i> Editar
             </button>
           </div>
         </form>
       </div>
     </div>
-  `,
+  `
 })
 export class DisponibilidadMedicoDetailComponent {
-disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '' };  staffMedicos: StaffMedico[] = [];
-  
+  disponibilidad: DisponibilidadMedico = {
+    id: 0,
+    staffMedicoId: null as any,
+    horarios: [],
+  };
+  staffMedicos: StaffMedico[] = [];
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   modoEdicion = false;
   esNuevo = false;
@@ -123,35 +146,32 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
     private staffMedicoService: StaffMedicoService,
     private location: Location
   ) {}
+  
+ngOnInit(): void {
+  const idParam = this.route.snapshot.paramMap.get('id');
+  const staffMedicoIdParam = this.route.snapshot.queryParamMap.get('staffMedicoId');
 
-  ngOnInit(): void {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
-      // Modo edición
-      this.get();
-    } else {
-      // Modo nuevo
-      this.modoEdicion = true;
-      this.esNuevo = true;
-      this.disponibilidad = { id: 0, staffMedicoId: null as any, diaSemana: [], horaInicio: '', horaFin: '' };
-      this.loadStaffMedicos(() => {
-        const staffMedicoId = this.route.snapshot.queryParamMap.get('staffMedicoId');
-        if (staffMedicoId) {
-          this.disponibilidad.staffMedicoId = +staffMedicoId;
-          const found = this.staffMedicos.some(s => s.id === this.disponibilidad.staffMedicoId);
-          if (!found) {
-            alert('El Staff Médico proporcionado no es válido.');
-            this.goBack();
-          }
-        }
-      });
+  if (idParam) {
+    this.get();
+  } else {
+    this.modoEdicion = true;
+    this.esNuevo = true;
+
+    // Si se pasa el staffMedicoId por la URL, asignarlo automáticamente
+    if (staffMedicoIdParam) {
+      const staffMedicoId = Number(staffMedicoIdParam);
+      if (!isNaN(staffMedicoId)) {
+        this.disponibilidad.staffMedicoId = staffMedicoId;
+      }
     }
+
+    this.loadStaffMedicos();
   }
+}
 
   get(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
-      // Modo edición
       this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
       this.esNuevo = false;
       const id = Number(idParam);
@@ -162,12 +182,6 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
       this.disponibilidadService.get(id).subscribe({
         next: (dataPackage) => {
           this.disponibilidad = <DisponibilidadMedico>dataPackage.data;
-          if (typeof this.disponibilidad.diaSemana === 'string') {
-            this.disponibilidad.diaSemana = [this.disponibilidad.diaSemana];
-          }
-          if (!Array.isArray(this.disponibilidad.diaSemana)) {
-            this.disponibilidad.diaSemana = [];
-          }
           this.loadStaffMedicos();
         },
         error: (err) => {
@@ -179,16 +193,16 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
   }
 
   save(): void {
-    // Validación extra
-    if (!Array.isArray(this.disponibilidad.diaSemana) || this.disponibilidad.diaSemana.length === 0) {
-      alert('Debe seleccionar al menos un día de la semana.');
+    if (!this.disponibilidad.horarios.length) {
+      alert('Debe agregar al menos un horario.');
       return;
     }
-    const payload = { ...this.disponibilidad };
-    delete payload.staffMedico;
-    // Forzar staffMedicoId a número
-    payload.staffMedicoId = Number(payload.staffMedicoId);
 
+    // Ordenar los horarios por el orden de los días de la semana
+    const diasOrden = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+    this.disponibilidad.horarios.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
+
+    const payload = { ...this.disponibilidad };
     this.disponibilidadService.create(payload).subscribe({
       next: () => {
         this.router.navigate(['/disponibilidades-medico']);
@@ -200,7 +214,7 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
     });
   }
 
-  activarEdicion() {
+  activarEdicion(): void {
     this.modoEdicion = true;
   }
 
@@ -208,12 +222,10 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
     this.location.back();
   }
 
-  loadStaffMedicos(callback?: () => void): void {
+  loadStaffMedicos(): void {
     this.staffMedicoService.all().subscribe({
       next: (dp: DataPackage) => {
         this.staffMedicos = dp.data as StaffMedico[];
-        console.log('Staff Médicos cargados:', this.staffMedicos); // Verificar los datos cargados
-        if (callback) callback();
       },
       error: (err) => {
         console.error('Error al cargar Staff Médicos:', err);
@@ -222,18 +234,21 @@ disponibilidad: DisponibilidadMedico = { id: 0, staffMedicoId: null as any, diaS
     });
   }
 
-  onDiaSemanaChange(event: Event, dia: string) {
-    // Asegura que siempre sea array
-    if (!Array.isArray(this.disponibilidad.diaSemana)) {
-      this.disponibilidad.diaSemana = [];
-    }
-    const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      if (!this.disponibilidad.diaSemana.includes(dia)) {
-        this.disponibilidad.diaSemana.push(dia);
-      }
-    } else {
-      this.disponibilidad.diaSemana = this.disponibilidad.diaSemana.filter(d => d !== dia);
-    }
+  addHorario(): void {
+    this.disponibilidad.horarios.push({ dia: '', horaInicio: '', horaFin: '' });
+  }
+
+  removeHorario(index: number): void {
+    this.disponibilidad.horarios.splice(index, 1);
+  }
+
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    if (!staff) return 'Sin asignar';
+
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+
+    return `${medicoNombre} (${especialidadNombre})`;
   }
 }

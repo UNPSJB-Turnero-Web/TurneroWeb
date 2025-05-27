@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
@@ -36,8 +35,7 @@ public class Agenda {
     private boolean habilitado = true;
     private String motivoInhabilitacion;
 
-    @ManyToOne
-    @JsonBackReference
+    @ManyToOne(optional = false)
     private EsquemaTurno esquemaTurno;
 
     @OneToMany(mappedBy = "agenda", cascade = CascadeType.ALL, orphanRemoval = true)

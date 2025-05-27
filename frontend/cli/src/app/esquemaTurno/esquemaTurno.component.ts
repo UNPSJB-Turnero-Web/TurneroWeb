@@ -46,22 +46,30 @@ import { Consultorio } from '../consultorios/consultorio';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let esquema of resultsPage.content"
-                (click)="goToDetail(esquema.id)"
+                *ngFor="let esquema of resultsPage.content" 
+                (click)="goToDetail(esquema.id)" 
                 style="cursor:pointer"
               >
                 <td>{{ esquema.id }}</td>
                 <td>{{ getStaffMedicoNombre(esquema.staffMedicoId) }}</td>
                 <td>{{ getConsultorioNombre(esquema.consultorioId) }}</td>
-                <td>{{ esquema.diasSemana?.join(', ') }}</td>
-                <td>{{ esquema.horaInicio }}</td>
-                <td>{{ esquema.horaFin }}</td>
+                <td>{{ getDiasSemana(esquema.horarios) }}</td>
+                <td>{{ esquema.horarios[0]?.horaInicio || 'N/A' }}</td>
+                <td>{{ esquema.horarios[esquema.horarios.length - 1]?.horaFin || 'N/A' }}</td>
                 <td>{{ esquema.intervalo }} min</td>
                 <td class="text-center">
-                  <button (click)="goToEdit(esquema.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                  <button 
+                    (click)="goToEdit(esquema.id); $event.stopPropagation()" 
+                    class="btn btn-sm btn-outline-primary me-1" 
+                    title="Editar"
+                  >
                     <i class="fa fa-pencil"></i>
                   </button>
-                  <button (click)="remove(esquema.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <button 
+                    (click)="remove(esquema.id); $event.stopPropagation()" 
+                    class="btn btn-sm btn-outline-danger" 
+                    title="Eliminar"
+                  >
                     <i class="fa fa-trash"></i>
                   </button>
                 </td>
@@ -116,7 +124,7 @@ export class EsquemaTurnoComponent {
     public router: Router,
     private modalService: ModalService,
     private consultorioService: ConsultorioService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.getEsquemas();
@@ -132,22 +140,33 @@ export class EsquemaTurnoComponent {
   getEsquemas(): void {
     this.esquemaTurnoService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
-      // Por cada esquema, traemos la disponibilidad y el staff
+
+      // Procesar cada esquema para asignar datos relacionados
       this.resultsPage.content.forEach((esquema: EsquemaTurno) => {
-        if (esquema.disponibilidadMedicoId) {
-          this.disponibilidadService.get(esquema.disponibilidadMedicoId).subscribe(dp => {
-            esquema.disponibilidadMedico = dp.data;
-            // Ahora traemos el staff médico
-            if (esquema.disponibilidadMedico.staffMedicoId) {
-              this.staffMedicoService.get(esquema.disponibilidadMedico.staffMedicoId).subscribe(staffDP => {
-                esquema.staffMedico = staffDP.data;
-              });
-            }
-          });
+        // Obtener el staff médico
+        if (esquema.staffMedicoId) {
+          const staff = this.staffMedicos.find(s => s.id === esquema.staffMedicoId);
+          if (staff) {
+            esquema.staffMedico = staff;
+          }
+        }
+
+        // Obtener el consultorio
+        if (esquema.consultorioId) {
+          const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
+          if (consultorio) {
+            esquema.consultorio = consultorio;
+          }
+        }
+
+        // Procesar los horarios si no están ya procesados
+        if (!esquema.horarios || esquema.horarios.length === 0) {
+          esquema.horarios = esquema.disponibilidadMedico?.horarios || [];
         }
       });
     });
   }
+
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
@@ -181,17 +200,24 @@ export class EsquemaTurnoComponent {
       });
   }
 
-getStaffMedicoNombre(staffMedicoId: number): string {
-  if (!this.staffMedicos) return '';
-  const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
-  if (!staff) return '';
-  const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
-  const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
-  return `${medicoNombre} (${especialidadNombre})`;
-}
+  getStaffMedicoNombre(staffMedicoId: number): string {
+    if (!this.staffMedicos) return '';
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    if (!staff) return '';
+    const medicoNombre = staff.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Sin médico';
+    const especialidadNombre = staff.especialidad ? staff.especialidad.nombre : 'Sin especialidad';
+    return `${medicoNombre} (${especialidadNombre})`;
+  }
   getConsultorioNombre(consultorioId: number): string {
     if (!consultorioId || !this.consultorios) return '';
     const consultorio = this.consultorios.find(c => c.id === consultorioId);
     return consultorio ? consultorio.nombre : '';
+  }
+
+  getDiasSemana(horarios: { dia: string; horaInicio: string; horaFin: string }[]): string {
+    if (!horarios || horarios.length === 0) {
+      return 'Sin días asignados';
+    }
+    return horarios.map(h => h.dia).join(', ');
   }
 }

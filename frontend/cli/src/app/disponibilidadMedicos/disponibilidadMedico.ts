@@ -7,9 +7,6 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 export interface DisponibilidadMedico {
   id: number;
   staffMedicoId: number;
-  diaSemana: string[];
-  horaInicio: string;
-  horaFin: string;
-  staffMedico?: any;
-
+  horarios: { dia: string; horaInicio: string; horaFin: string }[]; // Horarios específicos por día
+  staffMedico?: StaffMedico; // Información del staff médico
 }

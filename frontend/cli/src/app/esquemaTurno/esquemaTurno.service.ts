@@ -18,9 +18,9 @@ export class EsquemaTurnoService {
   }
 
   /** Obtiene un esquema de turno por ID */
-  get(id: number): Observable<DataPackage<EsquemaTurno>> {
-    return this.http.get<DataPackage<EsquemaTurno>>(`${this.url}/${id}`);
-  }
+get(id: number): Observable<EsquemaTurno> {
+  return this.http.get<EsquemaTurno>(`${this.url}/${id}`);
+}
 
   /** Crea un nuevo esquema de turno */
   create(esquema: EsquemaTurno): Observable<DataPackage<EsquemaTurno>> {

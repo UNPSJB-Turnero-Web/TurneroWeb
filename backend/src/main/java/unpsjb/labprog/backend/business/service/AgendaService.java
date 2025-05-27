@@ -18,6 +18,7 @@ import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.BloqueHorario;
+import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
@@ -217,13 +218,16 @@ public class AgendaService {
         List<Agenda> agendas = new ArrayList<>();
         LocalDate hoy = LocalDate.now();
 
-        for (String diaSemana : esquemaTurno.getDiasSemana()) {
-            DayOfWeek dayOfWeek = parseDiaSemana(diaSemana);
+        // Obtener los horarios de la disponibilidad médica asociada al esquema de turno
+        List<DisponibilidadMedico.DiaHorario> horarios = esquemaTurno.getDisponibilidadMedico().getHorarios();
+
+        for (DisponibilidadMedico.DiaHorario horario : horarios) {
+            DayOfWeek dayOfWeek = parseDiaSemana(horario.getDia());
             LocalDate fecha = hoy.with(TemporalAdjusters.nextOrSame(dayOfWeek));
             for (int i = 0; i < semanas; i++) {
                 Agenda agenda = new Agenda();
-                agenda.setHoraInicio(esquemaTurno.getHoraInicio());
-                agenda.setHoraFin(esquemaTurno.getHoraFin());
+                agenda.setHoraInicio(horario.getHoraInicio());
+                agenda.setHoraFin(horario.getHoraFin());
                 agenda.setFecha(fecha.plusWeeks(i));
                 agenda.setEsquemaTurno(esquemaTurno);
                 agenda.setHabilitado(true);
@@ -231,6 +235,7 @@ public class AgendaService {
                 agendas.add(agenda);
             }
         }
+
         List<Agenda> saved = new ArrayList<>();
         repository.saveAll(agendas).forEach(saved::add);
         return saved;

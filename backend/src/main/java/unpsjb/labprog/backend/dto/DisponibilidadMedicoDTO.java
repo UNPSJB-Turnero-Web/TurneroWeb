@@ -10,8 +10,14 @@ import lombok.Setter;
 @Setter
 public class DisponibilidadMedicoDTO {
     private Integer id;
-    private List<String> diaSemana; 
-    private LocalTime horaInicio;
-    private LocalTime horaFin;
     private Integer staffMedicoId;
+    private List<DiaHorarioDTO> horarios; // Lista de días con horarios
+
+    @Getter
+    @Setter
+    public static class DiaHorarioDTO {
+        private String dia; // Día de la semana
+        private LocalTime horaInicio; // Hora de inicio
+        private LocalTime horaFin; // Hora de fin
+    }
 }
