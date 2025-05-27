@@ -48,19 +48,57 @@ function getStaffMedicoIdPorNombre(nombreCompleto) {
 
   return staffMedico ? staffMedico.id : null;
 }
-When('el administrador crea un esquema de turno con {string}, {string}, {int}', function (medico, horariosJson, intervalo) {
- // Parsear los horarios desde el string JSON
-  const horarios = JSON.parse(horariosJson.replace(/\\"/g, '"')); // Reemplazar \" por "
-  assert(Array.isArray(horarios), 'El formato de horarios debe ser una lista de objetos');
+function getConsultorioIdPorNombre(nombreConsultorio) {
+  const res = request('GET', 'http://backend:8080/consultorios');
+  const responseData = JSON.parse(res.getBody('utf8'));
 
+  // Acceder a la propiedad "data" de la respuesta
+  const data = Array.isArray(responseData) ? responseData : responseData.data;
+
+  assert(Array.isArray(data), 'La respuesta del backend no contiene un array de consultorios');
+
+  const consultorio = data.find(
+    (consultorio) => consultorio.nombre.trim().toLowerCase() === nombreConsultorio.trim().toLowerCase()
+  );
+
+  return consultorio ? consultorio.id : null;
+}
+When('el administrador crea un esquema de turno con {string}, {int}, {string}', function (medico, intervalo, consultorio) {
   const staffMedicoId = getStaffMedicoIdPorNombre(medico); // Obtener el ID del médico
+  console.log(`staffMedicoId para ${medico}:`, staffMedicoId);
   assert(staffMedicoId, `No se encontró médico con nombre ${medico}`);
 
+  const consultorioId = getConsultorioIdPorNombre(consultorio); // Obtener el ID del consultorio
+  assert(consultorioId, `No se encontró el consultorio con nombre ${consultorio}`);
+
+  // Obtener el centroId asociado al staff médico
+  const staffRes = request('GET', `http://backend:8080/staff-medico/${staffMedicoId}`);
+  const staffData = JSON.parse(staffRes.getBody('utf8'));
+  const centroId = staffData.centroId;
+  console.log(`centroId para ${medico}:`, centroId);
+  assert(centroId, `No se encontró centro asociado al médico ${medico}`);
+
+  // Buscar la disponibilidad médica asociada al médico
+  const res = request('GET', `http://backend:8080/disponibilidades-medico`);
+  const disponibilidades = JSON.parse(res.getBody('utf8')).data;
+
+  // Filtrar las disponibilidades por staffMedicoId
+  const disponibilidad = disponibilidades.find(d => d.staffMedicoId === staffMedicoId);
+  assert(disponibilidad, `No se encontró disponibilidad para el médico ${medico}`);
+
+  const disponibilidadMedicoId = disponibilidad.id;
+  console.log(`Disponibilidad encontrada para ${medico}:`, disponibilidadMedicoId);
+
+  // Configurar el esquema de turno
   const esquemaTurnoConfig = {
     staffMedicoId: staffMedicoId,
-    horarios: horarios,
+    consultorioId: consultorioId,
+    disponibilidadMedicoId: disponibilidadMedicoId,
+    centroId: centroId,
     intervalo: intervalo
   };
+
+  console.log('Payload enviado al backend:', JSON.stringify(esquemaTurnoConfig, null, 2));
 
   try {
     const res = request('POST', 'http://backend:8080/esquema-turno', { json: esquemaTurnoConfig });
@@ -73,6 +111,8 @@ When('el administrador crea un esquema de turno con {string}, {string}, {int}', 
     this.statusCode = error.statusCode || 500;
   }
 });
+
+
 
 
 When('el administrador crea una agenda basada en el esquema de turno', function () {

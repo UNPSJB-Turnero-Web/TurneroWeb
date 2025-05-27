@@ -19,19 +19,15 @@ Ejemplos:
 
 
 Esquema del escenario: Crear esquema de turno
-Cuando el administrador crea un esquema de turno con "<medico>", "<horarios>", <intervalo>
+Cuando el administrador crea un esquema de turno con "<medico>", <intervalo>, "<consultorio>"
     Entonces el sistema responde con status_code <status_code> y status_text "<status_text>" para agenda
 
 Ejemplos:
-    | medico             | horarios                                                                                     | intervalo | status_code | status_text                          |
-    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | 30        | 200         | Esquema de turno creado correctamente |
-    | Gustavo González   | [{\"dia\":\"LUNES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"09:00\",\"horaFin\":\"13:00\"}] | 20        | 200         | Esquema de turno creado correctamente |
-    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"},{\"dia\":\"JUEVES\",\"horaInicio\":\"10:00\",\"horaFin\":\"12:00\"}] | 15        | 200         | Esquema de turno creado correctamente |
-    | Carlos López       | [{\"dia\":\"VIERNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"12:00\"}]                                   | 60        | 200         | Esquema de turno creado correctamente |
-    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MIERCOLES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | 30        | 409         | Conflicto: Esquema ya existe         |
-    | Gabriela Torres    | [{\"dia\":\"MARTES\",\"horaInicio\":\"10:00\",\"horaFin\":\"09:00\"}]                                    | 15        | 400         | Hora de inicio no puede ser mayor a hora de fin |
-    | Cecilia Morales    | []                                                                                           | 30        | 400         | Los días son obligatorios            |
-    | Cecilia Morales    | [{\"dia\":\"LUNES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"},{\"dia\":\"MARTES\",\"horaInicio\":\"08:00\",\"horaFin\":\"14:00\"}] | -10       | 400         | El intervalo debe ser positivo       |
+    | medico             | intervalo | consultorio    | status_code | status_text                          |
+    | Cecilia Morales    | 30        | Consultorio 1  | 200         | Esquema de turno creado correctamente |
+    | Gustavo González   | 20        | Consultorio 2  | 200         | Esquema de turno creado correctamente |
+    | Gabriela Torres    | 15        | Consultorio 3  | 200         | Esquema de turno creado correctamente |
+    | Carlos López       | 60        | Consultorio 4  | 200         | Esquema de turno creado correctamente |
 
 Esquema del escenario: Crear una agenda sin conflictos
 Dado que el administrador configura la agenda del "<consultorio>"
