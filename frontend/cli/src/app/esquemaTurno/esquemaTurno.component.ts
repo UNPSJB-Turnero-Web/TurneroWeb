@@ -38,8 +38,6 @@ import { Consultorio } from '../consultorios/consultorio';
                 <th>Staff Médico</th>
                 <th>Consultorio</th>
                 <th>Días</th>
-                <th>Hora Inicio</th>
-                <th>Hora Fin</th>
                 <th>Intervalo</th>
                 <th class="text-center">Acciones</th>
               </tr>
@@ -53,9 +51,13 @@ import { Consultorio } from '../consultorios/consultorio';
                 <td>{{ esquema.id }}</td>
                 <td>{{ getStaffMedicoNombre(esquema.staffMedicoId) }}</td>
                 <td>{{ getConsultorioNombre(esquema.consultorioId) }}</td>
-                <td>{{ getDiasSemana(esquema.horarios) }}</td>
-                <td>{{ esquema.horarios[0]?.horaInicio || 'N/A' }}</td>
-                <td>{{ esquema.horarios[esquema.horarios.length - 1]?.horaFin || 'N/A' }}</td>
+                <td>
+                  <ul class="list-unstyled mb-0">
+                    <li *ngFor="let horario of esquema.horarios">
+                      {{ horario.dia }}: {{ horario.horaInicio }} - {{ horario.horaFin }}
+                    </li>
+                  </ul>
+                </td>
                 <td>{{ esquema.intervalo }} min</td>
                 <td class="text-center">
                   <button 
@@ -109,7 +111,17 @@ import { Consultorio } from '../consultorios/consultorio';
       padding-left: 0.7rem!important;  
       overflow: hidden;
     }
-  `]
+      td ul {
+      padding-left: 0;
+      margin: 0;
+    }
+
+    td ul li {
+      margin-bottom: 0.25rem;
+    }
+
+
+`]
 })
 export class EsquemaTurnoComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
@@ -213,11 +225,12 @@ export class EsquemaTurnoComponent {
     const consultorio = this.consultorios.find(c => c.id === consultorioId);
     return consultorio ? consultorio.nombre : '';
   }
-
   getDiasSemana(horarios: { dia: string; horaInicio: string; horaFin: string }[]): string {
     if (!horarios || horarios.length === 0) {
       return 'Sin días asignados';
     }
-    return horarios.map(h => h.dia).join(', ');
+    return horarios
+      .map(h => `${h.dia}: ${h.horaInicio} - ${h.horaFin}`)
+      .join(', ');
   }
 }

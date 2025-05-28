@@ -29,60 +29,86 @@ public class EsquemaTurnoPresenter {
     private EsquemaTurnoService service;
 
     @GetMapping
-    public ResponseEntity<List<EsquemaTurnoDTO>> getAll() {
-        List<EsquemaTurnoDTO> esquemas = service.findAll();
-        return ResponseEntity.ok(esquemas);
+    public ResponseEntity<Object> getAll() {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.findAll();
+            return Response.ok(esquemas, "Esquemas de turno obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener los esquemas de turno: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EsquemaTurnoDTO> getById(@PathVariable Integer id) {
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
         return service.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(esquema -> Response.ok(esquema, "Esquema de turno obtenido correctamente"))
+                .orElse(Response.error(null, "Esquema de turno no encontrado"));
     }
 
     @GetMapping("/staff/{staffMedicoId}")
-    public ResponseEntity<List<EsquemaTurnoDTO>> getByStaffMedico(@PathVariable Integer staffMedicoId) {
-        List<EsquemaTurnoDTO> esquemas = service.findByStaffMedico(staffMedicoId);
-        return ResponseEntity.ok(esquemas);
+    public ResponseEntity<Object> getByStaffMedico(@PathVariable Integer staffMedicoId) {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.findByStaffMedico(staffMedicoId);
+            return Response.ok(esquemas, "Esquemas de turno obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener los esquemas de turno: " + e.getMessage());
+        }
     }
 
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
-        EsquemaTurnoDTO saved = service.saveOrUpdate(esquemaTurnoDTO);
-        return ResponseEntity.ok(saved);
+        try {
+            EsquemaTurnoDTO saved = service.saveOrUpdate(esquemaTurnoDTO);
+            return Response.ok(saved, "Esquema de turno creado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al crear el esquema de turno: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody EsquemaTurnoDTO esquemaTurnoDTO) {
-        esquemaTurnoDTO.setId(id);
-        EsquemaTurnoDTO updated = service.saveOrUpdate(esquemaTurnoDTO);
-        return ResponseEntity.ok(updated);
+        try {
+            esquemaTurnoDTO.setId(id);
+            EsquemaTurnoDTO updated = service.saveOrUpdate(esquemaTurnoDTO);
+            return Response.ok(updated, "Esquema de turno actualizado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar el esquema de turno: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (service.findById(id).isPresent()) {
-            service.deleteById(id);
-            return ResponseEntity.noContent().build();
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
+        try {
+            if (service.findById(id).isPresent()) {
+                service.deleteById(id);
+                return Response.ok(null, "Esquema de turno eliminado correctamente");
+            }
+            return Response.error(null, "Esquema de turno no encontrado");
+        } catch (Exception e) {
+            return Response.error(null, "Error al eliminar el esquema de turno: " + e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
+        try {
+            var pageResult = service.findByPage(page, size);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageResult.getContent());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("totalElements", pageResult.getTotalElements());
-        response.put("currentPage", pageResult.getNumber());
+            Map<String, Object> response = new HashMap<>();
+            response.put("content", pageResult.getContent());
+            response.put("totalPages", pageResult.getTotalPages());
+            response.put("totalElements", pageResult.getTotalElements());
+            response.put("currentPage", pageResult.getNumber());
 
-        return Response.ok(response);
+            return Response.ok(response, "Paginación obtenida correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener la paginación: " + e.getMessage());
+        }
     }
-
-    
 }
