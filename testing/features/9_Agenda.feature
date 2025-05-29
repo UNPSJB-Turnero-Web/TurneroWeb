@@ -35,3 +35,17 @@ Ejemplos:
     |                    | 30        | Consultorio 1  | 400         | Error al crear el esquema de turno: El campo staffMedicoId es obligatorio. |
     | Cecilia Morales    | 30        | Consultorio 1  | 409         | Conflicto: Esquema ya existe. |
     | Gabriela Torres    | 15        | Consultorio 3  | 400         | Error al crear el esquema de turno: Los días son obligatorios. |
+
+
+Esquema del escenario: Generar agenda basada en esquema de turno
+Cuando el administrador genera una agenda con "<esquemaTurnoId>", "<fecha>", "<horaInicio>", "<horaFin>"
+Entonces el sistema responde con status_code <status_code> y status_text "<status_text>" para agenda
+
+Ejemplos:
+    | esquemaTurnoId | fecha       | horaInicio | horaFin  | status_code | status_text                          |
+    | 1              | 2025-05-26 | 08:00      | 12:00    | 200         | Agenda generada correctamente        |
+    | 2              | 2025-05-27 | 09:00      | 13:00    | 200         | Agenda generada correctamente        |
+    | 3              | 2025-05-28 | 10:00      | 14:00    | 200         | Agenda generada correctamente        |
+    | 4              | 2025-05-29 | 08:00      | 12:00    | 400         | Error al generar la agenda: Esquema de turno no encontrado |
+    | 1              | 2025-05-26 | 12:00      | 08:00    | 400         | Error al generar la agenda: La hora de inicio no puede ser mayor a la hora de fin |
+    | 1              | 2025-05-26 | 08:00      | 12:00    | 409         | Ya existe una agenda en ese horario para este consultorio |

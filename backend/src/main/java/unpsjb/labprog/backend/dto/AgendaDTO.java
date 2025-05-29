@@ -23,4 +23,5 @@ public class AgendaDTO {
     private String nombreConsultorio;
 
     private List<BloqueHorarioDTO> bloquesReservados; // ✔️ si lo estás usando
+    private List<BloqueHorarioDTO> bloquesGenerados; // Representación de los bloques generados
 }

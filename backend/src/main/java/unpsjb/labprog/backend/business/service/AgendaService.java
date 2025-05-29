@@ -253,4 +253,25 @@ public class AgendaService {
             default: throw new IllegalArgumentException("Día de semana inválido: " + dia);
         }
     }
+
+    public void generarSlotsTurnos(Agenda agenda) {
+        EsquemaTurno esquemaTurno = agenda.getEsquemaTurno();
+        if (esquemaTurno == null || esquemaTurno.getDisponibilidadMedico() == null) {
+            throw new IllegalStateException("El esquema de turno o la disponibilidad médica no están configurados.");
+        }
+
+        agenda.getBloquesReservados().clear(); // Limpiar bloques existentes
+
+        esquemaTurno.getDisponibilidadMedico().getHorarios().forEach(horario -> {
+            LocalTime horaActual = horario.getHoraInicio();
+            while (horaActual.isBefore(horario.getHoraFin())) {
+                BloqueHorario bloque = new BloqueHorario();
+                bloque.setAgenda(agenda);
+                bloque.setHoraInicio(horaActual);
+                bloque.setHoraFin(horaActual.plusMinutes(esquemaTurno.getIntervalo()));
+                agenda.getBloquesReservados().add(bloque);
+                horaActual = horaActual.plusMinutes(esquemaTurno.getIntervalo());
+            }
+        });
+    }
 }
