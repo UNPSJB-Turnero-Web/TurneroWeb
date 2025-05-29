@@ -18,9 +18,9 @@ export class EsquemaTurnoService {
   }
 
   /** Obtiene un esquema de turno por ID */
-get(id: number): Observable<EsquemaTurno> {
-  return this.http.get<EsquemaTurno>(`${this.url}/${id}`);
-}
+  get(id: number): Observable<DataPackage<EsquemaTurno>> {
+    return this.http.get<DataPackage<EsquemaTurno>>(`${this.url}/${id}`);
+  }
 
   /** Crea un nuevo esquema de turno */
   create(esquema: EsquemaTurno): Observable<DataPackage<EsquemaTurno>> {
@@ -43,7 +43,6 @@ get(id: number): Observable<EsquemaTurno> {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page-1}&size=${size}`);
   }
 
-
   /** Búsqueda de esquemas de turno */
   search(term: string): Observable<DataPackage<EsquemaTurno[]>> {
     return this.http.get<DataPackage<EsquemaTurno[]>>(`${this.url}/search/${term}`);
@@ -56,7 +55,7 @@ get(id: number): Observable<EsquemaTurno> {
 
   /** Esquemas de turno disponibles para un centro de atención */
   getDisponibles(centroId: number): Observable<EsquemaTurno[]> {
-    return this.http.get<any>(`${this.url}/centrosAtencion/${centroId}/esquemas/disponibles`)
+    return this.http.get<DataPackage<EsquemaTurno[]>>(`${this.url}/centrosAtencion/${centroId}/esquemas/disponibles`)
       .pipe(
         map(res => res.data || [])
       );

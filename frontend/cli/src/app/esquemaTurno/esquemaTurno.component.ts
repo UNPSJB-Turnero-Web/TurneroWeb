@@ -11,6 +11,8 @@ import { EsquemaTurnoService } from './esquemaTurno.service';
 import { EsquemaTurno } from './esquemaTurno';
 import { ConsultorioService } from '../consultorios/consultorio.service';
 import { Consultorio } from '../consultorios/consultorio';
+import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
+import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 @Component({
   selector: 'app-esquema-turno',
   standalone: true,
@@ -37,6 +39,7 @@ import { Consultorio } from '../consultorios/consultorio';
                 <th>#</th>
                 <th>Staff Médico</th>
                 <th>Consultorio</th>
+                <th>Centro de Atención</th>
                 <th>Días</th>
                 <th>Intervalo</th>
                 <th class="text-center">Acciones</th>
@@ -51,6 +54,7 @@ import { Consultorio } from '../consultorios/consultorio';
                 <td>{{ esquema.id }}</td>
                 <td>{{ getStaffMedicoNombre(esquema.staffMedicoId) }}</td>
                 <td>{{ getConsultorioNombre(esquema.consultorioId) }}</td>
+                <td>{{ getCentroAtencionNombre(esquema.centroId) }}</td>
                 <td>
                   <ul class="list-unstyled mb-0">
                     <li *ngFor="let horario of esquema.horarios">
@@ -128,6 +132,7 @@ export class EsquemaTurnoComponent {
   currentPage: number = 1;
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
+  centrosAtencion: CentroAtencion[] = [];
 
   constructor(
     private esquemaTurnoService: EsquemaTurnoService,
@@ -135,7 +140,8 @@ export class EsquemaTurnoComponent {
     private staffMedicoService: StaffMedicoService,
     public router: Router,
     private modalService: ModalService,
-    private consultorioService: ConsultorioService
+    private consultorioService: ConsultorioService,
+    private centroAtencionService: CentroAtencionService
   ) { }
 
   ngOnInit() {
@@ -145,6 +151,9 @@ export class EsquemaTurnoComponent {
     });
     this.consultorioService.getAll().subscribe(dp => {
       this.consultorios = dp.data as Consultorio[];
+    });
+    this.centroAtencionService.all().subscribe(dp => {
+      this.centrosAtencion = dp.data as CentroAtencion[];
     });
   }
 
@@ -168,6 +177,14 @@ export class EsquemaTurnoComponent {
           const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
           if (consultorio) {
             esquema.consultorio = consultorio;
+          }
+        }
+
+        // Obtener el centro de atención
+        if (esquema.centroId) {
+          const centro = this.centrosAtencion.find(c => c.id === esquema.centroId);
+          if (centro) {
+            esquema.centroAtencion = centro;
           }
         }
 
@@ -224,6 +241,11 @@ export class EsquemaTurnoComponent {
     if (!consultorioId || !this.consultorios) return '';
     const consultorio = this.consultorios.find(c => c.id === consultorioId);
     return consultorio ? consultorio.nombre : '';
+  }
+  getCentroAtencionNombre(centroId: number): string {
+    if (!centroId || !this.centrosAtencion) return '';
+    const centro = this.centrosAtencion.find(c => c.id === centroId);
+    return centro ? centro.nombre : '';
   }
   getDiasSemana(horarios: { dia: string; horaInicio: string; horaFin: string }[]): string {
     if (!horarios || horarios.length === 0) {

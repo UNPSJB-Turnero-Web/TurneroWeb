@@ -59,7 +59,17 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
                 </tr>
               </tbody>
             </table>
-          </div>
+          </div><!-- Centro de Atención asociado -->
+<div class="mb-3">
+  <label class="form-label">Centro de Atención</label>
+  <input
+    type="text"
+    class="form-control"
+    [value]="getCentroNombre()"
+    disabled
+  />
+</div>
+          
           <!-- Consultorio editable -->
           <div class="mb-3">
             <label class="form-label">Consultorio</label>
@@ -121,7 +131,7 @@ export class EsquemaTurnoDetailComponent {
     disponibilidadMedicoId: null as any,
     centroId: null as any,
     horarios: [],
-    intervalo: 15
+    intervalo: 15,
   } as EsquemaTurno;
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
@@ -147,47 +157,44 @@ export class EsquemaTurnoDetailComponent {
   }
 
   get(): void {
-  const path = this.route.snapshot.routeConfig?.path;
+    const path = this.route.snapshot.routeConfig?.path;
 
-  if (path === 'esquema-turno/new') {
-    this.modoEdicion = true;
-    this.esNuevo = true;
-  } else if (path === 'esquema-turno/:id') {
-    this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
-    this.esNuevo = false;
+    if (path === 'esquema-turno/new') {
+      this.modoEdicion = true;
+      this.esNuevo = true;
+    } else if (path === 'esquema-turno/:id') {
+      this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
+      this.esNuevo = false;
 
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (!idParam) {
-      console.error('El ID proporcionado no es válido.');
-      return;
-    }
-
-    const id = Number(idParam);
-    if (isNaN(id)) {
-      console.error('El ID proporcionado no es un número válido.');
-      return;
-    }
-
-    this.esquemaTurnoService.get(id).subscribe({
-      next: (esquema) => {
-        console.log('Esquema recibido del backend:', esquema);
-        this.esquema = esquema;
-
-        // Asignar la disponibilidad seleccionada
-        this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
-
-        // Cargar los consultorios directamente usando el centroId del esquema
-        if (this.esquema.centroId) {
-          this.loadConsultorios(this.esquema.centroId);
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar el esquema de turno:', err);
-        alert('No se pudo cargar el esquema de turno.');
+      const idParam = this.route.snapshot.paramMap.get('id');
+      console.log('idParam:', idParam); // <-- Agrega este log
+      if (!idParam) {
+        console.error('El ID proporcionado no es válido.');
+        return;
       }
-    });
+
+      const id = Number(idParam);
+      console.log('id:', id); // <-- Agrega este log
+      if (isNaN(id)) {
+        console.error('El ID proporcionado no es un número válido.');
+        return;
+      }
+
+      this.esquemaTurnoService.get(id).subscribe({
+        next: (dataPackage) => {
+          this.esquema = <EsquemaTurno>dataPackage.data;
+          this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
+          if (this.esquema.centroId) {
+            this.loadConsultorios(this.esquema.centroId);
+          }
+        },
+        error: (err) => {
+          console.error('Error al cargar el esquema de turno:', err);
+          alert('No se pudo cargar el esquema de turno.');
+        }
+      });
+    }
   }
-}
 
   loadDisponibilidadesMedico(callback?: () => void): void {
     this.disponibilidadMedicoService.all().subscribe(dp => {
@@ -252,6 +259,13 @@ export class EsquemaTurnoDetailComponent {
       }
     });
   }
+
+  getCentroNombre(): string {
+  const staff = this.staffMedicos.find(s => s.id === this.esquema.staffMedicoId);
+  return staff?.centro?.nombre ?? '';
+}
+
+
 
   getDisponibilidadLabel(disp: DisponibilidadMedico): string {
     const staff = this.staffMedicos.find(s => s.id === disp.staffMedicoId);

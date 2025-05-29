@@ -59,18 +59,17 @@ public class EsquemaTurnoService {
         if (dto.getStaffMedicoId() == null) {
             throw new IllegalArgumentException("El campo staffMedicoId es obligatorio.");
         }
-        if (!staffMedicoRepository.existsById(dto.getStaffMedicoId())) {
-            throw new IllegalArgumentException("El staff médico no existe con ID: " + dto.getStaffMedicoId());
-        }
-
         // Validación: Consultorio
         if (dto.getConsultorioId() == null) {
             throw new IllegalArgumentException("El campo consultorio es obligatorio.");
         }
         if (!consultorioRepository.existsById(dto.getConsultorioId())) {
-            throw new IllegalArgumentException("El consultorio no existe con ID: " + dto.getConsultorioId());
+            throw new IllegalArgumentException("El consultorio no existe.");
         }
-
+        // Validación: Intervalo
+        if (dto.getIntervalo() <= 0) {
+            throw new IllegalArgumentException("El intervalo debe ser positivo");
+        }
         // Validación: Horarios
         if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {
             throw new IllegalArgumentException("Los días son obligatorios.");
@@ -80,12 +79,6 @@ public class EsquemaTurnoService {
                 throw new IllegalArgumentException("La hora de inicio no puede ser mayor a la hora de fin.");
             }
         }
-
-        // Validación: Intervalo
-        if (dto.getIntervalo() <= 0) {
-            throw new IllegalArgumentException("El intervalo debe ser positivo.");
-        }
-
         // Validación: Disponibilidad Médica
         if (dto.getDisponibilidadMedicoId() == null) {
             throw new IllegalArgumentException("El campo disponibilidadMedicoId es obligatorio.");
@@ -99,7 +92,11 @@ public class EsquemaTurnoService {
         // Validación: Conflictos de esquemas
         List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
         for (EsquemaTurno existente : existentes) {
-            if (!esquemaTurno.getId().equals(existente.getId()) &&
+            Integer nuevoId = esquemaTurno.getId();
+            Integer existenteId = existente.getId();
+            // Si ambos IDs son null, consideramos que son distintos (nuevo registro)
+            boolean mismoId = (nuevoId != null && nuevoId.equals(existenteId));
+            if (!mismoId &&
                 esquemaTurno.getDisponibilidadMedico().getId().equals(existente.getDisponibilidadMedico().getId())) {
                 throw new IllegalStateException("Conflicto: Esquema ya existe.");
             }

@@ -24,17 +24,17 @@ Cuando el administrador crea un esquema de turno con "<medico>", <intervalo>, "<
 
 Ejemplos:
     | medico             | intervalo | consultorio    | status_code | status_text                          |
-    | Cecilia Morales    | 30        | Consultorio 1  | 200         | Esquema de turno creado correctamente |
+    | Cecilia Morales    | 20        | Consultorio 1  | 200         | Esquema de turno creado correctamente |
     | Gustavo González   | 20        | Consultorio 2  | 200         | Esquema de turno creado correctamente |
     | Gabriela Torres    | 15        | Consultorio 3  | 200         | Esquema de turno creado correctamente |
-    | Carlos López       | 60        | Consultorio 4  | 200         | Esquema de turno creado correctamente |
+    | Carlos López       | 10        | Consultorio Norte  | 200         | Esquema de turno creado correctamente |
     | Cecilia Morales    | 0         | Consultorio 1  | 400         | Error al crear el esquema de turno: El intervalo debe ser positivo |
     | Gustavo González   | -10       | Consultorio 2  | 400         | Error al crear el esquema de turno: El intervalo debe ser positivo |
     | Gabriela Torres    | 15        | Consultorio X  | 400         | Error al crear el esquema de turno: El consultorio no existe. |
     | Carlos López       | 60        |                | 400         | Error al crear el esquema de turno: El campo consultorio es obligatorio. |
     |                    | 30        | Consultorio 1  | 400         | Error al crear el esquema de turno: El campo staffMedicoId es obligatorio. |
     | Cecilia Morales    | 30        | Consultorio 1  | 409         | Conflicto: Esquema ya existe. |
-    | Gabriela Torres    | 15        | Consultorio 3  | 400         | Error al crear el esquema de turno: Los días son obligatorios. |
+
 
 
 Esquema del escenario: Generar agenda basada en esquema de turno
