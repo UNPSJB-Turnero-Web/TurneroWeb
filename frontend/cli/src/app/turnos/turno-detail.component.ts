@@ -70,8 +70,7 @@ import { DataPackage } from '../data.package'; // Add missing import
       <input 
         class="form-control"
         [ngbTypeahead]="searchAgendas"
-        [inputFormatter]="formatterAgenda"
-        [resultFormatter]="formatterAgenda"
+
         [(ngModel)]="turno.agenda"
         (selectItem)="onAgendaSelected($event.item)"
         name="agenda"
@@ -200,7 +199,6 @@ export class TurnoDetailComponent {
       )
     );
 
-  formatterAgenda = (x: Agenda) => `${x.date} - ${x.centroAtencion?.nombre || 'Sin centro'}`;
 
   onAgendaSelected(agenda: Agenda): void {
     this.turno.agenda = agenda;

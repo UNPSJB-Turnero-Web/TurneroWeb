@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,7 +18,6 @@ import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.model.Agenda;
-import unpsjb.labprog.backend.model.BloqueHorario;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
@@ -92,15 +92,7 @@ public class AgendaService {
         // int duracionMinima = obtenerDuracionMinimaPorEspecialidad(...);
 
         // 4. Validar bloques reservados (cirugías, sanitización, etc.)
-        if (agenda.getBloquesReservados() != null) {
-            for (BloqueHorario bloque : agenda.getBloquesReservados()) {
-                if (horariosSeSuperponen(agenda.getHoraInicio(), agenda.getHoraFin(), bloque.getHoraInicio(),
-                        bloque.getHoraFin())) {
-                    throw new IllegalArgumentException(
-                            "Hay un bloque reservado (ej: " + bloque.getMotivo() + ") que se superpone con la agenda.");
-                }
-            }
-        }
+        // Eliminado: No se usa más BloqueHorario ni getBloquesReservados()
 
         // 5. Validar feriados y días excepcionales
         if (!agenda.isHabilitado()) {
@@ -114,7 +106,6 @@ public class AgendaService {
             List<Agenda> agendasConsultorio = repository.findByEsquemaTurno_StaffMedico_Consultorio_Id(consultorioId);
             for (Agenda a : agendasConsultorio) {
                 if (!a.getId().equals(agenda.getId())) {
-                    // Esto está bien si getHoraFin() y getHoraInicio() son LocalTime
                     if (a.getHoraFin() != null && agenda.getHoraInicio() != null) {
                         if (a.getHoraFin() != null && agenda.getHoraInicio() != null &&
                             Math.abs(((LocalTime) a.getHoraFin()).toSecondOfDay() - ((LocalTime) agenda.getHoraInicio()).toSecondOfDay()) < tolerancia * 60
@@ -142,41 +133,27 @@ public class AgendaService {
         repository.deleteAll();
     }
 
-    public Agenda saveFromDTO(AgendaDTO dto) {
-        Agenda agenda = (dto.getId() != null) ? findById(dto.getId()) : new Agenda();
+    // ADAPTADO: Usa solo SlotDTO como bloque/slot
+    public List<Agenda> saveFromDTO(AgendaDTO dto) {
+        List<Agenda> agendas = new ArrayList<>();
+        if (dto.getDias() != null) {
+            for (AgendaDTO.DiaDTO diaDTO : dto.getDias()) {
+                Agenda agenda = new Agenda();
+                agenda.setFecha(LocalDate.parse(diaDTO.getFecha()));
+                agenda.setHoraInicio(LocalTime.parse(diaDTO.getApertura()));
+                agenda.setHoraFin(LocalTime.parse(diaDTO.getCierre()));
+                agenda.setHabilitado(diaDTO.getInhabilitado() != null ? !diaDTO.getInhabilitado() : true);
+                agenda.setMotivoInhabilitacion(diaDTO.getMotivoInhabilitacion());
 
-        // Mapear campos simples
-        if (dto.getFecha() != null) {
-            agenda.setFecha(LocalDate.parse(dto.getFecha())); // ISO yyyy-MM-dd
-        }
-        agenda.setHoraInicio(dto.getHoraInicio());
-        agenda.setHoraFin(dto.getHoraFin());
-        agenda.setHabilitado(dto.getHabilitado() != null ? dto.getHabilitado() : true);
-        agenda.setMotivoInhabilitacion(dto.getMotivoInhabilitacion());
-        agenda.setTiempoTolerancia(dto.getTiempoTolerancia());
+                // Si quieres guardar los slots como JSON o en otra tabla, deberás adaptar aquí.
+                // Si no, simplemente ignora los slots en la entidad Agenda.
 
-        // Mapear relaciones
-        if (dto.getEsquemaTurnoId() != null) {
-            EsquemaTurno esquema = esquemaTurnoRepository.findById(dto.getEsquemaTurnoId()).orElse(null);
-            agenda.setEsquemaTurno(esquema);
-        }
-
-        // Mapear bloques reservados
-        if (dto.getBloquesReservados() != null) {
-            List<BloqueHorario> bloques = new ArrayList<>();
-            for (unpsjb.labprog.backend.dto.BloqueHorarioDTO bloqueDTO : dto.getBloquesReservados()) {
-                BloqueHorario bloque = new BloqueHorario();
-                bloque.setHoraInicio(bloqueDTO.getHoraInicio());
-                bloque.setHoraFin(bloqueDTO.getHoraFin());
-                bloque.setEsUrgencia(bloqueDTO.isEsUrgencia());
-                bloque.setMotivo(bloqueDTO.getMotivo());
-                bloque.setAgenda(agenda);
-                bloques.add(bloque);
+                agendas.add(agenda);
             }
-            agenda.setBloquesReservados(bloques);
         }
-
-        return save(agenda);
+        List<Agenda> saved = new ArrayList<>();
+        repository.saveAll(agendas).forEach(saved::add);
+        return saved;
     }
 
     private boolean horariosSeSuperponen(LocalTime inicio1, LocalTime fin1, LocalTime inicio2, LocalTime fin2) {
@@ -254,24 +231,40 @@ public class AgendaService {
         }
     }
 
-    public void generarSlotsTurnos(Agenda agenda) {
-        EsquemaTurno esquemaTurno = agenda.getEsquemaTurno();
-        if (esquemaTurno == null || esquemaTurno.getDisponibilidadMedico() == null) {
-            throw new IllegalStateException("El esquema de turno o la disponibilidad médica no están configurados.");
+   
+
+    public AgendaDTO getAgendaConfigurablePorConsultorio(Integer consultorioId, LocalDate desde, LocalDate hasta) {
+        List<Agenda> agendas = repository.findByEsquemaTurno_StaffMedico_Consultorio_Id(consultorioId)
+            .stream()
+            .filter(a -> !a.getFecha().isBefore(desde) && !a.getFecha().isAfter(hasta))
+            .collect(Collectors.toList());
+
+        AgendaDTO dto = new AgendaDTO();
+        dto.setDiaInicio(desde.toString());
+        dto.setDiaFin(hasta.toString());
+        dto.setDias(new ArrayList<>());
+
+        for (Agenda agenda : agendas) {
+            AgendaDTO.DiaDTO diaDTO = new AgendaDTO.DiaDTO();
+            diaDTO.setFecha(agenda.getFecha().toString());
+            diaDTO.setDiaSemana(agenda.getFecha().getDayOfWeek().toString());
+            diaDTO.setApertura(agenda.getHoraInicio() != null ? agenda.getHoraInicio().toString() : null);
+            diaDTO.setCierre(agenda.getHoraFin() != null ? agenda.getHoraFin().toString() : null);
+            diaDTO.setInhabilitado(!agenda.isHabilitado());
+            diaDTO.setMotivoInhabilitacion(agenda.getMotivoInhabilitacion());
+            diaDTO.setSlots(new ArrayList<>()); // Si quieres exponer slots, deberás generarlos aquí
+
+            // Si tienes lógica para generar slots a partir de la agenda, agrégala aquí.
+            // Por ejemplo, podrías calcular los slots en base a la horaInicio, horaFin e intervalo.
+
+            dto.getDias().add(diaDTO);
         }
 
-        agenda.getBloquesReservados().clear(); // Limpiar bloques existentes
+        if (!agendas.isEmpty() && agendas.get(0).getEsquemaTurno() != null) {
+            dto.setEspecialidadId(agendas.get(0).getEsquemaTurno().getStaffMedico().getMedico().getEspecialidad().getId());
+            dto.setEspecialidadNombre(agendas.get(0).getEsquemaTurno().getStaffMedico().getMedico().getEspecialidad().getNombre());
+        }
 
-        esquemaTurno.getDisponibilidadMedico().getHorarios().forEach(horario -> {
-            LocalTime horaActual = horario.getHoraInicio();
-            while (horaActual.isBefore(horario.getHoraFin())) {
-                BloqueHorario bloque = new BloqueHorario();
-                bloque.setAgenda(agenda);
-                bloque.setHoraInicio(horaActual);
-                bloque.setHoraFin(horaActual.plusMinutes(esquemaTurno.getIntervalo()));
-                agenda.getBloquesReservados().add(bloque);
-                horaActual = horaActual.plusMinutes(esquemaTurno.getIntervalo());
-            }
-        });
+        return dto;
     }
 }

@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.service.AgendaService;
+import unpsjb.labprog.backend.business.service.EsquemaTurnoService;
 import unpsjb.labprog.backend.dto.AgendaDTO;
+import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.Turno;
@@ -25,6 +27,9 @@ public class AgendaPresenter {
 
     @Autowired
     AgendaService service;
+
+    @Autowired
+    private EsquemaTurnoService esquemaTurnoService;
 
     @Autowired
     private EsquemaTurnoRepository esquemaTurnoRepository;
@@ -44,13 +49,13 @@ public class AgendaPresenter {
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> create(@RequestBody AgendaDTO dto) {
-        Agenda saved = service.saveFromDTO(dto);
+        List<Agenda> saved = service.saveFromDTO(dto);
         return Response.ok(saved);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
     public ResponseEntity<Object> update(@RequestBody AgendaDTO dto) {
-        Agenda saved = service.saveFromDTO(dto);
+        List<Agenda> saved = service.saveFromDTO(dto);
         return Response.ok(saved);
     }
 
@@ -91,6 +96,16 @@ public class AgendaPresenter {
         return Response.ok(service.findByConsultorio(consultorioId));
     }
 
+    @RequestMapping(value = "/esquema-turno/all", method = RequestMethod.GET)
+    public ResponseEntity<Object> getAllEsquemasTurno() {
+        try {
+            List<EsquemaTurnoDTO> esquemas = esquemaTurnoService.findAll();
+            return Response.ok(esquemas, "Todos los esquemas de turno obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener los esquemas de turno: " + e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/generar-desde-esquema/{esquemaTurnoId}", method = RequestMethod.POST)
     public ResponseEntity<List<Agenda>> generarAgenda(
             @PathVariable Integer esquemaTurnoId,
@@ -100,6 +115,5 @@ public class AgendaPresenter {
         List<Agenda> agendas = service.generarAgendaDesdeEsquemaTurno(esquema, semanas);
         return ResponseEntity.ok(agendas);
     }
-
 
 }

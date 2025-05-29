@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { DataPackage } from '../data.package';
 import { Agenda } from './agenda';
 
@@ -60,4 +60,24 @@ export class AgendaService {
   getAll(): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/all`);
   }
+
+getEsquemasTurno(): Observable<any[]> {
+  return this.http.get<any>(`${this.url}/esquema-turno/all`).pipe(
+    map(resp => resp.data) // <-- extrae el array de la respuesta
+  );
+
+}
+
+
+
+  // Obtener agenda configurable por consultorio y rango de fechas
+getAgendaConfigurablePorConsultorio(consultorioId: number, desde: string, hasta: string): Observable<Agenda> {
+  return this.http.get<Agenda>(
+    `/api/agenda/configurable/${consultorioId}?desde=${desde}&hasta=${hasta}`
+  );
+}
+
+generarDesdeEsquemaTurno(esquemaTurnoId: number, semanas: number) {
+  return this.http.post<Agenda[]>(`/agenda/generar-desde-esquema/${esquemaTurnoId}`, {});
+}
 }

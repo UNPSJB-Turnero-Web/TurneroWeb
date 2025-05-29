@@ -1,7 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
-
-
+@import "../node_modules/angular-calendar/css/angular-calendar.css";
+@import 'bootstrap/dist/css/bootstrap.min.css';
 @import '@fortawesome/fontawesome-free/css/all.min.css';
+@import 'leaflet/dist/leaflet.css';
 
 body {
   font-family: Arial, sans-serif;
@@ -13,5 +14,5 @@ body {
 }
 
 .modal-backdrop {
-  z-index: 1050;
+  z-index: 1051;
 }

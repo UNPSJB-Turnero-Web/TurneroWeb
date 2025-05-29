@@ -38,6 +38,16 @@ public class EsquemaTurnoPresenter {
         }
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<Object> getAllEsquemas() {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.findAll();
+            return Response.ok(esquemas, "Todos los esquemas de turno obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener todos los esquemas de turno: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Object> getById(@PathVariable Integer id) {
         return service.findById(id)

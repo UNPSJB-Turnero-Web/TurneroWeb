@@ -9,6 +9,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^19.2.10",
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",
     "@angular/core": "^19.2.0",
@@ -20,7 +21,9 @@
     "@ng-bootstrap/ng-bootstrap": "^18.0.0",
     "@popperjs/core": "^2.11.8",
     "@types/leaflet": "^1.9.17",
+    "angular-calendar": "^0.31.1",
     "bootstrap": "^5.3.6",
+    "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",

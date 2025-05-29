@@ -2,17 +2,12 @@ package unpsjb.labprog.backend.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,7 +33,5 @@ public class Agenda {
     @ManyToOne(optional = false)
     private EsquemaTurno esquemaTurno;
 
-    @OneToMany(mappedBy = "agenda", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
-    private List<BloqueHorario> bloquesReservados;
+
 }
