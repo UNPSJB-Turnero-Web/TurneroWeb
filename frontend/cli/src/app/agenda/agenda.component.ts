@@ -53,6 +53,7 @@ import { RouterModule } from '@angular/router';
                 placeholder="Ingrese el valor a buscar"
                 list="filterOptions"
               />
+              
               <datalist id="filterOptions">
                 <option *ngFor="let option of getFilterOptions()" [value]="option"></option>
               </datalist>
@@ -287,7 +288,7 @@ export class AgendaComponent implements OnInit {
                 events.push({
                   start: new Date(slotStart),
                   end: new Date(nextSlot.getTime()),
-                  title: `🩺 Turno (${horario.dia})`, // Agregar un ícono al título
+                  title: `🩺 Turno (${horario.dia})\n${slotStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, // Agregar hora de inicio
                   color: { primary: '#1e90ff', secondary: '#D1E8FF' }, // Colores personalizados
                   meta: {
                     staffMedicoNombre: esquema.nombreStaffMedico,
