@@ -24,13 +24,18 @@ public class TurnoDTO {
 
     // Datos del médico (resumidos
     private Integer staffMedicoId;
-    private String nombreStaffMedico;
-    private String especialidadStaffMedico;
+    private String staffMedicoNombre; 
+    private String especialidadStaffMedico; // VERIFICAR
 
     // Datos del centro y consultorio
     private String nombreCentro;
-    private String nombreConsultorio;
+    private String consultorioNombre;
+    private Integer consultorioId;
+    private Integer centroId;
 
     // Datos de agenda
     private Integer agendaId;
+
+    private String titulo;
+
 }

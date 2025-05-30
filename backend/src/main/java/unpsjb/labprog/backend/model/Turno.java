@@ -45,6 +45,10 @@ public class Turno {
     @ManyToOne(optional = false)
     private StaffMedico staffMedico;
 
+      @ManyToOne(optional = false)
+    private Consultorio consultorio;
+
+
     @ManyToOne(optional = false)
     private Agenda agenda;
 

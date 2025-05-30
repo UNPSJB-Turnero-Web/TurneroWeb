@@ -8,7 +8,7 @@ import { Agenda } from './agenda';
   providedIn: 'root',
 })
 export class AgendaService {
-  private url = 'rest/agenda';
+  private url = 'rest/agenda'; // Base URL del backend
 
   constructor(private http: HttpClient) {}
 
@@ -61,23 +61,23 @@ export class AgendaService {
     return this.http.get<DataPackage>(`${this.url}/all`);
   }
 
-getEsquemasTurno(): Observable<any[]> {
-  return this.http.get<any>(`${this.url}/esquema-turno/all`).pipe(
-    map(resp => resp.data) // <-- extrae el array de la respuesta
-  );
+  getEsquemasTurno(): Observable<any[]> {
+    return this.http.get<any>(`${this.url}/esquema-turno/all`).pipe(
+      map(resp => resp.data) // <-- extrae el array de la respuesta
+    );
 
+  }
+
+  // Método para obtener eventos generados desde el backend
+  obtenerEventos(esquemaTurnoId: number, semanas: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.url}/eventos?esquemaTurnoId=${esquemaTurnoId}&semanas=${semanas}`);
+  }
+
+  
+  generarDesdeEsquemaTurno(esquemaTurnoId: number, semanas: number) {
+
+
+     return this.http.post<Agenda>(`${this.url}/generar-desde-esquema/${esquemaTurnoId}`, {});
 }
 
-
-
-  // Obtener agenda configurable por consultorio y rango de fechas
-getAgendaConfigurablePorConsultorio(consultorioId: number, desde: string, hasta: string): Observable<Agenda> {
-  return this.http.get<Agenda>(
-    `/api/agenda/configurable/${consultorioId}?desde=${desde}&hasta=${hasta}`
-  );
-}
-
-generarDesdeEsquemaTurno(esquemaTurnoId: number, semanas: number) {
-  return this.http.post<Agenda[]>(`/agenda/generar-desde-esquema/${esquemaTurnoId}`, {});
-}
 }

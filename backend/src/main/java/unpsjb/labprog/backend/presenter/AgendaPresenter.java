@@ -3,13 +3,16 @@ package unpsjb.labprog.backend.presenter;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
@@ -17,6 +20,7 @@ import unpsjb.labprog.backend.business.service.AgendaService;
 import unpsjb.labprog.backend.business.service.EsquemaTurnoService;
 import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
+import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.Turno;
@@ -27,6 +31,9 @@ public class AgendaPresenter {
 
     @Autowired
     AgendaService service;
+
+    @Autowired
+    private AgendaService agendaService;
 
     @Autowired
     private EsquemaTurnoService esquemaTurnoService;
@@ -105,15 +112,23 @@ public class AgendaPresenter {
             return Response.error(null, "Error al obtener los esquemas de turno: " + e.getMessage());
         }
     }
+@RequestMapping(value = "/generar-desde-esquema/{esquemaTurnoId}", method = RequestMethod.POST)
+public ResponseEntity<List<AgendaDTO>> generarAgenda(
+        @PathVariable Integer esquemaTurnoId,
+        @RequestParam int semanas) {
+    EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
+            .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
+    List<AgendaDTO> agendas = service.generarAgendaDesdeEsquemaTurno(esquema, semanas);
+    return ResponseEntity.ok(agendas);
+}
 
-    @RequestMapping(value = "/generar-desde-esquema/{esquemaTurnoId}", method = RequestMethod.POST)
-    public ResponseEntity<List<Agenda>> generarAgenda(
-            @PathVariable Integer esquemaTurnoId,
-            @RequestParam int semanas) {
-        EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
-                .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
-        List<Agenda> agendas = service.generarAgendaDesdeEsquemaTurno(esquema, semanas);
-        return ResponseEntity.ok(agendas);
+    @GetMapping("/eventos")
+    public List<TurnoDTO> obtenerEventos(@RequestParam int esquemaTurnoId, @RequestParam int semanas) {
+        EsquemaTurno esquemaTurno = agendaService.findEsquemaTurnoById(esquemaTurnoId);
+        if (esquemaTurno == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Esquema de turno no encontrado");
+        }
+
+        return agendaService.generarEventosDesdeEsquemaTurno(esquemaTurno, semanas);
     }
-
 }

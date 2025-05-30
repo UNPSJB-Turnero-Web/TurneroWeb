@@ -35,8 +35,6 @@ public class StaffMedico {
     @OneToMany(mappedBy = "staffMedico", cascade = CascadeType.PERSIST)
     private List<DisponibilidadMedico> disponibilidad;
 
-    
-
 
     @ManyToOne
     private Consultorio consultorio;
