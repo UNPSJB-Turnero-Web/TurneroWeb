@@ -121,24 +121,32 @@ public class EsquemaTurnoService {
                 .collect(Collectors.toList());
     }
 
-    private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {
-        EsquemaTurnoDTO dto = new EsquemaTurnoDTO();
-        dto.setId(esquema.getId());
-        dto.setIntervalo(esquema.getIntervalo());
-        dto.setDisponibilidadMedicoId(esquema.getDisponibilidadMedico().getId());
-        dto.setHorarios(esquema.getDisponibilidadMedico().getHorarios().stream().map(horario -> {
-            DiaHorarioDTO diaHorarioDTO = new DiaHorarioDTO();
-            diaHorarioDTO.setDia(horario.getDia());
-            diaHorarioDTO.setHoraInicio(horario.getHoraInicio());
-            diaHorarioDTO.setHoraFin(horario.getHoraFin());
-            return diaHorarioDTO;
-        }).collect(Collectors.toList()));
-        dto.setStaffMedicoId(esquema.getStaffMedico().getId());
-        dto.setCentroId(esquema.getCentroAtencion().getId());
-        dto.setConsultorioId(esquema.getConsultorio().getId());
-        return dto;
-    }
+  private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {
+    EsquemaTurnoDTO dto = new EsquemaTurnoDTO();
+    dto.setId(esquema.getId());
+    dto.setIntervalo(esquema.getIntervalo());
+    dto.setDisponibilidadMedicoId(esquema.getDisponibilidadMedico().getId());
+    dto.setHorarios(esquema.getDisponibilidadMedico().getHorarios().stream().map(horario -> {
+        DiaHorarioDTO diaHorarioDTO = new DiaHorarioDTO();
+        diaHorarioDTO.setDia(horario.getDia());
+        diaHorarioDTO.setHoraInicio(horario.getHoraInicio());
+        diaHorarioDTO.setHoraFin(horario.getHoraFin());
+        return diaHorarioDTO;
+    }).collect(Collectors.toList()));
 
+    // Mapear nombres
+    dto.setStaffMedicoId(esquema.getStaffMedico().getId());
+    dto.setNombreStaffMedico(esquema.getStaffMedico().getMedico().getNombre() + " " +
+                             esquema.getStaffMedico().getMedico().getApellido());
+
+    dto.setCentroId(esquema.getCentroAtencion().getId());
+    dto.setNombreCentro(esquema.getCentroAtencion().getNombre());
+
+    dto.setConsultorioId(esquema.getConsultorio().getId());
+    dto.setNombreConsultorio(esquema.getConsultorio().getNombre());
+
+    return dto;
+}
     private EsquemaTurno toEntity(EsquemaTurnoDTO dto) {
         EsquemaTurno esquema = new EsquemaTurno();
         esquema.setId(dto.getId());

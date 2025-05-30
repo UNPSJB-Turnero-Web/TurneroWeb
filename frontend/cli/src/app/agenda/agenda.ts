@@ -33,8 +33,8 @@ export interface Slot {
   centroAtencionNombre?: string;
   consultorioId?: number;
   consultorioNombre?: string;
-  medicoId?: number;
-  medicoNombre?: string;
+  staffMedicoId?: number;
+  staffMedicoNombre?: string;
 }
 
 export interface DiaExcepcional {

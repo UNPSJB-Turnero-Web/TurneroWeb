@@ -1,18 +1,15 @@
-import { Component, ChangeDetectionStrategy, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CalendarEvent, CalendarView, CalendarEventTitleFormatter, CalendarDateFormatter } from 'angular-calendar';
-import { addHours } from 'date-fns';
+import { Component, ChangeDetectionStrategy, OnInit, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef } from '@angular/core';
+import { CalendarEvent, CalendarEventTitleFormatter, CalendarDateFormatter } from 'angular-calendar';
 import { AgendaService } from './agenda.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { ModalService } from '../modal/modal.service';
-import { CalendarModule, DateAdapter } from 'angular-calendar';
+import { CalendarModule } from 'angular-calendar';
 import { Agenda } from './agenda';
-import { FormsModule } from '@angular/forms'; // Para ngModel si quieres seleccionar esquemaTurnoId y semanas
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-
-import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-agenda',
@@ -21,7 +18,7 @@ import { forkJoin } from 'rxjs';
     CommonModule,
     PaginationComponent,
     FormsModule,
-    CalendarModule, 
+    CalendarModule,
     RouterModule,
   ],
   providers: [CalendarEventTitleFormatter, CalendarDateFormatter],
@@ -33,121 +30,68 @@ import { forkJoin } from 'rxjs';
             <i class="fa fa-calendar me-2"></i>
             <h2 class="fw-bold mb-0 fs-4">Agenda de Turnos</h2>
           </div>
-
-          <div>
-            <input type="number" [(ngModel)]="esquemaTurnoId" placeholder="ID EsquemaTurno" class="form-control d-inline-block w-auto me-2" />
-            <input type="number" [(ngModel)]="semanas" placeholder="Semanas" class="form-control d-inline-block w-auto me-2" />
-
-          </div>
         </div>
-        <div class="card-body p-0">
-        <mwl-calendar-month-view
-          [viewDate]="viewDate"
-          [events]="events"
-          (eventClicked)="handleEvent($event)">
-        </mwl-calendar-month-view>
-
-        <!-- Aquí la tabla de eventos -->
-        <div class="mt-4">
-          <h3>Eventos generados</h3>
-          <table class="table table-bordered table-sm">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Hora Inicio</th>
-                <th>Título</th>
-                <th>Consultorio</th>
-                <th>Médico</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let event of events">
-                <td>{{ event.start | date: 'yyyy-MM-dd' }}</td>
-                <td>{{ event.start | date: 'HH:mm' }}</td>
-                <td>{{ event.title }}</td>
-                <td>{{ event.meta?.consultorioId }}</td>
-                <td>{{ event.meta?.staffMedicoId }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        </div>
-      </div>
-
-      <div *ngIf="agendaDTO">
-        <h3 class="mt-4">Agenda Detallada</h3>
-        <div *ngFor="let dia of agendaDTO.dias" class="mb-3">
-          <div class="fw-bold">
-            {{ dia.fecha }} ({{ dia.diaSemana }}) 
-            <span *ngIf="dia.inhabilitado" class="badge bg-warning text-dark ms-2">Inhabilitado</span>
-          </div>
-          <div *ngIf="dia.motivoInhabilitacion" class="text-danger small mb-1">
-            {{ dia.motivoInhabilitacion }}
-          </div>
-          <table class="table table-sm table-bordered">
-            <thead>
-              <tr>
-                <th>Hora Inicio</th>
-                <th>Hora Fin</th>
-                <th>Estado</th>
-                <th>Motivo</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let slot of dia.slots">
-                <td>{{ slot.horaInicio }}</td>
-                <td>{{ slot.horaFin }}</td>
-                <td>
-                  <span *ngIf="slot.inhabilitado" class="text-danger">Inhabilitado</span>
-                  <span *ngIf="!slot.inhabilitado" class="text-success">Disponible</span>
-                </td>
-                <td>{{ slot.motivoInhabilitacion }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div *ngIf="agendas.length > 0">
-        <h3 class="mt-4">Agendas por Esquema</h3>
-        <div *ngFor="let agenda of agendas" class="mb-3">
-          <div class="fw-bold">
-          <div *ngFor="let dia of agenda.dias" class="mb-2">
-            <div class="small text-muted">
-              {{ dia.fecha }} ({{ dia.diaSemana }})
-              <span *ngIf="dia.inhabilitado" class="badge bg-warning text-dark ms-2">Inhabilitado</span>
+        <div class="card-body">
+          <!-- Formulario de búsqueda -->
+          <form class="mb-3 d-flex align-items-center">
+            <div class="me-3">
+              <label for="filterType" class="form-label">Filtrar por:</label>
+              <select id="filterType" class="form-select" [(ngModel)]="filterType" name="filterType">
+                <option value="staffMedico">Staff Médico</option>
+                <option value="centroAtencion">Centro de Atención</option>
+                <option value="consultorio">Consultorio</option>
+              </select>
             </div>
-            <div *ngIf="dia.motivoInhabilitacion" class="text-danger small mb-1">
-              {{ dia.motivoInhabilitacion }}
+            <div class="me-3">
+              <label for="filterValue" class="form-label">Valor:</label>
+              <input
+                id="filterValue"
+                type="text"
+                class="form-control"
+                [(ngModel)]="filterValue"
+                name="filterValue"
+                placeholder="Ingrese el valor a buscar"
+              />
             </div>
-            <table class="table table-sm table-bordered">
-              <thead>
-                <tr>
-                  <th>Hora Inicio</th>
-                  <th>Hora Fin</th>
-                  <th>Estado</th>
-                  <th>Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let slot of dia.slots">
-                  <td>{{ slot.horaInicio }}</td>
-                  <td>{{ slot.horaFin }}</td>
-                  <td>
-                    <span *ngIf="slot.inhabilitado" class="text-danger">Inhabilitado</span>
-                    <span *ngIf="!slot.inhabilitado" class="text-success">Disponible</span>
-                  </td>
-                  <td>{{ slot.motivoInhabilitacion }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <button type="button" class="btn btn-primary" (click)="applyFilter()">Buscar</button>
+            <button type="button" class="btn btn-secondary ms-2" (click)="clearFilter()">Limpiar</button>
+          </form>
+
+          <!-- Vista del calendario semanal -->
+          <mwl-calendar-week-view
+            [viewDate]="viewDate"
+            [events]="filteredEvents"
+            [hourSegments]="6"
+            [dayStartHour]="6"
+            [dayEndHour]="24"
+            (eventClicked)="handleEvent($event)">
+          </mwl-calendar-week-view>
+
+          <!-- Modal para mostrar detalles del evento -->
+          <div *ngIf="selectedEvent" class="modal fade show d-block" tabindex="-1" role="dialog" style="background: rgba(0, 0, 0, 0.5);">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title">Detalle del Turno</h5>
+                  <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Título:</strong> {{ selectedEvent.title }}</p>
+                  <p><strong>Médico:</strong> {{ selectedEvent.meta?.staffMedicoNombre }}</p>
+                  <p><strong>Consultorio:</strong> {{ selectedEvent.meta?.consultorioNombre }}</p>
+                  <p><strong>Centro de Atención:</strong> {{ selectedEvent.meta?.centroAtencionNombre }}</p>
+                  <p><strong>Hora Inicio:</strong> {{ selectedEvent.start | date: 'yyyy-MM-dd HH:mm' }}</p>
+                  <p><strong>Hora Fin:</strong> {{ selectedEvent.end | date: 'yyyy-MM-dd HH:mm' }}</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Agrega esto arriba del calendario -->
-    <div>Eventos cargados: {{ events.length }}</div>
   `,
   changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
@@ -155,41 +99,18 @@ import { forkJoin } from 'rxjs';
     .card-header { border-top-left-radius: 1rem !important; border-top-right-radius: 1rem !important; }
 
     /* Estilos básicos para angular-calendar */
-.mwl-calendar-month-view {
-  border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
-  background: #fff;
-  margin-bottom: 2rem;
-  padding: 1rem;
-}
-.mwl-calendar-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.mwl-calendar-table th,
-.mwl-calendar-table td {
-  border: 1px solid #dee2e6;
-  text-align: center;
-  padding: 0.5rem;
-  min-width: 40px;
-  min-height: 40px;
-}
-.mwl-calendar-event {
-  background: #1e90ff;
-  color: #fff;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin: 2px 0;
-  font-size: 0.85em;
-  cursor: pointer;
-}
-
-    
+    .mwl-calendar-week-view {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      background: #fff;
+      margin-bottom: 2rem;
+      padding: 1rem;
+    }
   `],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class AgendaComponent implements OnInit {
-  viewDate: Date = new Date(2025, 4, 1); // Mayo 2025
+  viewDate: Date = new Date(2025, 4, 5); // Lunes 5 de mayo de 2025
   events: CalendarEvent[] = [];
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
@@ -198,16 +119,21 @@ export class AgendaComponent implements OnInit {
   semanas: number = 4; // valor por defecto
   esquemas: any[] = [];
   agendas: Agenda[] = [];
+  selectedEvent: CalendarEvent | null = null; // Agregado para el evento seleccionado
+  filterType: string = 'staffMedico';
+  filterValue: string = '';
+  filteredEvents: CalendarEvent[] = [];
 
   constructor(
     private agendaService: AgendaService,
     public router: Router,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private cdr: ChangeDetectorRef // Agrega esto
   ) { }
 
   ngOnInit() {
     this.getAgendas();
-  this.cargarEsquemasYEventos();
+    this.cargarEsquemasYEventos();
   }
 
   getAgendas(): void {
@@ -216,52 +142,50 @@ export class AgendaComponent implements OnInit {
     });
   }
 
-  onPageChangeRequested(page: number): void {
-    this.currentPage = page;
-    this.getAgendas();
+  handleEvent(eventObj: any) {
+    this.selectedEvent = eventObj.event; // Asigna el evento seleccionado
+    console.log('Evento seleccionado:', this.selectedEvent); // Depuración
   }
 
-  goToDetail(id: number): void {
-    this.router.navigate(['/agenda', id]);
+  closeModal() {
+    this.selectedEvent = null; // Limpia el evento seleccionado
   }
 
-  goToEdit(id: number): void {
-    this.router.navigate(['/agenda', id], { queryParams: { edit: true } });
+  cargarEsquemasYEventos() {
+    this.agendaService.getEsquemasTurno().subscribe(esquemas => {
+      this.esquemas = esquemas;
+      this.events = this.mapEsquemasToEvents(this.esquemas);
+      this.filteredEvents = this.events; // Inicialmente, los eventos filtrados son todos los eventos
+      console.log('Eventos pasados al calendario:', this.events); // Depuración
+      this.cdr.detectChanges(); // Forzar la detección de cambios
+    });
   }
 
-  confirmDelete(id: number): void {
-    this.modalService
-      .confirm(
-        "Eliminar agenda",
-        "¿Está seguro que desea eliminar esta agenda?",
-        "Esta acción no se puede deshacer"
-      )
-      .then(() => this.remove(id))
-      .catch(() => { });
-  }
+  applyFilter() {
+    if (!this.filterValue) {
+      this.filteredEvents = this.events;
+      return;
+    }
 
-  remove(id: number): void {
-    this.agendaService.remove(id).subscribe({
-      next: () => this.getAgendas(),
-      error: (err) => {
-        const msg = err?.error?.message || "Error al eliminar la agenda.";
-        this.modalService.alert("Error", msg);
-        console.error("Error al eliminar agenda:", err);
+    this.filteredEvents = this.events.filter(event => {
+      const valorFiltro = this.filterValue.toLowerCase();
+      switch (this.filterType) {
+        case 'staffMedico':
+          return event.meta?.staffMedicoNombre?.toLowerCase().includes(valorFiltro);
+        case 'centroAtencion':
+          return event.meta?.centroAtencionNombre?.toLowerCase().includes(valorFiltro);
+        case 'consultorio':
+          return event.meta?.consultorioNombre?.toLowerCase().includes(valorFiltro);
+        default:
+          return true;
       }
     });
   }
 
-  handleEvent(eventObj: any) {
-    alert('Turno: ' + eventObj.event?.title);
+  clearFilter() {
+    this.filterValue = '';
+    this.filteredEvents = this.events;
   }
-
-
-cargarEsquemasYEventos() {
-  this.agendaService.getEsquemasTurno().subscribe(esquemas => {
-    this.esquemas = esquemas; // <-- usa directamente el array
-    this.events = this.mapEsquemasToEvents(this.esquemas);
-  });
-}
 
   private mapEsquemasToEvents(esquemas: any[]): CalendarEvent[] {
     const events: CalendarEvent[] = [];
@@ -274,52 +198,72 @@ cargarEsquemasYEventos() {
       'VIERNES': 5,
       'SABADO': 6
     };
-    const mes = this.viewDate.getMonth();
-    const anio = this.viewDate.getFullYear();
+
+    // Generar eventos para un rango amplio de fechas
+    const semanasARango = 4; // Cambia este valor si necesitas más semanas
+    const fechaInicio = new Date(2025, 4, 1); // Fecha fija para evitar dependencia de la fecha actual
+    const fechaFin = new Date(fechaInicio);
+    fechaFin.setDate(fechaInicio.getDate() + semanasARango * 7); // 4 semanas desde la fecha fija
+
+    console.log('Generando eventos desde:', fechaInicio, 'hasta:', fechaFin);
 
     esquemas.forEach(esquema => {
       const intervalo = esquema.intervalo ? Number(esquema.intervalo) : 20; // minutos
+      console.log('Procesando esquema:', esquema);
+
       esquema.horarios.forEach((horario: any) => {
-        for (let semana = 0; semana < 5; semana++) {
-          const primerDiaMes = new Date(anio, mes, 1);
-          let dia = diasSemana[horario.dia as keyof typeof diasSemana];
-          let primerDia = primerDiaMes.getDay();
-          let offset = (7 + dia - primerDia) % 7;
-          let fechaEvento = new Date(anio, mes, 1 + offset + semana * 7);
+        console.log('Procesando horario:', horario);
 
-          if (fechaEvento.getMonth() !== mes) continue;
+        let fechaActual = new Date(fechaInicio);
 
-          const [hInicio, mInicio, sInicio] = horario.horaInicio.split(':').map(Number);
-          const [hFin, mFin, sFin] = horario.horaFin.split(':').map(Number);
+        while (fechaActual <= fechaFin) {
+          const diaSemana = diasSemana[horario.dia as keyof typeof diasSemana];
+          if (fechaActual.getDay() === diaSemana) {
+            console.log(`Generando eventos para el día: ${horario.dia} (${fechaActual.toDateString()})`);
 
-          let slotStart = new Date(fechaEvento);
-          slotStart.setHours(hInicio, mInicio, sInicio || 0, 0);
+            const [hInicio, mInicio, sInicio] = horario.horaInicio.split(':').map(Number);
+            const [hFin, mFin, sFin] = horario.horaFin.split(':').map(Number);
 
-          let slotEnd = new Date(fechaEvento);
-          slotEnd.setHours(hFin, mFin, sFin || 0, 0);
+            let slotStart = new Date(fechaActual);
+            slotStart.setHours(hInicio, mInicio, sInicio || 0, 0);
 
-          while (slotStart < slotEnd) {
-            let nextSlot = new Date(slotStart.getTime() + intervalo * 60000);
-            if (nextSlot > slotEnd) nextSlot = new Date(slotEnd);
+            let slotEnd = new Date(fechaActual);
+            slotEnd.setHours(hFin, mFin, sFin || 0, 0);
 
-            events.push({
-              start: new Date(slotStart),
-              end: new Date(nextSlot),
-              title: `Turno (${horario.dia})`,
-              color: { primary: '#1e90ff', secondary: '#D1E8FF' },
-              meta: {
-                esquemaId: esquema.id,
-                consultorioId: esquema.consultorioId,
-                staffMedicoId: esquema.staffMedicoId
+            while (slotStart < slotEnd) {
+              let nextSlot = new Date(slotStart.getTime() + intervalo * 60000);
+
+              // 🔒 Clampeo por seguridad
+              if (nextSlot > slotEnd) {
+                nextSlot = new Date(slotEnd);
               }
-            });
 
-            slotStart = nextSlot;
+              // ⚠️ Verificación explícita de duración positiva
+              if (nextSlot.getTime() > slotStart.getTime()) {
+                events.push({
+                  start: new Date(slotStart),
+                  end: new Date(nextSlot.getTime()), // 1 segundo menos
+                  title: `Turno (${horario.dia})`,
+                  color: { primary: '#1e90ff', secondary: '#D1E8FF' },
+                  meta: {
+                    staffMedicoNombre: esquema.nombreStaffMedico,
+                    consultorioNombre: esquema.nombreConsultorio,
+                    centroAtencionNombre: esquema.nombreCentro
+                  }
+                });
+              }
+
+              // 🔄 Importante: clonar el objeto, no referenciarlo
+              slotStart = new Date(nextSlot.getTime());
+            }
           }
+          fechaActual.setDate(fechaActual.getDate() + 1); // Avanzar al siguiente día
         }
       });
     });
-    console.log('EVENTOS GENERADOS:', events);
+
+    console.log('Eventos generados:', events); // Depuración: Verifica cuántos eventos se generan
+
     return events.filter(ev => ev.start instanceof Date && !isNaN(ev.start.getTime()));
   }
 }

@@ -15,6 +15,8 @@ public class EsquemaTurnoDTO {
     private List<DisponibilidadMedicoDTO.DiaHorarioDTO> horarios; // Horarios de DisponibilidadMedico
 
     private Integer staffMedicoId;
+    private String nombreStaffMedico; // Nuevo campo para el nombre del médico
+
     private Integer centroId;
     private String nombreCentro;
 
