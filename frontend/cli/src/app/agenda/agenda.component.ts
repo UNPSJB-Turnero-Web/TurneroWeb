@@ -33,9 +33,9 @@ import { RouterModule } from '@angular/router';
         </div>
         <div class="card-body">
           <!-- Formulario de búsqueda -->
-          <form class="mb-3 d-flex align-items-center">
+          <form class="mb-3 d-flex align-items-center bg-light p-3 rounded shadow-sm">
             <div class="me-3">
-              <label for="filterType" class="form-label">Filtrar por:</label>
+              <label for="filterType" class="form-label fw-bold">Filtrar por:</label>
               <select id="filterType" class="form-select" [(ngModel)]="filterType" name="filterType">
                 <option value="staffMedico">Staff Médico</option>
                 <option value="centroAtencion">Centro de Atención</option>
@@ -43,7 +43,7 @@ import { RouterModule } from '@angular/router';
               </select>
             </div>
             <div class="me-3">
-              <label for="filterValue" class="form-label">Valor:</label>
+              <label for="filterValue" class="form-label fw-bold">Valor:</label>
               <input
                 id="filterValue"
                 type="text"
@@ -51,7 +51,11 @@ import { RouterModule } from '@angular/router';
                 [(ngModel)]="filterValue"
                 name="filterValue"
                 placeholder="Ingrese el valor a buscar"
+                list="filterOptions"
               />
+              <datalist id="filterOptions">
+                <option *ngFor="let option of getFilterOptions()" [value]="option"></option>
+              </datalist>
             </div>
             <button type="button" class="btn btn-primary" (click)="applyFilter()">Buscar</button>
             <button type="button" class="btn btn-secondary ms-2" (click)="clearFilter()">Limpiar</button>
@@ -95,17 +99,44 @@ import { RouterModule } from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.Default,
   styles: [`
-    .card { border-radius: 1.15rem; overflow: hidden; }
-    .card-header { border-top-left-radius: 1rem !important; border-top-right-radius: 1rem !important; }
+  .container {
+    max-width: 90%; /* Ocupa el 90% del ancho de la pantalla */
+    margin: 0 auto; /* Centra el contenido horizontalmente */
+    padding: 1rem; /* Espaciado interno */
+  }
+  .card {
+    border-radius: 1.15rem;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra más suave */
+  }
+  .card-header {
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+    background: linear-gradient(90deg, #007bff, #0056b3); /* Degradado en el encabezado */
+    color: white;
+  }
+  .card-body {
+    background-color: #f8f9fa; /* Fondo claro para el cuerpo */
+  }
 
-    /* Estilos básicos para angular-calendar */
-    .mwl-calendar-week-view {
-      border: 1px solid #dee2e6;
-      border-radius: 0.5rem;
-      background: #fff;
-      margin-bottom: 2rem;
-      padding: 1rem;
-    }
+  /* Estilos básicos para angular-calendar */
+  .mwl-calendar-week-view {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background: #fff;
+    margin-bottom: 2rem;
+    padding: 1rem;
+  }
+  .mwl-calendar-week-view .cal-day-column {
+    border-right: 1px solid #dee2e6; /* Líneas divisorias más visibles */
+  }
+  .mwl-calendar-week-view .cal-hour-segment {
+    background-color: #f8f9fa; /* Fondo claro para las horas */
+  }
+  .mwl-calendar-week-view .cal-event {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra para los eventos */
+  }
   `],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
@@ -187,6 +218,19 @@ export class AgendaComponent implements OnInit {
     this.filteredEvents = this.events;
   }
 
+  getFilterOptions(): string[] {
+    switch (this.filterType) {
+      case 'staffMedico':
+        return [...new Set(this.events.map(event => event.meta?.staffMedicoNombre).filter(Boolean))];
+      case 'centroAtencion':
+        return [...new Set(this.events.map(event => event.meta?.centroAtencionNombre).filter(Boolean))];
+      case 'consultorio':
+        return [...new Set(this.events.map(event => event.meta?.consultorioNombre).filter(Boolean))];
+      default:
+        return [];
+    }
+  }
+
   private mapEsquemasToEvents(esquemas: any[]): CalendarEvent[] {
     const events: CalendarEvent[] = [];
     const diasSemana = {
@@ -242,9 +286,9 @@ export class AgendaComponent implements OnInit {
               if (nextSlot.getTime() > slotStart.getTime()) {
                 events.push({
                   start: new Date(slotStart),
-                  end: new Date(nextSlot.getTime()), // 1 segundo menos
-                  title: `Turno (${horario.dia})`,
-                  color: { primary: '#1e90ff', secondary: '#D1E8FF' },
+                  end: new Date(nextSlot.getTime()),
+                  title: `🩺 Turno (${horario.dia})`, // Agregar un ícono al título
+                  color: { primary: '#1e90ff', secondary: '#D1E8FF' }, // Colores personalizados
                   meta: {
                     staffMedicoNombre: esquema.nombreStaffMedico,
                     consultorioNombre: esquema.nombreConsultorio,
