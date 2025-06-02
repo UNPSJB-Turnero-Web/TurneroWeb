@@ -19,3 +19,8 @@ EsquemaTurno va a ser el que se va a mostrar finalmente en agenda
 Agenda va a tener una "grilla" de los dias de la semana
 y bloques por horario, marcando los intervalos de los medicos
 con hora de inicio en cada turno y la duracion
+
+
+
+esq turno forma el layout de los consultorios fisicamente
+distrubuir de acuerdo a las necesidades de las especialidades y consultorios del centros

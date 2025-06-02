@@ -52,6 +52,13 @@ public class EsquemaTurnoService {
         return esquemaTurnoRepository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
     }
+       public List<EsquemaTurnoDTO> findByConsultorio(Integer consultorioId) {
+        return esquemaTurnoRepository.findByConsultorioId(consultorioId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
     @Transactional
     public EsquemaTurnoDTO saveOrUpdate(EsquemaTurnoDTO dto) {

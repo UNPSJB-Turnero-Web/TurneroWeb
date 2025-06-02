@@ -67,111 +67,11 @@ public class AgendaService {
                         () -> new IllegalArgumentException("EsquemaTurno no encontrado con ID: " + esquemaTurnoId));
     }
 
-    public Agenda save(Agenda agenda) {
-        // 1. Validar superposición de horarios en el consultorio
-        Integer consultorioId = agenda.getEsquemaTurno() != null && agenda.getEsquemaTurno().getStaffMedico() != null
-                && agenda.getEsquemaTurno().getStaffMedico().getConsultorio() != null
-                        ? agenda.getEsquemaTurno().getStaffMedico().getConsultorio().getId()
-                        : null;
-        if (consultorioId != null) {
-            List<Agenda> agendasConsultorio = repository.findByEsquemaTurno_StaffMedico_Consultorio_Id(consultorioId);
-            for (Agenda a : agendasConsultorio) {
-                if (!a.getId().equals(agenda.getId())
-                        && horariosSeSuperponen((LocalTime) a.getHoraInicio(), (LocalTime) a.getHoraFin(),
-                                (LocalTime) agenda.getHoraInicio(), (LocalTime) agenda.getHoraFin())) {
-                    throw new IllegalArgumentException("Ya existe una agenda en ese horario para este consultorio.");
-                }
-            }
-        }
-
-        // 2. Validar médico no en dos consultorios al mismo tiempo
-        Integer medicoId = agenda.getEsquemaTurno() != null && agenda.getEsquemaTurno().getStaffMedico() != null
-                && agenda.getEsquemaTurno().getStaffMedico().getMedico() != null
-                        ? agenda.getEsquemaTurno().getStaffMedico().getMedico().getId()
-                        : null;
-        if (medicoId != null) {
-            List<Agenda> agendasMedico = repository.findByEsquemaTurno_StaffMedico_Medico_Id(medicoId);
-            for (Agenda a : agendasMedico) {
-                if (!a.getId().equals(agenda.getId())
-                        && horariosSeSuperponen((LocalTime) a.getHoraInicio(), (LocalTime) a.getHoraFin(),
-                                (LocalTime) agenda.getHoraInicio(), (LocalTime) agenda.getHoraFin())) {
-                    throw new IllegalArgumentException(
-                            "El médico ya tiene asignación en otro consultorio en ese horario.");
-                }
-            }
-        }
-
-        // 3. Validar tiempo mínimo de consulta por especialidad
-        // Si tu modelo Agenda no tiene especialidad directa, puedes omitir esta
-        // validación o tomarla del staffMedico
-        // int duracionMinima = obtenerDuracionMinimaPorEspecialidad(...);
-
-        // 4. Validar bloques reservados (cirugías, sanitización, etc.)
-        // Eliminado: No se usa más BloqueHorario ni getBloquesReservados()
-
-        // 5. Validar feriados y días excepcionales
-        if (!agenda.isHabilitado()) {
-            throw new IllegalArgumentException(
-                    "El consultorio está inhabilitado temporalmente: " + agenda.getMotivoInhabilitacion());
-        }
-
-        // 6. Validar tolerancia entre turnos
-        int tolerancia = agenda.getTiempoTolerancia() != null ? agenda.getTiempoTolerancia() : 0;
-        if (consultorioId != null) {
-            List<Agenda> agendasConsultorio = repository.findByEsquemaTurno_StaffMedico_Consultorio_Id(consultorioId);
-            for (Agenda a : agendasConsultorio) {
-                if (!a.getId().equals(agenda.getId())) {
-                    if (a.getHoraFin() != null && agenda.getHoraInicio() != null) {
-                        if (a.getHoraFin() != null && agenda.getHoraInicio() != null &&
-                                Math.abs(((LocalTime) a.getHoraFin()).toSecondOfDay()
-                                        - ((LocalTime) agenda.getHoraInicio()).toSecondOfDay()) < tolerancia * 60
-                                || Math.abs(((LocalTime) agenda.getHoraFin()).toSecondOfDay()
-                                        - ((LocalTime) a.getHoraInicio()).toSecondOfDay()) < tolerancia * 60) {
-                            throw new IllegalArgumentException(
-                                    "No se respeta el tiempo de tolerancia entre agendas en este consultorio.");
-                        }
-                    }
-                }
-            }
-        }
-
-        return repository.save(agenda);
-    }
 
     public Page<Agenda> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size));
     }
 
-    public void delete(Integer id) {
-        repository.deleteById(id);
-    }
-
-    public void deleteAll() {
-        repository.deleteAll();
-    }
-
-    // ADAPTADO: Usa solo SlotDTO como bloque/slot
-    public List<Agenda> saveFromDTO(AgendaDTO dto) {
-        List<Agenda> agendas = new ArrayList<>();
-        if (dto.getDias() != null) {
-            for (AgendaDTO.DiaDTO diaDTO : dto.getDias()) {
-                Agenda agenda = new Agenda();
-                agenda.setFecha(LocalDate.parse(diaDTO.getFecha()));
-                agenda.setHoraInicio(LocalTime.parse(diaDTO.getApertura()));
-                agenda.setHoraFin(LocalTime.parse(diaDTO.getCierre()));
-                agenda.setHabilitado(diaDTO.getInhabilitado() != null ? !diaDTO.getInhabilitado() : true);
-                agenda.setMotivoInhabilitacion(diaDTO.getMotivoInhabilitacion());
-
-                // Si quieres guardar los slots como JSON o en otra tabla, deberás adaptar aquí.
-                // Si no, simplemente ignora los slots en la entidad Agenda.
-
-                agendas.add(agenda);
-            }
-        }
-        List<Agenda> saved = new ArrayList<>();
-        repository.saveAll(agendas).forEach(saved::add);
-        return saved;
-    }
 
     private boolean horariosSeSuperponen(LocalTime inicio1, LocalTime fin1, LocalTime inicio2, LocalTime fin2) {
         return !inicio1.isAfter(fin2) && !inicio2.isAfter(fin1);
@@ -378,5 +278,50 @@ public class AgendaService {
         turno.setConsultorio(esquemaTurno.getStaffMedico().getConsultorio());
 
         return turnoRepository.save(turno);
+    }
+
+    public AgendaDTO generarAgendaConfigurablePorConsultorio(Integer consultorioId, LocalDate desde, LocalDate hasta) {
+        // Obtener esquemas de turno asociados al consultorio
+        List<EsquemaTurno> esquemasTurno = esquemaTurnoRepository.findByStaffMedicoId(consultorioId);
+
+        AgendaDTO agendaDTO = new AgendaDTO();
+        agendaDTO.setDiaInicio(desde.toString());
+        agendaDTO.setDiaFin(hasta.toString());
+        agendaDTO.setDias(new ArrayList<>());
+
+        for (EsquemaTurno esquemaTurno : esquemasTurno) {
+            List<DisponibilidadMedico.DiaHorario> horarios = esquemaTurno.getDisponibilidadMedico().getHorarios();
+            for (DisponibilidadMedico.DiaHorario horario : horarios) {
+                LocalDate fecha = desde;
+                while (!fecha.isAfter(hasta)) {
+                    if (fecha.getDayOfWeek() == parseDiaSemana(horario.getDia())) {
+                        AgendaDTO.DiaDTO diaDTO = new AgendaDTO.DiaDTO();
+                        diaDTO.setFecha(fecha.toString());
+                        diaDTO.setDiaSemana(fecha.getDayOfWeek().toString());
+                        diaDTO.setApertura(horario.getHoraInicio().toString());
+                        diaDTO.setCierre(horario.getHoraFin().toString());
+
+                        // Generar slots para el día
+                        List<AgendaDTO.SlotDTO> slots = generarSlots(
+                                fecha,
+                                horario.getHoraInicio(),
+                                horario.getHoraFin(),
+                                esquemaTurno.getIntervalo(),
+                                esquemaTurno.getStaffMedico().getConsultorio().getCentroAtencion().getId(),
+                                esquemaTurno.getStaffMedico().getConsultorio().getCentroAtencion().getNombre(),
+                                esquemaTurno.getStaffMedico().getConsultorio().getId(),
+                                esquemaTurno.getStaffMedico().getConsultorio().getNombre(),
+                                esquemaTurno.getStaffMedico().getMedico().getId(),
+                                esquemaTurno.getStaffMedico().getMedico().getNombre());
+
+                        diaDTO.setSlots(slots);
+                        agendaDTO.getDias().add(diaDTO);
+                    }
+                    fecha = fecha.plusDays(1);
+                }
+            }
+        }
+
+        return agendaDTO;
     }
 }
