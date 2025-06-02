@@ -145,10 +145,10 @@ public class AgendaService {
         List<AgendaDTO> agendas = new ArrayList<>();
         LocalDate hoy = LocalDate.now();
 
-        // Obtener los horarios de la disponibilidad médica asociada al esquema de turno
-        List<DisponibilidadMedico.DiaHorario> horarios = esquemaTurno.getDisponibilidadMedico().getHorarios();
+        // Obtener los horarios definidos en el esquema de turno
+        List<EsquemaTurno.Horario> horarios = esquemaTurno.getHorarios(); // Ajustar para usar horarios del esquema
 
-        for (DisponibilidadMedico.DiaHorario horario : horarios) {
+        for (EsquemaTurno.Horario horario : horarios) {
             DayOfWeek dayOfWeek = parseDiaSemana(horario.getDia());
             LocalDate fecha = hoy.with(TemporalAdjusters.nextOrSame(dayOfWeek));
             for (int i = 0; i < semanas; i++) {
@@ -162,10 +162,10 @@ public class AgendaService {
                         horario.getHoraInicio(),
                         horario.getHoraFin(),
                         esquemaTurno.getIntervalo(),
-                        esquemaTurno.getStaffMedico().getConsultorio().getCentroAtencion().getId(),
-                        esquemaTurno.getStaffMedico().getConsultorio().getCentroAtencion().getNombre(),
-                        esquemaTurno.getStaffMedico().getConsultorio().getId(),
-                        esquemaTurno.getStaffMedico().getConsultorio().getNombre(),
+                        esquemaTurno.getCentroAtencion().getId(),
+                        esquemaTurno.getCentroAtencion().getNombre(),
+                        null, // No necesitamos consultorioId
+                        null, // No necesitamos consultorioNombre
                         esquemaTurno.getStaffMedico().getMedico().getId(),
                         esquemaTurno.getStaffMedico().getMedico().getNombre());
 

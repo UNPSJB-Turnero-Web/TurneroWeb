@@ -42,7 +42,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
           </div>
           <!-- Mostrar Horarios de la Disponibilidad Seleccionada -->
           <div class="mb-3">
-            <label class="form-label">Horarios Disponibles</label>
+            <label class="form-label">Horarios Disponibles del medico</label>
             <table class="table table-bordered table-striped">
               <thead class="table-light">
                 <tr>
@@ -52,7 +52,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let horario of esquema.horarios">
+                <tr *ngFor="let horario of esquema.horariosDisponibilidad">
                   <td>{{ horario.dia }}</td>
                   <td>{{ horario.horaInicio }}</td>
                   <td>{{ horario.horaFin }}</td>
@@ -97,6 +97,65 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
               min="1"
             />
           </div>
+
+          <!-- Horarios por Día -->
+          <div class="mb-3">
+            <label class="form-label">Horarios por Día</label>
+            <div *ngFor="let horario of esquema.horarios; let i = index" class="mb-3">
+              <div class="row g-2">
+                <!-- Selección del Día -->
+                <div class="col-4">
+                  <select
+                    [(ngModel)]="horario.dia"
+                    name="dia-{{ i }}"
+                    class="form-select"
+                    required
+                  >
+                    <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
+                  </select>
+                </div>
+
+                <!-- Hora de Inicio -->
+                <div class="col-3">
+                  <input
+                    type="time"
+                    class="form-control"
+                    [(ngModel)]="horario.horaInicio"
+                    name="horaInicio-{{ i }}"
+                    required
+                  />
+                </div>
+
+                <!-- Hora de Fin -->
+                <div class="col-3">
+                  <input
+                    type="time"
+                    class="form-control"
+                    [(ngModel)]="horario.horaFin"
+                    name="horaFin-{{ i }}"
+                    required
+                  />
+                </div>
+
+                <!-- Botón para Eliminar -->
+                <div class="col-2">
+                  <button
+                    type="button"
+                    class="btn btn-danger w-100"
+                    (click)="removeHorario(i)"
+                  >
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón para Agregar Horario -->
+            <button type="button" class="btn btn-primary mt-2" (click)="addHorario()">
+              <i class="fa fa-plus me-1"></i> Agregar Día
+            </button>
+          </div>
+
           <div class="d-flex justify-content-between mt-4">
             <button type="button" class="btn btn-secondary" (click)="goBack()">
               <i class="fa fa-arrow-left me-1"></i> Cancelar
@@ -139,6 +198,8 @@ export class EsquemaTurnoDetailComponent {
   selectedDisponibilidadId: number | null = null;
   modoEdicion = false;
   esNuevo = false;
+
+  diasSemana: string[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   constructor(
     private route: ActivatedRoute,
@@ -214,7 +275,7 @@ export class EsquemaTurnoDetailComponent {
     const disp = this.disponibilidadesMedico.find(d => d.id === this.selectedDisponibilidadId);
     if (disp) {
       this.esquema.staffMedicoId = disp.staffMedicoId;
-      this.esquema.horarios = disp.horarios.map(horario => ({
+      this.esquema.horariosDisponibilidad = disp.horarios.map(horario => ({
         dia: horario.dia,
         horaInicio: horario.horaInicio,
         horaFin: horario.horaFin
@@ -261,9 +322,9 @@ export class EsquemaTurnoDetailComponent {
   }
 
   getCentroNombre(): string {
-  const staff = this.staffMedicos.find(s => s.id === this.esquema.staffMedicoId);
-  return staff?.centro?.nombre ?? '';
-}
+    const staff = this.staffMedicos.find(s => s.id === this.esquema.staffMedicoId);
+    return staff?.centro?.nombre ?? '';
+  }
 
 
 
@@ -309,5 +370,11 @@ export class EsquemaTurnoDetailComponent {
   goBack(): void {
     this.location.back();
   }
+  addHorario(): void {
+    this.esquema.horarios.push({ dia: '', horaInicio: '', horaFin: '' });
+  }
 
+  removeHorario(index: number): void {
+    this.esquema.horarios.splice(index, 1);
+  }
 }

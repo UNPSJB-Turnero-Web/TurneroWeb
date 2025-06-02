@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.dto;
 
+import java.time.LocalTime;
 import java.util.List;
 
 import lombok.Getter;
@@ -10,16 +11,22 @@ import lombok.Setter;
 public class EsquemaTurnoDTO {
     private Integer id;
     private int intervalo;
-
-    private Integer disponibilidadMedicoId; // ID de DisponibilidadMedico
-    private List<DisponibilidadMedicoDTO.DiaHorarioDTO> horarios; // Horarios de DisponibilidadMedico
-
+    private Integer disponibilidadMedicoId;
     private Integer staffMedicoId;
-    private String nombreStaffMedico; // Nuevo campo para el nombre del médico
-
     private Integer centroId;
-    private String nombreCentro;
-
     private Integer consultorioId;
-    private String nombreConsultorio;
+
+    private List<DiaHorarioDTO> horarios;
+
+    private String nombreStaffMedico; 
+    private String nombreCentro; 
+    private String nombreConsultorio; 
+
+    @Getter
+    @Setter
+    public static class DiaHorarioDTO {
+        private String dia;
+        private LocalTime horaInicio;
+        private LocalTime horaFin;
+    }
 }

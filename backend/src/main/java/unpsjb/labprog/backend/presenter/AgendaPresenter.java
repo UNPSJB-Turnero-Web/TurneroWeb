@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,17 +53,6 @@ public class AgendaPresenter {
                 : Response.notFound();
     }
 
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> create(@RequestBody AgendaDTO dto) {
-        List<Agenda> saved = service.saveFromDTO(dto);
-        return Response.ok(saved);
-    }
-
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody AgendaDTO dto) {
-        List<Agenda> saved = service.saveFromDTO(dto);
-        return Response.ok(saved);
-    }
 
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
@@ -73,12 +61,7 @@ public class AgendaPresenter {
         return Response.ok(service.findByPage(page, size));
     }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
-        service.delete(id);
-        return Response.ok("Agenda " + id + " borrada.");
-    }
-
+ 
     @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
     public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") Integer id) {
         try {

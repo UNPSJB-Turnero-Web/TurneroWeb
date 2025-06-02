@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -15,7 +16,6 @@ import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
-import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO.DiaHorarioDTO;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -52,13 +52,6 @@ public class EsquemaTurnoService {
         return esquemaTurnoRepository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
     }
-       public List<EsquemaTurnoDTO> findByConsultorio(Integer consultorioId) {
-        return esquemaTurnoRepository.findByConsultorioId(consultorioId)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
 
     @Transactional
     public EsquemaTurnoDTO saveOrUpdate(EsquemaTurnoDTO dto) {
@@ -66,6 +59,7 @@ public class EsquemaTurnoService {
         if (dto.getStaffMedicoId() == null) {
             throw new IllegalArgumentException("El campo staffMedicoId es obligatorio.");
         }
+
         // Validación: Consultorio
         if (dto.getConsultorioId() == null) {
             throw new IllegalArgumentException("El campo consultorio es obligatorio.");
@@ -73,43 +67,61 @@ public class EsquemaTurnoService {
         if (!consultorioRepository.existsById(dto.getConsultorioId())) {
             throw new IllegalArgumentException("El consultorio no existe.");
         }
+
         // Validación: Intervalo
         if (dto.getIntervalo() <= 0) {
-            throw new IllegalArgumentException("El intervalo debe ser positivo");
+            throw new IllegalArgumentException("El intervalo debe ser positivo.");
         }
-        // Validación: Horarios
+
+        // Validación: Horarios específicos del esquema de turno
         if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {
-            throw new IllegalArgumentException("Los días son obligatorios.");
+            throw new IllegalArgumentException("Los horarios son obligatorios.");
         }
-        for (DiaHorarioDTO horario : dto.getHorarios()) {
+        for (EsquemaTurnoDTO.DiaHorarioDTO horario : dto.getHorarios()) {
             if (horario.getHoraInicio().isAfter(horario.getHoraFin())) {
                 throw new IllegalArgumentException("La hora de inicio no puede ser mayor a la hora de fin.");
             }
         }
-        // Validación: Disponibilidad Médica
-        if (dto.getDisponibilidadMedicoId() == null) {
-            throw new IllegalArgumentException("El campo disponibilidadMedicoId es obligatorio.");
-        }
-        if (!disponibilidadMedicoRepository.existsById(dto.getDisponibilidadMedicoId())) {
-            throw new IllegalArgumentException("La disponibilidad médica no existe con ID: " + dto.getDisponibilidadMedicoId());
-        }
 
         EsquemaTurno esquemaTurno = toEntity(dto);
 
-        // Validación: Conflictos de esquemas
-        List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
+        // Guardar el esquema de turno con horarios específicos// Validación: Conflictos
+        // de esquemas
+        List<EsquemaTurno> existentes = esquemaTurnoRepository
+                .findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
         for (EsquemaTurno existente : existentes) {
             Integer nuevoId = esquemaTurno.getId();
             Integer existenteId = existente.getId();
             // Si ambos IDs son null, consideramos que son distintos (nuevo registro)
             boolean mismoId = (nuevoId != null && nuevoId.equals(existenteId));
             if (!mismoId &&
-                esquemaTurno.getDisponibilidadMedico().getId().equals(existente.getDisponibilidadMedico().getId())) {
+                    esquemaTurno.getDisponibilidadMedico().getId()
+                            .equals(existente.getDisponibilidadMedico().getId())) {
                 throw new IllegalStateException("Conflicto: Esquema ya existe.");
             }
         }
-
         return toDTO(esquemaTurnoRepository.save(esquemaTurno));
+    }
+
+    private static DayOfWeek parseDiaSemana(String dia) {
+        switch (dia.toUpperCase()) {
+            case "LUNES":
+                return DayOfWeek.MONDAY;
+            case "MARTES":
+                return DayOfWeek.TUESDAY;
+            case "MIERCOLES":
+                return DayOfWeek.WEDNESDAY;
+            case "JUEVES":
+                return DayOfWeek.THURSDAY;
+            case "VIERNES":
+                return DayOfWeek.FRIDAY;
+            case "SABADO":
+                return DayOfWeek.SATURDAY;
+            case "DOMINGO":
+                return DayOfWeek.SUNDAY;
+            default:
+                throw new IllegalArgumentException("Día de semana inválido: " + dia);
+        }
     }
 
     @Transactional
@@ -128,46 +140,60 @@ public class EsquemaTurnoService {
                 .collect(Collectors.toList());
     }
 
-  private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {
-    EsquemaTurnoDTO dto = new EsquemaTurnoDTO();
-    dto.setId(esquema.getId());
-    dto.setIntervalo(esquema.getIntervalo());
-    dto.setDisponibilidadMedicoId(esquema.getDisponibilidadMedico().getId());
-    dto.setHorarios(esquema.getDisponibilidadMedico().getHorarios().stream().map(horario -> {
-        DiaHorarioDTO diaHorarioDTO = new DiaHorarioDTO();
-        diaHorarioDTO.setDia(horario.getDia());
-        diaHorarioDTO.setHoraInicio(horario.getHoraInicio());
-        diaHorarioDTO.setHoraFin(horario.getHoraFin());
-        return diaHorarioDTO;
-    }).collect(Collectors.toList()));
+    private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {
+        EsquemaTurnoDTO dto = new EsquemaTurnoDTO();
+        dto.setId(esquema.getId());
+        dto.setIntervalo(esquema.getIntervalo());
+        dto.setDisponibilidadMedicoId(esquema.getDisponibilidadMedico().getId());
 
-    // Mapear nombres
-    dto.setStaffMedicoId(esquema.getStaffMedico().getId());
-    dto.setNombreStaffMedico(esquema.getStaffMedico().getMedico().getNombre() + " " +
-                             esquema.getStaffMedico().getMedico().getApellido());
+        dto.setHorarios(esquema.getHorarios().stream().map(horario -> {
+            EsquemaTurnoDTO.DiaHorarioDTO diaHorarioDTO = new EsquemaTurnoDTO.DiaHorarioDTO();
+            diaHorarioDTO.setDia(horario.getDia());
+            diaHorarioDTO.setHoraInicio(horario.getHoraInicio());
+            diaHorarioDTO.setHoraFin(horario.getHoraFin());
+            return diaHorarioDTO;
+        }).collect(Collectors.toList()));
 
-    dto.setCentroId(esquema.getCentroAtencion().getId());
-    dto.setNombreCentro(esquema.getCentroAtencion().getNombre());
+        // Mapear nombres
+        dto.setStaffMedicoId(esquema.getStaffMedico().getId());
+        dto.setNombreStaffMedico(esquema.getStaffMedico().getMedico().getNombre() + " " +
+                esquema.getStaffMedico().getMedico().getApellido());
 
-    dto.setConsultorioId(esquema.getConsultorio().getId());
-    dto.setNombreConsultorio(esquema.getConsultorio().getNombre());
+        dto.setCentroId(esquema.getCentroAtencion().getId());
+        dto.setNombreCentro(esquema.getCentroAtencion().getNombre());
 
-    return dto;
-}
+        dto.setConsultorioId(esquema.getConsultorio().getId());
+        dto.setNombreConsultorio(esquema.getConsultorio().getNombre());
+
+        return dto;
+    }
+
     private EsquemaTurno toEntity(EsquemaTurnoDTO dto) {
         EsquemaTurno esquema = new EsquemaTurno();
         esquema.setId(dto.getId());
         esquema.setIntervalo(dto.getIntervalo());
 
         DisponibilidadMedico disponibilidad = disponibilidadMedicoRepository.findById(dto.getDisponibilidadMedicoId())
-                .orElseThrow(() -> new IllegalArgumentException("DisponibilidadMedico no encontrada con ID: " + dto.getDisponibilidadMedicoId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "DisponibilidadMedico no encontrada con ID: " + dto.getDisponibilidadMedicoId()));
         esquema.setDisponibilidadMedico(disponibilidad);
 
         esquema.setStaffMedico(disponibilidad.getStaffMedico());
         esquema.setCentroAtencion(centroAtencionRepository.findById(dto.getCentroId())
-                .orElseThrow(() -> new IllegalArgumentException("CentroAtencion no encontrado con ID: " + dto.getCentroId())));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "CentroAtencion no encontrado con ID: " + dto.getCentroId())));
         esquema.setConsultorio(consultorioRepository.findById(dto.getConsultorioId())
-                .orElseThrow(() -> new IllegalArgumentException("Consultorio no encontrado con ID: " + dto.getConsultorioId())));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Consultorio no encontrado con ID: " + dto.getConsultorioId())));
+
+        esquema.setHorarios(dto.getHorarios().stream().map(horarioDTO -> {
+            EsquemaTurno.Horario horario = new EsquemaTurno.Horario();
+            horario.setDia(parseDiaSemana(horarioDTO.getDia()).toString()); // Convertir a DayOfWeek y luego a String
+            horario.setHoraInicio(horarioDTO.getHoraInicio());
+            horario.setHoraFin(horarioDTO.getHoraFin());
+            return horario;
+        }).collect(Collectors.toList()));
+
         return esquema;
     }
 }

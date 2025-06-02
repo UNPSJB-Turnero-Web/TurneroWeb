@@ -13,10 +13,12 @@ import { ConsultorioService } from '../consultorios/consultorio.service';
 import { Consultorio } from '../consultorios/consultorio';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
 import { CentroAtencion } from '../centrosAtencion/centroAtencion';
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-esquema-turno',
   standalone: true,
-  imports: [CommonModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, RouterModule, PaginationComponent,FormsModule],
   template: `
     <div class="container mt-4">
       <div class="card shadow-sm">
@@ -94,6 +96,7 @@ import { CentroAtencion } from '../centrosAtencion/centroAtencion';
         </div>
       </div>
     </div>
+
   `,
   styles: [`
     .table-hover tbody tr:hover {
@@ -133,6 +136,16 @@ export class EsquemaTurnoComponent {
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
   centrosAtencion: CentroAtencion[] = [];
+  esquema: EsquemaTurno = {
+    id: 0,
+    intervalo: 15,
+    disponibilidadMedicoId: 0,
+    staffMedicoId: 0,
+    centroId: 0,
+    consultorioId: 0,
+    horarios: [], // Inicializamos como un array vacío
+    horariosDisponibilidad: [], // Inicializamos como un array vacío
+  };
 
   constructor(
     private esquemaTurnoService: EsquemaTurnoService,
@@ -188,9 +201,9 @@ export class EsquemaTurnoComponent {
           }
         }
 
-        // Procesar los horarios si no están ya procesados
+        // Procesar los horarios del esquema
         if (!esquema.horarios || esquema.horarios.length === 0) {
-          esquema.horarios = esquema.disponibilidadMedico?.horarios || [];
+          esquema.horarios = [];
         }
       });
     });

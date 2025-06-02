@@ -6,14 +6,18 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
 export interface EsquemaTurno {
   id: number;
   intervalo: number;
-  disponibilidadMedicoId: number;
-  staffMedicoId: number;
-  centroId: number;
-  consultorioId?: number;
-  consultorioNombre?: string;
-  diasSemana?: string[]; // Opcional si se usa en otro contexto
-  horarios: { dia: string; horaInicio: string; horaFin: string }[]; // Horarios específicos por día
-  // Agregamos opcionalmente los objetos completos:
+  disponibilidadMedicoId: number; // ID de la disponibilidad médica asociada
+  staffMedicoId: number; // ID del staff médico
+  centroId: number; // ID del centro de atención
+  consultorioId?: number; // ID del consultorio (opcional)
+
+  // Horarios del esquema de turno (definidos por el centro de atención)
+  horarios: { dia: string; horaInicio: string; horaFin: string }[];
+
+  // Horarios de disponibilidad del médico (definidos por el médico)
+  horariosDisponibilidad?: { dia: string; horaInicio: string; horaFin: string }[];
+
+  // Relaciones opcionales
   disponibilidadMedico?: DisponibilidadMedico;
   staffMedico?: StaffMedico;
   centroAtencion?: CentroAtencion;
