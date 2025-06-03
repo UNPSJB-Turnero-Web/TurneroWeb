@@ -19,7 +19,6 @@ import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.Consultorio;
-import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Paciente;
@@ -132,8 +131,8 @@ public class AgendaService {
         List<TurnoDTO> eventos = new ArrayList<>();
         LocalDate hoy = LocalDate.now();
 
-        // Obtener los horarios del esquema
-        List<DisponibilidadMedico.DiaHorario> horarios = esquemaTurno.getDisponibilidadMedico().getHorarios();
+        // Obtener los horarios del esquema desde la tabla esquema_turno_horarios
+        List<EsquemaTurno.Horario> horarios = esquemaTurno.getHorarios();
         Consultorio consultorio = esquemaTurno.getConsultorio();
 
         // Validar que el consultorio no sea null
@@ -141,7 +140,7 @@ public class AgendaService {
             throw new IllegalStateException("El consultorio asociado al EsquemaTurno con ID " + esquemaTurno.getId() + " es nulo.");
         }
 
-        for (DisponibilidadMedico.DiaHorario horario : horarios) {
+        for (EsquemaTurno.Horario horario : horarios) {
             DayOfWeek dayOfWeek = parseDiaSemana(horario.getDia());
             LocalDate fecha = hoy.with(TemporalAdjusters.nextOrSame(dayOfWeek));
 
