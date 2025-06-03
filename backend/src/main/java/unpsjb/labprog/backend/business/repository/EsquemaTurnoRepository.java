@@ -14,6 +14,8 @@ import unpsjb.labprog.backend.model.EsquemaTurno;
 public interface EsquemaTurnoRepository extends JpaRepository<EsquemaTurno, Integer> {
 
     List<EsquemaTurno> findByStaffMedicoId(Integer staffMedicoId);
+    
+    List<EsquemaTurno> findByConsultorioId(Integer consultorioId);
 
     @Query("SELECT e FROM EsquemaTurno e WHERE e.id = :id")
     Optional<EsquemaTurno> findById(@Param("id") Integer id);

@@ -100,7 +100,6 @@ export class AgendaComponent implements OnInit {
   viewDate: Date = new Date(); // Fecha actual para el calendario
   events: CalendarEvent[] = [];
   filteredEvents: CalendarEvent[] = [];
-  esquemaTurnoId: number = 1; // ID del esquema de turno (puedes cambiarlo dinámicamente)
   semanas: number = 4; // Número de semanas para generar eventos
   selectedEvent: CalendarEvent | null = null; // Evento seleccionado
   filterType: string = 'staffMedico';
@@ -112,26 +111,35 @@ export class AgendaComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cargarEventos();
+    this.cargarTodosLosEventos();
   }
 
   // Método para cargar eventos desde el backend
-  cargarEventos(): void {
-    this.agendaService.obtenerEventos(this.esquemaTurnoId, this.semanas).subscribe((eventos) => {
-      this.events = eventos.map(evento => ({
-        start: new Date(evento.fecha + 'T' + evento.horaInicio),
-        end: new Date(evento.fecha + 'T' + evento.horaFin),
-        title: evento.titulo,
-        color: { primary: '#1e90ff', secondary: '#D1E8FF' },
-        meta: {
-          staffMedicoNombre: evento.staffMedicoNombre,
-          consultorioNombre: evento.consultorioNombre,
-          centroAtencionNombre: evento.nombreCentro
-        }
-      }));
-      this.filteredEvents = this.events; // Inicialmente, los eventos filtrados son todos los eventos
-      console.log('Eventos cargados desde el backend:', this.events);
-      this.cdr.detectChanges(); // Forzar la detección de cambios
+  cargarTodosLosEventos(): void {
+    const semanas = this.semanas; // Número de semanas para generar los eventos
+
+    this.agendaService.obtenerTodosLosEventos(semanas).subscribe({
+      next: (eventos) => {
+        // Transformar los datos recibidos en eventos para el calendario
+        this.events = eventos.map(evento => ({
+          start: new Date(evento.fecha + 'T' + evento.horaInicio),
+          end: new Date(evento.fecha + 'T' + evento.horaFin),
+          title: evento.titulo,
+          color: { primary: '#1e90ff', secondary: '#D1E8FF' },
+          meta: {
+            staffMedicoNombre: evento.staffMedicoNombre,
+            consultorioNombre: evento.consultorioNombre,
+            centroAtencionNombre: evento.nombreCentro
+          }
+        }));
+        this.filteredEvents = this.events; // Inicialmente, los eventos filtrados son todos los eventos
+        console.log('Todos los eventos cargados desde el backend:', this.events);
+        this.cdr.detectChanges(); // Forzar la detección de cambios
+      },
+      error: (err) => {
+        console.error('Error al cargar todos los eventos:', err);
+        alert('No se pudieron cargar los eventos. Intente nuevamente.');
+      }
     });
   }
 

@@ -10,7 +10,7 @@ import { Agenda } from './agenda';
 export class AgendaService {
   private url = 'rest/agenda'; // Base URL del backend
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   get(id: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/${id}`);
@@ -61,23 +61,15 @@ export class AgendaService {
     return this.http.get<DataPackage>(`${this.url}/all`);
   }
 
-  getEsquemasTurno(): Observable<any[]> {
-    return this.http.get<any>(`${this.url}/esquema-turno/all`).pipe(
-      map(resp => resp.data) // <-- extrae el array de la respuesta
-    );
 
-  }
 
   // Método para obtener eventos generados desde el backend
   obtenerEventos(esquemaTurnoId: number, semanas: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/eventos?esquemaTurnoId=${esquemaTurnoId}&semanas=${semanas}`);
   }
+  obtenerTodosLosEventos(semanas: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.url}/eventos/todos?semanas=${semanas}`);
+  }
 
-  
-  generarDesdeEsquemaTurno(esquemaTurnoId: number, semanas: number) {
-
-
-     return this.http.post<Agenda>(`${this.url}/generar-desde-esquema/${esquemaTurnoId}`, {});
-}
 
 }

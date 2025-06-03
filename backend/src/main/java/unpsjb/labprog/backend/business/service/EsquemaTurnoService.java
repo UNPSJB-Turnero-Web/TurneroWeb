@@ -1,6 +1,5 @@
 package unpsjb.labprog.backend.business.service;
 
-import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -100,28 +99,32 @@ public class EsquemaTurnoService {
                 throw new IllegalStateException("Conflicto: Esquema ya existe.");
             }
         }
+        // Validación: Conflictos de horarios en el mismo consultorio
+        List<EsquemaTurno> esquemasEnConsultorio = esquemaTurnoRepository.findByConsultorioId(dto.getConsultorioId());
+        if (esquemasEnConsultorio.stream().anyMatch(existente ->
+                !esquemaTurno.getId().equals(existente.getId()) &&
+                hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()))) {
+            throw new IllegalStateException("Conflicto: Horarios en conflicto en el mismo consultorio.");
+        }
+
+        // Validación: Conflictos de horarios para el mismo médico en diferentes consultorios
+        List<EsquemaTurno> esquemasDelMedico = esquemaTurnoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
+        if (esquemasDelMedico.stream().anyMatch(existente ->
+                !esquemaTurno.getId().equals(existente.getId()) &&
+                hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()))) {
+            throw new IllegalStateException("Conflicto: El médico ya está asignado a otro consultorio en este horario.");
+        }
+
         return toDTO(esquemaTurnoRepository.save(esquemaTurno));
     }
 
-    private static DayOfWeek parseDiaSemana(String dia) {
-        switch (dia.toUpperCase()) {
-            case "LUNES":
-                return DayOfWeek.MONDAY;
-            case "MARTES":
-                return DayOfWeek.TUESDAY;
-            case "MIERCOLES":
-                return DayOfWeek.WEDNESDAY;
-            case "JUEVES":
-                return DayOfWeek.THURSDAY;
-            case "VIERNES":
-                return DayOfWeek.FRIDAY;
-            case "SABADO":
-                return DayOfWeek.SATURDAY;
-            case "DOMINGO":
-                return DayOfWeek.SUNDAY;
-            default:
-                throw new IllegalArgumentException("Día de semana inválido: " + dia);
-        }
+    private boolean hayConflictoDeHorarios(List<EsquemaTurno.Horario> horariosExistentes,
+            List<EsquemaTurnoDTO.DiaHorarioDTO> nuevosHorarios) {
+        return nuevosHorarios.stream()
+                .anyMatch(nuevoHorario -> horariosExistentes.stream()
+                        .anyMatch(horarioExistente -> nuevoHorario.getDia().equals(horarioExistente.getDia()) &&
+                                nuevoHorario.getHoraInicio().isBefore(horarioExistente.getHoraFin()) &&
+                                nuevoHorario.getHoraFin().isAfter(horarioExistente.getHoraInicio())));
     }
 
     @Transactional
@@ -188,7 +191,7 @@ public class EsquemaTurnoService {
 
         esquema.setHorarios(dto.getHorarios().stream().map(horarioDTO -> {
             EsquemaTurno.Horario horario = new EsquemaTurno.Horario();
-            horario.setDia(parseDiaSemana(horarioDTO.getDia()).toString()); // Convertir a DayOfWeek y luego a String
+            horario.setDia((horarioDTO.getDia()).toString());
             horario.setHoraInicio(horarioDTO.getHoraInicio());
             horario.setHoraFin(horarioDTO.getHoraFin());
             return horario;

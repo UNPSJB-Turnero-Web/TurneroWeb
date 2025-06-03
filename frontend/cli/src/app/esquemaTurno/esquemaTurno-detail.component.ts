@@ -200,6 +200,15 @@ export class EsquemaTurnoDetailComponent {
   esNuevo = false;
 
   diasSemana: string[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  diasSemanaMap: { [key: string]: string } = {
+    Monday: 'Lunes',
+    Tuesday: 'Martes',
+    Wednesday: 'Miércoles',
+    Thursday: 'Jueves',
+    Friday: 'Viernes',
+    Saturday: 'Sábado',
+    Sunday: 'Domingo',
+  };
 
   constructor(
     private route: ActivatedRoute,
@@ -228,14 +237,12 @@ export class EsquemaTurnoDetailComponent {
       this.esNuevo = false;
 
       const idParam = this.route.snapshot.paramMap.get('id');
-      console.log('idParam:', idParam); // <-- Agrega este log
       if (!idParam) {
         console.error('El ID proporcionado no es válido.');
         return;
       }
 
       const id = Number(idParam);
-      console.log('id:', id); // <-- Agrega este log
       if (isNaN(id)) {
         console.error('El ID proporcionado no es un número válido.');
         return;
@@ -244,6 +251,13 @@ export class EsquemaTurnoDetailComponent {
       this.esquemaTurnoService.get(id).subscribe({
         next: (dataPackage) => {
           this.esquema = <EsquemaTurno>dataPackage.data;
+
+          // Convertir los días al formato esperado
+          this.esquema.horarios = this.esquema.horarios.map(horario => ({
+            ...horario,
+            dia: this.diasSemanaMap[horario.dia] || horario.dia, // Convertir el día si es necesario
+          }));
+
           this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
           if (this.esquema.centroId) {
             this.loadConsultorios(this.esquema.centroId);

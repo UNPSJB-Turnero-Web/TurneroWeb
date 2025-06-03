@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,6 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.service.AgendaService;
 import unpsjb.labprog.backend.business.service.EsquemaTurnoService;
-import unpsjb.labprog.backend.dto.AgendaDTO;
-import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -86,25 +85,6 @@ public class AgendaPresenter {
         return Response.ok(service.findByConsultorio(consultorioId));
     }
 
-    @RequestMapping(value = "/esquema-turno/all", method = RequestMethod.GET)
-    public ResponseEntity<Object> getAllEsquemasTurno() {
-        try {
-            List<EsquemaTurnoDTO> esquemas = esquemaTurnoService.findAll();
-            return Response.ok(esquemas, "Todos los esquemas de turno obtenidos correctamente");
-        } catch (Exception e) {
-            return Response.error(null, "Error al obtener los esquemas de turno: " + e.getMessage());
-        }
-    }
-@RequestMapping(value = "/generar-desde-esquema/{esquemaTurnoId}", method = RequestMethod.POST)
-public ResponseEntity<List<AgendaDTO>> generarAgenda(
-        @PathVariable Integer esquemaTurnoId,
-        @RequestParam int semanas) {
-    EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
-            .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
-    List<AgendaDTO> agendas = service.generarAgendaDesdeEsquemaTurno(esquema, semanas);
-    return ResponseEntity.ok(agendas);
-}
-
     @GetMapping("/eventos")
     public List<TurnoDTO> obtenerEventos(@RequestParam int esquemaTurnoId, @RequestParam int semanas) {
         EsquemaTurno esquemaTurno = agendaService.findEsquemaTurnoById(esquemaTurnoId);
@@ -113,5 +93,17 @@ public ResponseEntity<List<AgendaDTO>> generarAgenda(
         }
 
         return agendaService.generarEventosDesdeEsquemaTurno(esquemaTurno, semanas);
+    }
+
+        @GetMapping("/eventos/todos")
+    public List<TurnoDTO> obtenerTodosLosEventos(@RequestParam int semanas) {
+        List<EsquemaTurno> esquemasTurno = esquemaTurnoRepository.findAll();
+        List<TurnoDTO> todosLosEventos = new ArrayList<>();
+    
+        for (EsquemaTurno esquema : esquemasTurno) {
+            todosLosEventos.addAll(agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas));
+        }
+    
+        return todosLosEventos;
     }
 }
