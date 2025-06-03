@@ -6,6 +6,8 @@ import { Router } from '@angular/router';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { CalendarModule } from 'angular-calendar';
+
 
 @Component({
   selector: 'app-agenda',
@@ -15,6 +17,7 @@ import { RouterModule } from '@angular/router';
     PaginationComponent,
     FormsModule,
     RouterModule,
+    CalendarModule,
   ],
   providers: [CalendarEventTitleFormatter, CalendarDateFormatter],
   template: `
@@ -94,10 +97,52 @@ import { RouterModule } from '@angular/router';
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Default,
-  schemas: [CUSTOM_ELEMENTS_SCHEMA]
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  
+  styles: [`
+  .container {
+    max-width: 90%; /* Ocupa el 90% del ancho de la pantalla */
+    margin: 0 auto; /* Centra el contenido horizontalmente */
+    padding: 1rem; /* Espaciado interno */
+  }
+  .card {
+    border-radius: 1.15rem;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra más suave */
+  }
+  .card-header {
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+    background: linear-gradient(90deg, #007bff, #0056b3); /* Degradado en el encabezado */
+    color: white;
+  }
+  .card-body {
+    background-color: #f8f9fa; /* Fondo claro para el cuerpo */
+  }
+
+  /* Estilos básicos para angular-calendar */
+  .mwl-calendar-week-view {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background: #fff;
+    margin-bottom: 2rem;
+    padding: 1rem;
+  }
+  .mwl-calendar-week-view .cal-day-column {
+    border-right: 1px solid #dee2e6; /* Líneas divisorias más visibles */
+  }
+  .mwl-calendar-week-view .cal-hour-segment {
+    background-color: #f8f9fa; /* Fondo claro para las horas */
+  }
+  .mwl-calendar-week-view .cal-event {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra para los eventos */
+  }
+  `]
 })
 export class AgendaComponent implements OnInit {
   viewDate: Date = new Date(); // Fecha actual para el calendario
+  
   events: CalendarEvent[] = [];
   filteredEvents: CalendarEvent[] = [];
   semanas: number = 4; // Número de semanas para generar eventos
@@ -119,21 +164,14 @@ export class AgendaComponent implements OnInit {
     const semanas = this.semanas; // Número de semanas para generar los eventos
 
     this.agendaService.obtenerTodosLosEventos(semanas).subscribe({
-      next: (eventos) => {
-        // Transformar los datos recibidos en eventos para el calendario
-        this.events = eventos.map(evento => ({
-          start: new Date(evento.fecha + 'T' + evento.horaInicio),
-          end: new Date(evento.fecha + 'T' + evento.horaFin),
-          title: evento.titulo,
-          color: { primary: '#1e90ff', secondary: '#D1E8FF' },
-          meta: {
-            staffMedicoNombre: evento.staffMedicoNombre,
-            consultorioNombre: evento.consultorioNombre,
-            centroAtencionNombre: evento.nombreCentro
-          }
-        }));
+      next: (eventosBackend) => {
+        console.log('Eventos recibidos desde el backend:', eventosBackend);
+
+        // Transformar los eventos del backend en objetos CalendarEvent
+        this.events = this.mapEsquemasToEvents(eventosBackend);
         this.filteredEvents = this.events; // Inicialmente, los eventos filtrados son todos los eventos
-        console.log('Todos los eventos cargados desde el backend:', this.events);
+
+        console.log('Eventos filtrados asignados al calendario:', this.filteredEvents);
         this.cdr.detectChanges(); // Forzar la detección de cambios
       },
       error: (err) => {
@@ -157,7 +195,6 @@ export class AgendaComponent implements OnInit {
       this.filteredEvents = this.events;
       return;
     }
-
     this.filteredEvents = this.events.filter(event => {
       const valorFiltro = this.filterValue.toLowerCase();
       switch (this.filterType) {
@@ -189,5 +226,44 @@ export class AgendaComponent implements OnInit {
       default:
         return [];
     }
+  }
+
+  private mapEsquemasToEvents(eventosBackend: any[]): CalendarEvent[] {
+    const events: CalendarEvent[] = [];
+
+    console.log('Eventos recibidos desde el backend:', eventosBackend);
+
+    eventosBackend.forEach(evento => {
+      // Validar que el evento tenga los datos necesarios
+      if (!evento.fecha || !evento.horaInicio || !evento.horaFin) {
+        console.warn('Evento con datos incompletos:', evento);
+        return; // Ignorar eventos incompletos
+      }
+
+      const start = new Date(`${evento.fecha}T${evento.horaInicio}`);
+      const end = new Date(`${evento.fecha}T${evento.horaFin}`);
+
+      // Validar que las fechas sean válidas
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.warn('Evento con fechas inválidas:', evento);
+        return; // Ignorar eventos con fechas inválidas
+      }
+
+      // Crear el evento y agregarlo a la lista
+      events.push({
+        start,
+        end,
+        title: evento.titulo || 'Turno',
+        color: { primary: '#1e90ff', secondary: '#D1E8FF' },
+        meta: {
+          staffMedicoNombre: evento.staffMedicoNombre,
+          consultorioNombre: evento.consultorioNombre,
+          centroAtencionNombre: evento.nombreCentro
+        }
+      });
+    });
+
+    console.log('Eventos generados:', events); // Depuración: Verifica cuántos eventos se generan
+    return events;
   }
 }
