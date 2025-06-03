@@ -84,21 +84,37 @@ public class EsquemaTurnoService {
 
         EsquemaTurno esquemaTurno = toEntity(dto);
 
-        // Guardar el esquema de turno con horarios específicos// Validación: Conflictos
-        // de esquemas
-        List<EsquemaTurno> existentes = esquemaTurnoRepository
-                .findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
+        // Validación: Conflictos entre esquemas de turnos existentes
+        List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
         for (EsquemaTurno existente : existentes) {
             Integer nuevoId = esquemaTurno.getId();
             Integer existenteId = existente.getId();
+
             // Si ambos IDs son null, consideramos que son distintos (nuevo registro)
             boolean mismoId = (nuevoId != null && nuevoId.equals(existenteId));
-            if (!mismoId &&
-                    esquemaTurno.getDisponibilidadMedico().getId()
-                            .equals(existente.getDisponibilidadMedico().getId())) {
+            if (!mismoId && esquemaTurno.getDisponibilidadMedico().getId()
+                    .equals(existente.getDisponibilidadMedico().getId())) {
                 throw new IllegalStateException("Conflicto: Esquema ya existe.");
             }
         }
+
+        // Validación: Disponibilidad del médico
+        List<DisponibilidadMedico> disponibilidades = disponibilidadMedicoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
+        for (EsquemaTurnoDTO.DiaHorarioDTO horario : dto.getHorarios()) {
+            boolean disponible = disponibilidades.stream().anyMatch(disponibilidad -> 
+                disponibilidad.getHorarios().stream().anyMatch(diaHorario -> 
+                    diaHorario.getDia().equals(horario.getDia()) &&
+                    !horario.getHoraInicio().isBefore(diaHorario.getHoraInicio()) &&
+                    !horario.getHoraFin().isAfter(diaHorario.getHoraFin())
+                )
+            );
+
+            if (!disponible) {
+                throw new IllegalArgumentException("El médico no tiene disponibilidad para el día " + horario.getDia() +
+                        " entre " + horario.getHoraInicio() + " y " + horario.getHoraFin() + ".");
+            }
+        }
+
         // Validación: Conflictos de horarios en el mismo consultorio
         List<EsquemaTurno> esquemasEnConsultorio = esquemaTurnoRepository.findByConsultorioId(dto.getConsultorioId());
         if (esquemasEnConsultorio.stream().anyMatch(existente ->

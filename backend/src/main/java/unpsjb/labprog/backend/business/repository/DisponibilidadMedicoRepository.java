@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.business.repository;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,7 @@ boolean existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin
     @Param("horaFin") LocalTime horaFin,
     @Param("id") Integer id
 );
+
+    List<DisponibilidadMedico> findByStaffMedicoId(Integer staffMedicoId);
+
 }

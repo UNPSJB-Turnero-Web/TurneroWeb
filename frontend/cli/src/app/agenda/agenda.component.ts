@@ -60,6 +60,12 @@ import { CalendarModule } from 'angular-calendar';
             <button type="button" class="btn btn-secondary ms-2" (click)="clearFilter()">Limpiar</button>
           </form>
 
+          <!-- Navegación entre semanas -->
+          <div class="d-flex justify-content-between mb-3">
+            <button type="button" class="btn btn-secondary" (click)="changeWeek(-1)">Semana anterior</button>
+            <button type="button" class="btn btn-secondary" (click)="changeWeek(1)">Semana siguiente</button>
+          </div>
+
           <!-- Vista del calendario semanal -->
           <mwl-calendar-week-view
             [viewDate]="viewDate"
@@ -101,9 +107,9 @@ import { CalendarModule } from 'angular-calendar';
   
   styles: [`
   .container {
-    max-width: 90%; /* Ocupa el 90% del ancho de la pantalla */
-    margin: 0 auto; /* Centra el contenido horizontalmente */
-    padding: 1rem; /* Espaciado interno */
+    max-width: 100%; /* Reduce el ancho del contenedor */
+    margin: 0 auto; /* Centra el contenido */
+    padding: 1rem;
   }
   .card {
     border-radius: 1.15rem;
@@ -127,6 +133,8 @@ import { CalendarModule } from 'angular-calendar';
     background: #fff;
     margin-bottom: 2rem;
     padding: 1rem;
+    height: 500px; /* Ajusta la altura del calendario */
+    overflow-y: auto; /* Permite desplazamiento si el contenido excede la altura */
   }
   .mwl-calendar-week-view .cal-day-column {
     border-right: 1px solid #dee2e6; /* Líneas divisorias más visibles */
@@ -265,5 +273,11 @@ export class AgendaComponent implements OnInit {
 
     console.log('Eventos generados:', events); // Depuración: Verifica cuántos eventos se generan
     return events;
+  }
+
+  changeWeek(direction: number): void {
+    const currentDate = this.viewDate;
+    this.viewDate = new Date(currentDate.setDate(currentDate.getDate() + direction * 7));
+    console.log('Nueva fecha de vista:', this.viewDate);
   }
 }

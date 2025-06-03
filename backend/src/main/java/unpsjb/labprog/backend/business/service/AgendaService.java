@@ -107,7 +107,12 @@ public class AgendaService {
     }
 
     private static DayOfWeek parseDiaSemana(String dia) {
-        switch (dia.toUpperCase()) {
+        // Eliminar acentos y convertir a mayúsculas
+        String diaNormalizado = java.text.Normalizer.normalize(dia, java.text.Normalizer.Form.NFD)
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toUpperCase();
+
+        switch (diaNormalizado) {
             case "LUNES":
                 return DayOfWeek.MONDAY;
             case "MARTES":
