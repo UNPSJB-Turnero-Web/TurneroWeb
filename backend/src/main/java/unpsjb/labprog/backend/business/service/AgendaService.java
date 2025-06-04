@@ -20,7 +20,6 @@ import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
-import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
 @Service
@@ -76,27 +75,27 @@ public class AgendaService {
         return !inicio1.isAfter(fin2) && !inicio2.isAfter(fin1);
     }
 
-    public void cancelarAgendaYNotificarPacientes(int agendaId) {
-        Agenda agenda = findById(agendaId);
-        if (agenda == null)
-            throw new IllegalArgumentException("Agenda no encontrada");
+    // public void cancelarAgendaYNotificarPacientes(int agendaId) {
+    //     Agenda agenda = findById(agendaId);
+    //     if (agenda == null)
+    //         throw new IllegalArgumentException("Agenda no encontrada");
 
-        // Buscar turnos pendientes de la agenda
-        List<Turno> turnos = turnoRepository.findByAgenda_IdAndEstado(agendaId, EstadoTurno.PENDIENTE);
+    //     // Buscar turnos pendientes de la agenda
+    //     List<Turno> turnos = turnoRepository.findByAgenda_IdAndEstado(agendaId, EstadoTurno.PENDIENTE);
 
-        // Notificar a cada paciente y sugerir alternativas
-        for (Turno turno : turnos) {
-            List<Agenda> alternativas = sugerirAlternativas(turno);
-            notificacionService.notificarCancelacion(turno.getPaciente(), agenda, alternativas);
-            turno.setEstado(EstadoTurno.CANCELADO);
-            turnoRepository.save(turno);
-        }
+    //     // Notificar a cada paciente y sugerir alternativas
+    //     for (Turno turno : turnos) {
+    //         List<Agenda> alternativas = sugerirAlternativas(turno);
+    //         notificacionService.notificarCancelacion(turno.getPaciente(), agenda, alternativas);
+    //         turno.setEstado(EstadoTurno.CANCELADO);
+    //         turnoRepository.save(turno);
+    //     }
 
-        // Inhabilitar agenda
-        agenda.setHabilitado(false);
-        agenda.setMotivoInhabilitacion("Cancelada por el médico");
-        repository.save(agenda);
-    }
+    //     // Inhabilitar agenda
+    //     agenda.setHabilitado(false);
+    //     agenda.setMotivoInhabilitacion("Cancelada por el médico");
+    //     repository.save(agenda);
+    // }
 
     public List<Agenda> sugerirAlternativas(Turno turno) {
         // Acceder a consultorioId y especialidadId a través de StaffMedico y Medico
@@ -179,6 +178,9 @@ public class AgendaService {
                     // Asignar datos del esquema
                     evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
                     evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
+                    evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
+                    evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico().getMedico()
+                            .getEspecialidad().getNombre());
                     evento.setConsultorioId(consultorio.getId());
                     evento.setConsultorioNombre(consultorio.getNombre());
                     evento.setCentroId(esquemaTurno.getCentroAtencion().getId());

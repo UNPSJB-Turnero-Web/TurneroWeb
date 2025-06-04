@@ -41,16 +41,12 @@ public class Turno {
     @ManyToOne(optional = false)
     private Paciente paciente;
 
-    private CentroAtencion centroAtencion;
-
     @ManyToOne(optional = false)
     private StaffMedico staffMedico;
 
     @ManyToOne(optional = false)
     private Consultorio consultorio;
-
-    @ManyToOne(optional = false)
-    private Agenda agenda;
+    
 
     public void confirmarTurno() {
         if (this.estado != EstadoTurno.PENDIENTE) {

@@ -10,10 +10,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.PacienteRepository;
+import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.TurnoDTO;
-import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Paciente;
@@ -29,6 +30,12 @@ public class TurnoService {
     @Autowired
     private PacienteRepository pacienteRepository;
 
+    @Autowired
+    private StaffMedicoRepository staffMedicoRepository;
+
+    @Autowired
+    private ConsultorioRepository consultorioRepository;
+
     // Obtener todos los turnos como DTOs
     public List<TurnoDTO> findAll() {
         return repository.findAll().stream()
@@ -43,13 +50,16 @@ public class TurnoService {
 
     @Transactional
     public TurnoDTO save(TurnoDTO dto) {
-
-        Turno turno = toEntity(dto);
-
-        validarTurno(turno);
-
-        Turno saved = repository.save(turno);
-        return toDTO(saved);
+        try {
+            Turno turno = toEntity(dto); // Convertir DTO a entidad
+            validarTurno(turno); // Validar el turno
+            Turno saved = repository.save(turno); // Guardar el turno
+            return toDTO(saved); // Convertir entidad a DTO y retornar
+        } catch (Exception e) {
+            System.err.println("Error al guardar el turno: " + e.getMessage());
+            e.printStackTrace(); // Registrar el stack trace completo
+            throw e; // Re-lanzar la excepción para que el controlador la maneje
+        }
     }
 
     // Obtener turnos paginados como DTOs
@@ -77,19 +87,65 @@ public class TurnoService {
         dto.setFecha(turno.getFecha());
         dto.setHoraInicio(turno.getHoraInicio());
         dto.setHoraFin(turno.getHoraFin());
-        dto.setPacienteId(turno.getPaciente().getId());
-        dto.setStaffMedicoId(turno.getStaffMedico().getId());
         dto.setEstado(turno.getEstado().name());
+        dto.setPacienteId(turno.getPaciente().getId());
+        dto.setNombrePaciente(turno.getPaciente().getNombre());
+        dto.setApellidoPaciente(turno.getPaciente().getApellido());
+        dto.setStaffMedicoId(turno.getStaffMedico().getId());
+        dto.setStaffMedicoNombre(turno.getStaffMedico().getMedico().getNombre());
+        dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
+        dto.setEspecialidadStaffMedico(turno.getStaffMedico().getMedico().getEspecialidad().getNombre());
+
+        // Validar si consultorio no es null antes de acceder a sus propiedades
+        if (turno.getStaffMedico().getConsultorio() != null) {
+            dto.setConsultorioId(turno.getStaffMedico().getConsultorio().getId());
+            dto.setConsultorioNombre(turno.getStaffMedico().getConsultorio().getNombre());
+            dto.setCentroId(turno.getStaffMedico().getConsultorio().getCentroAtencion().getId());
+            dto.setNombreCentro(turno.getStaffMedico().getConsultorio().getCentroAtencion().getNombre());
+        } else {
+            dto.setConsultorioId(null);
+            dto.setConsultorioNombre(null);
+            dto.setCentroId(null);
+            dto.setNombreCentro(null);
+        }
+
         return dto;
     }
 
     private Turno toEntity(TurnoDTO dto) {
+        System.out.println("Procesando TurnoDTO: " + dto);
+
         Turno turno = new Turno();
         turno.setId(dto.getId());
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(dto.getHoraInicio());
         turno.setHoraFin(dto.getHoraFin());
         turno.setEstado(EstadoTurno.valueOf(dto.getEstado()));
+
+        if (dto.getPacienteId() != null) {
+            Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Paciente no encontrado con ID: " + dto.getPacienteId()));
+            turno.setPaciente(paciente);
+        }
+
+        if (dto.getStaffMedicoId() != null) {
+            StaffMedico staffMedico = staffMedicoRepository.findById(dto.getStaffMedicoId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Médico no encontrado con ID: " + dto.getStaffMedicoId()));
+            turno.setStaffMedico(staffMedico);
+        }
+
+        if (dto.getConsultorioId() != null) {
+            Consultorio consultorio = consultorioRepository.findById(dto.getConsultorioId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Consultorio no encontrado con ID: " + dto.getConsultorioId()));
+            turno.setConsultorio(consultorio);
+        } else {
+            throw new IllegalArgumentException("El consultorio es obligatorio.");
+        }
+
+        System.out.println("Turno procesado: " + turno);
         return turno;
     }
 
@@ -117,36 +173,38 @@ public class TurnoService {
         }
     }
 
+    // public TurnoDTO asignarTurno(TurnoDTO turnoDTO) {
+    // if (turnoDTO == null) {
+    // throw new IllegalArgumentException("El turnoDTO no puede ser nulo.");
+    // }
 
-    public TurnoDTO asignarTurno(TurnoDTO turnoDTO) {
-    if (turnoDTO == null) {
-        throw new IllegalArgumentException("El turnoDTO no puede ser nulo.");
-    }
+    // // Crear un nuevo turno utilizando los datos del TurnoDTO
+    // Turno turno = new Turno();
+    // turno.setFecha(turnoDTO.getFecha());
+    // turno.setHoraInicio(turnoDTO.getHoraInicio());
+    // turno.setHoraFin(turnoDTO.getHoraFin());
+    // turno.setEstado(EstadoTurno.PENDIENTE); // Estado inicial
 
-    // Crear un nuevo turno utilizando los datos del TurnoDTO
-    Turno turno = new Turno();
-    turno.setFecha(turnoDTO.getFecha());
-    turno.setHoraInicio(turnoDTO.getHoraInicio());
-    turno.setHoraFin(turnoDTO.getHoraFin());
-    turno.setEstado(EstadoTurno.PENDIENTE); // Estado inicial
+    // // Asignar el paciente
+    // if (turnoDTO.getPacienteId() != null) {
+    // Paciente paciente = pacienteRepository.findById(turnoDTO.getPacienteId())
+    // .orElseThrow(() -> new IllegalArgumentException(
+    // "Paciente no encontrado con ID: " + turnoDTO.getPacienteId()));
+    // turno.setPaciente(paciente);
+    // }
 
-    // Asignar el paciente
-    if (turnoDTO.getPacienteId() != null) {
-        Paciente paciente = pacienteRepository.findById(turnoDTO.getPacienteId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Paciente no encontrado con ID: " + turnoDTO.getPacienteId()));
-        turno.setPaciente(paciente);
-    }
+    // // Asignar datos del esquema directamente desde el TurnoDTO
+    // turno.setStaffMedico(new StaffMedico(turnoDTO.getStaffMedicoId(),
+    // turnoDTO.getStaffMedicoNombre));
+    // turno.setConsultorio(new Consultorio(turnoDTO.getConsultorioId(),
+    // turnoDTO.getConsultorioNombre));
+    // turno.setCentroAtencion(new CentroAtencion(turnoDTO.getCentroId(),
+    // turnoDTO.getNombreCentro));
 
-    // Asignar datos del esquema directamente desde el TurnoDTO
-    turno.setStaffMedico(new StaffMedico(turnoDTO.getStaffMedicoId(), turnoDTO.getStaffMedicoNombre));
-    turno.setConsultorio(new Consultorio(turnoDTO.getConsultorioId(), turnoDTO.getConsultorioNombre));
-    turno.setCentroAtencion(new CentroAtencion(turnoDTO.getCentroId(), turnoDTO.getNombreCentro));
+    // // Guardar el turno
+    // Turno savedTurno = repository.save(turno);
 
-    // Guardar el turno
-    Turno savedTurno = repository.save(turno);
-
-    // Retornar el turno como DTO
-    return toDTO(savedTurno);
-}
+    // // Retornar el turno como DTO
+    // return toDTO(savedTurno);
+    // }
 }

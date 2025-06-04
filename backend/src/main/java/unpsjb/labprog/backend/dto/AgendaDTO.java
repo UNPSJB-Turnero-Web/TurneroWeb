@@ -50,6 +50,8 @@ public class AgendaDTO {
         private String consultorioNombre;
         private Integer medicoId;
         private String medicoNombre;
+        private String medicoApellido;
+        private String especialidadStaffMedico;
     }
 
     @Data

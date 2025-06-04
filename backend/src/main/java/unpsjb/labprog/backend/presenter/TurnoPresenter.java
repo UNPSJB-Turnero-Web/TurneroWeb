@@ -75,7 +75,7 @@ public class TurnoPresenter {
     @PostMapping("/asignar")
 public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO) {
     try {
-        TurnoDTO savedTurno = service.asignarTurno(turnoDTO);
+        TurnoDTO savedTurno = service.save(turnoDTO);
         return Response.ok(savedTurno, "Turno asignado correctamente.");
     } catch (IllegalArgumentException e) {
         return Response.dbError(e.getMessage());

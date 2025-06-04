@@ -1,5 +1,4 @@
 package unpsjb.labprog.backend.dto;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -22,16 +21,14 @@ public class TurnoDTO {
     private String apellidoPaciente;
     // Datos del médico (resumidos
     private Integer staffMedicoId;
-    private String staffMedicoNombre; 
+    private String staffMedicoNombre;
+    private String staffMedicoApellido;
     private String especialidadStaffMedico; // VERIFICAR
     // Datos del centro y consultorio
     private String nombreCentro;
     private String consultorioNombre;
     private Integer consultorioId;
     private Integer centroId;
-
-    // Datos de agenda
-    private Integer agendaId;
 
     private String titulo;
 

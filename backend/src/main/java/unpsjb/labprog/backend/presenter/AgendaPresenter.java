@@ -59,15 +59,15 @@ public class AgendaPresenter {
         return Response.ok(service.findByPage(page, size));
     }
 
-    @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
-    public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") Integer id) {
-        try {
-            service.cancelarAgendaYNotificarPacientes(id);
-            return Response.ok("Agenda cancelada y pacientes notificados.");
-        } catch (IllegalArgumentException e) {
-            return Response.notFound();
-        }
-    }
+    // @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
+    // public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") Integer id) {
+    //     try {
+    //         service.cancelarAgendaYNotificarPacientes(id);
+    //         return Response.ok("Agenda cancelada y pacientes notificados.");
+    //     } catch (IllegalArgumentException e) {
+    //         return Response.notFound();
+    //     }
+    // }
 
     @RequestMapping(value = "/alternativas/{turnoId}", method = RequestMethod.GET)
     public ResponseEntity<Object> sugerirAlternativas(@PathVariable("turnoId") Integer turnoId) {

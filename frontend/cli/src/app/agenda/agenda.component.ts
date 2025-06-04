@@ -40,6 +40,7 @@ import { HttpClient } from '@angular/common/http'; // Importa HttpClient
                 <option value="staffMedico">Staff Médico</option>
                 <option value="centroAtencion">Centro de Atención</option>
                 <option value="consultorio">Consultorio</option>
+                <option value="especialidad">Especialidad</option>
               </select>
             </div>
             <div class="me-3">
@@ -89,7 +90,9 @@ import { HttpClient } from '@angular/common/http'; // Importa HttpClient
                 </div>
                 <div class="modal-body">
                   <p><strong>Título:</strong> {{ selectedEvent.title }}</p>
-                  <p><strong>Médico:</strong> {{ selectedEvent.meta?.staffMedicoNombre }}</p>
+                  <p><strong>Médico:</strong> {{ selectedEvent.meta?.staffMedicoNombre }} {{ selectedEvent.meta?.staffMedicoApellido }}</p>
+                  <p><strong>Especialidad:</strong> {{ selectedEvent.meta?.especialidadStaffMedico }}</p>
+
                   <p><strong>Consultorio:</strong> {{ selectedEvent.meta?.consultorioNombre }}</p>
                   <p><strong>Centro de Atención:</strong> {{ selectedEvent.meta?.centroAtencionNombre }}</p>
                   <p><strong>Hora Inicio:</strong> {{ selectedEvent.start | date: 'yyyy-MM-dd HH:mm' }}</p>
@@ -246,11 +249,13 @@ export class AgendaComponent implements OnInit {
       const valorFiltro = this.filterValue.toLowerCase();
       switch (this.filterType) {
         case 'staffMedico':
-          return event.meta?.staffMedicoNombre?.toLowerCase().includes(valorFiltro);
+            return `${event.meta?.staffMedicoNombre} ${event.meta?.staffMedicoApellido}`.toLowerCase().includes(valorFiltro);
         case 'centroAtencion':
           return event.meta?.centroAtencionNombre?.toLowerCase().includes(valorFiltro);
         case 'consultorio':
           return event.meta?.consultorioNombre?.toLowerCase().includes(valorFiltro);
+        case 'especialidad':
+          return event.meta?.especialidadStaffMedico?.toLowerCase().includes(valorFiltro);
         default:
           return true;
       }
@@ -265,13 +270,15 @@ export class AgendaComponent implements OnInit {
   getFilterOptions(): string[] {
     switch (this.filterType) {
       case 'staffMedico':
-        return [...new Set(this.events.map(event => event.meta?.staffMedicoNombre).filter(Boolean))];
+      return [...new Set(this.events.map(event => `${event.meta?.staffMedicoNombre} ${event.meta?.staffMedicoApellido}`).filter(Boolean))];
       case 'centroAtencion':
-        return [...new Set(this.events.map(event => event.meta?.centroAtencionNombre).filter(Boolean))];
+      return [...new Set(this.events.map(event => event.meta?.centroAtencionNombre).filter(Boolean))];
       case 'consultorio':
-        return [...new Set(this.events.map(event => event.meta?.consultorioNombre).filter(Boolean))];
+      return [...new Set(this.events.map(event => event.meta?.consultorioNombre).filter(Boolean))];
+      case 'especialidad':
+      return [...new Set(this.events.map(event => event.meta?.especialidadStaffMedico).filter(Boolean))];
       default:
-        return [];
+      return [];
     }
   }
 
@@ -305,6 +312,12 @@ export class AgendaComponent implements OnInit {
         meta: {
           id: evento.id, 
           staffMedicoNombre: evento.staffMedicoNombre,
+          staffMedicoApellido: evento.staffMedicoApellido,
+          especialidadStaffMedico: evento.especialidadStaffMedico,
+          centroId: evento.centroId,
+          staffMedicoId: evento.staffMedicoId,
+          consultorioId: evento.consultorioId,
+          
           consultorioNombre: evento.consultorioNombre,
           centroAtencionNombre: evento.nombreCentro
         }
@@ -327,13 +340,25 @@ export class AgendaComponent implements OnInit {
       return;
     }
 
-    const turnoId = this.selectedEvent?.meta?.id; // Obtener el ID del turno
-    if (!turnoId) {
-      alert('No se puede asignar el turno porque no hay un ID válido.');
-      return;
-    }
+    const turnoDTO = {
+      id: this.selectedEvent?.meta?.id, // ID dinámico del turno
+     fecha: this.selectedEvent?.start.toISOString().substring(0, 10), // Solo la fecha
+    horaInicio: this.selectedEvent?.start.toISOString().substring(11, 19), // Solo la hora
+    horaFin: this.selectedEvent?.end ? this.selectedEvent.end.toISOString().substring(11, 19) : '', // Solo la hora
+      pacienteId: this.pacienteId, // ID del paciente seleccionado
+      staffMedicoId: this.selectedEvent?.meta?.staffMedicoId,
+      staffMedicoNombre: this.selectedEvent?.meta?.staffMedicoNombre,
+      staffMedicoApellido: this.selectedEvent?.meta.staffMedicoApellido, // Agregar el apellido del médico
+      especialidadStaffMedico: this.selectedEvent?.meta?.especialidadStaffMedico,
+    
+      consultorioId: this.selectedEvent?.meta?.consultorioId,
+      consultorioNombre: this.selectedEvent?.meta?.consultorioNombre,
+      centroId: this.selectedEvent?.meta?.centroId,
+      nombreCentro: this.selectedEvent?.meta?.centroAtencionNombre,
+      estado: 'PENDIENTE', // Estado inicial del turno
+    };
 
-    this.http.post(`/rest/agenda/asignar-turno`, { turnoId, pacienteId: this.pacienteId }).subscribe({
+    this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
       next: () => {
         alert('Turno asignado correctamente.');
         this.closeModal(); // Cerrar el modal después de asignar el turno
