@@ -1,41 +1,49 @@
 import { Injectable } from '@angular/core';
-import { Turno } from './turno';
-import { Observable } from 'rxjs';
-import { DataPackage } from '../data.package';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Turno } from './turno';
+import { DataPackage } from '../data.package';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TurnoService {
-
-  private turnosUrl = 'rest/turnos';
+  private url = 'rest/turno';
 
   constructor(private http: HttpClient) {}
 
-  all(): Observable<DataPackage> {
-    return this.http.get<DataPackage>(this.turnosUrl);
+  /** Obtiene todos los turnos */
+  all(): Observable<DataPackage<Turno[]>> {
+    return this.http.get<DataPackage<Turno[]>>(this.url);
   }
 
-  get(code: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.turnosUrl}/code/${code}`);
+  /** Obtiene un turno por ID */
+  get(id: number): Observable<DataPackage<Turno>> {
+    return this.http.get<DataPackage<Turno>>(`${this.url}/${id}`);
   }
 
-  save(turno: Turno): Observable<DataPackage> {
-    return turno.id 
-    ? this.http.put<DataPackage>(this.turnosUrl, turno)
-    : this.http.post<DataPackage>(this.turnosUrl, turno);
+  /** Crea un nuevo turno */
+  create(turno: Turno): Observable<DataPackage<Turno>> {
+    return this.http.post<DataPackage<Turno>>(this.url, turno);
   }
 
-  delete(code: string): Observable<void> {
-    return this.http.delete<void>(`${this.turnosUrl}/code/${code}`);
+  /** Actualiza un turno existente */
+  update(id: number, turno: Turno): Observable<DataPackage<Turno>> {
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}`, turno);
   }
 
+  /** Elimina un turno por ID */
+  remove(id: number): Observable<any> {
+    return this.http.delete(`${this.url}/${id}`);
+  }
+
+  /** Paginación de turnos */
   byPage(page: number, size: number): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.turnosUrl}/page?page=${page-1}&size=${size}`);
+    return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
   }
 
-  search(searchTerm: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.turnosUrl}/search/${searchTerm}`);
+  /** Búsqueda de turnos */
+  search(term: string): Observable<DataPackage<Turno[]>> {
+    return this.http.get<DataPackage<Turno[]>>(`${this.url}/search/${term}`);
   }
 }

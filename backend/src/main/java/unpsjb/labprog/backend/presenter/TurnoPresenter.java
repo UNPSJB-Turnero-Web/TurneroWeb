@@ -52,17 +52,27 @@ public class TurnoPresenter {
         return Response.ok(updated, "Turno actualizado correctamente");
     }
 
-    @GetMapping("/page")
+     @GetMapping("/page")
     public ResponseEntity<Object> getByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
-        var response = Map.of(
-                "content", pageResult.getContent(),
-                "totalPages", pageResult.getTotalPages(),
-                "totalElements", pageResult.getTotalElements(),
-                "currentPage", pageResult.getNumber());
-        return Response.ok(response, "Turnos paginados recuperados correctamente");
+        try {
+            var pageResult = service.findByPage(page, size);
+
+            var response = Map.of(
+                    "content", pageResult.getContent(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements(),
+                    "number", pageResult.getNumber(),
+                    "size", pageResult.getSize(),
+                    "first", pageResult.isFirst(),
+                    "last", pageResult.isLast(),
+                    "numberOfElements", pageResult.getNumberOfElements());
+
+            return Response.ok(response, "Staff médico paginado recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el staff médico paginado: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

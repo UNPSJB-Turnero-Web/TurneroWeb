@@ -1,13 +1,24 @@
-import { Especialidad } from '../especialidades/especialidad';
-import { Paciente } from '../pacientes/paciente';
-import { Agenda } from '../agenda/agenda';
-
 export interface Turno {
     id: number;
-    code: string;
-    name: string;
-    especialidad: Especialidad;
-    paciente: Paciente; // Relación con Paciente
-    agenda: Agenda; // Relación con Agenda
+    nombre: string;
+    codigo: string;
+    fecha: string;
+    horaInicio: string;
+    horaFin: string;
     estado: string; // Ej: "pendiente", "confirmado", "cancelado"
+    pacienteId: number;
+    pacienteNombre: string;
+    pacienteApellido: string;
+    staffMedicoId: number;
+    staffMedicoNombre: string;
+    staffMedicoApellido: string;
+    especialidadStaffMedicoId?: number; // Opcional, si aplica
+    especialidadStaffMedicoNombre?: string; // Opcional, si aplica
+    centroAtencionId: number;
+    centroAtencionNombre: string;
+    consultorioId?: number; // Opcional, si aplica
+    esquemaTurnoId?: number; // ID del esquema de turno asociado
+    motivoCancelacion?: string; // Opcional, si el turno fue cancelado      
+
+
 }

@@ -24,3 +24,11 @@ con hora de inicio en cada turno y la duracion
 
 esq turno forma el layout de los consultorios fisicamente
 distrubuir de acuerdo a las necesidades de las especialidades y consultorios del centros
+
+
+
+
+falta: 
+validaciones de turnos
+sistema slotless de la agenda (que muestre los turnos ocupados )
+validaciones de dplicado de asignado de turnos

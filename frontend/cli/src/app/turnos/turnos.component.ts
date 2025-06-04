@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { TurnoService } from './turno.service';
 import { Turno } from './turno';
 import { ModalService } from '../modal/modal.service';
@@ -29,31 +29,31 @@ import { PaginationComponent } from '../pagination/pagination.component';
             <thead class="table-light">
               <tr>
                 <th>#</th>
-                <th>Código</th>
                 <th>Nombre</th>
-                <th>Especialidad</th>
-                <th>Paciente</th>
-                <th>Agenda</th>
+                <th>Código</th>
+                <th>Fecha</th>
+                <th>Hora Inicio</th>
+                <th>Hora Fin</th>
                 <th>Estado</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let turno of resultsPage.content"
-                  (click)="goToDetail(turno.code)"
+                  (click)="goToDetail(turno.id)"
                   style="cursor:pointer;">
                 <td>{{ turno.id }}</td>
-                <td>{{ turno.code }}</td>
-                <td>{{ turno.name }}</td>
-                <td>{{ turno.especialidad?.name || 'Sin especialidad' }}</td>
-                <td>{{ turno.paciente?.name || 'Sin paciente' }}</td>
-                <td>{{ turno.agenda?.fechaHora || 'Sin agenda' }}</td>
-                <td>{{ turno.estado || 'Sin estado' }}</td>
+                <td>{{ turno.nombre }}</td>
+                <td>{{ turno.codigo }}</td>
+                <td>{{ turno.fecha }}</td>
+                <td>{{ turno.horaInicio }}</td>
+                <td>{{ turno.horaFin }}</td>
+                <td>{{ turno.estado }}</td>
                 <td class="text-center">
-                  <button (click)="goToEdit(turno.code); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                  <button (click)="goToEdit(turno.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>
                   </button>
-                  <button (click)="remove(turno); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <button (click)="confirmDelete(turno.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
                     <i class="fa fa-trash"></i>
                   </button>
                 </td>
@@ -106,9 +106,9 @@ export class TurnosComponent {
     private turnoService: TurnoService,
     private modalService: ModalService,
     public router: Router
-  ) { }
+  ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.getTurnos();
   }
 
@@ -118,15 +118,25 @@ export class TurnosComponent {
     });
   }
 
-  remove(turno: Turno): void {
-    this.modalService.confirm(
-      "Eliminar turno",
-      "¿Estás seguro de eliminar el turno?",
-      "Si elimina el turno será irrecuperable"
-    ).then(() => {
-      this.turnoService.delete(turno.code).subscribe(() => {
-        this.getTurnos();
-      });
+  confirmDelete(id: number): void {
+    this.modalService
+      .confirm(
+        "Eliminar turno",
+        "¿Está seguro que desea eliminar este turno?",
+        "Esta acción no se puede deshacer"
+      )
+      .then(() => this.remove(id))
+      .catch(() => {});
+  }
+
+  remove(id: number): void {
+    this.turnoService.remove(id).subscribe({
+      next: () => this.getTurnos(),
+      error: (err) => {
+        const msg = err?.error?.message || "Error al eliminar el turno.";
+        this.modalService.alert("Error", msg);
+        console.error("Error al eliminar turno:", err);
+      }
     });
   }
 
@@ -135,11 +145,11 @@ export class TurnosComponent {
     this.getTurnos();
   }
 
-  goToDetail(code: string): void {
-    this.router.navigate(['/turnos/code', code]);
+  goToDetail(id: number): void {
+    this.router.navigate(['/turnos', id]);
   }
 
-  goToEdit(code: string): void {
-    this.router.navigate(['/turnos/code', code], { queryParams: { edit: true } });
+  goToEdit(id: number): void {
+    this.router.navigate(['/turnos', id], { queryParams: { edit: true } });
   }
 }
