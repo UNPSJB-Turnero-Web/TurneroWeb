@@ -15,7 +15,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Entity
 @Getter
 @Setter
@@ -42,12 +41,13 @@ public class Turno {
     @ManyToOne(optional = false)
     private Paciente paciente;
 
+    private CentroAtencion centroAtencion;
+
     @ManyToOne(optional = false)
     private StaffMedico staffMedico;
 
-      @ManyToOne(optional = false)
+    @ManyToOne(optional = false)
     private Consultorio consultorio;
-
 
     @ManyToOne(optional = false)
     private Agenda agenda;

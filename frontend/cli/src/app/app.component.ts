@@ -56,6 +56,9 @@ import { RouterOutlet } from '@angular/router';
             <li>
               <a class="dropdown-item" href="/pacientes">Pacientes</a>
             </li>
+              <li>
+              <a class="dropdown-item" href="/obraSocial">Obra Social</a>
+            </li>
           </ul>
         </div>
         <!-- Menú Agenda -->

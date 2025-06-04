@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,11 +60,17 @@ public class ObraSocialService {
         repository.deleteById(id);
     }
 
+    public Page<ObraSocialDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
     private ObraSocialDTO toDTO(ObraSocial obraSocial) {
         ObraSocialDTO dto = new ObraSocialDTO();
         dto.setId(obraSocial.getId());
         dto.setNombre(obraSocial.getNombre());
         dto.setCodigo(obraSocial.getCodigo());
+        dto.setDescripcion(obraSocial.getDescripcion()); // Campo agregado
         return dto;
     }
 
@@ -71,6 +79,7 @@ public class ObraSocialService {
         obraSocial.setId(dto.getId());
         obraSocial.setNombre(dto.getNombre());
         obraSocial.setCodigo(dto.getCodigo());
+        obraSocial.setDescripcion(dto.getDescripcion()); // Campo agregado
         return obraSocial;
     }
 

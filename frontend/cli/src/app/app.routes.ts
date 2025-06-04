@@ -20,6 +20,8 @@ import { DisponibilidadMedicoComponent } from './disponibilidadMedicos/disponibi
 import { DisponibilidadMedicoDetailComponent } from './disponibilidadMedicos/disponibilidadMedico-detail.component';
 import { EsquemaTurnoComponent } from './esquemaTurno/esquemaTurno.component';
 import { EsquemaTurnoDetailComponent } from './esquemaTurno/esquemaTurno-detail.component';
+import { ObraSocialComponent } from './obraSocial/obraSocial.component';
+import { ObraSocialDetailComponent } from './obraSocial/obraSocial-detail.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -33,6 +35,9 @@ export const routes: Routes = [
     { path: 'pacientes', component: PacientesComponent },
     { path: 'pacientes/new', component: PacienteDetailComponent },
     { path: 'pacientes/:id', component: PacienteDetailComponent },
+    { path: 'obraSocial', component: ObraSocialComponent },
+    { path: 'obraSocial/new', component: ObraSocialDetailComponent },
+    { path: 'obraSocial/:id', component: ObraSocialDetailComponent },
     { path: 'especialidades', component: EspecialidadesComponent },
     { path: 'especialidades/new', component: EspecialidadDetailComponent },
     { path: 'especialidades/:id', component: EspecialidadDetailComponent },

@@ -7,6 +7,8 @@ import { PaginationComponent } from '../pagination/pagination.component';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CalendarModule } from 'angular-calendar';
+import { PacienteService } from '../pacientes/paciente.service'; // Importa el servicio de pacientes
+import { HttpClient } from '@angular/common/http'; // Importa HttpClient
 
 
 @Component({
@@ -96,13 +98,15 @@ import { CalendarModule } from 'angular-calendar';
                   <!-- Campo para ingresar el ID del paciente -->
                   <div class="mt-3">
                     <label for="pacienteId" class="form-label"><strong>Asignar Paciente:</strong></label>
-                    <input
+                    <select
                       id="pacienteId"
-                      type="text"
-                      class="form-control"
+                      class="form-select"
                       [(ngModel)]="pacienteId"
-                      placeholder="Ingrese el ID del paciente"
-                    />
+                    >
+                      <option *ngFor="let paciente of pacientes" [value]="paciente.id">
+                        {{ paciente.nombre }} {{ paciente.apellido }} (ID: {{ paciente.id }})
+                      </option>
+                    </select>
                   </div>
                 </div>
                 <div class="modal-footer">
@@ -175,16 +179,20 @@ export class AgendaComponent implements OnInit {
   selectedEvent: CalendarEvent | null = null; // Evento seleccionado
   filterType: string = 'staffMedico';
   filterValue: string = '';
-  pacienteId: string = ''; // Variable para almacenar el ID del paciente
+  pacientes: { id: number; nombre: string; apellido: string }[] = []; // Lista de pacientes
+  pacienteId: number | null = null; // Variable para almacenar el ID del paciente seleccionado
 
   constructor(
     private agendaService: AgendaService,
+    private pacienteService: PacienteService, // Inyecta el servicio de pacientes
+    private http: HttpClient, // Inyecta HttpClient
     private cdr: ChangeDetectorRef,
     private router: Router // Inyecta el Router
   ) { }
 
   ngOnInit() {
     this.cargarTodosLosEventos();
+    this.cargarPacientes(); // Carga la lista de pacientes
   }
 
   // Método para cargar eventos desde el backend
@@ -202,12 +210,25 @@ export class AgendaComponent implements OnInit {
         // console.log('Eventos filtrados asignados al calendario:', this.filteredEvents);
         this.cdr.detectChanges(); // Forzar la detección de cambios
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error('Error al cargar todos los eventos:', err);
         alert('No se pudieron cargar los eventos. Intente nuevamente.');
       }
     });
   }
+
+  cargarPacientes(): void {
+    this.pacienteService.all().subscribe({
+      next: (dataPackage) => {
+        this.pacientes = dataPackage.data; // Asigna los pacientes recibidos
+      },
+      error: (err) => {
+        console.error('Error al cargar pacientes:', err);
+        alert('No se pudieron cargar los pacientes. Intente nuevamente.');
+      },
+    });
+  }
+
   handleEvent(eventObj: any) {
     this.selectedEvent = eventObj.event; // Asigna el evento seleccionado
     console.log('Evento seleccionado:', this.selectedEvent);
@@ -302,7 +323,7 @@ export class AgendaComponent implements OnInit {
   
   asignarTurno(): void {
     if (!this.pacienteId) {
-      alert('Por favor, ingrese el ID del paciente.');
+      alert('Por favor, seleccione un paciente.');
       return;
     }
 
@@ -312,12 +333,12 @@ export class AgendaComponent implements OnInit {
       return;
     }
 
-    this.agendaService.asignarTurno(turnoId, +this.pacienteId).subscribe({
+    this.http.post(`/rest/agenda/asignar-turno`, { turnoId, pacienteId: this.pacienteId }).subscribe({
       next: () => {
         alert('Turno asignado correctamente.');
         this.closeModal(); // Cerrar el modal después de asignar el turno
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al asignar el turno:', err);
         alert('No se pudo asignar el turno. Intente nuevamente.');
       },

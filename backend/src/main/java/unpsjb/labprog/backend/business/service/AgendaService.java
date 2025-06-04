@@ -21,7 +21,6 @@ import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
-import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.Turno;
 
 @Service
@@ -41,6 +40,9 @@ public class AgendaService {
 
     @Autowired
     private NotificacionService notificacionService;
+
+    @Autowired
+    private PacienteService pacienteService;
 
     public List<Agenda> findAll() {
         List<Agenda> result = new ArrayList<>();
@@ -143,7 +145,8 @@ public class AgendaService {
 
         // Validar que el consultorio no sea null
         if (consultorio == null) {
-            throw new IllegalStateException("El consultorio asociado al EsquemaTurno con ID " + esquemaTurno.getId() + " es nulo.");
+            throw new IllegalStateException(
+                    "El consultorio asociado al EsquemaTurno con ID " + esquemaTurno.getId() + " es nulo.");
         }
 
         for (EsquemaTurno.Horario horario : horarios) {
@@ -189,30 +192,5 @@ public class AgendaService {
         return eventos;
     }
 
-    public Turno guardarTurno(TurnoDTO turnoDTO, EsquemaTurno esquemaTurno) {
-        Turno turno = new Turno();
-
-        // Asignar datos básicos del turno
-        turno.setFecha(turnoDTO.getFecha());
-        turno.setHoraInicio(turnoDTO.getHoraInicio());
-        turno.setHoraFin(turnoDTO.getHoraFin());
-        turno.setEstado(EstadoTurno.PENDIENTE); // Estado inicial
-
-        // Buscar y asignar el paciente
-        if (turnoDTO.getPacienteId() != null) {
-            Paciente paciente = pacienteRepository.findById(turnoDTO.getPacienteId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Paciente no encontrado con ID: " + turnoDTO.getPacienteId()));
-            turno.setPaciente(paciente);
-        }
-
-        // Buscar y asignar el staff médico
-
-        // Asignar el staff médico y consultorio directamente desde el EsquemaTurno
-        turno.setStaffMedico(esquemaTurno.getStaffMedico());
-        turno.setConsultorio(esquemaTurno.getStaffMedico().getConsultorio());
-
-        return turnoRepository.save(turno);
-    }
-
+  
 }

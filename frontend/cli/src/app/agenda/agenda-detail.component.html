@@ -1,0 +1,18 @@
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h2 class="fw-bold mb-0 fs-4">Detalle del Turno</h2>
+    </div>
+    <div class="card-body">
+      <p><strong>Título:</strong> {{ agenda?.titulo }}</p>
+      <p><strong>Médico:</strong> {{ slot?.staffMedicoNombre }}</p>
+      <p><strong>Consultorio:</strong> {{ slot?.consultorioNombre }}</p>
+      <p><strong>Centro de Atención:</strong> {{ slot?.centroAtencionNombre }}</p>
+      <p><strong>Hora Inicio:</strong> {{ slot?.horaInicio }}</p>
+      <p><strong>Hora Fin:</strong> {{ slot?.horaFin }}</p>
+
+      <button class="btn btn-success" (click)="asignarTurno()">Asignar Turno</button>
+      <button class="btn btn-secondary ms-2" (click)="goBack()">Volver</button>
+    </div>
+  </div>
+</div>

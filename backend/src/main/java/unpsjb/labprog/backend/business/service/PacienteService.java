@@ -72,14 +72,18 @@ public class PacienteService {
         dto.setId(paciente.getId());
         dto.setNombre(paciente.getNombre());
         dto.setApellido(paciente.getApellido());
-        dto.setDni(paciente.getDni()); 
+        dto.setDni(paciente.getDni());
         dto.setFechaNacimiento(paciente.getFechaNacimiento());
+        dto.setEmail(paciente.getEmail()); 
+        dto.setTelefono(paciente.getTelefono()); 
+
         // Mapear la relación con ObraSocial
         if (paciente.getObraSocial() != null) {
             ObraSocialDTO obraSocialDTO = new ObraSocialDTO();
             obraSocialDTO.setId(paciente.getObraSocial().getId());
             obraSocialDTO.setNombre(paciente.getObraSocial().getNombre());
             obraSocialDTO.setCodigo(paciente.getObraSocial().getCodigo());
+            obraSocialDTO.setDescripcion(paciente.getObraSocial().getDescripcion());
             dto.setObraSocial(obraSocialDTO);
         }
         return dto;
@@ -90,13 +94,17 @@ public class PacienteService {
         paciente.setId(dto.getId());
         paciente.setNombre(dto.getNombre());
         paciente.setApellido(dto.getApellido());
-        paciente.setDni(dto.getDni()); 
+        paciente.setDni(dto.getDni());
         paciente.setFechaNacimiento(dto.getFechaNacimiento());
+        paciente.setEmail(dto.getEmail()); 
+        paciente.setTelefono(dto.getTelefono()); 
+
         if (dto.getObraSocial() != null) {
             ObraSocial obraSocial = new ObraSocial();
-            obraSocial.setId(dto.getObraSocial().getId());
+            obraSocial.setId(Integer.valueOf(dto.getObraSocial().getId()));
             obraSocial.setNombre(dto.getObraSocial().getNombre());
             obraSocial.setCodigo(dto.getObraSocial().getCodigo());
+            obraSocial.setDescripcion(dto.getObraSocial().getDescripcion());
             paciente.setObraSocial(obraSocial);
         }
         return paciente;

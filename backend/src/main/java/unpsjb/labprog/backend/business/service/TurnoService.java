@@ -10,9 +10,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import unpsjb.labprog.backend.business.repository.PacienteRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.TurnoDTO;
+import unpsjb.labprog.backend.model.CentroAtencion;
+import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EstadoTurno;
+import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.model.StaffMedico;
 import unpsjb.labprog.backend.model.Turno;
 
 @Service
@@ -20,6 +25,9 @@ public class TurnoService {
 
     @Autowired
     private TurnoRepository repository;
+
+    @Autowired
+    private PacienteRepository pacienteRepository;
 
     // Obtener todos los turnos como DTOs
     public List<TurnoDTO> findAll() {
@@ -108,4 +116,37 @@ public class TurnoService {
             throw new IllegalArgumentException("El estado del turno es obligatorio");
         }
     }
+
+
+    public TurnoDTO asignarTurno(TurnoDTO turnoDTO) {
+    if (turnoDTO == null) {
+        throw new IllegalArgumentException("El turnoDTO no puede ser nulo.");
+    }
+
+    // Crear un nuevo turno utilizando los datos del TurnoDTO
+    Turno turno = new Turno();
+    turno.setFecha(turnoDTO.getFecha());
+    turno.setHoraInicio(turnoDTO.getHoraInicio());
+    turno.setHoraFin(turnoDTO.getHoraFin());
+    turno.setEstado(EstadoTurno.PENDIENTE); // Estado inicial
+
+    // Asignar el paciente
+    if (turnoDTO.getPacienteId() != null) {
+        Paciente paciente = pacienteRepository.findById(turnoDTO.getPacienteId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Paciente no encontrado con ID: " + turnoDTO.getPacienteId()));
+        turno.setPaciente(paciente);
+    }
+
+    // Asignar datos del esquema directamente desde el TurnoDTO
+    turno.setStaffMedico(new StaffMedico(turnoDTO.getStaffMedicoId(), turnoDTO.getStaffMedicoNombre));
+    turno.setConsultorio(new Consultorio(turnoDTO.getConsultorioId(), turnoDTO.getConsultorioNombre));
+    turno.setCentroAtencion(new CentroAtencion(turnoDTO.getCentroId(), turnoDTO.getNombreCentro));
+
+    // Guardar el turno
+    Turno savedTurno = repository.save(turno);
+
+    // Retornar el turno como DTO
+    return toDTO(savedTurno);
+}
 }

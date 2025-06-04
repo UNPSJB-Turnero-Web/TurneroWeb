@@ -1,23 +1,18 @@
 package unpsjb.labprog.backend.presenter;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ObraSocialService;
 import unpsjb.labprog.backend.dto.ObraSocialDTO;
 
 @RestController
-@RequestMapping("/api/obra-social")
+@RequestMapping("/obra-social")
 public class ObraSocialPresenter {
 
     @Autowired
@@ -26,36 +21,75 @@ public class ObraSocialPresenter {
     @GetMapping
     public ResponseEntity<Object> getAll() {
         List<ObraSocialDTO> obrasSociales = service.findAll();
-        return ResponseEntity.ok(obrasSociales);
+        return Response.ok(obrasSociales, "Obras sociales recuperadas correctamente");
+    }
+
+    @GetMapping("/page")
+    public ResponseEntity<Object> getByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            var pageResult = service.findByPage(page, size);
+
+            var response = Map.of(
+                    "content", pageResult.getContent(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements(),
+                    "currentPage", pageResult.getNumber());
+
+            return Response.ok(response, "Obras sociales paginadas recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar las obras sociales paginadas: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
-public ResponseEntity<ObraSocialDTO> getById(@PathVariable Integer id) {
-    return service.findById(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-}
-
+    public ResponseEntity<Object> getById(@PathVariable Integer id) {
+        try {
+            ObraSocialDTO dto = service.findById(id).orElse(null);
+            if (dto == null) {
+                return Response.notFound("No se encontró la obra social con id " + id);
+            }
+            return Response.ok(dto, "Obra social recuperada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar la obra social: " + e.getMessage());
+        }
+    }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody ObraSocialDTO obraSocialDTO) {
-        ObraSocialDTO saved = service.saveOrUpdate(obraSocialDTO);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<Object> create(@RequestBody ObraSocialDTO dto) {
+        try {
+            ObraSocialDTO saved = service.saveOrUpdate(dto);
+            return Response.ok(saved, "Obra social creada correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ObraSocialDTO updatedObraSocial) {
-        updatedObraSocial.setId(id);
-        ObraSocialDTO saved = service.saveOrUpdate(updatedObraSocial);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ObraSocialDTO dto) {
+        try {
+            dto.setId(id);
+            ObraSocialDTO updated = service.saveOrUpdate(dto);
+            return Response.ok(updated, "Obra social editada exitosamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        if (service.findById(id).isPresent()) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id) {
+        try {
             service.deleteById(id);
-            return ResponseEntity.noContent().build();
+            return Response.ok(null, "Obra social eliminada exitosamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error inesperado: " + e.getMessage());
         }
-        return ResponseEntity.notFound().build();
     }
 }

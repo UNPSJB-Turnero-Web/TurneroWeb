@@ -52,7 +52,6 @@ public class AgendaPresenter {
                 : Response.notFound();
     }
 
-
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
@@ -60,7 +59,6 @@ public class AgendaPresenter {
         return Response.ok(service.findByPage(page, size));
     }
 
- 
     @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
     public ResponseEntity<Object> cancelarAgenda(@PathVariable("id") Integer id) {
         try {
@@ -95,15 +93,16 @@ public class AgendaPresenter {
         return agendaService.generarEventosDesdeEsquemaTurno(esquemaTurno, semanas);
     }
 
-        @GetMapping("/eventos/todos")
+    @GetMapping("/eventos/todos")
     public List<TurnoDTO> obtenerTodosLosEventos(@RequestParam int semanas) {
         List<EsquemaTurno> esquemasTurno = esquemaTurnoRepository.findAll();
         List<TurnoDTO> todosLosEventos = new ArrayList<>();
-    
+
         for (EsquemaTurno esquema : esquemasTurno) {
             todosLosEventos.addAll(agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas));
         }
-    
+
         return todosLosEventos;
     }
+
 }

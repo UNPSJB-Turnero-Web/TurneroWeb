@@ -176,7 +176,7 @@ export class TurnoDetailComponent {
       )
     );
 
-  formatterPaciente = (x: Paciente) => `${x.name} ${x.apellido}`;
+  formatterPaciente = (x: Paciente) => `${x.nombre} ${x.apellido}`;
 
   onPacienteSelected(paciente: Paciente): void {
     this.turno.paciente = paciente;

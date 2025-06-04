@@ -8,6 +8,6 @@ public class ObraSocialDTO {
     private Integer id;
     private String nombre;
     private String codigo;
+    private String descripcion; // Campo agregado
 
-    // Getters y Setters
 }

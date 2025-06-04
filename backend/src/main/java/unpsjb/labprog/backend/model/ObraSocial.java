@@ -24,4 +24,6 @@ public class ObraSocial {
 
     @Column(unique = true, nullable = false)
     private String codigo;
+
+    private String descripcion; // Campo agregado
 }

@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { PacienteService } from './paciente.service';
-import { Paciente } from './paciente';
+import { RouterModule, Router } from '@angular/router';
+import { ObraSocialService } from './obraSocial.service';
+import { ObraSocial } from './obraSocial';
 import { ModalService } from '../modal/modal.service';
 import { ResultsPage } from '../results-page';
 import { PaginationComponent } from '../pagination/pagination.component';
 
 @Component({
-  selector: 'app-pacientes',
+  selector: 'app-obra-social',
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
@@ -17,11 +17,11 @@ import { PaginationComponent } from '../pagination/pagination.component';
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4"
              style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
           <div class="d-flex align-items-center">
-            <i class="fa fa-user me-2"></i>
-            <h2 class="fw-bold mb-0 fs-4">Pacientes</h2>
+            <i class="fa fa-hospital me-2"></i>
+            <h2 class="fw-bold mb-0 fs-4">Obras Sociales</h2>
           </div>
-          <button class="btn btn-light btn-sm" (click)="router.navigate(['/pacientes/new'])">
-            <i class="fa fa-plus me-1"></i> Nuevo Paciente
+          <button class="btn btn-light btn-sm" (click)="router.navigate(['/obraSocial/new'])">
+            <i class="fa fa-plus me-1"></i> Nueva Obra Social
           </button>
         </div>
         <div class="card-body p-0">
@@ -30,38 +30,30 @@ import { PaginationComponent } from '../pagination/pagination.component';
               <tr>
                 <th>#</th>
                 <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>DNI</th>
-                <th>Fecha de Nacimiento</th>
-                <th>Obra Social</th>
+                <th>Código</th>
+                <th>Descripción</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let paciente of resultsPage.content"
-                  (click)="goToDetail(paciente.id)"
+              <tr *ngFor="let obraSocial of resultsPage.content"
+                  (click)="goToDetail(obraSocial.id)"
                   style="cursor:pointer;">
-                <td>{{ paciente.id }}</td>
-                <td>{{ paciente.nombre }}</td>
-                <td>{{ paciente.apellido }}</td>
-                <td>{{ paciente.email }}</td>
-                <td>{{ paciente.telefono }}</td>
-                <td>{{ paciente.dni }}</td>
-                <td>{{ paciente.fechaNacimiento | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ paciente.obraSocial?.nombre || 'Sin obra social' }}</td>
+                <td>{{ obraSocial.id }}</td>
+                <td>{{ obraSocial.nombre }}</td>
+                <td>{{ obraSocial.codigo }}</td>
+                <td>{{ obraSocial.descripcion || 'Sin descripción' }}</td>
                 <td class="text-center">
-                  <button (click)="goToEdit(paciente.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
+                  <button (click)="goToEdit(obraSocial.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
                     <i class="fa fa-pencil"></i>
                   </button>
-                  <button (click)="confirmDelete(paciente.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                  <button (click)="confirmDelete(obraSocial.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
                     <i class="fa fa-trash"></i>
                   </button>
                 </td>
               </tr>
               <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
-                <td colspan="9" class="text-center text-muted py-4">No hay pacientes para mostrar.</td>
+                <td colspan="5" class="text-center text-muted py-4">No hay obras sociales para mostrar.</td>
               </tr>
             </tbody>
           </table>
@@ -100,22 +92,22 @@ import { PaginationComponent } from '../pagination/pagination.component';
     }
   `]
 })
-export class PacientesComponent {
+export class ObraSocialComponent {
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
 
   constructor(
-    private pacienteService: PacienteService,
+    private obraSocialService: ObraSocialService,
     private modalService: ModalService,
     public router: Router
   ) {}
 
   ngOnInit(): void {
-    this.getPacientes();
+    this.getObrasSociales();
   }
 
-  getPacientes(): void {
-    this.pacienteService.byPage(this.currentPage, 10).subscribe(dataPackage => {
+  getObrasSociales(): void {
+    this.obraSocialService.byPage(this.currentPage, 10).subscribe(dataPackage => {
       this.resultsPage = <ResultsPage>dataPackage.data;
     });
   }
@@ -123,35 +115,35 @@ export class PacientesComponent {
   confirmDelete(id: number): void {
     this.modalService
       .confirm(
-        "Eliminar paciente",
-        "Eliminar paciente",
-        "¿Está seguro que desea eliminar el paciente?"
+        "Eliminar obra social",
+        "¿Está seguro que desea eliminar esta obra social?",
+        "Esta acción no se puede deshacer"
       )
       .then(() => this.remove(id))
       .catch(() => {});
   }
 
   remove(id: number): void {
-    this.pacienteService.remove(id).subscribe({
-      next: () => this.getPacientes(),
+    this.obraSocialService.remove(id).subscribe({
+      next: () => this.getObrasSociales(),
       error: (err) => {
-        const msg = err?.error?.message || "Error al eliminar el paciente.";
+        const msg = err?.error?.message || "Error al eliminar la obra social.";
         this.modalService.alert("Error", msg);
-        console.error("Error al eliminar paciente:", err);
+        console.error("Error al eliminar obra social:", err);
       }
     });
   }
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
-    this.getPacientes();
+    this.getObrasSociales();
   }
 
   goToDetail(id: number): void {
-    this.router.navigate(['/pacientes', id]);
+    this.router.navigate(['/obraSocial', id]);
   }
 
   goToEdit(id: number): void {
-    this.router.navigate(['/pacientes', id], { queryParams: { edit: true } });
+    this.router.navigate(['/obraSocial', id], { queryParams: { edit: true } });
   }
 }
