@@ -90,15 +90,26 @@ When('el administrador crea un esquema de turno con {string}, {int}, {string}, {
     consultorioId = -1; // o cualquier ID que no exista
   }
 
+   let disponibilidadMedicoId = null;
+if (staffMedicoId) {
+  disponibilidadMedicoId = getDisponibilidadMedicoIdPorStaffMedicoId(staffMedicoId);
+  assert(disponibilidadMedicoId, `No se encontró disponibilidad médica para el staff médico con ID ${staffMedicoId}`);
+}
+
   const esquemaTurnoConfig = {
     staffMedicoId: staffMedicoId,
     consultorioId: consultorioId,
+    disponibilidadMedicoId: disponibilidadMedicoId,
     centroId: centroId,
     intervalo: intervalo,
-    horarios: horarios
+     horarios: horarios.map(horario => ({
+    dia: horario.dia,
+    horaInicio: `${horario.horaInicio}`,
+    horaFin: `${horario.horaFin}`
+  })),
   };
 
-  console.log('Datos enviados al backend:', esquemaTurnoConfig);
+//  console.log('Datos enviados al backend:', esquemaTurnoConfig);
 
   try {
     const res = request('POST', 'http://backend:8080/esquema-turno', { json: esquemaTurnoConfig });
@@ -112,54 +123,20 @@ When('el administrador crea un esquema de turno con {string}, {int}, {string}, {
   }
 });
 
+function getDisponibilidadMedicoIdPorStaffMedicoId(staffMedicoId) {
+  assert(staffMedicoId, 'El ID del staff médico es requerido para buscar la disponibilidad médica');
 
-// When('el administrador crea una agenda basada en el esquema de turno', function () {
-//   const agendaConfig = {
-//     esquemaTurnoId: this.esquemaTurnoId,
-//     fecha: "2025-05-26", // Fecha de ejemplo, puede ser dinámica
-//     horaInicio: "08:00",
-//     horaFin: "12:00",
-//     habilitado: true
-//   };
+  const res = request('GET', `http://backend:8080/disponibilidades-medico?staffMedicoId=${staffMedicoId}`);
+  const responseData = JSON.parse(res.getBody('utf8'));
 
-//   try {
-//     const res = request('POST', 'http://backend:8080/agenda', { json: agendaConfig });
-//     this.response = JSON.parse(res.getBody('utf8'));
-//     this.statusCode = res.statusCode;
-//   } catch (error) {
-//     this.response = error.response
-//       ? JSON.parse(error.response.body.toString('utf8'))
-//       : { status_code: 500, status_text: 'Error interno' };
-//     this.statusCode = error.statusCode || 500;
-//   }
-// });
+  // Acceder a la propiedad "data" de la respuesta
+  const data = Array.isArray(responseData) ? responseData : responseData.data;
 
+  assert(Array.isArray(data), 'La respuesta del backend no contiene un array de disponibilidades médicas');
 
-// ----- agenda
-let agendaConfig = {};
-let agendaConfig2 = {};
-function getStaffMedicoIdPorMedicoId(medicoId) {
-  const res = request('GET', `http://backend:8080/staff-medico?medicoId=${medicoId}`);
-  const data = JSON.parse(res.getBody('utf8'));
-  return data.length > 0 ? data[0].id : null; // Asume que el primer resultado es válido
-}
-function getIdByNombre(url, nombreCampo, valor) {
-  const res = request('GET', url);
-  const data = JSON.parse(res.getBody('utf8'));
-  let arr = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
-  return (arr.find(e => e[nombreCampo] === valor || e.name === valor) || {}).id || null;
-}
+  const disponibilidadMedico = data.find((disponibilidad) => disponibilidad.staffMedicoId === staffMedicoId);
 
-function getMedicoIdPorNombreCompleto(nombre, apellido) {
-  const res = request('GET', 'http://backend:8080/medicos');
-  const data = JSON.parse(res.getBody('utf8'));
-  let arr = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
-  const obj = arr.find(e =>
-    e.nombre && e.apellido &&
-    e.nombre.trim().toLowerCase() === nombre.trim().toLowerCase() &&
-    e.apellido.trim().toLowerCase() === apellido.trim().toLowerCase()
-  );
-  return obj ? obj.id : null;
+  return disponibilidadMedico ? disponibilidadMedico.id : null;
 }
 Then('el sistema responde con status_code {int} y status_text {string} para agenda', function (expectedStatus, expectedText) {
   // Verificar el campo status_code del cuerpo de la respuesta

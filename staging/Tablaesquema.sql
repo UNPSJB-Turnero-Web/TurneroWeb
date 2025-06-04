@@ -1,1 +1,0 @@
-ALTER TABLE esquema_turno DROP COLUMN nombre;

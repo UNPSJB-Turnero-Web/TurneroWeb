@@ -101,11 +101,19 @@ public class EsquemaTurnoService {
         // Validación: Disponibilidad del médico
         List<DisponibilidadMedico> disponibilidades = disponibilidadMedicoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
         for (EsquemaTurnoDTO.DiaHorarioDTO horario : dto.getHorarios()) {
+            System.out.println("Validando horario: " + horario.getDia() + " " + horario.getHoraInicio() + " - " + horario.getHoraFin());
+            for (DisponibilidadMedico disponibilidad : disponibilidades) {
+                System.out.println("Disponibilidad: ");
+                disponibilidad.getHorarios().forEach(diaHorario -> 
+                    System.out.println("Día: " + diaHorario.getDia() + ", Inicio: " + diaHorario.getHoraInicio() + ", Fin: " + diaHorario.getHoraFin())
+                );
+            }
+
             boolean disponible = disponibilidades.stream().anyMatch(disponibilidad -> 
                 disponibilidad.getHorarios().stream().anyMatch(diaHorario -> 
-                    diaHorario.getDia().equals(horario.getDia()) &&
-                    !horario.getHoraInicio().isBefore(diaHorario.getHoraInicio()) &&
-                    !horario.getHoraFin().isAfter(diaHorario.getHoraFin())
+                    diaHorario.getDia().equalsIgnoreCase(horario.getDia()) &&
+                    (horario.getHoraInicio().equals(diaHorario.getHoraInicio()) || !horario.getHoraInicio().isBefore(diaHorario.getHoraInicio())) &&
+                    (horario.getHoraFin().equals(diaHorario.getHoraFin()) || !horario.getHoraFin().isAfter(diaHorario.getHoraFin()))
                 )
             );
 
