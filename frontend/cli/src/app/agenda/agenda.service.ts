@@ -71,5 +71,9 @@ export class AgendaService {
     return this.http.get<any[]>(`${this.url}/eventos/todos?semanas=${semanas}`);
   }
 
+  asignarTurno(turnoId: number, pacienteId: number): Observable<any> {
+  return this.http.post(`${this.url}/asignar-turno`, { turnoId, pacienteId });
+}
+
 
 }

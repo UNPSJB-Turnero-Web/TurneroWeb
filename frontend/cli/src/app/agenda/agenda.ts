@@ -1,5 +1,6 @@
 export interface Agenda {
   id: number;
+  titulo: string;
   especialidadId: number;
   especialidadNombre: string;
   diaInicio: string; // ISO yyyy-MM-dd

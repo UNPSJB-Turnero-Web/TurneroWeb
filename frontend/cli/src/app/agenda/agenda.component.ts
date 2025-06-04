@@ -74,6 +74,7 @@ import { CalendarModule } from 'angular-calendar';
             [dayStartHour]="6"
             [dayEndHour]="24"
             (eventClicked)="handleEvent($event)">
+
           </mwl-calendar-week-view>
 
           <!-- Modal para mostrar detalles del evento -->
@@ -91,8 +92,21 @@ import { CalendarModule } from 'angular-calendar';
                   <p><strong>Centro de Atención:</strong> {{ selectedEvent.meta?.centroAtencionNombre }}</p>
                   <p><strong>Hora Inicio:</strong> {{ selectedEvent.start | date: 'yyyy-MM-dd HH:mm' }}</p>
                   <p><strong>Hora Fin:</strong> {{ selectedEvent.end | date: 'yyyy-MM-dd HH:mm' }}</p>
+
+                  <!-- Campo para ingresar el ID del paciente -->
+                  <div class="mt-3">
+                    <label for="pacienteId" class="form-label"><strong>Asignar Paciente:</strong></label>
+                    <input
+                      id="pacienteId"
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="pacienteId"
+                      placeholder="Ingrese el ID del paciente"
+                    />
+                  </div>
                 </div>
                 <div class="modal-footer">
+                  <button type="button" class="btn btn-success" (click)="asignarTurno()">Asignar Turno</button>
                   <button type="button" class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
                 </div>
               </div>
@@ -104,7 +118,7 @@ import { CalendarModule } from 'angular-calendar';
   `,
   changeDetection: ChangeDetectionStrategy.Default,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  
+
   styles: [`
   .container {
     max-width: 100%; /* Reduce el ancho del contenedor */
@@ -146,22 +160,28 @@ import { CalendarModule } from 'angular-calendar';
     border-radius: 0.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra para los eventos */
   }
+
+  .past-day {
+  background-color: #ffcccc !important; /* Fondo rojo claro */
+}
   `]
 })
 export class AgendaComponent implements OnInit {
   viewDate: Date = new Date(); // Fecha actual para el calendario
-  
+
   events: CalendarEvent[] = [];
   filteredEvents: CalendarEvent[] = [];
   semanas: number = 4; // Número de semanas para generar eventos
   selectedEvent: CalendarEvent | null = null; // Evento seleccionado
   filterType: string = 'staffMedico';
   filterValue: string = '';
+  pacienteId: string = ''; // Variable para almacenar el ID del paciente
 
   constructor(
     private agendaService: AgendaService,
-    private cdr: ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    private router: Router // Inyecta el Router
+  ) { }
 
   ngOnInit() {
     this.cargarTodosLosEventos();
@@ -173,13 +193,13 @@ export class AgendaComponent implements OnInit {
 
     this.agendaService.obtenerTodosLosEventos(semanas).subscribe({
       next: (eventosBackend) => {
-        console.log('Eventos recibidos desde el backend:', eventosBackend);
+        // console.log('Eventos recibidos desde el backend:', eventosBackend);
 
         // Transformar los eventos del backend en objetos CalendarEvent
         this.events = this.mapEsquemasToEvents(eventosBackend);
         this.filteredEvents = this.events; // Inicialmente, los eventos filtrados son todos los eventos
 
-        console.log('Eventos filtrados asignados al calendario:', this.filteredEvents);
+        // console.log('Eventos filtrados asignados al calendario:', this.filteredEvents);
         this.cdr.detectChanges(); // Forzar la detección de cambios
       },
       error: (err) => {
@@ -188,12 +208,10 @@ export class AgendaComponent implements OnInit {
       }
     });
   }
-
   handleEvent(eventObj: any) {
     this.selectedEvent = eventObj.event; // Asigna el evento seleccionado
     console.log('Evento seleccionado:', this.selectedEvent);
   }
-
   closeModal() {
     this.selectedEvent = null; // Limpia el evento seleccionado
   }
@@ -239,7 +257,7 @@ export class AgendaComponent implements OnInit {
   private mapEsquemasToEvents(eventosBackend: any[]): CalendarEvent[] {
     const events: CalendarEvent[] = [];
 
-    console.log('Eventos recibidos desde el backend:', eventosBackend);
+    // console.log('Eventos recibidos desde el backend:', eventosBackend);
 
     eventosBackend.forEach(evento => {
       // Validar que el evento tenga los datos necesarios
@@ -264,6 +282,7 @@ export class AgendaComponent implements OnInit {
         title: evento.titulo || 'Turno',
         color: { primary: '#1e90ff', secondary: '#D1E8FF' },
         meta: {
+          id: evento.id, 
           staffMedicoNombre: evento.staffMedicoNombre,
           consultorioNombre: evento.consultorioNombre,
           centroAtencionNombre: evento.nombreCentro
@@ -271,13 +290,37 @@ export class AgendaComponent implements OnInit {
       });
     });
 
-    console.log('Eventos generados:', events); // Depuración: Verifica cuántos eventos se generan
+    // console.log('Eventos generados:', events); // Depuración: Verifica cuántos eventos se generan
     return events;
   }
 
   changeWeek(direction: number): void {
     const currentDate = this.viewDate;
     this.viewDate = new Date(currentDate.setDate(currentDate.getDate() + direction * 7));
-    console.log('Nueva fecha de vista:', this.viewDate);
+    // console.log('Nueva fecha de vista:', this.viewDate);
+  }
+  
+  asignarTurno(): void {
+    if (!this.pacienteId) {
+      alert('Por favor, ingrese el ID del paciente.');
+      return;
+    }
+
+    const turnoId = this.selectedEvent?.meta?.id; // Obtener el ID del turno
+    if (!turnoId) {
+      alert('No se puede asignar el turno porque no hay un ID válido.');
+      return;
+    }
+
+    this.agendaService.asignarTurno(turnoId, +this.pacienteId).subscribe({
+      next: () => {
+        alert('Turno asignado correctamente.');
+        this.closeModal(); // Cerrar el modal después de asignar el turno
+      },
+      error: (err) => {
+        console.error('Error al asignar el turno:', err);
+        alert('No se pudo asignar el turno. Intente nuevamente.');
+      },
+    });
   }
 }

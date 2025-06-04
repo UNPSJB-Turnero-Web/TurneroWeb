@@ -135,6 +135,7 @@ public class AgendaService {
     public List<TurnoDTO> generarEventosDesdeEsquemaTurno(EsquemaTurno esquemaTurno, int semanas) {
         List<TurnoDTO> eventos = new ArrayList<>();
         LocalDate hoy = LocalDate.now();
+        int eventoIdCounter = 1; // Contador para generar IDs únicos
 
         // Obtener los horarios del esquema desde la tabla esquema_turno_horarios
         List<EsquemaTurno.Horario> horarios = esquemaTurno.getHorarios();
@@ -166,6 +167,7 @@ public class AgendaService {
 
                     // Crear un DTO para el evento
                     TurnoDTO evento = new TurnoDTO();
+                    evento.setId(eventoIdCounter++); // Asignar un ID único al evento
                     evento.setFecha(fechaEvento);
                     evento.setHoraInicio(slotStart);
                     evento.setHoraFin(nextSlot);
