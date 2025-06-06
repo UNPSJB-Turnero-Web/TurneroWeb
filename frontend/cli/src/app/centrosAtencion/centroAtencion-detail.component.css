@@ -840,4 +840,28 @@
   border: none;
   padding: 0;
 }
+
+/* Estilos para disponibilidad médica - días en columna */
+.dias-container-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: center!important;
+}
+
+
+.dia-item-vertical {
+  display: flex;
+  width: 100%;
+}
+
+.dia-item-vertical .badge {
+  min-width: 120px;
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-block;
+}
 }

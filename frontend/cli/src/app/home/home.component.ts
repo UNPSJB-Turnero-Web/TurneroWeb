@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
   imports: [],
   template: `
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 bg-light">
-      <h1 class="display-3 text-primary mb-4">Bienvenido a Turnero Web</h1>
+      <h1 class="display-3 text-primary mb-4">Bienvenido a CheTurno</h1>
       <p class="lead text-secondary text-center mb-5">
         Simplifica la gestión de turnos con nuestra plataforma intuitiva y eficiente.
       </p>

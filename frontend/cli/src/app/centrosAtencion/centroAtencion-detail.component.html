@@ -1061,12 +1061,14 @@
                                             class="disponibilidad-detail-row">
                                           <!-- Días -->
                                           <td>
-                                            <div class="dias-container">
+                                            <div class="dias-container-vertical">
                                               <div *ngIf="disponibilidad.horarios && disponibilidad.horarios.length > 0; else noDias">
-                                                <span *ngFor="let horario of disponibilidad.horarios; let isLast = last" 
-                                                      class="badge bg-primary-subtle text-primary-emphasis me-1 mb-1">
-                                                  {{ horario.dia }}{{ !isLast ? '' : '' }}
-                                                </span>
+                                                <div *ngFor="let horario of disponibilidad.horarios" 
+                                                     class="dia-item-vertical">
+                                                  <span class="badge bg-primary-subtle text-primary-emphasis">
+                                                    {{ horario.dia }}
+                                                  </span>
+                                                </div>
                                               </div>
                                               <ng-template #noDias>
                                                 <small class="text-muted">

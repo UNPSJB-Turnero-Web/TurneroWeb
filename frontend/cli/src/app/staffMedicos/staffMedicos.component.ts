@@ -28,7 +28,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </div>
             <button 
               class="btn btn-new"
-              (click)="router.navigate(['/staff-medico/new'])"
+              (click)="router.navigate(['/staffMedico/new'])"
             >
               <i class="fas fa-plus me-2"></i>
               Nuevo Staff
@@ -427,11 +427,11 @@ export class StaffMedicosComponent {
   }
 
   goToEdit(id: number): void {
-    this.router.navigate(['/staff-medico', id], { queryParams: { edit: true } });
+    this.router.navigate(['/staffMedico', id], { queryParams: { edit: true } });
   }
 
   goToDetail(id: number): void {
-    this.router.navigate(['/staff-medico', id]);
+    this.router.navigate(['/staffMedico', id]);
   }
 
   goToDisponibilidad(staff: StaffMedico): void {
