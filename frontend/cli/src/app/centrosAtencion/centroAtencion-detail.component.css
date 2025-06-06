@@ -1,4 +1,4 @@
- .card {
+.card {
       border-radius: 1.5rem;
       border: none;
       box-shadow: var(--centro-atencion-shadow);
@@ -334,8 +334,155 @@
       color: white;
     }
 
-    /* Responsive Design */
-    @media (max-width: 768px) {
+    /* Enhanced esquemas table styling */
+.esquemas-table {
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.esquemas-table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  padding: 12px 8px;
+}
+
+.esquemas-table td {
+  padding: 12px 8px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.esquemas-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Medico avatar styling */
+.medico-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.medico-info {
+  display: flex;
+  align-items: center;
+}
+
+.medico-name {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Horarios styling */
+.horarios-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 200px;
+}
+
+.horario-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Status badge styling */
+.estado-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.estado-badge i {
+  font-size: 10px;
+}
+
+/* Action buttons styling */
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.action-buttons .btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Asignacion rapida panel */
+.asignacion-rapida {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.asignacion-rapida h6 {
+  color: #495057;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.asignacion-form {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.asignacion-form .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.asignacion-form .btn {
+  white-space: nowrap;
+}
+
+/* Empty state styling */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+}
+
+.empty-state i {
+  font-size: 48px;
+  color: #dee2e6;
+  margin-bottom: 16px;
+}
+
+.empty-state h5 {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
       .card-body {
         padding: 1.5rem;
       }
@@ -590,6 +737,37 @@
     height: 35px;
     font-size: 14px;
   }
+  
+  .esquemas-table {
+    font-size: 13px;
+  }
+  
+  .esquemas-table th,
+  .esquemas-table td {
+    padding: 8px 4px;
+  }
+  
+  .medico-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .horarios-list {
+    max-width: 150px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .asignacion-form {
+    flex-direction: column;
+  }
+  
+  .asignacion-form .form-group {
+    min-width: 100%;
+  }
 }
 
 /* Efectos de transición para elementos interactivos */
@@ -662,4 +840,4 @@
   border: none;
   padding: 0;
 }
-    }
+}

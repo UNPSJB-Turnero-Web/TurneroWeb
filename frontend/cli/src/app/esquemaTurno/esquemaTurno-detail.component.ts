@@ -810,6 +810,18 @@ export class EsquemaTurnoDetailComponent {
     if (path === 'esquema-turno/new') {
       this.modoEdicion = true;
       this.esNuevo = true;
+      
+      // Auto-completar con parámetros de query si vienen del centro de atención
+      const consultorioId = this.route.snapshot.queryParamMap.get('consultorioId');
+      const centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+      
+      if (consultorioId && centroAtencionId) {
+        this.esquema.consultorioId = Number(consultorioId);
+        this.esquema.centroId = Number(centroAtencionId);
+        
+        // Cargar consultorios para el centro específico
+        this.loadConsultorios(Number(centroAtencionId));
+      }
     } else if (path === 'esquema-turno/:id') {
       this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
       this.esNuevo = false;
@@ -947,7 +959,16 @@ export class EsquemaTurnoDetailComponent {
     }
 
     this.esquemaTurnoService.create(payload).subscribe({
-      next: () => this.router.navigate(['/esquema-turno']),
+      next: () => {
+        const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+        const centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+        
+        if (returnTo === 'centro-detail' && centroAtencionId) {
+          this.router.navigate(['/centrosAtencion', centroAtencionId]);
+        } else {
+          this.router.navigate(['/esquema-turno']);
+        }
+      },
       error: (err) => {
         console.error('Error al guardar el esquema de turno:', err);
         this.modalService.alert('Error', 'Error al guardar el esquema de turno.');
@@ -962,12 +983,26 @@ export class EsquemaTurnoDetailComponent {
   cancelar(): void {
     this.modoEdicion = false;
     if (this.esNuevo) {
-      this.router.navigate(['/esquema-turno']);
+      const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+      const centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+      
+      if (returnTo === 'centro-detail' && centroAtencionId) {
+        this.router.navigate(['/centrosAtencion', centroAtencionId]);
+      } else {
+        this.router.navigate(['/esquema-turno']);
+      }
     }
   }
 
   goBack(): void {
-    this.router.navigate(['/esquema-turno']);
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    const centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+    
+    if (returnTo === 'centro-detail' && centroAtencionId) {
+      this.router.navigate(['/centrosAtencion', centroAtencionId]);
+    } else {
+      this.router.navigate(['/esquema-turno']);
+    }
   }
 
   remove(esquema: EsquemaTurno): void {
