@@ -103,6 +103,37 @@ public class EsquemaTurnoPresenter {
         }
     }
 
+    // Nuevos endpoints para centros de atencion
+    @GetMapping("/centrosAtencion/{centroId}/esquemas")
+    public ResponseEntity<Object> getByCentroAtencion(@PathVariable Integer centroId) {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.findByCentroAtencion(centroId);
+            return Response.ok(esquemas, "Esquemas de turno del centro obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener los esquemas del centro: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/centrosAtencion/{centroId}/esquemas/disponibles")
+    public ResponseEntity<Object> getDisponiblesByCentroAtencion(@PathVariable Integer centroId) {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.findDisponiblesByCentroAtencion(centroId);
+            return Response.ok(esquemas, "Esquemas disponibles del centro obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener los esquemas disponibles del centro: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/search/{term}")
+    public ResponseEntity<Object> search(@PathVariable String term) {
+        try {
+            List<EsquemaTurnoDTO> esquemas = service.search(term);
+            return Response.ok(esquemas, "Busqueda completada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al realizar la busqueda: " + e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,

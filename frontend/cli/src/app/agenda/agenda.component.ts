@@ -237,7 +237,7 @@ import { HttpClient } from '@angular/common/http'; // Importa HttpClient
   styles: [`
     /* Contenedor principal */
     .container {
-      max-width: 1200px;
+      max-width: 95%;
       margin: 0 auto;
       padding: 2rem 1rem;
     }

@@ -14,7 +14,6 @@ import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
-import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.dto.EsquemaTurnoDTO;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -27,9 +26,6 @@ public class EsquemaTurnoService {
 
     @Autowired
     private DisponibilidadMedicoRepository disponibilidadMedicoRepository;
-
-    @Autowired
-    private StaffMedicoRepository staffMedicoRepository;
 
     @Autowired
     private CentroAtencionRepository centroAtencionRepository;
@@ -167,6 +163,33 @@ public class EsquemaTurnoService {
                 .collect(Collectors.toList());
     }
 
+    // Nuevos métodos para centros de atención
+    public List<EsquemaTurnoDTO> findByCentroAtencion(Integer centroId) {
+        return esquemaTurnoRepository.findByCentroAtencionId(centroId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<EsquemaTurnoDTO> findDisponiblesByCentroAtencion(Integer centroId) {
+        // Lógica para obtener esquemas disponibles del centro
+        // Por ahora, retornamos todos los esquemas del centro
+        return findByCentroAtencion(centroId);
+    }
+
+    public List<EsquemaTurnoDTO> search(String term) {
+        return esquemaTurnoRepository.findAll()
+                .stream()
+                .filter(esquema -> 
+                    esquema.getStaffMedico().getMedico().getNombre().toLowerCase().contains(term.toLowerCase()) ||
+                    esquema.getStaffMedico().getMedico().getApellido().toLowerCase().contains(term.toLowerCase()) ||
+                    esquema.getCentroAtencion().getNombre().toLowerCase().contains(term.toLowerCase()) ||
+                    esquema.getConsultorio().getNombre().toLowerCase().contains(term.toLowerCase())
+                )
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {
         EsquemaTurnoDTO dto = new EsquemaTurnoDTO();
         dto.setId(esquema.getId());
@@ -215,7 +238,7 @@ public class EsquemaTurnoService {
 
         esquema.setHorarios(dto.getHorarios().stream().map(horarioDTO -> {
             EsquemaTurno.Horario horario = new EsquemaTurno.Horario();
-            horario.setDia((horarioDTO.getDia()).toString());
+            horario.setDia(horarioDTO.getDia());
             horario.setHoraInicio(horarioDTO.getHoraInicio());
             horario.setHoraFin(horarioDTO.getHoraFin());
             return horario;

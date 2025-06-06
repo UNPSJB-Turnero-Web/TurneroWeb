@@ -7,7 +7,16 @@
         <i class="icon-centro-atencion"></i>
         <div class="header-text">
           <h1>{{ centroAtencion.nombre || 'Centro de Atención' }}</h1>
-          <p>Gestión integral del centro médico</p>
+          <p class="mb-1">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            {{ centroAtencion.direccion || 'Dirección no especificada' }}, 
+            {{ centroAtencion.localidad || 'Localidad' }}, 
+            {{ centroAtencion.provincia || 'Provincia' }}
+          </p>
+          <p class="mb-0 opacity-75">
+            <i class="fas fa-phone me-2"></i>
+            {{ centroAtencion.telefono || 'Teléfono no registrado' }}
+          </p>
         </div>
       </div>
     </div>
@@ -390,8 +399,8 @@
                 <i class="icon-consultorios"></i>
               </div>
               <div>
-                <h2 class="mb-1 fw-bold text-white">Consultorios</h2>
-                <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
+                <h2 class="mb-1 fw-bold text-white">Gestión de Consultorios</h2>
+                <p class="mb-0 opacity-75">Administrar consultorios del centro médico</p>
               </div>
             </div>
             <div *ngIf="!modoCrearConsultorio">
@@ -442,25 +451,30 @@
             </div>
           </div>
           
-          <!-- Consultorios Table -->
+          <!-- Consultorios Table con Filas Expandibles -->
           <div *ngIf="consultorios.length > 0; else noConsultorios">
             <div class="modern-table">
               <table class="table mb-0">
                 <thead>
                   <tr>
-                    <th>
+                    <th width="5%">
+                      <div class="d-flex align-items-center">
+                        <div class="icon-consultorios me-2"></div>
+                      </div>
+                    </th>
+                    <th width="15%">
                       <div class="d-flex align-items-center">
                         <div class="icon-consultorios me-2"></div>
                         Número
                       </div>
                     </th>
-                    <th>
-                      <div class="d-flex align-items-center">
+                    <th width="60%">
+z                      <div class="d-flex align-items-center">
                         <div class="icon-consultorios me-2"></div>
-                        Nombre
+                        Nombre / Esquemas de Turno
                       </div>
                     </th>
-                    <th>
+                    <th width="20%">
                       <div class="d-flex align-items-center">
                         <div class="icon-obra-social me-2"></div>
                         Acciones
@@ -469,52 +483,255 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let consultorio of consultorios; let i = index">
-                    <td>
-                      <span class="badge-consultorios">
-                        <i class="fa fa-hashtag me-1"></i>{{ consultorio.numero }}
-                      </span>
-                    </td>
-                    <td>
-                      <div *ngIf="editConsultorioIndex !== i">
-                        <i class="icon-consultorios me-2"></i>
-                        {{ consultorio.nombre }}
-                      </div>
-                      <div *ngIf="editConsultorioIndex === i">
-                        <input [(ngModel)]="consultorio.nombre" class="form-control-modern">
-                      </div>
-                    </td>
-                    <td>
-                      <div class="d-flex gap-1">
-                        <button *ngIf="editConsultorioIndex !== i" 
-                                class="action-btn btn-edit" 
-                                (click)="editarConsultorio(i)"
-                                title="Editar consultorio">
-                          <i class="fa fa-pencil"></i>
+                  <ng-container *ngFor="let consultorio of consultorios; let i = index">
+                    <!-- Fila Principal del Consultorio -->
+                    <tr class="consultorio-row" 
+                        [class.expanded]="consultorioExpandido[consultorio.id || 0]"
+                        (click)="toggleConsultorioExpansion(consultorio)">
+                      <td>
+                        <button class="btn btn-link p-0 text-primary" 
+                                [class.rotated]="consultorioExpandido[consultorio.id || 0]">
+                          <i class="fa fa-chevron-right transition-all"></i>
                         </button>
-                        <button *ngIf="editConsultorioIndex === i" 
-                                class="action-btn btn-add" 
-                                (click)="guardarEdicionConsultorio(i)"
-                                title="Guardar cambios">
-                          <i class="fa fa-save"></i>
-                        </button>
-                        <button *ngIf="editConsultorioIndex === i" 
-                                class="action-btn btn-delete" 
-                                (click)="cancelarEdicionConsultorio()"
-                                title="Cancelar edición">
-                          <i class="fa fa-times"></i>
-                        </button>
-                        <button *ngIf="editConsultorioIndex !== i" 
-                                class="action-btn btn-delete" 
-                                (click)="eliminarConsultorio(consultorio)"
-                                title="Eliminar consultorio">
-                          <i class="fa fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td>
+                        <span class="badge-consultorios">
+                          <i class="fa fa-hashtag me-1"></i>{{ consultorio.numero }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div *ngIf="editConsultorioIndex !== i">
+                            <div class="d-flex align-items-center">
+                              <i class="icon-consultorios me-2"></i>
+                              <strong>{{ consultorio.nombre }}</strong>
+                              <span class="ms-3 text-muted">
+                                <i class="fa fa-clock me-1"></i>
+                                {{ verEsquemasConsultorio(consultorio).length }} esquema(s) de turno
+                              </span>
+                            </div>
+                          </div>
+                          <div *ngIf="editConsultorioIndex === i" class="w-100">
+                            <input [(ngModel)]="consultorio.nombre" 
+                                   class="form-control-modern"
+                                   (click)="$event.stopPropagation()">
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <button *ngIf="editConsultorioIndex !== i" 
+                                  class="action-btn btn-edit" 
+                                  (click)="editarConsultorio(i); $event.stopPropagation()"
+                                  title="Editar consultorio">
+                            <i class="fa fa-pencil"></i>
+                          </button>
+                          <button *ngIf="editConsultorioIndex === i" 
+                                  class="action-btn btn-add" 
+                                  (click)="guardarEdicionConsultorio(i); $event.stopPropagation()"
+                                  title="Guardar cambios">
+                            <i class="fa fa-save"></i>
+                          </button>
+                          <button *ngIf="editConsultorioIndex === i" 
+                                  class="action-btn btn-delete" 
+                                  (click)="cancelarEdicionConsultorio(); $event.stopPropagation()"
+                                  title="Cancelar edición">
+                            <i class="fa fa-times"></i>
+                          </button>
+                          <button *ngIf="editConsultorioIndex !== i" 
+                                  class="action-btn btn-delete" 
+                                  (click)="eliminarConsultorio(consultorio); $event.stopPropagation()"
+                                  title="Eliminar consultorio">
+                            <i class="fa fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    <!-- Fila Expandible - Gestión de Esquemas de Turno -->
+                    <tr *ngIf="consultorioExpandido[consultorio.id || 0]" class="expansion-row">
+                      <td colspan="4" class="p-0">
+                        <div class="expansion-content">
+                          <div class="row g-4">
+                            
+                            <!-- Panel Izquierdo: Esquemas Asignados -->
+                            <div class="col-md-7">
+                              <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                  <h6 class="mb-0">
+                                    <i class="fa fa-check-circle me-2"></i>
+                                    Esquemas Asignados al Consultorio {{ consultorio.numero }}
+                                  </h6>
+                                </div>
+                                <div class="card-body">
+                                  <div *ngIf="verEsquemasConsultorio(consultorio).length === 0" 
+                                       class="text-center text-muted py-4">
+                                    <i class="fa fa-clock fa-3x mb-3 opacity-50"></i>
+                                    <p>No hay esquemas de turno asignados a este consultorio.</p>
+                                    <p class="small">Use el panel de la derecha para asignar esquemas.</p>
+                                  </div>
+                                  
+                                  <div *ngFor="let esquema of verEsquemasConsultorio(consultorio)" 
+                                       class="esquema-card mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                      <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                          <div class="doctor-avatar me-3">
+                                            <i class="fa fa-user-md"></i>
+                                          </div>
+                                          <div>
+                                            <h6 class="mb-0">
+                                              Dr. {{ esquema.staffMedico?.medico?.apellido }}, {{ esquema.staffMedico?.medico?.nombre }}
+                                            </h6>
+                                            <small class="text-muted">
+                                              {{ esquema.staffMedico?.especialidad?.nombre }}
+                                            </small>
+                                          </div>
+                                        </div>
+                                        
+                                        <div class="esquema-details">
+                                          <div class="row">
+                                            <div class="col-sm-6">
+                                              <small class="text-muted">Intervalo de atención:</small>
+                                              <div class="fw-bold text-primary">
+                                                <i class="fa fa-clock me-1"></i>
+                                                {{ esquema.intervalo }} minutos
+                                              </div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                              <small class="text-muted">Horarios configurados:</small>
+                                              <div class="fw-bold">
+                                                {{ esquema.horarios?.length || 0 }} día(s)
+                                              </div>
+                                            </div>
+                                          </div>
+                                          
+                                          <!-- Horarios detallados -->
+                                          <div *ngIf="esquema.horarios && esquema.horarios.length > 0" 
+                                               class="mt-2">
+                                            <small class="text-muted">Horarios:</small>
+                                            <div class="horarios-list">
+                                              <span *ngFor="let horario of esquema.horarios" 
+                                                    class="badge bg-light text-dark me-1 mb-1">
+                                                {{ horario.dia }}: {{ horario.horaInicio }} - {{ horario.horaFin }}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div class="esquema-actions">
+                                        <button class="btn btn-outline-primary btn-sm me-2" 
+                                                (click)="editarEsquema(esquema)"
+                                                title="Editar esquema">
+                                          <i class="fa fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                (click)="desasignarEsquemaConsultorio(consultorio, esquema)"
+                                                title="Quitar del consultorio">
+                                          <i class="fa fa-times"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <!-- Panel Derecho: Asignar Nuevos Esquemas -->
+                            <div class="col-md-5">
+                              <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                  <h6 class="mb-0">
+                                    <i class="fa fa-plus-circle me-2"></i>
+                                    Asignar Nuevos Esquemas
+                                  </h6>
+                                </div>
+                                <div class="card-body">
+                                  
+                                  <!-- Selector de esquemas disponibles -->
+                                  <div class="mb-4">
+                                    <label class="form-label fw-semibold">
+                                      <i class="fa fa-list me-2"></i>
+                                      Esquemas Disponibles:
+                                    </label>
+                                    <select class="form-select" 
+                                            [value]="esquemaSeleccionado[consultorio.id || 0] || ''"
+                                            (change)="onEsquemaSeleccionado(consultorio, $event)"
+                                            (focus)="cargarEsquemasDisponibles(consultorio)">
+                                      <option value="">Seleccionar esquema...</option>
+                                      <option *ngFor="let esquema of esquemasDisponibles" 
+                                              [value]="esquema.id"
+                                              [disabled]="yaEstaAsignado(consultorio, esquema)">
+                                        Dr. {{ esquema.staffMedico?.medico?.apellido }} - {{ esquema.intervalo }}min
+                                        <span *ngIf="yaEstaAsignado(consultorio, esquema)"> (Ya asignado)</span>
+                                      </option>
+                                    </select>
+                                    <button class="btn btn-success w-100 mt-2" 
+                                            [disabled]="!esquemaSeleccionado[consultorio.id || 0]"
+                                            (click)="asignarEsquemaConsultorio(consultorio)">
+                                      <i class="fa fa-plus me-2"></i>
+                                      Asignar Esquema Seleccionado
+                                    </button>
+                                  </div>
+                                  
+                                  <hr>
+                                  
+                                  <!-- Crear nuevo esquema -->
+                                  <div class="text-center">
+                                    <h6 class="text-info mb-3">
+                                      <i class="fa fa-magic me-2"></i>
+                                      Crear Nuevo Esquema
+                                    </h6>
+                                    <button class="btn btn-info w-100" 
+                                            (click)="crearNuevoEsquemaRapido(consultorio)">
+                                      <i class="fa fa-plus-circle me-2"></i>
+                                      Crear Esquema para este Consultorio
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                      Te llevará al formulario de creación de esquemas
+                                    </small>
+                                  </div>
+                                  
+                                </div>
+                              </div>
+                            </div>
+                            
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
                 </tbody>
               </table>
+            </div>
+          </div>
+          
+          <!-- Información sobre Esquemas de Turno -->
+          <div *ngIf="consultorios.length > 0" class="mt-4 p-3" style="background: rgba(40, 167, 69, 0.05); border-radius: 15px; border: 2px solid rgba(40, 167, 69, 0.2);">
+            <h6 class="mb-2 text-success">
+              <i class="fa fa-info-circle me-2"></i>Gestión de Esquemas de Turno
+            </h6>
+            <div class="small text-muted mb-2">
+              <p class="mb-1"><strong>Botones disponibles:</strong></p>
+              <p class="mb-1">
+                <i class="fa fa-calendar-alt text-primary me-2"></i><strong>Gestionar esquemas:</strong> Accede al editor completo de esquemas de turno
+              </p>
+              <p class="mb-1">
+                <i class="fa fa-plus-circle text-success me-2"></i><strong>Crear esquema rápido:</strong> Crea un esquema básico con disponibilidades existentes
+              </p>
+              <p class="mb-0">
+                <small class="text-info">
+                  <i class="fa fa-lightbulb me-1"></i>
+                  Primero asocie médicos y configure sus disponibilidades en el tab "Staff Médico" antes de crear esquemas de turno.
+                </small>
+              </p>
+            </div>
+            <!-- Botón de debug temporal -->
+            <div class="mt-2">
+              <button class="btn btn-sm btn-warning" (click)="debugEsquemas()">
+                <i class="fa fa-bug me-1"></i> Debug Esquemas
+              </button>
             </div>
           </div>
           
@@ -538,8 +755,8 @@
               <i class="icon-especialidades"></i>
             </div>
             <div>
-              <h2 class="mb-1 fw-bold text-white">Especialidades</h2>
-              <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
+              <h2 class="mb-1 fw-bold text-white">Especialidades Médicas</h2>
+              <p class="mb-0 opacity-75">Gestionar especialidades disponibles en el centro</p>
             </div>
           </div>
         </div>
@@ -655,8 +872,8 @@
               <i class="icon-medicos"></i>
             </div>
             <div>
-              <h2 class="mb-1 fw-bold text-white">Staff Médico</h2>
-              <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
+              <h2 class="mb-1 fw-bold text-white">Personal Médico</h2>
+              <p class="mb-0 opacity-75">Administrar médicos y especialidades del centro</p>
             </div>
           </div>
         </div>
@@ -771,8 +988,13 @@
                       <div class="d-flex gap-1">
                         <button class="action-btn btn-add" 
                                 (click)="agregarDisponibilidad(staff)"
-                                title="Agregar disponibilidad">
+                                title="Gestionar disponibilidad básica">
                           <i class="fa fa-calendar-plus"></i>
+                        </button>
+                        <button class="action-btn btn-edit" 
+                                (click)="gestionarDisponibilidadAvanzada(staff)"
+                                title="Gestión avanzada de disponibilidad">
+                          <i class="fa fa-cogs"></i>
                         </button>
                         <button class="action-btn btn-delete" 
                                 (click)="desasociarMedico(staff)"
@@ -784,6 +1006,28 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+          
+          <!-- Información sobre Gestión de Disponibilidades -->
+          <div *ngIf="staffMedicoCentro.length > 0" class="mt-4 p-3" style="background: rgba(40, 167, 69, 0.05); border-radius: 15px; border: 2px solid rgba(40, 167, 69, 0.2);">
+            <h6 class="mb-2 text-success">
+              <i class="fa fa-info-circle me-2"></i>Gestión de Disponibilidades Médicas
+            </h6>
+            <div class="small text-muted mb-2">
+              <p class="mb-1"><strong>Opciones disponibles:</strong></p>
+              <p class="mb-1">
+                <i class="fa fa-calendar-plus text-primary me-2"></i><strong>Disponibilidad básica:</strong> Configuración rápida de horarios
+              </p>
+              <p class="mb-1">
+                <i class="fa fa-cogs text-warning me-2"></i><strong>Gestión avanzada:</strong> Editor completo con opciones detalladas
+              </p>
+              <p class="mb-0">
+                <small class="text-info">
+                  <i class="fa fa-lightbulb me-1"></i>
+                  Las disponibilidades médicas son necesarias para crear esquemas de turno en los consultorios.
+                </small>
+              </p>
             </div>
           </div>
           

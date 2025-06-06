@@ -18,371 +18,18 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 import { Medico } from '../medicos/medico';
 import { MedicoService } from '../medicos/medico.service';
+import { EsquemaTurno } from '../esquemaTurno/esquemaTurno';
+import { EsquemaTurnoService } from '../esquemaTurno/esquemaTurno.service';
+import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
+import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 
 @Component({
   selector: 'app-centro-atencion-detail',
   standalone: true,
   imports: [FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent, RouterModule],
   templateUrl: './centroAtencion-detail.component.html',
-  styles: `
-    /* Global CSS Variables Integration */
-    .card {
-      border-radius: 1.5rem;
-      border: none;
-      box-shadow: var(--centro-atencion-shadow);
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-      position: relative;
-      background: rgba(255, 255, 255, 0.95);
-      animation: fadeInUp 0.6s ease-out;
-    }
+  styleUrls: ['./centroAtencion-detail.component.css'],
 
-    .card-header {
-      background: var(--centro-atencion-gradient);
-      padding: 2rem;
-      border: none;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card-body {
-      padding: 2.5rem;
-    }
-
-    .card-footer {
-      background: rgba(248, 249, 250, 0.8);
-      border-top: 1px solid var(--centro-atencion-light);
-      padding: 1.5rem;
-    }
-
-    /* Info Display Items */
-    .info-item {
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      border-radius: 15px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      border-left: 4px solid var(--centro-atencion-primary);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .info-item:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--centro-atencion-shadow);
-      border-left-color: var(--centro-atencion-secondary);
-    }
-
-    .info-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.5rem;
-      margin-right: 1rem;
-      flex-shrink: 0;
-    }
-
-    .info-label {
-      font-weight: 600;
-      color: var(--centro-atencion-primary);
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .info-value {
-      font-size: 1.1rem;
-      color: #495057;
-      font-weight: 500;
-    }
-
-    /* Form Groups */
-    .form-group-modern {
-      margin-bottom: 2rem;
-      position: relative;
-    }
-
-    .form-label-modern {
-      display: flex;
-      align-items: center;
-      font-weight: 600;
-      color: var(--centro-atencion-primary);
-      margin-bottom: 1rem;
-      font-size: 1rem;
-    }
-
-    .form-icon {
-      width: 35px;
-      height: 35px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.1rem;
-      margin-right: 0.75rem;
-    }
-
-    .form-control {
-      border-radius: 15px;
-      border: 2px solid var(--centro-atencion-light);
-      padding: 15px 20px;
-      font-size: 1.1rem;
-      transition: all 0.3s ease;
-      background: rgba(255,255,255,0.9);
-    }
-
-    .form-control:focus {
-      border-color: var(--centro-atencion-primary);
-      box-shadow: 0 0 0 0.2rem var(--centro-atencion-light);
-      background: white;
-      transform: translateY(-2px);
-      outline: none;
-    }
-
-    .form-help {
-      font-size: 0.85rem;
-      color: #6c757d;
-      margin-top: 0.5rem;
-      font-style: italic;
-    }
-
-    /* Modern Buttons */
-    .btn-modern {
-      border-radius: 50px;
-      padding: 12px 30px;
-      font-weight: 600;
-      border: none;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .btn-modern:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-
-    .btn-back {
-      background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
-      color: white;
-    }
-
-    .btn-edit {
-      background: var(--disponibilidad-gradient);
-      color: white;
-    }
-
-    .btn-delete {
-      background: var(--obra-social-gradient);
-      color: white;
-    }
-
-    .btn-save {
-      background: var(--medicos-gradient);
-      color: white;
-    }
-
-    .btn-cancel {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-      color: white;
-    }
-
-    /* Modern Tab Styling */
-    .modern-tabs .nav-link {
-      font-weight: 600;
-      color: var(--centro-atencion-primary);
-      border: none;
-      background: none;
-      border-radius: 15px 15px 0 0;
-      transition: all 0.3s ease;
-      margin-right: 0.25rem;
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .modern-tabs .nav-link::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 3px;
-      background: var(--centro-atencion-gradient);
-      transition: width 0.3s ease;
-    }
-
-    .modern-tabs .nav-link.active::before {
-      width: 100%;
-    }
-
-    .modern-tabs .nav-link.active {
-      color: #fff !important;
-      background: var(--centro-atencion-gradient);
-      box-shadow: var(--centro-atencion-shadow);
-      border: none;
-    }
-
-    .modern-tabs .nav-link:hover:not(.active) {
-      background: var(--centro-atencion-light);
-      color: var(--centro-atencion-secondary);
-      transform: translateY(-2px);
-    }
-
-    /* Table Styling */
-    .modern-table {
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: var(--centro-atencion-shadow);
-      background: white;
-    }
-
-    .modern-table thead th {
-      background: var(--centro-atencion-gradient);
-      color: white;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 0.9rem;
-      padding: 1.25rem 1rem;
-      border: none;
-    }
-
-    .modern-table tbody tr {
-      transition: all 0.3s ease;
-      border: none;
-    }
-
-    .modern-table tbody tr:hover {
-      background: var(--centro-atencion-light);
-      transform: translateY(-1px);
-    }
-
-    .modern-table tbody td {
-      padding: 1.25rem 1rem;
-      border: none;
-      border-bottom: 1px solid var(--centro-atencion-light);
-      vertical-align: middle;
-    }
-
-    /* Map Container */
-    .map-container {
-      border-radius: 15px;
-      overflow: hidden;
-      box-shadow: var(--centro-atencion-shadow);
-      height: 400px;
-    }
-
-    /* Animations */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* Alert Messages */
-    .modern-alert {
-      border-radius: 15px;
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
-      border: none;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .modern-alert.alert-success {
-      background: var(--medicos-light);
-      color: var(--medicos-primary);
-      border-left: 4px solid var(--medicos-primary);
-    }
-
-    .modern-alert.alert-danger {
-      background: var(--obra-social-light);
-      color: var(--obra-social-primary);
-      border-left: 4px solid var(--obra-social-primary);
-    }
-
-    .modern-alert.alert-info {
-      background: var(--centro-atencion-light);
-      color: var(--centro-atencion-primary);
-      border-left: 4px solid var(--centro-atencion-primary);
-    }
-
-    /* Action Buttons */
-    .action-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      margin: 0 2px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    }
-
-    .action-btn.btn-edit {
-      background: var(--disponibilidad-gradient);
-      color: white;
-    }
-
-    .action-btn.btn-delete {
-      background: var(--obra-social-gradient);
-      color: white;
-    }
-
-    .action-btn.btn-add {
-      background: var(--medicos-gradient);
-      color: white;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .card-body {
-        padding: 1.5rem;
-      }
-      
-      .modern-tabs .nav-link {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-      }
-      
-      .info-item {
-        padding: 1rem;
-      }
-      
-      .btn-modern {
-        padding: 10px 20px;
-        font-size: 0.8rem;
-      }
-    }
-  `
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   centroAtencion!: CentroAtencion;
@@ -398,24 +45,24 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   modoEdicion = false;
   especialidadesAsociadas: Especialidad[] = [];
   especialidadSeleccionada: Especialidad | null = null;
-  activeTab: string = 'detalle';
-
+  especialidadesDisponibles: Especialidad[] = [];
+  especialidadesMedico: Especialidad[] = [];
   mensaje: string = '';
-  tipoMensaje: 'info' | 'danger' | 'success' = 'info';
-
-  mensajeStaff: string = '';
-  tipoMensajeStaff: 'info' | 'danger' | 'success' = 'info';
-
-  modoCrearConsultorio = false;
-  nuevoConsultorio = { numero: null, nombre: '' };
+  tipoMensaje: string = '';
   mensajeConsultorio: string = '';
-  tipoMensajeConsultorio: 'info' | 'danger' | 'success' = 'info';
+  tipoMensajeConsultorio: string = '';
+  mensajeStaff: string = '';
+  tipoMensajeStaff: string = '';
+  activeTab: string = 'detalle';
+  modoCrearConsultorio: boolean = false;
   editConsultorioIndex: number | null = null;
-
-  // Nuevas variables para médicos y especialidades
+  nuevoConsultorio: { numero: number | null, nombre: string } = { numero: null, nombre: '' };
   medicoSeleccionado: Medico | null = null;
-  especialidadesDisponibles: Especialidad[] = []; // Para el tab de Especialidades
-  especialidadesMedico: Especialidad[] = []; // Para el tab de Staff Médico
+  consultorioExpandido: { [consultorioId: number]: boolean } = {};
+  esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
+  disponibilidadesMedico: DisponibilidadMedico[] = [];
+  esquemasDisponibles: EsquemaTurno[] = [];
+  esquemaSeleccionado: { [consultorioId: number]: number } = {};
   constructor(
     private route: ActivatedRoute,
     private centroAtencionService: CentroAtencionService,
@@ -425,6 +72,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private especialidadService: EspecialidadService,
     private staffMedicoService: StaffMedicoService,
     private medicoService: MedicoService,
+    private esquemaTurnoService: EsquemaTurnoService,
+    private disponibilidadMedicoService: DisponibilidadMedicoService,
     private router: Router
   ) { }
 
@@ -604,6 +253,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
           this.cargarEspecialidadesAsociadas();
           this.loadStaffMedico();
           this.cargarMedicosYEspecialidades(); // Cargar médicos y especialidades disponibles
+          this.cargarEsquemasTurno(); // Cargar esquemas de turno
         },
         error: (err) => {
           alert('No se pudo cargar el centro de atención. Intente nuevamente.');
@@ -686,6 +336,23 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         console.log('Error al cargar las especialidades asociadas al centro.');
       }
     });
+  }
+  
+  /**
+   * Controla la expansión y colapso del panel de consultorios
+   */
+  toggleConsultorioExpansion(consultorio: Consultorio): void {
+    if (!consultorio.id) return;
+    
+    // Invierte el estado de expansión del consultorio
+    this.consultorioExpandido[consultorio.id] = !this.consultorioExpandido[consultorio.id];
+    
+    // Si se está expandiendo, cargar esquemas disponibles y recargar esquemas asignados
+    if (this.consultorioExpandido[consultorio.id]) {
+      this.cargarEsquemasDisponibles(consultorio);
+      // Recargar esquemas específicos para este consultorio
+      this.cargarEsquemasConsultorio(consultorio);
+    }
   }
 
   asociarEspecialidad() {
@@ -810,6 +477,66 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.especialidadService.all().subscribe(dp => this.especialidadesDisponibles = dp.data as Especialidad[]);
   }
 
+  cargarEsquemasTurno() {
+    if (!this.centroAtencion?.id) {
+      console.log('No hay centro de atención ID para cargar esquemas');
+      return;
+    }
+    
+    console.log('Cargando esquemas de turno para centro ID:', this.centroAtencion.id);
+    
+    // Primero intentar cargar todos los esquemas para ver si hay datos
+    this.esquemaTurnoService.all().subscribe({
+      next: (dataPackage) => {
+        console.log('Todos los esquemas disponibles:', dataPackage);
+      },
+      error: (err) => {
+        console.error('Error cargando todos los esquemas:', err);
+      }
+    });
+    
+    // Cargar esquemas de turno del centro
+    this.esquemaTurnoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+      next: (dataPackage) => {
+        console.log('Respuesta esquemas de turno:', dataPackage);
+        const esquemas = dataPackage.data as EsquemaTurno[];
+        console.log('Esquemas obtenidos:', esquemas);
+        
+        // Agrupar esquemas por consultorio
+        this.esquemasConsultorio = {};
+        esquemas.forEach(esquema => {
+          console.log('Procesando esquema:', esquema);
+          if (esquema.consultorioId) {
+            if (!this.esquemasConsultorio[esquema.consultorioId]) {
+              this.esquemasConsultorio[esquema.consultorioId] = [];
+            }
+            this.esquemasConsultorio[esquema.consultorioId].push(esquema);
+          }
+        });
+        console.log('Esquemas agrupados por consultorio:', this.esquemasConsultorio);
+      },
+      error: (err) => {
+        console.error('Error cargando esquemas de turno:', err);
+        console.error('Detalles del error:', err.message, err.status);
+      }
+    });
+
+    // Cargar todas las disponibilidades médicas y filtrar por centro
+    this.disponibilidadMedicoService.all().subscribe({
+      next: (dataPackage) => {
+        console.log('Respuesta disponibilidades médicas:', dataPackage);
+        const todasDisponibilidades = dataPackage.data as DisponibilidadMedico[];
+        this.disponibilidadesMedico = todasDisponibilidades.filter(disp => 
+          disp.staffMedico?.centroAtencionId === this.centroAtencion.id
+        );
+        console.log('Disponibilidades filtradas para el centro:', this.disponibilidadesMedico);
+      },
+      error: (err) => {
+        console.error('Error cargando disponibilidades médicas:', err);
+      }
+    });
+  }
+
   medicoYaAsociado(): boolean {
     return !!this.staffMedicoCentro.find(staff =>
       staff.medicoId === this.medicoSeleccionado?.id
@@ -891,6 +618,24 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     }
   });
 }
+
+  /**
+   * Edita un esquema de turno, navegando al componente de edición
+   */
+  editarEsquema(esquema: EsquemaTurno): void {
+    if (!esquema.id) {
+      this.mostrarMensajeConsultorio('No se puede editar un esquema sin ID', 'danger');
+      return;
+    }
+    
+    // Navegar al componente de edición de esquemas de turno
+    this.router.navigate(['/esquemas-turno', esquema.id], { 
+      queryParams: { 
+        edit: 'true',
+        centroAtencionId: this.centroAtencion.id
+      } 
+    });
+  }
 agregarDisponibilidad(staff: any): void {
   this.router.navigate(['/disponibilidades-medico/new'], { queryParams: { staffMedicoId: staff.id } });
 }
@@ -971,4 +716,171 @@ asociarEspecialidadAlCentro(especialidad: Especialidad) {
     }
   });
 }
+
+// Métodos para gestión de esquemas de turno
+
+debugEsquemas(): void {
+  console.log('=== DEBUG ESQUEMAS ===');
+  console.log('Centro de atención:', this.centroAtencion);
+  console.log('Consultorios:', this.consultorios);
+  console.log('Esquemas por consultorio:', this.esquemasConsultorio);
+  console.log('Disponibilidades médico:', this.disponibilidadesMedico);
+  console.log('Staff médico centro:', this.staffMedicoCentro);
+  
+  // Forzar recarga de esquemas
+  this.cargarEsquemasTurno();
+}
+
+gestionarEsquemaTurno(consultorio: Consultorio): void {
+  // Navegar al componente de esquemas de turno con parámetros del consultorio
+  this.router.navigate(['/esquemas-turno/new'], { 
+    queryParams: { 
+      centroAtencionId: this.centroAtencion.id,
+      consultorioId: consultorio.id,
+      consultorioNombre: consultorio.nombre
+    } 
+  });
+}
+
+verEsquemasConsultorio(consultorio: Consultorio): EsquemaTurno[] {
+  return this.esquemasConsultorio[consultorio.id!] || [];
+}
+
+/**
+ * Carga los esquemas disponibles para asignar a un consultorio
+ */
+cargarEsquemasDisponibles(consultorio: Consultorio): void {
+  if (!this.centroAtencion?.id) return;
+  
+  this.esquemaTurnoService.getDisponibles(this.centroAtencion.id).subscribe({
+    next: (esquemas) => {
+      this.esquemasDisponibles = esquemas || [];
+    },
+    error: (err) => {
+      console.error('Error al cargar esquemas disponibles:', err);
+      this.esquemasDisponibles = [];
+    }
+  });
+}
+
+/**
+ * Maneja la selección de un esquema en el dropdown
+ */
+onEsquemaSeleccionado(consultorio: Consultorio, event: any): void {
+  const esquemaId = parseInt(event.target.value);
+  if (esquemaId && consultorio.id) {
+    this.esquemaSeleccionado[consultorio.id] = esquemaId;
+  }
+}
+
+/**
+ * Verifica si un esquema ya está asignado a un consultorio
+ */
+yaEstaAsignado(consultorio: Consultorio, esquema: EsquemaTurno): boolean {
+  const esquemasAsignados = this.verEsquemasConsultorio(consultorio);
+  return esquemasAsignados.some(e => e.id === esquema.id);
+}
+
+/**
+ * Asigna un esquema seleccionado al consultorio
+ */
+asignarEsquemaConsultorio(consultorio: Consultorio): void {
+  if (!consultorio.id || !this.esquemaSeleccionado[consultorio.id]) {
+    return;
+  }
+
+  const esquemaId = this.esquemaSeleccionado[consultorio.id];
+  const esquemaSeleccionado = this.esquemasDisponibles.find(e => e.id === esquemaId);
+  
+  if (!esquemaSeleccionado) {
+    this.mostrarMensajeConsultorio('Esquema no encontrado', 'danger');
+    return;
+  }
+
+  // Crear una copia del esquema con el nuevo consultorio
+  const esquemaParaAsignar: EsquemaTurno = {
+    ...esquemaSeleccionado,
+    id: 0, // Nuevo registro
+    consultorioId: consultorio.id
+  };
+
+  this.esquemaTurnoService.create(esquemaParaAsignar).subscribe({
+    next: (dataPackage) => {
+      this.mostrarMensajeConsultorio(
+        `Esquema asignado exitosamente al consultorio ${consultorio.nombre}`,
+        'success'
+      );
+      // Limpiar selección
+      delete this.esquemaSeleccionado[consultorio.id!];
+      // Recargar esquemas
+      this.cargarEsquemasTurno();
+    },
+    error: (err) => {
+      const mensajeError = err?.error?.status_text || 'Error al asignar el esquema';
+      this.mostrarMensajeConsultorio(mensajeError, 'danger');
+    }
+  });
+}
+
+/**
+ * Desasigna un esquema de un consultorio
+ */
+desasignarEsquemaConsultorio(consultorio: Consultorio, esquema: EsquemaTurno): void {
+  if (confirm(`¿Está seguro de quitar el esquema de Dr. ${esquema.staffMedico?.medico?.apellido} del consultorio ${consultorio.nombre}?`)) {
+    this.esquemaTurnoService.remove(esquema.id).subscribe({
+      next: () => {
+        this.mostrarMensajeConsultorio(
+          `Esquema desasignado del consultorio ${consultorio.nombre}`,
+          'success'
+        );
+        this.cargarEsquemasTurno(); // Recargar esquemas
+      },
+      error: (err) => {
+        const mensajeError = err?.error?.status_text || 'Error al desasignar el esquema';
+        this.mostrarMensajeConsultorio(mensajeError, 'danger');
+      }
+    });
+  }
+}
+
+/**
+ * Crea un nuevo esquema rápido para un consultorio
+ */
+crearNuevoEsquemaRapido(consultorio: Consultorio): void {
+  // Navegar al formulario de creación de esquemas
+  this.router.navigate(['/esquemas-turno/new'], { 
+    queryParams: { 
+      consultorioId: consultorio.id,
+      centroAtencionId: this.centroAtencion.id,
+      modo: 'rapido'
+    } 
+  });
+}
+
+gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
+  // Navegar a disponibilidad médica con más opciones
+  this.router.navigate(['/disponibilidades-medico/new'], { 
+    queryParams: { 
+      staffMedicoId: staff.id,
+      centroAtencionId: this.centroAtencion.id,
+      modo: 'avanzado'
+    } 
+  });
+}  /**
+   * Carga los esquemas asignados específicamente a un consultorio
+   */
+  cargarEsquemasConsultorio(consultorio: Consultorio): void {
+    if (!consultorio.id || !this.centroAtencion?.id) return;
+    
+    // Filtrar esquemas ya cargados por consultorio
+    const esquemasFiltrados = Object.values(this.esquemasConsultorio).flat()
+      .filter(esquema => esquema.consultorioId === consultorio.id);
+    
+    this.esquemasConsultorio[consultorio.id] = esquemasFiltrados;
+    
+    // Si no hay esquemas cargados, intentar recargar desde el servidor
+    if (esquemasFiltrados.length === 0) {
+      this.cargarEsquemasTurno();
+    }
+  }
 }

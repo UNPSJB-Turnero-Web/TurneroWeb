@@ -1,0 +1,665 @@
+ .card {
+      border-radius: 1.5rem;
+      border: none;
+      box-shadow: var(--centro-atencion-shadow);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      position: relative;
+      background: rgba(255, 255, 255, 0.95);
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .card-header {
+      background: var(--centro-atencion-gradient);
+      padding: 2rem;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-body {
+      padding: 2.5rem;
+    }
+
+    .card-footer {
+      background: rgba(248, 249, 250, 0.8);
+      border-top: 1px solid var(--centro-atencion-light);
+      padding: 1.5rem;
+    }
+
+    /* Info Display Items */
+    .info-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--centro-atencion-primary);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--centro-atencion-shadow);
+      border-left-color: var(--centro-atencion-secondary);
+    }
+
+    .info-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      color: #495057;
+      font-weight: 500;
+    }
+
+    /* Form Groups */
+    .form-group-modern {
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .form-label-modern {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .form-icon {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.1rem;
+      margin-right: 0.75rem;
+    }
+
+    .form-control {
+      border-radius: 15px;
+      border: 2px solid var(--centro-atencion-light);
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.9);
+    }
+
+    .form-control:focus {
+      border-color: var(--centro-atencion-primary);
+      box-shadow: 0 0 0 0.2rem var(--centro-atencion-light);
+      background: white;
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .form-help {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    /* Modern Buttons */
+    .btn-modern {
+      border-radius: 50px;
+      padding: 12px 30px;
+      font-weight: 600;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-modern:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .btn-back {
+      background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+      color: white;
+    }
+
+    .btn-edit {
+      background: var(--disponibilidad-gradient);
+      color: white;
+    }
+
+    .btn-delete {
+      background: var(--obra-social-gradient);
+      color: white;
+    }
+
+    .btn-save {
+      background: var(--medicos-gradient);
+      color: white;
+    }
+
+    .btn-cancel {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    /* Modern Tab Styling */
+    .modern-tabs .nav-link {
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      border: none;
+      background: none;
+      border-radius: 15px 15px 0 0;
+      transition: all 0.3s ease;
+      margin-right: 0.25rem;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modern-tabs .nav-link::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--centro-atencion-gradient);
+      transition: width 0.3s ease;
+    }
+
+    .modern-tabs .nav-link.active::before {
+      width: 100%;
+    }
+
+    .modern-tabs .nav-link.active {
+      color: #fff !important;
+      background: var(--centro-atencion-gradient);
+      box-shadow: var(--centro-atencion-shadow);
+      border: none;
+    }
+
+    .modern-tabs .nav-link:hover:not(.active) {
+      background: var(--centro-atencion-light);
+      color: var(--centro-atencion-secondary);
+      transform: translateY(-2px);
+    }
+
+    /* Table Styling */
+    .modern-table {
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--centro-atencion-shadow);
+      background: white;
+    }
+
+    .modern-table thead th {
+      background: var(--centro-atencion-gradient);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+      padding: 1.25rem 1rem;
+      border: none;
+    }
+
+    .modern-table tbody tr {
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .modern-table tbody tr:hover {
+      background: var(--centro-atencion-light);
+      transform: translateY(-1px);
+    }
+
+    .modern-table tbody td {
+      padding: 1.25rem 1rem;
+      border: none;
+      border-bottom: 1px solid var(--centro-atencion-light);
+      vertical-align: middle;
+    }
+
+    /* Map Container */
+    .map-container {
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--centro-atencion-shadow);
+      height: 400px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Alert Messages */
+    .modern-alert {
+      border-radius: 15px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      border: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modern-alert.alert-success {
+      background: var(--medicos-light);
+      color: var(--medicos-primary);
+      border-left: 4px solid var(--medicos-primary);
+    }
+
+    .modern-alert.alert-danger {
+      background: var(--obra-social-light);
+      color: var(--obra-social-primary);
+      border-left: 4px solid var(--obra-social-primary);
+    }
+
+    .modern-alert.alert-info {
+      background: var(--centro-atencion-light);
+      color: var(--centro-atencion-primary);
+      border-left: 4px solid var(--centro-atencion-primary);
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      margin: 0 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .action-btn.btn-edit {
+      background: var(--disponibilidad-gradient);
+      color: white;
+    }
+
+    .action-btn.btn-delete {
+      background: var(--obra-social-gradient);
+      color: white;
+    }
+
+    .action-btn.btn-add {
+      background: var(--medicos-gradient);
+      color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 1.5rem;
+      }
+      
+      .modern-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .info-item {
+        padding: 1rem;
+      }
+      
+      .btn-modern {
+        padding: 10px 20px;
+        font-size: 0.8rem;
+      }
+    
+/* Estilos para filas expandibles (acordeón) */
+.consultorio-row {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none !important;
+  position: relative;
+}
+
+.consultorio-row:hover {
+  background-color: rgba(0, 123, 255, 0.05) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.consultorio-row::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 0;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  transition: width 0.3s ease;
+}
+
+.consultorio-row.expanded {
+  background-color: rgba(0, 123, 255, 0.08) !important;
+}
+
+.consultorio-row.expanded::after {
+  width: 100%;
+}
+
+/* Animación del chevron */
+.fa-chevron-right {
+  transition: transform 0.3s ease;
+}
+
+.rotated .fa-chevron-right {
+  transform: rotate(90deg);
+}
+
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Fila de expansión */
+.expansion-row {
+  background-color: #f8f9fa;
+  border: none !important;
+}
+
+.expansion-content {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0 0 10px 10px;
+  margin: 0 -15px;
+  animation: expandContent 0.3s ease-out;
+  box-shadow: inset 0 5px 15px -10px rgba(0, 0, 0, 0.15), inset 0 -5px 15px -10px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes expandContent {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 2000px;
+  }
+}
+
+/* Tarjetas de esquemas */
+.esquema-card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.esquema-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: #007bff;
+}
+
+.esquema-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 0;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  transition: height 0.3s ease;
+}
+
+.esquema-card:hover::before {
+  height: 100%;
+}
+
+/* Avatar del doctor */
+.doctor-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+}
+
+/* Detalles del esquema */
+.esquema-details {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.horarios-list .badge {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+/* Acciones del esquema */
+.esquema-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Estilos para botones de acción */
+.btn-outline-primary {
+  border-color: #007bff;
+  color: #007bff;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  transform: scale(1.05);
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+}
+
+.btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+  transform: scale(1.05);
+  background-color: #dc3545;
+  color: white;
+  box-shadow: 0 2px 5px rgba(220, 53, 69, 0.3);
+}
+
+.btn-info, .btn-success {
+  transition: all 0.2s ease;
+}
+
+.btn-info:hover, .btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Panel de asignación */
+.card-header.bg-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  border: none;
+  border-radius: 8px 8px 0 0 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header.bg-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+  border: none;
+  border-radius: 8px 8px 0 0 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header.bg-success::before,
+.card-header.bg-primary::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.expansion-content .card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.expansion-content .card:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .expansion-content .col-md-7,
+  .expansion-content .col-md-5 {
+    margin-bottom: 15px;
+  }
+  
+  .esquema-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .doctor-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+  }
+}
+
+/* Efectos de transición para elementos interactivos */
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-select:focus {
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  border-color: #007bff;
+  outline: none;
+}
+
+.form-select:hover {
+  border-color: #007bff;
+}
+
+.btn:focus {
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  border: none;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  border: none;
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.3);
+}
+
+/* Estados de carga y deshabilitado */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Badges mejorados */
+.badge-consultorios {
+  background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* Tabla sin bordes para el acordeón */
+.modern-table table tbody tr.consultorio-row td {
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.modern-table table tbody tr.expansion-row td {
+  border: none;
+  padding: 0;
+}
+    }
