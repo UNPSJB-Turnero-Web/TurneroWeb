@@ -61,11 +61,11 @@
   --turnos-shadow: rgba(54, 185, 204, 0.4);
 
   /* 🗂️ Agenda - Rosa moderno */
-  --agenda-primary: #fd79a8;
-  --agenda-secondary: #e84393;
-  --agenda-light: #ffe8f0;
-  --agenda-gradient: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
-  --agenda-shadow: rgba(253, 121, 168, 0.4);
+  --agenda-primary: #fdbf79;
+  --agenda-secondary: #e89b43;
+  --agenda-light: #fff2e8;
+  --agenda-gradient: linear-gradient(135deg, #fdb979 0%, #e88043 100%);
+  --agenda-shadow: rgba(253, 169, 121, 0.4);
 
   /* 👥 Pacientes - Celeste suave */
   --pacientes-primary: #74b9ff;
