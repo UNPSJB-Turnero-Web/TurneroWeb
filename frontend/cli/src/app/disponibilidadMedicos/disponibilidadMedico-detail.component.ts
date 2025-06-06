@@ -608,6 +608,10 @@ export class DisponibilidadMedicoDetailComponent {
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   modoEdicion = false;
   esNuevo = false;
+  
+  // Parámetros de navegación de retorno
+  returnTo: string | null = null;
+  centroAtencionId: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -620,6 +624,10 @@ export class DisponibilidadMedicoDetailComponent {
 ngOnInit(): void {
   const idParam = this.route.snapshot.paramMap.get('id');
   const staffMedicoIdParam = this.route.snapshot.queryParamMap.get('staffMedicoId');
+  
+  // Capturar parámetros de navegación de retorno
+  this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+  this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
 
   if (idParam) {
     this.get();
@@ -644,6 +652,11 @@ ngOnInit(): void {
     if (idParam) {
       this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
       this.esNuevo = false;
+      
+      // Capturar parámetros de navegación de retorno también en modo edición
+      this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+      this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+      
       const id = Number(idParam);
       if (isNaN(id)) {
         console.error('El ID proporcionado no es un número válido.');
@@ -673,15 +686,31 @@ ngOnInit(): void {
     this.disponibilidad.horarios.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
 
     const payload = { ...this.disponibilidad };
-    this.disponibilidadService.create(payload).subscribe({
-      next: () => {
-        this.router.navigate(['/disponibilidades-medico']);
-      },
-      error: (error) => {
-        console.error('Error al crear la disponibilidad:', error);
-        alert('Error al crear la disponibilidad.');
-      }
-    });
+    
+    if (this.esNuevo) {
+      // Crear nueva disponibilidad
+      this.disponibilidadService.create(payload).subscribe({
+        next: () => {
+          this.navigateBack();
+        },
+        error: (error) => {
+          console.error('Error al crear la disponibilidad:', error);
+          alert('Error al crear la disponibilidad.');
+        }
+      });
+    } else {
+      // Actualizar disponibilidad existente
+      this.disponibilidadService.update(this.disponibilidad.id, payload).subscribe({
+        next: () => {
+          this.modoEdicion = false;
+          this.navigateBack();
+        },
+        error: (error) => {
+          console.error('Error al actualizar la disponibilidad:', error);
+          alert('Error al actualizar la disponibilidad.');
+        }
+      });
+    }
   }
 
   activarEdicion(): void {
@@ -691,12 +720,25 @@ ngOnInit(): void {
   cancelar(): void {
     this.modoEdicion = false;
     if (this.esNuevo) {
-      this.router.navigate(['/disponibilidades-medico']);
+      this.navigateBack();
     }
   }
 
   goBack(): void {
-    this.router.navigate(['/disponibilidades-medico']);
+    this.navigateBack();
+  }
+
+  /**
+   * Navega de vuelta según el parámetro returnTo
+   */
+  private navigateBack(): void {
+    if (this.returnTo === 'centro-detail' && this.centroAtencionId) {
+      // Regresar al detalle del centro de atención
+      this.router.navigate(['/centrosAtencion', this.centroAtencionId]);
+    } else {
+      // Regresar a la lista de disponibilidades médicas por defecto
+      this.router.navigate(['/disponibilidades-medico']);
+    }
   }
 
   remove(disponibilidad: DisponibilidadMedico): void {

@@ -124,4 +124,10 @@ public class DisponibilidadMedicoService {
         }).collect(Collectors.toList()));
         return disponibilidad;
     }
+
+    public List<DisponibilidadMedicoDTO> findByStaffMedicoId(Integer staffMedicoId) {
+        return repository.findByStaffMedicoId(staffMedicoId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 }

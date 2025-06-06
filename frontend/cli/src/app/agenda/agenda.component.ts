@@ -699,7 +699,7 @@ import { HttpClient } from '@angular/common/http'; // Importa HttpClient
     /* Responsive */
     @media (max-width: 768px) {
       .container {
-        padding: 1rem;
+         padding: 1rem;
       }
       
       .card-header {

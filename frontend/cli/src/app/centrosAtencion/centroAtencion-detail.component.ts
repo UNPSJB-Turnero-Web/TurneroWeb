@@ -998,10 +998,25 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       next: (dataPackage: any) => {
         const disponibilidades = dataPackage.data || [];
         this.disponibilidadesStaff[staffMedico.id!] = disponibilidades;
+        console.log(`Disponibilidades cargadas para staff médico ${staffMedico.id}:`, disponibilidades.length);
       },
       error: (err: any) => {
         console.error('Error al cargar disponibilidades del staff médico:', err);
         this.disponibilidadesStaff[staffMedico.id!] = [];
+        
+        // Mostrar mensaje de error más específico
+        if (err.status === 404) {
+          console.warn(`No se encontraron disponibilidades para el staff médico ID: ${staffMedico.id}`);
+          this.mostrarMensajeStaff(
+            `No hay disponibilidades configuradas para Dr. ${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`,
+            'info'
+          );
+        } else {
+          this.mostrarMensajeStaff(
+            'Error al cargar las disponibilidades médicas',
+            'danger'
+          );
+        }
       }
     });
   }
@@ -1019,7 +1034,7 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
    */
   crearNuevaDisponibilidad(staffMedico: StaffMedico): void {
     // Navegar al formulario de creación de disponibilidades con el staff médico ID como parámetro
-    this.router.navigate(['/disponibilidad-medico/new'], { 
+    this.router.navigate(['/disponibilidades-medico/new'], { 
       queryParams: { 
         staffMedicoId: staffMedico.id,
         centroAtencionId: this.centroAtencion.id,
@@ -1032,7 +1047,7 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
    * Edita una disponibilidad médica existente
    */
   editarDisponibilidad(disponibilidad: DisponibilidadMedico): void {
-    this.router.navigate(['/disponibilidad-medico', disponibilidad.id], {
+    this.router.navigate(['/disponibilidades-medico', disponibilidad.id], {
       queryParams: {
         edit: 'true',
         returnTo: 'centro-detail',
@@ -1065,6 +1080,44 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
           console.error('Error al eliminar disponibilidad:', err);
         }
       });
+    }
+  }
+
+  /**
+   * Calcula la duración de un horario específico
+   */
+  calcularDuracionHorario(horario: any): string {
+    if (!horario.horaInicio || !horario.horaFin) {
+      return 'N/A';
+    }
+    
+    try {
+      const [horasInicio, minutosInicio] = horario.horaInicio.split(':').map(Number);
+      const [horasFin, minutosFin] = horario.horaFin.split(':').map(Number);
+      
+      const inicioEnMinutos = horasInicio * 60 + minutosInicio;
+      const finEnMinutos = horasFin * 60 + minutosFin;
+      
+      let duracionMinutos = finEnMinutos - inicioEnMinutos;
+      
+      // Manejar casos donde el horario cruza medianoche
+      if (duracionMinutos < 0) {
+        duracionMinutos += 24 * 60; // Agregar 24 horas
+      }
+      
+      const horas = Math.floor(duracionMinutos / 60);
+      const minutos = duracionMinutos % 60;
+      
+      if (horas === 0) {
+        return `${minutos}min`;
+      } else if (minutos === 0) {
+        return `${horas}h`;
+      } else {
+        return `${horas}h ${minutos}min`;
+      }
+    } catch (error) {
+      console.error('Error calculando duración:', error);
+      return 'Error';
     }
   }
 
