@@ -70,7 +70,7 @@ public class EsquemaTurnoService {
         // Validación: Intervalo
         if (dto.getIntervalo() <= 0) {
             throw new IllegalArgumentException("El intervalo debe ser positivo.");
-        }
+        }       
 
         // Validación: Horarios específicos del esquema de turno
         if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {

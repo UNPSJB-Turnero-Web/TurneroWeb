@@ -4,6 +4,9 @@
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 @import 'leaflet/dist/leaflet.css';
 
+/* SISTEMA DE COLORES GLOBAL POR ENTIDAD */
+@import './entity-colors.css';
+
 body {
   font-family: Arial, sans-serif;
 }

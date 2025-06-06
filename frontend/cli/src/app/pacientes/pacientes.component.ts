@@ -12,91 +12,204 @@ import { PaginationComponent } from '../pagination/pagination.component';
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
-    <div class="container mt-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4"
-             style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
-          <div class="d-flex align-items-center">
-            <i class="fa fa-user me-2"></i>
-            <h2 class="fw-bold mb-0 fs-4">Pacientes</h2>
+    <div class="container-fluid px-3 py-4">
+      <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+      <div class="banner-pacientes d-flex align-items-center justify-content-between mb-4">
+        <div class="title-section d-flex align-items-center">
+          <div class="header-icon me-3">
+            <i class="fas fa-user-injured"></i>
           </div>
-          <button class="btn btn-light btn-sm" (click)="router.navigate(['/pacientes/new'])">
-            <i class="fa fa-plus me-1"></i> Nuevo Paciente
-          </button>
+          <div>
+            <h1 class="mb-0 fw-bold">Pacientes</h1>
+            <p class="mb-0 opacity-75">Gestión de pacientes registrados</p>
+          </div>
         </div>
-        <div class="card-body p-0">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th>#</th>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>DNI</th>
-                <th>Fecha de Nacimiento</th>
-                <th>Obra Social</th>
-                <th class="text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let paciente of resultsPage.content"
-                  (click)="goToDetail(paciente.id)"
-                  style="cursor:pointer;">
-                <td>{{ paciente.id }}</td>
-                <td>{{ paciente.nombre }}</td>
-                <td>{{ paciente.apellido }}</td>
-                <td>{{ paciente.email }}</td>
-                <td>{{ paciente.telefono }}</td>
-                <td>{{ paciente.dni }}</td>
-                <td>{{ paciente.fechaNacimiento | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ paciente.obraSocial?.nombre || 'Sin obra social' }}</td>
-                <td class="text-center">
-                  <button (click)="goToEdit(paciente.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
-                    <i class="fa fa-pencil"></i>
+        <button class="btn-new" (click)="router.navigate(['/pacientes/new'])">
+          <i class="fas fa-plus me-2"></i>
+          <span class="d-none d-sm-inline">Nuevo Paciente</span>
+        </button>
+      </div>
+
+      <!-- TABLA MODERNA CON SISTEMA GLOBAL -->
+      <div class="modern-table">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th class="border-0 py-3 ps-4">
+                <div class="header-cell">
+                  <div class="icon-circle id-header">
+                    <i class="fas fa-hashtag"></i>
+                  </div>
+                  <span>ID</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <span>Nombre</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-user-tag"></i>
+                  </div>
+                  <span>Apellido</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <span>Email</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-phone"></i>
+                  </div>
+                  <span>Teléfono</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-id-card"></i>
+                  </div>
+                  <span>DNI</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-pacientes">
+                    <i class="fas fa-calendar-alt"></i>
+                  </div>
+                  <span>Fecha Nac.</span>
+                </div>
+              </th>
+              <th class="border-0 py-3">
+                <div class="header-cell">
+                  <div class="icon-circle icon-obra-social">
+                    <i class="fas fa-hospital"></i>
+                  </div>
+                  <span>Obra Social</span>
+                </div>
+              </th>
+              <th class="border-0 py-3 text-center">
+                <div class="header-cell justify-content-center">
+                  <div class="icon-circle actions-header">
+                    <i class="fas fa-cogs"></i>
+                  </div>
+                  <span>Acciones</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let paciente of resultsPage.content; let i = index"
+                (click)="goToDetail(paciente.id)"
+                class="hover-pacientes cursor-pointer">
+              <td class="ps-4 py-3">
+                <span class="badge-pacientes">{{ paciente.id }}</span>
+              </td>
+              <td class="py-3">
+                <div class="fw-medium text-dark">{{ paciente.nombre }}</div>
+              </td>
+              <td class="py-3">
+                <div class="fw-medium text-dark">{{ paciente.apellido }}</div>
+              </td>
+              <td class="py-3">
+                <div class="text-muted small d-flex align-items-center">
+                  <i class="fas fa-envelope me-2 text-pacientes"></i>
+                  {{ paciente.email }}
+                </div>
+              </td>
+              <td class="py-3">
+                <div class="text-muted d-flex align-items-center">
+                  <i class="fas fa-phone me-2 text-pacientes"></i>
+                  {{ paciente.telefono }}
+                </div>
+              </td>
+              <td class="py-3">
+                <span class="chip-pacientes">{{ paciente.dni }}</span>
+              </td>
+              <td class="py-3">
+                <div class="text-muted small d-flex align-items-center">
+                  <i class="fas fa-calendar me-2 text-pacientes"></i>
+                  {{ paciente.fechaNacimiento | date: 'dd/MM/yyyy' }}
+                </div>
+              </td>
+              <td class="py-3">
+                <span class="badge-obra-social" 
+                      [class.chip-obra-social]="!paciente.obraSocial?.nombre">
+                  <i class="fas fa-hospital me-1"></i>
+                  {{ paciente.obraSocial?.nombre || 'Sin obra social' }}
+                </span>
+              </td>
+              <td class="py-3 text-center">
+                <div class="d-flex justify-content-center gap-2">
+                  <button (click)="goToEdit(paciente.id); $event.stopPropagation()" 
+                          class="btn-action btn-edit" 
+                          title="Editar paciente">
+                    <i class="fas fa-edit"></i>
                   </button>
-                  <button (click)="confirmDelete(paciente.id); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                    <i class="fa fa-trash"></i>
+                  <button (click)="confirmDelete(paciente.id); $event.stopPropagation()" 
+                          class="btn-action btn-delete" 
+                          title="Eliminar paciente">
+                    <i class="fas fa-trash"></i>
                   </button>
-                </td>
-              </tr>
-              <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
-                <td colspan="9" class="text-center text-muted py-4">No hay pacientes para mostrar.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="card-footer bg-white">
-          <app-pagination
-            [totalPages]="resultsPage.totalPages"
-            [currentPage]="currentPage"
-            (pageChangeRequested)="onPageChangeRequested($event)"
-            [number]="resultsPage.number"
-            [hidden]="resultsPage.numberOfElements < 1"
-          ></app-pagination>
-        </div>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
+              <td colspan="9" class="text-center py-5">
+                <div class="empty-state">
+                  <i class="fas fa-user-injured fa-3x text-muted mb-3"></i>
+                  <h5 class="text-muted">No hay pacientes registrados</h5>
+                  <p class="text-muted small">Comience agregando un nuevo paciente al sistema</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINACIÓN -->
+      <div class="mt-4">
+        <app-pagination
+          [totalPages]="resultsPage.totalPages"
+          [currentPage]="currentPage"
+          (pageChangeRequested)="onPageChangeRequested($event)"
+          [number]="resultsPage.number"
+          [hidden]="resultsPage.numberOfElements < 1"
+        ></app-pagination>
       </div>
     </div>
   `,
   styles: [`
-    .table-hover tbody tr:hover {
-      background-color: #f5f7fa;
+    /* SISTEMA GLOBAL DE COLORES - COMPONENTE PACIENTES NORMALIZADO */
+    
+    .cursor-pointer {
+      cursor: pointer;
     }
-    .btn-outline-primary, .btn-outline-danger {
-      min-width: 32px;
+    
+    .empty-state {
+      padding: 3rem 2rem;
     }
-    .card {
-      border-radius: 1.15rem;
-      overflow: hidden;
-    }
-    .card-header {
-      border-top-left-radius: 1rem !important;
-      border-top-right-radius: 1rem !important;
-      padding-top: 0.75rem;      
-      padding-bottom: 0.75rem;  
-      padding-right: 0.7rem!important;
-      padding-left: 0.7rem!important;  
-      overflow: hidden;
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .header-cell span {
+        font-size: 0.875rem;
+      }
+      
+      .modern-table {
+        font-size: 0.875rem;
+      }
     }
   `]
 })

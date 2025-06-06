@@ -1,0 +1,207 @@
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+      <div class="card">
+        <!-- HEADER DEL CARD -->
+        <div class="card-header text-white">
+          <div class="d-flex align-items-center">
+            <div class="info-icon me-3" style="background: rgba(255,255,255,0.2);">
+              👥
+            </div>
+            <div>
+              <h4 class="mb-0 fw-bold">
+                <ng-container *ngIf="!esNuevo && staffMedico.id; else nuevoTitle">
+                  Staff Médico #{{ staffMedico.id }}
+                </ng-container>
+                <ng-template #nuevoTitle>
+                  Nuevo Staff Médico
+                </ng-template>
+              </h4>
+              <small class="opacity-75">
+                <ng-container *ngIf="!modoEdicion">Información del Staff Médico</ng-container>
+                <ng-container *ngIf="modoEdicion && !esNuevo">Editando Staff Médico</ng-container>
+                <ng-container *ngIf="modoEdicion && esNuevo">Creando Nuevo Staff Médico</ng-container>
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUERPO DEL CARD -->
+        <div class="card-body">
+          <!-- MODO VISTA -->
+          <div *ngIf="!modoEdicion">
+            <div class="row">
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    🆔
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">ID del Staff</div>
+                    <div class="info-value">
+                      <span class="id-display">{{ staffMedico.id }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    🏥
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Centro de Atención</div>
+                    <div class="info-value">
+                      <span class="centro-display">{{ getCentroNombre() }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                    👨‍⚕️
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Médico</div>
+                    <div class="info-value">
+                      <span class="medico-display">{{ getMedicoNombre() }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">
+                    🩺
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Especialidad</div>
+                    <div class="info-value">
+                      <span class="especialidad-display">{{ getEspecialidadNombre() }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO EDICIÓN -->
+          <form *ngIf="modoEdicion" (ngSubmit)="save()" #staffForm="ngForm">
+            <div class="row">
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏥</span>
+                    Centro de Atención
+                  </label>
+                  <select
+                    [(ngModel)]="staffMedico.centroAtencionId"
+                    name="centroAtencionId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione un centro...</option>
+                    <option *ngFor="let centro of centros" [value]="centro.id">
+                      {{ centro.nombre }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione el centro de atención donde trabajará el médico.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">👨‍⚕️</span>
+                    Médico
+                  </label>
+                  <select
+                    [(ngModel)]="staffMedico.medicoId"
+                    name="medicoId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione un médico...</option>
+                    <option *ngFor="let medico of medicos" [value]="medico.id">
+                      {{ medico.nombre }} {{ medico.apellido }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione el médico que formará parte del staff.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">🩺</span>
+                    Especialidad
+                  </label>
+                  <select
+                    [(ngModel)]="staffMedico.especialidadId"
+                    name="especialidadId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione una especialidad...</option>
+                    <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
+                      {{ especialidad.nombre }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione la especialidad en la que trabajará el médico.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- FOOTER DEL CARD -->
+        <div class="card-footer">
+          <div class="d-flex gap-2 flex-wrap">
+            <!-- Botones en modo vista -->
+            <ng-container *ngIf="!modoEdicion">
+              <button type="button" class="btn btn-modern btn-back" (click)="goBack()">
+                ← Volver
+              </button>
+              <button type="button" class="btn btn-modern btn-edit" (click)="activarEdicion()">
+                ✏️ Editar
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-modern btn-delete ms-auto" 
+                (click)="remove(staffMedico)"
+                *ngIf="staffMedico.id"
+              >
+                🗑️ Eliminar
+              </button>
+            </ng-container>
+
+            <!-- Botones en modo edición -->
+            <ng-container *ngIf="modoEdicion">
+              <button 
+                type="submit" 
+                class="btn btn-modern btn-save" 
+                [disabled]="allFieldsEmpty()"
+                (click)="save()"
+              >
+                💾 Guardar
+              </button>
+              <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
+                ❌ Cancelar
+              </button>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

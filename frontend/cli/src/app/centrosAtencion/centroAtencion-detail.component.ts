@@ -1,5 +1,5 @@
 import { Component, AfterViewInit, OnInit } from '@angular/core';
-import { CommonModule, Location, UpperCasePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CentroAtencion } from './centroAtencion';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,154 +22,366 @@ import { MedicoService } from '../medicos/medico.service';
 @Component({
   selector: 'app-centro-atencion-detail',
   standalone: true,
-  imports: [UpperCasePipe, FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent, RouterModule],
+  imports: [FormsModule, CommonModule, NgbTypeaheadModule, MapModalComponent, RouterModule],
   templateUrl: './centroAtencion-detail.component.html',
   styles: `
-  .card {
-      border-radius: 1rem ;
+    /* Global CSS Variables Integration */
+    .card {
+      border-radius: 1.5rem;
+      border: none;
+      box-shadow: var(--centro-atencion-shadow);
+      backdrop-filter: blur(10px);
       overflow: hidden;
+      position: relative;
+      background: rgba(255, 255, 255, 0.95);
+      animation: fadeInUp 0.6s ease-out;
+    }
+
+    .card-header {
+      background: var(--centro-atencion-gradient);
+      padding: 2rem;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-body {
+      padding: 2.5rem;
+    }
+
+    .card-footer {
+      background: rgba(248, 249, 250, 0.8);
+      border-top: 1px solid var(--centro-atencion-light);
+      padding: 1.5rem;
+    }
+
+    /* Info Display Items */
+    .info-item {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--centro-atencion-primary);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--centro-atencion-shadow);
+      border-left-color: var(--centro-atencion-secondary);
+    }
+
+    .info-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: 1.1rem;
+      color: #495057;
+      font-weight: 500;
+    }
+
+    /* Form Groups */
+    .form-group-modern {
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .form-label-modern {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .form-icon {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.1rem;
+      margin-right: 0.75rem;
+    }
+
+    .form-control {
+      border-radius: 15px;
+      border: 2px solid var(--centro-atencion-light);
+      padding: 15px 20px;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.9);
+    }
+
+    .form-control:focus {
+      border-color: var(--centro-atencion-primary);
+      box-shadow: 0 0 0 0.2rem var(--centro-atencion-light);
+      background: white;
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .form-help {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    /* Modern Buttons */
+    .btn-modern {
+      border-radius: 50px;
+      padding: 12px 30px;
+      font-weight: 600;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-modern:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .btn-back {
+      background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+      color: white;
+    }
+
+    .btn-edit {
+      background: var(--disponibilidad-gradient);
+      color: white;
+    }
+
+    .btn-delete {
+      background: var(--obra-social-gradient);
+      color: white;
+    }
+
+    .btn-save {
+      background: var(--medicos-gradient);
+      color: white;
+    }
+
+    .btn-cancel {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    /* Modern Tab Styling */
+    .modern-tabs .nav-link {
+      font-weight: 600;
+      color: var(--centro-atencion-primary);
+      border: none;
+      background: none;
+      border-radius: 15px 15px 0 0;
+      transition: all 0.3s ease;
+      margin-right: 0.25rem;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modern-tabs .nav-link::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: var(--centro-atencion-gradient);
+      transition: width 0.3s ease;
+    }
+
+    .modern-tabs .nav-link.active::before {
+      width: 100%;
+    }
+
+    .modern-tabs .nav-link.active {
+      color: #fff !important;
+      background: var(--centro-atencion-gradient);
+      box-shadow: var(--centro-atencion-shadow);
+      border: none;
+    }
+
+    .modern-tabs .nav-link:hover:not(.active) {
+      background: var(--centro-atencion-light);
+      color: var(--centro-atencion-secondary);
+      transform: translateY(-2px);
+    }
+
+    /* Table Styling */
+    .modern-table {
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--centro-atencion-shadow);
+      background: white;
+    }
+
+    .modern-table thead th {
+      background: var(--centro-atencion-gradient);
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.9rem;
+      padding: 1.25rem 1rem;
+      border: none;
+    }
+
+    .modern-table tbody tr {
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .modern-table tbody tr:hover {
+      background: var(--centro-atencion-light);
+      transform: translateY(-1px);
+    }
+
+    .modern-table tbody td {
+      padding: 1.25rem 1rem;
+      border: none;
+      border-bottom: 1px solid var(--centro-atencion-light);
+      vertical-align: middle;
+    }
+
+    /* Map Container */
+    .map-container {
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: var(--centro-atencion-shadow);
+      height: 400px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
       }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-.custom-tabs .nav-link {
-  font-weight: 500;
-  color: #1565c0;
-  border: none;
-  background: none;
-  border-radius: 0.5rem 0.5rem 0 0;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-  margin-right: 0.2rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1.08rem;
-  box-shadow: none;
-}
+    /* Alert Messages */
+    .modern-alert {
+      border-radius: 15px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      border: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-.custom-tabs .nav-link.active {
-  color: #fff !important;
-  background: linear-gradient(90deg, #1976d2 80%, #42a5f5 100%);
-  box-shadow: 0 4px 16px -8px #1976d2;
-  border: none;
-}
+    .modern-alert.alert-success {
+      background: var(--medicos-light);
+      color: var(--medicos-primary);
+      border-left: 4px solid var(--medicos-primary);
+    }
 
-.custom-tabs .nav-link:hover:not(.active) {
-  background: #e3f2fd;
-  color: #1976d2;
-}
+    .modern-alert.alert-danger {
+      background: var(--obra-social-light);
+      color: var(--obra-social-primary);
+      border-left: 4px solid var(--obra-social-primary);
+    }
 
-.table {
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+    .modern-alert.alert-info {
+      background: var(--centro-atencion-light);
+      color: var(--centro-atencion-primary);
+      border-left: 4px solid var(--centro-atencion-primary);
+    }
 
-.table-hover tbody tr:hover {
-  background-color: #f8f9fa;
-}
+    /* Action Buttons */
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      margin: 0 2px;
+      position: relative;
+      overflow: hidden;
+    }
 
-.table-primary {
-  background-color: #007bff;
-  color: white;
-}
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
 
-.table-primary th {
-  border: none;
-}
+    .action-btn.btn-edit {
+      background: var(--disponibilidad-gradient);
+      color: white;
+    }
 
-.btn-outline-primary {
-  color: #007bff;
-  border-color: #007bff;
-}
+    .action-btn.btn-delete {
+      background: var(--obra-social-gradient);
+      color: white;
+    }
 
-.btn-outline-primary:hover {
-  background-color: #007bff;
-  color: white;
-}
+    .action-btn.btn-add {
+      background: var(--medicos-gradient);
+      color: white;
+    }
 
-.btn-outline-danger {
-  color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
-}
-
-.text-center {
-  text-align: center;
-}
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-  border-color: #004085;
-}
-
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border-radius: 0.5rem;
-}
-
-.card {
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.card-header {
-  border-top-left-radius: 0.75rem;
-  border-top-right-radius: 0.75rem;
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.list-group-item {
-  border: none;
-  border-radius: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding: 0.75rem 1rem;
-  background-color: #f8f9fa;
-  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.list-group-item:hover {
-  background-color: #e9ecef;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.btn-outline-danger {
-  color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
-}
-
-.text-muted {
-  font-size: 0.875rem;
-}
-.btn-light {
-  background-color: #f8f9fa;
-  border-color: #ced4da;
-  color: #495057;
-}
-
-.btn-light:hover {
-  background-color: #e2e6ea;
-  border-color: #dae0e5;
-  color: #212529;
-}
-
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  border-radius: 0.5rem;
-}
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 1.5rem;
+      }
+      
+      .modern-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .info-item {
+        padding: 1rem;
+      }
+      
+      .btn-modern {
+        padding: 10px 20px;
+        font-size: 0.8rem;
+      }
+    }
   `
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
@@ -181,6 +393,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   consultorios: Consultorio[] = [];
   staffMedicoCentro: StaffMedico[] = [];
   medicosDisponibles: Medico[] = [];
+  form: any = { invalid: false, valid: true };
 
   modoEdicion = false;
   especialidadesAsociadas: Especialidad[] = [];
@@ -206,15 +419,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   constructor(
     private route: ActivatedRoute,
     private centroAtencionService: CentroAtencionService,
-    private location: Location,
     private modalService: ModalService,
     private http: HttpClient,
     private consultorioService: ConsultorioService,
     private especialidadService: EspecialidadService,
     private staffMedicoService: StaffMedicoService,
-    private medicoService: MedicoService, // Inyectar el servicio de médicos
-    private router: Router // Inyectar el servicio de Router
-
+    private medicoService: MedicoService,
+    private router: Router
   ) { }
 
   ngAfterViewInit(): void {
@@ -268,39 +479,24 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   goBack(): void {
-    this.location.back();
+    this.router.navigate(['/centrosAtencion']);
   }
 
-  save(): void {
-    // Si hay coordenadas, separarlas y asignarlas a latitud/longitud
-    if (this.coordenadas) {
-      const [lat, lng] = this.coordenadas.split(',').map(c => Number(c.trim()));
-      this.centroAtencion.latitud = lat;
-      this.centroAtencion.longitud = lng;
-    }
-    // El código siempre es el id (si existe)
-    if (this.centroAtencion.id) {
-      this.centroAtencion.code = String(this.centroAtencion.id);
-    }
-    this.centroAtencionService.save(this.centroAtencion).subscribe({
-      next: (dataPackage) => {
-        this.centroAtencion = <CentroAtencion>dataPackage.data;
-        this.modoEdicion = false;
-        this.getConsultorios();
-
-      },
-      error: (err) => {
-        console.error('Error al guardar el centro de atención:', err);
-        alert('No se pudo guardar el centro de atención. Intente nuevamente.');
-      }
-    });
+  activarEdicion(): void {
+    this.modoEdicion = true;
   }
 
-  remove(centro: CentroAtencion): void {
+  cancelar(): void {
+    this.modoEdicion = false;
+    this.get(); // Reload original data
+  }
+
+  confirmDelete(centro: CentroAtencion): void {
     if (centro.id === undefined) {
-      alert('No se puede eliminar: el centro no tiene ID.');
+      this.modalService.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
       return;
     }
+    
     this.modalService
       .confirm(
         "Eliminar centro de atención",
@@ -308,16 +504,60 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         "Si elimina el centro no lo podrá utilizar luego"
       )
       .then(() => {
-        this.centroAtencionService.delete(centro.id!).subscribe({
-          next: () => {
-            this.goBack();
-          },
-          error: (err) => {
-            console.error('Error al eliminar el centro de atención:', err);
-            alert('No se pudo eliminar el centro de atención. Intente nuevamente.');
-          }
-        });
+        this.remove(centro);
+      })
+      .catch(() => {
+        // User cancelled
       });
+  }
+
+  save(): void {
+    try {
+      // Si hay coordenadas, separarlas y asignarlas a latitud/longitud
+      if (this.coordenadas) {
+        const [lat, lng] = this.coordenadas.split(',').map(c => Number(c.trim()));
+        this.centroAtencion.latitud = lat;
+        this.centroAtencion.longitud = lng;
+      }
+      // El código siempre es el id (si existe)
+      if (this.centroAtencion.id) {
+        this.centroAtencion.code = String(this.centroAtencion.id);
+      }
+      
+      this.centroAtencionService.save(this.centroAtencion).subscribe({
+        next: (dataPackage) => {
+          this.centroAtencion = <CentroAtencion>dataPackage.data;
+          this.modoEdicion = false;
+          this.getConsultorios();
+          this.modalService.alert('Éxito', 'Centro de atención guardado correctamente.');
+        },
+        error: (err) => {
+          console.error('Error al guardar el centro de atención:', err);
+          this.modalService.alert('Error', 'No se pudo guardar el centro de atención. Intente nuevamente.');
+        }
+      });
+    } catch (error) {
+      console.error('Error en save():', error);
+      this.modalService.alert('Error', 'Ocurrió un error inesperado al guardar.');
+    }
+  }
+
+  remove(centro: CentroAtencion): void {
+    if (centro.id === undefined) {
+      this.modalService.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
+      return;
+    }
+    
+    this.centroAtencionService.delete(centro.id!).subscribe({
+      next: () => {
+        this.modalService.alert('Éxito', 'Centro de atención eliminado correctamente.');
+        this.goBack();
+      },
+      error: (err) => {
+        console.error('Error al eliminar el centro de atención:', err);
+        this.modalService.alert('Error', 'No se pudo eliminar el centro de atención. Intente nuevamente.');
+      }
+    });
   }
 
   get(): void {
@@ -390,14 +630,14 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   allFieldsEmpty(): boolean {
-    return !this.centroAtencion?.nombre?.trim() &&
-      !this.centroAtencion?.direccion?.trim() &&
-      !this.centroAtencion?.localidad?.trim() &&
-      !this.centroAtencion?.provincia?.trim() &&
-      !this.centroAtencion?.telefono?.trim() &&
-      !this.coordenadas?.trim();
+    // Check if the minimum required fields are empty
+    return !this.centroAtencion.nombre || !this.centroAtencion.direccion || 
+           !this.centroAtencion.localidad || !this.centroAtencion.provincia;
   }
+  
 
+
+  
   getConsultorios(): void {
     if (this.centroAtencion?.id) {
       this.consultorioService.getByCentroAtencion(this.centroAtencion.id).subscribe({
@@ -479,9 +719,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       });
   }
 
-  activarEdicion() {
-    this.modoEdicion = true;
-  }
+
 
   cancelarEdicion() {
     this.modoEdicion = false;
@@ -654,7 +892,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   });
 }
 agregarDisponibilidad(staff: any): void {
-  this.router.navigate(['/disponibilidades-medico/new'], { queryParams: { staffMedicoId: staff.id } });
   this.router.navigate(['/disponibilidades-medico/new'], { queryParams: { staffMedicoId: staff.id } });
 }
 

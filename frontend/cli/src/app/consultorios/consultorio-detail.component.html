@@ -1,69 +1,172 @@
-<div *ngIf="consultorio">
-  <!-- MODO VISTA -->
-  <div *ngIf="!modoEdicion">
-    <h2>Consultorio: {{ consultorio.nombre }}</h2>
-    <p><b>Número:</b> {{ consultorio.numero }}</p>
-    <p><b>Centro de Atención:</b> {{ consultorio.centroAtencion?.nombre }}</p>
-    <button class="btn btn-danger" (click)="goBack()">Atrás</button>
-    <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
-
-  </div>
-
-  <!-- MODO EDICIÓN -->
-  <form *ngIf="modoEdicion" #form="ngForm">
-    <h2>
-      <ng-container *ngIf="consultorio.id && consultorio.id !== 0; else nuevo">
-        Editando consultorio: {{ consultorio.nombre }}
-      </ng-container>
-      <ng-template #nuevo>
-        Nuevo Consultorio
-      </ng-template>
-    </h2>
-    <!-- Número -->
-    <div class="form-group">
-      <label for="numero">Número:</label>
-      <input type="number" name="numero" required placeholder="Número" class="form-control"
-        [(ngModel)]="consultorio.numero" #numero="ngModel" min="1" />
-      <div *ngIf="numero.invalid && (numero.dirty || numero.touched)" class="alert">
-        <div *ngIf="numero.errors?.['required']">
-          El número del consultorio es requerido
+    <div class="container mt-4" *ngIf="consultorio">
+      <div class="card modern-card">
+        <!-- HEADER MODERNO -->
+        <div class="card-header">
+          <div class="header-content">
+            <div class="header-icon">
+              <i class="fas fa-door-open"></i>
+            </div>
+            <div class="header-text">
+              <h1>{{ esNuevo ? 'Nuevo Consultorio' : 'Consultorio #' + consultorio.numero }}</h1>
+              <p>{{ esNuevo ? 'Configure un nuevo consultorio' : consultorio.nombre }}</p>
+            </div>
+          </div>
         </div>
-        <div *ngIf="numero.errors?.['min']">
-          El número debe ser mayor o igual a 1
+
+        <!-- BODY DEL CARD -->
+        <div class="card-body">
+          <!-- MODO VISTA -->
+          <div *ngIf="!modoEdicion">
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">🔢</span>
+                  Número
+                </div>
+                <div class="info-value">
+                  {{ consultorio.numero }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏷️</span>
+                  Nombre
+                </div>
+                <div class="info-value">
+                  {{ consultorio.nombre }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">🏥</span>
+                  Centro de Atención
+                </div>
+                <div class="info-value">
+                  {{ consultorio.centroAtencion?.nombre || 'Sin centro asignado' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO EDICIÓN -->
+          <form *ngIf="modoEdicion" #form="ngForm" (ngSubmit)="save()">
+            <div class="row">
+              <!-- Número -->
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">🔢</span>
+                    Número del Consultorio
+                  </label>
+                  <input 
+                    type="number" 
+                    name="numero" 
+                    required 
+                    placeholder="Número del consultorio" 
+                    class="form-control form-control-modern"
+                    [(ngModel)]="consultorio.numero" 
+                    #numero="ngModel" 
+                    min="1"
+                  />
+                  <div *ngIf="numero.invalid && (numero.dirty || numero.touched)" class="form-help text-danger">
+                    <div *ngIf="numero.errors?.['required']">
+                      El número del consultorio es requerido
+                    </div>
+                    <div *ngIf="numero.errors?.['min']">
+                      El número debe ser mayor o igual a 1
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nombre -->
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏷️</span>
+                    Nombre del Consultorio
+                  </label>
+                  <input 
+                    name="nombre" 
+                    required 
+                    placeholder="Nombre del consultorio" 
+                    class="form-control form-control-modern" 
+                    [(ngModel)]="consultorio.nombre"
+                    #nombre="ngModel"
+                  />
+                  <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="form-help text-danger">
+                    <div *ngIf="nombre.errors?.['required']">
+                      El nombre del consultorio es requerido
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Centro de Atención -->
+              <div class="col-md-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">🏥</span>
+                    Centro de Atención
+                  </label>
+                  <input
+                    type="text"
+                    class="form-control form-control-modern"
+                    name="centroSearch"
+                    placeholder="Buscar centro..."
+                    [(ngModel)]="centroSearch"
+                    [ngbTypeahead]="searchCentros"
+                    [inputFormatter]="formatCentro"
+                    [resultFormatter]="formatCentro"
+                    (selectItem)="onSelectCentro($event)"
+                  />
+                  <div class="form-help">
+                    Centro de atención al que pertenece este consultorio
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
-      </div>
-      <div *ngIf="numero.invalid && (numero.dirty || numero.touched)" class="alert">
-        <div *ngIf="numero.errors?.['required']">
-          El número del consultorio es requerido
+
+        <!-- FOOTER DEL CARD -->
+        <div class="card-footer">
+          <div class="d-flex gap-2 flex-wrap">
+            <!-- Botones en modo vista -->
+            <ng-container *ngIf="!modoEdicion">
+              <button type="button" class="btn btn-modern btn-back" (click)="goBack()">
+                ← Volver
+              </button>
+              <button type="button" class="btn btn-modern btn-edit" (click)="activarEdicion()">
+                ✏️ Editar
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-modern btn-delete ms-auto" 
+                (click)="remove()"
+                *ngIf="consultorio.id && consultorio.id !== 0"
+              >
+                🗑️ Eliminar
+              </button>
+            </ng-container>
+
+            <!-- Botones en modo edición -->
+            <ng-container *ngIf="modoEdicion">
+              <button 
+                type="submit" 
+                class="btn btn-modern btn-save" 
+                [disabled]="form.invalid"
+                (click)="save()"
+              >
+                💾 Guardar
+              </button>
+              <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
+                ❌ Cancelar
+              </button>
+            </ng-container>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- Nombre -->
-    <div class="form-group">
-      <label for="nombre">Nombre:</label>
-      <input name="nombre" required placeholder="Nombre" class="form-control" [(ngModel)]="consultorio.nombre"
-        #nombre="ngModel" />
-      <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="alert">
-        <div *ngIf="nombre.errors?.['required']">
-          El nombre del consultorio es requerido
-        </div>
-      </div>
-    </div>
-
-    <!-- Centro de Atención (typeahead) -->
-    <div class="form-group">
-      <label for="centroAtencion">Centro de Atención:</label>
-      <input name="centroAtencion" required class="form-control" [ngbTypeahead]="searchCentrosAtencion"
-        [inputFormatter]="formatter" [resultFormatter]="formatter" [(ngModel)]="selectedCentroAtencion"
-        (selectItem)="onCentroAtencionSelected($event.item)" />
-    </div>
-
-    <!-- Botones -->
-    <button type="button" class="btn btn-secondary ms-2" (click)="goBack()">Cancelar</button> <button type="button"
-      (click)="save()" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">
-      Guardar
-    </button>
-    <button *ngIf="consultorio.id" (click)="remove(consultorio)" class="btn btn-outline-danger">Eliminar</button>
-  </form>
-</div>

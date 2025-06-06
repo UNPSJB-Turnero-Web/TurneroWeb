@@ -167,13 +167,32 @@ public class AgendaService {
                         break;
                     }
 
+                    // Verificar si existe un turno asignado para este slot
+                    boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoId(
+                            fechaEvento, slotStart, esquemaTurno.getStaffMedico().getId());
+
                     // Crear un DTO para el evento
                     TurnoDTO evento = new TurnoDTO();
                     evento.setId(eventoIdCounter++); // Asignar un ID único al evento
                     evento.setFecha(fechaEvento);
                     evento.setHoraInicio(slotStart);
                     evento.setHoraFin(nextSlot);
-                    evento.setTitulo("Turno (" + horario.getDia() + ")");
+                    evento.setTitulo(slotOcupado ? "Ocupado" : "Disponible");
+
+                    // Configurar campos de slot
+                    evento.setEsSlot(true);
+                    evento.setOcupado(slotOcupado);
+                    
+                    // Configurar colores según el estado
+                    if (slotOcupado) {
+                        evento.setBackgroundColor("#dc3545"); // Rojo para ocupado
+                        evento.setBorderColor("#dc3545");
+                        evento.setTextColor("#ffffff");
+                    } else {
+                        evento.setBackgroundColor("#007bff"); // Azul para disponible
+                        evento.setBorderColor("#007bff");
+                        evento.setTextColor("#ffffff");
+                    }
 
                     // Asignar datos del esquema
                     evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());

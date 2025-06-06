@@ -1,24 +1,35 @@
 export interface Turno {
-    id: number;
-    nombre: string;
-    codigo: string;
-    fecha: string;
-    horaInicio: string;
-    horaFin: string;
-    estado: string; // Ej: "pendiente", "confirmado", "cancelado"
-    pacienteId: number;
-    pacienteNombre: string;
-    pacienteApellido: string;
+    // Campos básicos
+    id?: number;
+    fecha: string;                  // LocalDate como string
+    horaInicio: string;             // LocalTime como string  
+    horaFin: string;                // LocalTime como string
+    estado: string;                 // "PENDIENTE", "CONFIRMADO", "CANCELADO"
+    
+    // Campos de paciente
+    pacienteId?: number;
+    nombrePaciente?: string;
+    apellidoPaciente?: string;
+    
+    // Campos de staff médico
     staffMedicoId: number;
-    staffMedicoNombre: string;
-    staffMedicoApellido: string;
-    especialidadStaffMedicoId?: number; // Opcional, si aplica
-    especialidadStaffMedicoNombre?: string; // Opcional, si aplica
-    centroAtencionId: number;
-    centroAtencionNombre: string;
-    consultorioId?: number; // Opcional, si aplica
-    esquemaTurnoId?: number; // ID del esquema de turno asociado
-    motivoCancelacion?: string; // Opcional, si el turno fue cancelado      
-
-
+    staffMedicoNombre?: string;
+    staffMedicoApellido?: string;
+    especialidadStaffMedico?: string;
+    
+    // Campos de centro y consultorio
+    centroId?: number;
+    nombreCentro?: string;
+    consultorioId?: number;
+    consultorioNombre?: string;
+    
+    // Campo para título personalizado
+    titulo?: string;
+    
+    // Campos para manejo de SLOTS en la agenda
+    esSlot?: boolean;               // true = slot generado, false/undefined = turno real
+    ocupado?: boolean;              // true = slot ocupado por un turno, false = disponible
+    backgroundColor?: string;       // Color de fondo para el evento en la agenda
+    borderColor?: string;          // Color del borde para el evento en la agenda
+    textColor?: string;            // Color del texto para el evento en la agenda
 }

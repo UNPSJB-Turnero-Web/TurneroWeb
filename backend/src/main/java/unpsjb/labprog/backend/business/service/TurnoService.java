@@ -97,11 +97,11 @@ public class TurnoService {
         dto.setEspecialidadStaffMedico(turno.getStaffMedico().getMedico().getEspecialidad().getNombre());
 
         // Validar si consultorio no es null antes de acceder a sus propiedades
-        if (turno.getStaffMedico().getConsultorio() != null) {
-            dto.setConsultorioId(turno.getStaffMedico().getConsultorio().getId());
-            dto.setConsultorioNombre(turno.getStaffMedico().getConsultorio().getNombre());
-            dto.setCentroId(turno.getStaffMedico().getConsultorio().getCentroAtencion().getId());
-            dto.setNombreCentro(turno.getStaffMedico().getConsultorio().getCentroAtencion().getNombre());
+        if (turno.getConsultorio() != null) {
+            dto.setConsultorioId(turno.getConsultorio().getId());
+            dto.setConsultorioNombre(turno.getConsultorio().getNombre());
+            dto.setCentroId(turno.getConsultorio().getCentroAtencion().getId());
+            dto.setNombreCentro(turno.getConsultorio().getCentroAtencion().getNombre());
         } else {
             dto.setConsultorioId(null);
             dto.setConsultorioNombre(null);

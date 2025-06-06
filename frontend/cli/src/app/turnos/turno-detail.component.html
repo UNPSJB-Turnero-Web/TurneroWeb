@@ -1,0 +1,331 @@
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+      <div class="card">
+        <!-- HEADER DEL CARD -->
+        <div class="card-header text-white">
+          <div class="d-flex align-items-center">
+            <div class="info-icon me-3" style="background: rgba(255,255,255,0.2);">
+              📅
+            </div>
+            <div>
+              <h4 class="mb-0 fw-bold">
+                <ng-container *ngIf="turno.id && turno.id !== 0; else nuevoTitle">
+                  Turno #{{ turno.id }}
+                </ng-container>
+                <ng-template #nuevoTitle>
+                  Nuevo Turno
+                </ng-template>
+              </h4>
+              <small class="opacity-75">
+                <ng-container *ngIf="!modoEdicion">Información del Turno</ng-container>
+                <ng-container *ngIf="modoEdicion && turno.id">Editando Turno</ng-container>
+                <ng-container *ngIf="modoEdicion && !turno.id">Creando Nuevo Turno</ng-container>
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUERPO DEL CARD -->
+        <div class="card-body">
+          <!-- MODO VISTA -->
+          <div *ngIf="!modoEdicion">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);">
+                    🆔
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">ID del Turno</div>
+                    <div class="info-value">
+                      <span class="turno-id-display">{{ turno.id }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">
+                    👤
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Paciente</div>
+                    <div class="info-value">
+                      <span class="paciente-display">{{ turno.nombrePaciente }} {{ turno.apellidoPaciente }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                    👨‍⚕️
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Médico</div>
+                    <div class="info-value">
+                      <span class="medico-display">{{ turno.staffMedicoNombre }} {{ turno.staffMedicoApellido }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">
+                    🩺
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Especialidad</div>
+                    <div class="info-value">{{ turno.especialidadStaffMedico }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">
+                    📅
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Fecha</div>
+                    <div class="info-value">
+                      <span class="fecha-display">{{ turno.fecha }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    🕐
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Horario</div>
+                    <div class="info-value">
+                      <span class="hora-display">{{ turno.horaInicio }} - {{ turno.horaFin }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    🏥
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Centro</div>
+                    <div class="info-value">{{ turno.nombreCentro }}</div>
+                  </div>
+                </div>
+
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    🚪
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Consultorio</div>
+                    <div class="info-value">{{ turno.consultorioNombre }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);">
+                    📊
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value">
+                      <span [ngClass]="getEstadoBadgeClass(turno.estado)">
+                        {{ turno.estado }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO EDICIÓN -->
+          <form *ngIf="modoEdicion" (ngSubmit)="save()" #turnoForm="ngForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">👤</span>
+                    Paciente
+                  </label>
+                  <select
+                    [(ngModel)]="turno.pacienteId"
+                    name="pacienteId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione un paciente...</option>
+                    <option *ngFor="let paciente of pacientes" [value]="paciente.id">
+                      {{ paciente.nombre }} {{ paciente.apellido }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione el paciente para el turno.
+                  </div>
+                </div>
+
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">👨‍⚕️</span>
+                    Staff Médico
+                  </label>
+                  <select
+                    [(ngModel)]="turno.staffMedicoId"
+                    name="staffMedicoId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione un staff médico...</option>
+                    <option *ngFor="let staff of staffMedicos" [value]="staff.id">
+                      {{ staff.medico?.nombre }} {{ staff.medico?.apellido }} - {{ staff.especialidad?.nombre }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione el médico que atenderá el turno.
+                  </div>
+                </div>
+
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🚪</span>
+                    Consultorio
+                  </label>
+                  <select
+                    [(ngModel)]="turno.consultorioId"
+                    name="consultorioId"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="">Seleccione un consultorio...</option>
+                    <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
+                      {{ consultorio.nombre }} - {{ consultorio.centroAtencion?.nombre }}
+                    </option>
+                  </select>
+                  <div class="form-help">
+                    Seleccione el consultorio donde se realizará el turno.
+                  </div>
+                </div>
+
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);">📊</span>
+                    Estado
+                  </label>
+                  <select
+                    [(ngModel)]="turno.estado"
+                    name="estado"
+                    class="form-control form-control-modern"
+                    required
+                  >
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="CONFIRMADO">Confirmado</option>
+                    <option value="CANCELADO">Cancelado</option>
+                    <option value="COMPLETADO">Completado</option>
+                  </select>
+                  <div class="form-help">
+                    Estado actual del turno.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">📅</span>
+                    Fecha
+                  </label>
+                  <input
+                    [(ngModel)]="turno.fecha"
+                    name="fecha"
+                    type="date"
+                    class="form-control form-control-modern"
+                    required
+                  />
+                  <div class="form-help">
+                    Fecha del turno médico.
+                  </div>
+                </div>
+
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
+                    Hora de Inicio
+                  </label>
+                  <input
+                    [(ngModel)]="turno.horaInicio"
+                    name="horaInicio"
+                    type="time"
+                    class="form-control form-control-modern"
+                    required
+                  />
+                  <div class="form-help">
+                    Hora de inicio del turno.
+                  </div>
+                </div>
+
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
+                    Hora de Fin
+                  </label>
+                  <input
+                    [(ngModel)]="turno.horaFin"
+                    name="horaFin"
+                    type="time"
+                    class="form-control form-control-modern"
+                    required
+                  />
+                  <div class="form-help">
+                    Hora de finalización del turno.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- FOOTER DEL CARD -->
+        <div class="card-footer">
+          <div class="d-flex gap-2 flex-wrap">
+            <!-- Botones en modo vista -->
+            <ng-container *ngIf="!modoEdicion">
+              <button type="button" class="btn btn-modern btn-back" (click)="goBack()">
+                ← Volver
+              </button>
+              <button type="button" class="btn btn-modern btn-edit" (click)="activarEdicion()">
+                ✏️ Editar
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-modern btn-delete ms-auto" 
+                (click)="remove(turno)"
+                *ngIf="turno.id"
+              >
+                🗑️ Eliminar
+              </button>
+            </ng-container>
+
+            <!-- Botones en modo edición -->
+            <ng-container *ngIf="modoEdicion">
+              <button 
+                type="submit" 
+                class="btn btn-modern btn-save" 
+                [disabled]="allFieldsEmpty()"
+                (click)="save()"
+              >
+                💾 Guardar
+              </button>
+              <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
+                ❌ Cancelar
+              </button>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

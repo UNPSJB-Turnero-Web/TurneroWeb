@@ -1,0 +1,885 @@
+/* =================================================================
+   SISTEMA DE COLORES GLOBAL POR ENTIDAD - TURNERO WEB
+   ================================================================= */
+
+/* === VARIABLES CSS POR ENTIDAD === */
+:root {
+  /* 🏥 Centro de Atención - Azul corporativo */
+  --centro-atencion-primary: #007bff;
+  --centro-atencion-secondary: #0056b3;
+  --centro-atencion-light: #cce5ff;
+  --centro-atencion-gradient: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  --centro-atencion-shadow: rgba(0, 123, 255, 0.4);
+
+  /* 👨‍⚕️ Médicos - Verde médico */
+  --medicos-primary: #1cc88a;
+  --medicos-secondary: #17a673;
+  --medicos-light: #ccf7e8;
+  --medicos-gradient: linear-gradient(135deg, #1cc88a 0%, #17a673 100%);
+  --medicos-shadow: rgba(28, 200, 138, 0.4);
+
+  /* 🏩 Especialidades - Púrpura profesional */
+  --especialidades-primary: #9b59b6;
+  --especialidades-secondary: #8e44ad;
+  --especialidades-light: #f4e6ff;
+  --especialidades-gradient: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  --especialidades-shadow: rgba(155, 89, 182, 0.4);
+
+  /* 🏠 Consultorios - Naranja cálido */
+  --consultorios-primary: #f39c12;
+  --consultorios-secondary: #d68910;
+  --consultorios-light: #fdf2e3;
+  --consultorios-gradient: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
+  --consultorios-shadow: rgba(243, 156, 18, 0.4);
+
+  /* ⚕️ Staff Médico - Verde esmeralda */
+  --staff-medico-primary: #00c9a7;
+  --staff-medico-secondary: #00a085;
+  --staff-medico-light: #ccfff7;
+  --staff-medico-gradient: linear-gradient(135deg, #00c9a7 0%, #00a085 100%);
+  --staff-medico-shadow: rgba(0, 201, 167, 0.4);
+
+  /* 📅 Disponibilidad - Púrpura vibrante */
+  --disponibilidad-primary: #6c5ce7;
+  --disponibilidad-secondary: #5a4fcf;
+  --disponibilidad-light: #e8e4ff;
+  --disponibilidad-gradient: linear-gradient(135deg, #6c5ce7 0%, #5a4fcf 100%);
+  --disponibilidad-shadow: rgba(108, 92, 231, 0.4);
+
+  /* 🗓️ Esquema Turno - Índigo */
+  --esquema-turno-primary: #667eea;
+  --esquema-turno-secondary: #5a67d8;
+  --esquema-turno-light: #e6e9ff;
+  --esquema-turno-gradient: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+  --esquema-turno-shadow: rgba(102, 126, 234, 0.4);
+
+  /* 📋 Turnos - Teal */
+  --turnos-primary: #36b9cc;
+  --turnos-secondary: #258391;
+  --turnos-light: #d1ecf1;
+  --turnos-gradient: linear-gradient(135deg, #36b9cc 0%, #258391 100%);
+  --turnos-shadow: rgba(54, 185, 204, 0.4);
+
+  /* 🗂️ Agenda - Rosa moderno */
+  --agenda-primary: #fd79a8;
+  --agenda-secondary: #e84393;
+  --agenda-light: #ffe8f0;
+  --agenda-gradient: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+  --agenda-shadow: rgba(253, 121, 168, 0.4);
+
+  /* 👥 Pacientes - Celeste suave */
+  --pacientes-primary: #74b9ff;
+  --pacientes-secondary: #0984e3;
+  --pacientes-light: #e3f2fd;
+  --pacientes-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  --pacientes-shadow: rgba(116, 185, 255, 0.4);
+
+  /* 🏛️ Obra Social - Gris elegante */
+  --obra-social-primary: #6c757d;
+  --obra-social-secondary: #5a6268;
+  --obra-social-light: #f8f9fa;
+  --obra-social-gradient: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  --obra-social-shadow: rgba(108, 117, 125, 0.4);
+
+  /* === COLORES DE ACCIÓN UNIVERSAL === */
+  --action-edit: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  --action-edit-shadow: rgba(23, 162, 184, 0.4);
+  --action-delete: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --action-delete-shadow: rgba(220, 38, 38, 0.4);
+  --action-add: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  --action-add-shadow: rgba(40, 167, 69, 0.4);
+}
+
+/* === BANNERS TRANSPARENTES POR ENTIDAD === */
+.banner-centro-atencion {
+  background: var(--centro-atencion-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--centro-atencion-shadow);
+}
+
+.banner-medicos {
+  background: var(--medicos-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--medicos-shadow);
+}
+
+.banner-especialidades {
+  background: var(--especialidades-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--especialidades-shadow);
+}
+
+.banner-consultorios {
+  background: var(--consultorios-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--consultorios-shadow);
+}
+
+.banner-staff-medico {
+  background: var(--staff-medico-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--staff-medico-shadow);
+}
+
+.banner-disponibilidad {
+  background: var(--disponibilidad-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--disponibilidad-shadow);
+}
+
+.banner-esquema-turno {
+  background: var(--esquema-turno-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--esquema-turno-shadow);
+}
+
+.banner-turnos {
+  background: var(--turnos-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--turnos-shadow)!important;
+}
+
+.banner-agenda {
+  background: var(--agenda-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--agenda-shadow);
+}
+
+.banner-pacientes {
+  background: var(--pacientes-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--pacientes-shadow);
+}
+
+.banner-obra-social {
+  background: var(--obra-social-gradient);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px var(--obra-social-shadow);
+}
+
+.btn-new {
+      background: rgba(255,255,255,0.2)!important;
+      border: 1px solid rgba(255,255,255,0.3)!important;
+      color: white!important;
+      padding: 0.75rem 1.5rem!important;
+      border-radius: 12px!important;
+      font-weight: 600!important;
+      backdrop-filter: blur(10px)!important;
+      transition: all 0.3s ease!important;
+    }
+
+    .btn-new:hover {
+      background: rgba(255,255,255,0.3)!important;
+      color: white!important;
+      transform: translateY(-2px)!important;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2)!important;
+    }
+
+
+    .btn-banner {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .btn-banner:hover {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+.banner-pacientes {
+  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px var(--pacientes-shadow);
+}
+
+.banner-obra-social {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efectos decorativos para banners */
+.banner-centro-atencion::before,
+.banner-medicos::before,
+.banner-especialidades::before,
+.banner-consultorios::before,
+.banner-staff-medico::before,
+.banner-disponibilidad::before,
+.banner-esquema-turno::before,
+.banner-turnos::before,
+.banner-agenda::before,
+.banner-pacientes::before,
+.banner-obra-social::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+}
+
+/* ========================================
+   BOTONES TRANSPARENTES PARA BANNERS
+   ======================================== */
+
+/* .btn-banner {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-banner:hover {
+  background: rgba(255,255,255,0.3);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+} */
+
+.btn-banner:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+/* ========================================
+   ICONOS CIRCULARES POR ENTIDAD
+   ======================================== */
+
+.icon-centro-atencion {
+  background: var(--centro-atencion-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--centro-atencion-shadow);
+}
+
+.icon-medicos {
+  background: var(--medicos-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--medicos-shadow);
+}
+
+.icon-especialidades {
+  background: var(--especialidades-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--especialidades-shadow);
+}
+
+.icon-consultorios {
+  background: var(--consultorios-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--consultorios-shadow);
+}
+
+.icon-staff-medico {
+  background: var(--staff-medico-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--staff-medico-shadow);
+}
+
+.icon-disponibilidad {
+  background: var(--disponibilidad-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--disponibilidad-shadow);
+}
+
+.icon-esquema-turno {
+  background: var(--esquema-turno-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--esquema-turno-shadow);
+}
+
+.icon-turnos {
+  background: var(--turnos-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--turnos-shadow);
+}
+
+.icon-agenda {
+  background: var(--agenda-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--agenda-shadow);
+}
+
+.icon-pacientes {
+  background: var(--pacientes-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--pacientes-shadow);
+}
+
+.icon-obra-social {
+  background: var(--obra-social-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--obra-social-shadow);
+}
+
+/* ========================================
+   BADGES Y ELEMENTOS POR ENTIDAD
+   ======================================== */
+
+.badge-centro-atencion {
+  background: var(--centro-atencion-gradient);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px var(--centro-atencion-shadow);
+  display: inline-block;
+}
+
+.badge-medicos {
+  background: var(--medicos-gradient);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 3px 10px var(--medicos-shadow);
+  display: inline-block;
+}
+
+.badge-especialidades {
+  background: var(--especialidades-gradient);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 3px 10px var(--especialidades-shadow);
+  display: inline-block;
+}
+
+.badge-consultorios {
+  background: var(--consultorios-gradient);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 3px 10px var(--consultorios-shadow);
+  display: inline-block;
+}
+
+.badge-staff-medico {
+  background: var(--staff-medico-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--staff-medico-shadow);
+  display: inline-block;
+}
+
+.badge-disponibilidad {
+  background: var(--disponibilidad-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--disponibilidad-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.badge-esquema-turno {
+  background: var(--esquema-turno-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--esquema-turno-shadow);
+  display: inline-block;
+}
+
+.badge-turnos {
+  background: var(--turnos-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--turnos-shadow);
+  display: inline-block;
+}
+
+.badge-agenda {
+  background: var(--agenda-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--agenda-shadow);
+  display: inline-block;
+}
+
+.badge-pacientes {
+  background: var(--pacientes-gradient);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 15px var(--pacientes-shadow);
+  display: inline-block;
+}
+
+.badge-obra-social {
+  background: var(--obra-social-gradient);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 3px 10px var(--obra-social-shadow);
+  display: inline-block;
+}
+
+/* ========================================
+   AVATARES CIRCULARES POR ENTIDAD
+   ======================================== */
+
+.avatar-centro-atencion,
+.avatar-medicos,
+.avatar-especialidades,
+.avatar-consultorios,
+.avatar-staff-medico,
+.avatar-disponibilidad,
+.avatar-esquema-turno,
+.avatar-turnos,
+.avatar-agenda,
+.avatar-pacientes,
+.avatar-obra-social {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.avatar-centro-atencion { background: var(--centro-atencion-gradient); box-shadow: 0 4px 15px var(--centro-atencion-shadow); }
+.avatar-medicos { background: var(--medicos-gradient); box-shadow: 0 4px 15px var(--medicos-shadow); }
+.avatar-especialidades { background: var(--especialidades-gradient); box-shadow: 0 4px 15px var(--especialidades-shadow); }
+.avatar-consultorios { background: var(--consultorios-gradient); box-shadow: 0 4px 15px var(--consultorios-shadow); }
+.avatar-staff-medico { background: var(--staff-medico-gradient); box-shadow: 0 4px 15px var(--staff-medico-shadow); }
+.avatar-disponibilidad { background: var(--disponibilidad-gradient); box-shadow: 0 4px 15px var(--disponibilidad-shadow); }
+.avatar-esquema-turno { background: var(--esquema-turno-gradient); box-shadow: 0 4px 15px var(--esquema-turno-shadow); }
+.avatar-turnos { background: var(--turnos-gradient); box-shadow: 0 4px 15px var(--turnos-shadow); }
+.avatar-agenda { background: var(--agenda-gradient); box-shadow: 0 4px 15px var(--agenda-shadow); }
+.avatar-pacientes { background: var(--pacientes-gradient); box-shadow: 0 4px 15px var(--pacientes-shadow); }
+.avatar-obra-social { background: var(--obra-social-gradient); box-shadow: 0 4px 15px var(--obra-social-shadow); }
+
+/* ========================================
+   BOTONES DE ACCIÓN ESTÁNDAR
+   ======================================== */
+
+.btn-action {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-action::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.btn-action:hover::before {
+  width: 100px;
+  height: 100px;
+}
+
+.btn-edit {
+  background: var(--action-edit);
+  color: white;
+  box-shadow: 0 4px 12px var(--action-edit-shadow);
+}
+
+.btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--action-edit-shadow);
+}
+
+.btn-delete {
+  background: var(--action-delete);
+  color: white;
+  box-shadow: 0 4px 12px var(--action-delete-shadow);
+}
+
+.btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--action-delete-shadow);
+}
+
+.btn-add {
+  background: var(--action-add);
+  color: white;
+  box-shadow: 0 4px 12px var(--action-add-shadow);
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--action-add-shadow);
+}
+
+/* ========================================
+   ICONOS BANNER TRANSPARENTES
+   ======================================== */
+
+.header-icon {
+  background: rgba(255,255,255,0.2);
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ========================================
+   CLASES PARA REFERENCIAS CRUZADAS
+   ======================================== */
+
+/* Cuando una entidad referencia a otra, usa el color de la entidad referenciada */
+.ref-centro-atencion { background: var(--centro-atencion-gradient); color: white; }
+.ref-medicos { background: var(--medicos-gradient); color: white; }
+.ref-especialidades { background: var(--especialidades-gradient); color: white; }
+.ref-consultorios { background: var(--consultorios-gradient); color: white; }
+.ref-staff-medico { background: var(--staff-medico-gradient); color: white; }
+.ref-disponibilidad { background: var(--disponibilidad-gradient); color: white; }
+.ref-esquema-turno { background: var(--esquema-turno-gradient); color: white; }
+.ref-turnos { background: var(--turnos-gradient); color: white; }
+.ref-agenda { background: var(--agenda-gradient); color: white; }
+.ref-pacientes { background: var(--pacientes-gradient); color: white; }
+.ref-obra-social { background: var(--obra-social-gradient); color: white; }
+
+/* ========================================
+   VARIANTES PEQUEÑAS PARA CHIPS/TAGS
+   ======================================== */
+
+.chip-centro-atencion,
+.chip-medicos,
+.chip-especialidades,
+.chip-consultorios,
+.chip-staff-medico,
+.chip-disponibilidad,
+.chip-esquema-turno,
+.chip-turnos,
+.chip-agenda,
+.chip-pacientes,
+.chip-obra-social {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: white;
+  display: inline-block;
+  margin: 2px;
+}
+
+.chip-centro-atencion { background: var(--centro-atencion-gradient); }
+.chip-medicos { background: var(--medicos-gradient); }
+.chip-especialidades { background: var(--especialidades-gradient); }
+.chip-consultorios { background: var(--consultorios-gradient); }
+.chip-staff-medico { background: var(--staff-medico-gradient); }
+.chip-disponibilidad { background: var(--disponibilidad-gradient); }
+.chip-esquema-turno { background: var(--esquema-turno-gradient); }
+.chip-turnos { background: var(--turnos-gradient); }
+.chip-agenda { background: var(--agenda-gradient); }
+.chip-pacientes { background: var(--pacientes-gradient); }
+.chip-obra-social { background: var(--obra-social-gradient); }
+
+/* ========================================
+   UTILIDADES PARA RESPONSIVIDAD
+   ======================================== */
+
+@media (max-width: 768px) {
+  .header-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+  
+  .btn-banner {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .avatar-centro-atencion,
+  .avatar-medicos,
+  .avatar-especialidades,
+  .avatar-consultorios,
+  .avatar-staff-medico,
+  .avatar-disponibilidad,
+  .avatar-esquema-turno,
+  .avatar-turnos,
+  .avatar-agenda,
+  .avatar-pacientes,
+  .avatar-obra-social {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .btn-action {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ========================================
+   HEADER CELLS PARA TABLAS
+   ======================================== */
+
+.header-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: rgb(39, 39, 39);
+  padding: 1rem;
+}
+
+.icon-circle {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Headers específicos por funcionalidad */
+.id-header { background: var(--centro-atencion-gradient); box-shadow: 0 3px 10px var(--centro-atencion-shadow); }
+.staff-header { background: var(--staff-medico-gradient); box-shadow: 0 3px 10px var(--staff-medico-shadow); }
+.horarios-header { background: var(--disponibilidad-gradient); box-shadow: 0 3px 10px var(--disponibilidad-shadow); }
+.actions-header { background: var(--obra-social-gradient); box-shadow: 0 3px 10px var(--obra-social-shadow); }
+.medico-header { background: var(--medicos-gradient); box-shadow: 0 3px 10px var(--medicos-shadow); }
+.especialidad-header { background: var(--especialidades-gradient); box-shadow: 0 3px 10px var(--especialidades-shadow); }
+.consultorio-header { background: var(--consultorios-gradient); box-shadow: 0 3px 10px var(--consultorios-shadow); }
+.centro-header { background: var(--centro-atencion-gradient); box-shadow: 0 3px 10px var(--centro-atencion-shadow); }
+.turno-header { background: var(--turnos-gradient); box-shadow: 0 3px 10px var(--turnos-shadow); }
+.agenda-header { background: var(--agenda-gradient); box-shadow: 0 3px 10px var(--agenda-shadow); }
+.paciente-header { background: var(--pacientes-gradient); box-shadow: 0 3px 10px var(--pacientes-shadow); }
+
+/* ========================================
+   BORDES Y TEXTO POR ENTIDAD
+   ======================================== */
+
+.border-centro-atencion { border-color: var(--centro-atencion-primary) !important; }
+.border-medicos { border-color: var(--medicos-primary) !important; }
+.border-especialidades { border-color: var(--especialidades-primary) !important; }
+.border-consultorios { border-color: var(--consultorios-primary) !important; }
+.border-staff-medico { border-color: var(--staff-medico-primary) !important; }
+.border-disponibilidad { border-color: var(--disponibilidad-primary) !important; }
+.border-esquema-turno { border-color: var(--esquema-turno-primary) !important; }
+.border-turnos { border-color: var(--turnos-primary) !important; }
+.border-agenda { border-color: var(--agenda-primary) !important; }
+.border-pacientes { border-color: var(--pacientes-primary) !important; }
+.border-obra-social { border-color: var(--obra-social-primary) !important; }
+
+.text-centro-atencion { color: var(--centro-atencion-primary) !important; }
+.text-medicos { color: var(--medicos-primary) !important; }
+.text-especialidades { color: var(--especialidades-primary) !important; }
+.text-consultorios { color: var(--consultorios-primary) !important; }
+.text-staff-medico { color: var(--staff-medico-primary) !important; }
+.text-disponibilidad { color: var(--disponibilidad-primary) !important; }
+.text-esquema-turno { color: var(--esquema-turno-primary) !important; }
+.text-turnos { color: var(--turnos-primary) !important; }
+.text-agenda { color: var(--agenda-primary) !important; }
+.text-pacientes { color: var(--pacientes-primary) !important; }
+.text-obra-social { color: var(--obra-social-primary) !important; }
+
+/* ========================================
+   HOVER STATES PARA ELEMENTOS
+   ======================================== */
+
+.hover-centro-atencion:hover { background: var(--centro-atencion-light) !important; color: var(--centro-atencion-secondary) !important; }
+.hover-medicos:hover { background: var(--medicos-light) !important; color: var(--medicos-secondary) !important; }
+.hover-especialidades:hover { background: var(--especialidades-light) !important; color: var(--especialidades-secondary) !important; }
+.hover-consultorios:hover { background: var(--consultorios-light) !important; color: var(--consultorios-secondary) !important; }
+.hover-staff-medico:hover { background: var(--staff-medico-light) !important; color: var(--staff-medico-secondary) !important; }
+.hover-disponibilidad:hover { background: var(--disponibilidad-light) !important; color: var(--disponibilidad-secondary) !important; }
+.hover-esquema-turno:hover { background: var(--esquema-turno-light) !important; color: var(--esquema-turno-secondary) !important; }
+.hover-turnos:hover { background: var(--turnos-light) !important; color: var(--turnos-secondary) !important; }
+.hover-agenda:hover { background: var(--agenda-light) !important; color: var(--agenda-secondary) !important; }
+.hover-pacientes:hover { background: var(--pacientes-light) !important; color: var(--pacientes-secondary) !important; }
+.hover-obra-social:hover { background: var(--obra-social-light) !important; color: var(--obra-social-secondary) !important; }
+
+/* ========================================
+   FONDOS CLAROS PARA SECCIONES
+   ======================================== */
+
+.bg-light-centro-atencion { background: var(--centro-atencion-light) !important; }
+.bg-light-medicos { background: var(--medicos-light) !important; }
+.bg-light-especialidades { background: var(--especialidades-light) !important; }
+.bg-light-consultorios { background: var(--consultorios-light) !important; }
+.bg-light-staff-medico { background: var(--staff-medico-light) !important; }
+.bg-light-disponibilidad { background: var(--disponibilidad-light) !important; }
+.bg-light-esquema-turno { background: var(--esquema-turno-light) !important; }
+.bg-light-turnos { background: var(--turnos-light) !important; }
+.bg-light-agenda { background: var(--agenda-light) !important; }
+.bg-light-pacientes { background: var(--pacientes-light) !important; }
+.bg-light-obra-social { background: var(--obra-social-light) !important; }
+
+/* ========================================
+   TABLA MODERNA CON SISTEMA DE COLORES
+   ======================================== */
+
+.modern-table {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  border: none;
+}
+
+.modern-table thead tr {
+  background: transparent;
+}
+
+.modern-table tbody tr {
+  transition: all 0.3s ease;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.modern-table tbody tr:hover {
+  background: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* ========================================
+   EJEMPLOS DE USO - DOCUMENTACIÓN
+   ======================================== */
+
+/*
+EJEMPLOS DE USO DEL SISTEMA DE COLORES:
+
+1. Banner de entidad:
+   <div class="banner-centro-atencion">
+     <button class="btn-banner">Acción</button>
+   </div>
+
+2. Icono circular:
+   <div class="icon-circle icon-medicos">
+     <i class="fas fa-user-md"></i>
+   </div>
+
+3. Badge de entidad:
+   <span class="badge-especialidades">Cardiología</span>
+
+4. Avatar circular:
+   <div class="avatar-staff-medico">JD</div>
+
+5. Botón de acción:
+   <button class="btn-action btn-edit">
+     <i class="fas fa-edit"></i>
+   </button>
+
+6. Referencia cruzada:
+   <span class="chip-centro-atencion">Hospital Central</span>
+
+7. Tabla moderna:
+   <table class="table modern-table">
+     <thead>
+       <th>
+         <div class="header-cell">
+           <div class="icon-circle id-header">
+             <i class="fas fa-hashtag"></i>
+           </div>
+           ID
+         </div>
+       </th>
+     </thead>
+   </table>
+*/
+
+/* ========================================
+   FIN DEL SISTEMA DE COLORES GLOBAL
+   ======================================== */

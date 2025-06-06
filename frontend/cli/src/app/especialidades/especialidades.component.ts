@@ -13,48 +13,120 @@ import { PaginationComponent } from '../pagination/pagination.component';
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
-    <div class="container mt-4">
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between px-4"
-             style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
-          <div class="d-flex align-items-center">
-            <i class="fa fa-stethoscope me-2"></i>
-            <h2 class="fw-bold mb-0 fs-4">Especialidades</h2>
+    <div class="container-fluid mt-4">
+      <div class="modern-card">
+        <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+        <div class="banner-especialidades">
+          <div class="header-content">
+            <div class="title-section">
+              <div class="header-icon">
+                <i class="fas fa-stethoscope"></i>
+              </div>
+              <div class="header-text">
+                <h1>Especialidades</h1>
+                <p>Gestión de especialidades médicas del sistema</p>
+              </div>
+            </div>
+            <button 
+              class="btn btn-new"
+              (click)="router.navigate(['/especialidades/new'])"
+            >
+              <i class="fas fa-plus me-2"></i>
+              Nueva Especialidad
+            </button>
           </div>
-          <button class="btn btn-light btn-sm" (click)="router.navigate(['/especialidades/new'])">
-            <i class="fa fa-plus me-1"></i> Nueva Especialidad
-          </button>
         </div>
-        <div class="card-body p-0">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+
+        <!-- TABLA MODERNA NORMALIZADA -->
+        <div class="table-container">
+          <table class="table modern-table">
+            <thead>
               <tr>
-                <th>#</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th class="text-center">Acciones</th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle id-header">
+                      <i class="fas fa-hashtag"></i>
+                    </div>
+                    ID
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle icon-especialidades">
+                      <i class="fas fa-stethoscope"></i>
+                    </div>
+                    Nombre
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle icon-obra-social">
+                      <i class="fas fa-file-text"></i>
+                    </div>
+                    Descripción
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell text-center">
+                    <div class="icon-circle actions-header">
+                      <i class="fas fa-cogs"></i>
+                    </div>
+                    Acciones
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let c of resultsPage.content"
-                  (click)="goToDetail(c.id)"
-                  style="cursor:pointer;">
-                <td>{{ c.id }}</td>
-                <td>{{ c.nombre }}</td>
-                <td>{{ c.descripcion }}</td>
-                <td class="text-center">
-                  <button (click)="goToEdit(c.id); $event.stopPropagation()" class="btn btn-sm btn-outline-primary me-1" title="Editar">
-                    <i class="fa fa-pencil"></i>
-                  </button>
-                  <button (click)="remove(c); $event.stopPropagation()" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                    <i class="fa fa-trash"></i>
-                  </button>
+              <tr 
+                *ngFor="let especialidad of resultsPage.content; let i = index"
+                class="table-row"
+                (click)="goToDetail(especialidad.id)"
+                [style.animation-delay]="(i * 100) + 'ms'"
+              >
+                <td>
+                  <div class="id-badge">
+                    <span>{{ especialidad.id }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="especialidad-info">
+                    <div class="avatar-especialidades">
+                      <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="especialidad-details">
+                      <span class="especialidad-name">{{ especialidad.nombre }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="descripcion-text">
+                    {{ especialidad.descripcion || 'Sin descripción' }}
+                  </div>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-edit"
+                      (click)="goToEdit(especialidad.id); $event.stopPropagation()" 
+                      title="Editar especialidad"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete"
+                      (click)="remove(especialidad); $event.stopPropagation()" 
+                      title="Eliminar especialidad"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="card-footer bg-white">
+        
+        <div class="card-footer">
           <app-pagination
             [totalPages]="resultsPage.totalPages"
             [currentPage]="currentPage"
@@ -67,24 +139,216 @@ import { PaginationComponent } from '../pagination/pagination.component';
     </div>
   `,
   styles: [`
-    .table-hover tbody tr:hover {
-      background-color: #f5f7fa;
+    /* === ESPECIALIDADES CON SISTEMA DE COLORES GLOBAL === */
+    
+    /* Banner header structure - uses global banner-especialidades */
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
     }
-    .btn-outline-primary, .btn-outline-danger {
-      min-width: 32px;
+
+    .title-section {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
     }
-    .card {
-      border-radius: 1.15rem;
+
+    .header-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .header-text h1 {
+      color: white;
+      margin: 0;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .header-text p {
+      color: rgba(255,255,255,0.9);
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    /* Table structure */
+    .table-container {
+      padding: 0;
+      overflow-x: auto;
+    }
+
+    .table-row {
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+      border-bottom: 1px solid #f8f9fa;
+    }
+
+    .table-row:hover {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .table-row td {
+      padding: 1.25rem 1rem;
+      vertical-align: middle;
+      border: none;
+    }
+
+    /* ID BADGE usando sistema global */
+    .id-badge {
+      background: var(--especialidades-gradient);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px var(--especialidades-shadow);
+      display: inline-block;
+    }
+
+    /* Especialidad info usando avatares globales */
+    .especialidad-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .especialidad-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .especialidad-name {
+      font-weight: 600;
+      color: #495057;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    /* Descripción text styling */
+    .descripcion-text {
+      color: #6c757d;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      max-width: 300px;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .card-header {
-      border-top-left-radius: 1rem !important;
-      border-top-right-radius: 1rem !important;
-      padding-top: 0.75rem;      
-      padding-bottom: 0.75rem;  
-      padding-right: 0.7rem!important;
-      padding-left: 0.7rem!important;  
-      overflow: hidden;
+
+    /* Action buttons usando sistema global */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-action {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
+    .btn-edit {
+      background: var(--action-edit);
+      color: white;
+    }
+
+    .btn-edit:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px var(--action-edit-shadow);
+    }
+
+    .btn-delete {
+      background: var(--action-delete);
+      color: white;
+    }
+
+    .btn-delete:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px var(--action-delete-shadow);
+    }
+
+    /* Animaciones */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .table-row {
+      animation: fadeInUp 0.5s ease-out;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .container-fluid {
+        padding: 1rem;
+      }
+      
+      .header-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+      }
+      
+      .header-text h1 {
+        font-size: 1.5rem;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+      
+      .modern-table {
+        min-width: 600px;
+      }
+      
+      .descripcion-text {
+        max-width: 150px;
+      }
+      
+      .especialidad-info {
+        gap: 0.5rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .btn-action {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+      }
     }
   `]
 })

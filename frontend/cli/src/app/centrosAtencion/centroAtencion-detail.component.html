@@ -1,413 +1,805 @@
-<div *ngIf="centroAtencion">
+<div *ngIf="centroAtencion" class="container-fluid">
+  
+  <!-- Header Normalizado con Sistema de Colores -->
+  <div class="banner-centro-atencion">
+    <div class="header-content">
+      <div class="title-section">
+        <i class="icon-centro-atencion"></i>
+        <div class="header-text">
+          <h1>{{ centroAtencion.nombre || 'Centro de Atención' }}</h1>
+          <p>Gestión integral del centro médico</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <ul class="nav nav-tabs custom-tabs mb-4" id="centroTabs" role="tablist">
+  <!-- Tab Navigation -->
+  <ul class="nav nav-tabs modern-tabs mb-4" id="centroTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'detalle'" (click)="activeTab = 'detalle'" type="button">
-        <i class="fa fa-info-circle me-1"></i> Detalle / Editar
+        <i class="icon-centro-atencion me-2"></i> Detalle / Editar
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'consultorios'" (click)="activeTab = 'consultorios'"
         type="button">
-        <i class="fa fa-stethoscope me-1"></i> Consultorios
+        <i class="icon-consultorios me-2"></i> Consultorios
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'especialidades'" (click)="activeTab = 'especialidades'"
         type="button">
-        <i class="fa fa-user-md me-1"></i> Especialidades
+        <i class="icon-especialidades me-2"></i> Especialidades
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'staff'" (click)="activeTab = 'staff'" type="button">
-        <i class="fa fa-users me-1"></i> Staff Médico
+        <i class="icon-medicos me-2"></i> Staff Médico
       </button>
     </li>
   </ul>
 
-  <hr class="mb-4" style="border-top: 2px solid #1565c0; opacity: 0.15;">
-
   <div class="tab-content">
+    
     <!-- TAB DETALLE/EDITAR -->
     <div class="tab-pane fade" [class.show]="activeTab === 'detalle'" [class.active]="activeTab === 'detalle'">
-      <!-- MODO VISTA -->
-      <div *ngIf="centroAtencion && !modoEdicion" class="mb-4">
-        <div *ngIf="centroAtencion && !modoEdicion" class="mb-4">
-          <div class="card shadow-sm" style="overflow: hidden;">
-            <!-- Header sin dropdown -->
-            <div class="card-header bg-primary text-white d-flex align-items-center"
-              style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
-              <i class="fa fa-hospital-o me-2"></i>
-              <span class="fs-4 fw-bold">Centro de Atención</span>
+      <div class="card">
+        <!-- HEADER DEL CARD -->
+        <div class="card-header text-white">
+          <div class="d-flex align-items-center">
+            <div class="info-icon me-3" style="background: rgba(255,255,255,0.2);">
+              🏥
             </div>
-            <div class="card-body">
-              <h2 class="display-6 fw-bold mb-4">
-                <i class="fa fa-map-marker-alt me-2"></i>{{ centroAtencion.nombre }}
-              </h2>
-              <div class="row g-4">
-                <div class="col-md-6">
-                  <div class="mb-2">
-                    <i class="fa fa-barcode text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Código:</span>
-                    <span class="fw-bold">{{ centroAtencion.code }}</span>
-                  </div>
-                  <div class="mb-2">
-                    <i class="fa fa-road text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Dirección:</span>
-                    {{ centroAtencion.direccion }}
-                  </div>
-                  <div class="mb-2">
-                    <i class="fa fa-map-marker text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Localidad:</span>
-                    {{ centroAtencion.localidad }}
-                  </div>
-                  <div class="mb-2">
-                    <i class="fa fa-flag text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Provincia:</span>
-                    {{ centroAtencion.provincia }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-2">
-                    <i class="fa fa-phone text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Teléfono:</span>
-                    {{ centroAtencion.telefono }}
-                  </div>
-                  <div class="mb-2">
-                    <i class="fa fa-globe text-secondary me-2"></i>
-                    <span class="fw-semibold text-secondary">Coordenadas:</span>
-                    <span class="badge bg-light text-dark border">
-                      {{ centroAtencion.latitud }}, {{ centroAtencion.longitud }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-4">
-                <button class="btn btn-danger me-2" (click)="goBack()">
-                  <i class="fa fa-arrow-left me-1"></i> Atrás
-                </button>
-                <button class="btn btn-primary" (click)="activarEdicion()">
-                  <i class="fa fa-pencil me-1"></i> Editar
-                </button>
-              </div>
+            <div>
+              <h4 class="mb-0 fw-bold">
+                <ng-container *ngIf="!modoEdicion && centroAtencion.id; else nuevoTitle">
+                  Centro de Atención: {{ centroAtencion.nombre }}
+                </ng-container>
+                <ng-template #nuevoTitle>
+                  <ng-container *ngIf="!centroAtencion.id || centroAtencion.id === 0; else editando">
+                    Nuevo Centro de Atención
+                  </ng-container>
+                  <ng-template #editando>
+                    Editando: {{ centroAtencion.nombre }}
+                  </ng-template>
+                </ng-template>
+              </h4>
+              <small class="opacity-75">
+                <ng-container *ngIf="!modoEdicion">Información del Centro de Atención</ng-container>
+                <ng-container *ngIf="modoEdicion && centroAtencion.id">Editando Centro de Atención</ng-container>
+                <ng-container *ngIf="modoEdicion && (!centroAtencion.id || centroAtencion.id === 0)">Creando Nuevo Centro de Atención</ng-container>
+              </small>
             </div>
           </div>
         </div>
 
-      </div>
-      <!-- MODO EDICIÓN -->
-      <form *ngIf="modoEdicion" #form="ngForm" class="mt-4">
-        <div class="card shadow-sm">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">
-              <ng-container *ngIf="!centroAtencion.id || centroAtencion.id === 0; else editando">
-                <i class="fa fa-plus me-2"></i>Nuevo Centro de Atención
-              </ng-container>
-              <ng-template #editando>
-                <i class="fa fa-pencil me-2"></i>Editando: {{ centroAtencion.nombre }}
-              </ng-template>
-            </h4>
+        <!-- CUERPO DEL CARD -->
+        <div class="card-body">
+          <!-- MODO VISTA -->
+          <div *ngIf="!modoEdicion">
+            <div class="row">
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    🆔
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Código del Centro</div>
+                    <div class="info-value">
+                      <span class="id-display">{{ centroAtencion.code || 'No asignado' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    📍
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Dirección</div>
+                    <div class="info-value">
+                      <span class="centro-display">{{ centroAtencion.direccion || 'No especificada' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                    🏙️
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Localidad</div>
+                    <div class="info-value">
+                      <span class="localidad-display">{{ centroAtencion.localidad || 'No especificada' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">
+                    🗺️
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Provincia</div>
+                    <div class="info-value">
+                      <span class="provincia-display">{{ centroAtencion.provincia || 'No especificada' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">
+                    📞
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Teléfono</div>
+                    <div class="info-value">
+                      <span class="telefono-display">{{ centroAtencion.telefono || 'No registrado' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #e83e8c 0%, #d91a72 100%);">
+                    🌍
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Coordenadas GPS</div>
+                    <div class="info-value">
+                      <span class="coordenadas-display">{{ centroAtencion.latitud }}, {{ centroAtencion.longitud }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label for="name" class="form-label">Nombre:</label>
-                <input name="name" required placeholder="Nombre" class="form-control"
-                  [(ngModel)]="centroAtencion.nombre" [ngModelOptions]="{standalone: true}" #name="ngModel">
-                <div *ngIf="name.invalid && (name.dirty || name.touched)" class="alert alert-warning py-1 mt-1 mb-0">
-                  <div *ngIf="name.errors?.['required']">
-                    El nombre del centro es requerido
+
+          <!-- MODO EDICIÓN -->
+          <form *ngIf="modoEdicion" (ngSubmit)="save()" #centroForm="ngForm">
+            <div class="row">
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏥</span>
+                    Nombre del Centro
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.nombre"
+                    name="nombre"
+                    class="form-control form-control-modern"
+                    placeholder="Nombre del centro de atención"
+                    required
+                    #nombre="ngModel"
+                  >
+                  <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="form-help text-danger">
+                    El nombre del centro es requerido.
+                  </div>
+                  <div class="form-help">
+                    Ingrese el nombre completo del centro de atención médica.
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label for="code" class="form-label">Código:</label>
-                <input name="code" placeholder="Código" class="form-control" [(ngModel)]="centroAtencion.code"
-                  [ngModelOptions]="{standalone: true}">
-              </div>
-              <div class="col-md-6">
-                <label for="direccion" class="form-label">Dirección:</label>
-                <input name="direccion" required placeholder="Dirección" class="form-control"
-                  [(ngModel)]="centroAtencion.direccion" [ngModelOptions]="{standalone: true}">
-              </div>
-              <div class="col-md-6">
-                <label for="localidad" class="form-label">Localidad:</label>
-                <input name="localidad" required placeholder="Localidad" class="form-control"
-                  [(ngModel)]="centroAtencion.localidad" [ngModelOptions]="{standalone: true}">
-              </div>
-              <div class="col-md-6">
-                <label for="provincia" class="form-label">Provincia:</label>
-                <input name="provincia" required placeholder="Provincia" class="form-control"
-                  [(ngModel)]="centroAtencion.provincia" [ngModelOptions]="{standalone: true}">
-              </div>
-              <div class="col-md-6">
-                <label for="telefono" class="form-label">Teléfono:</label>
-                <input name="telefono" placeholder="Teléfono" class="form-control" [(ngModel)]="centroAtencion.telefono"
-                  [ngModelOptions]="{standalone: true}" pattern="^[0-9]*$" #telefono="ngModel" required>
-                <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)"
-                  class="alert alert-warning py-1 mt-1 mb-0">
-                  <div *ngIf="telefono.errors?.['pattern']">
-                    Solo se permiten números en el teléfono.
-                  </div>
-                  <div *ngIf="telefono.errors?.['required']">
-                    El teléfono es requerido.
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">🆔</span>
+                    Código
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.code"
+                    name="code"
+                    class="form-control form-control-modern"
+                    placeholder="Código del centro (opcional)"
+                  >
+                  <div class="form-help">
+                    El código se asigna automáticamente si no se especifica.
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label for="coordenadas" class="form-label">Coordenadas:</label>
-                <input name="coordenadas" placeholder="latitud,longitud" class="form-control" [(ngModel)]="coordenadas"
-                  [ngModelOptions]="{standalone: true}">
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">📍</span>
+                    Dirección
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.direccion"
+                    name="direccion"
+                    class="form-control form-control-modern"
+                    placeholder="Dirección completa del centro"
+                    required
+                    #direccion="ngModel"
+                  >
+                  <div *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)" class="form-help text-danger">
+                    La dirección es requerida.
+                  </div>
+                  <div class="form-help">
+                    Ingrese la dirección completa donde se ubica el centro.
+                  </div>
+                </div>
               </div>
-              <div class="col-md-6 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-primary w-100" (click)="toggleMap()">
-                  <i class="fa fa-map-marker me-1"></i> Marcar en el mapa
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">🏙️</span>
+                    Localidad
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.localidad"
+                    name="localidad"
+                    class="form-control form-control-modern"
+                    placeholder="Localidad donde se encuentra"
+                    required
+                    #localidad="ngModel"
+                  >
+                  <div *ngIf="localidad.invalid && (localidad.dirty || localidad.touched)" class="form-help text-danger">
+                    La localidad es requerida.
+                  </div>
+                  <div class="form-help">
+                    Especifique la localidad del centro de atención.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #e83e8c 0%, #d91a72 100%);">🗺️</span>
+                    Provincia
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.provincia"
+                    name="provincia"
+                    class="form-control form-control-modern"
+                    placeholder="Provincia"
+                    required
+                    #provincia="ngModel"
+                  >
+                  <div *ngIf="provincia.invalid && (provincia.dirty || provincia.touched)" class="form-help text-danger">
+                    La provincia es requerida.
+                  </div>
+                  <div class="form-help">
+                    Indique la provincia donde se ubica el centro.
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">📞</span>
+                    Teléfono
+                  </label>
+                  <input
+                    [(ngModel)]="centroAtencion.telefono"
+                    name="telefono"
+                    class="form-control form-control-modern"
+                    placeholder="Número de teléfono"
+                    pattern="^[0-9]*$"
+                    required
+                    #telefono="ngModel"
+                  >
+                  <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="form-help text-danger">
+                    <div *ngIf="telefono.errors?.['pattern']">Solo se permiten números.</div>
+                    <div *ngIf="telefono.errors?.['required']">El teléfono es requerido.</div>
+                  </div>
+                  <div class="form-help">
+                    Número de contacto del centro (solo números).
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🌍</span>
+                    Coordenadas GPS
+                  </label>
+                  <input
+                    [(ngModel)]="coordenadas"
+                    name="coordenadas"
+                    class="form-control form-control-modern"
+                    placeholder="latitud,longitud (ej: -34.6037,-58.3816)"
+                  >
+                  <div class="form-help">
+                    Formato: latitud,longitud o use el botón para marcar en el mapa.
+                  </div>
+                  <button type="button" class="btn btn-modern btn-secondary mt-2" (click)="toggleMap()">
+                    <i class="fa fa-map-marker me-2"></i> Marcar en Mapa
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Map Container -->
+            <div *ngIf="showMap" class="mt-4">
+              <div class="map-container">
+                <div id="map" style="height: 400px; width: 100%;"></div>
+              </div>
+              <div class="mt-3">
+                <input [(ngModel)]="searchQuery" placeholder="Buscar ubicación..." 
+                       class="form-control form-control-modern me-2" style="display: inline-block; width: auto;">
+                <button type="button" class="btn btn-modern btn-success" (click)="searchLocation()">
+                  <i class="fa fa-search me-2"></i> Buscar
                 </button>
               </div>
             </div>
-            <div class="d-flex gap-2 mt-4 justify-content-end">
-              <button type="button" class="btn btn-secondary" (click)="cancelarEdicion()">
-                <i class="fa fa-times me-1"></i> Cancelar
+          </form>
+        </div>
+
+        <!-- FOOTER DEL CARD -->
+        <div class="card-footer">
+          <div class="d-flex gap-2 flex-wrap">
+            <!-- Botones en modo vista -->
+            <ng-container *ngIf="!modoEdicion">
+              <button type="button" class="btn btn-modern btn-back" (click)="goBack()">
+                ← Volver
               </button>
-              <button type="button" (click)="save()" class="btn btn-success"
-                [disabled]="form.invalid || allFieldsEmpty()">
-                <i class="fa fa-save me-1"></i> Guardar
+              <button type="button" class="btn btn-modern btn-edit" (click)="activarEdicion()">
+                ✏️ Editar
               </button>
-              <button *ngIf="centroAtencion.id" type="button" (click)="remove(centroAtencion)"
-                class="btn btn-outline-danger">
-                <i class="fa fa-trash me-1"></i> Eliminar
+              <button 
+                type="button" 
+                class="btn btn-modern btn-delete ms-auto" 
+                (click)="confirmDelete(centroAtencion)"
+                *ngIf="centroAtencion.id"
+              >
+                🗑️ Eliminar
               </button>
-            </div>
+            </ng-container>
+
+            <!-- Botones en modo edición -->
+            <ng-container *ngIf="modoEdicion">
+              <button 
+                type="submit" 
+                class="btn btn-modern btn-save" 
+                [disabled]="allFieldsEmpty()"
+                (click)="save()"
+              >
+                💾 Guardar
+              </button>
+              <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
+                ❌ Cancelar
+              </button>
+            </ng-container>
           </div>
         </div>
-      </form>
+      </div>
     </div>
 
     <!-- TAB CONSULTORIOS -->
-    <div class="tab-pane fade" [class.show]="activeTab === 'consultorios'"
-      [class.active]="activeTab === 'consultorios'">
-      <div *ngIf="consultorios.length > 0" class="mt-3">
-        <div class="card shadow-sm mb-4">
-          <!-- Header con nombre del centro -->
-          <div class="card-header bg-primary text-white d-flex align-items-center"
-            style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem; border-bottom: 2px solid #1565c0;">
-            <i class="fa fa-stethoscope me-2"></i>
-            Consultorios en <b class="ms-1">{{ centroAtencion.nombre }}</b>
-          </div>
-          <div class="card-body p-3">
-            <button *ngIf="!modoCrearConsultorio" class="btn btn-outline-primary w-100 mb-3"
-              (click)="modoCrearConsultorio = true">
-              <i class="fa fa-plus"></i> Nuevo Consultorio
-            </button>
-            <form class="row g-2 align-items-end mb-3" (ngSubmit)="crearConsultorio()" *ngIf="modoCrearConsultorio">
-              <div class="col-12 col-md-4">
-                <input type="number" class="form-control" placeholder="Número" [(ngModel)]="nuevoConsultorio.numero"
-                  name="numero" required min="1">
+    <div class="tab-pane fade" [class.show]="activeTab === 'consultorios'" [class.active]="activeTab === 'consultorios'">
+      <div class="modern-card">
+        <div class="modern-card-header">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <i class="icon-consultorios"></i>
               </div>
-              <div class="col-12 col-md-5">
-                <input type="text" class="form-control" placeholder="Nombre" [(ngModel)]="nuevoConsultorio.nombre"
-                  name="name" required>
+              <div>
+                <h2 class="mb-1 fw-bold text-white">Consultorios</h2>
+                <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
               </div>
-              <div class="col-12 col-md-3 d-flex gap-2">
-                <button class="btn btn-success flex-fill" type="submit"><i class="fa fa-plus"></i> Crear</button>
-                <button class="btn btn-secondary flex-fill" type="button"
-                  (click)="modoCrearConsultorio = false">Cancelar</button>
-              </div>
-            </form>
-            <div *ngIf="mensajeConsultorio" class="alert py-2 mb-3" [ngClass]="{
-                   'alert-info': tipoMensajeConsultorio === 'info',
-                   'alert-success': tipoMensajeConsultorio === 'success',
-                   'alert-danger': tipoMensajeConsultorio === 'danger'
-                 }">
-              {{ mensajeConsultorio }}
             </div>
-            <table class="table table-hover align-middle text-center">
-              <thead class="table-primary">
-                <tr>
-                  <th>#</th>
-                  <th>Número</th>
-                  <th>Nombre</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let consultorio of consultorios; let i = index">
-                  <td>{{ i + 1 }}</td>
-                  <td>{{ consultorio.numero }}</td>
-                  <td>{{ consultorio.nombre }}</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" (click)="editarConsultorio(i)">
-                      <i class="fa fa-pencil"></i> Editar
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarConsultorio(consultorio)">
-                      <i class="fa fa-trash"></i> Eliminar
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="text-end text-muted small mt-3">
-              Total de consultorios: {{ consultorios.length }}
+            <div *ngIf="!modoCrearConsultorio">
+              <button class="btn-modern btn-success-modern" (click)="modoCrearConsultorio = true">
+                <i class="fa fa-plus me-2"></i> Nuevo Consultorio
+              </button>
             </div>
           </div>
+        </div>
+        
+        <div class="modern-card-body">
+          <!-- Alert Messages -->
+          <div *ngIf="mensajeConsultorio" class="modern-alert" 
+               [class.alert-success]="tipoMensajeConsultorio === 'success'"
+               [class.alert-danger]="tipoMensajeConsultorio === 'danger'"
+               [class.alert-info]="tipoMensajeConsultorio === 'info'">
+            <i class="fa" [class.fa-check-circle]="tipoMensajeConsultorio === 'success'"
+               [class.fa-exclamation-triangle]="tipoMensajeConsultorio === 'danger'"
+               [class.fa-info-circle]="tipoMensajeConsultorio === 'info'" me-2></i>
+            {{ mensajeConsultorio }}
+          </div>
+          
+          <!-- Create New Consultorio Form -->
+          <div *ngIf="modoCrearConsultorio" class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
+            <h5 class="mb-3 text-primary">
+              <i class="fa fa-plus-circle me-2"></i>Crear Nuevo Consultorio
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Número:</label>
+                <input type="number" [(ngModel)]="nuevoConsultorio.numero" 
+                       class="form-control-modern" placeholder="Número del consultorio">
+              </div>
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Nombre:</label>
+                <input type="text" [(ngModel)]="nuevoConsultorio.nombre" 
+                       class="form-control-modern" placeholder="Nombre descriptivo del consultorio">
+              </div>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+              <button class="btn-modern btn-success-modern" (click)="crearConsultorio()"
+                      [disabled]="!nuevoConsultorio.numero || !nuevoConsultorio.nombre">
+                <i class="fa fa-save me-2"></i> Crear
+              </button>
+              <button class="btn-modern btn-secondary-modern" (click)="modoCrearConsultorio = false; nuevoConsultorio = { numero: null, nombre: '' }">
+                <i class="fa fa-times me-2"></i> Cancelar
+              </button>
+            </div>
+          </div>
+          
+          <!-- Consultorios Table -->
+          <div *ngIf="consultorios.length > 0; else noConsultorios">
+            <div class="modern-table">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-consultorios me-2"></div>
+                        Número
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-consultorios me-2"></div>
+                        Nombre
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-obra-social me-2"></div>
+                        Acciones
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let consultorio of consultorios; let i = index">
+                    <td>
+                      <span class="badge-consultorios">
+                        <i class="fa fa-hashtag me-1"></i>{{ consultorio.numero }}
+                      </span>
+                    </td>
+                    <td>
+                      <div *ngIf="editConsultorioIndex !== i">
+                        <i class="icon-consultorios me-2"></i>
+                        {{ consultorio.nombre }}
+                      </div>
+                      <div *ngIf="editConsultorioIndex === i">
+                        <input [(ngModel)]="consultorio.nombre" class="form-control-modern">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <button *ngIf="editConsultorioIndex !== i" 
+                                class="action-btn btn-edit" 
+                                (click)="editarConsultorio(i)"
+                                title="Editar consultorio">
+                          <i class="fa fa-pencil"></i>
+                        </button>
+                        <button *ngIf="editConsultorioIndex === i" 
+                                class="action-btn btn-add" 
+                                (click)="guardarEdicionConsultorio(i)"
+                                title="Guardar cambios">
+                          <i class="fa fa-save"></i>
+                        </button>
+                        <button *ngIf="editConsultorioIndex === i" 
+                                class="action-btn btn-delete" 
+                                (click)="cancelarEdicionConsultorio()"
+                                title="Cancelar edición">
+                          <i class="fa fa-times"></i>
+                        </button>
+                        <button *ngIf="editConsultorioIndex !== i" 
+                                class="action-btn btn-delete" 
+                                (click)="eliminarConsultorio(consultorio)"
+                                title="Eliminar consultorio">
+                          <i class="fa fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <ng-template #noConsultorios>
+            <div class="text-center py-5" style="opacity: 0.7;">
+              <i class="fa fa-stethoscope" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
+              <h5>No hay consultorios registrados</h5>
+              <p class="text-muted">Agregue el primer consultorio para este centro de atención</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
 
     <!-- TAB ESPECIALIDADES -->
-    <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'"
-      [class.active]="activeTab === 'especialidades'">
-      <div class="mt-3">
-        <div class="card mt-4 shadow-sm">
-          <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+    <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'" [class.active]="activeTab === 'especialidades'">
+      <div class="modern-card">
+        <div class="modern-card-header">
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <i class="icon-especialidades"></i>
+            </div>
             <div>
-              <i class="fa fa-user-md me-2"></i>
-              Especialidades en <b class="ms-1">{{ centroAtencion.nombre }}</b>
+              <h2 class="mb-1 fw-bold text-white">Especialidades</h2>
+              <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
             </div>
           </div>
-          <div class="card-body">
-            <form class="d-flex gap-2 align-items-center mb-3">
-              <button
-                class="btn btn-sm btn-primary w-50"
-                (click)="asociarEspecialidad()"
-                [disabled]="!especialidadSeleccionada"
-              >
-                <i class="fa fa-plus"></i> Asociar
-              </button>
-              <select
-                class="form-control w-100"
-                [(ngModel)]="especialidadSeleccionada"
-                [ngModelOptions]="{ standalone: true }"
-              >
-                <option [ngValue]="null">Seleccionar especialidad...</option>
-                <option *ngFor="let esp of especialidadesDisponibles || []" [ngValue]="esp">
-                  {{ esp.nombre }}
-                </option>
-              </select>
-            </form>
-            <ul class="list-group">
-              <li
-                class="list-group-item d-flex justify-content-between align-items-center shadow-sm"
-                *ngFor="let esp of especialidadesAsociadas"
-              >
-                <div>
-                  <b>{{ esp.nombre }}</b>
-                  <span class="text-muted small d-block">{{ esp.descripcion || 'Sin descripción' }}</span>
-                </div>
-                <button class="btn btn-sm btn-outline-danger" (click)="desasociarEspecialidad(esp)">
-                  <i class="fa fa-trash"></i> Quitar
+        </div>
+        
+        <div class="modern-card-body">
+          <!-- Alert Messages -->
+          <div *ngIf="mensaje" class="modern-alert" 
+               [class.alert-success]="tipoMensaje === 'success'"
+               [class.alert-danger]="tipoMensaje === 'danger'"
+               [class.alert-info]="tipoMensaje === 'info'">
+            <i class="fa" [class.fa-check-circle]="tipoMensaje === 'success'"
+               [class.fa-exclamation-triangle]="tipoMensaje === 'danger'"
+               [class.fa-info-circle]="tipoMensaje === 'info'"></i>
+            {{ mensaje }}
+          </div>
+          
+          <!-- Add Especialidad Form -->
+          <div class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
+            <h5 class="mb-3 text-primary">
+              <i class="fa fa-plus-circle me-2"></i>Asociar Especialidad
+            </h5>
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Seleccionar Especialidad:</label>
+                <select [(ngModel)]="especialidadSeleccionada" class="modern-select form-control">
+                  <option [ngValue]="null">Seleccione una especialidad...</option>
+                  <option *ngFor="let esp of especialidadesDisponibles" [ngValue]="esp">
+                    {{ esp.nombre }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <button class="btn-modern btn-success-modern w-100" (click)="asociarEspecialidad()"
+                        [disabled]="!especialidadSeleccionada">
+                  <i class="fa fa-plus me-2"></i> Asociar
                 </button>
-              </li>
-            </ul>
-            <div *ngIf="especialidadesAsociadas.length === 0" class="text-muted mt-3 text-center">
-              No hay especialidades asociadas a este centro.
+              </div>
             </div>
           </div>
+          
+          <!-- Especialidades Associated Table -->
+          <div *ngIf="especialidadesAsociadas.length > 0; else noEspecialidades">
+            <h5 class="mb-3 text-primary">
+              <i class="fa fa-list me-2"></i>Especialidades Asociadas
+            </h5>
+            <div class="modern-table">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-centro-atencion me-2"></div>
+                        ID
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-especialidades me-2"></div>
+                        Especialidad
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-obra-social me-2"></div>
+                        Acciones
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let esp of especialidadesAsociadas">
+                    <td>
+                      <span class="badge-centro-atencion">
+                        <i class="fa fa-hashtag me-1"></i>{{ esp.id }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <i class="icon-especialidades me-2"></i>
+                        <span class="fw-semibold">{{ esp.nombre }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <button class="action-btn btn-delete" 
+                              (click)="desasociarEspecialidad(esp)"
+                              title="Desasociar especialidad">
+                        <i class="fa fa-unlink"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <ng-template #noEspecialidades>
+            <div class="text-center py-5" style="opacity: 0.7;">
+              <i class="fa fa-user-md" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
+              <h5>No hay especialidades asociadas</h5>
+              <p class="text-muted">Asocie especialidades para que puedan atender en este centro</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
 
     <!-- TAB STAFF MÉDICO -->
     <div class="tab-pane fade" [class.show]="activeTab === 'staff'" [class.active]="activeTab === 'staff'">
-      <div class="mt-3">
-        <div class="card mt-4" style="overflow: hidden;">
-          <div class="card-header bg-primary text-white d-flex align-items-center"
-            style="border-top-left-radius: 0.6rem; border-top-right-radius: 0.6rem;">
-            <i class="fa fa-users me-2"></i>
-            Staff Médico en <b class="ms-1">{{ centroAtencion.nombre }}</b>
+      <div class="modern-card">
+        <div class="modern-card-header">
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <i class="icon-medicos"></i>
+            </div>
+            <div>
+              <h2 class="mb-1 fw-bold text-white">Staff Médico</h2>
+              <p class="mb-0 opacity-75">{{ centroAtencion.nombre }}</p>
+            </div>
           </div>
-          <div class="card-body">
-            <form class="row g-2 align-items-end mb-3" (ngSubmit)="asociarMedico()" *ngIf="activeTab === 'staff'">
-              <!-- Selección de Médico -->
-              <div class="col-12 col-md-5">
-                <select class="form-control" [(ngModel)]="medicoSeleccionado" name="medicoSeleccionado" required
-                  (change)="onMedicoSeleccionado()">
-                  <option [ngValue]="null">Seleccionar médico...</option>
+        </div>
+        
+        <div class="modern-card-body">
+          <!-- Alert Messages -->
+          <div *ngIf="mensajeStaff" class="modern-alert" 
+               [class.alert-success]="tipoMensajeStaff === 'success'"
+               [class.alert-danger]="tipoMensajeStaff === 'danger'"
+               [class.alert-info]="tipoMensajeStaff === 'info'">
+            <i class="fa" [class.fa-check-circle]="tipoMensajeStaff === 'success'"
+               [class.fa-exclamation-triangle]="tipoMensajeStaff === 'danger'"
+               [class.fa-info-circle]="tipoMensajeStaff === 'info'"></i>
+            {{ mensajeStaff }}
+          </div>
+          
+          <!-- Add Médico Form -->
+          <div class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
+            <h5 class="mb-3 text-primary">
+              <i class="fa fa-user-plus me-2"></i>Asociar Médico
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Seleccionar Médico:</label>
+                <select [(ngModel)]="medicoSeleccionado" 
+                        (ngModelChange)="onMedicoSeleccionado()"
+                        class="modern-select form-control">
+                  <option [ngValue]="null">Seleccione un médico...</option>
                   <option *ngFor="let medico of medicosDisponibles" [ngValue]="medico">
-                    {{ medico.nombre }} {{ medico.apellido }}
+                    Dr. {{ medico.nombre }} {{ medico.apellido }} - {{ medico.especialidad.nombre }}
                   </option>
                 </select>
               </div>
-
-              <!-- Selección de Especialidad -->
-              <div class="col-12 col-md-5">
-                <select class="form-control" [(ngModel)]="especialidadSeleccionada" name="especialidadSeleccionada"
-                  required>
-                  <option [ngValue]="null">Seleccionar especialidad...</option>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Especialidad:</label>
+                <select [(ngModel)]="especialidadSeleccionada" class="modern-select form-control">
+                  <option [ngValue]="null">Seleccione especialidad...</option>
                   <option *ngFor="let esp of especialidadesMedico" [ngValue]="esp">
                     {{ esp.nombre }}
                   </option>
                 </select>
               </div>
-
-              <!-- Botón Asociar -->
-              <div class="col-12 col-md-2">
-                <button class="btn btn-success w-100" type="submit"
-                  [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
-                  <i class="fa fa-plus"></i> Asociar
+              <div class="col-md-2 d-flex align-items-end">
+                <button class="btn-modern btn-success-modern w-100" (click)="asociarMedico()"
+                        [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
+                  <i class="fa fa-plus me-2"></i> Asociar
                 </button>
               </div>
-            </form>
-
-            <!-- Mensaje de error o éxito -->
-            <div *ngIf="mensajeStaff" class="alert py-2 mb-3" [ngClass]="{
-                   'alert-info': tipoMensajeStaff === 'info',
-                   'alert-success': tipoMensajeStaff === 'success',
-                   'alert-danger': tipoMensajeStaff === 'danger'
-                 }">
-              {{ mensajeStaff }}
             </div>
-
-            <!-- Tabla de Staff Médico -->
-            <table class="table table-hover align-middle shadow-sm rounded" *ngIf="staffMedicoCentro.length > 0">
-              <thead class="table-primary">
-                <tr>
-                  <th class="text-center" style="width: 60px;">#</th>
-                  <th>Médico</th>
-                  <th>Especialidad</th>
-                  <th class="text-center" style="width: 180px;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let staff of staffMedicoCentro">
-                  <td class="text-center fw-bold">{{ staff.id }}</td>
-                  <td>
-                    <i class="fa fa-user-md text-primary me-1"></i>
-                    <span class="fw-semibold">
-                      {{ staff.medico?.nombre }} {{ staff.medico?.apellido || '' }}
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge bg-info text-dark px-3 py-2 fs-6">
-                      <i class="fa fa-stethoscope me-1"></i>
-                      {{ staff.especialidad?.nombre || 'Sin especialidad' }}
-                    </span>
-                  </td>
-                  <td class="text-center">
-                    <a [routerLink]="['/staffMedico', staff.id]" class="btn btn-sm btn-outline-primary me-1"
-                      title="Ver detalle">
-                      <i class="fa fa-eye"></i>
-                    </a>
-                    <button class="btn btn-sm btn-outline-success me-1" (click)="agregarDisponibilidad(staff)" title="Agregar disponibilidad">
-                      <i class="fa fa-calendar-plus"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" (click)="desasociarMedico(staff)" title="Desasociar">
-                      <i class="fa fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <!-- Mensaje si no hay staff médico -->
-            <div *ngIf="staffMedicoCentro.length === 0" class="alert alert-info">
-              No hay staff médico asignado a este centro.
+            <div *ngIf="medicoYaAsociado()" class="modern-alert alert-danger mt-3">
+              <i class="fa fa-exclamation-triangle me-2"></i>
+              Este médico ya está asociado al centro
             </div>
           </div>
+          
+          <!-- Staff Médico Table -->
+          <div *ngIf="staffMedicoCentro.length > 0; else noStaff">
+            <div class="modern-table">
+              <table class="table mb-0">
+                <thead>
+                  <tr>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-centro-atencion me-2"></div>
+                        ID
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-medicos me-2"></div>
+                        Médico
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-especialidades me-2"></div>
+                        Especialidad
+                      </div>
+                    </th>
+                    <th>
+                      <div class="d-flex align-items-center">
+                        <div class="icon-obra-social me-2"></div>
+                        Acciones
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let staff of staffMedicoCentro">
+                    <td>
+                      <span class="badge-centro-atencion">
+                        <i class="fa fa-hashtag me-1"></i>{{ staff.id }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar-medicos me-3">
+                          Dr
+                        </div>
+                        <div>
+                          <div class="fw-semibold">Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</div>
+                          <small class="text-muted">Matrícula: {{ staff.medico?.matricula }}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-especialidades">
+                        <i class="fa fa-stethoscope me-1"></i>{{ staff.especialidad?.nombre }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <button class="action-btn btn-add" 
+                                (click)="agregarDisponibilidad(staff)"
+                                title="Agregar disponibilidad">
+                          <i class="fa fa-calendar-plus"></i>
+                        </button>
+                        <button class="action-btn btn-delete" 
+                                (click)="desasociarMedico(staff)"
+                                title="Desasociar médico">
+                          <i class="fa fa-unlink"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <ng-template #noStaff>
+            <div class="text-center py-5" style="opacity: 0.7;">
+              <i class="fa fa-users" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
+              <h5>No hay médicos asociados</h5>
+              <p class="text-muted">Asocie médicos para que puedan atender en este centro</p>
+            </div>
+          </ng-template>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<app-map-modal *ngIf="showMap" (locationSelected)="onLocationSelected($event)"></app-map-modal>
+  <!-- Map Modal Component -->
+  <app-map-modal *ngIf="showMap" 
+                 (locationSelected)="onLocationSelected($event)">
+  </app-map-modal>

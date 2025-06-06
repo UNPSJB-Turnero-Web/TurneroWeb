@@ -3,7 +3,6 @@ import { HomeComponent } from './home/home.component';
 import { TurnosComponent } from './turnos/turnos.component';
 import { TurnoDetailComponent } from './turnos/turno-detail.component';
 import { AgendaComponent } from './agenda/agenda.component';
-import { AgendaDetailComponent } from './agenda/agenda-detail.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
 import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
 import { EspecialidadesComponent } from './especialidades/especialidades.component';
@@ -30,8 +29,6 @@ export const routes: Routes = [
 
     { path: 'turnos/:id', component: TurnoDetailComponent },
     { path: 'agenda', component: AgendaComponent },
-    { path: 'agenda/new', component: AgendaDetailComponent },
-    { path: 'agenda/:id', component: AgendaDetailComponent },
     { path: 'pacientes', component: PacientesComponent },
     { path: 'pacientes/new', component: PacienteDetailComponent },
     { path: 'pacientes/:id', component: PacienteDetailComponent },

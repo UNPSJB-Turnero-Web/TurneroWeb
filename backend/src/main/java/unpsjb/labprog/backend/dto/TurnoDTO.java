@@ -31,5 +31,12 @@ public class TurnoDTO {
     private Integer centroId;
 
     private String titulo;
+    
+    // Campos para manejo de slots en la agenda
+    private Boolean esSlot;          // true = slot generado, false/null = turno real
+    private Boolean ocupado;         // true = slot ocupado por un turno, false = disponible
+    private String backgroundColor;  // Color de fondo para el evento en la agenda
+    private String borderColor;      // Color del borde para el evento en la agenda
+    private String textColor;        // Color del texto para el evento en la agenda
 
 }

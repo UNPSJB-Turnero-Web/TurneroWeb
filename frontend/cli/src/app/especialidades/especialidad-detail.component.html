@@ -1,42 +1,95 @@
 <div class="container mt-4">
-  <!-- MODO VISTA -->
-  <div *ngIf="!modoEdicion">
-    <h2>Especialidad: {{ especialidad.nombre }}</h2>
-    <p><b>Descripción:</b> {{ especialidad.descripcion }}</p>
-    <button class="btn btn-danger" (click)="goBack()">Atrás</button>
-    <button class="btn btn-primary" (click)="activarEdicion()">Editar</button>
-  </div>
+  <div class="card shadow-sm">
+    <!-- MODO VISTA -->
+    <div *ngIf="!modoEdicion">
+      <div class="card-header bg-primary text-white d-flex align-items-center" 
+           style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <i class="fa fa-user-md me-2"></i>
+        <h2 class="fw-bold mb-0 fs-4">{{ especialidad.nombre }}</h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="mb-3">
+              <i class="fa fa-tag text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">ID:</span>
+              <span class="badge bg-light text-dark border ms-2">#{{ especialidad.id }}</span>
+            </div>
+            <div class="mb-3">
+              <i class="fa fa-stethoscope text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Especialidad:</span>
+              <span class="ms-2 fw-bold">{{ especialidad.nombre }}</span>
+            </div>
+            <div class="mb-3">
+              <i class="fa fa-info-circle text-secondary me-2"></i>
+              <span class="fw-semibold text-secondary">Descripción:</span>
+              <p class="mt-2 text-muted">{{ especialidad.descripcion || 'Sin descripción' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-white d-flex gap-2">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="fa fa-arrow-left me-1"></i> Volver
+        </button>
+        <button class="btn btn-primary" (click)="activarEdicion()">
+          <i class="fa fa-edit me-1"></i> Editar
+        </button>
+      </div>
+    </div>
 
-  <!-- MODO EDICIÓN -->
-  <form *ngIf="modoEdicion" (ngSubmit)="save()" #form="ngForm">
-    <h2>
-      <ng-container *ngIf="especialidad.id && especialidad.id !== 0; else nueva">
-        Editando: {{ especialidad.nombre }}
-      </ng-container>
-      <ng-template #nueva>
-        Nueva Especialidad
-      </ng-template>
-    </h2>
-    <div class="mb-3">
-      <label class="form-label">Nombre</label>
-      <input
-        [(ngModel)]="especialidad.nombre"
-        name="nombre"
-        class="form-control"
-        required
-      />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Descripción</label>
-      <textarea
-        [(ngModel)]="especialidad.descripcion"
-        name="descripcion"
-        class="form-control"
-        rows="3"
-        placeholder="Ingrese una descripción"
-      ></textarea>
-    </div>
-    <button type="submit" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">Guardar</button>
-<button type="button" class="btn btn-secondary ms-2" (click)="goBack()">Cancelar</button>  
-</form>
+    <!-- MODO EDICIÓN -->
+    <form *ngIf="modoEdicion" (ngSubmit)="save()" #form="ngForm">
+      <div class="card-header bg-primary text-white d-flex align-items-center" 
+           style="border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+        <i class="fa fa-edit me-2"></i>
+        <h2 class="fw-bold mb-0 fs-4">
+          <ng-container *ngIf="especialidad.id && especialidad.id !== 0; else nueva">
+            Editando: {{ especialidad.nombre }}
+          </ng-container>
+          <ng-template #nueva>
+            Nueva Especialidad
+          </ng-template>
+        </h2>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-8">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-stethoscope text-primary me-2"></i>Nombre de la Especialidad
+              </label>
+              <input
+                [(ngModel)]="especialidad.nombre"
+                name="nombre"
+                class="form-control form-control-lg"
+                placeholder="Ej: Cardiología, Neurología..."
+                required
+              />
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-info-circle text-primary me-2"></i>Descripción
+              </label>
+              <textarea
+                [(ngModel)]="especialidad.descripcion"
+                name="descripcion"
+                class="form-control"
+                rows="4"
+                placeholder="Describe las características y ámbito de esta especialidad médica..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer bg-white d-flex gap-2">
+        <button type="submit" class="btn btn-success" [disabled]="form.invalid || allFieldsEmpty()">
+          <i class="fa fa-save me-1"></i> Guardar
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="fa fa-times me-1"></i> Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
