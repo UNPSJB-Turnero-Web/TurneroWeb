@@ -354,7 +354,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .card-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--esquema-turno-gradient);
       border: none;
       padding: 2rem;
       position: relative;
@@ -389,7 +389,7 @@ import { ModalService } from '../modal/modal.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #667eea;
+      color: var(--esquema-turno-primary);
       font-size: 1.5rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
@@ -546,8 +546,8 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .form-control-modern:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25);
+      border-color: var(--esquema-turno-primary);
+      box-shadow: 0 0 0 0.2rem var(--esquema-turno-shadow);
       outline: 0;
     }
     
