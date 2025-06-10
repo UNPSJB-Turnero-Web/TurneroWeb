@@ -29,7 +29,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .card-header {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: var(--staff-medico-gradient);
       border: none;
       padding: 1.5rem 2rem;
       position: relative;
@@ -59,7 +59,7 @@ import { ModalService } from '../modal/modal.service';
       padding: 1.5rem;
       margin-bottom: 1rem;
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      border-left: 4px solid #28a745;
+      border-left: 4px solid var(--staff-medico-primary);
       transition: all 0.3s ease;
     }
     
@@ -97,13 +97,13 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .id-display {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: var(--staff-medico-gradient);
       color: white;
       padding: 12px 20px;
       border-radius: 25px;
       font-weight: bold;
       font-size: 1.3rem;
-      box-shadow: 0 4px 16px rgba(40,167,69,0.3);
+      box-shadow: 0 4px 16px var(--staff-medico-shadow);
       display: inline-block;
     }
     
@@ -169,12 +169,12 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      background: var(--staff-medico-gradient);
       color: white;
     }
     
     .btn-save {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: var(--staff-medico-gradient);
       color: white;
     }
     
@@ -199,8 +199,8 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .form-control-modern:focus {
-      border-color: #28a745;
-      box-shadow: 0 0 0 0.2rem rgba(40,167,69,0.25);
+      border-color: var(--staff-medico-primary);
+      box-shadow: 0 0 0 0.2rem var(--staff-medico-shadow);
       background: #f0fff4;
     }
     

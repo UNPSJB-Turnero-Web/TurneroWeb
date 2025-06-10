@@ -339,9 +339,9 @@ import { ModalService } from '../modal/modal.service';
     </div>
   `,
   styles: [`
-    /* Gradiente verde-esmeralda para tema de pacientes */
+    /* Gradiente para tema de pacientes */
     .bg-gradient-green {
-      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+      background: var(--pacientes-gradient);
       position: relative;
       overflow: hidden;
     }
@@ -433,14 +433,14 @@ import { ModalService } from '../modal/modal.service';
 
     .info-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
-      border-color: #10b981;
+      box-shadow: 0 10px 30px var(--pacientes-shadow);
+      border-color: var(--pacientes-primary);
     }
 
     .info-icon {
       width: 50px;
       height: 50px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: var(--pacientes-gradient);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -483,8 +483,8 @@ import { ModalService } from '../modal/modal.service';
     }
 
     .form-control-modern:focus, .form-select:focus {
-      border-color: #10b981;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      border-color: var(--pacientes-primary);
+      box-shadow: 0 0 0 3px var(--pacientes-shadow);
       background: white;
     }
 
@@ -498,13 +498,13 @@ import { ModalService } from '../modal/modal.service';
     .form-floating > .form-control-modern:not(:placeholder-shown) ~ label,
     .form-floating > .form-select:focus ~ label,
     .form-floating > .form-select:not([value=""]) ~ label {
-      color: #10b981;
+      color: var(--pacientes-primary);
       transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
     }
 
     /* Botones con gradiente */
     .btn-success-gradient {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      background: var(--pacientes-gradient);
       border: none;
       color: white;
       font-weight: 600;
@@ -512,9 +512,9 @@ import { ModalService } from '../modal/modal.service';
     }
 
     .btn-success-gradient:hover:not(:disabled) {
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      background: var(--pacientes-gradient);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 8px 25px var(--pacientes-shadow);
       color: white;
     }
 

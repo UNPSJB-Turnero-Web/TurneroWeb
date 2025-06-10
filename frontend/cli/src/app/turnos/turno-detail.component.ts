@@ -29,7 +29,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .card-header {
-      background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+      background: var(--turnos-gradient);
       border: none;
       padding: 1.5rem 2rem;
       position: relative;
@@ -97,13 +97,13 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .turno-id-display {
-      background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+      background: var(--turnos-gradient);
       color: white;
       padding: 12px 20px;
       border-radius: 25px;
       font-weight: bold;
       font-size: 1.3rem;
-      box-shadow: 0 4px 16px rgba(0,123,255,0.3);
+      box-shadow: 0 4px 16px var(--turnos-shadow);
       display: inline-block;
     }
     
@@ -209,7 +209,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      background: var(--turnos-gradient);
       color: white;
     }
     
@@ -239,8 +239,8 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .form-control-modern:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+      border-color: var(--turnos-primary);
+      box-shadow: 0 0 0 0.2rem var(--turnos-shadow);
       background: #f8f9ff;
     }
     

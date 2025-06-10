@@ -267,7 +267,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .card-header {
-      background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+      background: var(--medicos-gradient);
       border: none;
       padding: 2rem;
       position: relative;
@@ -302,7 +302,7 @@ import { ModalService } from '../modal/modal.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #6f42c1;
+      color: var(--medicos-primary);
       font-size: 1.5rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
@@ -446,8 +446,8 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .form-control-modern:focus {
-      box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25);
-      border-color: #86b7fe;
+      box-shadow: 0 0 0 0.25rem var(--medicos-shadow);
+      border-color: var(--medicos-primary);
     }
     
     .form-error {
@@ -495,7 +495,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      background: var(--medicos-gradient);
       color: white;
     }
     
@@ -505,7 +505,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-save {
-      background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+      background: var(--medicos-gradient);
       color: white;
     }
     

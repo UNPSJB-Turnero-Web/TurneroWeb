@@ -39,7 +39,7 @@ import { ModalService } from '../modal/modal.service';
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">👨‍⚕️</span>
+                  <span class="info-icon" style="background: var(--staff-medico-gradient);">👨‍⚕️</span>
                   Disponibilidad Médica
                 </div>
                 <div class="info-value">
@@ -49,7 +49,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏥</span>
+                  <span class="info-icon" style="background: var(--centro-atencion-gradient);">🏥</span>
                   Centro de Atención
                 </div>
                 <div class="info-value">
@@ -59,7 +59,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">🚪</span>
+                  <span class="info-icon" style="background: var(--consultorios-gradient);">🚪</span>
                   Consultorio
                 </div>
                 <div class="info-value">
@@ -69,7 +69,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">⏱️</span>
+                  <span class="info-icon" style="background: var(--esquema-turno-gradient);">⏱️</span>
                   Intervalo
                 </div>
                 <div class="info-value">
@@ -79,7 +79,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item full-width">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);">🕐</span>
+                  <span class="info-icon" style="background: var(--disponibilidad-gradient);">🕐</span>
                   Horarios de Disponibilidad
                 </div>
                 <div class="horarios-disponibles">
@@ -96,7 +96,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item full-width" *ngIf="esquema.horarios && esquema.horarios.length > 0">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">📅</span>
+                  <span class="info-icon" style="background: var(--esquema-turno-gradient);">📅</span>
                   Horarios del Esquema
                 </div>
                 <div class="horarios-esquema">
@@ -116,7 +116,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">👨‍⚕️</span>
+                    <span class="form-icon" style="background: var(--staff-medico-gradient);">👨‍⚕️</span>
                     Disponibilidad Médica
                   </label>
                   <select
@@ -141,7 +141,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-md-6" *ngIf="esquema.centroId">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🏥</span>
+                    <span class="form-icon" style="background: var(--centro-atencion-gradient);">🏥</span>
                     Centro de Atención
                   </label>
                   <input
@@ -160,7 +160,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">🚪</span>
+                    <span class="form-icon" style="background: var(--consultorios-gradient);">🚪</span>
                     Consultorio
                   </label>
                   <select
@@ -184,7 +184,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">⏱️</span>
+                    <span class="form-icon" style="background: var(--esquema-turno-gradient);">⏱️</span>
                     Intervalo (minutos)
                   </label>
                   <input
@@ -206,7 +206,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-12" *ngIf="esquema.horariosDisponibilidad && esquema.horariosDisponibilidad.length > 0">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);">🕐</span>
+                    <span class="form-icon" style="background: var(--disponibilidad-gradient);">🕐</span>
                     Horarios de Disponibilidad del Médico
                   </label>
                   <div class="horarios-table">
@@ -231,7 +231,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">📅</span>
+                    <span class="form-icon" style="background: var(--esquema-turno-gradient);">📅</span>
                     Horarios del Esquema
                   </label>
                   
@@ -473,13 +473,13 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .horario-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--esquema-turno-gradient);
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 20px;
       font-size: 0.9rem;
       font-weight: 500;
-      box-shadow: 0 3px 10px rgba(102,126,234,0.3);
+      box-shadow: 0 3px 10px var(--esquema-turno-shadow);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -566,7 +566,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .table-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--esquema-turno-gradient);
       color: white;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -665,7 +665,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      background: var(--esquema-turno-gradient);
       color: white;
     }
     
@@ -675,7 +675,7 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .btn-save {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: var(--esquema-turno-gradient);
       color: white;
     }
     
