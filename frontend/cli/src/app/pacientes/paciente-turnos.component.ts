@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { TurnoService } from '../turnos/turno.service';
+import { Turno } from '../turnos/turno';
+import { DataPackage } from '../data.package';
 
 @Component({
   selector: 'app-paciente-turnos',
@@ -45,7 +48,17 @@ import { Router } from '@angular/router';
 
       <!-- Appointments List -->
       <div class="appointments-container">
-        <div class="appointment-card" *ngFor="let turno of filteredTurnos" [class]="turno.status">
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="isLoadingTurnos">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Cargando turnos...</p>
+        </div>
+
+        <!-- Appointments -->
+        <div class="appointment-card" 
+             *ngFor="let turno of filteredTurnos" 
+             [class]="turno.status"
+             [hidden]="isLoadingTurnos">
           <div class="appointment-header">
             <div class="appointment-date">
               <span class="day">{{ turno.day }}</span>
@@ -87,7 +100,7 @@ import { Router } from '@angular/router';
         </div>
 
         <!-- Empty State -->
-        <div class="empty-state" *ngIf="filteredTurnos.length === 0">
+        <div class="empty-state" *ngIf="!isLoadingTurnos && filteredTurnos.length === 0">
           <i class="fas fa-calendar-times"></i>
           <h3>No hay turnos {{ getEmptyStateText() }}</h3>
           <p>{{ getEmptyStateDescription() }}</p>
@@ -215,6 +228,23 @@ import { Router } from '@angular/router';
       gap: 1.5rem;
     }
 
+    .loading-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6c757d;
+    }
+
+    .loading-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--pacientes-primary);
+    }
+
+    .loading-state p {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
     .appointment-card {
       background: white;
       border-radius: 15px;
@@ -229,11 +259,11 @@ import { Router } from '@angular/router';
       box-shadow: 0 6px 25px rgba(0,0,0,0.12);
     }
 
-    .appointment-card.confirmed {
+    .appointment-card.confirmado {
       border-left-color: #28a745;
     }
 
-    .appointment-card.pending {
+    .appointment-card.pendiente {
       border-left-color: #ffc107;
     }
 
@@ -241,7 +271,7 @@ import { Router } from '@angular/router';
       border-left-color: #6c757d;
     }
 
-    .appointment-card.cancelled {
+    .appointment-card.cancelado {
       border-left-color: #dc3545;
       opacity: 0.7;
     }
@@ -323,12 +353,12 @@ import { Router } from '@angular/router';
       text-transform: uppercase;
     }
 
-    .status-badge.confirmed {
+    .status-badge.confirmado {
       background: #d4edda;
       color: #155724;
     }
 
-    .status-badge.pending {
+    .status-badge.pendiente {
       background: #fff3cd;
       color: #856404;
     }
@@ -338,7 +368,7 @@ import { Router } from '@angular/router';
       color: #383d41;
     }
 
-    .status-badge.cancelled {
+    .status-badge.cancelado {
       background: #f8d7da;
       color: #721c24;
     }
@@ -410,49 +440,88 @@ import { Router } from '@angular/router';
     }
   `
 })
-export class PacienteTurnosComponent {
+export class PacienteTurnosComponent implements OnInit {
   currentFilter: 'upcoming' | 'past' | 'all' = 'upcoming';
   patientDNI: string = '';
+  turnos: any[] = [];
+  isLoadingTurnos = false;
 
-  // Mock data - in a real app this would come from a service
-  turnos = [
-    {
-      id: 1,
-      day: '15',
-      month: 'JUN',
-      time: '10:30 AM',
-      doctor: 'Dr. Juan Pérez',
-      specialty: 'Cardiología',
-      location: 'Centro Médico Norte - Consultorio 3',
-      status: 'confirmed',
-      date: new Date('2025-06-15')
-    },
-    {
-      id: 2,
-      day: '22',
-      month: 'JUN',
-      time: '3:00 PM',
-      doctor: 'Dra. María García',
-      specialty: 'Dermatología',
-      location: 'Centro Médico Sur - Consultorio 1',
-      status: 'pending',
-      date: new Date('2025-06-22')
-    },
-    {
-      id: 3,
-      day: '05',
-      month: 'JUN',
-      time: '9:00 AM',
-      doctor: 'Dr. Carlos López',
-      specialty: 'Traumatología',
-      location: 'Centro Médico Centro - Consultorio 5',
-      status: 'completed',
-      date: new Date('2025-06-05')
-    }
-  ];
-
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private turnoService: TurnoService
+  ) {
     this.patientDNI = localStorage.getItem('patientDNI') || '';
+  }
+
+  ngOnInit() {
+    this.cargarTurnosPaciente();
+  }
+
+  cargarTurnosPaciente() {
+    // Primero intentar obtener el ID del paciente de diferentes formas
+    let pacienteId = localStorage.getItem('pacienteId');
+    
+    if (!pacienteId) {
+      // Si no hay pacienteId, intentar obtenerlo de patientData
+      const patientDataStr = localStorage.getItem('patientData');
+      if (patientDataStr) {
+        try {
+          const patientData = JSON.parse(patientDataStr);
+          pacienteId = patientData.id?.toString();
+          // Guardarlo para futuras consultas
+          if (pacienteId) {
+            localStorage.setItem('pacienteId', pacienteId);
+          }
+        } catch (e) {
+          console.error('Error parsing patient data:', e);
+        }
+      }
+    }
+
+    if (!pacienteId) {
+      console.error('No se encontró ID del paciente en localStorage');
+      console.log('localStorage contents:', {
+        pacienteId: localStorage.getItem('pacienteId'),
+        patientData: localStorage.getItem('patientData'),
+        userRole: localStorage.getItem('userRole'),
+        patientDNI: localStorage.getItem('patientDNI')
+      });
+      return;
+    }
+
+    this.isLoadingTurnos = true;
+    console.log('Cargando turnos del paciente ID:', pacienteId);
+    
+    this.turnoService.getByPacienteId(parseInt(pacienteId)).subscribe({
+      next: (dataPackage: DataPackage<Turno[]>) => {
+        console.log('Turnos recibidos en mis turnos:', dataPackage);
+        const turnosData = dataPackage.data || [];
+        this.turnos = turnosData.map(turno => this.convertirTurnoParaLista(turno));
+        this.isLoadingTurnos = false;
+      },
+      error: (error) => {
+        console.error('Error cargando turnos del paciente:', error);
+        this.isLoadingTurnos = false;
+      }
+    });
+  }
+
+  private convertirTurnoParaLista(turno: Turno): any {
+    const fecha = new Date(turno.fecha);
+    const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
+                   'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    
+    return {
+      id: turno.id,
+      day: fecha.getDate().toString().padStart(2, '0'),
+      month: meses[fecha.getMonth()],
+      time: turno.horaInicio,
+      doctor: `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`,
+      specialty: turno.especialidadStaffMedico,
+      location: `${turno.nombreCentro} - ${turno.consultorioNombre}`,
+      status: turno.estado?.toLowerCase() || 'pendiente',
+      date: fecha
+    };
   }
 
   get filteredTurnos() {
@@ -462,7 +531,7 @@ export class PacienteTurnosComponent {
     switch (this.currentFilter) {
       case 'upcoming':
         return this.turnos.filter(turno => 
-          turno.date >= today && turno.status !== 'completed' && turno.status !== 'cancelled'
+          turno.date >= today && turno.status !== 'completed' && turno.status !== 'cancelado'
         );
       case 'past':
         return this.turnos.filter(turno => 
@@ -481,10 +550,10 @@ export class PacienteTurnosComponent {
 
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'confirmed': 'Confirmado',
-      'pending': 'Pendiente',
+      'confirmado': 'Confirmado',
+      'pendiente': 'Pendiente',
       'completed': 'Completado',
-      'cancelled': 'Cancelado'
+      'cancelado': 'Cancelado'
     };
     return statusMap[status] || status;
   }
@@ -522,8 +591,9 @@ export class PacienteTurnosComponent {
 
   cancel(turno: any) {
     if (confirm('¿Estás seguro de que deseas cancelar este turno?')) {
-      turno.status = 'cancelled';
+      turno.status = 'cancelado';
       console.log('Turno cancelado:', turno);
+      // Aquí podrías llamar al servicio para actualizar el estado en el backend
     }
   }
 }

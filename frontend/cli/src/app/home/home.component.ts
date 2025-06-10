@@ -607,6 +607,7 @@ export class HomeComponent {
             localStorage.setItem('userRole', 'patient');
             localStorage.setItem('patientDNI', this.patientCredentials.dni);
             localStorage.setItem('patientData', JSON.stringify(response.data));
+            localStorage.setItem('pacienteId', response.data.id.toString()); // ← Agregar esta línea
             localStorage.setItem('userName', `${response.data.nombre} ${response.data.apellido}`);
             
             this.isLoading = false;

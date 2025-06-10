@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { TurnoService } from '../turnos/turno.service';
+import { Turno } from '../turnos/turno';
+import { DataPackage } from '../data.package';
 
 @Component({
   selector: 'app-paciente-dashboard',
@@ -39,8 +42,8 @@ import { Router } from '@angular/router';
           
           <div class="action-card" (click)="viewAgenda()">
             <i class="fas fa-calendar-alt"></i>
-            <h3>Agenda Médica</h3>
-            <p>Ver horarios disponibles por especialidad</p>
+            <h3>Agenda de turnos</h3>
+            <p>Ver horarios disponibles</p>
           </div>
           
           <div class="action-card" (click)="viewProfile()">
@@ -60,39 +63,41 @@ import { Router } from '@angular/router';
       <!-- Recent Appointments -->
       <div class="recent-appointments">
         <h2>Próximos Turnos</h2>
-        <div class="appointments-list">
-          <div class="appointment-card upcoming">
+        
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="isLoadingTurnos">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Cargando turnos...</p>
+        </div>
+        
+        <!-- Appointments list -->
+        <div class="appointments-list" *ngIf="!isLoadingTurnos && proximosTurnos.length > 0">
+          <div class="appointment-card" 
+               *ngFor="let turno of proximosTurnos" 
+               [class]="turno.status === 'confirmado' ? 'upcoming' : ''">
             <div class="appointment-date">
-              <span class="day">15</span>
-              <span class="month">JUN</span>
+              <span class="day">{{ turno.day }}</span>
+              <span class="month">{{ turno.month }}</span>
             </div>
             <div class="appointment-info">
-              <h4>Dr. Juan Pérez</h4>
-              <p>Cardiología</p>
-              <span class="time">10:30 AM</span>
+              <h4>{{ turno.doctor }}</h4>
+              <p>{{ turno.specialty }}</p>
+              <p class="location">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ turno.location }}
+              </p>
+              <span class="time">{{ turno.time }}</span>
             </div>
             <div class="appointment-status">
-              <span class="status confirmed">Confirmado</span>
-            </div>
-          </div>
-          
-          <div class="appointment-card">
-            <div class="appointment-date">
-              <span class="day">22</span>
-              <span class="month">JUN</span>
-            </div>
-            <div class="appointment-info">
-              <h4>Dra. María García</h4>
-              <p>Dermatología</p>
-              <span class="time">3:00 PM</span>
-            </div>
-            <div class="appointment-status">
-              <span class="status pending">Pendiente</span>
+              <span class="status" [class]="turno.status">
+                {{ getStatusText(turno.status) }}
+              </span>
             </div>
           </div>
         </div>
         
-        <div class="empty-state" *ngIf="false">
+        <!-- Empty state -->
+        <div class="empty-state" *ngIf="!isLoadingTurnos && proximosTurnos.length === 0">
           <i class="fas fa-calendar-times"></i>
           <h3>No tienes turnos programados</h3>
           <p>¡Programa tu primera cita médica!</p>
@@ -232,6 +237,23 @@ import { Router } from '@angular/router';
       margin-bottom: 1.5rem;
     }
 
+    .loading-state {
+      text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+    }
+
+    .loading-state i {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: var(--pacientes-primary);
+    }
+
+    .loading-state p {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
     .appointments-list {
       display: flex;
       flex-direction: column;
@@ -297,6 +319,12 @@ import { Router } from '@angular/router';
     .appointment-info p {
       color: #6c757d;
       margin: 0 0 0.25rem 0;
+    }
+
+    .appointment-info .location {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .appointment-info .time {
@@ -373,11 +401,112 @@ import { Router } from '@angular/router';
     }
   `
 })
-export class PacienteDashboardComponent {
+export class PacienteDashboardComponent implements OnInit {
   patientDNI: string = '';
+  proximosTurnos: any[] = [];
+  isLoadingTurnos = false;
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+    private turnoService: TurnoService
+  ) {
     this.patientDNI = localStorage.getItem('patientDNI') || '';
+  }
+
+  ngOnInit() {
+    this.cargarProximosTurnos();
+  }
+
+  cargarProximosTurnos() {
+    // Primero intentar obtener el ID del paciente de diferentes formas
+    let pacienteId = localStorage.getItem('pacienteId');
+    
+    if (!pacienteId) {
+      // Si no hay pacienteId, intentar obtenerlo de patientData
+      const patientDataStr = localStorage.getItem('patientData');
+      if (patientDataStr) {
+        try {
+          const patientData = JSON.parse(patientDataStr);
+          pacienteId = patientData.id?.toString();
+          // Guardarlo para futuras consultas
+          if (pacienteId) {
+            localStorage.setItem('pacienteId', pacienteId);
+          }
+        } catch (e) {
+          console.error('Error parsing patient data:', e);
+        }
+      }
+    }
+
+    if (!pacienteId) {
+      console.error('No se encontró ID del paciente en localStorage');
+      console.log('localStorage contents:', {
+        pacienteId: localStorage.getItem('pacienteId'),
+        patientData: localStorage.getItem('patientData'),
+        userRole: localStorage.getItem('userRole'),
+        patientDNI: localStorage.getItem('patientDNI')
+      });
+      return;
+    }
+
+    this.isLoadingTurnos = true;
+    console.log('Cargando próximos turnos para paciente ID:', pacienteId);
+    
+    this.turnoService.getByPacienteId(parseInt(pacienteId)).subscribe({
+      next: (dataPackage: DataPackage<Turno[]>) => {
+        console.log('Turnos recibidos en dashboard:', dataPackage);
+        const turnos = dataPackage.data || [];
+        
+        // Filtrar solo los próximos turnos (fecha >= hoy y estado confirmado o pendiente)
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        this.proximosTurnos = turnos
+          .filter(turno => {
+            const fechaTurno = new Date(turno.fecha);
+            fechaTurno.setHours(0, 0, 0, 0);
+            return fechaTurno >= hoy && 
+                   (turno.estado?.toLowerCase() === 'confirmado' || 
+                    turno.estado?.toLowerCase() === 'pendiente');
+          })
+          .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+          .slice(0, 3) // Mostrar solo los próximos 3
+          .map(turno => this.convertirTurnoParaDashboard(turno));
+        
+        this.isLoadingTurnos = false;
+      },
+      error: (error) => {
+        console.error('Error cargando próximos turnos:', error);
+        this.isLoadingTurnos = false;
+      }
+    });
+  }
+
+  private convertirTurnoParaDashboard(turno: Turno): any {
+    const fecha = new Date(turno.fecha);
+    const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
+                   'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    
+    return {
+      id: turno.id,
+      day: fecha.getDate().toString().padStart(2, '0'),
+      month: meses[fecha.getMonth()],
+      time: turno.horaInicio,
+      doctor: `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`,
+      specialty: turno.especialidadStaffMedico,
+      location: turno.nombreCentro,
+      status: turno.estado?.toLowerCase() || 'pendiente'
+    };
+  }
+
+  getStatusText(status: string): string {
+    const statusMap: { [key: string]: string } = {
+      'confirmado': 'Confirmado',
+      'pendiente': 'Pendiente',
+      'completed': 'Completado',
+      'cancelled': 'Cancelado'
+    };
+    return statusMap[status] || status;
   }
 
   logout() {
