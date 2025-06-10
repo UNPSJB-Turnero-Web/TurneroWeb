@@ -89,16 +89,38 @@ public class TurnoPresenter {
 
 
     @PostMapping("/asignar")
-public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO) {
-    try {
-        TurnoDTO savedTurno = service.save(turnoDTO);
-        return Response.ok(savedTurno, "Turno asignado correctamente.");
-    } catch (IllegalArgumentException e) {
-        return Response.dbError(e.getMessage());
-    } catch (Exception e) {
-        return Response.error(null, "Error al asignar el turno.");
+    public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO) {
+        try {
+            TurnoDTO savedTurno = service.save(turnoDTO);
+            return Response.ok(savedTurno, "Turno asignado correctamente.");
+        } catch (IllegalArgumentException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al asignar el turno.");
+        }
     }
-}
 
-   
+    @PutMapping("/{id}/cancelar")
+    public ResponseEntity<Object> cancelarTurno(@PathVariable Integer id) {
+        try {
+            TurnoDTO turno = service.cancelarTurno(id);
+            return Response.ok(turno, "Turno cancelado correctamente.");
+        } catch (IllegalArgumentException e) {
+            return Response.notFound("Turno no encontrado");
+        } catch (Exception e) {
+            return Response.error(null, "Error al cancelar el turno: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/confirmar")
+    public ResponseEntity<Object> confirmarTurno(@PathVariable Integer id) {
+        try {
+            TurnoDTO turno = service.confirmarTurno(id);
+            return Response.ok(turno, "Turno confirmado correctamente.");
+        } catch (IllegalArgumentException e) {
+            return Response.notFound("Turno no encontrado");
+        } catch (Exception e) {
+            return Response.error(null, "Error al confirmar el turno: " + e.getMessage());
+        }
+    }
 }

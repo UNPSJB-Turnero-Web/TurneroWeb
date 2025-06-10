@@ -89,6 +89,40 @@ public class TurnoService {
         repository.deleteAll();
     }
 
+    @Transactional
+    public TurnoDTO cancelarTurno(Integer id) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        turno.setEstado(EstadoTurno.CANCELADO);
+        Turno savedTurno = repository.save(turno);
+        
+        return toDTO(savedTurno);
+    }
+
+    @Transactional
+    public TurnoDTO confirmarTurno(Integer id) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        
+        // Verificar que el turno esté en estado PENDIENTE
+        if (turno.getEstado() != EstadoTurno.PENDIENTE) {
+            throw new IllegalArgumentException("Solo se pueden confirmar turnos en estado PENDIENTE. Estado actual: " + turno.getEstado());
+        }
+        
+        turno.setEstado(EstadoTurno.CONFIRMADO);
+        Turno savedTurno = repository.save(turno);
+        
+        return toDTO(savedTurno);
+    }
+
     // Métodos de conversión entre entidad y DTO
     private TurnoDTO toDTO(Turno turno) {
         TurnoDTO dto = new TurnoDTO();

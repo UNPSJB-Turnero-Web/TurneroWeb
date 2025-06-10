@@ -51,4 +51,14 @@ export class TurnoService {
   getByPacienteId(pacienteId: number): Observable<DataPackage<Turno[]>> {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/paciente/${pacienteId}`);
   }
+
+  /** Cancela un turno */
+  cancelar(id: number): Observable<DataPackage<Turno>> {
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, {});
+  }
+
+  /** Confirma un turno */
+  confirmar(id: number): Observable<DataPackage<Turno>> {
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/confirmar`, {});
+  }
 }

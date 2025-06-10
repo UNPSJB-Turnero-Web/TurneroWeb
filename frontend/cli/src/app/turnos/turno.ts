@@ -29,7 +29,5 @@ export interface Turno {
     // Campos para manejo de SLOTS en la agenda
     esSlot?: boolean;               // true = slot generado, false/undefined = turno real
     ocupado?: boolean;              // true = slot ocupado por un turno, false = disponible
-    backgroundColor?: string;       // Color de fondo para el evento en la agenda
-    borderColor?: string;          // Color del borde para el evento en la agenda
-    textColor?: string;            // Color del texto para el evento en la agenda
+    // Los colores se manejan en el frontend según el estado
 }

@@ -34,12 +34,7 @@ import { DataPackage } from '../data.package';
             <p>Ver y gestionar tus citas médicas</p>
           </div>
           
-          <div class="action-card" (click)="scheduleAppointment()">
-            <i class="fas fa-plus-circle"></i>
-            <h3>Solicitar Turno</h3>
-            <p>Reservar una nueva cita médica</p>
-          </div>
-          
+        
           <div class="action-card" (click)="viewAgenda()">
             <i class="fas fa-calendar-alt"></i>
             <h3>Agenda de turnos</h3>
@@ -88,10 +83,18 @@ import { DataPackage } from '../data.package';
               </p>
               <span class="time">{{ turno.time }}</span>
             </div>
-            <div class="appointment-status">
-              <span class="status" [class]="turno.status">
-                {{ getStatusText(turno.status) }}
-              </span>
+            <div class="appointment-right">
+              <div class="appointment-status">
+                <span class="status" [class]="turno.status">
+                  {{ getStatusText(turno.status) }}
+                </span>
+              </div>
+              <div class="appointment-actions" *ngIf="turno.status === 'pendiente'">
+                <button class="btn btn-confirm" (click)="confirmarTurno(turno)">
+                  <i class="fas fa-check"></i>
+                  Confirmar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -333,6 +336,14 @@ import { DataPackage } from '../data.package';
       font-size: 0.95rem;
     }
 
+    .appointment-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1rem;
+      min-width: 120px;
+    }
+
     .appointment-status {
       display: flex;
       align-items: center;
@@ -346,14 +357,40 @@ import { DataPackage } from '../data.package';
       text-transform: uppercase;
     }
 
-    .status.confirmed {
+    .status.confirmado {
       background: #d4edda;
       color: #155724;
     }
 
-    .status.pending {
+    .status.pendiente {
       background: #fff3cd;
       color: #856404;
+    }
+
+    .appointment-actions {
+      display: flex;
+    }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 10px rgba(40, 167, 69, 0.2);
+    }
+
+    .btn-confirm:hover {
+      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
     }
 
     .empty-state {
@@ -397,6 +434,18 @@ import { DataPackage } from '../data.package';
         flex-direction: column;
         text-align: center;
         gap: 1rem;
+      }
+
+      .appointment-right {
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+        min-width: unset;
+      }
+
+      .appointment-actions {
+        margin-top: 0;
       }
     }
   `
@@ -507,6 +556,28 @@ export class PacienteDashboardComponent implements OnInit {
       'cancelled': 'Cancelado'
     };
     return statusMap[status] || status;
+  }
+
+  confirmarTurno(turno: any) {
+    const confirmMessage = `¿Deseas confirmar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
+    
+    if (confirm(confirmMessage)) {
+      this.turnoService.confirmar(turno.id).subscribe({
+        next: (response) => {
+          console.log('Turno confirmado exitosamente:', response);
+          // Actualizar el estado localmente
+          turno.status = 'confirmado';
+          // Mostrar mensaje de éxito
+          alert('Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.');
+          // Recargar próximos turnos para reflejar el cambio
+          this.cargarProximosTurnos();
+        },
+        error: (error) => {
+          console.error('Error confirmando el turno:', error);
+          alert('No se pudo confirmar el turno. Por favor, intenta nuevamente.');
+        }
+      });
+    }
   }
 
   logout() {

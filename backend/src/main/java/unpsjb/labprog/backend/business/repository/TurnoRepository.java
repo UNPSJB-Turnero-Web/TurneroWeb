@@ -20,6 +20,10 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer> {
 
     boolean existsByFechaAndHoraInicioAndStaffMedicoId(LocalDate fecha, LocalTime horaInicio, Integer staffMedicoId);
 
+    // Verificar si existe un turno activo (no cancelado) en un slot específico
+    boolean existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
+        LocalDate fecha, LocalTime horaInicio, Integer staffMedicoId, EstadoTurno estado);
+
     // Buscar turnos por paciente ID
     List<Turno> findByPaciente_Id(Integer pacienteId);
 

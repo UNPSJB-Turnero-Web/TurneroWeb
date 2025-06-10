@@ -894,15 +894,33 @@ export class AgendaComponent implements OnInit {
         return; // Ignorar eventos con fechas inválidas
       }
 
+      // Aplicar colores basándose en el estado (frontend)
+      let color;
+      if (evento.ocupado) {
+        // Slot ocupado - color rojo
+        color = { 
+          primary: '#dc3545', 
+          secondary: '#f8d7da' 
+        };
+      } else {
+        // Slot disponible - color verde
+        color = { 
+          primary: '#28a745', 
+          secondary: '#d4edda' 
+        };
+      }
+
+      // Título dinámico basado en el estado
+      const title = evento.ocupado ? 
+        `Ocupado - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}` : 
+        `Disponible - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`;
+
       // Crear el evento y agregarlo a la lista
       events.push({
         start,
         end,
-        title: evento.titulo || 'Turno',
-        color: { 
-          primary: evento.backgroundColor || '#1e90ff', 
-          secondary: evento.backgroundColor || '#D1E8FF' 
-        },
+        title: title,
+        color: color,
         meta: {
           id: evento.id, 
           staffMedicoNombre: evento.staffMedicoNombre,
@@ -926,6 +944,10 @@ export class AgendaComponent implements OnInit {
   changeWeek(direction: number): void {
     const currentDate = this.viewDate;
     this.viewDate = new Date(currentDate.setDate(currentDate.getDate() + direction * 7));
+    
+    // Recargar eventos al cambiar de semana para obtener datos actualizados
+    this.cargarTodosLosEventos();
+    
     // console.log('Nueva fecha de vista:', this.viewDate);
   }
   
@@ -935,11 +957,34 @@ export class AgendaComponent implements OnInit {
       return;
     }
 
+    // Crear fechas locales sin conversión a UTC
+    const startDate = this.selectedEvent?.start;
+    const endDate = this.selectedEvent?.end;
+    
+    if (!startDate) {
+      alert('Error: Fecha de inicio no válida.');
+      return;
+    }
+    
+    // Formatear fecha y hora en horario local (sin UTC)
+    const fechaLocal = startDate.getFullYear() + '-' + 
+                      String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(startDate.getDate()).padStart(2, '0');
+    
+    const horaInicioLocal = String(startDate.getHours()).padStart(2, '0') + ':' + 
+                           String(startDate.getMinutes()).padStart(2, '0') + ':' + 
+                           String(startDate.getSeconds()).padStart(2, '0');
+    
+    const horaFinLocal = endDate ? 
+                        String(endDate.getHours()).padStart(2, '0') + ':' + 
+                        String(endDate.getMinutes()).padStart(2, '0') + ':' + 
+                        String(endDate.getSeconds()).padStart(2, '0') : '';
+
     const turnoDTO = {
       id: this.selectedEvent?.meta?.id, // ID dinámico del turno
-     fecha: this.selectedEvent?.start.toISOString().substring(0, 10), // Solo la fecha
-    horaInicio: this.selectedEvent?.start.toISOString().substring(11, 19), // Solo la hora
-    horaFin: this.selectedEvent?.end ? this.selectedEvent.end.toISOString().substring(11, 19) : '', // Solo la hora
+      fecha: fechaLocal, // Fecha en formato local
+      horaInicio: horaInicioLocal, // Hora en formato local
+      horaFin: horaFinLocal, // Hora en formato local
       pacienteId: this.pacienteId, // ID del paciente seleccionado
       staffMedicoId: this.selectedEvent?.meta?.staffMedicoId,
       staffMedicoNombre: this.selectedEvent?.meta?.staffMedicoNombre,
@@ -953,15 +998,49 @@ export class AgendaComponent implements OnInit {
       estado: 'PENDIENTE', // Estado inicial del turno
     };
 
+    console.log('Enviando turno DTO (admin):', turnoDTO); // Debug log
+
     this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
       next: () => {
         alert('Turno asignado correctamente.');
         this.closeModal(); // Cerrar el modal después de asignar el turno
+        
+        // Actualizar inmediatamente el slot en el calendario local
+        this.actualizarSlotAsignado(this.selectedEvent);
+        
+        // Recargar los eventos para obtener datos actualizados del servidor
+        setTimeout(() => {
+          this.cargarTodosLosEventos();
+        }, 500);
       },
       error: (err: any) => {
         console.error('Error al asignar el turno:', err);
         alert('No se pudo asignar el turno. Intente nuevamente.');
       },
     });
+  }
+
+  // Actualizar slot asignado inmediatamente en el calendario local
+  private actualizarSlotAsignado(slot: CalendarEvent | null) {
+    if (!slot) return;
+    
+    // Encontrar el slot en el array de eventos y marcarlo como ocupado
+    const eventoEncontrado = this.events.find(event => 
+      event.meta?.id === slot.meta?.id &&
+      event.start.getTime() === slot.start.getTime()
+    );
+    
+    if (eventoEncontrado) {
+      // Actualizar metadatos
+      eventoEncontrado.meta.ocupado = true;
+      eventoEncontrado.title = 'Ocupado';
+      eventoEncontrado.color = { primary: '#dc3545', secondary: '#f8d7da' };
+      
+      // Aplicar filtros nuevamente para actualizar la vista
+      this.applyFilter();
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+    }
   }
 }

@@ -20,6 +20,7 @@ import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
+import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
 @Service
@@ -167,9 +168,9 @@ public class AgendaService {
                         break;
                     }
 
-                    // Verificar si existe un turno asignado para este slot
-                    boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoId(
-                            fechaEvento, slotStart, esquemaTurno.getStaffMedico().getId());
+                    // Verificar si existe un turno activo (no cancelado) para este slot
+                    boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
+                            fechaEvento, slotStart, esquemaTurno.getStaffMedico().getId(), EstadoTurno.CANCELADO);
 
                     // Crear un DTO para el evento
                     TurnoDTO evento = new TurnoDTO();
@@ -183,16 +184,8 @@ public class AgendaService {
                     evento.setEsSlot(true);
                     evento.setOcupado(slotOcupado);
                     
-                    // Configurar colores según el estado
-                    if (slotOcupado) {
-                        evento.setBackgroundColor("#dc3545"); // Rojo para ocupado
-                        evento.setBorderColor("#dc3545");
-                        evento.setTextColor("#ffffff");
-                    } else {
-                        evento.setBackgroundColor("#007bff"); // Azul para disponible
-                        evento.setBorderColor("#007bff");
-                        evento.setTextColor("#ffffff");
-                    }
+                    // El frontend se encargará de aplicar los colores según el estado
+                    // No configuramos colores en el backend
 
                     // Asignar datos del esquema
                     evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());

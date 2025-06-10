@@ -1,10 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CalendarModule, CalendarEvent, CalendarView } from 'angular-calendar';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CalendarModule, CalendarEvent, CalendarEventTitleFormatter, CalendarDateFormatter, CalendarView } from 'angular-calendar';
 import { HttpClient } from '@angular/common/http';
+import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 
 // Services
 import { TurnoService } from '../turnos/turno.service';
@@ -26,6 +26,8 @@ import { DataPackage } from '../data.package';
     FormsModule,
     CalendarModule
   ],
+  providers: [CalendarEventTitleFormatter, CalendarDateFormatter],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="container-fluid mt-4">
       <!-- HEADER -->
@@ -204,7 +206,12 @@ import { DataPackage } from '../data.package';
                 [hourSegments]="4"
                 [dayStartHour]="7"
                 [dayEndHour]="20"
-                (eventClicked)="onTurnoDisponibleSelected($event)">
+                [weekStartsOn]="1"
+                [weekendDays]="[0, 6]"
+                [hourSegmentHeight]="60"
+                [hourSegmentModifier]="2"
+                (eventClicked)="onTurnoDisponibleSelected($event)"
+                (eventTimesChanged)="onEventTimesChanged($event)">
               </mwl-calendar-week-view>
             </div>
           </div>
@@ -217,13 +224,34 @@ import { DataPackage } from '../data.package';
           <div class="no-turnos-card">
             <div class="no-turnos-content">
               <i class="fas fa-calendar-times"></i>
-              <h4>No hay turnos disponibles</h4>
-              <p>No se encontraron turnos disponibles con los filtros seleccionados.</p>
+              <h4>No hay turnos para mostrar</h4>
+              <p>No se encontraron turnos con los filtros seleccionados.</p>
               <p>Intenta cambiar los filtros o seleccionar otra fecha.</p>
               <button class="btn btn-paciente-primary" (click)="limpiarTodosFiltros()">
                 <i class="fas fa-filter"></i>
                 Cambiar Filtros
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INFORMACIÓN SOBRE LOS COLORES -->
+      <div class="row mt-3" *ngIf="showCalendar && turnosDisponibles.length > 0">
+        <div class="col-12">
+          <div class="legend-card">
+            <div class="legend-content">
+              <h5>Leyenda:</h5>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <div class="legend-color available"></div>
+                  <span>Turnos Disponibles (Hacer clic para reservar)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-color occupied"></div>
+                  <span>Turnos Ocupados</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -579,6 +607,208 @@ import { DataPackage } from '../data.package';
 
     .calendar-body {
       padding: 1rem;
+      min-height: 600px;
+    }
+
+    /* ESTILOS ESPECÍFICOS PARA ANGULAR-CALENDAR */
+    :host ::ng-deep .cal-week-view {
+      background-color: #fff;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    :host ::ng-deep .cal-day-headers {
+      border-bottom: 2px solid #667eea;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    :host ::ng-deep .cal-day-headers .cal-header {
+      padding: 1rem 0.5rem;
+      font-weight: 600;
+      color: #495057;
+      text-align: center;
+      border-right: 1px solid #dee2e6;
+    }
+
+    :host ::ng-deep .cal-day-headers .cal-header:last-child {
+      border-right: none;
+    }
+
+    :host ::ng-deep .cal-day-columns {
+      min-height: 500px;
+    }
+
+    :host ::ng-deep .cal-day-column {
+      border-right: 1px solid #dee2e6;
+      position: relative;
+    }
+
+    :host ::ng-deep .cal-day-column:last-child {
+      border-right: none;
+    }
+
+    :host ::ng-deep .cal-hour-segment {
+      border-bottom: 1px solid #f1f3f4;
+      padding: 0;
+      position: relative;
+    }
+
+    :host ::ng-deep .cal-hour:nth-child(odd) .cal-hour-segment {
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    :host ::ng-deep .cal-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+      padding: 0.25rem 0.5rem;
+      width: 60px;
+      text-align: right;
+      background: #f8f9fa;
+      border-right: 1px solid #dee2e6;
+    }
+
+    :host ::ng-deep .cal-event {
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin: 1px;
+    }
+
+    :host ::ng-deep .cal-event:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    :host ::ng-deep .cal-event-title {
+      font-weight: 600;
+    }
+
+    :host ::ng-deep .cal-starts-within-week .cal-event {
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+    }
+
+    :host ::ng-deep .cal-ends-within-week .cal-event {
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* Eventos disponibles - Verde */
+    :host ::ng-deep .cal-event[style*="background-color: rgb(40, 167, 69)"] {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+      color: white !important;
+      border: 2px solid #1e7e34 !important;
+      cursor: pointer !important;
+    }
+
+    :host ::ng-deep .cal-event[style*="background-color: rgb(40, 167, 69)"]:hover {
+      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%) !important;
+      transform: scale(1.05) !important;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+    }
+
+    /* Eventos ocupados - Rojo */
+    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"] {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+      color: white !important;
+      border: 2px solid #bd2130 !important;
+      cursor: not-allowed !important;
+      opacity: 0.8;
+      position: relative;
+    }
+
+    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"]:hover {
+      opacity: 0.9;
+      transform: none !important;
+    }
+
+    /* Agregar ícono de candado para turnos ocupados */
+    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"]:before {
+      content: "🔒";
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 10px;
+    }
+
+    :host ::ng-deep .cal-week-view .cal-day-headers {
+      display: flex;
+    }
+
+    :host ::ng-deep .cal-week-view .cal-day-columns {
+      display: flex;
+      flex: 1;
+    }
+
+    :host ::ng-deep .cal-week-view .cal-day-column {
+      flex: 1;
+      min-height: 500px;
+    }
+      color: #2c3e50;
+      text-align: center;
+      border-right: 1px solid #e9ecef;
+    }
+
+    :host ::ng-deep .cal-day-headers .cal-header:last-child {
+      border-right: none;
+    }
+
+    :host ::ng-deep .cal-day-column {
+      border-right: 1px solid #e9ecef;
+      min-width: 150px;
+    }
+
+    :host ::ng-deep .cal-day-column:last-child {
+      border-right: none;
+    }
+
+    :host ::ng-deep .cal-hour-segment {
+      border-bottom: 1px solid #f1f3f4;
+      background-color: #fafbff;
+      min-height: 40px;
+    }
+
+    :host ::ng-deep .cal-hour-segment:hover {
+      background-color: #f0f8ff;
+    }
+
+    :host ::ng-deep .cal-time {
+      font-size: 0.85rem;
+      color: #6c757d;
+      padding: 0.25rem;
+    }
+
+    :host ::ng-deep .cal-event {
+      border-radius: 6px;
+      border: none;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin: 1px;
+      transition: all 0.2s ease;
+    }
+
+    :host ::ng-deep .cal-event:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    :host ::ng-deep .cal-event-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    :host ::ng-deep .cal-week-view .cal-hour-rows {
+      overflow: visible;
+    }
+
+    :host ::ng-deep .cal-week-view .cal-time-events {
+      position: relative;
     }
 
     /* NO TURNOS */
@@ -699,6 +929,55 @@ import { DataPackage } from '../data.package';
       justify-content: flex-end;
     }
 
+    /* LEYENDA */
+    .legend-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--pacientes-primary);
+    }
+
+    .legend-content h5 {
+      margin-bottom: 0.75rem;
+      color: #495057;
+      font-weight: 600;
+    }
+
+    .legend-items {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 2px solid;
+    }
+
+    .legend-color.available {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border-color: #1e7e34;
+    }
+
+    .legend-color.occupied {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      border-color: #bd2130;
+    }
+
+    .legend-item span {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .header-content {
@@ -728,12 +1007,15 @@ import { DataPackage } from '../data.package';
   `]
 })
 export class PacienteAgendaComponent implements OnInit {
+  // Vista del calendario
+  view: CalendarView = CalendarView.Week;
+  CalendarView = CalendarView;
+  
   // Estados de carga
   isLoadingTurnos = false;
   isLoadingEspecialidades = false;
   isLoadingStaffMedicos = false;
   isLoadingCentros = false;
-  isConfirming = false;
 
   // Filtros
   especialidadSeleccionada = '';
@@ -748,19 +1030,15 @@ export class PacienteAgendaComponent implements OnInit {
   // Calendario
   viewDate = new Date();
   showCalendar = false;
-  turnosDisponibles: CalendarEvent[] = []; // Para mostrar turnos disponibles para reservar
+  turnosDisponibles: CalendarEvent[] = [];
   events: CalendarEvent[] = [];
   filteredEvents: CalendarEvent[] = [];
-  semanas: number = 4; // Número de semanas para generar eventos
+  semanas: number = 4;
 
   // Modal de reserva
   showBookingModal = false;
   selectedTurnoDisponible: CalendarEvent | null = null;
   isBooking = false;
-
-  // Modal de confirmación (mantener para compatibilidad)
-  showConfirmModal = false;
-  selectedTurno: CalendarEvent | null = null;
 
   constructor(
     private turnoService: TurnoService,
@@ -851,130 +1129,18 @@ export class PacienteAgendaComponent implements OnInit {
   // Método llamado cuando cambia el staff médico
   onStaffMedicoChange() {
     if (this.especialidadSeleccionada && this.events.length > 0) {
-      // Solo aplicar filtros si ya tenemos eventos cargados
-      this.aplicarFiltrosPaciente();
+      this.aplicarFiltros();
     }
   }
 
   // Método llamado cuando cambia el centro de atención
   onCentroAtencionChange() {
     if (this.especialidadSeleccionada && this.events.length > 0) {
-      // Solo aplicar filtros si ya tenemos eventos cargados
-      this.aplicarFiltrosPaciente();
-    }
-  } 
-  events: CalendarEvent[] = [];
-  filteredEvents: CalendarEvent[] = [];
-  semanas: number = 4;
-
-  // Modal de reserva
-  showBookingModal = false;
-  selectedTurnoDisponible: CalendarEvent | null = null;
-  isBooking = false;
-
-  constructor(
-    private turnoService: TurnoService,
-    private especialidadService: EspecialidadService,
-    private staffMedicoService: StaffMedicoService,
-    private centroAtencionService: CentroAtencionService,
-    private agendaService: AgendaService,
-    private http: HttpClient,
-    private cdr: ChangeDetectorRef,
-    private router: Router
-  ) {}
-
-  ngOnInit() {
-    this.cargarEspecialidades();
-  }
-
-  // Cargar especialidades al inicializar
-  cargarEspecialidades() {
-    this.isLoadingEspecialidades = true;
-    this.especialidadService.all().subscribe({
-      next: (dataPackage: DataPackage<Especialidad[]>) => {
-        this.especialidades = dataPackage.data || [];
-        this.isLoadingEspecialidades = false;
-      },
-      error: (error) => {
-        console.error('Error cargando especialidades:', error);
-        this.isLoadingEspecialidades = false;
-      }
-    });
-  }
-
-  // Método llamado cuando cambia la especialidad
-  onEspecialidadChange() {
-    // Limpiar filtros dependientes
-    this.staffMedicoSeleccionado = null;
-    this.centroAtencionSeleccionado = null;
-    this.staffMedicos = [];
-    this.centrosAtencion = [];
-
-    if (this.especialidadSeleccionada) {
-      // Cargar staff médicos y centros para la especialidad seleccionada
-      this.cargarStaffMedicosPorEspecialidad();
-      this.cargarCentrosAtencion();
-      // Cargar turnos con la especialidad seleccionada
-      this.cargarTurnosConFiltros();
-    } else {
-      // Si no hay especialidad, ocultar calendario
-      this.showCalendar = false;
-      this.turnosDisponibles = [];
+      this.aplicarFiltros();
     }
   }
 
-  // Cargar staff médicos filtrados por especialidad
-  cargarStaffMedicosPorEspecialidad() {
-    if (!this.especialidadSeleccionada) return;
-    
-    this.isLoadingStaffMedicos = true;
-    this.staffMedicoService.all().subscribe({
-      next: (dataPackage: DataPackage<StaffMedico[]>) => {
-        // Filtrar staff médicos que tengan la especialidad seleccionada
-        this.staffMedicos = (dataPackage.data || []).filter(staff => 
-          staff.especialidad?.nombre === this.especialidadSeleccionada
-        );
-        this.isLoadingStaffMedicos = false;
-      },
-      error: (error) => {
-        console.error('Error cargando staff médicos:', error);
-        this.isLoadingStaffMedicos = false;
-      }
-    });
-  }
-
-  // Cargar centros de atención
-  cargarCentrosAtencion() {
-    this.isLoadingCentros = true;
-    this.centroAtencionService.all().subscribe({
-      next: (dataPackage: any) => {
-        this.centrosAtencion = dataPackage.data || [];
-        this.isLoadingCentros = false;
-      },
-      error: (error) => {
-        console.error('Error cargando centros de atención:', error);
-        this.isLoadingCentros = false;
-      }
-    });
-  }
-
-  // Método llamado cuando cambia el staff médico
-  onStaffMedicoChange() {
-    if (this.especialidadSeleccionada && this.events.length > 0) {
-      // Solo aplicar filtros si ya tenemos eventos cargados
-      this.aplicarFiltrosPaciente();
-    }
-  }
-
-  // Método llamado cuando cambia el centro de atención
-  onCentroAtencionChange() {
-    if (this.especialidadSeleccionada && this.events.length > 0) {
-      // Solo aplicar filtros si ya tenemos eventos cargados
-      this.aplicarFiltrosPaciente();
-    }
-  }
-
-  // Cargar turnos con filtros aplicados
+  // Cargar turnos con filtros aplicados (usando el sistema del admin)
   cargarTurnosConFiltros() {
     if (!this.especialidadSeleccionada) {
       this.showCalendar = false;
@@ -983,34 +1149,59 @@ export class PacienteAgendaComponent implements OnInit {
 
     this.isLoadingTurnos = true;
     
-    // Usar el servicio de agenda para obtener turnos disponibles reales
-    this.cargarTurnosDisponiblesDesdeBackend();
-  }
-
-  // Cargar turnos disponibles desde el backend (como admin pero filtrados)
-  cargarTurnosDisponiblesDesdeBackend() {
-    const semanas = this.semanas;
-    this.agendaService.obtenerTodosLosEventos(semanas).subscribe({
+    // Usar el mismo sistema que el admin para obtener turnos disponibles
+    this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
       next: (eventosBackend) => {
         // Transformar los eventos del backend en objetos CalendarEvent
         this.events = this.mapEsquemasToEvents(eventosBackend);
-        // Aplicar filtros del paciente
-        this.aplicarFiltrosPaciente();
+        this.aplicarFiltros();
         this.showCalendar = true;
         this.isLoadingTurnos = false;
         this.cdr.detectChanges();
       },
       error: (err: unknown) => {
-        console.error('Error al cargar eventos disponibles:', err);
+        console.error('Error al cargar eventos:', err);
         this.isLoadingTurnos = false;
-        // En caso de error, mostrar calendario vacío
-        this.turnosDisponibles = [];
         this.showCalendar = true;
+        this.turnosDisponibles = [];
       }
     });
   }
 
-  // Mapear eventos del backend a CalendarEvent (similar al admin)
+  // Aplicar filtros a los eventos cargados
+  aplicarFiltros() {
+    let eventosFiltrados = this.events;
+
+    // Filtrar por especialidad
+    if (this.especialidadSeleccionada) {
+      eventosFiltrados = eventosFiltrados.filter(event =>
+        event.meta?.especialidadStaffMedico === this.especialidadSeleccionada
+      );
+    }
+
+    // Filtrar por staff médico si está seleccionado
+    if (this.staffMedicoSeleccionado) {
+      eventosFiltrados = eventosFiltrados.filter(event =>
+        event.meta?.staffMedicoId === this.staffMedicoSeleccionado
+      );
+    }
+
+    // Filtrar por centro de atención si está seleccionado
+    if (this.centroAtencionSeleccionado) {
+      eventosFiltrados = eventosFiltrados.filter(event =>
+        event.meta?.centroId === this.centroAtencionSeleccionado
+      );
+    }
+
+    // Mostrar TODOS los slots (tanto disponibles como ocupados)
+    eventosFiltrados = eventosFiltrados.filter(event =>
+      event.meta?.esSlot === true
+    );
+
+    this.turnosDisponibles = eventosFiltrados;
+  }
+
+  // Transformar eventos del backend (igual que en el admin)
   private mapEsquemasToEvents(eventosBackend: any[]): CalendarEvent[] {
     const events: CalendarEvent[] = [];
 
@@ -1030,61 +1221,176 @@ export class PacienteAgendaComponent implements OnInit {
         return;
       }
 
-      // Solo mostrar slots disponibles (no ocupados)
-      if (!evento.ocupado && evento.esSlot) {
-        events.push({
-          start,
-          end,
-          title: `${evento.especialidadStaffMedico || 'Disponible'} - Reservar`,
-          color: { 
-            primary: '#28a745', // Verde para disponible
-            secondary: '#d4edda' 
-          },
-          meta: {
-            id: evento.id,
-            staffMedicoId: evento.staffMedicoId,
-            staffMedicoNombre: evento.staffMedicoNombre,
-            staffMedicoApellido: evento.staffMedicoApellido,
-            especialidad: evento.especialidadStaffMedico,
-            medico: `${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`,
-            centro: evento.nombreCentro,
-            consultorio: evento.consultorioNombre,
-            centroId: evento.centroId,
-            consultorioId: evento.consultorioId,
-            esSlot: evento.esSlot,
-            ocupado: evento.ocupado,
-            disponible: true
-          }
-        });
+      // Aplicar colores basándose en el estado (frontend)
+      let color;
+      if (evento.ocupado) {
+        // Slot ocupado - color rojo
+        color = { 
+          primary: '#dc3545', 
+          secondary: '#f8d7da' 
+        };
+      } else {
+        // Slot disponible - color verde
+        color = { 
+          primary: '#28a745', 
+          secondary: '#d4edda' 
+        };
       }
+
+      // Título dinámico basado en el estado
+      const title = evento.ocupado ? 
+        `Ocupado - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}` : 
+        `Disponible - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`;
+
+      events.push({
+        start,
+        end,
+        title: title,
+        color: color,
+        meta: {
+          id: evento.id,
+          staffMedicoNombre: evento.staffMedicoNombre,
+          staffMedicoApellido: evento.staffMedicoApellido,
+          especialidadStaffMedico: evento.especialidadStaffMedico,
+          centroId: evento.centroId,
+          staffMedicoId: evento.staffMedicoId,
+          consultorioId: evento.consultorioId,
+          consultorioNombre: evento.consultorioNombre,
+          centroAtencionNombre: evento.nombreCentro,
+          esSlot: evento.esSlot,
+          ocupado: evento.ocupado,
+          // Datos para el modal
+          especialidad: evento.especialidadStaffMedico,
+          medico: `${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`,
+          centro: evento.nombreCentro,
+          consultorio: evento.consultorioNombre
+        }
+      });
     });
 
     return events;
   }
 
-  // Aplicar filtros específicos del paciente
-  aplicarFiltrosPaciente() {
-    this.turnosDisponibles = this.events.filter(event => {
-      // Filtro por especialidad (obligatorio)
-      if (this.especialidadSeleccionada && 
-          event.meta?.especialidad !== this.especialidadSeleccionada) {
-        return false;
-      }
+  // Manejar clic en turno disponible
+  onTurnoDisponibleSelected(event: any) {
+    const turno = event.event;
+    
+    // Verificar si es un slot válido
+    if (!turno.meta?.esSlot) {
+      return;
+    }
 
-      // Filtro por staff médico (opcional)
-      if (this.staffMedicoSeleccionado && 
-          event.meta?.staffMedicoId !== this.staffMedicoSeleccionado) {
-        return false;
-      }
+    // Si el slot está ocupado, mostrar mensaje informativo
+    if (turno.meta?.ocupado) {
+      alert('Este turno ya está ocupado. Por favor, selecciona otro horario disponible.');
+      return;
+    }
 
-      // Filtro por centro de atención (opcional)
-      if (this.centroAtencionSeleccionado && 
-          event.meta?.centroId !== this.centroAtencionSeleccionado) {
-        return false;
-      }
+    // Solo permitir reservar turnos disponibles (no ocupados)
+    this.selectedTurnoDisponible = turno;
+    this.showBookingModal = true;
+  }
 
-      return true;
+  // Confirmar reserva de turno
+  confirmarReservaTurno() {
+    if (!this.selectedTurnoDisponible) return;
+
+    const pacienteId = localStorage.getItem('pacienteId');
+    if (!pacienteId) {
+      alert('Error: No se encontró la información del paciente. Por favor, inicie sesión nuevamente.');
+      return;
+    }
+
+    this.isBooking = true;
+
+    // Crear fechas locales sin conversión a UTC
+    const startDate = this.selectedTurnoDisponible.start;
+    const endDate = this.selectedTurnoDisponible.end;
+    
+    // Formatear fecha y hora en horario local (sin UTC)
+    const fechaLocal = startDate.getFullYear() + '-' + 
+                      String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(startDate.getDate()).padStart(2, '0');
+    
+    const horaInicioLocal = String(startDate.getHours()).padStart(2, '0') + ':' + 
+                           String(startDate.getMinutes()).padStart(2, '0') + ':' + 
+                           String(startDate.getSeconds()).padStart(2, '0');
+    
+    const horaFinLocal = endDate ? 
+                        String(endDate.getHours()).padStart(2, '0') + ':' + 
+                        String(endDate.getMinutes()).padStart(2, '0') + ':' + 
+                        String(endDate.getSeconds()).padStart(2, '0') : '';
+
+    const turnoDTO = {
+      id: this.selectedTurnoDisponible.meta?.id,
+      fecha: fechaLocal,
+      horaInicio: horaInicioLocal,
+      horaFin: horaFinLocal,
+      pacienteId: parseInt(pacienteId),
+      staffMedicoId: this.selectedTurnoDisponible.meta?.staffMedicoId,
+      staffMedicoNombre: this.selectedTurnoDisponible.meta?.staffMedicoNombre,
+      staffMedicoApellido: this.selectedTurnoDisponible.meta?.staffMedicoApellido,
+      especialidadStaffMedico: this.selectedTurnoDisponible.meta?.especialidadStaffMedico,
+      consultorioId: this.selectedTurnoDisponible.meta?.consultorioId,
+      consultorioNombre: this.selectedTurnoDisponible.meta?.consultorioNombre,
+      centroId: this.selectedTurnoDisponible.meta?.centroId,
+      nombreCentro: this.selectedTurnoDisponible.meta?.centroAtencionNombre,
+      estado: 'PENDIENTE'
+    };
+
+    console.log('Enviando turno DTO:', turnoDTO); // Debug log
+
+    this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
+      next: () => {
+        alert('¡Turno reservado exitosamente!');
+        
+        // Actualizar inmediatamente el slot en el calendario local
+        if (this.selectedTurnoDisponible) {
+          this.actualizarSlotReservado(this.selectedTurnoDisponible);
+        }
+        
+        this.closeBookingModal();
+        
+        // Recargar los turnos para obtener datos actualizados del servidor
+        setTimeout(() => {
+          this.cargarTurnosConFiltros();
+        }, 500);
+      },
+      error: (err: any) => {
+        console.error('Error al reservar el turno:', err);
+        alert('No se pudo reservar el turno. Intente nuevamente.');
+        this.isBooking = false;
+      }
     });
+  }
+
+  // Cerrar modal de reserva
+  closeBookingModal() {
+    this.showBookingModal = false;
+    this.selectedTurnoDisponible = null;
+    this.isBooking = false;
+  }
+
+  // Actualizar slot reservado inmediatamente en el calendario local
+  private actualizarSlotReservado(slot: CalendarEvent) {
+    // Encontrar el slot en el array de eventos y marcarlo como ocupado
+    const eventoEncontrado = this.events.find(event => 
+      event.meta?.id === slot.meta?.id &&
+      event.start.getTime() === slot.start.getTime()
+    );
+    
+    if (eventoEncontrado) {
+      // Actualizar metadatos
+      eventoEncontrado.meta.ocupado = true;
+      eventoEncontrado.title = 'Ocupado';
+      eventoEncontrado.color = { primary: '#dc3545', secondary: '#f8d7da' };
+      
+      // Aplicar filtros nuevamente para actualizar la vista
+      this.aplicarFiltros();
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+    }
   }
 
   // Métodos de limpieza de filtros
@@ -1126,111 +1432,30 @@ export class PacienteAgendaComponent implements OnInit {
     return centro ? centro.nombre : 'Centro no encontrado';
   }
 
-  irASolicitarTurno() {
-    this.router.navigate(['/paciente-solicitar-turno']);
-  }
-
   // Navegación del calendario
   previousWeek() {
-    const newDate = new Date(this.viewDate);
-    newDate.setDate(newDate.getDate() - 7);
-    this.viewDate = newDate;
-    // Recargar turnos para la nueva semana
+    this.viewDate = subWeeks(this.viewDate, 1);
+    // Recargar turnos si hay filtros aplicados
     if (this.especialidadSeleccionada) {
       this.cargarTurnosConFiltros();
     }
   }
 
   nextWeek() {
-    const newDate = new Date(this.viewDate);
-    newDate.setDate(newDate.getDate() + 7);
-    this.viewDate = newDate;
-    // Recargar turnos para la nueva semana
+    this.viewDate = addWeeks(this.viewDate, 1);
+    // Recargar turnos si hay filtros aplicados
     if (this.especialidadSeleccionada) {
       this.cargarTurnosConFiltros();
     }
   }
 
-  // Método para manejar la selección de turno disponible para reservar
-  onTurnoDisponibleSelected(event: any) {
-    const turnoEvent = event.event;
-    
-    // Solo permitir reserva si es un slot disponible
-    if (turnoEvent.meta?.disponible && !turnoEvent.meta?.ocupado) {
-      this.selectedTurnoDisponible = turnoEvent;
-      this.showBookingModal = true;
-    }
+  // Método para manejar cambios en los eventos (requerido por el calendario)
+  onEventTimesChanged(event: any) {
+    // Este método es requerido por el calendario pero no lo usamos para cambiar eventos
+    // ya que los pacientes solo pueden reservar, no mover eventos
   }
 
-  // Confirmar reserva de turno
-  confirmarReservaTurno() {
-    if (!this.selectedTurnoDisponible) {
-      return;
-    }
-
-    // Obtener ID del paciente
-    let pacienteId = localStorage.getItem('pacienteId');
-    
-    if (!pacienteId) {
-      const patientDataStr = localStorage.getItem('patientData');
-      if (patientDataStr) {
-        try {
-          const patientData = JSON.parse(patientDataStr);
-          pacienteId = patientData.id?.toString();
-          if (pacienteId) {
-            localStorage.setItem('pacienteId', pacienteId);
-          }
-        } catch (e) {
-          console.error('Error parsing patient data:', e);
-        }
-      }
-    }
-
-    if (!pacienteId) {
-      alert('Error: No se pudo identificar al paciente. Por favor, inicie sesión nuevamente.');
-      return;
-    }
-
-    this.isBooking = true;
-
-    // Crear el DTO del turno siguiendo el mismo patrón que el admin
-    const turnoDTO = {
-      id: this.selectedTurnoDisponible.meta?.id,
-      fecha: this.selectedTurnoDisponible.start.toISOString().substring(0, 10),
-      horaInicio: this.selectedTurnoDisponible.start.toISOString().substring(11, 19),
-      horaFin: this.selectedTurnoDisponible.end ? this.selectedTurnoDisponible.end.toISOString().substring(11, 19) : '',
-      pacienteId: parseInt(pacienteId),
-      staffMedicoId: this.selectedTurnoDisponible.meta?.staffMedicoId,
-      staffMedicoNombre: this.selectedTurnoDisponible.meta?.staffMedicoNombre,
-      staffMedicoApellido: this.selectedTurnoDisponible.meta?.staffMedicoApellido,
-      especialidadStaffMedico: this.selectedTurnoDisponible.meta?.especialidad,
-      consultorioId: this.selectedTurnoDisponible.meta?.consultorioId,
-      consultorioNombre: this.selectedTurnoDisponible.meta?.consultorio,
-      centroId: this.selectedTurnoDisponible.meta?.centroId,
-      nombreCentro: this.selectedTurnoDisponible.meta?.centro,
-      estado: 'PENDIENTE'
-    };
-
-    // Usar el mismo endpoint que el admin para asignar turnos
-    this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
-      next: () => {
-        alert('¡Turno reservado exitosamente! Se ha confirmado tu cita médica.');
-        this.closeBookingModal();
-        // Recargar los turnos para actualizar la disponibilidad
-        this.cargarTurnosConFiltros();
-      },
-      error: (err: any) => {
-        console.error('Error al reservar el turno:', err);
-        alert('No se pudo reservar el turno. Por favor, intenta nuevamente.');
-        this.isBooking = false;
-      }
-    });
-  }
-
-  // Cerrar modal de reserva
-  closeBookingModal() {
-    this.showBookingModal = false;
-    this.selectedTurnoDisponible = null;
-    this.isBooking = false;
+  irASolicitarTurno() {
+    this.router.navigate(['/paciente-solicitar-turno']);
   }
 }

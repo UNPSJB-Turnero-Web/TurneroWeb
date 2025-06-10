@@ -87,7 +87,13 @@ import { DataPackage } from '../data.package';
             </div>
           </div>
           
-          <div class="appointment-actions" *ngIf="turno.status !== 'completed' && turno.status !== 'cancelled'">
+          <div class="appointment-actions" *ngIf="turno.status !== 'completed' && turno.status !== 'cancelado' && turno.status !== 'cancelled'">
+            <button class="btn btn-success" 
+                    *ngIf="turno.status === 'pendiente'"
+                    (click)="confirm(turno)">
+              <i class="fas fa-check"></i>
+              Confirmar
+            </button>
             <button class="btn btn-secondary" (click)="reschedule(turno)">
               <i class="fas fa-calendar-alt"></i>
               Reprogramar
@@ -175,6 +181,17 @@ import { DataPackage } from '../data.package';
     .btn-secondary:hover {
       background: #5a6268;
       transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
     }
 
     .btn-danger {
@@ -589,11 +606,43 @@ export class PacienteTurnosComponent implements OnInit {
     // Navigate to reschedule component
   }
 
+  confirm(turno: any) {
+    const confirmMessage = `¿Deseas confirmar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
+    
+    if (confirm(confirmMessage)) {
+      this.turnoService.confirmar(turno.id).subscribe({
+        next: (response) => {
+          console.log('Turno confirmado exitosamente:', response);
+          // Actualizar el estado localmente
+          turno.status = 'confirmado';
+          // Mostrar mensaje de éxito
+          alert('Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.');
+        },
+        error: (error) => {
+          console.error('Error confirmando el turno:', error);
+          alert('No se pudo confirmar el turno. Por favor, intenta nuevamente.');
+        }
+      });
+    }
+  }
+
   cancel(turno: any) {
-    if (confirm('¿Estás seguro de que deseas cancelar este turno?')) {
-      turno.status = 'cancelado';
-      console.log('Turno cancelado:', turno);
-      // Aquí podrías llamar al servicio para actualizar el estado en el backend
+    const confirmMessage = `¿Estás seguro de que deseas cancelar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
+    
+    if (confirm(confirmMessage)) {
+      this.turnoService.cancelar(turno.id).subscribe({
+        next: (response) => {
+          console.log('Turno cancelado exitosamente:', response);
+          // Actualizar el estado localmente
+          turno.status = 'cancelado';
+          // Mostrar mensaje de éxito
+          alert('Turno cancelado exitosamente. El horario quedará disponible para otros pacientes.');
+        },
+        error: (error) => {
+          console.error('Error cancelando el turno:', error);
+          alert('No se pudo cancelar el turno. Por favor, intenta nuevamente.');
+        }
+      });
     }
   }
 }
