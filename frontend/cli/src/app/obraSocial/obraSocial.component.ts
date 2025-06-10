@@ -12,184 +12,188 @@ import { PaginationComponent } from '../pagination/pagination.component';
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
-    <div class="container mt-4">
-      <div class="card modern-card">
-        <!-- HEADER MODERNO -->
-        <div class="card-header">
+    <div class="container-fluid mt-4">
+      <div class="modern-card">
+        <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+        <div class="banner-obra-social">
           <div class="header-content">
-            <div class="header-icon">
-              <i class="fas fa-heart-pulse"></i>
+            <div class="title-section">
+              <div class="header-icon">
+                <i class="fas fa-heart-pulse"></i>
+              </div>
+              <div class="header-text">
+                <h1>Obras Sociales</h1>
+                <p>Gestión de obras sociales del sistema</p>
+              </div>
             </div>
-            <div class="header-text">
-              <h1>Obras Sociales</h1>
-              <p>Gestione las obras sociales del sistema</p>
-            </div>
-            <button class="btn btn-modern btn-add ms-auto" (click)="router.navigate(['/obraSocial/new'])">
-              <i class="fas fa-plus me-2"></i> Nueva Obra Social
+            <button 
+              class="btn btn-banner"
+              (click)="router.navigate(['/obraSocial/new'])"
+            >
+              <i class="fas fa-plus me-2"></i>
+              Nueva Obra Social
             </button>
           </div>
         </div>
-
-        <!-- TABLA MODERNA -->
-        <div class="card-body">
-          <div class="table-container">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>
-                    <div class="th-content">
-                      <span class="th-icon" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">🆔</span>
-                      <span class="th-text">ID</span>
+        <!-- TABLA MODERNA NORMALIZADA -->
+        <div class="table-container">
+          <table class="table modern-table">
+            <thead>
+              <tr>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle id-header">
+                      <i class="fas fa-hashtag"></i>
                     </div>
-                  </th>
-                  <th>
-                    <div class="th-content">
-                      <span class="th-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">💊</span>
-                      <span class="th-text">Nombre</span>
+                    ID
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle obra-social-header">
+                      <i class="fas fa-heart-pulse"></i>
                     </div>
-                  </th>
-                  <th>
-                    <div class="th-content">
-                      <span class="th-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🔖</span>
-                      <span class="th-text">Código</span>
+                    Nombre
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle obra-social-header">
+                      <i class="fas fa-barcode"></i>
                     </div>
-                  </th>
-                  <th>
-                    <div class="th-content">
-                      <span class="th-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);">📋</span>
-                      <span class="th-text">Descripción</span>
+                    Código
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle obra-social-header">
+                      <i class="fas fa-file-text"></i>
                     </div>
-                  </th>
-                  <th>
-                    <div class="th-content">
-                      <span class="th-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">⚙️</span>
-                      <span class="th-text">Acciones</span>
+                    Descripción
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle actions-header">
+                      <i class="fas fa-cogs"></i>
                     </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let obraSocial of resultsPage.content; let i = index"
-                    (click)="goToDetail(obraSocial.id)"
-                    class="table-row"
-                    [class.even-row]="i % 2 === 0"
-                    [class.odd-row]="i % 2 !== 0">
-                  <td>
-                    <div class="id-badge">
-                      {{ obraSocial.id }}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="obra-nombre">
-                      {{ obraSocial.nombre }}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="codigo-badge">
-                      {{ obraSocial.codigo }}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="descripcion-text">
-                      {{ obraSocial.descripcion || 'Sin descripción' }}
-                    </div>
-                  </td>
-                  <td class="text-center">
-                    <div class="action-container">
-                      <button (click)="goToEdit(obraSocial.id); $event.stopPropagation()" 
-                              class="btn-action btn-edit" 
-                              title="Editar obra social">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button (click)="confirmDelete(obraSocial.id); $event.stopPropagation()" 
-                              class="btn-action btn-delete" 
-                              title="Eliminar obra social">
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
-                  <td colspan="5" class="text-center text-muted py-4">No hay obras sociales para mostrar.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="card-footer">
-          <app-pagination
-            [totalPages]="resultsPage.totalPages"
-            [currentPage]="currentPage"
-            (pageChangeRequested)="onPageChangeRequested($event)"
-            [number]="resultsPage.number"
-            [hidden]="resultsPage.numberOfElements < 1"
-          ></app-pagination>
+                    Acciones
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                *ngFor="let obraSocial of resultsPage.content; let i = index"
+                class="table-row"
+                [class.even]="i % 2 === 0"
+                [class.odd]="i % 2 !== 0"
+                (click)="goToDetail(obraSocial.id)"
+              >
+                <td>
+                  <span class="badge-obra-social">{{ obraSocial.id }}</span>
+                </td>
+                <td>
+                  <div class="obra-social-info">
+                    <div class="obra-social-name">{{ obraSocial.nombre }}</div>
+                    <div class="obra-social-type">Obra Social</div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-obra-social">{{ obraSocial.codigo }}</span>
+                </td>
+                <td>
+                  <div class="descripcion-text">
+                    {{ obraSocial.descripcion || 'Sin descripción' }}
+                  </div>
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-edit"
+                      (click)="goToEdit(obraSocial.id); $event.stopPropagation()"
+                      title="Editar"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      class="btn-action btn-delete"
+                      (click)="confirmDelete(obraSocial.id); $event.stopPropagation()"
+                      title="Eliminar"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="resultsPage.content.length === 0">
+                <td colspan="5" class="text-center py-4 text-muted">
+                  <i class="fas fa-heart-pulse fa-3x mb-3 d-block opacity-50"></i>
+                  No hay obras sociales registradas
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
+      
+      <!-- PAGINACIÓN -->
+      <app-pagination
+        [totalPages]="resultsPage.totalPages"
+        [currentPage]="currentPage"
+        (pageChangeRequested)="onPageChangeRequested($event)"
+        [number]="resultsPage.number"
+        [hidden]="resultsPage.numberOfElements < 1"
+      ></app-pagination>
     </div>
   `,
   styles: [`
-    /* Estilos modernos para el listado de obras sociales */
-    .container {
-      max-width: 1200px;
+    /* Estilos normalizados usando el sistema de colores global */
+    .container-fluid {
+      max-width: 1400px;
       margin: 0 auto;
     }
     
     .modern-card {
-      border-radius: 1.5rem;
-      overflow: hidden;
-      border: none;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.1);
       background: white;
-      backdrop-filter: blur(20px);
-    }
-    
-    /* Estilos del encabezado */
-    .card-header {
-      background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
       border: none;
-      padding: 2rem;
-      position: relative;
       overflow: hidden;
-    }
-    
-    .card-header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -50%;
-      width: 200px;
-      height: 200px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-      transform: translate(-30%, -30%);
+      backdrop-filter: blur(10px);
     }
     
     .header-content {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .title-section {
+      display: flex;
       align-items: center;
       gap: 1.5rem;
-      position: relative;
-      z-index: 1;
     }
     
     .header-icon {
+      background: rgba(255,255,255,0.2);
       width: 60px;
       height: 60px;
-      background: white;
-      border-radius: 50%;
+      border-radius: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ff9a9e;
       font-size: 1.5rem;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      color: white;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
     }
-    
+
     .header-text h1 {
       color: white;
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 700;
       margin: 0;
       text-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -201,138 +205,139 @@ import { PaginationComponent } from '../pagination/pagination.component';
       font-size: 1rem;
     }
     
-    .btn-modern {
-      border-radius: 25px;
-      padding: 0.7rem 1.5rem;
-      font-weight: 600;
-      border: none;
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .btn-add {
-      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
-      color: #ff9a9e;
-    }
-    
-    .btn-add:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    
-    /* Estilos de la tabla */
-    .card-body {
-      padding: 2rem;
-    }
-    
     .table-container {
+      padding: 0;
       overflow-x: auto;
-      border-radius: 1rem;
     }
-    
+
     .modern-table {
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      border: none;
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
+      margin: 0;
     }
-    
-    .modern-table thead th {
-      background: #f8f9fa;
-      padding: 1rem;
-      text-align: left;
-      font-weight: 600;
+
+    .modern-table thead tr {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .modern-table th {
+      border: none;
+      padding: 1.5rem 1rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: #495057;
-      border-bottom: 2px solid #e9ecef;
+      background: transparent;
     }
-    
-    .th-content {
+
+    .header-cell {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      font-weight: 600;
+      color: #495057;
+      padding: 0;
     }
-    
-    .th-icon {
-      width: 32px;
-      height: 32px;
+
+    .icon-circle {
+      width: 35px;
+      height: 35px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.9rem;
       color: white;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      flex-shrink: 0;
     }
+
+    /* Headers específicos */
+    .id-header { background: var(--centro-atencion-gradient); box-shadow: 0 3px 10px var(--centro-atencion-shadow); }
+    .obra-social-header { background: var(--obra-social-gradient); box-shadow: 0 3px 10px var(--obra-social-shadow); }
+    .actions-header { background: var(--obra-social-gradient); box-shadow: 0 3px 10px var(--obra-social-shadow); }
     
     .table-row {
+      transition: all 0.3s ease;
       cursor: pointer;
-      transition: all 0.2s ease;
+      border: none;
+      border-bottom: 1px solid #f8f9fa;
     }
     
     .table-row:hover {
-      background-color: #f8f9fa;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
       transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
     
-    .even-row {
-      background-color: #ffffff;
-    }
-    
-    .odd-row {
-      background-color: #f8f9fa;
-    }
-    
-    .modern-table td {
-      padding: 1rem;
+    .table-row td {
+      padding: 1.25rem 1rem;
       vertical-align: middle;
-      border-bottom: 1px solid #e9ecef;
+      border: none;
     }
     
-    /* Estilos para los badges y contenido */
-    .id-badge {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-      color: white;
-      border-radius: 15px;
-      padding: 0.5rem 1rem;
+    /* INFO CONTAINERS */
+    .obra-social-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .obra-social-name {
       font-weight: 600;
+      color: #495057;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .obra-social-type {
+      font-size: 0.85rem;
+      color: #636e72;
+      background: linear-gradient(135deg, #f1f2f6 0%, #ddd 100%);
+      padding: 4px 10px;
+      border-radius: 12px;
       display: inline-block;
-      box-shadow: 0 4px 15px rgba(0,123,255,0.3);
-    }
-    
-    .obra-nombre {
-      font-weight: 600;
-      color: #212529;
-      font-size: 1.05rem;
-    }
-    
-    .codigo-badge {
-      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-      color: white;
-      border-radius: 15px;
-      padding: 0.5rem 1rem;
-      font-weight: 600;
-      display: inline-block;
-      box-shadow: 0 4px 15px rgba(23,162,184,0.3);
-      font-family: 'Courier New', monospace;
     }
     
     .descripcion-text {
       color: #6c757d;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      font-size: 0.9rem;
+      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 300px;
+      white-space: nowrap;
     }
     
-    /* Estilos para los botones de acción */
-    .action-container {
+    /* BOTÓN TRANSPARENTE PERSONALIZADO */
+    .btn-banner {
+      background: rgba(255,255,255,0.2) !important;
+      border: 1px solid rgba(255,255,255,0.3) !important;
+      color: white !important;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .btn-banner:hover {
+      background: rgba(255,255,255,0.3) !important;
+      color: white !important;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    /* BOTONES DE ACCIÓN */
+    .action-buttons {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
       justify-content: center;
     }
     
@@ -347,11 +352,12 @@ import { PaginationComponent } from '../pagination/pagination.component';
       color: white;
       transition: all 0.3s ease;
       font-size: 0.9rem;
+      cursor: pointer;
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-      box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+      background: var(--obra-social-gradient);
+      box-shadow: 0 4px 15px var(--obra-social-shadow);
     }
     
     .btn-delete {
@@ -361,64 +367,42 @@ import { PaginationComponent } from '../pagination/pagination.component';
     
     .btn-action:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
     }
-    
-    /* Footer y paginación */
-    .card-footer {
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+
+    /* BADGES */
+    .badge-obra-social {
+      background: var(--obra-social-gradient);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-block;
+      box-shadow: 0 4px 15px var(--obra-social-shadow);
       border: none;
-      padding: 1.5rem 2rem;
     }
     
-    /* Responsive */
+    /* RESPONSIVE */
     @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-      
-      .card-header {
-        padding: 1.5rem;
-      }
-      
       .header-content {
         flex-direction: column;
-        text-align: center;
         gap: 1rem;
+        text-align: center;
       }
       
-      .header-text h1 {
-        font-size: 1.5rem;
+      .title-section {
+        flex-direction: column;
+        gap: 0.5rem;
       }
       
-      .btn-modern {
-        width: 100%;
-        margin-top: 1rem;
-        justify-content: center;
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.25rem;
       }
       
-      .card-body {
-        padding: 1rem;
-      }
-      
-      .th-icon {
-        display: none;
-      }
-      
-      .modern-table th, 
-      .modern-table td {
-        padding: 1rem 0.75rem;
-      }
-      
-      .id-badge,
-      .codigo-badge {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.8rem;
-      }
-      
-      .btn-action {
-        width: 35px;
-        height: 35px;
+      .obra-social-info {
+        text-align: center;
       }
     }
   `]

@@ -746,6 +746,7 @@
 .turno-header { background: var(--turnos-gradient); box-shadow: 0 3px 10px var(--turnos-shadow); }
 .agenda-header { background: var(--agenda-gradient); box-shadow: 0 3px 10px var(--agenda-shadow); }
 .paciente-header { background: var(--pacientes-gradient); box-shadow: 0 3px 10px var(--pacientes-shadow); }
+.obra-social-header { background: var(--obra-social-gradient); box-shadow: 0 3px 10px var(--obra-social-shadow); }
 
 /* ========================================
    BORDES Y TEXTO POR ENTIDAD
