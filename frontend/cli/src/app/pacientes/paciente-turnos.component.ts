@@ -87,18 +87,22 @@ import { DataPackage } from '../data.package';
             </div>
           </div>
           
-          <div class="appointment-actions" *ngIf="turno.status !== 'completed' && turno.status !== 'cancelado' && turno.status !== 'cancelled'">
+          <div class="appointment-actions" *ngIf="turno.status !== 'cancelado'">
             <button class="btn btn-success" 
-                    *ngIf="turno.status === 'pendiente'"
+                    *ngIf="turno.status === 'programado'"
                     (click)="confirm(turno)">
               <i class="fas fa-check"></i>
               Confirmar
             </button>
-            <button class="btn btn-secondary" (click)="reschedule(turno)">
+            <button class="btn btn-secondary" 
+                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado'"
+                    (click)="reschedule(turno)">
               <i class="fas fa-calendar-alt"></i>
               Reprogramar
             </button>
-            <button class="btn btn-danger" (click)="cancel(turno)">
+            <button class="btn btn-danger" 
+                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado'"
+                    (click)="cancel(turno)">
               <i class="fas fa-times"></i>
               Cancelar
             </button>
@@ -280,8 +284,12 @@ import { DataPackage } from '../data.package';
       border-left-color: #28a745;
     }
 
-    .appointment-card.pendiente {
+    .appointment-card.programado {
       border-left-color: #ffc107;
+    }
+
+    .appointment-card.reagendado {
+      border-left-color: #17a2b8;
     }
 
     .appointment-card.completed {
@@ -375,14 +383,14 @@ import { DataPackage } from '../data.package';
       color: #155724;
     }
 
-    .status-badge.pendiente {
+    .status-badge.programado {
       background: #fff3cd;
       color: #856404;
     }
 
-    .status-badge.completed {
-      background: #e2e3e5;
-      color: #383d41;
+    .status-badge.reagendado {
+      background: #d1ecf1;
+      color: #0c5460;
     }
 
     .status-badge.cancelado {
@@ -536,7 +544,7 @@ export class PacienteTurnosComponent implements OnInit {
       doctor: `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`,
       specialty: turno.especialidadStaffMedico,
       location: `${turno.nombreCentro} - ${turno.consultorioNombre}`,
-      status: turno.estado?.toLowerCase() || 'pendiente',
+      status: turno.estado?.toLowerCase() || 'programado',
       date: fecha
     };
   }
@@ -548,7 +556,8 @@ export class PacienteTurnosComponent implements OnInit {
     switch (this.currentFilter) {
       case 'upcoming':
         return this.turnos.filter(turno => 
-          turno.date >= today && turno.status !== 'completed' && turno.status !== 'cancelado'
+          turno.date >= today && 
+          (turno.status === 'programado' || turno.status === 'confirmado' || turno.status === 'reagendado')
         );
       case 'past':
         return this.turnos.filter(turno => 
@@ -568,8 +577,8 @@ export class PacienteTurnosComponent implements OnInit {
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
       'confirmado': 'Confirmado',
-      'pendiente': 'Pendiente',
-      'completed': 'Completado',
+      'programado': 'Programado',
+      'reagendado': 'Reagendado',
       'cancelado': 'Cancelado'
     };
     return statusMap[status] || status;
@@ -602,8 +611,7 @@ export class PacienteTurnosComponent implements OnInit {
   }
 
   reschedule(turno: any) {
-    console.log('Reprogramar turno:', turno);
-    // Navigate to reschedule component
+    this.router.navigate(['/paciente-reagendar-turno', turno.id]);
   }
 
   confirm(turno: any) {

@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -97,6 +98,10 @@ public class TurnoService {
         }
 
         Turno turno = turnoOpt.get();
+        
+        // Validaciones de negocio para cancelación
+        validarCancelacion(turno);
+        
         turno.setEstado(EstadoTurno.CANCELADO);
         Turno savedTurno = repository.save(turno);
         
@@ -112,15 +117,71 @@ public class TurnoService {
 
         Turno turno = turnoOpt.get();
         
-        // Verificar que el turno esté en estado PENDIENTE
-        if (turno.getEstado() != EstadoTurno.PENDIENTE) {
-            throw new IllegalArgumentException("Solo se pueden confirmar turnos en estado PENDIENTE. Estado actual: " + turno.getEstado());
-        }
+        // Validaciones de negocio para confirmación
+        validarConfirmacion(turno);
         
         turno.setEstado(EstadoTurno.CONFIRMADO);
         Turno savedTurno = repository.save(turno);
         
         return toDTO(savedTurno);
+    }
+
+    @Transactional
+    public TurnoDTO reagendarTurno(Integer id, TurnoDTO nuevosDatos) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        
+        // Validaciones de negocio para reagendamiento
+        validarReagendamiento(turno);
+        
+        // Actualizar datos del turno
+        turno.setFecha(nuevosDatos.getFecha());
+        turno.setHoraInicio(nuevosDatos.getHoraInicio());
+        turno.setHoraFin(nuevosDatos.getHoraFin());
+        turno.setEstado(EstadoTurno.REAGENDADO);
+        
+        Turno savedTurno = repository.save(turno);
+        
+        return toDTO(savedTurno);
+    }
+
+    // Métodos de validación de reglas de negocio
+    private void validarCancelacion(Turno turno) {
+        // Un turno cancelado no puede ser reactivado
+        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+            throw new IllegalStateException("No se puede cancelar un turno que ya está cancelado");
+        }
+        
+        // No se pueden cancelar turnos el mismo día de la cita sin justificación válida
+        LocalDate hoy = LocalDate.now();
+        if (turno.getFecha().equals(hoy)) {
+            throw new IllegalStateException("No se pueden cancelar turnos el mismo día de la cita");
+        }
+    }
+
+    private void validarConfirmacion(Turno turno) {
+        // Solo se pueden confirmar turnos en estado PROGRAMADO
+        if (turno.getEstado() != EstadoTurno.PROGRAMADO) {
+            throw new IllegalStateException("Solo se pueden confirmar turnos en estado PROGRAMADO. Estado actual: " + turno.getEstado());
+        }
+        
+        // Un turno confirmado no puede volver al estado programado (esto se valida implícitamente)
+    }
+
+    private void validarReagendamiento(Turno turno) {
+        // Un turno cancelado no puede ser reagendado
+        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+            throw new IllegalStateException("No se puede reagendar un turno cancelado");
+        }
+        
+        // Solo se pueden reagendar turnos en estado PROGRAMADO o CONFIRMADO
+        if (turno.getEstado() != EstadoTurno.PROGRAMADO && turno.getEstado() != EstadoTurno.CONFIRMADO) {
+            throw new IllegalStateException("Solo se pueden reagendar turnos en estado PROGRAMADO o CONFIRMADO. Estado actual: " + turno.getEstado());
+        }
     }
 
     // Métodos de conversión entre entidad y DTO
@@ -163,7 +224,13 @@ public class TurnoService {
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(dto.getHoraInicio());
         turno.setHoraFin(dto.getHoraFin());
-        turno.setEstado(EstadoTurno.valueOf(dto.getEstado()));
+        
+        // Si no se especifica estado, usar PROGRAMADO por defecto
+        if (dto.getEstado() != null && !dto.getEstado().isEmpty()) {
+            turno.setEstado(EstadoTurno.valueOf(dto.getEstado()));
+        } else {
+            turno.setEstado(EstadoTurno.PROGRAMADO);
+        }
 
         if (dto.getPacienteId() != null) {
             Paciente paciente = pacienteRepository.findById(dto.getPacienteId())
@@ -226,7 +293,7 @@ public class TurnoService {
     // turno.setFecha(turnoDTO.getFecha());
     // turno.setHoraInicio(turnoDTO.getHoraInicio());
     // turno.setHoraFin(turnoDTO.getHoraFin());
-    // turno.setEstado(EstadoTurno.PENDIENTE); // Estado inicial
+    // turno.setEstado(EstadoTurno.PROGRAMADO); // Estado inicial
 
     // // Asignar el paciente
     // if (turnoDTO.getPacienteId() != null) {

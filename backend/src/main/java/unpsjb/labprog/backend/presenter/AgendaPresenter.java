@@ -95,14 +95,27 @@ public class AgendaPresenter {
 
     @GetMapping("/eventos/todos")
     public List<TurnoDTO> obtenerTodosLosEventos(@RequestParam int semanas) {
-        List<EsquemaTurno> esquemasTurno = esquemaTurnoRepository.findAll();
+        List<EsquemaTurno> esquemas = esquemaTurnoRepository.findAll();
         List<TurnoDTO> todosLosEventos = new ArrayList<>();
 
-        for (EsquemaTurno esquema : esquemasTurno) {
-            todosLosEventos.addAll(agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas));
+        for (EsquemaTurno esquema : esquemas) {
+            List<TurnoDTO> eventos = agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas);
+            todosLosEventos.addAll(eventos);
         }
 
         return todosLosEventos;
+    }
+
+    @GetMapping("/slots-disponibles/{staffMedicoId}")
+    public ResponseEntity<Object> obtenerSlotsDisponiblesPorMedico(
+            @PathVariable Integer staffMedicoId,
+            @RequestParam(defaultValue = "4") int semanas) {
+        try {
+            List<TurnoDTO> slotsDisponibles = agendaService.obtenerSlotsDisponiblesPorMedico(staffMedicoId, semanas);
+            return Response.ok(slotsDisponibles, "Slots disponibles obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener slots disponibles: " + e.getMessage());
+        }
     }
 
 }

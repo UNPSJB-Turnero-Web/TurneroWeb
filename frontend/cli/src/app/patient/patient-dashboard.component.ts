@@ -81,7 +81,7 @@ import { Router } from '@angular/router';
               <span class="time">3:00 PM</span>
             </div>
             <div class="appointment-status">
-              <span class="status pending">Pendiente</span>
+              <span class="status pending">Programado</span>
             </div>
           </div>
         </div>

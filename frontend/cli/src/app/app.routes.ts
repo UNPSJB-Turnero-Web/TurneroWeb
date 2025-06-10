@@ -24,6 +24,7 @@ import { ObraSocialDetailComponent } from './obraSocial/obraSocial-detail.compon
 import { PacienteDashboardComponent } from './pacientes/paciente-dashboard.component';
 import { PacienteTurnosComponent } from './pacientes/paciente-turnos.component';
 import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
+import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
 import { AdminGuard } from './guards/admin.guard';
 import { PatientGuard } from './guards/patient.guard';
 
@@ -34,6 +35,7 @@ export const routes: Routes = [
     { path: 'paciente-dashboard', component: PacienteDashboardComponent, canActivate: [PatientGuard] },
     { path: 'paciente-turnos', component: PacienteTurnosComponent, canActivate: [PatientGuard] },
     { path: 'paciente-agenda', component: PacienteAgendaComponent, canActivate: [PatientGuard] },
+    { path: 'paciente-reagendar-turno/:id', component: PacienteReagendarTurnoComponent, canActivate: [PatientGuard] },
     
     // Admin Routes (protected)
     { path: 'turnos', component: TurnosComponent, canActivate: [AdminGuard] },

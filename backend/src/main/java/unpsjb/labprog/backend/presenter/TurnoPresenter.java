@@ -123,4 +123,18 @@ public class TurnoPresenter {
             return Response.error(null, "Error al confirmar el turno: " + e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reagendar")
+    public ResponseEntity<Object> reagendarTurno(@PathVariable Integer id, @RequestBody TurnoDTO nuevosDatos) {
+        try {
+            TurnoDTO turno = service.reagendarTurno(id, nuevosDatos);
+            return Response.ok(turno, "Turno reagendado correctamente.");
+        } catch (IllegalArgumentException e) {
+            return Response.notFound("Turno no encontrado");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al reagendar el turno: " + e.getMessage());
+        }
+    }
 }

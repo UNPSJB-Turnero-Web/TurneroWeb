@@ -1335,7 +1335,7 @@ export class PacienteAgendaComponent implements OnInit {
       consultorioNombre: this.selectedTurnoDisponible.meta?.consultorioNombre,
       centroId: this.selectedTurnoDisponible.meta?.centroId,
       nombreCentro: this.selectedTurnoDisponible.meta?.centroAtencionNombre,
-      estado: 'PENDIENTE'
+      estado: 'PROGRAMADO'
     };
 
     console.log('Enviando turno DTO:', turnoDTO); // Debug log

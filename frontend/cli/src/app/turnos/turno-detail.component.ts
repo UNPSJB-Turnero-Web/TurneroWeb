@@ -157,7 +157,7 @@ import { ModalService } from '../modal/modal.service';
       display: inline-block;
     }
     
-    .estado-pendiente {
+    .estado-programado {
       background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
       color: #212529;
     }
@@ -341,7 +341,7 @@ export class TurnoDetailComponent {
     fecha: '',
     horaInicio: '',
     horaFin: '',
-    estado: 'PENDIENTE',
+    estado: 'PROGRAMADO',
     pacienteId: 0,
     staffMedicoId: 0,
     consultorioId: 0
@@ -378,7 +378,7 @@ export class TurnoDetailComponent {
         fecha: '',
         horaInicio: '',
         horaFin: '',
-        estado: 'PENDIENTE',
+        estado: 'PROGRAMADO',
         pacienteId: 0,
         staffMedicoId: 0,
         consultorioId: 0
@@ -473,14 +473,14 @@ export class TurnoDetailComponent {
 
   getEstadoBadgeClass(estado: string): string {
     switch (estado?.toUpperCase()) {
-      case 'PENDIENTE':
-        return 'estado-display estado-pendiente';
+      case 'PROGRAMADO':
+        return 'estado-display estado-programado';
       case 'CONFIRMADO':
         return 'estado-display estado-confirmado';
+      case 'REAGENDADO':
+        return 'estado-display estado-reagendado';
       case 'CANCELADO':
         return 'estado-display estado-cancelado';
-      case 'COMPLETADO':
-        return 'estado-display estado-completado';
       default:
         return 'estado-display bg-secondary text-white';
     }

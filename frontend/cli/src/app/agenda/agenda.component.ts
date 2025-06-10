@@ -995,7 +995,7 @@ export class AgendaComponent implements OnInit {
       consultorioNombre: this.selectedEvent?.meta?.consultorioNombre,
       centroId: this.selectedEvent?.meta?.centroId,
       nombreCentro: this.selectedEvent?.meta?.centroAtencionNombre,
-      estado: 'PENDIENTE', // Estado inicial del turno
+      estado: 'PROGRAMADO', // Estado inicial del turno
     };
 
     console.log('Enviando turno DTO (admin):', turnoDTO); // Debug log

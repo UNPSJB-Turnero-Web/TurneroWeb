@@ -61,4 +61,9 @@ export class TurnoService {
   confirmar(id: number): Observable<DataPackage<Turno>> {
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/confirmar`, {});
   }
+
+  /** Reagenda un turno */
+  reagendar(id: number, nuevosDatos: any): Observable<DataPackage<Turno>> {
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/reagendar`, nuevosDatos);
+  }
 }

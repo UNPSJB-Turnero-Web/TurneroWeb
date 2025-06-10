@@ -4,7 +4,7 @@ export interface Turno {
     fecha: string;                  // LocalDate como string
     horaInicio: string;             // LocalTime como string  
     horaFin: string;                // LocalTime como string
-    estado: string;                 // "PENDIENTE", "CONFIRMADO", "CANCELADO"
+    estado: string;                 // "PROGRAMADO", "CONFIRMADO", "CANCELADO"
     
     // Campos de paciente
     pacienteId?: number;

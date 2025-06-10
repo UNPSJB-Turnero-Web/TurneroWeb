@@ -49,8 +49,8 @@ public class Turno {
     
 
     public void confirmarTurno() {
-        if (this.estado != EstadoTurno.PENDIENTE) {
-            throw new IllegalStateException("Solo se pueden confirmar turnos en estado PENDIENTE.");
+        if (this.estado != EstadoTurno.PROGRAMADO) {
+            throw new IllegalStateException("Solo se pueden confirmar turnos en estado PROGRAMADO.");
         }
         this.estado = EstadoTurno.CONFIRMADO;
     }

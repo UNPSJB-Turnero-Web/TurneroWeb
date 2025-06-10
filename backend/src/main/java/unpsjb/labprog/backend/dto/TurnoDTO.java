@@ -14,7 +14,7 @@ public class TurnoDTO {
     private LocalTime horaInicio;
     private LocalTime horaFin;
 
-    private String estado; // PENDIENTE, CONFIRMADO, CANCELADO
+    private String estado; // PROGRAMADO, CONFIRMADO, CANCELADO, REAGENDADO
     // Datos del paciente (resumidos)
     private Integer pacienteId;
     private String nombrePaciente;

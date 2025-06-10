@@ -326,7 +326,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
       letter-spacing: 0.5px;
     }
 
-    .estado-badge.pendiente {
+    .estado-badge.programado {
       background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
       color: #212529;
       box-shadow: 0 4px 12px rgba(255,193,7,0.3);
@@ -583,8 +583,8 @@ export class TurnosComponent {
 
   getEstadoBadgeClass(estado: string): string {
     switch (estado?.toUpperCase()) {
-      case 'PENDIENTE':
-        return 'pendiente';
+      case 'PROGRAMADO':
+        return 'programado';
       case 'CONFIRMADO':
         return 'confirmado';
       case 'CANCELADO':
@@ -592,13 +592,13 @@ export class TurnosComponent {
       case 'COMPLETADO':
         return 'completado';
       default:
-        return 'pendiente';
+        return 'programado';
     }
   }
 
   getEstadoIcon(estado: string): string {
     switch (estado?.toUpperCase()) {
-      case 'PENDIENTE':
+      case 'PROGAMADO':
         return 'fa-clock';
       case 'CONFIRMADO':
         return 'fa-check-circle';

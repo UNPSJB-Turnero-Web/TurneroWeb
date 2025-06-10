@@ -81,8 +81,8 @@ public class AgendaService {
     //     if (agenda == null)
     //         throw new IllegalArgumentException("Agenda no encontrada");
 
-    //     // Buscar turnos pendientes de la agenda
-    //     List<Turno> turnos = turnoRepository.findByAgenda_IdAndEstado(agendaId, EstadoTurno.PENDIENTE);
+    //     // Buscar turnos programados de la agenda
+    //     List<Turno> turnos = turnoRepository.findByAgenda_IdAndEstado(agendaId, EstadoTurno.PROGRAMADO);
 
     //     // Notificar a cada paciente y sugerir alternativas
     //     for (Turno turno : turnos) {
@@ -204,6 +204,35 @@ public class AgendaService {
         }
 
         return eventos;
+    }
+
+    /**
+     * Obtiene solo los slots disponibles (no ocupados) para un médico específico
+     */
+    public List<TurnoDTO> obtenerSlotsDisponiblesPorMedico(Integer staffMedicoId, int semanas) {
+        // Buscar esquemas de turno para el médico específico
+        List<EsquemaTurno> esquemasMedico = esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId);
+        
+        List<TurnoDTO> slotsDisponibles = new ArrayList<>();
+        
+        for (EsquemaTurno esquema : esquemasMedico) {
+            List<TurnoDTO> todosLosSlots = generarEventosDesdeEsquemaTurno(esquema, semanas);
+            
+            // Filtrar solo los slots disponibles (no ocupados) y que sean del futuro
+            LocalDate hoy = LocalDate.now();
+            LocalTime ahora = LocalTime.now();
+            
+            for (TurnoDTO slot : todosLosSlots) {
+                boolean esFuturo = slot.getFecha().isAfter(hoy) || 
+                                 (slot.getFecha().equals(hoy) && slot.getHoraInicio().isAfter(ahora));
+                
+                if (!slot.getOcupado() && esFuturo && slot.getEsSlot()) {
+                    slotsDisponibles.add(slot);
+                }
+            }
+        }
+        
+        return slotsDisponibles;
     }
 
   

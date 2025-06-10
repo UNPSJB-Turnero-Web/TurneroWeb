@@ -83,18 +83,16 @@ import { DataPackage } from '../data.package';
               </p>
               <span class="time">{{ turno.time }}</span>
             </div>
-            <div class="appointment-right">
-              <div class="appointment-status">
-                <span class="status" [class]="turno.status">
-                  {{ getStatusText(turno.status) }}
-                </span>
-              </div>
-              <div class="appointment-actions" *ngIf="turno.status === 'pendiente'">
-                <button class="btn btn-confirm" (click)="confirmarTurno(turno)">
-                  <i class="fas fa-check"></i>
-                  Confirmar
-                </button>
-              </div>
+            <div class="appointment-status">
+              <span class="status" [class]="turno.status">
+                {{ getStatusText(turno.status) }}
+              </span>
+            </div>
+            <div class="appointment-actions" *ngIf="turno.status === 'programado'">
+              <button class="btn btn-confirm" (click)="confirmarTurno(turno)">
+                <i class="fas fa-check"></i>
+                Confirmar
+              </button>
             </div>
           </div>
         </div>
@@ -336,14 +334,6 @@ import { DataPackage } from '../data.package';
       font-size: 0.95rem;
     }
 
-    .appointment-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 1rem;
-      min-width: 120px;
-    }
-
     .appointment-status {
       display: flex;
       align-items: center;
@@ -357,26 +347,30 @@ import { DataPackage } from '../data.package';
       text-transform: uppercase;
     }
 
-    .status.confirmado {
+    .status.confirmed {
       background: #d4edda;
       color: #155724;
     }
 
-    .status.pendiente {
+    .status.pending {
       background: #fff3cd;
       color: #856404;
     }
 
     .appointment-actions {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
       display: flex;
+      gap: 0.5rem;
     }
 
     .btn-confirm {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      background: #28a745;
       color: white;
-      padding: 0.6rem 1.2rem;
+      padding: 0.5rem 1rem;
       border: none;
-      border-radius: 25px;
+      border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -384,12 +378,11 @@ import { DataPackage } from '../data.package';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.9rem;
-      box-shadow: 0 2px 10px rgba(40, 167, 69, 0.2);
     }
 
     .btn-confirm:hover {
-      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
-      transform: translateY(-2px);
+      background: #218838;
+      transform: translateY(-1px);
       box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
     }
 
@@ -434,18 +427,6 @@ import { DataPackage } from '../data.package';
         flex-direction: column;
         text-align: center;
         gap: 1rem;
-      }
-
-      .appointment-right {
-        align-items: center;
-        flex-direction: row;
-        justify-content: space-between;
-        width: 100%;
-        min-width: unset;
-      }
-
-      .appointment-actions {
-        margin-top: 0;
       }
     }
   `
@@ -506,7 +487,7 @@ export class PacienteDashboardComponent implements OnInit {
         console.log('Turnos recibidos en dashboard:', dataPackage);
         const turnos = dataPackage.data || [];
         
-        // Filtrar solo los próximos turnos (fecha >= hoy y estado confirmado o pendiente)
+        // Filtrar solo los próximos turnos (fecha >= hoy y estado confirmado o PRO)
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         
@@ -516,7 +497,7 @@ export class PacienteDashboardComponent implements OnInit {
             fechaTurno.setHours(0, 0, 0, 0);
             return fechaTurno >= hoy && 
                    (turno.estado?.toLowerCase() === 'confirmado' || 
-                    turno.estado?.toLowerCase() === 'pendiente');
+                    turno.estado?.toLowerCase() === 'programado');
           })
           .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
           .slice(0, 3) // Mostrar solo los próximos 3
@@ -544,14 +525,14 @@ export class PacienteDashboardComponent implements OnInit {
       doctor: `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`,
       specialty: turno.especialidadStaffMedico,
       location: turno.nombreCentro,
-      status: turno.estado?.toLowerCase() || 'pendiente'
+      status: turno.estado?.toLowerCase() || 'programado'
     };
   }
 
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
       'confirmado': 'Confirmado',
-      'pendiente': 'Pendiente',
+      'programado': 'Programado',
       'completed': 'Completado',
       'cancelled': 'Cancelado'
     };
