@@ -32,6 +32,10 @@ public class PacienteService {
         return repository.findById(id).map(this::toDTO);
     }
 
+    public Optional<PacienteDTO> findByDni(Integer dni) {
+        return repository.findByDni(Long.valueOf(dni)).map(this::toDTO);
+    }
+
     @Transactional
     public PacienteDTO saveOrUpdate(PacienteDTO dto) {
         Paciente paciente = toEntity(dto);

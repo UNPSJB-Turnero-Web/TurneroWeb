@@ -48,6 +48,15 @@ public class TurnoService {
         return repository.findById(id).map(this::toDTO);
     }
 
+ 
+
+    // Obtener turnos por paciente ID
+    public List<TurnoDTO> findByPacienteId(Integer pacienteId) {
+        return repository.findByPaciente_Id(pacienteId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public TurnoDTO save(TurnoDTO dto) {
         try {

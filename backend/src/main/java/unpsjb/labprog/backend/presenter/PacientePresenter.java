@@ -68,6 +68,20 @@ public class PacientePresenter {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateById(@PathVariable Integer id, @RequestBody PacienteDTO pacienteDTO) {
+        try {
+            // Asegurar que el ID del path coincida con el del DTO
+            pacienteDTO.setId(id);
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
+            return Response.ok(updated, "Paciente actualizado correctamente");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar el paciente: " + e.getMessage());
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
@@ -93,5 +107,11 @@ public class PacientePresenter {
         return Response.ok(response);
     }
 
-    
+    @GetMapping("/dni/{dni}")
+    public ResponseEntity<Object> findByDni(@PathVariable Integer dni) {
+        return service.findByDni(dni)
+                .map(paciente -> Response.ok(paciente, "Paciente encontrado por DNI"))
+                .orElse(Response.notFound("Paciente con DNI " + dni + " no encontrado"));
+    }
+
 }

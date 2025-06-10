@@ -52,7 +52,13 @@ export class PacienteService {
       map(res => res.data || false)
     );
   }
-getObrasSociales(): Observable<DataPackage<{ id: number; nombre: string; codigo: string }[]>> {
-  return this.http.get<DataPackage<{ id: number; nombre: string; codigo: string }[]>>(`rest/obra-social`);
-}
+
+  /** Busca un paciente por DNI */
+  findByDni(dni: number): Observable<DataPackage<Paciente>> {
+    return this.http.get<DataPackage<Paciente>>(`${this.url}/dni/${dni}`);
+  }
+
+  getObrasSociales(): Observable<DataPackage<{ id: number; nombre: string; codigo: string }[]>> {
+    return this.http.get<DataPackage<{ id: number; nombre: string; codigo: string }[]>>(`rest/obra-social`);
+  }
 }

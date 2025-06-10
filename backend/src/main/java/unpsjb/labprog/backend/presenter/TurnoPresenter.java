@@ -39,6 +39,12 @@ public class TurnoPresenter {
                 .orElse(Response.notFound("Turno no encontrado"));
     }
 
+    @GetMapping("/paciente/{pacienteId}")
+    public ResponseEntity<Object> getByPacienteId(@PathVariable Integer pacienteId) {
+        List<TurnoDTO> turnos = service.findByPacienteId(pacienteId);
+        return Response.ok(turnos, "Turnos del paciente recuperados correctamente");
+    }
+
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO) {
         TurnoDTO saved = service.save(turnoDTO);

@@ -46,4 +46,9 @@ export class TurnoService {
   search(term: string): Observable<DataPackage<Turno[]>> {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/search/${term}`);
   }
+
+  /** Obtiene los turnos de un paciente específico */
+  getByPacienteId(pacienteId: number): Observable<DataPackage<Turno[]>> {
+    return this.http.get<DataPackage<Turno[]>>(`${this.url}/paciente/${pacienteId}`);
+  }
 }
