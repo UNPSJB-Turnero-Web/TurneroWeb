@@ -88,10 +88,18 @@ import { DataPackage } from '../data.package';
                 {{ getStatusText(turno.status) }}
               </span>
             </div>
-            <div class="appointment-actions" *ngIf="turno.status === 'programado'">
+            <div class="appointment-actions" *ngIf="turno.status === 'programado' || turno.status === 'reagendado'">
               <button class="btn btn-confirm" (click)="confirmarTurno(turno)">
                 <i class="fas fa-check"></i>
                 Confirmar
+              </button>
+              <button class="btn btn-secondary" (click)="reprogramarTurno(turno)">
+                <i class="fas fa-calendar-alt"></i>
+                Reprogramar
+              </button>
+              <button class="btn btn-danger" (click)="cancelarTurno(turno)">
+                <i class="fas fa-times"></i>
+                Cancelar
               </button>
             </div>
           </div>
@@ -352,6 +360,16 @@ import { DataPackage } from '../data.package';
       color: #155724;
     }
 
+    .status.programado {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status.reagendado {
+      background: #e2e3e5;
+      color: #383d41;
+    }
+
     .status.pending {
       background: #fff3cd;
       color: #856404;
@@ -363,6 +381,7 @@ import { DataPackage } from '../data.package';
       border-top: 1px solid #e9ecef;
       display: flex;
       gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .btn-confirm {
@@ -384,6 +403,48 @@ import { DataPackage } from '../data.package';
       background: #218838;
       transform: translateY(-1px);
       box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
     }
 
     .empty-state {
@@ -427,6 +488,17 @@ import { DataPackage } from '../data.package';
         flex-direction: column;
         text-align: center;
         gap: 1rem;
+      }
+      
+      .appointment-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      
+      .btn-confirm, .btn-secondary, .btn-danger {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        min-width: auto;
       }
     }
   `
@@ -497,7 +569,8 @@ export class PacienteDashboardComponent implements OnInit {
             fechaTurno.setHours(0, 0, 0, 0);
             return fechaTurno >= hoy && 
                    (turno.estado?.toLowerCase() === 'confirmado' || 
-                    turno.estado?.toLowerCase() === 'programado');
+                    turno.estado?.toLowerCase() === 'programado' ||
+                    turno.estado?.toLowerCase() === 'reagendado');
           })
           .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
           .slice(0, 3) // Mostrar solo los próximos 3
@@ -533,6 +606,7 @@ export class PacienteDashboardComponent implements OnInit {
     const statusMap: { [key: string]: string } = {
       'confirmado': 'Confirmado',
       'programado': 'Programado',
+      'reagendado': 'Reagendado',
       'completed': 'Completado',
       'cancelled': 'Cancelado'
     };
@@ -556,6 +630,29 @@ export class PacienteDashboardComponent implements OnInit {
         error: (error) => {
           console.error('Error confirmando el turno:', error);
           alert('No se pudo confirmar el turno. Por favor, intenta nuevamente.');
+        }
+      });
+    }
+  }
+
+  reprogramarTurno(turno: any) {
+    this.router.navigate(['/paciente-reagendar-turno', turno.id]);
+  }
+
+  cancelarTurno(turno: any) {
+    const cancelMessage = `¿Estás seguro de que deseas cancelar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
+    
+    if (confirm(cancelMessage)) {
+      this.turnoService.cancelar(turno.id).subscribe({
+        next: (response) => {
+          console.log('Turno cancelado exitosamente:', response);
+          alert('Turno cancelado exitosamente.');
+          // Recargar próximos turnos para reflejar el cambio
+          this.cargarProximosTurnos();
+        },
+        error: (error) => {
+          console.error('Error cancelando el turno:', error);
+          alert('No se pudo cancelar el turno. Por favor, intenta nuevamente.');
         }
       });
     }
