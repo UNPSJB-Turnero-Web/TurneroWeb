@@ -35,6 +35,12 @@ import { DataPackage } from '../data.package';
         <div class="col-12">
           <div class="banner-paciente-agenda">
             <div class="header-content">
+              <div class="header-actions">
+                <button class="btn btn-back" (click)="goBack()">
+                  <i class="fas fa-arrow-left"></i>
+                  Volver
+                </button>
+              </div>
               <div class="header-icon">
                 <i class="fas fa-calendar-check"></i>
               </div>
@@ -316,7 +322,7 @@ import { DataPackage } from '../data.package';
   styles: [`
     /* HEADER */
     .banner-paciente-agenda {
-      background: linear-gradient(135deg, var(--pacientes-gradient));
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 2rem;
       border-radius: 15px;
@@ -326,24 +332,69 @@ import { DataPackage } from '../data.package';
     .header-content {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      justify-content: flex-start;
+      gap: 2rem;
+      position: relative;
+      min-height: 80px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-back {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.6);
+      transform: translateY(-1px);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .header-icon {
       font-size: 3rem;
-      opacity: 0.9;
+      color: white;
+      opacity: 1;
+      display: flex;
+      align-items: center;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .header-text h1 {
       margin: 0;
       font-size: 2.5rem;
       font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .header-text p {
       margin: 0.5rem 0 0 0;
       font-size: 1.1rem;
-      opacity: 0.9;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     /* FILTROS CARD */
@@ -386,8 +437,8 @@ import { DataPackage } from '../data.package';
     }
 
     .filtro-step.active {
-      border-color: var(--pacientes-primary);
-      background: rgba(var(--pacientes-primary-rgb), 0.05);
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
     }
 
     .filtro-step.disabled {
@@ -403,7 +454,7 @@ import { DataPackage } from '../data.package';
     }
 
     .step-number {
-      background: var(--pacientes-primary);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       width: 35px;
       height: 35px;
@@ -413,6 +464,7 @@ import { DataPackage } from '../data.package';
       justify-content: center;
       font-weight: bold;
       font-size: 1.1rem;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
 
     .step-header h4 {
@@ -432,8 +484,8 @@ import { DataPackage } from '../data.package';
 
     .form-control-paciente:focus {
       outline: none;
-      border-color: var(--pacientes-primary);
-      box-shadow: 0 0 0 0.2rem rgba(var(--pacientes-primary-rgb), 0.25);
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
     }
 
     .loading-indicator {
@@ -448,7 +500,7 @@ import { DataPackage } from '../data.package';
       padding: 1rem;
       background: #f8f9fa;
       border-radius: 8px;
-      border-left: 4px solid var(--pacientes-primary);
+      border-left: 4px solid #667eea;
     }
 
     .filtros-aplicados h5 {
@@ -465,7 +517,7 @@ import { DataPackage } from '../data.package';
     }
 
     .filter-tag {
-      background: var(--pacientes-primary);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 0.5rem 1rem;
       border-radius: 20px;
@@ -474,6 +526,7 @@ import { DataPackage } from '../data.package';
       gap: 0.5rem;
       font-size: 0.9rem;
       font-weight: 500;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
 
     .filter-tag button {
@@ -519,7 +572,7 @@ import { DataPackage } from '../data.package';
     }
 
     .btn-paciente-primary {
-      background: var(--pacientes-gradient);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
       padding: 0.75rem 2rem;
@@ -529,11 +582,13 @@ import { DataPackage } from '../data.package';
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .btn-paciente-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(var(--pacientes-primary-rgb), 0.3);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 
     .btn-paciente-secondary {
@@ -571,7 +626,7 @@ import { DataPackage } from '../data.package';
     }
 
     .calendar-header {
-      background: linear-gradient(135deg, var(--pacientes-gradient));
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 1.5rem;
     }
@@ -579,6 +634,8 @@ import { DataPackage } from '../data.package';
     .calendar-header h3 {
       margin: 0;
       font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     .calendar-navigation {
@@ -588,21 +645,34 @@ import { DataPackage } from '../data.package';
     }
 
     .btn-nav {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      transition: background 0.3s ease;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      backdrop-filter: blur(10px);
     }
 
     .btn-nav:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .current-period {
       font-weight: 600;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      color: white;
+      min-width: 200px;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
     .calendar-body {
@@ -935,7 +1005,7 @@ import { DataPackage } from '../data.package';
       border-radius: 8px;
       padding: 1rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      border-left: 4px solid var(--pacientes-primary);
+      border-left: 4px solid #667eea;
     }
 
     .legend-content h5 {
@@ -982,8 +1052,25 @@ import { DataPackage } from '../data.package';
     @media (max-width: 768px) {
       .header-content {
         flex-direction: column;
+        align-items: center;
         text-align: center;
-        gap: 1rem;
+        gap: 1.5rem;
+        min-height: auto;
+      }
+
+      .header-actions {
+        order: 1;
+        align-self: center;
+      }
+
+      .header-icon {
+        order: 2;
+        font-size: 2.5rem;
+      }
+
+      .header-text {
+        order: 3;
+        text-align: center;
       }
 
       .header-text h1 {
@@ -997,6 +1084,16 @@ import { DataPackage } from '../data.package';
       .calendar-navigation {
         flex-direction: column;
         gap: 0.5rem;
+      }
+
+      .current-period {
+        min-width: auto;
+        margin: 0.5rem 0;
+      }
+
+      .btn-nav {
+        width: 100%;
+        justify-content: center;
       }
 
       .paciente-modal {
@@ -1453,6 +1550,10 @@ export class PacienteAgendaComponent implements OnInit {
   onEventTimesChanged(event: any) {
     // Este método es requerido por el calendario pero no lo usamos para cambiar eventos
     // ya que los pacientes solo pueden reservar, no mover eventos
+  }
+
+  goBack() {
+    this.router.navigate(['/paciente-dashboard']);
   }
 
   irASolicitarTurno() {

@@ -89,19 +89,19 @@ import { DataPackage } from '../data.package';
           
           <div class="appointment-actions" *ngIf="turno.status !== 'cancelado'">
             <button class="btn btn-success" 
-                    *ngIf="turno.status === 'programado'"
+                    *ngIf="turno.status === 'programado' || turno.status === 'reagendado'"
                     (click)="confirm(turno)">
               <i class="fas fa-check"></i>
               Confirmar
             </button>
             <button class="btn btn-secondary" 
-                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado'"
+                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado' || turno.status === 'reagendado'"
                     (click)="reschedule(turno)">
               <i class="fas fa-calendar-alt"></i>
               Reprogramar
             </button>
             <button class="btn btn-danger" 
-                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado'"
+                    *ngIf="turno.status === 'programado' || turno.status === 'confirmado' || turno.status === 'reagendado'"
                     (click)="cancel(turno)">
               <i class="fas fa-times"></i>
               Cancelar
@@ -137,10 +137,13 @@ import { DataPackage } from '../data.package';
     }
 
     .page-header h1 {
-      color: var(--pacientes-primary);
+      color: #667eea;
       font-size: 2.5rem;
       font-weight: 700;
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .btn {
@@ -157,55 +160,64 @@ import { DataPackage } from '../data.package';
     }
 
     .btn-back {
-      background: #f8f9fa;
-      color: #6c757d;
-      border: 2px solid #e9ecef;
+      background: rgba(255, 255, 255, 0.9);
+      color: #667eea;
+      border: 2px solid #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
     }
 
     .btn-back:hover {
-      background: #e9ecef;
-      color: #495057;
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .btn-primary {
-      background: var(--pacientes-gradient);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 15px var(--pacientes-shadow);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
 
     .btn-secondary {
-      background: #6c757d;
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
       color: white;
+      box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
     }
 
     .btn-secondary:hover {
-      background: #5a6268;
+      background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
     }
 
     .btn-success {
-      background: #28a745;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
       color: white;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
     }
 
     .btn-success:hover {
-      background: #218838;
+      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
       transform: translateY(-1px);
       box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
     }
 
     .btn-danger {
-      background: var(--action-delete);
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
       color: white;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
     }
 
     .btn-danger:hover {
+      background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 15px var(--action-delete-shadow);
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
     }
 
     .filters-section {
@@ -219,28 +231,33 @@ import { DataPackage } from '../data.package';
     .filter-tabs {
       display: flex;
       gap: 0.5rem;
+      background: #f8f9fa;
+      padding: 0.5rem;
+      border-radius: 12px;
     }
 
     .filter-tab {
       padding: 0.75rem 1.5rem;
-      border: 2px solid #e9ecef;
-      background: white;
-      border-radius: 10px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
       color: #6c757d;
+      position: relative;
     }
 
     .filter-tab:hover {
-      border-color: var(--pacientes-primary);
-      color: var(--pacientes-primary);
+      color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
     }
 
     .filter-tab.active {
-      background: var(--pacientes-gradient);
-      border-color: var(--pacientes-primary);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      transform: translateY(-1px);
     }
 
     .appointments-container {
@@ -258,7 +275,13 @@ import { DataPackage } from '../data.package';
     .loading-state i {
       font-size: 3rem;
       margin-bottom: 1rem;
-      color: var(--pacientes-primary);
+      color: #667eea;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .loading-state p {
@@ -282,23 +305,49 @@ import { DataPackage } from '../data.package';
 
     .appointment-card.confirmado {
       border-left-color: #28a745;
+      border-left-width: 6px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
     }
 
     .appointment-card.programado {
       border-left-color: #ffc107;
+      border-left-width: 6px;
+      background: linear-gradient(135deg, #ffffff 0%, #fffef8 100%);
     }
 
     .appointment-card.reagendado {
       border-left-color: #17a2b8;
+      border-left-width: 6px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8feff 100%);
+      position: relative;
+    }
+
+    .appointment-card.reagendado::before {
+      content: "📅 REAGENDADO";
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #17a2b8;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .appointment-card.completed {
       border-left-color: #6c757d;
+      border-left-width: 6px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     }
 
     .appointment-card.cancelado {
       border-left-color: #dc3545;
+      border-left-width: 6px;
       opacity: 0.7;
+      background: linear-gradient(135deg, #ffffff 0%, #fef8f8 100%);
     }
 
     .appointment-header {
@@ -315,10 +364,11 @@ import { DataPackage } from '../data.package';
       justify-content: center;
       width: 80px;
       height: 80px;
-      background: var(--pacientes-gradient);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border-radius: 12px;
       flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .appointment-date .day {
@@ -337,9 +387,12 @@ import { DataPackage } from '../data.package';
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: var(--pacientes-primary);
+      color: #667eea;
       font-weight: 600;
       font-size: 1.1rem;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
     }
 
     .appointment-body {
@@ -357,9 +410,13 @@ import { DataPackage } from '../data.package';
     }
 
     .doctor-info .specialty {
-      color: var(--pacientes-primary);
+      color: #667eea;
       font-weight: 600;
       margin: 0 0 0.5rem 0;
+      background: rgba(102, 126, 234, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 15px;
+      display: inline-block;
     }
 
     .doctor-info .location {
@@ -379,23 +436,41 @@ import { DataPackage } from '../data.package';
     }
 
     .status-badge.confirmado {
-      background: #d4edda;
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
       color: #155724;
+      border: 2px solid #28a745;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
     }
 
     .status-badge.programado {
-      background: #fff3cd;
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
       color: #856404;
+      border: 2px solid #ffc107;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
     }
 
     .status-badge.reagendado {
-      background: #d1ecf1;
+      background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
       color: #0c5460;
+      border: 2px solid #17a2b8;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
+      position: relative;
+    }
+
+    .status-badge.reagendado::before {
+      content: "🔄";
+      margin-right: 4px;
     }
 
     .status-badge.cancelado {
-      background: #f8d7da;
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
       color: #721c24;
+      border: 2px solid #dc3545;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
     }
 
     .appointment-actions {
@@ -625,6 +700,8 @@ export class PacienteTurnosComponent implements OnInit {
           turno.status = 'confirmado';
           // Mostrar mensaje de éxito
           alert('Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.');
+          // Recargar la lista de turnos para reflejar cambios
+          this.cargarTurnosPaciente();
         },
         error: (error) => {
           console.error('Error confirmando el turno:', error);
@@ -645,6 +722,8 @@ export class PacienteTurnosComponent implements OnInit {
           turno.status = 'cancelado';
           // Mostrar mensaje de éxito
           alert('Turno cancelado exitosamente. El horario quedará disponible para otros pacientes.');
+          // Recargar la lista de turnos para reflejar cambios
+          this.cargarTurnosPaciente();
         },
         error: (error) => {
           console.error('Error cancelando el turno:', error);

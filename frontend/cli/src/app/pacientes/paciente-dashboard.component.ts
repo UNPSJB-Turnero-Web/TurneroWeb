@@ -69,7 +69,7 @@ import { DataPackage } from '../data.package';
         <div class="appointments-list" *ngIf="!isLoadingTurnos && proximosTurnos.length > 0">
           <div class="appointment-card" 
                *ngFor="let turno of proximosTurnos" 
-               [class]="turno.status === 'confirmado' ? 'upcoming' : ''">
+               [class]="'upcoming ' + turno.status">
             <div class="appointment-date">
               <span class="day">{{ turno.day }}</span>
               <span class="month">{{ turno.month }}</span>
@@ -278,6 +278,8 @@ import { DataPackage } from '../data.package';
       gap: 1.5rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       transition: all 0.3s ease;
+      position: relative;
+      border-left: 6px solid transparent;
     }
 
     .appointment-card:hover {
@@ -286,7 +288,47 @@ import { DataPackage } from '../data.package';
     }
 
     .appointment-card.upcoming {
-      border-left: 4px solid var(--pacientes-primary);
+      border-left-color: #28a745;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+    }
+
+    .appointment-card.upcoming.programado {
+      border-left-color: #ffc107;
+      background: linear-gradient(135deg, #ffffff 0%, #fffef8 100%);
+    }
+
+    .appointment-card.upcoming.reagendado {
+      border-left-color: #17a2b8;
+      background: linear-gradient(135deg, #ffffff 0%, #f8feff 100%);
+    }
+
+    .appointment-card.upcoming.reagendado::before {
+      content: "📅 REAGENDADO";
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #17a2b8;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      z-index: 1;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(23, 162, 184, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0);
+      }
     }
 
     .appointment-date {
@@ -358,16 +400,39 @@ import { DataPackage } from '../data.package';
     .status.confirmed {
       background: #d4edda;
       color: #155724;
+      border: 1px solid #c3e6cb;
     }
 
     .status.programado {
       background: #fff3cd;
       color: #856404;
+      border: 1px solid #ffeaa7;
     }
 
     .status.reagendado {
-      background: #e2e3e5;
-      color: #383d41;
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(23, 162, 184, 0.2);
+      position: relative;
+    }
+
+    .status.reagendado::before {
+      content: "🔄 ";
+      margin-right: 4px;
+    }
+
+    .status.confirmado {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.cancelado {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
     }
 
     .status.pending {
@@ -385,7 +450,7 @@ import { DataPackage } from '../data.package';
     }
 
     .btn-confirm {
-      background: #28a745;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
       color: white;
       padding: 0.5rem 1rem;
       border: none;
@@ -397,16 +462,17 @@ import { DataPackage } from '../data.package';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
     }
 
     .btn-confirm:hover {
-      background: #218838;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.5);
     }
 
     .btn-secondary {
-      background: #6c757d;
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
       color: white;
       padding: 0.5rem 1rem;
       border: none;
@@ -418,16 +484,17 @@ import { DataPackage } from '../data.package';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
     }
 
     .btn-secondary:hover {
-      background: #5a6268;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+      background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.5);
     }
 
     .btn-danger {
-      background: #dc3545;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
       color: white;
       padding: 0.5rem 1rem;
       border: none;
@@ -439,12 +506,13 @@ import { DataPackage } from '../data.package';
       align-items: center;
       gap: 0.5rem;
       font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
     }
 
     .btn-danger:hover {
-      background: #c82333;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+      background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.5);
     }
 
     .empty-state {
