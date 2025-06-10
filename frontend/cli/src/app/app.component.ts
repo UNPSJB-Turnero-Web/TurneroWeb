@@ -31,9 +31,6 @@ import { RouterOutlet } from '@angular/router';
             <li>
               <a class="dropdown-item" href="/consultorios">Consultorios</a>
             </li>
-            <li>
-              <a class="dropdown-item" href="/especialidades">Especialidades</a>
-            </li>
           </ul>
         </div>
         <!-- Menú Persona -->

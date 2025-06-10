@@ -34,7 +34,7 @@ import { DataPackage } from '../data.package';
             <div class="info-grid">
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);">🆔</span>
+                  <span class="info-icon" style="background: var(--obra-social-gradient);">🆔</span>
                   ID de la Obra Social
                 </div>
                 <div class="info-value">
@@ -44,7 +44,7 @@ import { DataPackage } from '../data.package';
 
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);">💊</span>
+                  <span class="info-icon" style="background: var(--obra-social-gradient);">💊</span>
                   Nombre de la Obra Social
                 </div>
                 <div class="info-value">
@@ -54,7 +54,7 @@ import { DataPackage } from '../data.package';
 
               <div class="info-item">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);">🏷️</span>
+                  <span class="info-icon" style="background: var(--obra-social-gradient);">🏷️</span>
                   Código
                 </div>
                 <div class="info-value">
@@ -64,7 +64,7 @@ import { DataPackage } from '../data.package';
 
               <div class="info-item" *ngIf="obraSocial.descripcion">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);">📝</span>
+                  <span class="info-icon" style="background: var(--obra-social-gradient);">📝</span>
                   Descripción
                 </div>
                 <div class="info-value">
@@ -81,7 +81,7 @@ import { DataPackage } from '../data.package';
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);">💊</span>
+                    <span class="form-icon" style="background: var(--obra-social-gradient);">💊</span>
                     Nombre
                   </label>
                   <input
@@ -105,7 +105,7 @@ import { DataPackage } from '../data.package';
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);">🏷️</span>
+                    <span class="form-icon" style="background: var(--obra-social-gradient);">🏷️</span>
                     Código
                   </label>
                   <input
@@ -129,7 +129,7 @@ import { DataPackage } from '../data.package';
               <div class="col-md-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);">📝</span>
+                    <span class="form-icon" style="background: var(--obra-social-gradient);">📝</span>
                     Descripción
                   </label>
                   <textarea
@@ -172,9 +172,9 @@ import { DataPackage } from '../data.package';
             <!-- Botones en modo edición -->
             <ng-container *ngIf="modoEdicion">
               <button 
-                type="submit" 
+                type="button" 
                 class="btn btn-modern btn-save" 
-                [disabled]="form.invalid"
+                [disabled]="!isFormValid()"
                 (click)="save()"
               >
                 💾 Guardar
@@ -205,7 +205,7 @@ import { DataPackage } from '../data.package';
     }
     
     .card-header {
-      background: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);
+      background: var(--obra-social-gradient);
       border: none;
       padding: 2rem;
       position: relative;
@@ -240,7 +240,7 @@ import { DataPackage } from '../data.package';
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #ff9ff3;
+      color: var(--obra-social-primary);
       font-size: 1.5rem;
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
@@ -351,8 +351,8 @@ import { DataPackage } from '../data.package';
     }
     
     .form-control-modern:focus {
-      border-color: #ff9ff3;
-      box-shadow: 0 0 0 0.2rem rgba(255,159,243,0.25);
+      border-color: var(--obra-social-primary);
+      box-shadow: 0 0 0 0.2rem var(--obra-social-shadow);
       outline: 0;
     }
     
@@ -388,7 +388,7 @@ import { DataPackage } from '../data.package';
     }
     
     .btn-edit {
-      background: linear-gradient(135deg, #ff9ff3 0%, #f368e0 100%);
+      background: var(--obra-social-gradient);
       color: white;
     }
     
@@ -499,7 +499,16 @@ export class ObraSocialDetailComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.form.valid) {
+    // Validar campos requeridos manualmente si el form no está disponible
+    if (!this.obraSocial.nombre || !this.obraSocial.codigo) {
+      this.modalService.alert(
+        "Error", 
+        "Por favor, complete correctamente todos los campos requeridos (Nombre y Código)."
+      );
+      return;
+    }
+
+    if (this.form && !this.form.valid) {
       this.modalService.alert(
         "Error", 
         "Por favor, complete correctamente todos los campos requeridos."
@@ -508,7 +517,7 @@ export class ObraSocialDetailComponent implements OnInit {
     }
     
     const operacion = this.esNuevo ? 'crear' : 'actualizar';
-    const op = this.obraSocial.id
+    const op = this.obraSocial.id && this.obraSocial.id !== 0
       ? this.obraSocialService.update(this.obraSocial.id, this.obraSocial)
       : this.obraSocialService.create(this.obraSocial);
       
@@ -548,6 +557,16 @@ export class ObraSocialDetailComponent implements OnInit {
       queryParamsHandling: 'merge'
     });
     this.modoEdicion = true;
+  }
+
+  allFieldsEmpty(): boolean {
+    return !this.obraSocial?.nombre && 
+           !this.obraSocial?.codigo && 
+           !this.obraSocial?.descripcion;
+  }
+
+  isFormValid(): boolean {
+    return !!(this.obraSocial?.nombre && this.obraSocial?.codigo);
   }
 
   remove(): void {
