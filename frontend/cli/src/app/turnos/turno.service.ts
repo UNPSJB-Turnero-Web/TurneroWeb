@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Turno } from './turno';
 import { DataPackage } from '../data.package';
+import { TurnoAuditInfo, AuditFilter } from '../audit/audit-log';
 
 @Injectable({
   providedIn: 'root'
@@ -65,5 +66,103 @@ export class TurnoService {
   /** Reagenda un turno */
   reagendar(id: number, nuevosDatos: any): Observable<DataPackage<Turno>> {
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/reagendar`, nuevosDatos);
+  }
+
+  // ===== AUDIT-SPECIFIC METHODS =====
+
+  /** Obtiene turnos con filtros para auditoría */
+  getTurnosForAudit(filter: AuditFilter): Observable<DataPackage<TurnoAuditInfo[]>> {
+    let params = new HttpParams();
+    
+    if (filter.dateFrom) {
+      params = params.set('fechaDesde', filter.dateFrom.toISOString());
+    }
+    if (filter.dateTo) {
+      params = params.set('fechaHasta', filter.dateTo.toISOString());
+    }
+    if (filter.centroId) {
+      params = params.set('centroAtencionId', filter.centroId.toString());
+    }
+    if (filter.especialidadId) {
+      params = params.set('especialidadId', filter.especialidadId.toString());
+    }
+    if (filter.staffMedicoId) {
+      params = params.set('medicoId', filter.staffMedicoId.toString());
+    }
+    if (filter.action) {
+      params = params.set('action', filter.action);
+    }
+    if (filter.turnoId) {
+      params = params.set('turnoId', filter.turnoId.toString());
+    }
+
+    return this.http.get<DataPackage<TurnoAuditInfo[]>>(`${this.url}/audit`, { params });
+  }
+
+  /** Obtiene información detallada de auditoría para un turno específico */
+  getTurnoAuditInfo(id: number): Observable<DataPackage<TurnoAuditInfo>> {
+    return this.http.get<DataPackage<TurnoAuditInfo>>(`${this.url}/${id}/audit`);
+  }
+
+  /** Actualiza un turno con audit trail */
+  updateWithAudit(id: number, turno: Turno, reason: string): Observable<DataPackage<Turno>> {
+    const auditData = {
+      turno: turno,
+      auditReason: reason,
+      userId: localStorage.getItem('userName') || 'Unknown User'
+    };
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/audit`, auditData);
+  }
+
+  /** Resuelve un conflicto en un turno */
+  resolveConflict(turnoId: number, resolution: any): Observable<DataPackage<any>> {
+    return this.http.post<DataPackage<any>>(`${this.url}/${turnoId}/resolve-conflict`, resolution);
+  }
+
+  /** Obtiene estadísticas de turnos para el dashboard de auditoría */
+  getAuditStats(filter: AuditFilter): Observable<DataPackage<any>> {
+    let params = new HttpParams();
+    
+    if (filter.dateFrom) {
+      params = params.set('fechaDesde', filter.dateFrom.toISOString());
+    }
+    if (filter.dateTo) {
+      params = params.set('fechaHasta', filter.dateTo.toISOString());
+    }
+    if (filter.centroId) {
+      params = params.set('centroAtencionId', filter.centroId.toString());
+    }
+
+    return this.http.get<DataPackage<any>>(`${this.url}/audit/stats`, { params });
+  }
+
+  /** Exporta turnos para auditoría */
+  exportTurnosForAudit(filter: AuditFilter, format: 'csv' | 'pdf'): Observable<Blob> {
+    let params = new HttpParams();
+    
+    if (filter.dateFrom) {
+      params = params.set('fechaDesde', filter.dateFrom.toISOString());
+    }
+    if (filter.dateTo) {
+      params = params.set('fechaHasta', filter.dateTo.toISOString());
+    }
+    if (filter.centroId) {
+      params = params.set('centroAtencionId', filter.centroId.toString());
+    }
+    if (filter.especialidadId) {
+      params = params.set('especialidadId', filter.especialidadId.toString());
+    }
+    if (filter.staffMedicoId) {
+      params = params.set('medicoId', filter.staffMedicoId.toString());
+    }
+    if (filter.action) {
+      params = params.set('action', filter.action);
+    }
+    params = params.set('format', format);
+
+    return this.http.get(`${this.url}/audit/export`, { 
+      params, 
+      responseType: 'blob' 
+    });
   }
 }

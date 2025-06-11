@@ -772,6 +772,8 @@ import { DataPackage } from '../data.package';
       flex: 1;
       min-height: 500px;
     }
+
+    :host ::ng-deep .cal-day-headers .cal-header {
       color: #2c3e50;
       text-align: center;
       border-right: 1px solid #e9ecef;

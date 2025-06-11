@@ -27,6 +27,9 @@ import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
 import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
 import { AdminGuard } from './guards/admin.guard';
 import { PatientGuard } from './guards/patient.guard';
+import { AuditDashboardComponent } from './audit/audit-dashboard.component';
+import { AuditTurnoDetailComponent } from './audit/audit-turno-detail.component';
+import { AuditLogsComponent } from './audit/audit-logs.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -36,6 +39,13 @@ export const routes: Routes = [
     { path: 'paciente-turnos', component: PacienteTurnosComponent, canActivate: [PatientGuard] },
     { path: 'paciente-agenda', component: PacienteAgendaComponent, canActivate: [PatientGuard] },
     { path: 'paciente-reagendar-turno/:id', component: PacienteReagendarTurnoComponent, canActivate: [PatientGuard] },
+    
+    // Audit Routes (admin only)
+    { path: 'audit', component: AuditDashboardComponent, canActivate: [AdminGuard] },
+    { path: 'audit/logs', component: AuditLogsComponent, canActivate: [AdminGuard] },
+    { path: 'audit/turno/:id', component: AuditTurnoDetailComponent, canActivate: [AdminGuard] },
+    { path: 'audit/turno/:id/edit', component: AuditTurnoDetailComponent, canActivate: [AdminGuard] },
+    { path: 'audit/turno/:id/history', component: AuditTurnoDetailComponent, canActivate: [AdminGuard] },
     
     // Admin Routes (protected)
     { path: 'turnos', component: TurnosComponent, canActivate: [AdminGuard] },
