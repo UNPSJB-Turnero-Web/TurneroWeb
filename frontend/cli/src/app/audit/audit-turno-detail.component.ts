@@ -3,15 +3,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuditService } from './audit.service';
+import { AuditValidationService, ValidationResult, ConflictDetection, TurnoConflict } from './audit-validation.service';
 import { TurnoService } from '../turnos/turno.service';
 import { TurnoAuditInfo, AuditLog, ConflictResolution, ConflictType } from './audit-log';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
+import { AuditValidationPanelComponent } from './audit-validation-panel.component';
+import { NotificationService } from './notification.service';
 
 @Component({
   selector: 'app-audit-turno-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AuditValidationPanelComponent],
   template: `
     <div class="audit-turno-detail">
       <!-- Header -->
@@ -147,7 +150,11 @@ import { DataPackage } from '../data.package';
                   <i class="fas fa-times"></i>
                   Cancelar
                 </button>
-                <button type="submit" class="btn btn-primary" [disabled]="!changeReason">
+                <button type="button" class="btn btn-warning" (click)="validateChanges()">
+                  <i class="fas fa-check-double"></i>
+                  Validar Cambios
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="!changeReason || hasValidationErrors">
                   <i class="fas fa-save"></i>
                   Guardar Cambios
                 </button>
@@ -155,6 +162,17 @@ import { DataPackage } from '../data.package';
             </form>
           </div>
         </div>
+
+        <!-- Validation Panel -->
+        <app-audit-validation-panel
+          [validationResult]="validationResult"
+          [conflictDetection]="conflictDetection"
+          [showPanel]="showValidationPanel"
+          (panelClosed)="onValidationPanelClosed()"
+          (proceedRequested)="onProceedWithChanges()"
+          (conflictResolved)="onConflictResolved($event)"
+          (conflictIgnored)="onConflictIgnored($event)">
+        </app-audit-validation-panel>
 
         <!-- Conflicts Section -->
         <div class="conflicts-section" *ngIf="conflicts && conflicts.length > 0">
@@ -766,12 +784,20 @@ export class AuditTurnoDetailComponent implements OnInit {
   isEditMode = false;
   editedTurno: any = {};
   changeReason = '';
+  
+  // Validation properties
+  validationResult?: ValidationResult;
+  conflictDetection?: ConflictDetection;
+  showValidationPanel = false;
+  hasValidationErrors = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private auditService: AuditService,
-    private turnoService: TurnoService
+    private turnoService: TurnoService,
+    private validationService: AuditValidationService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -1056,5 +1082,72 @@ export class AuditTurnoDetailComponent implements OnInit {
 
   trackByLogId(index: number, log: AuditLog): number {
     return log.id;
+  }
+
+  // Validation methods
+  validateChanges(): void {
+    this.validationResult = this.validationService.validateTurno(this.editedTurno);
+    this.conflictDetection = this.validationService.detectConflicts(this.editedTurno);
+    this.showValidationPanel = true;
+    this.hasValidationErrors = !this.validationResult.isValid;
+
+    // Show notification based on validation result
+    if (this.validationResult.isValid && !this.conflictDetection.hasConflicts) {
+      this.notificationService.showSuccess(
+        'Validación Exitosa',
+        'Todos los cambios son válidos y no se detectaron conflictos.'
+      );
+    } else if (this.validationResult.errors.length > 0) {
+      this.notificationService.showError(
+        'Errores de Validación',
+        `Se encontraron ${this.validationResult.errors.length} error(es) que deben corregirse.`
+      );
+    } else if (this.conflictDetection.hasConflicts) {
+      this.notificationService.showWarning(
+        'Conflictos Detectados',
+        `Se detectaron ${this.conflictDetection.conflicts.length} conflicto(s) que requieren atención.`
+      );
+    }
+  }
+
+  onValidationPanelClosed(): void {
+    this.showValidationPanel = false;
+  }
+
+  onProceedWithChanges(): void {
+    if (!this.hasValidationErrors) {
+      this.saveTurnoChanges();
+      this.showValidationPanel = false;
+    }
+  }
+
+  onConflictResolved(event: { conflict: TurnoConflict, index: number }): void {
+    // Remove the resolved conflict from the list
+    if (this.conflictDetection) {
+      this.conflictDetection.conflicts.splice(event.index, 1);
+      this.conflictDetection.hasConflicts = this.conflictDetection.conflicts.length > 0;
+    }
+
+    this.notificationService.showSuccess(
+      'Conflicto Resuelto',
+      'El conflicto ha sido resuelto exitosamente.'
+    );
+
+    // Re-validate if no more conflicts
+    if (!this.conflictDetection?.hasConflicts) {
+      this.hasValidationErrors = false;
+    }
+  }
+
+  onConflictIgnored(event: { conflict: TurnoConflict, index: number }): void {
+    // Mark conflict as ignored (could be tracked in backend)
+    if (this.conflictDetection) {
+      this.conflictDetection.conflicts[event.index].ignored = true;
+    }
+
+    this.notificationService.showInfo(
+      'Conflicto Ignorado',
+      'El conflicto ha sido marcado como ignorado. Los cambios pueden proceder.'
+    );
   }
 }

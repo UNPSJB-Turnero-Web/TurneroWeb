@@ -8,7 +8,7 @@ import { NotificationsComponent } from './audit/notifications.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, NotificationsComponent],
   template: `
     <nav class="modern-navbar">
       <div class="navbar-container">
@@ -202,6 +202,9 @@ import { NotificationsComponent } from './audit/notifications.component';
     <main class="main-content">
       <router-outlet></router-outlet>
     </main>
+
+    <!-- Sistema de Notificaciones -->
+    <app-notifications></app-notifications>
   `,
   styles: [`
     /* NAVBAR MODERNA */

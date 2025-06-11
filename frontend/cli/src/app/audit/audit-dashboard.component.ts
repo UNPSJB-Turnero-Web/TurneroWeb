@@ -7,11 +7,15 @@ import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
 import { AuditFilter } from './audit-log';
+import { NotificationService } from './notification.service';
+import { AuditStatsComponent } from './audit-stats.component';
+import { AuditAdvancedSearchComponent } from './audit-advanced-search.component';
+import { AuditOperationsComponent } from './audit-operations.component';
 
 @Component({
   selector: 'app-audit-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AuditStatsComponent, AuditAdvancedSearchComponent, AuditOperationsComponent],
   template: `
     <div class="audit-dashboard">
       <!-- Header Section -->
@@ -39,105 +43,18 @@ import { AuditFilter } from './audit-log';
         </div>
       </div>
 
-      <!-- Filters Section -->
-      <div class="filters-section">
-        <div class="filters-header">
-          <h2>
-            <i class="fas fa-filter"></i>
-            Filtros Avanzados
-          </h2>
-          <button class="btn btn-link" (click)="toggleFilters()">
-            <i class="fas" [class.fa-chevron-down]="!showFilters" [class.fa-chevron-up]="showFilters"></i>
-            {{ showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
-          </button>
-        </div>
+      <!-- Real-time Statistics -->
+      <app-audit-stats></app-audit-stats>
 
-        <div class="filters-content" [class.expanded]="showFilters">
-          <div class="filter-row">
-            <div class="filter-group">
-              <label>Estado del Turno</label>
-              <select [(ngModel)]="currentFilter.estado" (change)="applyFilters()">
-                <option value="">Todos los estados</option>
-                <option value="PROGRAMADO">Programado</option>
-                <option value="CONFIRMADO">Confirmado</option>
-                <option value="REAGENDADO">Reagendado</option>
-                <option value="CANCELADO">Cancelado</option>
-              </select>
-            </div>
+      <!-- Advanced Search -->
+      <app-audit-advanced-search
+        (filtersChanged)="onAdvancedFiltersChanged($event)"
+        (searchTriggered)="onAdvancedSearchTriggered($event)">
+      </app-audit-advanced-search>
 
-            <div class="filter-group">
-              <label>Fecha Desde</label>
-              <input 
-                type="date" 
-                [(ngModel)]="currentFilter.fechaDesde" 
-                (change)="applyFilters()"
-                class="form-control">
-            </div>
+      <!-- Operations Monitor -->
+      <app-audit-operations></app-audit-operations>
 
-            <div class="filter-group">
-              <label>Fecha Hasta</label>
-              <input 
-                type="date" 
-                [(ngModel)]="currentFilter.fechaHasta" 
-                (change)="applyFilters()"
-                class="form-control">
-            </div>
-
-            <div class="filter-group">
-              <label>Buscar</label>
-              <div class="search-input">
-                <input 
-                  type="text" 
-                  [(ngModel)]="searchTerm" 
-                  (input)="onSearchChange()"
-                  placeholder="Buscar por paciente, médico..."
-                  class="form-control">
-                <i class="fas fa-search search-icon"></i>
-              </div>
-            </div>
-          </div>
-
-          <div class="filter-row">
-            <div class="filter-group">
-              <label>Centro de Atención</label>
-              <select [(ngModel)]="currentFilter.centroId" (change)="applyFilters()">
-                <option value="">Todos los centros</option>
-                <!-- Options will be loaded dynamically -->
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label>Especialidad</label>
-              <select [(ngModel)]="currentFilter.especialidadId" (change)="applyFilters()">
-                <option value="">Todas las especialidades</option>
-                <!-- Options will be loaded dynamically -->
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label>Médico</label>
-              <select [(ngModel)]="currentFilter.staffMedicoId" (change)="applyFilters()">
-                <option value="">Todos los médicos</option>
-                <!-- Options will be loaded dynamically -->
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label>Acciones</label>
-              <div class="filter-actions">
-                <button class="btn btn-secondary" (click)="clearFilters()">
-                  <i class="fas fa-eraser"></i>
-                  Limpiar
-                </button>
-                <button class="btn btn-primary" (click)="applyFilters()">
-                  <i class="fas fa-search"></i>
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Statistics Section -->
       <div class="statistics-section">
@@ -830,7 +747,8 @@ export class AuditDashboardComponent implements OnInit {
   constructor(
     private auditService: AuditService,
     private turnoService: TurnoService,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -879,10 +797,20 @@ export class AuditDashboardComponent implements OnInit {
         next: (response: any) => {
           this.resultsPage = response.data;
           this.isLoading = false;
+          
+          // Mostrar notificación de éxito si hay resultados
+          if (response.data.content && response.data.content.length > 0) {
+            this.notificationService.showInfo(
+              'Búsqueda Completa',
+              `Se encontraron ${response.data.totalElements} turnos`,
+              3000
+            );
+          }
         },
         error: (error: any) => {
           console.error('Error loading turnos:', error);
           this.isLoading = false;
+          this.notificationService.auditError('cargar turnos', error.message);
         }
       });
   }
@@ -918,6 +846,43 @@ export class AuditDashboardComponent implements OnInit {
   goToPage(page: number) {
     this.currentPage = page;
     this.loadTurnos();
+  }
+
+  // Advanced Search Methods
+  onAdvancedFiltersChanged(filters: any): void {
+    // Update current filter with advanced search filters
+    this.currentFilter = {
+      estado: filters.estado,
+      fechaDesde: filters.fechaDesde,
+      fechaHasta: filters.fechaHasta,
+      centroId: filters.centroId,
+      especialidadId: filters.especialidadId,
+      staffMedicoId: filters.staffMedicoId
+    };
+    
+    this.searchTerm = filters.searchTerm;
+    
+    // Apply additional filters that don't exist in basic search
+    if (filters.pacienteId) {
+      this.currentFilter.pacienteId = filters.pacienteId;
+    }
+    if (filters.conConflictos) {
+      this.currentFilter.conConflictos = true;
+    }
+    if (filters.soloValidados) {
+      this.currentFilter.soloValidados = true;
+    }
+  }
+
+  onAdvancedSearchTriggered(filters: any): void {
+    this.onAdvancedFiltersChanged(filters);
+    this.applyFilters();
+    
+    this.notificationService.showInfo(
+      'Búsqueda Avanzada',
+      'Aplicando filtros avanzados de búsqueda...',
+      2000
+    );
   }
 
   formatDate(dateString: string): string {
@@ -992,6 +957,13 @@ export class AuditDashboardComponent implements OnInit {
       filter.searchTerm = this.searchTerm;
     }
 
+    // Mostrar notificación de inicio
+    this.notificationService.showInfo(
+      'Exportando Datos',
+      `Generando archivo ${format.toUpperCase()}...`,
+      2000
+    );
+
     const exportMethod = format === 'csv' 
       ? this.auditService.exportTurnosCSV(filter)
       : this.auditService.exportTurnosPDF(filter);
@@ -1000,10 +972,11 @@ export class AuditDashboardComponent implements OnInit {
       next: (blob: any) => {
         const filename = `turnos_audit_${new Date().toISOString().split('T')[0]}.${format}`;
         this.auditService.downloadFile(blob, filename);
+        this.notificationService.exportComplete(format, filename);
       },
       error: (error: any) => {
         console.error(`Error exporting ${format}:`, error);
-        alert(`Error al exportar en formato ${format.toUpperCase()}`);
+        this.notificationService.auditError(`exportar en formato ${format.toUpperCase()}`, error.message);
       }
     });
   }

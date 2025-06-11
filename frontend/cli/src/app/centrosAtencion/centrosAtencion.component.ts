@@ -272,7 +272,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
     }
     
     .modern-table thead th {
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      background: #f1f1f1;
       border: none;
       padding: 1.5rem 1rem;
       font-weight: 600;
