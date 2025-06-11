@@ -209,25 +209,45 @@ interface SlotDisponible {
   styles: `
     .reagendar-turno-container {
       min-height: 100vh;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
       padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .reagendar-turno-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      pointer-events: none;
     }
 
     .page-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 2rem;
       margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
     .page-header h1 {
-      color: #2c3e50;
-      font-size: 2.5rem;
-      font-weight: 700;
+      color: white;
+      font-size: 2.8rem;
+      font-weight: 800;
       margin: 0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background: linear-gradient(45deg, #fff, #f0f8ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .btn {
@@ -249,92 +269,152 @@ interface SlotDisponible {
     }
 
     .btn-back {
-      background: #f8f9fa;
-      color: #6c757d;
-      border: 2px solid #e9ecef;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
     .btn-back:hover:not(:disabled) {
-      background: #e9ecef;
-      color: #495057;
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.2);
     }
 
     .btn-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+      border: none;
     }
 
     .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
 
     .btn-cancel {
-      background: #6c757d;
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
       color: white;
+      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
     }
 
     .btn-cancel:hover:not(:disabled) {
-      background: #5a6268;
+      background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
     }
 
     .current-appointment {
-      background: white;
-      border-radius: 15px;
-      padding: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
       margin-bottom: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-left: 4px solid #ffc107;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      border-left: 6px solid #ff6b6b;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .current-appointment::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #ff6b6b, #ffa500);
+      border-radius: 50%;
+      opacity: 0.1;
+      transform: translate(30px, -30px);
     }
 
     .current-appointment h2 {
       color: #2c3e50;
-      margin-bottom: 1.5rem;
-      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      font-size: 1.8rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      position: relative;
+      z-index: 1;
     }
 
     .appointment-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     .info-row {
-      padding: 0.5rem 0;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+      transition: all 0.3s ease;
+    }
+
+    .info-row:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
     }
 
     .info-row strong {
-      color: #495057;
+      color: #2c3e50;
+      font-weight: 700;
       margin-right: 0.5rem;
+      font-size: 0.95rem;
     }
 
     .available-slots {
-      background: white;
-      border-radius: 15px;
-      padding: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
       margin-bottom: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .available-slots::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border-radius: 50%;
+      opacity: 0.1;
+      transform: translate(-20px, -20px);
     }
 
     .available-slots h2 {
       color: #2c3e50;
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      position: relative;
+      z-index: 1;
     }
 
     .slots-subtitle {
       color: #6c757d;
       margin-bottom: 2rem;
       font-size: 1.1rem;
+      position: relative;
+      z-index: 1;
     }
 
     .loading-slots {
@@ -380,29 +460,50 @@ interface SlotDisponible {
     }
 
     .slot-card {
-      background: #f8f9fa;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
       border: 2px solid #e9ecef;
-      border-radius: 12px;
-      padding: 1.5rem;
+      border-radius: 15px;
+      padding: 1.8rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
       position: relative;
       overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .slot-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
     }
 
     .slot-card:hover {
       border-color: #667eea;
-      background: #f0f4ff;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.25);
+    }
+
+    .slot-card:hover::before {
+      opacity: 0.05;
     }
 
     .slot-card.selected {
       border-color: #667eea;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 20px 50px rgba(102, 126, 234, 0.4);
+    }
+
+    .slot-card.selected::before {
+      opacity: 0;
     }
 
     .slot-header {
@@ -461,21 +562,40 @@ interface SlotDisponible {
     }
 
     .confirmation-section {
-      background: white;
-      border-radius: 15px;
-      padding: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
       margin-bottom: 2rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      border-left: 4px solid #28a745;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      border-left: 6px solid #28a745;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .confirmation-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(45deg, #28a745, #20c997);
+      border-radius: 50%;
+      opacity: 0.1;
+      transform: translate(30px, -30px);
     }
 
     .confirmation-section h2 {
       color: #2c3e50;
       margin-bottom: 2rem;
-      font-size: 1.5rem;
+      font-size: 1.8rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      position: relative;
+      z-index: 1;
     }
 
     .change-summary {

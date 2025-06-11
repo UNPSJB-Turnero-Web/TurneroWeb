@@ -36,7 +36,7 @@ import { DataPackage } from '../data.package';
           <div class="banner-paciente-agenda">
             <div class="header-content">
               <div class="header-actions">
-                <button class="btn btn-back" (click)="goBack()">
+                <button class="btn btn-header-glass" (click)="goBack()">
                   <i class="fas fa-arrow-left"></i>
                   Volver
                 </button>
@@ -188,7 +188,7 @@ import { DataPackage } from '../data.package';
                 <div class="calendar-navigation">
                   <button 
                     type="button" 
-                    class="btn btn-nav" 
+                    class="btn btn-header-glass" 
                     (click)="previousWeek()">
                     <i class="fas fa-chevron-left"></i> Anterior
                   </button>
@@ -197,7 +197,7 @@ import { DataPackage } from '../data.package';
                   </span>
                   <button 
                     type="button" 
-                    class="btn btn-nav" 
+                    class="btn btn-header-glass" 
                     (click)="nextWeek()">
                     Siguiente <i class="fas fa-chevron-right"></i>
                   </button>
@@ -341,30 +341,6 @@ import { DataPackage } from '../data.package';
     .header-actions {
       display: flex;
       align-items: center;
-    }
-
-    .btn-back {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-back:hover {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.6);
-      transform: translateY(-1px);
-      color: white;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .header-icon {
@@ -642,28 +618,6 @@ import { DataPackage } from '../data.package';
       display: flex;
       align-items: center;
       gap: 1rem;
-    }
-
-    .btn-nav {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-nav:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
 
     .current-period {

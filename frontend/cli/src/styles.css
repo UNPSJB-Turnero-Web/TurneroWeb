@@ -74,3 +74,165 @@ body {
   background: #f8d7da;
   color: #721c24;
 }
+
+/* === BOTONES DE ENCABEZADO CON ANIMACIONES AVANZADAS === */
+
+/* Botón base para encabezados (transparente sobre gradientes) */
+.btn-header-glass {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Efecto de brillo deslizante */
+.btn-header-glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+/* Hover para botón transparente */
+.btn-header-glass:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.35) 100%);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-3px) scale(1.05);
+  color: white;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.btn-header-glass:hover::before {
+  left: 100%;
+}
+
+/* Botón sólido para encabezados (con colores del tema) */
+.btn-header-solid {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 2px solid transparent;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Efecto de brillo para botón sólido */
+.btn-header-solid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+/* Hover para botón sólido */
+.btn-header-solid:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+  transform: translateY(-3px) scale(1.05);
+  color: white;
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-header-solid:hover::before {
+  left: 100%;
+}
+
+/* Variantes de color para botones sólidos */
+.btn-header-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-header-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
+  box-shadow: 0 15px 40px rgba(40, 167, 69, 0.5);
+}
+
+.btn-header-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-header-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+  box-shadow: 0 15px 40px rgba(220, 53, 69, 0.5);
+}
+
+.btn-header-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.btn-header-warning:hover {
+  background: linear-gradient(135deg, #e0a800 0%, #e8640f 100%);
+  box-shadow: 0 15px 40px rgba(255, 193, 7, 0.5);
+}
+
+/* Tamaños adicionales */
+.btn-header-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-header-lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+/* Estados deshabilitados */
+.btn-header-glass:disabled,
+.btn-header-solid:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-header-glass:disabled:hover,
+.btn-header-solid:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-header-glass,
+  .btn-header-solid {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .btn-header-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}

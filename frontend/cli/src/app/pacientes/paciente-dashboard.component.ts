@@ -16,7 +16,7 @@ import { DataPackage } from '../data.package';
           <h1>¡Bienvenido/a!</h1>
           <p>DNI: {{ patientDNI }}</p>
           <div class="user-actions">
-            <button class="btn btn-logout" (click)="logout()">
+            <button class="btn btn-header-solid btn-header-danger" (click)="logout()">
               <i class="fas fa-sign-out-alt"></i>
               Cerrar Sesión
             </button>
@@ -110,7 +110,8 @@ import { DataPackage } from '../data.package';
           <i class="fas fa-calendar-times"></i>
           <h3>No tienes turnos programados</h3>
           <p>¡Programa tu primera cita médica!</p>
-          <button class="btn btn-primary" (click)="scheduleAppointment()">
+          <button class="btn btn-header-solid" (click)="scheduleAppointment()">
+            <i class="fas fa-plus"></i>
             Solicitar Turno
           </button>
         </div>
@@ -122,215 +123,342 @@ import { DataPackage } from '../data.package';
       min-height: 100vh;
       background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
       padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .patient-dashboard::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      pointer-events: none;
     }
 
     .dashboard-header {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 25px;
+      padding: 2.5rem;
       margin-bottom: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .dashboard-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 150px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border-radius: 50%;
+      opacity: 0.05;
+      transform: translate(50px, -50px);
     }
 
     .welcome-section {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
+      z-index: 1;
     }
 
     .welcome-section h1 {
-      color: var(--pacientes-primary);
-      font-size: 2.5rem;
-      font-weight: 700;
+      color: #2c3e50;
+      font-size: 3rem;
+      font-weight: 800;
       margin: 0;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .welcome-section p {
       color: #6c757d;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      font-weight: 500;
       margin: 0.5rem 0 0 0;
     }
+    
 
     .user-actions {
       display: flex;
       gap: 1rem;
+      position: relative;
+      z-index: 1;
     }
 
     .btn {
-      padding: 0.75rem 1.5rem;
+      padding: 0.8rem 1.8rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      font-size: 0.95rem;
     }
 
     .btn-logout {
-      background: var(--action-delete);
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
       color: white;
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
     }
 
     .btn-logout:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px var(--action-delete-shadow);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(255, 107, 107, 0.5);
+      background: linear-gradient(135deg, #ee5a24 0%, #d63031 100%);
     }
 
     .btn-primary {
-      background: var(--pacientes-gradient);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     }
 
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px var(--pacientes-shadow);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
     }
+    
 
     .quick-actions {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 25px;
+      padding: 2.5rem;
       margin-bottom: 2rem;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .quick-actions::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 120px;
+      height: 120px;
+      background: linear-gradient(45deg, #f093fb, #f5576c);
+      border-radius: 50%;
+      opacity: 0.05;
+      transform: translate(-40px, -40px);
     }
 
     .quick-actions h2 {
-      color: #333;
-      font-size: 1.8rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
+      color: #2c3e50;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
     .actions-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
     .action-card {
-      background: white;
-      border-radius: 15px;
-      padding: 2rem;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 20px;
+      padding: 2.5rem;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      border: 2px solid rgba(102, 126, 234, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
     }
 
     .action-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      border-color: #667eea;
+    }
+
+    .action-card:hover::before {
+      opacity: 0.05;
     }
 
     .action-card i {
-      font-size: 3rem;
-      color: var(--pacientes-primary);
-      margin-bottom: 1rem;
+      font-size: 3.5rem;
+      color: #667eea;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .action-card:hover i {
+      transform: scale(1.1);
+      color: #5a6fd8;
     }
 
     .action-card h3 {
-      color: #333;
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
+      color: #2c3e50;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0 0 0.8rem 0;
+      position: relative;
+      z-index: 1;
     }
 
     .action-card p {
       color: #6c757d;
       margin: 0;
-      line-height: 1.5;
+      line-height: 1.6;
+      font-size: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+    .recent-appointments {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 25px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .recent-appointments::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #a8edea, #fed6e3);
+      border-radius: 50%;
+      opacity: 0.1;
+      transform: translate(30px, -30px);
     }
 
     .recent-appointments h2 {
-      color: #333;
-      font-size: 1.8rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
+      color: #2c3e50;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 1;
     }
 
     .loading-state {
       text-align: center;
-      padding: 2rem;
+      padding: 3rem;
       color: #6c757d;
+      position: relative;
+      z-index: 1;
     }
 
     .loading-state i {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      color: var(--pacientes-primary);
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+      color: #667eea;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .loading-state p {
       margin: 0;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      font-weight: 500;
     }
 
     .appointments-list {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 1.5rem;
+      position: relative;
+      z-index: 1;
     }
 
     .appointment-card {
-      background: white;
-      border-radius: 15px;
-      padding: 1.5rem;
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      border-radius: 20px;
+      padding: 2rem;
       display: flex;
       align-items: center;
-      gap: 1.5rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      transition: all 0.3s ease;
+      gap: 2rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
       position: relative;
       border-left: 6px solid transparent;
+      overflow: hidden;
+    }
+
+    .appointment-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+      pointer-events: none;
     }
 
     .appointment-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.15);
     }
 
     .appointment-card.upcoming {
       border-left-color: #28a745;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fff8 100%);
+      border-left-width: 8px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 255, 248, 0.95) 100%);
     }
 
     .appointment-card.upcoming.programado {
       border-left-color: #ffc107;
-      background: linear-gradient(135deg, #ffffff 0%, #fffef8 100%);
+      border-left-width: 8px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 254, 248, 0.95) 100%);
     }
 
-    .appointment-card.upcoming.reagendado {
-      border-left-color: #17a2b8;
-      background: linear-gradient(135deg, #ffffff 0%, #f8feff 100%);
-    }
-
-    .appointment-card.upcoming.reagendado::before {
-      content: "📅 REAGENDADO";
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      background: #17a2b8;
-      color: white;
-      padding: 6px 12px;
-      border-radius: 15px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      z-index: 1;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.7);
-      }
-      70% {
-        box-shadow: 0 0 0 10px rgba(23, 162, 184, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(23, 162, 184, 0);
-      }
-    }
-
+  
     .appointment-date {
       display: flex;
       flex-direction: column;
@@ -338,10 +466,11 @@ import { DataPackage } from '../data.package';
       justify-content: center;
       width: 80px;
       height: 80px;
-      background: var(--pacientes-gradient);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border-radius: 12px;
       flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .appointment-date .day {
@@ -379,7 +508,7 @@ import { DataPackage } from '../data.package';
     }
 
     .appointment-info .time {
-      color: var(--pacientes-primary);
+      color: #667eea;
       font-weight: 600;
       font-size: 0.95rem;
     }
@@ -390,54 +519,70 @@ import { DataPackage } from '../data.package';
     }
 
     .status {
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 25px;
+      font-size: 0.8rem;
+      font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .status.confirmed {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+    .status::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .status:hover::before {
+      left: 100%;
+    }
+
+    .status.confirmado, .status.confirmed {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+      border: none;
     }
 
     .status.programado {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeaa7;
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+      border: none;
     }
 
     .status.reagendado {
-      background: #d1ecf1;
-      color: #0c5460;
-      border: 1px solid #bee5eb;
-      font-weight: 700;
-      box-shadow: 0 2px 4px rgba(23, 162, 184, 0.2);
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+      border: none;
       position: relative;
     }
 
-    .status.reagendado::before {
-      content: "🔄 ";
-      margin-right: 4px;
-    }
-
-    .status.confirmado {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+    .status.reagendado::after {
+      content: "🔄";
+      margin-left: 6px;
     }
 
     .status.cancelado {
-      background: #f8d7da;
-      color: #721c24;
-      border: 1px solid #f5c6cb;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+      border: none;
     }
 
     .status.pending {
-      background: #fff3cd;
-      color: #856404;
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+      border: none;
     }
 
     .appointment-actions {
