@@ -3,6 +3,7 @@ import { HomeComponent } from './home/home.component';
 import { TurnosComponent } from './turnos/turnos.component';
 import { TurnoDetailComponent } from './turnos/turno-detail.component';
 import { AgendaComponent } from './agenda/agenda.component';
+import { DiasExcepcionalesComponent } from './agenda/dias-excepcionales.component';
 import { PacientesComponent } from './pacientes/pacientes.component';
 import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
 import { EspecialidadesComponent } from './especialidades/especialidades.component';
@@ -43,6 +44,7 @@ export const routes: Routes = [
     { path: 'turnos/new', component: TurnoDetailComponent, canActivate: [AdminGuard] },
     { path: 'turnos/:id', component: TurnoDetailComponent, canActivate: [AdminGuard] },
     { path: 'agenda', component: AgendaComponent, canActivate: [AdminGuard] },
+    { path: 'agenda/dias-excepcionales', component: DiasExcepcionalesComponent, canActivate: [AdminGuard] },
     { path: 'pacientes', component: PacientesComponent, canActivate: [AdminGuard] },
     { path: 'pacientes/new', component: PacienteDetailComponent, canActivate: [AdminGuard] },
     { path: 'pacientes/:id', component: PacienteDetailComponent, canActivate: [AdminGuard] },

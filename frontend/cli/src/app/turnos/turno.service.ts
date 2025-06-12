@@ -66,4 +66,87 @@ export class TurnoService {
   reagendar(id: number, nuevosDatos: any): Observable<DataPackage<Turno>> {
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/reagendar`, nuevosDatos);
   }
+
+  // Nuevos métodos para gestionar días excepcionales usando Agenda
+  
+  /** Crea un día excepcional genérico */
+  crearDiaExcepcional(params: any): Observable<DataPackage<any>> {
+    return this.http.post<DataPackage<any>>(`rest/agenda/dia-excepcional`, params);
+  }
+  
+  /** Marca un día como feriado para todo el sistema */
+  marcarFeriado(fecha: string, esquemaTurnoId: number, descripcion: string): Observable<DataPackage<any>> {
+    const params = {
+      fecha,
+      // Para feriados no enviamos esquemaTurnoId (será null en backend)
+      descripcion,
+      tipoAgenda: 'FERIADO'
+    };
+    return this.http.post<DataPackage<any>>(`rest/agenda/dia-excepcional`, params);
+  }
+
+  /** Configura mantenimiento para un consultorio */
+  configurarMantenimiento(fecha: string, esquemaTurnoId: number, descripcion: string, 
+                         horaInicio?: string, horaFin?: string): Observable<DataPackage<any>> {
+    const params = {
+      fecha,
+      esquemaTurnoId,
+      descripcion,
+      tipoAgenda: 'MANTENIMIENTO',
+      horaInicio,
+      horaFin
+    };
+    return this.http.post<DataPackage<any>>(`rest/agenda/dia-excepcional`, params);
+  }
+
+  /** Configura atención especial para una fecha específica */
+  configurarAtencionEspecial(fecha: string, esquemaTurnoId: number, descripcion: string,
+                           horaInicio: string, horaFin: string): Observable<DataPackage<any>> {
+    const params = {
+      fecha,
+      esquemaTurnoId,
+      descripcion,
+      tipoAgenda: 'ATENCION_ESPECIAL',
+      horaInicio,
+      horaFin
+    };
+    return this.http.post<DataPackage<any>>(`rest/agenda/dia-excepcional`, params);
+  }
+
+  /** Configura tiempo de sanitización para un esquema de turno */
+  configurarSanitizacion(esquemaTurnoId: number, tiempoSanitizacion: number): Observable<DataPackage<any>> {
+    return this.http.put<DataPackage<any>>(`rest/agenda/esquema-turno/${esquemaTurnoId}/sanitizacion`, {
+      tiempoSanitizacion
+    });
+  }
+
+  /** Obtiene días excepcionales por rango de fechas */
+  getDiasExcepcionales(fechaInicio: string, fechaFin: string, centroId?: number): Observable<DataPackage<any[]>> {
+    let params = new HttpParams()
+      .set('fechaInicio', fechaInicio)
+      .set('fechaFin', fechaFin);
+    
+    if (centroId) {
+      params = params.set('centroId', centroId.toString());
+    }
+
+    return this.http.get<DataPackage<any[]>>(`rest/agenda/dias-excepcionales`, { params });
+  }
+
+  /** Valida disponibilidad considerando días excepcionales y sanitización */
+  validarDisponibilidad(fecha: string, horaInicio: string, consultorioId: number, 
+                       staffMedicoId: number): Observable<DataPackage<{disponible: boolean, motivo?: string}>> {
+    const params = new HttpParams()
+      .set('fecha', fecha)
+      .set('horaInicio', horaInicio)
+      .set('consultorioId', consultorioId.toString())
+      .set('staffMedicoId', staffMedicoId.toString());
+
+    return this.http.get<DataPackage<{disponible: boolean, motivo?: string}>>(`rest/agenda/validar-disponibilidad`, { params });
+  }
+
+  /** Elimina un día excepcional */
+  eliminarDiaExcepcional(agendaId: number): Observable<DataPackage<any>> {
+    return this.http.delete<DataPackage<any>>(`rest/agenda/dia-excepcional/${agendaId}`);
+  }
 }

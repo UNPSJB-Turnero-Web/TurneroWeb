@@ -58,10 +58,20 @@ public class AgendaDTO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class DiaExcepcionalDTO {
-        private String fecha; // ISO yyyy-MM-dd
+        private Integer id;       // ID de la agenda
+        private String fecha;     // ISO yyyy-MM-dd
+        private String tipoAgenda; // FERIADO, MANTENIMIENTO, ATENCION_ESPECIAL
         private String descripcion;
-        private String apertura; // HH:mm
-        private String cierre;   // HH:mm
+        private String apertura;  // HH:mm
+        private String cierre;    // HH:mm
+        private Integer centroId;
+        private String centroNombre;
+        private Integer medicoId;
+        private String medicoNombre;
+        private String medicoApellido;
+        private String especialidad;
+        private Integer consultorioId;
+        private String consultorioNombre;
     }
 
 }

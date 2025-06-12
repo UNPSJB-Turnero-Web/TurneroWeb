@@ -363,6 +363,12 @@
   box-shadow: 0 4px 15px var(--obra-social-shadow);
 }
 
+.icon-dias-excepcionales {
+  background: var(--agenda-gradient);
+  color: white;
+  box-shadow: 0 4px 15px var(--agenda-shadow);
+}
+
 /* ========================================
    BADGES Y ELEMENTOS POR ENTIDAD
    ======================================== */

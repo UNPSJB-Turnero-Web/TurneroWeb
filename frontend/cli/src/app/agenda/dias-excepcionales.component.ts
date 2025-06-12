@@ -1,0 +1,614 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TurnoService } from '../turnos/turno.service';
+import { EsquemaTurnoService } from '../esquemaTurno/esquemaTurno.service';
+import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
+
+interface DiaExcepcional {
+  id?: number;
+  fecha: string;
+  tipoAgenda: 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO';
+  descripcion?: string; // Campo del DTO del backend
+  apertura?: string;   // Hora inicio del DTO
+  cierre?: string;     // Hora fin del DTO
+  centroId?: number;
+  centroNombre?: string;
+  medicoId?: number;
+  medicoNombre?: string;
+  medicoApellido?: string;
+  especialidad?: string;
+  consultorioId?: number;
+  consultorioNombre?: string;
+  // Campos para el formulario
+  descripcionExcepcion?: string; // Para compatibilidad con formulario
+  esquemaTurnoId?: number;
+  horaInicio?: string;
+  horaFin?: string;
+  tiempoSanitizacion?: number;
+}
+
+@Component({
+  selector: 'app-dias-excepcionales',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="container-fluid py-4">
+      <div class="page-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="display-6 mb-2">
+              <i class="fas fa-calendar-times text-warning me-3"></i>
+              Gestión de Días Excepcionales
+            </h1>
+            <p class="text-muted mb-0">Configure feriados, mantenimiento y horarios especiales</p>
+          </div>
+          <button class="btn btn-primary btn-lg" (click)="abrirModalNuevo()">
+            <i class="fas fa-plus me-2"></i>Agregar Día Excepcional
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-filter me-2"></i>Filtros de Búsqueda
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Centro de Atención</label>
+              <select class="form-select" [(ngModel)]="filtros.centroId" (change)="aplicarFiltros()">
+                <option value="">Todos los centros</option>
+                <option *ngFor="let centro of centros" [value]="centro.id">{{ centro.nombre }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" [(ngModel)]="filtros.tipo" (change)="aplicarFiltros()">
+                <option value="">Todos los tipos</option>
+                <option value="FERIADO">Feriado</option>
+                <option value="ATENCION_ESPECIAL">Atención Especial</option>
+                <option value="MANTENIMIENTO">Mantenimiento</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Año</label>
+              <select class="form-select" [(ngModel)]="filtros.anio" (change)="aplicarFiltros()">
+                <option *ngFor="let anio of anios" [value]="anio">{{ anio }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de días excepcionales -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>Días Excepcionales Configurados
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Descripción</th>
+                  <th>Centro/Consultorio</th>
+                  <th>Horario</th>
+                  <th>Sanitización</th>
+                  <th class="text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let dia of diasFiltrados" class="align-middle">
+                  <td>
+                    <strong>{{ dia.fecha | date:'dd/MM/yyyy' }}</strong>
+                    <br>
+                    <small class="text-muted">{{ dia.fecha | date:'EEEE' }}</small>
+                  </td>
+                  <td>
+                    <span class="badge fs-6" [ngClass]="getTipoBadgeClass(dia.tipoAgenda)">
+                      <i class="fas" [ngClass]="getTipoIcon(dia.tipoAgenda)" class="me-1"></i>
+                      {{ getTipoLabel(dia.tipoAgenda) }}
+                    </span>
+                  </td>
+                  <td class="descripcion-cell">
+                    <div class="descripcion-text">{{ dia.descripcion }}</div>
+                  </td>
+                  <td>
+                    <div *ngIf="dia.centroNombre" class="centro-info">
+                      <strong>{{ dia.centroNombre }}</strong>
+                      <br>
+                      <small class="text-muted" *ngIf="dia.consultorioNombre">
+                        <i class="fas fa-door-open me-1"></i>{{ dia.consultorioNombre }}
+                      </small>
+                      <br>
+                      <small class="text-muted" *ngIf="dia.medicoNombre">
+                        <i class="fas fa-user-md me-1"></i>Dr. {{ dia.medicoNombre }} {{ dia.medicoApellido }}
+                        <span *ngIf="dia.especialidad" class="d-block">
+                          <i class="fas fa-stethoscope me-1"></i>{{ dia.especialidad }}
+                        </span>
+                      </small>
+                    </div>
+                    <div *ngIf="!dia.centroNombre">
+                      <span class="badge bg-info text-dark">
+                        <i class="fas fa-globe me-1"></i>General
+                      </span>
+                      <br>
+                      <small class="text-muted">(Todos los centros)</small>
+                    </div>
+                  </td>
+                  <td>
+                    <div *ngIf="dia.apertura && dia.cierre">
+                      <i class="fas fa-clock me-1"></i>
+                      {{ dia.apertura }} - {{ dia.cierre }}
+                    </div>
+                    <div *ngIf="!dia.apertura">
+                      <span class="text-muted">Todo el día</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div *ngIf="dia.tiempoSanitizacion">
+                      <i class="fas fa-spray-can me-1"></i>
+                      {{ dia.tiempoSanitizacion }} min
+                    </div>
+                    <div *ngIf="!dia.tiempoSanitizacion">
+                      <span class="text-muted">-</span>
+                    </div>
+                  </td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-outline-primary" (click)="editar(dia)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-outline-danger" (click)="eliminar(dia)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="diasFiltrados.length === 0">
+                  <td colspan="7" class="text-center py-5 text-muted">
+                    <i class="fas fa-calendar-times fa-3x mb-3 opacity-50"></i>
+                    <p class="mb-0">No hay días excepcionales configurados</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal para agregar/editar día excepcional -->
+      <div class="modal fade" [class.show]="showModal" [style.display]="showModal ? 'block' : 'none'" 
+           tabindex="-1" *ngIf="showModal">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="fas fa-calendar-plus me-2"></i>
+                {{ editando ? 'Editar' : 'Agregar' }} Día Excepcional
+              </h5>
+              <button type="button" class="btn-close" (click)="cerrarModal()"></button>
+            </div>
+            <div class="modal-body">
+              <form (ngSubmit)="guardar()" #form="ngForm">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Fecha *</label>
+                    <input type="date" class="form-control" [(ngModel)]="diaActual.fecha" 
+                           name="fecha" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Tipo *</label>
+                    <select class="form-select" [(ngModel)]="diaActual.tipoAgenda" 
+                            name="tipo" required (change)="onTipoChange()">
+                      <option value="">Seleccione un tipo</option>
+                      <option value="FERIADO">Feriado</option>
+                      <option value="ATENCION_ESPECIAL">Atención Especial</option>
+                      <option value="MANTENIMIENTO">Mantenimiento</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Descripción *</label>
+                    <textarea class="form-control" [(ngModel)]="diaActual.descripcionExcepcion" 
+                              name="descripcion" required rows="2" 
+                              placeholder="Ej: Día del Trabajador, Mantenimiento sistema eléctrico, etc."></textarea>
+                  </div>
+                  
+                  <!-- Solo para mantenimiento y atención especial -->
+                  <div class="col-12" *ngIf="diaActual.tipoAgenda !== 'FERIADO'">
+                    <label class="form-label">Esquema de Turno *</label>
+                    <select class="form-select" [(ngModel)]="diaActual.esquemaTurnoId" 
+                            name="esquemaTurno" required>
+                      <option value="">Seleccione un esquema</option>
+                      <option *ngFor="let esquema of esquemasTurno" [value]="esquema.id">
+                        {{ esquema.nombreCentro }} - {{ esquema.nombreConsultorio }} - Dr. {{ esquema.nombreStaffMedico }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Horarios especiales para atención especial -->
+                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
+                    <label class="form-label">Hora Inicio *</label>
+                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
+                           name="horaInicio" required>
+                  </div>
+                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
+                    <label class="form-label">Hora Fin *</label>
+                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaFin" 
+                           name="horaFin" required>
+                  </div>
+
+                  <!-- Tiempo de sanitización -->
+                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda !== 'FERIADO'">
+                    <label class="form-label">Tiempo Sanitización (minutos)</label>
+                    <input type="number" class="form-control" [(ngModel)]="diaActual.tiempoSanitizacion" 
+                           name="tiempoSanitizacion" min="0" max="60"
+                           placeholder="Ej: 15">
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
+                <i class="fas fa-times me-2"></i>Cancelar
+              </button>
+              <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="!form.valid">
+                <i class="fas fa-save me-2"></i>{{ editando ? 'Actualizar' : 'Guardar' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show" *ngIf="showModal"></div>
+    </div>
+  `,
+  styles: [`
+    .page-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .table th {
+      border-top: none;
+      font-weight: 600;
+      background-color: #f8f9fa;
+      color: #495057;
+      white-space: nowrap;
+    }
+
+    .table td {
+      vertical-align: middle;
+      border-color: #e9ecef;
+    }
+
+    /* Mejoras de visualización para columnas */
+    .table th:nth-child(1), .table td:nth-child(1) { width: 12%; } /* Fecha */
+    .table th:nth-child(2), .table td:nth-child(2) { width: 15%; } /* Tipo */
+    .table th:nth-child(3), .table td:nth-child(3) { width: 20%; } /* Descripción */
+    .table th:nth-child(4), .table td:nth-child(4) { width: 25%; } /* Centro/Consultorio */
+    .table th:nth-child(5), .table td:nth-child(5) { width: 12%; } /* Horario */
+    .table th:nth-child(6), .table td:nth-child(6) { width: 10%; } /* Sanitización */
+    .table th:nth-child(7), .table td:nth-child(7) { width: 6%; }  /* Acciones */
+
+    .descripcion-cell {
+      max-width: 200px;
+    }
+
+    .descripcion-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.3;
+      max-height: 2.6em;
+    }
+
+    .centro-info {
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+
+    .centro-info strong {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .centro-info small {
+      font-size: 0.8rem;
+      color: #6c757d;
+    }
+
+    .badge.fs-6 {
+      font-size: 0.875rem !important;
+      padding: 0.5rem 0.8rem;
+    }
+
+    .badge-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+    }
+
+    .badge-warning {
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+      color: #212529;
+    }
+
+    .badge-info {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+    }
+
+    .modal.show {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-group-sm .btn {
+      padding: 0.25rem 0.5rem;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .table-responsive {
+        font-size: 0.85rem;
+      }
+      
+      .descripcion-text {
+        -webkit-line-clamp: 1;
+        max-height: 1.3em;
+      }
+
+      .centro-info {
+        font-size: 0.8rem;
+      }
+
+      .badge.fs-6 {
+        font-size: 0.75rem !important;
+        padding: 0.35rem 0.6rem;
+      }
+    }
+  `]
+})
+export class DiasExcepcionalesComponent implements OnInit {
+  diasExcepcionales: DiaExcepcional[] = [];
+  diasFiltrados: DiaExcepcional[] = [];
+  centros: any[] = [];
+  esquemasTurno: any[] = [];
+  
+  filtros = {
+    centroId: '',
+    tipo: '',
+    anio: new Date().getFullYear()
+  };
+  
+  anios: number[] = [];
+  showModal = false;
+  editando = false;
+  
+  diaActual: DiaExcepcional = {
+    fecha: '',
+    tipoAgenda: 'FERIADO',
+    descripcionExcepcion: ''
+  };
+
+  constructor(
+    private turnoService: TurnoService,
+    private esquemaTurnoService: EsquemaTurnoService,
+    private centroService: CentroAtencionService,
+    private cdr: ChangeDetectorRef
+  ) {
+    // Generar años (actual y próximos 2)
+    const anioActual = new Date().getFullYear();
+    this.anios = [anioActual - 1, anioActual, anioActual + 1, anioActual + 2];
+  }
+
+  ngOnInit() {
+    this.cargarCentros();
+    this.cargarEsquemasTurno();
+    this.cargarDiasExcepcionales();
+  }
+
+  cargarCentros() {
+    this.centroService.all().subscribe({
+      next: (response) => {
+        this.centros = response.data || [];
+      },
+      error: (error) => {
+        console.error('Error al cargar centros:', error);
+      }
+    });
+  }
+
+  cargarEsquemasTurno() {
+    this.esquemaTurnoService.all().subscribe({
+      next: (response) => {
+        this.esquemasTurno = response.data || [];
+      },
+      error: (error) => {
+        console.error('Error al cargar esquemas de turno:', error);
+      }
+    });
+  }
+
+  cargarDiasExcepcionales() {
+    const fechaInicio = `${this.filtros.anio}-01-01`;
+    const fechaFin = `${this.filtros.anio}-12-31`;
+    
+    this.turnoService.getDiasExcepcionales(fechaInicio, fechaFin, 
+      this.filtros.centroId ? Number(this.filtros.centroId) : undefined).subscribe({
+      next: (response) => {
+        this.diasExcepcionales = response.data || [];
+        this.aplicarFiltros();
+      },
+      error: (error) => {
+        console.error('Error al cargar días excepcionales:', error);
+      }
+    });
+  }
+
+  aplicarFiltros() {
+    this.diasFiltrados = this.diasExcepcionales.filter(dia => {
+      let cumpleFiltros = true;
+      
+      if (this.filtros.tipo && dia.tipoAgenda !== this.filtros.tipo) {
+        cumpleFiltros = false;
+      }
+      
+      return cumpleFiltros;
+    });
+  }
+
+  abrirModalNuevo() {
+    this.editando = false;
+    this.diaActual = {
+      fecha: '',
+      tipoAgenda: 'FERIADO',
+      descripcionExcepcion: ''
+    };
+    this.showModal = true;
+  }
+
+  editar(dia: DiaExcepcional) {
+    this.editando = true;
+    // Mapear campos del DTO a campos del formulario
+    this.diaActual = {
+      ...dia,
+      descripcionExcepcion: dia.descripcion || dia.descripcionExcepcion,
+      horaInicio: dia.apertura || dia.horaInicio,
+      horaFin: dia.cierre || dia.horaFin
+    };
+    this.showModal = true;
+  }
+
+  onTipoChange() {
+    // Limpiar campos específicos cuando cambia el tipo
+    if (this.diaActual.tipoAgenda === 'FERIADO') {
+      this.diaActual.esquemaTurnoId = undefined;
+      this.diaActual.horaInicio = undefined;
+      this.diaActual.horaFin = undefined;
+      this.diaActual.tiempoSanitizacion = undefined;
+    }
+  }
+
+  guardar() {
+    if (!this.diaActual.fecha || !this.diaActual.tipoAgenda || !this.diaActual.descripcionExcepcion) {
+      alert('Por favor complete todos los campos obligatorios');
+      return;
+    }
+
+    // Validaciones específicas por tipo
+    if (this.diaActual.tipoAgenda !== 'FERIADO') {
+      if (!this.diaActual.esquemaTurnoId) {
+        alert('Debe seleccionar un esquema de turno para este tipo de día excepcional');
+        return;
+      }
+    }
+
+    if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+      if (!this.diaActual.horaInicio || !this.diaActual.horaFin) {
+        alert('Debe especificar horarios para atención especial');
+        return;
+      }
+    }
+
+    // Preparar datos para enviar
+    const params: any = {
+      fecha: this.diaActual.fecha,
+      tipoAgenda: this.diaActual.tipoAgenda,
+      descripcion: this.diaActual.descripcionExcepcion
+    };
+
+    // Solo agregar esquemaTurnoId si no es feriado
+    if (this.diaActual.tipoAgenda !== 'FERIADO' && this.diaActual.esquemaTurnoId) {
+      params.esquemaTurnoId = this.diaActual.esquemaTurnoId;
+    }
+
+    // Agregar horarios si es atención especial
+    if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+      params.horaInicio = this.diaActual.horaInicio;
+      params.horaFin = this.diaActual.horaFin;
+    }
+
+    // Agregar tiempo de sanitización si está especificado
+    if (this.diaActual.tiempoSanitizacion) {
+      params.tiempoSanitizacion = this.diaActual.tiempoSanitizacion;
+    }
+
+    // Usar el método genérico para crear día excepcional
+    this.turnoService.crearDiaExcepcional(params).subscribe({
+      next: () => {
+        alert(`Día excepcional ${this.editando ? 'actualizado' : 'creado'} correctamente`);
+        this.cerrarModal();
+        this.cargarDiasExcepcionales();
+      },
+      error: (error) => {
+        console.error('Error al guardar día excepcional:', error);
+        const mensaje = error.error?.status_text || error.error?.message || 'Error al guardar el día excepcional';
+        alert(mensaje);
+      }
+    });
+  }
+
+  eliminar(dia: DiaExcepcional) {
+    if (confirm('¿Está seguro que desea eliminar este día excepcional?')) {
+      this.turnoService.eliminarDiaExcepcional(dia.id!).subscribe({
+        next: () => {
+          alert('Día excepcional eliminado correctamente');
+          this.cargarDiasExcepcionales();
+        },
+        error: (error) => {
+          console.error('Error al eliminar día excepcional:', error);
+          alert('Error al eliminar el día excepcional: ' + (error.error?.message || 'Error desconocido'));
+        }
+      });
+    }
+  }
+
+  cerrarModal() {
+    this.showModal = false;
+    this.editando = false;
+  }
+
+  getTipoBadgeClass(tipo: string): string {
+    switch (tipo) {
+      case 'FERIADO': return 'badge-danger';
+      case 'ATENCION_ESPECIAL': return 'badge-warning';
+      case 'MANTENIMIENTO': return 'badge-info';
+      default: return 'badge-secondary';
+    }
+  }
+
+  getTipoIcon(tipo: string): string {
+    switch (tipo) {
+      case 'FERIADO': return 'fa-calendar-times';
+      case 'ATENCION_ESPECIAL': return 'fa-clock';
+      case 'MANTENIMIENTO': return 'fa-tools';
+      default: return 'fa-calendar';
+    }
+  }
+
+  getTipoLabel(tipo: string): string {
+    switch (tipo) {
+      case 'FERIADO': return 'Feriado';
+      case 'ATENCION_ESPECIAL': return 'Atención Especial';
+      case 'MANTENIMIENTO': return 'Mantenimiento';
+      default: return tipo;
+    }
+  }
+}

@@ -1,13 +1,21 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.service.AgendaService;
-import unpsjb.labprog.backend.business.service.EsquemaTurnoService;
+import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -28,25 +36,19 @@ import unpsjb.labprog.backend.model.Turno;
 public class AgendaPresenter {
 
     @Autowired
-    AgendaService service;
-
-    @Autowired
     private AgendaService agendaService;
-
-    @Autowired
-    private EsquemaTurnoService esquemaTurnoService;
 
     @Autowired
     private EsquemaTurnoRepository esquemaTurnoRepository;
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
-        return Response.ok(service.findAll());
+        return Response.ok(agendaService.findAll());
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET)
     public ResponseEntity<Object> findById(@PathVariable("id") Integer id) {
-        Agenda agenda = service.findById(id);
+        Agenda agenda = agendaService.findById(id);
         return (agenda != null)
                 ? Response.ok(agenda)
                 : Response.notFound();
@@ -56,7 +58,7 @@ public class AgendaPresenter {
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return Response.ok(service.findByPage(page, size));
+        return Response.ok(agendaService.findByPage(page, size));
     }
 
     // @RequestMapping(value = "/{id}/cancelar", method = RequestMethod.POST)
@@ -72,15 +74,15 @@ public class AgendaPresenter {
     @RequestMapping(value = "/alternativas/{turnoId}", method = RequestMethod.GET)
     public ResponseEntity<Object> sugerirAlternativas(@PathVariable("turnoId") Integer turnoId) {
         // Busca el turno y llama al método del service
-        Turno turno = service.findTurnoById(turnoId);
+        Turno turno = agendaService.findTurnoById(turnoId);
         if (turno == null)
             return Response.notFound();
-        return Response.ok(service.sugerirAlternativas(turno));
+        return Response.ok(agendaService.sugerirAlternativas(turno));
     }
 
     @RequestMapping(value = "/consultorio/{consultorioId}", method = RequestMethod.GET)
     public ResponseEntity<Object> findByConsultorio(@PathVariable("consultorioId") Integer consultorioId) {
-        return Response.ok(service.findByConsultorio(consultorioId));
+        return Response.ok(agendaService.findByConsultorio(consultorioId));
     }
 
     @GetMapping("/eventos")
@@ -115,6 +117,129 @@ public class AgendaPresenter {
             return Response.ok(slotsDisponibles, "Slots disponibles obtenidos correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al obtener slots disponibles: " + e.getMessage());
+        }
+    }
+
+    // Nuevos endpoints para gestión de días excepcionales y sanitización
+    
+    @PostMapping("/dia-excepcional")
+    public ResponseEntity<Object> crearDiaExcepcional(@RequestBody Map<String, Object> params) {
+        try {
+            LocalDate fecha = LocalDate.parse((String) params.get("fecha"));
+            Agenda.TipoAgenda tipo = Agenda.TipoAgenda.valueOf((String) params.get("tipoAgenda"));
+            String descripcion = (String) params.get("descripcion");
+            
+            // Handle esquemaTurnoId safely - can be null for holidays
+            Integer esquemaTurnoId = null;
+            if (params.containsKey("esquemaTurnoId") && params.get("esquemaTurnoId") != null) {
+                Object esquemaIdObj = params.get("esquemaTurnoId");
+                if (esquemaIdObj instanceof Integer) {
+                    esquemaTurnoId = (Integer) esquemaIdObj;
+                } else if (esquemaIdObj instanceof String) {
+                    esquemaTurnoId = Integer.parseInt((String) esquemaIdObj);
+                } else if (esquemaIdObj instanceof Number) {
+                    esquemaTurnoId = ((Number) esquemaIdObj).intValue();
+                }
+            }
+            
+            LocalTime horaInicio = null;
+            LocalTime horaFin = null;
+            Integer tiempoSanitizacion = null;
+            
+            if (params.containsKey("horaInicio") && params.get("horaInicio") != null) {
+                horaInicio = LocalTime.parse((String) params.get("horaInicio"));
+            }
+            if (params.containsKey("horaFin") && params.get("horaFin") != null) {
+                horaFin = LocalTime.parse((String) params.get("horaFin"));
+            }
+            if (params.containsKey("tiempoSanitizacion") && params.get("tiempoSanitizacion") != null) {
+                Object tiempoObj = params.get("tiempoSanitizacion");
+                if (tiempoObj instanceof Integer) {
+                    tiempoSanitizacion = (Integer) tiempoObj;
+                } else if (tiempoObj instanceof String) {
+                    tiempoSanitizacion = Integer.parseInt((String) tiempoObj);
+                } else if (tiempoObj instanceof Number) {
+                    tiempoSanitizacion = ((Number) tiempoObj).intValue();
+                }
+            }
+            
+            Agenda agenda = agendaService.crearAgendaExcepcional(fecha, tipo, descripcion, esquemaTurnoId, 
+                                                               horaInicio, horaFin, tiempoSanitizacion);
+            
+            // Convertir la entidad a DTO para evitar recursión infinita
+            AgendaDTO.DiaExcepcionalDTO diaExcepcionalDTO = agendaService.convertirADiaExcepcionalDTO(agenda);
+            
+            return Response.ok(diaExcepcionalDTO, "Día excepcional creado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al crear día excepcional: " + e.getMessage());
+        }
+    }
+    
+    @PutMapping("/esquema-turno/{esquemaTurnoId}/sanitizacion")
+    public ResponseEntity<Object> configurarSanitizacion(
+            @PathVariable Integer esquemaTurnoId,
+            @RequestBody Map<String, Integer> params) {
+        try {
+            Integer tiempoSanitizacion = params.get("tiempoSanitizacion");
+            agendaService.configurarSanitizacion(esquemaTurnoId, tiempoSanitizacion);
+            return Response.ok(null, "Configuración de sanitización actualizada correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al configurar sanitización: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/dias-excepcionales")
+    public ResponseEntity<Object> obtenerDiasExcepcionales(
+            @RequestParam String fechaInicio,
+            @RequestParam String fechaFin,
+            @RequestParam(required = false) Integer centroId) {
+        try {
+            LocalDate inicio = LocalDate.parse(fechaInicio);
+            LocalDate fin = LocalDate.parse(fechaFin);
+            
+            List<Agenda> diasExcepcionales = agendaService.obtenerAgendasExcepcionales(inicio, fin, centroId);
+            
+            // Convertir entidades a DTOs para evitar recursión infinita
+            List<AgendaDTO.DiaExcepcionalDTO> diasExcepcionalesDTO = 
+                agendaService.convertirADiasExcepcionalesDTO(diasExcepcionales);
+            
+            return Response.ok(diasExcepcionalesDTO, "Días excepcionales obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener días excepcionales: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/validar-disponibilidad")
+    public ResponseEntity<Object> validarDisponibilidad(
+            @RequestParam String fecha,
+            @RequestParam String horaInicio,
+            @RequestParam Integer consultorioId,
+            @RequestParam Integer staffMedicoId) {
+        try {
+            LocalDate fechaLocal = LocalDate.parse(fecha);
+            LocalTime horaLocal = LocalTime.parse(horaInicio);
+            
+            boolean disponible = agendaService.validarDisponibilidad(fechaLocal, horaLocal, consultorioId, staffMedicoId);
+            
+            Map<String, Object> resultado = new HashMap<>();
+            resultado.put("disponible", disponible);
+            if (!disponible) {
+                resultado.put("motivo", "Slot no disponible - verificar feriados, mantenimiento o turnos existentes");
+            }
+            
+            return Response.ok(resultado, "Validación completada");
+        } catch (Exception e) {
+            return Response.error(null, "Error al validar disponibilidad: " + e.getMessage());
+        }
+    }
+    
+    @DeleteMapping("/dia-excepcional/{agendaId}")
+    public ResponseEntity<Object> eliminarDiaExcepcional(@PathVariable Integer agendaId) {
+        try {
+            agendaService.eliminarAgendaExcepcional(agendaId);
+            return Response.ok(null, "Día excepcional eliminado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al eliminar día excepcional: " + e.getMessage());
         }
     }
 

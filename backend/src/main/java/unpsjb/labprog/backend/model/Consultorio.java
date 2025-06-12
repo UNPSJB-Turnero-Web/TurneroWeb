@@ -1,6 +1,13 @@
 package unpsjb.labprog.backend.model;
 
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,4 +37,35 @@ public class Consultorio {
     @ManyToOne(optional = false)
     @JoinColumn(name = "centro_atencion_id", nullable = false)
     private CentroAtencion centroAtencion;
+
+    // Horarios por defecto del consultorio
+    private LocalTime horaAperturaDefault;
+    private LocalTime horaCierreDefault;
+
+    // Horarios específicos por día de la semana
+    @ElementCollection
+    @CollectionTable(name = "consultorio_horarios", joinColumns = @JoinColumn(name = "consultorio_id"))
+    private List<HorarioConsultorio> horariosSemanales = new ArrayList<>();
+
+    @Embeddable
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class HorarioConsultorio {
+        @Column(nullable = false)
+        private String diaSemana; // LUNES, MARTES, etc.
+        
+        private LocalTime horaApertura;
+        private LocalTime horaCierre;
+        
+        @Column(nullable = false)
+        private Boolean activo = true; // Para días que no atiende
+        
+        public HorarioConsultorio(String diaSemana, LocalTime horaApertura, LocalTime horaCierre, Boolean activo) {
+            this.diaSemana = diaSemana;
+            this.horaApertura = horaApertura;
+            this.horaCierre = horaCierre;
+            this.activo = activo;
+        }
+    }
 }

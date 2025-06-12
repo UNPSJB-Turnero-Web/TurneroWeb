@@ -132,6 +132,13 @@ import { Router } from '@angular/router';
                   <span class="item-desc">Vista de agenda</span>
                 </div>
               </a>
+              <a ngbDropdownItem class="dropdown-item" href="/agenda/dias-excepcionales">
+                <i class="fas fa-calendar-times icon-item icon-dias-excepcionales"></i>
+                <div class="item-content">
+                  <span class="item-title">Días Excepcionales</span>
+                  <span class="item-desc">Feriados y mantenimiento</span>
+                </div>
+              </a>
               <a ngbDropdownItem class="dropdown-item" href="/turnos">
                 <i class="fas fa-clipboard-list icon-item icon-turnos"></i>
                 <div class="item-content">
