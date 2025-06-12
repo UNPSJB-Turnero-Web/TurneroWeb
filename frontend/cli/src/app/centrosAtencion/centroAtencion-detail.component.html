@@ -398,10 +398,7 @@
               <div class="me-3">
                 <i class="icon-consultorios"></i>
               </div>
-              <div>
-                <h2 class="mb-1 fw-bold text-white">Gestión de Consultorios</h2>
-                <p class="mb-0 opacity-75">Administrar consultorios del centro médico</p>
-              </div>
+          
             </div>
             <div *ngIf="!modoCrearConsultorio">
               <button class="btn-modern btn-success-modern" (click)="modoCrearConsultorio = true">
@@ -526,6 +523,12 @@
                                   title="Editar consultorio">
                             <i class="fa fa-pencil"></i>
                           </button>
+                          <button *ngIf="editConsultorioIndex !== i" 
+                                  class="action-btn btn-schedule" 
+                                  (click)="editarHorariosConsultorio(consultorio); $event.stopPropagation()"
+                                  title="Gestionar horarios de atención">
+                            <i class="fa fa-clock"></i>
+                          </button>
                           <button *ngIf="editConsultorioIndex === i" 
                                   class="action-btn btn-add" 
                                   (click)="guardarEdicionConsultorio(i); $event.stopPropagation()"
@@ -554,13 +557,68 @@
                         <div class="expansion-content">
                           <div class="row g-4">
                             
+                            <!-- Panel de Horarios del Consultorio -->
+                            <div class="col-md-6">
+                              <div class="card">
+                                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                  <h6 class="mb-0">
+                                    <i class="fa fa-clock me-2"></i>
+                                    Horarios de Atención
+                                  </h6>
+                                  <button class="btn btn-sm btn-light" 
+                                          (click)="editarHorariosConsultorio(consultorio)"
+                                          title="Editar horarios del consultorio">
+                                    <i class="fa fa-edit me-1"></i>Editar Horarios
+                                  </button>
+                                </div>
+                                <div class="card-body">
+                                  <!-- Horarios por Defecto -->
+                                  <div *ngIf="consultorio.horaAperturaDefault && consultorio.horaCierreDefault" class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                      <i class="fa fa-clock text-primary me-2"></i>
+                                      <strong>Horario General:</strong>
+                                    </div>
+                                    <div class="default-schedule-display">
+                                      {{ consultorio.horaAperturaDefault }} - {{ consultorio.horaCierreDefault }}
+                                    </div>
+                                  </div>
+                                  
+                                  <!-- Horarios Semanales -->
+                                  <div *ngIf="consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0">
+                                    <div class="d-flex align-items-center mb-2">
+                                      <i class="fa fa-calendar text-success me-2"></i>
+                                      <strong>Horarios por Día:</strong>
+                                    </div>
+                                    <div class="weekly-schedule-compact">
+                                      <div *ngFor="let horario of consultorio.horariosSemanales" 
+                                           class="schedule-day-compact"
+                                           [ngClass]="{'inactive': !horario.activo}">
+                                        <span class="day-name">{{ horario.diaSemana.substring(0,3) }}</span>
+                                        <span class="day-time" *ngIf="horario.activo">
+                                          {{ horario.horaApertura }}-{{ horario.horaCierre }}
+                                        </span>
+                                        <span class="day-time closed" *ngIf="!horario.activo">Cerrado</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <!-- Mensaje si no hay horarios configurados -->
+                                  <div *ngIf="!consultorio.horaAperturaDefault && !consultorio.horariosSemanales?.length" 
+                                       class="text-muted text-center py-3">
+                                    <i class="fa fa-clock-o fa-2x mb-2 d-block"></i>
+                                    Sin horarios configurados
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
                             <!-- Panel Principal: Tabla de Esquemas de Turno -->
-                            <div class="col-12">
+                            <div class="col-md-6">
                               <div class="card">
                                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                   <h6 class="mb-0">
                                     <i class="fa fa-calendar-alt me-2"></i>
-                                    Esquemas de Turno - Consultorio {{ consultorio.numero }} ({{ consultorio.nombre }})
+                                    Esquemas de Turno
                                   </h6>
                                   <button class="btn btn-sm btn-light" 
                                           (click)="crearNuevoEsquema(consultorio)">
@@ -757,10 +815,7 @@
             <div class="me-3">
               <i class="icon-especialidades"></i>
             </div>
-            <div>
-              <h2 class="mb-1 fw-bold text-white">Especialidades Médicas</h2>
-              <p class="mb-0 opacity-75">Gestionar especialidades disponibles en el centro</p>
-            </div>
+          
           </div>
         </div>
         
@@ -873,10 +928,6 @@
           <div class="d-flex align-items-center">
             <div class="me-3">
               <i class="icon-medicos"></i>
-            </div>
-            <div>
-              <h2 class="mb-1 fw-bold text-white">Personal Médico</h2>
-              <p class="mb-0 opacity-75">Administrar médicos y especialidades del centro</p>
             </div>
           </div>
         </div>

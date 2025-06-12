@@ -11,7 +11,7 @@ import {
   map,
 } from "rxjs";
 
-import { Consultorio } from "./consultorio";
+import { Consultorio, HorarioConsultorio } from "./consultorio";
 import { CentroAtencion } from "../centrosAtencion/centroAtencion";
 import { ConsultorioService } from "./consultorio.service";
 import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service";
@@ -254,6 +254,107 @@ import { ModalService } from "../modal/modal.service";
       transform: none;
     }
     
+    /* Estilos para gestión de horarios */
+    .schedule-display {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    .schedule-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+      border: 1px solid #e0e0e0;
+    }
+    
+    .schedule-day.inactive-day {
+      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+      opacity: 0.6;
+    }
+    
+    .day-name {
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #37474f;
+      margin-bottom: 0.25rem;
+    }
+    
+    .day-hours {
+      font-size: 0.8rem;
+      color: #546e7a;
+    }
+    
+    .day-hours.inactive {
+      color: #9e9e9e;
+      font-style: italic;
+    }
+    
+    .default-hours {
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+      border-radius: 8px;
+      border-left: 4px solid #4caf50;
+    }
+    
+    .schedule-editor {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+    }
+    
+    .schedule-day-editor {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #f5f5f5;
+      gap: 1rem;
+    }
+    
+    .schedule-day-editor:last-child {
+      border-bottom: none;
+    }
+    
+    .day-header {
+      min-width: 120px;
+    }
+    
+    .day-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #37474f;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    
+    .day-times {
+      flex: 1;
+    }
+    
+    .day-closed {
+      flex: 1;
+      text-align: center;
+      font-style: italic;
+      color: #9e9e9e;
+    }
+    
+    .form-control-sm {
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      padding: 0.375rem 0.75rem;
+    }
+    
+    .form-check-input:checked {
+      background-color: var(--consultorios-primary);
+      border-color: var(--consultorios-primary);
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
       .container {
@@ -334,7 +435,10 @@ export class ConsultorioDetailComponent implements OnInit {
         medicoAsignado: "",
         telefono: "",
         centroAtencion: {} as CentroAtencion,
+        horaAperturaDefault: "08:00",
+        horaCierreDefault: "17:00"
       };
+      this.initializeWeeklySchedule();
       this.selectedCentroAtencion = undefined!;
     } else {
       // Edición o vista
@@ -347,6 +451,48 @@ export class ConsultorioDetailComponent implements OnInit {
     this.getCentrosAtencion();
   }
 
+  /**
+   * Inicializa los horarios semanales con valores por defecto
+   */
+  private initializeWeeklySchedule(): void {
+    const diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+    
+    this.consultorio.horariosSemanales = diasSemana.map(dia => ({
+      diaSemana: dia,
+      horaApertura: this.consultorio.horaAperturaDefault || "08:00",
+      horaCierre: this.consultorio.horaCierreDefault || "17:00",
+      activo: dia !== 'SABADO' && dia !== 'DOMINGO' // Activo de lunes a viernes por defecto
+    }));
+  }
+
+  /**
+   * Valida que los horarios sean consistentes
+   */
+  private validateSchedule(): boolean {
+    // Validar horarios por defecto
+    if (this.consultorio.horaAperturaDefault && this.consultorio.horaCierreDefault) {
+      if (this.consultorio.horaAperturaDefault >= this.consultorio.horaCierreDefault) {
+        this.modalService.alert('Error de Validación', 'La hora de apertura debe ser anterior a la hora de cierre.');
+        return false;
+      }
+    }
+
+    // Validar horarios semanales
+    if (this.consultorio.horariosSemanales) {
+      for (const horario of this.consultorio.horariosSemanales) {
+        if (horario.activo && horario.horaApertura && horario.horaCierre) {
+          if (horario.horaApertura >= horario.horaCierre) {
+            this.modalService.alert('Error de Validación', 
+              `En ${horario.diaSemana}: la hora de apertura debe ser anterior a la hora de cierre.`);
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
   goBack(): void {
     this.router.navigate(['/consultorios']);
   }
@@ -357,6 +503,11 @@ export class ConsultorioDetailComponent implements OnInit {
         "Error",
         "Debe seleccionar un Centro de Atención válido."
       );
+      return;
+    }
+
+    // Validar horarios antes de guardar
+    if (!this.validateSchedule()) {
       return;
     }
 
@@ -375,28 +526,39 @@ export class ConsultorioDetailComponent implements OnInit {
         this.modalService.alert("Error", "No se pudo guardar el consultorio.");
       },
     });
+  }  private loadConsultorio(): void {
+    const id = Number(this.route.snapshot.paramMap.get("id"));
+    this.consultorioService.getById(id).subscribe({
+      next: (pkg) => {
+        console.log('Consultorio cargado:', pkg.data);
+        this.consultorio = pkg.data;
+
+        // Asignar el nombre del centro al modelo consultorio
+        this.consultorio.centroAtencion = {
+          id: this.consultorio.centroId,
+          nombre: this.consultorio.nombreCentro,
+        } as CentroAtencion;
+        this.selectedCentroAtencion = this.consultorio.centroAtencion;
+
+        // Inicializar horarios si no existen
+        if (!this.consultorio.horariosSemanales || this.consultorio.horariosSemanales.length === 0) {
+          this.initializeWeeklySchedule();
+        }
+
+        // Asegurar que tienen valores por defecto
+        if (!this.consultorio.horaAperturaDefault) {
+          this.consultorio.horaAperturaDefault = "08:00";
+        }
+        if (!this.consultorio.horaCierreDefault) {
+          this.consultorio.horaCierreDefault = "17:00";
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar el consultorio:', err);
+        this.modalService.alert('Error', 'No se pudo cargar la información del consultorio.');
+      }
+    });
   }
-
-private loadConsultorio(): void {
-  const id = Number(this.route.snapshot.paramMap.get("id"));
-  this.consultorioService.getById(id).subscribe({
-    next: (pkg) => {
-      console.log('Consultorio cargado:', pkg.data);
-      this.consultorio = pkg.data;
-
-      // Asignar el nombre del centro al modelo consultorio
-      this.consultorio.centroAtencion = {
-        id: this.consultorio.centroId,
-        nombre: this.consultorio.nombreCentro,
-      } as CentroAtencion;
-      this.selectedCentroAtencion = this.consultorio.centroAtencion;
-    },
-    error: (err) => {
-      console.error('Error al cargar el consultorio:', err);
-      this.modalService.alert('Error', 'No se pudo cargar la información del consultorio.');
-    }
-  });
-}
 
   private getCentrosAtencion(): void {
     this.centroAtencionService.getAll().subscribe((res) => {

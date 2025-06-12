@@ -955,6 +955,26 @@ crearNuevoEsquema(consultorio: Consultorio): void {
   });
 }
 
+/**
+ * Edita los horarios de atención de un consultorio
+ */
+editarHorariosConsultorio(consultorio: Consultorio): void {
+  if (!consultorio.id) {
+    this.modalService.alert('Error', 'No se puede editar: el consultorio no tiene ID.');
+    return;
+  }
+  
+  // Navegar al formulario de detalle del consultorio en modo edición
+  this.router.navigate(['/consultorios', consultorio.id], { 
+    queryParams: { 
+      edit: 'true',
+      tab: 'horarios', // Parámetro para indicar que se debe enfocar en la pestaña de horarios
+      returnTo: 'centro-detail',
+      centroAtencionId: this.centroAtencion.id
+    } 
+  });
+}
+
 gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
   // Navegar a disponibilidad médica con más opciones
   this.router.navigate(['/disponibilidades-medico/new'], { 

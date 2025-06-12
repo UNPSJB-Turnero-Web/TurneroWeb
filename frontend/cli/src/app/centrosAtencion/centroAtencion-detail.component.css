@@ -334,6 +334,11 @@
       color: white;
     }
 
+    .action-btn.btn-schedule {
+      background: var(--consultorios-primary);
+      color: white;
+    }
+
     /* Enhanced esquemas table styling */
 .esquemas-table {
   border-radius: 8px;

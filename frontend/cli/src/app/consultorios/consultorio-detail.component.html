@@ -47,6 +47,34 @@
                   {{ consultorio.centroAtencion?.nombre || 'Sin centro asignado' }}
                 </div>
               </div>
+
+              <!-- Horarios de Atención -->
+              <div class="info-item col-md-12">
+                <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">🕐</span>
+                  Horarios de Atención
+                </div>
+                <div class="info-value">
+                  <div *ngIf="consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0; else noSchedule">
+                    <div class="schedule-display">
+                      <div *ngFor="let horario of consultorio.horariosSemanales" class="schedule-day" 
+                           [ngClass]="{'inactive-day': !horario.activo}">
+                        <span class="day-name">{{ horario.diaSemana }}</span>
+                        <span class="day-hours" *ngIf="horario.activo">
+                          {{ horario.horaApertura }} - {{ horario.horaCierre }}
+                        </span>
+                        <span class="day-hours inactive" *ngIf="!horario.activo">Cerrado</span>
+                      </div>
+                    </div>
+                  </div>
+                  <ng-template #noSchedule>
+                    <div class="default-hours" *ngIf="consultorio.horaAperturaDefault && consultorio.horaCierreDefault">
+                      <strong>Horario General:</strong> {{ consultorio.horaAperturaDefault }} - {{ consultorio.horaCierreDefault }}
+                    </div>
+                    <span class="text-muted" *ngIf="!consultorio.horaAperturaDefault">Sin horarios configurados</span>
+                  </ng-template>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -124,6 +152,98 @@
                   />
                   <div class="form-help">
                     Centro de atención al que pertenece este consultorio
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios por Defecto -->
+              <div class="col-md-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">🕐</span>
+                    Horarios por Defecto
+                  </label>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="form-label">Hora de Apertura</label>
+                      <input
+                        type="time"
+                        class="form-control form-control-modern"
+                        name="horaAperturaDefault"
+                        [(ngModel)]="consultorio.horaAperturaDefault"
+                      />
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Hora de Cierre</label>
+                      <input
+                        type="time"
+                        class="form-control form-control-modern"
+                        name="horaCierreDefault"
+                        [(ngModel)]="consultorio.horaCierreDefault"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-help">
+                    Horarios generales del consultorio. Se pueden personalizar por día de la semana abajo.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios por Día de la Semana -->
+              <div class="col-md-12">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">📅</span>
+                    Horarios por Día de la Semana
+                  </label>
+                  <div class="schedule-editor">
+                    <div *ngFor="let horario of consultorio.horariosSemanales; let i = index" 
+                         class="schedule-day-editor">
+                      <div class="day-header">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            [(ngModel)]="horario.activo"
+                            [name]="'activo_' + i"
+                            [id]="'activo_' + i"
+                          />
+                          <label class="form-check-label day-label" [for]="'activo_' + i">
+                            {{ horario.diaSemana }}
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div class="day-times" *ngIf="horario.activo">
+                        <div class="row">
+                          <div class="col-md-6">
+                            <input
+                              type="time"
+                              class="form-control form-control-sm"
+                              [(ngModel)]="horario.horaApertura"
+                              [name]="'apertura_' + i"
+                              placeholder="Apertura"
+                            />
+                          </div>
+                          <div class="col-md-6">
+                            <input
+                              type="time"
+                              class="form-control form-control-sm"
+                              [(ngModel)]="horario.horaCierre"
+                              [name]="'cierre_' + i"
+                              placeholder="Cierre"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="day-closed" *ngIf="!horario.activo">
+                        <span class="text-muted">Cerrado</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-help">
+                    Configure horarios específicos para cada día. Desmarque para días que no atiende.
                   </div>
                 </div>
               </div>

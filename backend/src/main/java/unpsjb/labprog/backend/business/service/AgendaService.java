@@ -38,6 +38,9 @@ public class AgendaService {
     @Autowired
     private EsquemaTurnoRepository esquemaTurnoRepository;
 
+    @Autowired
+    private ConsultorioService consultorioService;
+
     // Nuevos métodos para gestionar días excepcionales y sanitización
 
     /**
@@ -132,7 +135,7 @@ public class AgendaService {
     }
 
     /**
-     * Validar disponibilidad considerando días excepcionales
+     * Validar disponibilidad considerando días excepcionales y horarios del consultorio
      */
     public boolean validarDisponibilidad(LocalDate fecha, LocalTime horaInicio, Integer consultorioId,
             Integer staffMedicoId) {
@@ -148,6 +151,12 @@ public class AgendaService {
                     fecha, Agenda.TipoAgenda.MANTENIMIENTO, esquema.getId())) {
                 return false;
             }
+        }
+
+        // NUEVA VALIDACIÓN: Verificar horarios del consultorio
+        String diaSemana = fecha.getDayOfWeek().name();
+        if (!consultorioService.consultorioDisponibleEnHorario(consultorioId, diaSemana, horaInicio)) {
+            return false;
         }
 
         // Verificar si ya existe un turno en ese horario
