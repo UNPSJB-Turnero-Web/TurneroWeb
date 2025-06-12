@@ -3,12 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { NotificationsComponent } from './audit/notifications.component';
+
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule, NotificationsComponent],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, ],
   template: `
     <nav class="modern-navbar">
       <div class="navbar-container">
@@ -203,8 +203,7 @@ import { NotificationsComponent } from './audit/notifications.component';
       <router-outlet></router-outlet>
     </main>
 
-    <!-- Sistema de Notificaciones -->
-    <app-notifications></app-notifications>
+
   `,
   styles: [`
     /* NAVBAR MODERNA */
