@@ -6,6 +6,7 @@ import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
 import { AgendaService } from '../agenda/agenda.service';
+import { DiasExcepcionalesService } from '../agenda/dias-excepcionales.service';
 
 interface SlotDisponible {
   id: number;
@@ -95,8 +96,18 @@ interface SlotDisponible {
             *ngFor="let slot of slotsDisponibles" 
             class="slot-card"
             [class.selected]="slotSeleccionado?.id === slot.id"
+            [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
+            [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
+            [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
+            [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
             (click)="seleccionarSlot(slot)"
           >
+            <!-- Indicador de día excepcional -->
+            <div class="slot-exception-indicator" *ngIf="esDiaExcepcional(slot.fecha)">
+              <span class="exception-icon">{{ getIconoExcepcion(slot.fecha) }}</span>
+              <span class="exception-label">{{ getTipoExcepcionLabel(slot.fecha) }}</span>
+            </div>
+
             <div class="slot-header">
               <div class="slot-date">
                 <i class="fas fa-calendar"></i>
@@ -121,6 +132,12 @@ interface SlotDisponible {
                 <i class="fas fa-map-marker-alt"></i>
                 {{ slot.nombreCentro }}
               </div>
+            </div>
+
+            <!-- Descripción de día excepcional -->
+            <div class="slot-exception-description" *ngIf="esDiaExcepcional(slot.fecha) && getDescripcionExcepcion(slot.fecha)">
+              <i class="fas fa-info-circle"></i>
+              {{ getDescripcionExcepcion(slot.fecha) }}
             </div>
 
             <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
@@ -561,6 +578,128 @@ interface SlotDisponible {
       opacity: 1;
     }
 
+    /* Estilos para días excepcionales */
+    .slot-card.slot-excepcional {
+      border-left: 4px solid #dc3545;
+      background: linear-gradient(135deg, #ffe6e6 0%, #fff0f0 100%);
+    }
+
+    .slot-card.slot-feriado {
+      border-left: 4px solid #e74c3c;
+      background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    }
+
+    .slot-card.slot-feriado:hover {
+      background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+      border-color: #c0392b;
+    }
+
+    .slot-card.slot-mantenimiento {
+      border-left: 4px solid #f39c12;
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    }
+
+    .slot-card.slot-mantenimiento:hover {
+      background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
+      border-color: #e67e22;
+    }
+
+    .slot-card.slot-atencion-especial {
+      border-left: 4px solid #9b59b6;
+      background: linear-gradient(135deg, #f8e6ff 0%, #e8d5ff 100%);
+    }
+
+    .slot-card.slot-atencion-especial:hover {
+      background: linear-gradient(135deg, #dda0dd 0%, #9b59b6 100%);
+      border-color: #8e44ad;
+    }
+
+    .slot-exception-indicator {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(220, 53, 69, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #dc3545;
+      backdrop-filter: blur(5px);
+    }
+
+    .slot-card.slot-feriado .slot-exception-indicator {
+      background: rgba(231, 76, 60, 0.15);
+      color: #c0392b;
+    }
+
+    .slot-card.slot-mantenimiento .slot-exception-indicator {
+      background: rgba(243, 156, 18, 0.15);
+      color: #e67e22;
+    }
+
+    .slot-card.slot-atencion-especial .slot-exception-indicator {
+      background: rgba(155, 89, 182, 0.15);
+      color: #8e44ad;
+    }
+
+    .exception-icon {
+      font-size: 0.9rem;
+    }
+
+    .exception-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .slot-exception-description {
+      margin-top: 0.8rem;
+      padding: 0.5rem;
+      background: rgba(220, 53, 69, 0.1);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #721c24;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-left: 3px solid #dc3545;
+    }
+
+    .slot-card.slot-feriado .slot-exception-description {
+      background: rgba(231, 76, 60, 0.1);
+      color: #922b21;
+      border-left-color: #e74c3c;
+    }
+
+    .slot-card.slot-mantenimiento .slot-exception-description {
+      background: rgba(243, 156, 18, 0.1);
+      color: #7d6608;
+      border-left-color: #f39c12;
+    }
+
+    .slot-card.slot-atencion-especial .slot-exception-description {
+      background: rgba(155, 89, 182, 0.1);
+      color: #633974;
+      border-left-color: #9b59b6;
+    }
+
+    /* Animación para días excepcionales */
+    .slot-card.slot-excepcional {
+      animation: exceptionalPulse 2s infinite;
+    }
+
+    @keyframes exceptionalPulse {
+      0%, 100% {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      }
+      50% {
+        box-shadow: 0 4px 25px rgba(220, 53, 69, 0.2);
+      }
+    }
+
     .confirmation-section {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
@@ -735,14 +874,22 @@ export class PacienteReagendarTurnoComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private turnoService: TurnoService,
-    private agendaService: AgendaService
+    private agendaService: AgendaService,
+    private diasExcepcionalesService: DiasExcepcionalesService
   ) {}
 
   ngOnInit() {
+    // Cargar días excepcionales primero
+    this.cargarDiasExcepcionales();
+    
     this.route.params.subscribe(params => {
       this.turnoId = +params['id'];
       this.cargarTurnoActual();
     });
+  }
+
+  cargarDiasExcepcionales() {
+    this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
   }
 
   cargarTurnoActual() {
@@ -876,5 +1023,46 @@ export class PacienteReagendarTurnoComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/paciente-turnos']);
+  }
+
+  // Métodos para manejo de días excepcionales
+  esDiaExcepcional(fecha: string): boolean {
+    return this.diasExcepcionalesService.esDiaExcepcional(fecha);
+  }
+
+  getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
+    return this.diasExcepcionalesService.getTipoExcepcion(fecha);
+  }
+
+  getDescripcionExcepcion(fecha: string): string | null {
+    return this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
+  }
+
+  getIconoExcepcion(fecha: string): string {
+    const tipo = this.getTipoExcepcion(fecha);
+    switch (tipo) {
+      case 'FERIADO':
+        return '🏛️';
+      case 'MANTENIMIENTO':
+        return '🔧';
+      case 'ATENCION_ESPECIAL':
+        return '⭐';
+      default:
+        return '⚠️';
+    }
+  }
+
+  getTipoExcepcionLabel(fecha: string): string {
+    const tipo = this.getTipoExcepcion(fecha);
+    switch (tipo) {
+      case 'FERIADO':
+        return 'Feriado';
+      case 'MANTENIMIENTO':
+        return 'Mantenimiento';
+      case 'ATENCION_ESPECIAL':
+        return 'Atención Especial';
+      default:
+        return 'Excepcional';
+    }
   }
 }

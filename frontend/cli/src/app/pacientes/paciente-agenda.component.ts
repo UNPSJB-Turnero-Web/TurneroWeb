@@ -12,6 +12,7 @@ import { EspecialidadService } from '../especialidades/especialidad.service';
 import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
 import { AgendaService } from '../agenda/agenda.service';
+import { DiasExcepcionalesService } from '../agenda/dias-excepcionales.service';
 import { Turno } from '../turnos/turno';
 import { Especialidad } from '../especialidades/especialidad';
 import { StaffMedico } from '../staffMedicos/staffMedico';
@@ -1057,6 +1058,195 @@ import { DataPackage } from '../data.package';
         margin: 1rem;
       }
     }
+
+    /* ============================================
+       ESTILOS PARA DÍAS EXCEPCIONALES - COLUMNAS COMPLETAS
+       ============================================ */
+    
+    /* Días excepcionales - FERIADO (Rojo intenso) */
+    :host ::ng-deep .cal-day-column.dia-feriado {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
+      border-left: 4px solid #c0392b !important;
+      border-right: 4px solid #c0392b !important;
+      position: relative;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-feriado::before {
+      content: '🏛️ FERIADO';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(192, 57, 43, 0.95);
+      color: white;
+      text-align: center;
+      padding: 0.5rem;
+      font-weight: bold;
+      font-size: 0.8rem;
+      z-index: 10;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-feriado .cal-hour-segment {
+      background: rgba(255, 107, 107, 0.1) !important;
+      border-bottom: 1px solid rgba(192, 57, 43, 0.3) !important;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-feriado .cal-hour-segment:hover {
+      background: rgba(255, 107, 107, 0.2) !important;
+    }
+    
+    /* Días excepcionales - MANTENIMIENTO (Naranja) */
+    :host ::ng-deep .cal-day-column.dia-mantenimiento {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+      border-left: 4px solid #d68910 !important;
+      border-right: 4px solid #d68910 !important;
+      position: relative;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-mantenimiento::before {
+      content: '🔧 MANTENIMIENTO';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(214, 137, 16, 0.95);
+      color: white;
+      text-align: center;
+      padding: 0.5rem;
+      font-weight: bold;
+      font-size: 0.8rem;
+      z-index: 10;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-mantenimiento .cal-hour-segment {
+      background: rgba(243, 156, 18, 0.1) !important;
+      border-bottom: 1px solid rgba(214, 137, 16, 0.3) !important;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-mantenimiento .cal-hour-segment:hover {
+      background: rgba(243, 156, 18, 0.2) !important;
+    }
+    
+    /* Días excepcionales - ATENCIÓN ESPECIAL (Púrpura) */
+    :host ::ng-deep .cal-day-column.dia-atencion-especial {
+      background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important;
+      border-left: 4px solid #7d3c98 !important;
+      border-right: 4px solid #7d3c98 !important;
+      position: relative;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-atencion-especial::before {
+      content: '⭐ ATENCIÓN ESPECIAL';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(125, 60, 152, 0.95);
+      color: white;
+      text-align: center;
+      padding: 0.5rem;
+      font-weight: bold;
+      font-size: 0.8rem;
+      z-index: 10;
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-atencion-especial .cal-hour-segment {
+      background: rgba(155, 89, 182, 0.1) !important;
+      border-bottom: 1px solid rgba(125, 60, 152, 0.3) !important;
+    }
+    
+    :host ::ng-deep .cal-day-column.dia-atencion-especial .cal-hour-segment:hover {
+      background: rgba(155, 89, 182, 0.2) !important;
+    }
+    
+    /* Animación para días excepcionales */
+    :host ::ng-deep .cal-day-column.dia-feriado,
+    :host ::ng-deep .cal-day-column.dia-mantenimiento,
+    :host ::ng-deep .cal-day-column.dia-atencion-especial {
+      animation: exceptionalColumnPulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes exceptionalColumnPulse {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(220, 53, 69, 0.6);
+      }
+    }
+    
+    /* Ajustar headers para días excepcionales */
+    :host ::ng-deep .cal-day-headers .cal-header.dia-feriado {
+      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important;
+      color: white !important;
+      font-weight: bold !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+      position: relative;
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header.dia-feriado::after {
+      content: ' 🏛️';
+      font-size: 1.2em;
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header.dia-mantenimiento {
+      background: linear-gradient(135deg, #d68910 0%, #b7950b 100%) !important;
+      color: white !important;
+      font-weight: bold !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header.dia-mantenimiento::after {
+      content: ' 🔧';
+      font-size: 1.2em;
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header.dia-atencion-especial {
+      background: linear-gradient(135deg, #7d3c98 0%, #6c3483 100%) !important;
+      color: white !important;
+      font-weight: bold !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header.dia-atencion-especial::after {
+      content: ' ⭐';
+      font-size: 1.2em;
+    }
+
+    /* Configuración de nombres de días en español */
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(1):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Lunes ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(2):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Martes ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(3):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Miércoles ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(4):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Jueves ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(5):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Viernes ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(6):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Sábado ';
+    }
+    
+    :host ::ng-deep .cal-day-headers .cal-header:nth-child(7):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
+      content: 'Domingo ';
+    }
   `]
 })
 export class PacienteAgendaComponent implements OnInit {
@@ -1099,13 +1289,21 @@ export class PacienteAgendaComponent implements OnInit {
     private staffMedicoService: StaffMedicoService,
     private centroAtencionService: CentroAtencionService,
     private agendaService: AgendaService,
+    private diasExcepcionalesService: DiasExcepcionalesService,
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    // Cargar días excepcionales primero
+    this.cargarDiasExcepcionales();
     this.cargarEspecialidades();
+  }
+
+  // Cargar días excepcionales para el calendario
+  cargarDiasExcepcionales() {
+    this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
   }
 
   // Cargar especialidades al inicializar
@@ -1211,6 +1409,11 @@ export class PacienteAgendaComponent implements OnInit {
         this.showCalendar = true;
         this.isLoadingTurnos = false;
         this.cdr.detectChanges();
+        
+        // Aplicar estilos a columnas de días excepcionales después de un breve delay
+        setTimeout(() => {
+          this.aplicarEstilosColumnasExcepcionales();
+        }, 200);
       },
       error: (err: unknown) => {
         console.error('Error al cargar eventos:', err);
@@ -1219,6 +1422,60 @@ export class PacienteAgendaComponent implements OnInit {
         this.turnosDisponibles = [];
       }
     });
+  }
+
+  /**
+   * Aplica estilos CSS a las columnas del calendario para días excepcionales
+   */
+  private aplicarEstilosColumnasExcepcionales(): void {
+    // Obtener la fecha de inicio de la semana actual usando startOfWeek de date-fns
+    const inicioSemana = startOfWeek(this.viewDate, { weekStartsOn: 1 }); // Lunes = 1
+
+    // Obtener todas las columnas del calendario
+    const columnas = document.querySelectorAll('.cal-day-column');
+    const headers = document.querySelectorAll('.cal-day-headers .cal-header');
+
+    // Limpiar clases previas
+    columnas.forEach(columna => {
+      columna.classList.remove('dia-feriado', 'dia-mantenimiento', 'dia-atencion-especial');
+    });
+    headers.forEach(header => {
+      header.classList.remove('dia-feriado', 'dia-mantenimiento', 'dia-atencion-especial');
+    });
+
+    // Aplicar clases para cada día de la semana
+    for (let i = 0; i < 7; i++) {
+      // Crear nueva fecha basada en el inicio de semana y sumar días usando UTC
+      const fechaDia = new Date(inicioSemana.getTime() + (i * 24 * 60 * 60 * 1000));
+      
+      // Formatear fecha como string en formato UTC para evitar offset de zona horaria
+      const year = fechaDia.getUTCFullYear();
+      const month = String(fechaDia.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(fechaDia.getUTCDate()).padStart(2, '0');
+      const fechaStr = `${year}-${month}-${day}`;
+
+      if (this.diasExcepcionalesService.esDiaExcepcional(fechaStr)) {
+        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaStr);
+        let claseCSS = '';
+
+        switch (tipoExcepcion) {
+          case 'FERIADO':
+            claseCSS = 'dia-feriado';
+            break;
+          case 'MANTENIMIENTO':
+            claseCSS = 'dia-mantenimiento';
+            break;
+          case 'ATENCION_ESPECIAL':
+            claseCSS = 'dia-atencion-especial';
+            break;
+        }
+
+        if (claseCSS && columnas[i] && headers[i]) {
+          columnas[i].classList.add(claseCSS);
+          headers[i].classList.add(claseCSS);
+        }
+      }
+    }
   }
 
   // Aplicar filtros a los eventos cargados
@@ -1276,7 +1533,40 @@ export class PacienteAgendaComponent implements OnInit {
 
       // Aplicar colores basándose en el estado (frontend)
       let color;
-      if (evento.ocupado) {
+      
+      // Verificar si es un día excepcional
+      const fechaEvento = evento.fecha;
+      const esDiaExcepcional = this.diasExcepcionalesService.esDiaExcepcional(fechaEvento);
+      
+      if (esDiaExcepcional) {
+        // Día excepcional - usar colores especiales según el tipo
+        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaEvento);
+        switch (tipoExcepcion) {
+          case 'FERIADO':
+            color = { 
+              primary: '#e74c3c', 
+              secondary: '#fadbd8' 
+            };
+            break;
+          case 'MANTENIMIENTO':
+            color = { 
+              primary: '#f39c12', 
+              secondary: '#fdeaa7' 
+            };
+            break;
+          case 'ATENCION_ESPECIAL':
+            color = { 
+              primary: '#9b59b6', 
+              secondary: '#e8daef' 
+            };
+            break;
+          default:
+            color = { 
+              primary: '#dc3545', 
+              secondary: '#f8d7da' 
+            };
+        }
+      } else if (evento.ocupado) {
         // Slot ocupado - color rojo
         color = { 
           primary: '#dc3545', 
@@ -1290,10 +1580,21 @@ export class PacienteAgendaComponent implements OnInit {
         };
       }
 
-      // Título dinámico basado en el estado
-      const title = evento.ocupado ? 
-        `Ocupado - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}` : 
-        `Disponible - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`;
+      // Título dinámico basado en el estado y días excepcionales
+      let title;
+      // Formatear hora de inicio para mostrar en el título
+      const horaInicio = start.getHours().toString().padStart(2, '0') + ':' + 
+                        start.getMinutes().toString().padStart(2, '0');
+      
+      if (esDiaExcepcional) {
+        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaEvento);
+        const iconoExcepcion = this.getIconoExcepcion(fechaEvento);
+        title = `${iconoExcepcion} ${tipoExcepcion} - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}`;
+      } else {
+        title = evento.ocupado ? 
+          `Ocupado - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}` : 
+          `Disponible - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}`;
+      }
 
       events.push({
         start,
@@ -1487,7 +1788,7 @@ export class PacienteAgendaComponent implements OnInit {
 
   // Navegación del calendario
   previousWeek() {
-    this.viewDate = subWeeks(this.viewDate, 1);
+    this.viewDate = new Date(this.viewDate.getTime() - 7 * 24 * 60 * 60 * 1000);
     // Recargar turnos si hay filtros aplicados
     if (this.especialidadSeleccionada) {
       this.cargarTurnosConFiltros();
@@ -1495,7 +1796,7 @@ export class PacienteAgendaComponent implements OnInit {
   }
 
   nextWeek() {
-    this.viewDate = addWeeks(this.viewDate, 1);
+    this.viewDate = new Date(this.viewDate.getTime() + 7 * 24 * 60 * 60 * 1000);
     // Recargar turnos si hay filtros aplicados
     if (this.especialidadSeleccionada) {
       this.cargarTurnosConFiltros();
@@ -1514,5 +1815,32 @@ export class PacienteAgendaComponent implements OnInit {
 
   irASolicitarTurno() {
     this.router.navigate(['/paciente-solicitar-turno']);
+  }
+
+  // Métodos para manejo de días excepcionales
+  esDiaExcepcional(fecha: string): boolean {
+    return this.diasExcepcionalesService.esDiaExcepcional(fecha);
+  }
+
+  getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
+    return this.diasExcepcionalesService.getTipoExcepcion(fecha);
+  }
+
+  getDescripcionExcepcion(fecha: string): string | null {
+    return this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
+  }
+
+  getIconoExcepcion(fecha: string): string {
+    const tipo = this.getTipoExcepcion(fecha);
+    switch (tipo) {
+      case 'FERIADO':
+        return '🏛️';
+      case 'MANTENIMIENTO':
+        return '🔧';
+      case 'ATENCION_ESPECIAL':
+        return '⭐';
+      default:
+        return '⚠️';
+    }
   }
 }
