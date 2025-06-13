@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,6 +12,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Entidad Agenda simplificada - solo para agendas normales operacionales.
+ * Las configuraciones excepcionales (feriados, mantenimientos) se manejan 
+ * en ConfiguracionExcepcional.
+ */
 @Entity
 @Getter
 @Setter
@@ -25,29 +28,16 @@ public class Agenda {
     private Integer id;
 
     private LocalDate fecha;              // Día de la agenda
-    private LocalTime horaInicio;         // Hora real de inicio
-    private LocalTime horaFin;            // Hora real de fin
+    private LocalTime horaInicio;         // Hora real de inicio (si difiere del esquema)
+    private LocalTime horaFin;            // Hora real de fin (si difiere del esquema)
     private Integer tiempoTolerancia;     // Minutos permitidos de atraso
     
-    // Nuevos campos para días excepcionales
-    @Enumerated(EnumType.STRING)
-    private TipoAgenda tipoAgenda = TipoAgenda.NORMAL;
+    // Campo para tiempo de sanitización específico de esta agenda
+    private Integer tiempoSanitizacion;   // Si es diferente al del esquema
     
-    private String descripcionExcepcion;  // Para feriados, mantenimiento, etc.
-    
-    // Campo para tiempo de sanitización entre turnos
-    private Integer tiempoSanitizacion = 0; // Minutos de sanitización
-
     private boolean habilitado = true;
     private String motivoInhabilitacion;
 
-    @ManyToOne(optional = true)  // Permitir null para feriados
-    private EsquemaTurno esquemaTurno;
-
-    public enum TipoAgenda {
-        NORMAL,
-        FERIADO,
-        ATENCION_ESPECIAL,
-        MANTENIMIENTO
-    }
+    @ManyToOne
+    private EsquemaTurno esquemaTurno;    // Siempre requerido
 }

@@ -15,6 +15,10 @@ public interface EsquemaTurnoRepository extends JpaRepository<EsquemaTurno, Inte
     List<EsquemaTurno> findByConsultorioId(Integer consultorioId);
     
     List<EsquemaTurno> findByCentroAtencionId(Integer centroAtencionId);
-
+    
+    /**
+     * Encuentra esquemas de turno para una especialidad y centro específicos
+     */
+    List<EsquemaTurno> findByStaffMedico_Medico_Especialidad_IdAndCentroAtencion_Id(Integer especialidadId, Integer centroId);
 
 }

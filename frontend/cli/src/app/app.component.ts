@@ -148,35 +148,6 @@ import { Router } from '@angular/router';
               </a>
             </div>
           </div>
-
-          <!-- Menú Auditoría (Solo Admin) -->
-          <div ngbDropdown class="nav-dropdown" *ngIf="isAdmin()">
-            <button 
-              class="nav-button"
-              ngbDropdownToggle
-              id="auditDropdown"
-            >
-              <i class="fas fa-shield-alt me-2"></i>
-              <span>Auditoría</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-            </button>
-            <div ngbDropdownMenu class="modern-dropdown" aria-labelledby="auditDropdown">
-              <a ngbDropdownItem class="dropdown-item" href="/audit">
-                <i class="fas fa-tachometer-alt icon-item icon-audit-dashboard"></i>
-                <div class="item-content">
-                  <span class="item-title">Dashboard</span>
-                  <span class="item-desc">Panel de control de auditoría</span>
-                </div>
-              </a>
-              <a ngbDropdownItem class="dropdown-item" href="/audit/logs">
-                <i class="fas fa-clipboard-list icon-item icon-audit-logs"></i>
-                <div class="item-content">
-                  <span class="item-title">Logs de Auditoría</span>
-                  <span class="item-desc">Registro completo de cambios</span>
-                </div>
-              </a>
-            </div>
-          </div>
         </div>
 
         <!-- USER SECTION (opcional para futuro) -->

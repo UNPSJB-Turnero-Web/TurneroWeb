@@ -1,6 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,9 @@ public class EsquemaTurnoService {
 
     @Autowired
     private ConsultorioRepository consultorioRepository;
+    
+    @Autowired
+    private ConsultorioDistribucionService consultorioDistribucionService;
 
     public List<EsquemaTurnoDTO> findAll() {
         return esquemaTurnoRepository.findAll().stream()
@@ -135,6 +141,9 @@ public class EsquemaTurnoService {
             throw new IllegalStateException("Conflicto: El médico ya está asignado a otro consultorio en este horario.");
         }
 
+        // NUEVA VALIDACIÓN: Verificar disponibilidad del consultorio y conflictos
+        validarDisponibilidadConsultorio(esquemaTurno);
+
         return toDTO(esquemaTurnoRepository.save(esquemaTurno));
     }
 
@@ -145,6 +154,62 @@ public class EsquemaTurnoService {
                         .anyMatch(horarioExistente -> nuevoHorario.getDia().equals(horarioExistente.getDia()) &&
                                 nuevoHorario.getHoraInicio().isBefore(horarioExistente.getHoraFin()) &&
                                 nuevoHorario.getHoraFin().isAfter(horarioExistente.getHoraInicio())));
+    }
+
+    /**
+     * Valida que el consultorio esté disponible para el esquema de turno.
+     * Verifica conflictos de horarios con otros médicos usando el mismo consultorio.
+     */
+    private void validarDisponibilidadConsultorio(EsquemaTurno esquemaTurno) {
+        if (esquemaTurno.getConsultorio() == null) {
+            return; // Ya validado en saveOrUpdate
+        }
+        
+        // Obtener esquemas existentes que usan el mismo consultorio
+        List<EsquemaTurno> esquemasExistentes = esquemaTurnoRepository.findByConsultorioId(esquemaTurno.getConsultorio().getId());
+        
+        // Filtrar el esquema actual si está siendo actualizado
+        if (esquemaTurno.getId() != null) {
+            esquemasExistentes = esquemasExistentes.stream()
+                .filter(e -> !e.getId().equals(esquemaTurno.getId()))
+                .collect(Collectors.toList());
+        }
+        
+        // Verificar conflictos de horario
+        for (EsquemaTurno.Horario nuevoHorario : esquemaTurno.getHorarios()) {
+            for (EsquemaTurno esquemaExistente : esquemasExistentes) {
+                for (EsquemaTurno.Horario horarioExistente : esquemaExistente.getHorarios()) {
+                    if (hayConflictoHorario(nuevoHorario, horarioExistente)) {
+                        throw new IllegalStateException(String.format(
+                            "Conflicto de horarios: El médico %s ya tiene asignado el consultorio %d " +
+                            "el %s de %s a %s. Conflicto con el horario propuesto para %s de %s a %s.",
+                            esquemaExistente.getStaffMedico().getMedico().getNombre(),
+                            esquemaTurno.getConsultorio().getId(),
+                            horarioExistente.getDia(),
+                            horarioExistente.getHoraInicio(),
+                            horarioExistente.getHoraFin(),
+                            nuevoHorario.getDia(),
+                            nuevoHorario.getHoraInicio(),
+                            nuevoHorario.getHoraFin()
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Verifica si dos horarios entran en conflicto.
+     */
+    private boolean hayConflictoHorario(EsquemaTurno.Horario horario1, EsquemaTurno.Horario horario2) {
+        // Deben ser el mismo día
+        if (!horario1.getDia().equalsIgnoreCase(horario2.getDia())) {
+            return false;
+        }
+        
+        // Verificar superposición de horarios
+        return horario1.getHoraInicio().isBefore(horario2.getHoraFin()) && 
+               horario1.getHoraFin().isAfter(horario2.getHoraInicio());
     }
 
     @Transactional
@@ -188,6 +253,51 @@ public class EsquemaTurnoService {
                 )
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Optimiza la distribución de consultorios para un centro de atención.
+     * Este método delega la optimización al ConsultorioDistribucionService.
+     */
+    public Map<Integer, Integer> optimizarDistribucionConsultorios(Integer centroAtencionId, LocalDate fecha, String diaSemana) {
+        return consultorioDistribucionService.distribuirConsultorios(centroAtencionId, fecha, diaSemana);
+    }
+
+    /**
+     * Verifica si la distribución actual necesita optimización.
+     */
+    public boolean necesitaOptimizacion(Integer centroAtencionId, LocalDate fecha) {
+        return consultorioDistribucionService.necesitaReoptimizacion(centroAtencionId, fecha);
+    }
+
+    /**
+     * Resuelve conflictos de consultorios aplicando la distribución optimizada.
+     */
+    public List<String> resolverConflictosConsultorios(Integer centroAtencionId, LocalDate fecha, String diaSemana) {
+        Map<Integer, Integer> distribucionOptima = optimizarDistribucionConsultorios(centroAtencionId, fecha, diaSemana);
+        List<String> conflictosResueltos = new ArrayList<>();
+        
+        for (Map.Entry<Integer, Integer> asignacion : distribucionOptima.entrySet()) {
+            Integer staffMedicoId = asignacion.getKey();
+            Integer consultorioRecomendado = asignacion.getValue();
+            
+            // Buscar esquemas de este médico
+            List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId);
+            
+            for (EsquemaTurno esquema : esquemas) {
+                if (!esquema.getConsultorio().getId().equals(consultorioRecomendado)) {
+                    String mensaje = String.format(
+                        "Médico %s: Se recomienda cambiar del consultorio %d al consultorio %d",
+                        esquema.getStaffMedico().getMedico().getNombre(),
+                        esquema.getConsultorio().getId(),
+                        consultorioRecomendado
+                    );
+                    conflictosResueltos.add(mensaje);
+                }
+            }
+        }
+        
+        return conflictosResueltos;
     }
 
     private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {

@@ -75,9 +75,4 @@ export class AgendaService {
     return this.http.post(`${this.url}/asignar-turno`, { turnoId, pacienteId });
   }
 
-  /** Obtener slots disponibles para un médico específico */
-  obtenerSlotsDisponiblesPorMedico(staffMedicoId: number, semanas: number = 4): Observable<any[]> {
-    return this.http.get<any>(`${this.url}/slots-disponibles/${staffMedicoId}?semanas=${semanas}`)
-      .pipe(map(response => response.data || []));
-  }
 }
