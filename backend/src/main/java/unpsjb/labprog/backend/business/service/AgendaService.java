@@ -631,4 +631,52 @@ public class AgendaService {
             }
         }
     }
+
+    /**
+     * Obtiene slots disponibles para un médico específico en las próximas semanas
+     * 
+     * @param staffMedicoId ID del staff médico
+     * @param semanas Número de semanas a futuro para buscar slots
+     * @return Lista de slots disponibles
+     */
+    public List<TurnoDTO> obtenerSlotsDisponiblesPorMedico(Integer staffMedicoId, int semanas) {
+        List<TurnoDTO> slotsDisponibles = new ArrayList<>();
+        
+        // Buscar todos los esquemas de turno para este médico
+        List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId);
+        
+        if (esquemas.isEmpty()) {
+            return slotsDisponibles;
+        }
+        
+        // Generar slots para cada esquema en las próximas semanas
+        LocalDate fechaInicio = LocalDate.now();
+        
+        for (EsquemaTurno esquema : esquemas) {
+            List<TurnoDTO> slots = generarEventosDesdeEsquemaTurno(esquema, semanas);
+            
+            // Filtrar solo los slots disponibles (no ocupados)
+            List<TurnoDTO> slotsLibres = slots.stream()
+                .filter(slot -> slot.getOcupado() == null || !slot.getOcupado()) // Solo slots libres
+                .filter(slot -> {
+                    // Filtrar slots que sean de fechas futuras
+                    LocalDate fechaSlot = slot.getFecha();
+                    return !fechaSlot.isBefore(fechaInicio);
+                })
+                .collect(Collectors.toList());
+            
+            slotsDisponibles.addAll(slotsLibres);
+        }
+        
+        // Ordenar por fecha y hora
+        slotsDisponibles.sort((s1, s2) -> {
+            int fechaComparison = s1.getFecha().compareTo(s2.getFecha());
+            if (fechaComparison != 0) {
+                return fechaComparison;
+            }
+            return s1.getHoraInicio().compareTo(s2.getHoraInicio());
+        });
+        
+        return slotsDisponibles;
+    }
 }

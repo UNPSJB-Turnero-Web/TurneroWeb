@@ -778,14 +778,23 @@ export class PacienteDashboardComponent implements OnInit {
         
         this.proximosTurnos = turnos
           .filter(turno => {
-            const fechaTurno = new Date(turno.fecha);
+            // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+            const [year, month, day] = turno.fecha.split('-').map(Number);
+            const fechaTurno = new Date(year, month - 1, day); // month es 0-indexed
             fechaTurno.setHours(0, 0, 0, 0);
             return fechaTurno >= hoy && 
                    (turno.estado?.toLowerCase() === 'confirmado' || 
                     turno.estado?.toLowerCase() === 'programado' ||
                     turno.estado?.toLowerCase() === 'reagendado');
           })
-          .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+          .sort((a, b) => {
+            // Parsear fechas sin conversión a UTC para evitar problemas de zona horaria
+            const [yearA, monthA, dayA] = a.fecha.split('-').map(Number);
+            const [yearB, monthB, dayB] = b.fecha.split('-').map(Number);
+            const dateA = new Date(yearA, monthA - 1, dayA);
+            const dateB = new Date(yearB, monthB - 1, dayB);
+            return dateA.getTime() - dateB.getTime();
+          })
           .slice(0, 3) // Mostrar solo los próximos 3
           .map(turno => this.convertirTurnoParaDashboard(turno));
         
@@ -799,7 +808,9 @@ export class PacienteDashboardComponent implements OnInit {
   }
 
   private convertirTurnoParaDashboard(turno: Turno): any {
-    const fecha = new Date(turno.fecha);
+    // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+    const [year, month, day] = turno.fecha.split('-').map(Number);
+    const fecha = new Date(year, month - 1, day); // month es 0-indexed
     const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
                    'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
     

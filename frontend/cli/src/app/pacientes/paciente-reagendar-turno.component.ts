@@ -784,7 +784,7 @@ export class PacienteReagendarTurnoComponent implements OnInit {
         console.log('Slots disponibles cargados:', this.slotsDisponibles);
         this.isLoadingSlots = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error cargando slots disponibles:', error);
         this.errorMessage = 'No se pudieron cargar los horarios disponibles.';
         this.isLoadingSlots = false;
@@ -844,7 +844,9 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
+    // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month es 0-indexed
     return date.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
@@ -854,7 +856,9 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   formatDateShort(dateString: string): string {
-    const date = new Date(dateString);
+    // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month es 0-indexed
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: '2-digit'
@@ -862,7 +866,9 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   formatDayOfWeek(dateString: string): string {
-    const date = new Date(dateString);
+    // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month es 0-indexed
     return date.toLocaleDateString('es-ES', {
       weekday: 'long'
     });

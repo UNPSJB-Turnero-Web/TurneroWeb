@@ -71,6 +71,11 @@ export class AgendaService {
     return this.http.get<any[]>(`${this.url}/eventos/todos?semanas=${semanas}`);
   }
 
+  // Método para obtener slots disponibles por médico
+  obtenerSlotsDisponiblesPorMedico(staffMedicoId: number, semanas: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.url}/slots-disponibles/${staffMedicoId}?semanas=${semanas}`);
+  }
+
   asignarTurno(turnoId: number, pacienteId: number): Observable<any> {
     return this.http.post(`${this.url}/asignar-turno`, { turnoId, pacienteId });
   }

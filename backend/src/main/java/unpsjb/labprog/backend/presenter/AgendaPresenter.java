@@ -249,25 +249,37 @@ public class AgendaPresenter {
             return Response.error(null, "Error al eliminar día excepcional: " + e.getMessage());
         }
     }
+    
+    @GetMapping("/slots-disponibles/{staffMedicoId}")
+    public ResponseEntity<Object> obtenerSlotsDisponiblesPorMedico(
+            @PathVariable Integer staffMedicoId,
+            @RequestParam(defaultValue = "4") int semanas) {
+        try {
+            List<TurnoDTO> slots = agendaService.obtenerSlotsDisponiblesPorMedico(staffMedicoId, semanas);
+            return Response.ok(slots, "Slots disponibles obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener slots disponibles: " + e.getMessage());
+        }
+    }
 
     /**
-     * Método auxiliar para convertir ConfiguracionExcepcional a DTO
+     * Convierte ConfiguracionExcepcional a DTO para compatibilidad con frontend
      */
     private AgendaDTO.DiaExcepcionalDTO convertirConfiguracionADTO(ConfiguracionExcepcional config) {
         AgendaDTO.DiaExcepcionalDTO dto = new AgendaDTO.DiaExcepcionalDTO();
         dto.setId(config.getId());
-        dto.setFecha(config.getFecha().toString());
+        dto.setFecha(config.getFecha().toString()); // Formato ISO yyyy-MM-dd
         dto.setTipoAgenda(config.getTipo().toString());
         dto.setDescripcion(config.getDescripcion());
         
         if (config.getHoraInicio() != null) {
-            dto.setApertura(config.getHoraInicio().toString());
+            dto.setApertura(config.getHoraInicio().toString()); // Formato HH:mm
         }
         if (config.getHoraFin() != null) {
-            dto.setCierre(config.getHoraFin().toString());
+            dto.setCierre(config.getHoraFin().toString()); // Formato HH:mm
         }
         
-        // Mapear información de relaciones
+        // Mapear información del centro, consultorio y esquema de turno si existen
         if (config.getCentroAtencion() != null) {
             dto.setCentroId(config.getCentroAtencion().getId());
             dto.setCentroNombre(config.getCentroAtencion().getNombre());

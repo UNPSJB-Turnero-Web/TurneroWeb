@@ -463,6 +463,8 @@ export class ConsultorioDetailComponent implements OnInit {
       horaCierre: this.consultorio.horaCierreDefault || "17:00",
       activo: dia !== 'SABADO' && dia !== 'DOMINGO' // Activo de lunes a viernes por defecto
     }));
+    
+    console.log('Horarios semanales inicializados:', this.consultorio.horariosSemanales);
   }
 
   /**
@@ -511,16 +513,49 @@ export class ConsultorioDetailComponent implements OnInit {
       return;
     }
 
+    // Asegurar que los datos del centro estén asignados
     this.consultorio.centroAtencion = this.selectedCentroAtencion;
     this.consultorio.centroId = this.selectedCentroAtencion.id;
     this.consultorio.nombreCentro = this.selectedCentroAtencion.nombre;
 
+    console.log('Horarios antes de procesar:', this.consultorio.horariosSemanales);
+    console.log('Horarios por defecto:', {
+      apertura: this.consultorio.horaAperturaDefault,
+      cierre: this.consultorio.horaCierreDefault
+    });
+
+    // Asegurar que los horarios semanales estén correctamente formateados
+    if (this.consultorio.horariosSemanales && this.consultorio.horariosSemanales.length > 0) {
+      this.consultorio.horariosSemanales = this.consultorio.horariosSemanales.map(horario => ({
+        diaSemana: horario.diaSemana,
+        horaApertura: horario.activo ? horario.horaApertura : undefined,
+        horaCierre: horario.activo ? horario.horaCierre : undefined,
+        activo: horario.activo
+      }));
+    } else {
+      // Si no hay horarios semanales, crear los por defecto
+      this.initializeWeeklySchedule();
+    }
+
+    console.log('Horarios después de procesar:', this.consultorio.horariosSemanales);
+
+    // Crear copia del consultorio para envío
+    const consultorioParaEnvio = {
+      ...this.consultorio,
+      centroAtencion: undefined // No enviar el objeto completo para evitar conflictos
+    };
+
+    console.log('Datos del consultorio a enviar:', consultorioParaEnvio);
+
     const op = this.consultorio.id
-      ? this.consultorioService.update(this.consultorio.id, this.consultorio)
-      : this.consultorioService.create(this.consultorio);
+      ? this.consultorioService.update(this.consultorio.id, consultorioParaEnvio)
+      : this.consultorioService.create(consultorioParaEnvio);
 
     op.subscribe({
-      next: () => this.router.navigate(["/consultorios"]),
+      next: (response) => {
+        console.log('Consultorio guardado exitosamente:', response);
+        this.router.navigate(["/consultorios"]);
+      },
       error: (err) => {
         console.error('Error al guardar el consultorio:', err);
         this.modalService.alert("Error", "No se pudo guardar el consultorio.");
@@ -533,16 +568,24 @@ export class ConsultorioDetailComponent implements OnInit {
         console.log('Consultorio cargado:', pkg.data);
         this.consultorio = pkg.data;
 
-        // Asignar el nombre del centro al modelo consultorio
-        this.consultorio.centroAtencion = {
-          id: this.consultorio.centroId,
-          nombre: this.consultorio.nombreCentro,
-        } as CentroAtencion;
-        this.selectedCentroAtencion = this.consultorio.centroAtencion;
+        // Asignar el centro de atención usando los datos que ya vienen del backend
+        if (this.consultorio.centroId && this.consultorio.nombreCentro) {
+          this.consultorio.centroAtencion = {
+            id: this.consultorio.centroId,
+            nombre: this.consultorio.nombreCentro,
+          } as CentroAtencion;
+          this.selectedCentroAtencion = this.consultorio.centroAtencion;
+          // Inicializar el campo de búsqueda con el nombre del centro
+          this.centroSearch = this.consultorio.nombreCentro;
+          console.log('Centro de atención asignado:', this.selectedCentroAtencion);
+        }
 
-        // Inicializar horarios si no existen
+        // Inicializar horarios si no existen o están vacíos
         if (!this.consultorio.horariosSemanales || this.consultorio.horariosSemanales.length === 0) {
+          console.log('Inicializando horarios semanales porque no existen...');
           this.initializeWeeklySchedule();
+        } else {
+          console.log('Horarios semanales existentes:', this.consultorio.horariosSemanales);
         }
 
         // Asegurar que tienen valores por defecto
@@ -580,6 +623,9 @@ export class ConsultorioDetailComponent implements OnInit {
 
   onSelectCentro(event: any): void {
     this.selectedCentroAtencion = event.item;
+    // Actualizar el campo de búsqueda con el nombre del centro seleccionado
+    this.centroSearch = event.item.nombre;
+    console.log('Centro seleccionado:', this.selectedCentroAtencion);
   }
 
   allFieldsEmpty(): boolean {

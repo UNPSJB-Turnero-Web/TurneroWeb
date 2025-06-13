@@ -742,7 +742,9 @@ export class PacienteTurnosComponent implements OnInit {
   }
 
   private convertirTurnoParaLista(turno: Turno): any {
-    const fecha = new Date(turno.fecha);
+    // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
+    const [year, month, day] = turno.fecha.split('-').map(Number);
+    const fecha = new Date(year, month - 1, day); // month es 0-indexed
     const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
                    'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
     
