@@ -149,4 +149,9 @@ export class TurnoService {
   eliminarDiaExcepcional(agendaId: number): Observable<DataPackage<any>> {
     return this.http.delete<DataPackage<any>>(`rest/agenda/dia-excepcional/${agendaId}`);
   }
+
+  /** Actualiza un día excepcional existente */
+  actualizarDiaExcepcional(configId: number, params: any): Observable<DataPackage<any>> {
+    return this.http.put<DataPackage<any>>(`rest/agenda/dia-excepcional/${configId}`, params);
+  }
 }

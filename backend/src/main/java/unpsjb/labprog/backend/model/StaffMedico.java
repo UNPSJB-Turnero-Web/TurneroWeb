@@ -2,6 +2,9 @@ package unpsjb.labprog.backend.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,6 +29,7 @@ public class StaffMedico {
 
     @ManyToOne
     @JoinColumn(name = "centro_atencion_id", nullable = false)
+    @JsonBackReference
     private CentroAtencion centroAtencion;
 
     @ManyToOne
@@ -33,6 +37,7 @@ public class StaffMedico {
     private Medico medico;
 
     @OneToMany(mappedBy = "staffMedico", cascade = CascadeType.PERSIST)
+    @JsonManagedReference
     private List<DisponibilidadMedico> disponibilidad;
 
 

@@ -4,6 +4,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
@@ -29,6 +31,7 @@ public class DisponibilidadMedico {
     private List<DiaHorario> horarios = new ArrayList<>(); // Lista de días con horarios
 
     @ManyToOne(optional = false)
+    @JsonBackReference
     private StaffMedico staffMedico; // Relación con StaffMedico
     
     @Embeddable

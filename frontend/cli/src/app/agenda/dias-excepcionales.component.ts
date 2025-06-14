@@ -226,12 +226,60 @@ interface DiaExcepcional {
                   <div class="col-12" *ngIf="diaActual.tipoAgenda !== 'FERIADO'">
                     <label class="form-label">Esquema de Turno *</label>
                     <select class="form-select" [(ngModel)]="diaActual.esquemaTurnoId" 
-                            name="esquemaTurno" required>
+                            name="esquemaTurno" required (change)="onEsquemaTurnoChange()">
                       <option value="">Seleccione un esquema</option>
                       <option *ngFor="let esquema of esquemasTurno" [value]="esquema.id">
                         {{ esquema.nombreCentro }} - {{ esquema.nombreConsultorio }} - Dr. {{ esquema.nombreStaffMedico }}
                       </option>
                     </select>
+                  </div>
+
+                  <!-- Mostrar horarios del esquema de turno seleccionado -->
+                  <div class="col-12" *ngIf="diaActual.tipoAgenda !== 'FERIADO' && getEsquemaSeleccionado()">
+                    <div class="esquema-horarios-info">
+                      <h6 class="mb-3">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        Horarios del Esquema de Turno Seleccionado
+                      </h6>
+                      <div class="esquema-info-card">
+                        <div class="esquema-header">
+                          <div class="esquema-details">
+                            <div class="detail-item">
+                              <i class="fas fa-building text-info me-2"></i>
+                              <strong>Centro:</strong> {{ getEsquemaSeleccionado()?.nombreCentro }}
+                            </div>
+                            <div class="detail-item">
+                              <i class="fas fa-door-open text-warning me-2"></i>
+                              <strong>Consultorio:</strong> {{ getEsquemaSeleccionado()?.nombreConsultorio }}
+                            </div>
+                            <div class="detail-item">
+                              <i class="fas fa-user-md text-success me-2"></i>
+                              <strong>Médico:</strong> Dr. {{ getEsquemaSeleccionado()?.nombreStaffMedico }}
+                            </div>
+                            <div class="detail-item">
+                              <i class="fas fa-hourglass-half text-secondary me-2"></i>
+                              <strong>Intervalo:</strong> {{ getEsquemaSeleccionado()?.intervalo }} minutos
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div class="horarios-container" *ngIf="getEsquemaSeleccionado()?.horarios && getEsquemaSeleccionado()?.horarios.length > 0; else noHorarios">
+                          <div class="horarios-grid">
+                            <div *ngFor="let horario of getEsquemaSeleccionado()?.horarios" class="horario-badge">
+                              <span class="dia-label">{{ horario.dia }}</span>
+                              <span class="hora-label">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <ng-template #noHorarios>
+                          <div class="no-horarios-warning">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            Este esquema de turno no tiene horarios configurados
+                          </div>
+                        </ng-template>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Horarios especiales para atención especial -->
@@ -244,6 +292,13 @@ interface DiaExcepcional {
                     <label class="form-label">Hora Fin *</label>
                     <input type="time" class="form-control" [(ngModel)]="diaActual.horaFin" 
                            name="horaFin" required>
+                  </div>
+
+                  <!-- Hora de inicio para mantenimiento -->
+                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'MANTENIMIENTO'">
+                    <label class="form-label">Hora de Inicio del Mantenimiento *</label>
+                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
+                           name="horaInicioMantenimiento" required>
                   </div>
 
                   <!-- Tiempo de sanitización -->
@@ -361,6 +416,91 @@ interface DiaExcepcional {
 
     .btn-group-sm .btn {
       padding: 0.25rem 0.5rem;
+    }
+
+    /* Estilos para la información del esquema de turno */
+    .esquema-horarios-info {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .esquema-info-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid #dee2e6;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .esquema-header {
+      margin-bottom: 1rem;
+    }
+
+    .esquema-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      padding: 0.25rem 0;
+    }
+
+    .detail-item strong {
+      margin-left: 0.25rem;
+      margin-right: 0.5rem;
+    }
+
+    .horarios-container {
+      border-top: 1px solid #dee2e6;
+      padding-top: 1rem;
+    }
+
+    .horarios-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .horario-badge {
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 120px;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+    }
+
+    .horario-badge .dia-label {
+      font-size: 0.75rem;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.2rem;
+    }
+
+    .horario-badge .hora-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .no-horarios-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      color: #856404;
+      font-style: italic;
     }
 
     /* Responsive design */
@@ -506,6 +646,19 @@ export class DiasExcepcionalesComponent implements OnInit {
     }
   }
 
+  onEsquemaTurnoChange() {
+    // Este método se llama cuando cambia la selección del esquema de turno
+    // Fuerza la actualización de la vista para mostrar/ocultar la información del esquema
+    this.cdr.detectChanges();
+  }
+
+  getEsquemaSeleccionado(): any {
+    if (!this.diaActual.esquemaTurnoId) {
+      return null;
+    }
+    return this.esquemasTurno.find(esquema => esquema.id == this.diaActual.esquemaTurnoId);
+  }
+
   guardar() {
     if (!this.diaActual.fecha || !this.diaActual.tipoAgenda || !this.diaActual.descripcionExcepcion) {
       alert('Por favor complete todos los campos obligatorios');
@@ -523,6 +676,17 @@ export class DiasExcepcionalesComponent implements OnInit {
     if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
       if (!this.diaActual.horaInicio || !this.diaActual.horaFin) {
         alert('Debe especificar horarios para atención especial');
+        return;
+      }
+    }
+
+    if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+      if (!this.diaActual.horaInicio) {
+        alert('Debe especificar la hora de inicio del mantenimiento');
+        return;
+      }
+      if (!this.diaActual.tiempoSanitizacion || this.diaActual.tiempoSanitizacion <= 0) {
+        alert('Debe especificar un tiempo de duración válido para el mantenimiento');
         return;
       }
     }
@@ -545,13 +709,22 @@ export class DiasExcepcionalesComponent implements OnInit {
       params.horaFin = this.diaActual.horaFin;
     }
 
+    // Agregar hora de inicio si es mantenimiento
+    if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+      params.horaInicio = this.diaActual.horaInicio;
+    }
+
     // Agregar tiempo de sanitización si está especificado
     if (this.diaActual.tiempoSanitizacion) {
       params.tiempoSanitizacion = this.diaActual.tiempoSanitizacion;
     }
 
-    // Usar el método genérico para crear día excepcional
-    this.turnoService.crearDiaExcepcional(params).subscribe({
+    // Usar el método apropiado según si estamos editando o creando
+    const operacion = this.editando ? 
+      this.turnoService.actualizarDiaExcepcional(this.diaActual.id!, params) :
+      this.turnoService.crearDiaExcepcional(params);
+
+    operacion.subscribe({
       next: () => {
         alert(`Día excepcional ${this.editando ? 'actualizado' : 'creado'} correctamente`);
         this.cerrarModal();

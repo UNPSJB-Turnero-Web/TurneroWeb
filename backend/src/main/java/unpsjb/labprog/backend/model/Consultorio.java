@@ -4,6 +4,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -36,6 +38,7 @@ public class Consultorio {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "centro_atencion_id", nullable = false)
+    @JsonBackReference
     private CentroAtencion centroAtencion;
 
     // Horarios por defecto del consultorio

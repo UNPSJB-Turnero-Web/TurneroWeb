@@ -4,17 +4,17 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.ConfiguracionExcepcionalRepository;
-import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
+import unpsjb.labprog.backend.dto.ConfiguracionExcepcionalDTO;
 import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
-import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 
@@ -27,9 +27,6 @@ public class ConfiguracionExcepcionalService {
 
     @Autowired
     private ConfiguracionExcepcionalRepository repository;
-    
-    @Autowired
-    private CentroAtencionRepository centroAtencionRepository;
     
     @Autowired
     private ConsultorioRepository consultorioRepository;
@@ -57,7 +54,8 @@ public class ConfiguracionExcepcionalService {
      */
     @Transactional
     public ConfiguracionExcepcional crearMantenimiento(LocalDate fecha, String descripcion, 
-                                                      Integer consultorioId, Integer tiempoSanitizacion) {
+                                                      Integer consultorioId, LocalTime horaInicio, 
+                                                      Integer tiempoSanitizacion) {
         Optional<Consultorio> consultorio = consultorioRepository.findById(consultorioId);
         if (!consultorio.isPresent()) {
             throw new IllegalArgumentException("Consultorio no encontrado con ID: " + consultorioId);
@@ -69,6 +67,11 @@ public class ConfiguracionExcepcionalService {
         config.setDescripcion(descripcion);
         config.setConsultorio(consultorio.get());
         config.setCentroAtencion(consultorio.get().getCentroAtencion());
+        config.setHoraInicio(horaInicio);
+        // Para mantenimiento, horaFin se calcula como horaInicio + tiempoSanitizacion
+        if (horaInicio != null && tiempoSanitizacion != null) {
+            config.setHoraFin(horaInicio.plusMinutes(tiempoSanitizacion));
+        }
         config.setTiempoSanitizacion(tiempoSanitizacion);
         config.setActivo(true);
         
@@ -175,5 +178,286 @@ public class ConfiguracionExcepcionalService {
      */
     public List<ConfiguracionExcepcional> findAll() {
         return (List<ConfiguracionExcepcional>) repository.findAll();
+    }
+
+    /**
+     * Actualizar un feriado existente
+     */
+    @Transactional
+    public ConfiguracionExcepcional actualizarFeriado(Integer configId, LocalDate fecha, String descripcion) {
+        Optional<ConfiguracionExcepcional> configOpt = repository.findById(configId);
+        if (!configOpt.isPresent()) {
+            throw new IllegalArgumentException("Configuración no encontrada con ID: " + configId);
+        }
+        
+        ConfiguracionExcepcional config = configOpt.get();
+        if (config.getTipo() != ConfiguracionExcepcional.TipoExcepcion.FERIADO) {
+            throw new IllegalArgumentException("La configuración especificada no es un feriado");
+        }
+        
+        config.setFecha(fecha);
+        config.setDescripcion(descripcion);
+        
+        return repository.save(config);
+    }
+
+    /**
+     * Actualizar un mantenimiento existente
+     */
+    @Transactional
+    public ConfiguracionExcepcional actualizarMantenimiento(Integer configId, LocalDate fecha, String descripcion, 
+                                                           Integer consultorioId, LocalTime horaInicio, 
+                                                           Integer tiempoSanitizacion) {
+        Optional<ConfiguracionExcepcional> configOpt = repository.findById(configId);
+        if (!configOpt.isPresent()) {
+            throw new IllegalArgumentException("Configuración no encontrada con ID: " + configId);
+        }
+        
+        ConfiguracionExcepcional config = configOpt.get();
+        if (config.getTipo() != ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO) {
+            throw new IllegalArgumentException("La configuración especificada no es un mantenimiento");
+        }
+        
+        Optional<Consultorio> consultorio = consultorioRepository.findById(consultorioId);
+        if (!consultorio.isPresent()) {
+            throw new IllegalArgumentException("Consultorio no encontrado con ID: " + consultorioId);
+        }
+
+        config.setFecha(fecha);
+        config.setDescripcion(descripcion);
+        config.setConsultorio(consultorio.get());
+        config.setCentroAtencion(consultorio.get().getCentroAtencion());
+        config.setHoraInicio(horaInicio);
+        // Para mantenimiento, horaFin se calcula como horaInicio + tiempoSanitizacion
+        if (horaInicio != null && tiempoSanitizacion != null) {
+            config.setHoraFin(horaInicio.plusMinutes(tiempoSanitizacion));
+        }
+        config.setTiempoSanitizacion(tiempoSanitizacion);
+        
+        return repository.save(config);
+    }
+
+    /**
+     * Actualizar atención especial existente
+     */
+    @Transactional
+    public ConfiguracionExcepcional actualizarAtencionEspecial(Integer configId, LocalDate fecha, String descripcion,
+                                                              Integer esquemaTurnoId, LocalTime horaInicio, 
+                                                              LocalTime horaFin, Integer tiempoSanitizacion) {
+        Optional<ConfiguracionExcepcional> configOpt = repository.findById(configId);
+        if (!configOpt.isPresent()) {
+            throw new IllegalArgumentException("Configuración no encontrada con ID: " + configId);
+        }
+        
+        ConfiguracionExcepcional config = configOpt.get();
+        if (config.getTipo() != ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL) {
+            throw new IllegalArgumentException("La configuración especificada no es atención especial");
+        }
+        
+        Optional<EsquemaTurno> esquema = esquemaTurnoRepository.findById(esquemaTurnoId);
+        if (!esquema.isPresent()) {
+            throw new IllegalArgumentException("EsquemaTurno no encontrado con ID: " + esquemaTurnoId);
+        }
+
+        config.setFecha(fecha);
+        config.setDescripcion(descripcion);
+        config.setEsquemaTurno(esquema.get());
+        config.setCentroAtencion(esquema.get().getCentroAtencion());
+        config.setConsultorio(esquema.get().getConsultorio());
+        config.setHoraInicio(horaInicio);
+        config.setHoraFin(horaFin);
+        config.setTiempoSanitizacion(tiempoSanitizacion);
+        
+        return repository.save(config);
+    }
+
+    /**
+     * Crear o actualizar una configuración excepcional
+     */
+    @Transactional
+    public ConfiguracionExcepcional saveOrUpdate(Integer configId, LocalDate fecha, String tipoExcepcion, 
+                                                String descripcion, Integer esquemaTurnoId, 
+                                                LocalTime horaInicio, LocalTime horaFin, 
+                                                Integer tiempoSanitizacion) {
+        
+        if (configId != null && configId > 0) {
+            // Actualizar existente
+            Optional<ConfiguracionExcepcional> existing = repository.findById(configId);
+            if (existing.isPresent()) {
+                ConfiguracionExcepcional.TipoExcepcion tipo = 
+                    ConfiguracionExcepcional.TipoExcepcion.valueOf(tipoExcepcion.toUpperCase());
+                
+                switch (tipo) {
+                    case FERIADO:
+                        return actualizarFeriado(configId, fecha, descripcion);
+                    case MANTENIMIENTO:
+                        if (esquemaTurnoId != null) {
+                            EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
+                                .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
+                            return actualizarMantenimiento(configId, fecha, descripcion, 
+                                esquema.getConsultorio().getId(), horaInicio, tiempoSanitizacion);
+                        }
+                        break;
+                    case ATENCION_ESPECIAL:
+                        return actualizarAtencionEspecial(configId, fecha, descripcion, 
+                            esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+                }
+            }
+        }
+        
+        // Crear nuevo
+        ConfiguracionExcepcional.TipoExcepcion tipo = 
+            ConfiguracionExcepcional.TipoExcepcion.valueOf(tipoExcepcion.toUpperCase());
+        
+        switch (tipo) {
+            case FERIADO:
+                return crearFeriado(fecha, descripcion);
+            case MANTENIMIENTO:
+                if (esquemaTurnoId != null) {
+                    EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
+                        .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
+                    return crearMantenimiento(fecha, descripcion, 
+                        esquema.getConsultorio().getId(), horaInicio, tiempoSanitizacion);
+                }
+                break;
+            case ATENCION_ESPECIAL:
+                return crearAtencionEspecial(fecha, descripcion, 
+                    esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+        }
+        
+        throw new IllegalArgumentException("Tipo de excepción no válido o faltan parámetros requeridos");
+    }
+
+    // ==================== MÉTODOS DTO ====================
+
+    /**
+     * Crear o actualizar una configuración excepcional usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO saveOrUpdateDTO(ConfiguracionExcepcionalDTO dto) {
+        ConfiguracionExcepcional entity = saveOrUpdate(
+            dto.getId(),
+            dto.getFecha(),
+            dto.getTipo(),
+            dto.getDescripcion(),
+            dto.getEsquemaTurnoId(),
+            dto.getHoraInicio(),
+            dto.getHoraFin(),
+            dto.getTiempoSanitizacion()
+        );
+        
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Crear un feriado usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO crearFeriadoDTO(LocalDate fecha, String descripcion) {
+        ConfiguracionExcepcional entity = crearFeriado(fecha, descripcion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Crear un mantenimiento usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO crearMantenimientoDTO(LocalDate fecha, String descripcion, 
+                                                           Integer consultorioId, LocalTime horaInicio, 
+                                                           Integer tiempoSanitizacion) {
+        ConfiguracionExcepcional entity = crearMantenimiento(fecha, descripcion, consultorioId, horaInicio, tiempoSanitizacion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Crear atención especial usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO crearAtencionEspecialDTO(LocalDate fecha, String descripcion,
+                                                              Integer esquemaTurnoId, LocalTime horaInicio, 
+                                                              LocalTime horaFin, Integer tiempoSanitizacion) {
+        ConfiguracionExcepcional entity = crearAtencionEspecial(fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Obtener todas las configuraciones para una fecha como DTO
+     */
+    public List<ConfiguracionExcepcionalDTO> obtenerConfiguracionesDTO(LocalDate fecha) {
+        List<ConfiguracionExcepcional> entities = obtenerConfiguraciones(fecha);
+        return entities.stream()
+                      .map(ConfiguracionExcepcionalDTO::fromEntity)
+                      .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener configuraciones por rango de fechas como DTO
+     */
+    public List<ConfiguracionExcepcionalDTO> obtenerConfiguracionesPorRangoDTO(LocalDate fechaInicio, LocalDate fechaFin) {
+        List<ConfiguracionExcepcional> entities = obtenerConfiguracionesPorRango(fechaInicio, fechaFin);
+        return entities.stream()
+                      .map(ConfiguracionExcepcionalDTO::fromEntity)
+                      .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener configuraciones por rango de fechas y centro como DTO
+     */
+    public List<ConfiguracionExcepcionalDTO> obtenerConfiguracionesPorCentroDTO(LocalDate fechaInicio, 
+                                                                               LocalDate fechaFin, 
+                                                                               Integer centroId) {
+        List<ConfiguracionExcepcional> entities = obtenerConfiguracionesPorCentro(fechaInicio, fechaFin, centroId);
+        return entities.stream()
+                      .map(ConfiguracionExcepcionalDTO::fromEntity)
+                      .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener todas las configuraciones como DTO
+     */
+    public List<ConfiguracionExcepcionalDTO> findAllDTO() {
+        List<ConfiguracionExcepcional> entities = findAll();
+        return entities.stream()
+                      .map(ConfiguracionExcepcionalDTO::fromEntity)
+                      .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtener configuración por ID como DTO
+     */
+    public Optional<ConfiguracionExcepcionalDTO> findByIdDTO(Integer id) {
+        Optional<ConfiguracionExcepcional> entity = repository.findById(id);
+        return entity.map(ConfiguracionExcepcionalDTO::fromEntity);
+    }
+
+    /**
+     * Actualizar un feriado usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO actualizarFeriadoDTO(Integer configId, LocalDate fecha, String descripcion) {
+        ConfiguracionExcepcional entity = actualizarFeriado(configId, fecha, descripcion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Actualizar un mantenimiento usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO actualizarMantenimientoDTO(Integer configId, LocalDate fecha, String descripcion, 
+                                                                Integer consultorioId, LocalTime horaInicio, 
+                                                                Integer tiempoSanitizacion) {
+        ConfiguracionExcepcional entity = actualizarMantenimiento(configId, fecha, descripcion, consultorioId, horaInicio, tiempoSanitizacion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
+    }
+
+    /**
+     * Actualizar atención especial usando DTO
+     */
+    @Transactional
+    public ConfiguracionExcepcionalDTO actualizarAtencionEspecialDTO(Integer configId, LocalDate fecha, String descripcion,
+                                                                   Integer esquemaTurnoId, LocalTime horaInicio, 
+                                                                   LocalTime horaFin, Integer tiempoSanitizacion) {
+        ConfiguracionExcepcional entity = actualizarAtencionEspecial(configId, fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+        return ConfiguracionExcepcionalDTO.fromEntity(entity);
     }
 }

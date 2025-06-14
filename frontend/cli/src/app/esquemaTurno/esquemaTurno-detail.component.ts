@@ -94,6 +94,53 @@ import { ModalService } from '../modal/modal.service';
                 </div>
               </div>
 
+              <!-- Horarios del Consultorio -->
+              <div class="info-item full-width" *ngIf="getConsultorioSeleccionado()">
+                <div class="info-label">
+                  <span class="info-icon" style="background: var(--consultorios-gradient);">🏢</span>
+                  Horarios de Atención del Consultorio
+                </div>
+                <div class="consultorio-horarios">
+                  <!-- Horario por defecto -->
+                  <div *ngIf="getConsultorioSeleccionado()?.horaAperturaDefault && getConsultorioSeleccionado()?.horaCierreDefault" 
+                       class="horario-default">
+                    <h6>Horario General</h6>
+                    <div class="horario-card consultorio">
+                      <span class="dia-label">TODOS LOS DÍAS</span>
+                      <span class="hora-label">{{ getConsultorioSeleccionado()?.horaAperturaDefault }} - {{ getConsultorioSeleccionado()?.horaCierreDefault }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Horarios específicos por día -->
+                  <div *ngIf="getConsultorioSeleccionado()?.horariosSemanales && getConsultorioSeleccionado()?.horariosSemanales!.length > 0"
+                       class="horarios-especificos">
+                    <h6>Horarios Específicos</h6>
+                    <div class="horarios-disponibles">
+                      <div *ngFor="let horario of getConsultorioSeleccionado()?.horariosSemanales" 
+                           class="horario-card consultorio"
+                           [class.inactivo]="!horario.activo">
+                        <span class="dia-label">{{ horario.diaSemana }}</span>
+                        <span class="hora-label" *ngIf="horario.activo && horario.horaApertura && horario.horaCierre">
+                          {{ horario.horaApertura }} - {{ horario.horaCierre }}
+                        </span>
+                        <span class="hora-label cerrado" *ngIf="!horario.activo">CERRADO</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Sin horarios configurados -->
+                  <div *ngIf="!getConsultorioSeleccionado()?.horaAperturaDefault && 
+                              (!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0)"
+                       class="no-horarios">
+                    El consultorio no tiene horarios de atención configurados
+                  </div>
+                  
+                  <div class="form-help">
+                    Horarios de atención del consultorio seleccionado (solo informativo).
+                  </div>
+                </div>
+              </div>
+
               <div class="info-item full-width" *ngIf="esquema.horarios && esquema.horarios.length > 0">
                 <div class="info-label">
                   <span class="info-icon" style="background: var(--esquema-turno-gradient);">📅</span>
@@ -223,6 +270,51 @@ import { ModalService } from '../modal/modal.service';
                   </div>
                   <div class="form-help">
                     Horarios base del médico según su disponibilidad.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios del Consultorio -->
+              <div class="col-12" *ngIf="getConsultorioSeleccionado()">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: var(--consultorios-gradient);">🏢</span>
+                    Horarios de Atención del Consultorio
+                  </label>
+                  
+                  <div *ngIf="getConsultorioSeleccionado()?.horaAperturaDefault && getConsultorioSeleccionado()?.horaCierreDefault" 
+                       class="horario-default">
+                    <h6>Horario General</h6>
+                    <div class="horario-card consultorio">
+                      <span class="dia-label">TODOS LOS DÍAS</span>
+                      <span class="hora-label">{{ getConsultorioSeleccionado()?.horaAperturaDefault }} - {{ getConsultorioSeleccionado()?.horaCierreDefault }}</span>
+                    </div>
+                  </div>
+                  
+                  <div *ngIf="getConsultorioSeleccionado()?.horariosSemanales && getConsultorioSeleccionado()?.horariosSemanales!.length > 0"
+                       class="horarios-especificos">
+                    <h6>Horarios Específicos</h6>
+                    <div class="horarios-disponibles">
+                      <div *ngFor="let horario of getConsultorioSeleccionado()?.horariosSemanales" 
+                           class="horario-card consultorio"
+                           [class.inactivo]="!horario.activo">
+                        <span class="dia-label">{{ horario.diaSemana }}</span>
+                        <span class="hora-label" *ngIf="horario.activo && horario.horaApertura && horario.horaCierre">
+                          {{ horario.horaApertura }} - {{ horario.horaCierre }}
+                        </span>
+                        <span class="hora-label cerrado" *ngIf="!horario.activo">CERRADO</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div *ngIf="!getConsultorioSeleccionado()?.horaAperturaDefault && 
+                              (!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0)"
+                       class="no-horarios">
+                    El consultorio no tiene horarios de atención configurados
+                  </div>
+                  
+                  <div class="form-help">
+                    Horarios de atención del consultorio seleccionado (solo informativo).
                   </div>
                 </div>
               </div>
@@ -507,6 +599,54 @@ import { ModalService } from '../modal/modal.service';
       border-radius: 10px;
     }
     
+    /* Estilos específicos para horarios del consultorio */
+    .consultorio-horarios {
+      margin-top: 0.5rem;
+    }
+    
+    .horario-default {
+      margin-bottom: 1.5rem;
+    }
+    
+    .horario-default h6 {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .horarios-especificos {
+      margin-top: 1rem;
+    }
+    
+    .horarios-especificos h6 {
+      color: #495057;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .horario-card.consultorio {
+      background: var(--consultorios-gradient);
+      color: white;
+      border: 2px solid transparent;
+    }
+    
+    .horario-card.consultorio.inactivo {
+      background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+      opacity: 0.7;
+    }
+    
+    .hora-label.cerrado {
+      color: #f8f9fa;
+      font-weight: 500;
+      font-style: italic;
+    }
+    
     /* Estilos del formulario */
     .form-group-modern {
       margin-bottom: 2rem;
@@ -537,18 +677,25 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .form-control-modern {
-      border: 2px solid #e9ecef;
+      border: 2px solid #b8e6b8;
       border-radius: 15px;
       padding: 0.75rem 1rem;
       font-size: 1rem;
       transition: all 0.3s ease;
-      background: white;
+      background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 100%);
+      color: #2d5a3d;
     }
     
     .form-control-modern:focus {
-      border-color: var(--esquema-turno-primary);
-      box-shadow: 0 0 0 0.2rem var(--esquema-turno-shadow);
+      border-color: #4a9960;
+      box-shadow: 0 0 0 0.2rem rgba(74, 153, 96, 0.25);
       outline: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f8f0 100%);
+    }
+    
+    .form-control-modern:hover {
+      border-color: #82d982;
+      background: linear-gradient(135deg, #fbfffa 0%, #ecf7ec 100%);
     }
     
     .form-help {
@@ -829,6 +976,10 @@ export class EsquemaTurnoDetailComponent {
   getConsultorioNombre(): string {
     const consultorio = this.consultorios.find(c => c.id === this.esquema.consultorioId);
     return consultorio?.nombre || 'Sin consultorio';
+  }
+
+  getConsultorioSeleccionado(): Consultorio | undefined {
+    return this.consultorios.find(c => c.id === this.esquema.consultorioId);
   }
 
   get(): void {

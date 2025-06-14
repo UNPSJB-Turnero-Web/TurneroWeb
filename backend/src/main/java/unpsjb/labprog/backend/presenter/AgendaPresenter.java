@@ -28,11 +28,12 @@ import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
 import unpsjb.labprog.backend.business.service.AgendaService;
 import unpsjb.labprog.backend.business.service.ConfiguracionExcepcionalService;
 import unpsjb.labprog.backend.dto.AgendaDTO;
+import unpsjb.labprog.backend.dto.ConfiguracionExcepcionalDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
+import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.Turno;
-import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 
 @RestController
 @RequestMapping("/agenda")
@@ -118,7 +119,7 @@ public class AgendaPresenter {
     // Nuevos endpoints para gestión de días excepcionales y sanitización
     
     /**
-     * Crear un día excepcional usando el nuevo sistema de configuraciones
+     * Crear un día excepcional usando el nuevo sistema de configuraciones con DTO
      */
     @PostMapping("/dia-excepcional")
     public ResponseEntity<Object> crearDiaExcepcional(@RequestBody Map<String, Object> params) {
@@ -143,11 +144,11 @@ public class AgendaPresenter {
                 tiempoSanitizacion = Integer.valueOf(params.get("tiempoSanitizacion").toString());
             }
             
-            ConfiguracionExcepcional config = null;
+            ConfiguracionExcepcionalDTO configDTO = null;
             
             switch (tipoAgenda.toUpperCase()) {
                 case "FERIADO":
-                    config = configuracionExcepcionalService.crearFeriado(fecha, descripcion);
+                    configDTO = configuracionExcepcionalService.crearFeriadoDTO(fecha, descripcion);
                     break;
                 case "MANTENIMIENTO":
                     if (esquemaTurnoId == null) {
@@ -155,21 +156,21 @@ public class AgendaPresenter {
                     }
                     EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
                             .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
-                    config = configuracionExcepcionalService.crearMantenimiento(fecha, descripcion, 
-                            esquema.getConsultorio().getId(), tiempoSanitizacion);
+                    configDTO = configuracionExcepcionalService.crearMantenimientoDTO(fecha, descripcion, 
+                            esquema.getConsultorio().getId(), horaInicio, tiempoSanitizacion);
                     break;
                 case "ATENCION_ESPECIAL":
                     if (esquemaTurnoId == null || horaInicio == null || horaFin == null) {
                         return Response.error(null, "EsquemaTurno, horaInicio y horaFin son requeridos para atención especial");
                     }
-                    config = configuracionExcepcionalService.crearAtencionEspecial(fecha, descripcion, 
+                    configDTO = configuracionExcepcionalService.crearAtencionEspecialDTO(fecha, descripcion, 
                             esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
                     break;
                 default:
                     return Response.error(null, "Tipo de agenda no válido: " + tipoAgenda);
             }
             
-            return Response.ok(config, "Día excepcional creado correctamente");
+            return Response.ok(configDTO, "Día excepcional creado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al crear día excepcional: " + e.getMessage());
         }
@@ -198,16 +199,16 @@ public class AgendaPresenter {
             LocalDate inicio = LocalDate.parse(fechaInicio);
             LocalDate fin = LocalDate.parse(fechaFin);
             
-            List<ConfiguracionExcepcional> configuraciones;
+            List<ConfiguracionExcepcionalDTO> configuraciones;
             if (centroId != null) {
-                configuraciones = configuracionExcepcionalService.obtenerConfiguracionesPorCentro(inicio, fin, centroId);
+                configuraciones = configuracionExcepcionalService.obtenerConfiguracionesPorCentroDTO(inicio, fin, centroId);
             } else {
-                configuraciones = configuracionExcepcionalService.obtenerConfiguracionesPorRango(inicio, fin);
+                configuraciones = configuracionExcepcionalService.obtenerConfiguracionesPorRangoDTO(inicio, fin);
             }
             
-            // Convertir ConfiguracionExcepcional a AgendaDTO.DiaExcepcionalDTO para compatibilidad con frontend
+            // Convertir ConfiguracionExcepcionalDTO a AgendaDTO.DiaExcepcionalDTO para compatibilidad con frontend
             List<AgendaDTO.DiaExcepcionalDTO> resultado = configuraciones.stream()
-                .map(this::convertirConfiguracionADTO)
+                .map(this::convertirConfiguracionDTOAAgendaDTO)
                 .collect(Collectors.toList());
             
             return Response.ok(resultado, "Días excepcionales obtenidos correctamente");
@@ -263,8 +264,9 @@ public class AgendaPresenter {
     }
 
     /**
-     * Convierte ConfiguracionExcepcional a DTO para compatibilidad con frontend
+     * Convierte ConfiguracionExcepcional a DTO para compatibilidad con frontend (DEPRECATED - usar convertirConfiguracionDTOAAgendaDTO)
      */
+    @Deprecated
     private AgendaDTO.DiaExcepcionalDTO convertirConfiguracionADTO(ConfiguracionExcepcional config) {
         AgendaDTO.DiaExcepcionalDTO dto = new AgendaDTO.DiaExcepcionalDTO();
         dto.setId(config.getId());
@@ -301,6 +303,75 @@ public class AgendaPresenter {
         }
         
         return dto;
+    }
+
+    /**
+     * Convierte ConfiguracionExcepcionalDTO a AgendaDTO.DiaExcepcionalDTO para compatibilidad con frontend
+     */
+    private AgendaDTO.DiaExcepcionalDTO convertirConfiguracionDTOAAgendaDTO(ConfiguracionExcepcionalDTO configDTO) {
+        AgendaDTO.DiaExcepcionalDTO dto = new AgendaDTO.DiaExcepcionalDTO();
+        dto.setId(configDTO.getId());
+        dto.setFecha(configDTO.getFecha().toString()); // Formato ISO yyyy-MM-dd
+        dto.setTipoAgenda(configDTO.getTipo());
+        dto.setDescripcion(configDTO.getDescripcion());
+        
+        if (configDTO.getHoraInicio() != null) {
+            dto.setApertura(configDTO.getHoraInicio().toString()); // Formato HH:mm
+        }
+        if (configDTO.getHoraFin() != null) {
+            dto.setCierre(configDTO.getHoraFin().toString()); // Formato HH:mm
+        }
+        
+        // Mapear información del centro, consultorio y esquema de turno desde DTO
+        dto.setCentroId(configDTO.getCentroAtencionId());
+        dto.setCentroNombre(configDTO.getCentroAtencionNombre());
+        dto.setConsultorioId(configDTO.getConsultorioId());
+        dto.setConsultorioNombre(configDTO.getConsultorioNombre());
+        
+        // Información del médico desde DTO
+        if (configDTO.getMedicoNombre() != null) {
+            dto.setMedicoNombre(configDTO.getMedicoNombre());
+            dto.setMedicoApellido(configDTO.getMedicoApellido());
+            dto.setEspecialidad(configDTO.getEspecialidadNombre());
+        }
+        
+        return dto;
+    }
+
+    /**
+     * Actualizar un día excepcional existente usando el nuevo sistema de configuraciones con DTO
+     */
+    @PutMapping("/dia-excepcional/{configId}")
+    public ResponseEntity<Object> actualizarDiaExcepcional(@PathVariable Integer configId, @RequestBody Map<String, Object> params) {
+        try {
+            LocalDate fecha = LocalDate.parse((String) params.get("fecha"));
+            String tipoAgenda = (String) params.get("tipoAgenda");
+            String descripcion = (String) params.get("descripcion");
+            Integer esquemaTurnoId = params.get("esquemaTurnoId") != null ? 
+                Integer.valueOf(params.get("esquemaTurnoId").toString()) : null;
+            
+            LocalTime horaInicio = null;
+            LocalTime horaFin = null;
+            Integer tiempoSanitizacion = null;
+            
+            if (params.get("horaInicio") != null) {
+                horaInicio = LocalTime.parse((String) params.get("horaInicio"));
+            }
+            if (params.get("horaFin") != null) {
+                horaFin = LocalTime.parse((String) params.get("horaFin"));
+            }
+            if (params.get("tiempoSanitizacion") != null) {
+                tiempoSanitizacion = Integer.valueOf(params.get("tiempoSanitizacion").toString());
+            }
+            
+            ConfiguracionExcepcionalDTO configDTO = configuracionExcepcionalService.saveOrUpdateDTO(
+                new ConfiguracionExcepcionalDTO(configId, fecha, tipoAgenda, descripcion, horaInicio, horaFin, 
+                tiempoSanitizacion, true, null, null, null, null, esquemaTurnoId, null, null, null, null, null, null, null));
+            
+            return Response.ok(configDTO, "Día excepcional actualizado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar día excepcional: " + e.getMessage());
+        }
     }
 
 }

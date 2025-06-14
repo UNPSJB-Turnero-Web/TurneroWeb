@@ -23,11 +23,11 @@ import unpsjb.labprog.backend.dto.AgendaDTO;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.model.Agenda;
+import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
-import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 
 /**
  * Servicio simplificado para Agenda - solo maneja agendas operacionales.
@@ -53,50 +53,6 @@ public class AgendaService {
     
     @Autowired
     private ConfiguracionExcepcionalService configuracionExcepcionalService;
-
-    /**
-     * Este método ahora es manejado por ConfiguracionExcepcionalService.
-     * Se mantiene para compatibilidad pero delega a la nueva arquitectura.
-     */
-    @Transactional
-    @Deprecated
-    public Agenda crearAgendaExcepcional(LocalDate fecha, String tipoExcepcion, String descripcion,
-            Integer esquemaTurnoId, LocalTime horaInicio, LocalTime horaFin, Integer tiempoSanitizacion) {
-        
-        // Delegar a ConfiguracionExcepcionalService basado en el tipo
-        switch (tipoExcepcion.toUpperCase()) {
-            case "FERIADO":
-                configuracionExcepcionalService.crearFeriado(fecha, descripcion);
-                break;
-            case "MANTENIMIENTO":
-                if (esquemaTurnoId != null) {
-                    EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
-                            .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
-                    configuracionExcepcionalService.crearMantenimiento(fecha, descripcion, 
-                            esquema.getConsultorio().getId(), tiempoSanitizacion);
-                }
-                break;
-            case "ATENCION_ESPECIAL":
-                if (esquemaTurnoId != null && horaInicio != null && horaFin != null) {
-                    configuracionExcepcionalService.crearAtencionEspecial(fecha, descripcion, 
-                            esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
-                }
-                break;
-            default:
-                throw new IllegalArgumentException("Tipo de excepción no válido: " + tipoExcepcion);
-        }
-        
-        // Retornar una agenda básica para compatibilidad
-        Agenda agenda = new Agenda();
-        agenda.setFecha(fecha);
-        agenda.setHabilitado(true);
-        if (esquemaTurnoId != null) {
-            EsquemaTurno esquemaTurno = esquemaTurnoRepository.findById(esquemaTurnoId)
-                    .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
-            agenda.setEsquemaTurno(esquemaTurno);
-        }
-        return repository.save(agenda);
-    }
 
     /**
      * Configurar tiempo de sanitización para un esquema de turno
