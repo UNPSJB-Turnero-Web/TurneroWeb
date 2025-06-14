@@ -178,18 +178,25 @@ import { ModalService } from "../modal/modal.service";
     }
     
     .form-control-modern {
-      border: 2px solid #e9ecef;
+      border: 2px solid #b8e6b8;
       border-radius: 15px;
       padding: 0.75rem 1rem;
       font-size: 1rem;
       transition: all 0.3s ease;
-      background: white;
+      background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 100%);
+      color: #2d5a3d;
     }
     
     .form-control-modern:focus {
-      border-color: var(--consultorios-primary);
-      box-shadow: 0 0 0 0.2rem var(--consultorios-shadow);
+      border-color: #4a9960;
+      box-shadow: 0 0 0 0.2rem rgba(74, 153, 96, 0.25);
       outline: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f8f0 100%);
+    }
+    
+    .form-control-modern:hover {
+      border-color: #82d982;
+      background: linear-gradient(135deg, #fbfffa 0%, #ecf7ec 100%);
     }
     
     .form-help {
@@ -345,9 +352,24 @@ import { ModalService } from "../modal/modal.service";
     }
     
     .form-control-sm {
-      border-radius: 6px;
-      border: 1px solid #ddd;
+      border-radius: 8px;
+      border: 2px solid #a8d8ea;
       padding: 0.375rem 0.75rem;
+      background: linear-gradient(135deg, #f7fcff 0%, #e8f4f8 100%);
+      color: #2c5282;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control-sm:focus {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 0.15rem rgba(49, 130, 206, 0.25);
+      outline: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+    }
+    
+    .form-control-sm:hover {
+      border-color: #63b3ed;
+      background: linear-gradient(135deg, #fbfeff 0%, #ecf5f9 100%);
     }
     
     .form-check-input:checked {

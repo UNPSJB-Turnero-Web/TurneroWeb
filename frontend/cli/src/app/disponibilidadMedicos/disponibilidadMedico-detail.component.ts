@@ -46,7 +46,7 @@ import { ModalService } from '../modal/modal.service';
 
               <div class="info-item full-width">
                 <div class="info-label">
-                  <span class="info-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">🕐</span>
+                  <span class="info-icon" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);">🕐</span>
                   Horarios de Disponibilidad
                 </div>
                 <div class="horarios-table">
@@ -100,7 +100,7 @@ import { ModalService } from '../modal/modal.service';
               <div class="col-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">🕐</span>
+                    <span class="form-icon" style="background: linear-gradient(135deg, #4a90e2 0%, #7b68ee 100%);">🕐</span>
                     Horarios por Día
                   </label>
                   
@@ -372,25 +372,25 @@ import { ModalService } from '../modal/modal.service';
     }
     
     .dia-badge {
-      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 8px 12px;
       border-radius: 15px;
       font-size: 0.8rem;
       font-weight: 600;
       text-align: center;
-      box-shadow: 0 3px 10px rgba(255,154,158,0.3);
+      box-shadow: 0 3px 10px rgba(102,126,234,0.4);
     }
     
     .hora-badge {
-      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-      color: #495057;
+      background: linear-gradient(135deg, #667eea 0%, #5b86e5 100%);
+      color: white;
       padding: 8px 12px;
       border-radius: 15px;
       font-size: 0.8rem;
       font-weight: 600;
       text-align: center;
-      box-shadow: 0 3px 10px rgba(168,237,234,0.3);
+ box-shadow: 0 3px 10px rgba(102,126,234,0.4);
     }
     
     .no-horarios {
@@ -608,7 +608,7 @@ export class DisponibilidadMedicoDetailComponent {
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   modoEdicion = false;
   esNuevo = false;
-  
+
   // Parámetros de navegación de retorno
   returnTo: string | null = null;
   centroAtencionId: string | null = null;
@@ -619,44 +619,44 @@ export class DisponibilidadMedicoDetailComponent {
     private disponibilidadService: DisponibilidadMedicoService,
     private staffMedicoService: StaffMedicoService,
     private modalService: ModalService
-  ) {}
-  
-ngOnInit(): void {
-  const idParam = this.route.snapshot.paramMap.get('id');
-  const staffMedicoIdParam = this.route.snapshot.queryParamMap.get('staffMedicoId');
-  
-  // Capturar parámetros de navegación de retorno
-  this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-  this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+  ) { }
 
-  if (idParam) {
-    this.get();
-  } else {
-    this.modoEdicion = true;
-    this.esNuevo = true;
+  ngOnInit(): void {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    const staffMedicoIdParam = this.route.snapshot.queryParamMap.get('staffMedicoId');
 
-    // Si se pasa el staffMedicoId por la URL, asignarlo automáticamente
-    if (staffMedicoIdParam) {
-      const staffMedicoId = Number(staffMedicoIdParam);
-      if (!isNaN(staffMedicoId)) {
-        this.disponibilidad.staffMedicoId = staffMedicoId;
+    // Capturar parámetros de navegación de retorno
+    this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+
+    if (idParam) {
+      this.get();
+    } else {
+      this.modoEdicion = true;
+      this.esNuevo = true;
+
+      // Si se pasa el staffMedicoId por la URL, asignarlo automáticamente
+      if (staffMedicoIdParam) {
+        const staffMedicoId = Number(staffMedicoIdParam);
+        if (!isNaN(staffMedicoId)) {
+          this.disponibilidad.staffMedicoId = staffMedicoId;
+        }
       }
-    }
 
-    this.loadStaffMedicos();
+      this.loadStaffMedicos();
+    }
   }
-}
 
   get(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
       this.esNuevo = false;
-      
+
       // Capturar parámetros de navegación de retorno también en modo edición
       this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
       this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
-      
+
       const id = Number(idParam);
       if (isNaN(id)) {
         console.error('El ID proporcionado no es un número válido.');
@@ -686,7 +686,7 @@ ngOnInit(): void {
     this.disponibilidad.horarios.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
 
     const payload = { ...this.disponibilidad };
-    
+
     if (this.esNuevo) {
       // Crear nueva disponibilidad
       this.disponibilidadService.create(payload).subscribe({
@@ -761,8 +761,8 @@ ngOnInit(): void {
   }
 
   allFieldsEmpty(): boolean {
-    return !this.disponibilidad.staffMedicoId || 
-           this.disponibilidad.horarios.length === 0;
+    return !this.disponibilidad.staffMedicoId ||
+      this.disponibilidad.horarios.length === 0;
   }
 
   loadStaffMedicos(): void {

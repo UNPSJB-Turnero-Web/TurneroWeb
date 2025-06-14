@@ -605,7 +605,23 @@ import { ModalService } from '../modal/modal.service';
     
     .form-control-sm {
       border-radius: 8px;
-      border: 1px solid #ced4da;
+      border: 2px solid #a8d8ea;
+      padding: 0.375rem 0.75rem;
+      background: linear-gradient(135deg, #f7fcff 0%, #e8f4f8 100%);
+      color: #2c5282;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control-sm:focus {
+      border-color: #3182ce;
+      box-shadow: 0 0 0 0.15rem rgba(49, 130, 206, 0.25);
+      outline: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+    }
+    
+    .form-control-sm:hover {
+      border-color: #63b3ed;
+      background: linear-gradient(135deg, #fbfeff 0%, #ecf5f9 100%);
     }
     
     .btn-delete-small {
@@ -762,15 +778,22 @@ export class EsquemaTurnoDetailComponent {
   modoEdicion = false;
   esNuevo = false;
 
-  diasSemana: string[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  diasSemana: string[] = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   diasSemanaMap: { [key: string]: string } = {
-    Monday: 'Lunes',
-    Tuesday: 'Martes',
-    Wednesday: 'Miércoles',
-    Thursday: 'Jueves',
-    Friday: 'Viernes',
-    Saturday: 'Sábado',
-    Sunday: 'Domingo',
+    'Monday': 'LUNES',
+    'Tuesday': 'MARTES', 
+    'Wednesday': 'MIERCOLES',
+    'Thursday': 'JUEVES',
+    'Friday': 'VIERNES',
+    'Saturday': 'SABADO',
+    'Sunday': 'DOMINGO',
+    'LUNES': 'LUNES',
+    'MARTES': 'MARTES',
+    'MIERCOLES': 'MIERCOLES', 
+    'JUEVES': 'JUEVES',
+    'VIERNES': 'VIERNES',
+    'SABADO': 'SABADO',
+    'DOMINGO': 'DOMINGO'
   };
 
   constructor(
@@ -784,9 +807,13 @@ export class EsquemaTurnoDetailComponent {
   ) { }
 
   ngOnInit(): void {
-    this.loadDisponibilidadesMedico();
-    this.get();
-    this.loadStaffMedicos();
+    // Cargar datos dependientes primero
+    this.loadStaffMedicos(() => {
+      this.loadDisponibilidadesMedico(() => {
+        // Una vez cargados todos los datos, procesar el esquema
+        this.get();
+      });
+    });
   }
 
   // Helper methods for template binding to replace arrow functions
@@ -848,7 +875,22 @@ export class EsquemaTurnoDetailComponent {
             dia: this.diasSemanaMap[horario.dia] || horario.dia, // Convertir el día si es necesario
           }));
 
+          // Asignar la disponibilidad seleccionada
           this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
+          
+          // Si hay una disponibilidad asociada, cargar sus horarios
+          if (this.esquema.disponibilidadMedicoId) {
+            const disp = this.disponibilidadesMedico.find(d => d.id === this.esquema.disponibilidadMedicoId);
+            if (disp) {
+              this.esquema.horariosDisponibilidad = disp.horarios.map(horario => ({
+                dia: horario.dia,
+                horaInicio: horario.horaInicio,
+                horaFin: horario.horaFin
+              }));
+            }
+          }
+
+          // Cargar consultorios si hay un centro asociado
           if (this.esquema.centroId) {
             this.loadConsultorios(this.esquema.centroId);
           }
@@ -947,6 +989,11 @@ export class EsquemaTurnoDetailComponent {
   }
 
   save(): void {
+    // Asegurar que se use la disponibilidad seleccionada
+    if (this.selectedDisponibilidadId) {
+      this.esquema.disponibilidadMedicoId = this.selectedDisponibilidadId;
+    }
+
     const payload = { ...this.esquema };
 
     // Agregar un log para verificar el contenido del payload
