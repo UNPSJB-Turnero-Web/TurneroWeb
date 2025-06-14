@@ -355,6 +355,62 @@ import { ModalService } from "../modal/modal.service";
       border-color: var(--consultorios-primary);
     }
     
+    /* Estilos para el selector de tipo de horario */
+    .schedule-type-selector {
+      display: flex;
+      gap: 2rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+      margin-bottom: 1rem;
+    }
+    
+    .form-check-inline {
+      margin-right: 0;
+      flex: 1;
+    }
+    
+    .form-check-label {
+      cursor: pointer;
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .form-check-input[type="radio"]:checked + .form-check-label {
+      background: linear-gradient(135deg, var(--consultorios-primary) 0%, #138496 100%);
+      color: white;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+    }
+    
+    .form-check-label small {
+      opacity: 0.8;
+    }
+    
+    /* Estilos para badge de tipo de horario */
+    .schedule-type-badge {
+      margin-bottom: 0.5rem;
+    }
+    
+    .schedule-type-badge .badge {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 1rem;
+    }
+    
+    /* Estilos para badges de tipo de horario */
+    .schedule-type-badge {
+      margin-bottom: 0.5rem;
+    }
+    
+    .schedule-type-badge .badge {
+      font-size: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
       .container {
@@ -412,6 +468,11 @@ export class ConsultorioDetailComponent implements OnInit {
   modoEdicion = false;
   esNuevo = false;
   centroSearch = '';
+  tipoHorario: 'general' | 'especifico' = 'general';
+
+  // Parámetros de navegación de retorno
+  returnTo: string | null = null;
+  centroAtencionId: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -422,6 +483,10 @@ export class ConsultorioDetailComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    // Capturar parámetros de navegación de retorno
+    this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+
     const path = this.route.snapshot.routeConfig?.path;
     if (path === "consultorios/new") {
       // Nuevo consultorio
@@ -435,14 +500,19 @@ export class ConsultorioDetailComponent implements OnInit {
         medicoAsignado: "",
         telefono: "",
         centroAtencion: {} as CentroAtencion,
-        horaAperturaDefault: "08:00",
-        horaCierreDefault: "17:00"
+        horaAperturaDefault: "",
+        horaCierreDefault: ""
       };
       this.initializeWeeklySchedule();
       this.selectedCentroAtencion = undefined!;
     } else {
       // Edición o vista
       this.esNuevo = false;
+      
+      // Capturar parámetros de navegación de retorno también en modo edición
+      this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+      this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+      
       this.route.queryParams.subscribe(params => {
         this.modoEdicion = params['edit'] === 'true';
       });
@@ -453,14 +523,19 @@ export class ConsultorioDetailComponent implements OnInit {
 
   /**
    * Inicializa los horarios semanales con valores por defecto
+   * Solo debe usarse cuando no hay horarios por defecto definidos
    */
   private initializeWeeklySchedule(): void {
     const diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
     
+    // Usar los horarios por defecto del consultorio si existen, sino usar hardcodeados
+    const horaApertura = this.consultorio.horaAperturaDefault || "08:00";
+    const horaCierre = this.consultorio.horaCierreDefault || "17:00";
+    
     this.consultorio.horariosSemanales = diasSemana.map(dia => ({
       diaSemana: dia,
-      horaApertura: this.consultorio.horaAperturaDefault || "08:00",
-      horaCierre: this.consultorio.horaCierreDefault || "17:00",
+      horaApertura: horaApertura,
+      horaCierre: horaCierre,
       activo: dia !== 'SABADO' && dia !== 'DOMINGO' // Activo de lunes a viernes por defecto
     }));
     
@@ -468,26 +543,44 @@ export class ConsultorioDetailComponent implements OnInit {
   }
 
   /**
-   * Valida que los horarios sean consistentes
+   * Valida que los horarios sean consistentes según el tipo seleccionado
    */
   private validateSchedule(): boolean {
-    // Validar horarios por defecto
-    if (this.consultorio.horaAperturaDefault && this.consultorio.horaCierreDefault) {
+    if (this.tipoHorario === 'general') {
+      // Validar horarios por defecto
+      if (!this.consultorio.horaAperturaDefault || !this.consultorio.horaCierreDefault) {
+        this.modalService.alert('Error de Validación', 'Debe configurar la hora de apertura y cierre general.');
+        return false;
+      }
+      
       if (this.consultorio.horaAperturaDefault >= this.consultorio.horaCierreDefault) {
         this.modalService.alert('Error de Validación', 'La hora de apertura debe ser anterior a la hora de cierre.');
         return false;
       }
-    }
+    } else if (this.tipoHorario === 'especifico') {
+      // Validar horarios semanales
+      if (!this.consultorio.horariosSemanales || this.consultorio.horariosSemanales.length === 0) {
+        this.modalService.alert('Error de Validación', 'Debe configurar los horarios semanales.');
+        return false;
+      }
 
-    // Validar horarios semanales
-    if (this.consultorio.horariosSemanales) {
-      for (const horario of this.consultorio.horariosSemanales) {
-        if (horario.activo && horario.horaApertura && horario.horaCierre) {
-          if (horario.horaApertura >= horario.horaCierre) {
-            this.modalService.alert('Error de Validación', 
-              `En ${horario.diaSemana}: la hora de apertura debe ser anterior a la hora de cierre.`);
-            return false;
-          }
+      const horariosActivos = this.consultorio.horariosSemanales.filter(h => h.activo);
+      if (horariosActivos.length === 0) {
+        this.modalService.alert('Error de Validación', 'Debe activar al menos un día de la semana.');
+        return false;
+      }
+
+      for (const horario of horariosActivos) {
+        if (!horario.horaApertura || !horario.horaCierre) {
+          this.modalService.alert('Error de Validación', 
+            `Debe configurar hora de apertura y cierre para ${horario.diaSemana}.`);
+          return false;
+        }
+        
+        if (horario.horaApertura >= horario.horaCierre) {
+          this.modalService.alert('Error de Validación', 
+            `En ${horario.diaSemana}: la hora de apertura debe ser anterior a la hora de cierre.`);
+          return false;
         }
       }
     }
@@ -495,8 +588,21 @@ export class ConsultorioDetailComponent implements OnInit {
     return true;
   }
 
+  /**
+   * Navega de vuelta según el parámetro returnTo
+   */
+  private navigateBack(): void {
+    if (this.returnTo === 'centro-detail' && this.centroAtencionId) {
+      // Regresar al detalle del centro de atención
+      this.router.navigate(['/centrosAtencion', this.centroAtencionId]);
+    } else {
+      // Regresar a la lista de consultorios por defecto
+      this.router.navigate(['/consultorios']);
+    }
+  }
+
   goBack(): void {
-    this.router.navigate(['/consultorios']);
+    this.navigateBack();
   }
 
   save(): void {
@@ -524,17 +630,38 @@ export class ConsultorioDetailComponent implements OnInit {
       cierre: this.consultorio.horaCierreDefault
     });
 
-    // Asegurar que los horarios semanales estén correctamente formateados
-    if (this.consultorio.horariosSemanales && this.consultorio.horariosSemanales.length > 0) {
-      this.consultorio.horariosSemanales = this.consultorio.horariosSemanales.map(horario => ({
+    console.log('=== DEBUG: Procesando horarios según tipo:', this.tipoHorario);
+    
+    // Procesar según el tipo de horario seleccionado
+    if (this.tipoHorario === 'general') {
+      // Modo horario general: usar horarios por defecto y limpiar horarios específicos
+      if (!this.consultorio.horaAperturaDefault || !this.consultorio.horaCierreDefault) {
+        this.modalService.alert('Error', 'Debe configurar los horarios generales.');
+        return;
+      }
+      
+      // Limpiar horarios específicos en modo general
+      this.consultorio.horariosSemanales = [];
+      
+    } else if (this.tipoHorario === 'especifico') {
+      // Modo horario específico: usar horarios semanales y limpiar horarios por defecto
+      const tieneHorariosActivos = this.consultorio.horariosSemanales?.some(h => h.activo);
+      if (!tieneHorariosActivos) {
+        this.modalService.alert('Error', 'Debe configurar al menos un día con horarios específicos.');
+        return;
+      }
+      
+      // Limpiar horarios por defecto en modo específico
+      this.consultorio.horaAperturaDefault = '';
+      this.consultorio.horaCierreDefault = '';
+      
+      // Procesar horarios semanales
+      this.consultorio.horariosSemanales = this.consultorio.horariosSemanales?.map(horario => ({
         diaSemana: horario.diaSemana,
         horaApertura: horario.activo ? horario.horaApertura : undefined,
         horaCierre: horario.activo ? horario.horaCierre : undefined,
         activo: horario.activo
-      }));
-    } else {
-      // Si no hay horarios semanales, crear los por defecto
-      this.initializeWeeklySchedule();
+      })) || [];
     }
 
     console.log('Horarios después de procesar:', this.consultorio.horariosSemanales);
@@ -542,9 +669,14 @@ export class ConsultorioDetailComponent implements OnInit {
     // Crear copia del consultorio para envío
     const consultorioParaEnvio = {
       ...this.consultorio,
-      centroAtencion: undefined // No enviar el objeto completo para evitar conflictos
+      centroAtencion: undefined, // No enviar el objeto completo para evitar conflictos
+      horaAperturaDefault: this.convertTimeToBackend(this.consultorio.horaAperturaDefault || ''),
+      horaCierreDefault: this.convertTimeToBackend(this.consultorio.horaCierreDefault || '')
     };
 
+    console.log('=== DEBUG: Valores convertidos para envío ===');
+    console.log('horaAperturaDefault para envío:', consultorioParaEnvio.horaAperturaDefault);
+    console.log('horaCierreDefault para envío:', consultorioParaEnvio.horaCierreDefault);
     console.log('Datos del consultorio a enviar:', consultorioParaEnvio);
 
     const op = this.consultorio.id
@@ -554,19 +686,57 @@ export class ConsultorioDetailComponent implements OnInit {
     op.subscribe({
       next: (response) => {
         console.log('Consultorio guardado exitosamente:', response);
-        this.router.navigate(["/consultorios"]);
+        this.navigateBack();
       },
       error: (err) => {
         console.error('Error al guardar el consultorio:', err);
         this.modalService.alert("Error", "No se pudo guardar el consultorio.");
       },
     });
-  }  private loadConsultorio(): void {
+  }  /**
+   * Convierte tiempo del formato del backend (HH:MM:SS) al formato del frontend (HH:MM)
+   */
+  private convertTimeFromBackend(time: string): string {
+    if (!time) return '';
+    // Si ya está en formato HH:MM, lo devolvemos tal como está
+    if (time.length === 5) return time;
+    // Si está en formato HH:MM:SS, cortamos los segundos
+    return time.substring(0, 5);
+  }
+
+  /**
+   * Convierte tiempo del formato del frontend (HH:MM) al formato del backend (HH:MM:SS)
+   */
+  private convertTimeToBackend(time: string): string {
+    if (!time) return '';
+    // Si ya está en formato HH:MM:SS, lo devolvemos tal como está
+    if (time.length === 8) return time;
+    // Si está en formato HH:MM, agregamos :00
+    return time + ':00';
+  }
+
+  private loadConsultorio(): void {
     const id = Number(this.route.snapshot.paramMap.get("id"));
     this.consultorioService.getById(id).subscribe({
       next: (pkg) => {
         console.log('Consultorio cargado:', pkg.data);
+        console.log('=== DEBUG: Valores de horarios del backend ===');
+        console.log('horaAperturaDefault del backend:', pkg.data.horaAperturaDefault);
+        console.log('horaCierreDefault del backend:', pkg.data.horaCierreDefault);
+        
         this.consultorio = pkg.data;
+
+        // Convertir formatos de tiempo del backend al frontend
+        if (this.consultorio.horaAperturaDefault) {
+          this.consultorio.horaAperturaDefault = this.convertTimeFromBackend(this.consultorio.horaAperturaDefault);
+        }
+        if (this.consultorio.horaCierreDefault) {
+          this.consultorio.horaCierreDefault = this.convertTimeFromBackend(this.consultorio.horaCierreDefault);
+        }
+
+        console.log('=== DEBUG: Valores después de conversión ===');
+        console.log('horaAperturaDefault convertida:', this.consultorio.horaAperturaDefault);
+        console.log('horaCierreDefault convertida:', this.consultorio.horaCierreDefault);
 
         // Asignar el centro de atención usando los datos que ya vienen del backend
         if (this.consultorio.centroId && this.consultorio.nombreCentro) {
@@ -588,19 +758,99 @@ export class ConsultorioDetailComponent implements OnInit {
           console.log('Horarios semanales existentes:', this.consultorio.horariosSemanales);
         }
 
-        // Asegurar que tienen valores por defecto
-        if (!this.consultorio.horaAperturaDefault) {
-          this.consultorio.horaAperturaDefault = "08:00";
-        }
-        if (!this.consultorio.horaCierreDefault) {
-          this.consultorio.horaCierreDefault = "17:00";
-        }
+        // Determinar qué tipo de horario está configurado
+        this.determinarTipoHorario();
+
+
       },
       error: (err) => {
         console.error('Error al cargar el consultorio:', err);
         this.modalService.alert('Error', 'No se pudo cargar la información del consultorio.');
       }
     });
+  }
+
+  /**
+   * Determina automáticamente qué tipo de horario usar basándose en los datos existentes
+   */
+  private determinarTipoHorario(): void {
+    // Si hay horarios específicos configurados (al menos uno activo con horarios diferentes al default)
+    const tieneHorariosEspecificos = this.consultorio.horariosSemanales?.some(horario => 
+      horario.activo && (
+        horario.horaApertura !== this.consultorio.horaAperturaDefault ||
+        horario.horaCierre !== this.consultorio.horaCierreDefault
+      )
+    );
+
+    // Si hay horarios por defecto pero no horarios específicos configurados
+    const tieneHorariosGenerales = this.consultorio.horaAperturaDefault && 
+                                   this.consultorio.horaCierreDefault && 
+                                   !tieneHorariosEspecificos;
+
+    if (tieneHorariosEspecificos) {
+      this.tipoHorario = 'especifico';
+    } else {
+      this.tipoHorario = 'general';
+    }
+
+    console.log('Tipo de horario determinado:', this.tipoHorario);
+  }
+
+  /**
+   * Verifica si hay horarios específicos configurados
+   */
+  tieneHorariosEspecificos(): boolean {
+    return this.consultorio.horariosSemanales?.some(h => h.activo) || false;
+  }
+
+
+  /**
+   * Maneja el cambio de tipo de horario
+   */
+  onTipoHorarioChange(): void {
+    console.log('Cambio de tipo de horario a:', this.tipoHorario);
+    
+    if (this.tipoHorario === 'general') {
+      // Si cambia a general, limpiar horarios específicos y usar valores por defecto
+      this.limpiarHorariosEspecificos();
+    } else if (this.tipoHorario === 'especifico') {
+      // Si cambia a específico, inicializar horarios semanales basándose en los horarios generales
+      this.inicializarHorariosEspecificosDesdeGenerales();
+    }
+  }
+
+  /**
+   * Limpia los horarios específicos cuando se selecciona horario general
+   */
+  private limpiarHorariosEspecificos(): void {
+    if (this.consultorio.horariosSemanales) {
+      this.consultorio.horariosSemanales = this.consultorio.horariosSemanales.map(horario => ({
+        ...horario,
+        horaApertura: '',
+        horaCierre: '',
+        activo: false
+      }));
+    }
+  }
+
+  /**
+   * Inicializa horarios específicos basándose en los horarios generales
+   */
+  private inicializarHorariosEspecificosDesdeGenerales(): void {
+    const horaApertura = this.consultorio.horaAperturaDefault || "08:00";
+    const horaCierre = this.consultorio.horaCierreDefault || "17:00";
+    
+    if (!this.consultorio.horariosSemanales || this.consultorio.horariosSemanales.length === 0) {
+      this.initializeWeeklySchedule();
+    } else {
+      // Actualizar horarios existentes con los valores generales
+      this.consultorio.horariosSemanales = this.consultorio.horariosSemanales.map(horario => ({
+        ...horario,
+        horaApertura: horaApertura,
+        horaCierre: horaCierre,
+        activo: horario.diaSemana !== 'SABADO' && horario.diaSemana !== 'DOMINGO'
+      }));
+    }
   }
 
   private getCentrosAtencion(): void {
@@ -626,12 +876,6 @@ export class ConsultorioDetailComponent implements OnInit {
     // Actualizar el campo de búsqueda con el nombre del centro seleccionado
     this.centroSearch = event.item.nombre;
     console.log('Centro seleccionado:', this.selectedCentroAtencion);
-  }
-
-  allFieldsEmpty(): boolean {
-    return !this.consultorio?.numero &&
-      !this.consultorio?.nombre &&
-      !this.selectedCentroAtencion;
   }
 
   remove(): void {
@@ -678,8 +922,8 @@ export class ConsultorioDetailComponent implements OnInit {
       });
       this.modoEdicion = false;
     } else {
-      // Si es un nuevo consultorio, volvemos a la lista
-      this.goBack();
+      // Si es un nuevo consultorio, usamos navegación de retorno
+      this.navigateBack();
     }
   }
 }

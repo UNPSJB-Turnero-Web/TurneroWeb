@@ -185,6 +185,9 @@ public class ConsultorioService {
             }
             existente.setNumero(consultorio.getNumero());
             existente.setNombre(consultorio.getNombre());
+            existente.setHoraAperturaDefault(consultorio.getHoraAperturaDefault());
+            existente.setHoraCierreDefault(consultorio.getHoraCierreDefault());
+            existente.setHorariosSemanales(consultorio.getHorariosSemanales());
             consultorio = existente;
         }
 

@@ -400,9 +400,12 @@
               </div>
           
             </div>
-            <div *ngIf="!modoCrearConsultorio">
+            <div *ngIf="!modoCrearConsultorio" class="d-flex gap-2">
               <button class="btn-modern btn-success-modern" (click)="modoCrearConsultorio = true">
                 <i class="fa fa-plus me-2"></i> Nuevo Consultorio
+              </button>
+              <button class="btn-modern btn-primary-modern" (click)="crearNuevoConsultorio()">
+                <i class="fa fa-external-link me-2"></i> Formulario Completo
               </button>
             </div>
           </div>

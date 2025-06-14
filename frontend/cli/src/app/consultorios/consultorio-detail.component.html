@@ -55,7 +55,11 @@
                   Horarios de Atención
                 </div>
                 <div class="info-value">
-                  <div *ngIf="consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0; else noSchedule">
+                  <!-- Mostrar horarios específicos si existen y están configurados -->
+                  <div *ngIf="tieneHorariosEspecificos(); else generalSchedule">
+                    <div class="schedule-type-badge mb-2">
+                      <span class="badge bg-primary">📅 Horarios Específicos por Día</span>
+                    </div>
                     <div class="schedule-display">
                       <div *ngFor="let horario of consultorio.horariosSemanales" class="schedule-day" 
                            [ngClass]="{'inactive-day': !horario.activo}">
@@ -67,9 +71,14 @@
                       </div>
                     </div>
                   </div>
-                  <ng-template #noSchedule>
+                  
+                  <!-- Mostrar horarios generales como fallback -->
+                  <ng-template #generalSchedule>
+                    <div class="schedule-type-badge mb-2">
+                      <span class="badge bg-success">⏰ Horario General</span>
+                    </div>
                     <div class="default-hours" *ngIf="consultorio.horaAperturaDefault && consultorio.horaCierreDefault">
-                      <strong>Horario General:</strong> {{ consultorio.horaAperturaDefault }} - {{ consultorio.horaCierreDefault }}
+                      <strong>Todos los días:</strong> {{ consultorio.horaAperturaDefault }} - {{ consultorio.horaCierreDefault }}
                     </div>
                     <span class="text-muted" *ngIf="!consultorio.horaAperturaDefault">Sin horarios configurados</span>
                   </ng-template>
@@ -156,12 +165,54 @@
                 </div>
               </div>
 
-              <!-- Horarios por Defecto -->
+              <!-- Selector de Tipo de Horario -->
               <div class="col-md-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">🕐</span>
-                    Horarios por Defecto
+                    Configuración de Horarios
+                  </label>
+                  <div class="schedule-type-selector">
+                    <div class="form-check form-check-inline">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        name="tipoHorario"
+                        id="horarioGeneral"
+                        value="general"
+                        [(ngModel)]="tipoHorario"
+                        (change)="onTipoHorarioChange()"
+                      />
+                      <label class="form-check-label" for="horarioGeneral">
+                        <strong>Horario General</strong>
+                        <small class="d-block text-muted">Mismo horario todos los días</small>
+                      </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        name="tipoHorario"
+                        id="horarioEspecifico"
+                        value="especifico"
+                        [(ngModel)]="tipoHorario"
+                        (change)="onTipoHorarioChange()"
+                      />
+                      <label class="form-check-label" for="horarioEspecifico">
+                        <strong>Horarios Específicos</strong>
+                        <small class="d-block text-muted">Diferentes horarios por día</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios por Defecto (Solo si tipo = general) -->
+              <div class="col-md-12" *ngIf="tipoHorario === 'general'">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">⏰</span>
+                    Horario General
                   </label>
                   <div class="row">
                     <div class="col-md-6">
@@ -171,6 +222,7 @@
                         class="form-control form-control-modern"
                         name="horaAperturaDefault"
                         [(ngModel)]="consultorio.horaAperturaDefault"
+                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -180,17 +232,18 @@
                         class="form-control form-control-modern"
                         name="horaCierreDefault"
                         [(ngModel)]="consultorio.horaCierreDefault"
+                        required
                       />
                     </div>
                   </div>
                   <div class="form-help">
-                    Horarios generales del consultorio. Se pueden personalizar por día de la semana abajo.
+                    Este horario se aplicará a todos los días de la semana.
                   </div>
                 </div>
               </div>
 
-              <!-- Horarios por Día de la Semana -->
-              <div class="col-md-12">
+              <!-- Horarios por Día de la Semana (Solo si tipo = especifico) -->
+              <div class="col-md-12" *ngIf="tipoHorario === 'especifico'">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">📅</span>
@@ -277,7 +330,6 @@
               <button 
                 type="submit" 
                 class="btn btn-modern btn-save" 
-                [disabled]="form.invalid"
                 (click)="save()"
               >
                 💾 Guardar

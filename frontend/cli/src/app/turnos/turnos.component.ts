@@ -109,7 +109,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let turno of resultsPage.content; let i = index"
+                *ngFor="let turno of resultsPage.content || []; let i = index"
                 class="table-row"
                 (click)="goToDetail(turno.id)"
                 [style.animation-delay]="(i * 100) + 'ms'"
@@ -513,7 +513,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
   `]
 })
 export class TurnosComponent {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
 
   constructor(

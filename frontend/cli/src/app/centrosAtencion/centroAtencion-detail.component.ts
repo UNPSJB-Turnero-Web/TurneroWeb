@@ -1221,4 +1221,16 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       console.error('Error cargando datos:', error);
     });
   }
+
+  /**
+   * Navega al formulario de creación de consultorios con parámetros de retorno
+   */
+  crearNuevoConsultorio(): void {
+    this.router.navigate(['/consultorios/new'], { 
+      queryParams: { 
+        centroAtencionId: this.centroAtencion.id,
+        returnTo: 'centro-detail'
+      } 
+    });
+  }
 }

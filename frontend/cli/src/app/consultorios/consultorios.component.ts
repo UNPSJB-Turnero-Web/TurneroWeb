@@ -76,7 +76,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let c of resultsPage.content; let i = index"
+                *ngFor="let c of resultsPage.content || []; let i = index"
                 class="table-row"
                 [class.even]="i % 2 === 0"
                 [class.odd]="i % 2 !== 0"
@@ -118,7 +118,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </td>
               </tr>
-              <tr *ngIf="resultsPage.content.length === 0">
+              <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
                 <td colspan="4" class="text-center py-4 text-muted">
                   <i class="fas fa-door-open fa-3x mb-3 d-block opacity-50"></i>
                   No hay consultorios registrados
@@ -135,6 +135,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
         [currentPage]="currentPage"
         (pageChangeRequested)="onPageChangeRequested($event)"
         [number]="resultsPage.number"
+        [last]="resultsPage.last"
         [hidden]="resultsPage.numberOfElements < 1"
       ></app-pagination>
     </div>
@@ -372,7 +373,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
   `]
 })
 export class ConsultoriosComponent implements OnInit {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
 
   constructor(

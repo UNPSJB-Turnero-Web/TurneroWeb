@@ -110,7 +110,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let paciente of resultsPage.content; let i = index"
+            <tr *ngFor="let paciente of resultsPage.content || []; let i = index"
                 (click)="goToDetail(paciente.id)"
                 class="hover-pacientes cursor-pointer">
               <td class="ps-4 py-3">
@@ -214,7 +214,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
   `]
 })
 export class PacientesComponent {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
 
   constructor(

@@ -236,7 +236,6 @@ import { ModalService } from '../modal/modal.service';
               <button 
                 type="submit" 
                 class="btn btn-modern btn-save" 
-                [disabled]="allFieldsEmpty() || form.invalid"
                 (click)="save()"
               >
                 💾 Guardar
@@ -762,14 +761,6 @@ export class MedicoDetailComponent implements OnInit {
 
   compareEspecialidad(e1: Especialidad, e2: Especialidad): boolean {
     return e1 && e2 ? e1.id === e2.id : e1 === e2;
-  }
-
-  allFieldsEmpty(): boolean {
-    return !this.medico?.nombre &&
-      !this.medico?.apellido &&
-      !this.medico?.dni &&
-      !this.medico?.matricula &&
-      !this.selectedEspecialidad;
   }
 
   remove(): void {

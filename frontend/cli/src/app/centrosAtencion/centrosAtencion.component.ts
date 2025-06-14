@@ -93,7 +93,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let centro of resultsPage.content; let i = index"
+                *ngFor="let centro of resultsPage.content || []; let i = index"
                 class="table-row"
                 [class.even]="i % 2 === 0"
                 [class.odd]="i % 2 !== 0"
@@ -625,7 +625,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
   `]
 })
 export class CentrosAtencionComponent {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
   modoEdicion: boolean = false;
   selectedId?: number;

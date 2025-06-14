@@ -109,7 +109,7 @@ import { FormsModule } from '@angular/forms';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let esquema of resultsPage.content; let i = index"
+                *ngFor="let esquema of resultsPage.content || []; let i = index"
                 class="table-row"
                 (click)="goToDetail(esquema.id)"
                 [style.animation-delay]="(i * 100) + 'ms'"
@@ -514,7 +514,16 @@ import { FormsModule } from '@angular/forms';
   `]
 })
 export class EsquemaTurnoComponent {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];

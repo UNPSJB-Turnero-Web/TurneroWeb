@@ -78,7 +78,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </thead>
             <tbody>
               <tr 
-                *ngFor="let especialidad of resultsPage.content; let i = index"
+                *ngFor="let especialidad of resultsPage.content || []; let i = index"
                 class="table-row"
                 (click)="goToDetail(especialidad.id)"
                 [style.animation-delay]="(i * 100) + 'ms'"
@@ -353,7 +353,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
   `]
 })
 export class EspecialidadesComponent {
-  resultsPage: ResultsPage = <ResultsPage>{};
+  resultsPage: ResultsPage = {
+    content: [],
+    totalElements: 0,
+    totalPages: 0,
+    number: 0,
+    size: 10,
+    numberOfElements: 0,
+    first: true,
+    last: true
+  };
   currentPage: number = 1;
 
   constructor(
