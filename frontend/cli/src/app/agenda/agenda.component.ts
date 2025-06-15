@@ -179,7 +179,7 @@ interface SlotDisponible {
                       [class.selected]="slotSeleccionado?.id === slot.id"
                       [class.slot-excepcional]="esDiaExcepcional(slot.fecha) || slot.enMantenimiento"
                       [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
-                      [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' || slot.enMantenimiento"
+                      [class.slot-mantenimiento]="slot.enMantenimiento || (getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha))"
                       [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
                       [class.slot-ocupado]="slot.ocupado"
                       (click)="seleccionarSlot(slot)">
@@ -1617,6 +1617,12 @@ export class AgendaComponent implements OnInit {
   tieneSlotsEnMantenimiento(fecha: string): boolean {
     const slotsDelDia = this.slotsPorFecha[fecha] || [];
     return slotsDelDia.some(slot => slot.enMantenimiento);
+  }
+
+  // Verificar si un día excepcional tiene franja horaria específica (no es día completo)
+  tieneFranjaHoraria(fecha: string): boolean {
+    const dias = this.diasExcepcionalesService.getDiasExcepcionalesPorFecha(fecha);
+    return dias.some(dia => dia.apertura && dia.cierre);
   }
 
   getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {

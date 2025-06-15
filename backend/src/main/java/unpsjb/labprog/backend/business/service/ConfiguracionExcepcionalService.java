@@ -147,29 +147,37 @@ public class ConfiguracionExcepcionalService {
                                                    LocalTime horaTurno, Integer duracionTurno) {
         LocalTime finTurno = horaTurno.plusMinutes(duracionTurno);
         
-        // DEBUG: Log detailed maintenance check
         List<ConfiguracionExcepcional> mantenimientos = repository
             .findByFechaAndConsultorio_IdAndActivoTrue(fecha, consultorioId);
         
-        System.out.println("=== MAINTENANCE CHECK DETAILS ===");
-        System.out.println("Checking slot: " + horaTurno + "-" + finTurno + " on " + fecha + " for consultorio " + consultorioId);
-        System.out.println("Found " + mantenimientos.size() + " maintenance configurations:");
+        // Filter maintenance configurations
+        List<ConfiguracionExcepcional> mantenimientosReales = mantenimientos.stream()
+            .filter(m -> m.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO)
+            .collect(Collectors.toList());
         
-        for (ConfiguracionExcepcional mant : mantenimientos) {
-            if (mant.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO) {
-                System.out.println("  - Maintenance: " + mant.getHoraInicio() + "-" + mant.getHoraFin() + " (" + mant.getDescripcion() + ")");
-                boolean conflict = hayConflictoHorario(horaTurno, finTurno, mant.getHoraInicio(), mant.getHoraFin());
-                System.out.println("    Conflict with slot " + horaTurno + "-" + finTurno + ": " + conflict);
-                if (conflict) {
-                    System.out.println("*** SLOT MARKED AS MAINTENANCE ***");
-                    return true;
-                }
+        // Log only if there are actual maintenance configurations
+        if (!mantenimientosReales.isEmpty()) {
+            System.out.println("=== MAINTENANCE CHECK ===");
+            System.out.println("Checking slot: " + horaTurno + "-" + finTurno + " on " + fecha + " for consultorio " + consultorioId);
+            System.out.println("Found " + mantenimientosReales.size() + " maintenance configurations:");
+            for (ConfiguracionExcepcional mant : mantenimientosReales) {
+                System.out.println("  - Maint ID: " + mant.getId() + ", Consultorio: " + 
+                                 (mant.getConsultorio() != null ? mant.getConsultorio().getId() : "NULL") + 
+                                 ", Horario: " + mant.getHoraInicio() + "-" + mant.getHoraFin() + 
+                                 ", Descripcion: " + mant.getDescripcion());
             }
         }
         
-        boolean result = tieneMantenimientoEnHorario(fecha, consultorioId, horaTurno, finTurno);
-        System.out.println("Final result for slot " + horaTurno + "-" + finTurno + ": " + result);
-        return result;
+        for (ConfiguracionExcepcional mant : mantenimientosReales) {
+            boolean conflict = hayConflictoHorario(horaTurno, finTurno, mant.getHoraInicio(), mant.getHoraFin());
+            if (conflict) {
+                System.out.println("*** SLOT " + horaTurno + "-" + finTurno + " CONFLICTS WITH MAINTENANCE " + 
+                                 mant.getHoraInicio() + "-" + mant.getHoraFin() + " ***");
+                return true;
+            }
+        }
+        
+        return false; // No conflicts found
     }
 
     /**
