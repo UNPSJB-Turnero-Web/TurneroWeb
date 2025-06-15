@@ -82,6 +82,35 @@
   --obra-social-gradient: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
   --obra-social-shadow: rgba(108, 117, 125, 0.4);
 
+  /* === COLORES PARA NAVEGACIÓN E INTERFAZ === */
+  /* 📊 Dashboard - Azul empresarial */
+  --dashboard-color: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  
+  /* 📅 Mis Turnos - Verde teal */
+  --mis-turnos-color: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+  
+  /* ➕ Agendar - Verde éxito */
+  --agendar-color: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  
+  /* ⚙️ Configuración - Gris neutro */
+  --configuracion-color: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+  
+  /* 🚪 Logout - Rojo discreto */
+  --logout-color: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+
+  /* === COLORES ADICIONALES PARA ICONOS === */
+  --centro-atencion-color: var(--centro-atencion-gradient);
+  --consultorios-color: var(--consultorios-gradient);
+  --medicos-color: var(--medicos-gradient);
+  --staff-medico-color: var(--staff-medico-gradient);
+  --pacientes-color: var(--pacientes-gradient);
+  --obra-social-color: var(--obra-social-gradient);
+  --disponibilidad-color: var(--disponibilidad-gradient);
+  --esquema-turno-color: var(--esquema-turno-gradient);
+  --agenda-color: var(--agenda-gradient);
+  --dias-excepcionales-color: var(--agenda-gradient);
+  --turnos-color: var(--turnos-gradient);
+
   /* === COLORES DE ACCIÓN UNIVERSAL === */
   --action-edit: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
   --action-edit-shadow: rgba(23, 162, 184, 0.4);
