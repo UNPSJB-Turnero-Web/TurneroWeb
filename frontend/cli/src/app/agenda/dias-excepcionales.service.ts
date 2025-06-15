@@ -128,6 +128,26 @@ export class DiasExcepcionalesService {
   }
 
   /**
+   * Obtiene todas las excepciones de un día específico
+   */
+  getExcepcionesDelDia(fecha: string): Array<{
+    tipo: 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO';
+    descripcion?: string;
+    horaInicio?: string;
+    horaFin?: string;
+  }> {
+    const dias = this.diasExcepcionales.value;
+    const excepcionesDelDia = dias.filter(dia => dia.fecha === fecha);
+    
+    return excepcionesDelDia.map(dia => ({
+      tipo: dia.tipoAgenda,
+      descripcion: dia.descripcion,
+      horaInicio: dia.apertura,
+      horaFin: dia.cierre
+    }));
+  }
+
+  /**
    * Obtiene la descripción del día excepcional
    */
   getDescripcionExcepcion(fecha: string): string | null {

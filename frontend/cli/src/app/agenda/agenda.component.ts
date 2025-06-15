@@ -772,7 +772,7 @@ interface SlotDisponible {
       margin: 0;
       font-size: 1.4rem;
       font-weight: 600;
-      color: #495057;
+      color: #2c3e50;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -783,12 +783,13 @@ interface SlotDisponible {
       align-items: center;
       gap: 0.5rem;
       padding: 0.4rem 0.8rem;
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
       font-size: 0.85rem;
-      font-weight: 500;
-      color: #495057;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      font-weight: 600;
+      color: #2c3e50;
+      border: 2px solid rgba(44, 62, 80, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .exception-icon {
@@ -919,7 +920,7 @@ interface SlotDisponible {
     }
 
     .slot-location {
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
     }
 
     .location-line {
@@ -932,7 +933,8 @@ interface SlotDisponible {
     }
 
     .slot-patient {
-      margin-bottom: 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1.2rem;
       padding: 0.5rem;
       background: rgba(40, 167, 69, 0.1);
       border-radius: 8px;
@@ -949,6 +951,7 @@ interface SlotDisponible {
 
     /* Información de día excepcional en slots */
     .slot-exception {
+      margin-top: 1.5rem;
       margin-bottom: 1rem;
       padding: 0.75rem;
       background: rgba(220, 53, 69, 0.05);
@@ -1048,6 +1051,15 @@ interface SlotDisponible {
       display: flex;
       align-items: center;
       gap: 0.3rem;
+      z-index: 10;
+    }
+
+    /* Ajustar posición del status en slots con excepciones */
+    .slot-card.slot-excepcional .slot-status {
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
     }
 
     .slot-status:not(.disponible) {
@@ -1683,7 +1695,7 @@ export class AgendaComponent implements OnInit {
   getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
     // Priorizar mantenimiento específico del slot
     if (slot?.enMantenimiento) {
-      return 'Mantenimiento del Slot';
+      return 'Mantenimiento';
     }
     
     // Verificar si es día excepcional completo
@@ -1724,7 +1736,7 @@ export class AgendaComponent implements OnInit {
     if (slot?.enMantenimiento && slot?.titulo) {
       // El título viene como "MANTENIMIENTO: descripción", extraer solo la descripción
       const match = slot.titulo.match(/MANTENIMIENTO:\s*(.+)/);
-      return match ? match[1] : 'Mantenimiento programado del slot';
+      return match ? match[1] : 'Mantenimiento programado en este horario';
     }
     
     // Si es un slot individual en mantenimiento pero no tiene título específico

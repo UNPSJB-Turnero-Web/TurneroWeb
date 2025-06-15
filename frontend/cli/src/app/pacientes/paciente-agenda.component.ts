@@ -218,19 +218,16 @@ interface SlotDisponible {
                 <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
                   <!-- Header de fecha -->
                   <div class="fecha-header" 
-                       [class.fecha-excepcional]="esDiaExcepcional(fecha)"
-                       [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
-                       [class.fecha-mantenimiento]="getTipoExcepcion(fecha) === 'MANTENIMIENTO'"
-                       [class.fecha-atencion-especial]="getTipoExcepcion(fecha) === 'ATENCION_ESPECIAL'">
+                       [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'">
                     <div class="fecha-info">
                       <h3 class="fecha-title">
                         <i class="fas fa-calendar-day"></i>
                         {{ formatearFecha(fecha) }}
                       </h3>
-                      <!-- Indicador de día excepcional en header -->
-                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha)">
-                        <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
-                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }}</span>
+                      <!-- Solo mostrar feriados para pacientes -->
+                      <div class="fecha-exception-badge" *ngIf="getTipoExcepcion(fecha) === 'FERIADO'">
+                        <span class="exception-icon">🏖️</span>
+                        <span class="exception-label">Feriado</span>
                         <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
                           - {{ getDescripcionExcepcion(fecha) }}
                         </span>
@@ -244,11 +241,7 @@ interface SlotDisponible {
                       *ngFor="let slot of slotsPorFecha[fecha]" 
                       class="slot-card"
                       [class.selected]="slotSeleccionado?.id === slot.id"
-                      [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
-                      [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
-                      [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
-                      [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
-                      [class.slot-ocupado]="slot.ocupado"
+                      [class.slot-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
                       (click)="seleccionarSlot(slot)">
                       
                       <div class="slot-time">
@@ -277,31 +270,14 @@ interface SlotDisponible {
                         </div>
                       </div>
 
-                      <!-- Estado del slot -->
-                      <div class="slot-status" *ngIf="slot.ocupado">
+                      <!-- Estado del slot simplificado para pacientes -->
+                      <div class="slot-status" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
                         <i class="fas fa-lock"></i>
                         Ocupado
                       </div>
-                      <div class="slot-status disponible" *ngIf="!slot.ocupado">
+                      <div class="slot-status disponible" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
                         <i class="fas fa-check-circle"></i>
                         Disponible
-                      </div>
-
-                      <!-- Información de día excepcional -->
-                      <div class="slot-exception" *ngIf="esDiaExcepcional(slot.fecha)">
-                        <div class="exception-badge">
-                          <span class="exception-icon">{{ getIconoExcepcion(slot.fecha) }}</span>
-                          <div class="exception-info">
-                            <span class="exception-type">{{ getTipoExcepcionLabel(slot.fecha) }}</span>
-                            <span class="exception-description" *ngIf="getDescripcionExcepcion(slot.fecha)">
-                              {{ getDescripcionExcepcion(slot.fecha) }}
-                            </span>
-                          </div>
-                        </div>
-                        <div class="exception-warning">
-                          <i class="fas fa-exclamation-triangle"></i>
-                          <span>No disponible para reserva</span>
-                        </div>
                       </div>
 
                       <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
@@ -741,24 +717,9 @@ interface SlotDisponible {
       margin-bottom: 1rem;
     }
 
-    .fecha-header.fecha-excepcional {
-      border-left-width: 6px;
-      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    }
-
     .fecha-header.fecha-feriado {
       border-left-color: #dc3545;
       background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
-    }
-
-    .fecha-header.fecha-mantenimiento {
-      border-left-color: #fd7e14;
-      background: linear-gradient(135deg, #ffe8d1 0%, #ffc947 100%);
-    }
-
-    .fecha-header.fecha-atencion-especial {
-      border-left-color: #6f42c1;
-      background: linear-gradient(135deg, #e2d9f3 0%, #c8a4d8 100%);
     }
 
     .fecha-info {
@@ -772,7 +733,7 @@ interface SlotDisponible {
       margin: 0;
       font-size: 1.4rem;
       font-weight: 600;
-      color: #495057;
+      color: #2c3e50;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -783,12 +744,13 @@ interface SlotDisponible {
       align-items: center;
       gap: 0.5rem;
       padding: 0.4rem 0.8rem;
-      background: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
       font-size: 0.85rem;
-      font-weight: 500;
-      color: #495057;
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      font-weight: 600;
+      color: #721c24;
+      border: 2px solid rgba(220, 53, 69, 0.4);
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
     }
 
     .exception-icon {
@@ -801,7 +763,7 @@ interface SlotDisponible {
 
     .exception-description {
       font-style: italic;
-      color: #6c757d;
+      color: #8b2635;
     }
 
     /* SLOTS GRID */
@@ -844,26 +806,6 @@ interface SlotDisponible {
     .slot-card.slot-ocupado:hover {
       transform: none;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    /* Exceptional day slots */
-    .slot-card.slot-excepcional {
-      border-width: 3px;
-    }
-
-    .slot-card.slot-feriado {
-      border-color: #dc3545;
-      background: rgba(220, 53, 69, 0.05);
-    }
-
-    .slot-card.slot-mantenimiento {
-      border-color: #fd7e14;
-      background: rgba(253, 126, 20, 0.05);
-    }
-
-    .slot-card.slot-atencion-especial {
-      border-color: #6f42c1;
-      background: rgba(111, 66, 193, 0.05);
     }
 
     .slot-time {
@@ -944,95 +886,6 @@ interface SlotDisponible {
       align-items: center;
       justify-content: center;
       box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    /* Información de día excepcional en slots */
-    .slot-exception {
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      background: rgba(220, 53, 69, 0.05);
-      border: 2px solid rgba(220, 53, 69, 0.2);
-      border-radius: 8px;
-      position: relative;
-    }
-
-    .slot-card.slot-feriado .slot-exception {
-      background: rgba(220, 53, 69, 0.05);
-      border-color: rgba(220, 53, 69, 0.3);
-    }
-
-    .slot-card.slot-mantenimiento .slot-exception {
-      background: rgba(253, 126, 20, 0.05);
-      border-color: rgba(253, 126, 20, 0.3);
-    }
-
-    .slot-card.slot-atencion-especial .slot-exception {
-      background: rgba(111, 66, 193, 0.05);
-      border-color: rgba(111, 66, 193, 0.3);
-    }
-
-    .exception-badge {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .exception-icon {
-      font-size: 1.2rem;
-      margin-top: 0.1rem;
-    }
-
-    .exception-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      flex: 1;
-    }
-
-    .exception-type {
-      font-weight: 700;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      color: #dc3545;
-    }
-
-    .slot-card.slot-mantenimiento .exception-type {
-      color: #fd7e14;
-    }
-
-    .slot-card.slot-atencion-especial .exception-type {
-      color: #6f42c1;
-    }
-
-    .exception-description {
-      font-size: 0.8rem;
-      color: #6c757d;
-      font-style: italic;
-      line-height: 1.3;
-    }
-
-    .exception-warning {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #dc3545;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .slot-card.slot-mantenimiento .exception-warning {
-      color: #fd7e14;
-    }
-
-    .slot-card.slot-atencion-especial .exception-warning {
-      color: #6f42c1;
-    }
-
-    .exception-warning i {
-      font-size: 0.9rem;
     }
 
     /* NO TURNOS */
@@ -1529,6 +1382,32 @@ export class PacienteAgendaComponent implements OnInit {
       return;
     }
 
+    // Verificar si el slot específico está afectado por una excepción
+    if (this.slotAfectadoPorExcepcion(slot)) {
+      const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
+      const excepcionAfectante = excepcionesDelDia?.find(exc => {
+        if (exc.tipo === 'FERIADO') return true;
+        if ((exc.tipo === 'MANTENIMIENTO' || exc.tipo === 'ATENCION_ESPECIAL') && 
+            exc.horaInicio && exc.horaFin) {
+          const inicioSlot = this.convertirHoraAMinutos(slot.horaInicio);
+          const finSlot = this.convertirHoraAMinutos(slot.horaFin);
+          const inicioExc = this.convertirHoraAMinutos(exc.horaInicio);
+          const finExc = this.convertirHoraAMinutos(exc.horaFin);
+          return inicioSlot < finExc && finSlot > inicioExc;
+        }
+        return false;
+      });
+
+      if (excepcionAfectante) {
+        const tipoLabel = excepcionAfectante.tipo === 'FERIADO' ? 'Feriado' : 
+                          excepcionAfectante.tipo === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Atención Especial';
+        alert(`Este horario no está disponible por ${tipoLabel}. Por favor, selecciona otro horario.`);
+      } else {
+        alert('Este horario no está disponible. Por favor, selecciona otro horario.');
+      }
+      return;
+    }
+
     this.slotSeleccionado = slot;
     
     // Crear objeto compatible con el modal existente
@@ -1588,23 +1467,6 @@ export class PacienteAgendaComponent implements OnInit {
     if (!pacienteId) {
       alert('Error: No se encontró la información del paciente. Por favor, inicie sesión nuevamente.');
       return;
-    }
-
-    // Verificar si es un día excepcional y advertir al paciente
-    if (this.esDiaExcepcional(this.slotSeleccionado.fecha)) {
-      const tipoExcepcion = this.getTipoExcepcionLabel(this.slotSeleccionado.fecha);
-      const descripcion = this.getDescripcionExcepcion(this.slotSeleccionado.fecha);
-      
-      const mensaje = `⚠️ ADVERTENCIA: Día No Disponible ⚠️\n\n` +
-                     `La fecha seleccionada está marcada como "${tipoExcepcion}".\n` +
-                     (descripcion ? `Motivo: ${descripcion}\n\n` : '\n') +
-                     `Este turno NO PODRÁ REALIZARSE en la fecha programada.\n\n` +
-                     `Le recomendamos seleccionar otra fecha disponible.\n\n` +
-                     `¿Desea continuar con la reserva de todas formas?`;
-
-      if (!confirm(mensaje)) {
-        return; // El paciente canceló la reserva
-      }
     }
 
     this.isBooking = true;
@@ -1703,6 +1565,48 @@ export class PacienteAgendaComponent implements OnInit {
   // Métodos para manejo de días excepcionales
   esDiaExcepcional(fecha: string): boolean {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
+  }
+
+  // Verificar si un slot específico está afectado por excepciones
+  slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
+    const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
+    
+    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
+      return false;
+    }
+
+    for (const excepcion of excepcionesDelDia) {
+      // Los feriados afectan todo el día
+      if (excepcion.tipo === 'FERIADO') {
+        return true;
+      }
+
+      // Para mantenimiento y atención especial, verificar horarios específicos
+      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
+          excepcion.horaInicio && excepcion.horaFin) {
+        
+        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
+        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
+        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
+        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
+
+        // Verificar si hay superposición entre el slot y la excepción
+        const hayConflicto = inicioSlotMinutos < finExcepcionMinutos && 
+                            finSlotMinutos > inicioExcepcionMinutos;
+
+        if (hayConflicto) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Función auxiliar para convertir hora "HH:mm" a minutos desde medianoche
+  convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 
   getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {

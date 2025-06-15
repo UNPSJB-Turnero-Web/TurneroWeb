@@ -95,19 +95,16 @@ interface SlotDisponible {
           <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
             <!-- Header de fecha -->
             <div class="fecha-header" 
-                 [class.fecha-excepcional]="esDiaExcepcional(fecha)"
-                 [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
-                 [class.fecha-mantenimiento]="getTipoExcepcion(fecha) === 'MANTENIMIENTO'"
-                 [class.fecha-atencion-especial]="getTipoExcepcion(fecha) === 'ATENCION_ESPECIAL'">
+                 [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'">
               <div class="fecha-info">
                 <h3 class="fecha-title">
                   <i class="fas fa-calendar-day"></i>
                   {{ formatearFecha(fecha) }}
                 </h3>
-                <!-- Indicador de día excepcional en header -->
-                <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha)">
-                  <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
-                  <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }}</span>
+                <!-- Solo mostrar feriados para pacientes en reagendamiento -->
+                <div class="fecha-exception-badge" *ngIf="getTipoExcepcion(fecha) === 'FERIADO'">
+                  <span class="exception-icon">🏖️</span>
+                  <span class="exception-label">Feriado</span>
                   <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
                     - {{ getDescripcionExcepcion(fecha) }}
                   </span>
@@ -121,10 +118,11 @@ interface SlotDisponible {
                 *ngFor="let slot of slotsPorFecha[fecha]" 
                 class="slot-card"
                 [class.selected]="slotSeleccionado?.id === slot.id"
-                [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
-                [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
-                [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
-                [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
+                [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
+                [class.slot-feriado]="slotAfectadoPorExcepcion(slot) && getTipoExcepcion(slot.fecha) === 'FERIADO'"
+                [class.slot-mantenimiento]="slotAfectadoPorExcepcion(slot) && getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
+                [class.slot-atencion-especial]="slotAfectadoPorExcepcion(slot) && getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
+                [class.slot-no-disponible]="slotAfectadoPorExcepcion(slot)"
                 (click)="seleccionarSlot(slot)"
               >
                 <div class="slot-time">
@@ -141,6 +139,16 @@ interface SlotDisponible {
                     <i class="fas fa-map-marker-alt"></i>
                     {{ slot.nombreCentro }}
                   </div>
+                </div>
+
+                <!-- Estado del slot -->
+                <div class="slot-status" *ngIf="slotAfectadoPorExcepcion(slot)">
+                  <i class="fas fa-lock"></i>
+                  No Disponible
+                </div>
+                <div class="slot-status disponible" *ngIf="!slotAfectadoPorExcepcion(slot)">
+                  <i class="fas fa-check-circle"></i>
+                  Disponible
                 </div>
 
                 <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
@@ -299,6 +307,21 @@ interface SlotDisponible {
     }
 
     .btn-back:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+    }
+
+    .btn-header-glass {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .btn-header-glass:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.25);
       border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-2px);
@@ -527,14 +550,14 @@ interface SlotDisponible {
     .fecha-info {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.8rem;
     }
 
     .fecha-title {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      color: white;
+      color: #2c3e50;
       font-size: 1.25rem;
       font-weight: 600;
       margin: 0;
@@ -550,9 +573,15 @@ interface SlotDisponible {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
       font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.9);
-      font-weight: 500;
+      color: #721c24;
+      font-weight: 600;
+      border: 2px solid rgba(220, 53, 69, 0.4);
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+      margin-top: 0.5rem;
     }
 
     .exception-icon {
@@ -618,11 +647,30 @@ interface SlotDisponible {
       opacity: 0;
     }
 
+    /* Estilos para slots no disponibles */
+    .slot-card.slot-no-disponible {
+      border-color: #dc3545;
+      background: rgba(220, 53, 69, 0.05);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .slot-card.slot-no-disponible:hover {
+      transform: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-color: #dc3545;
+    }
+
+    .slot-card.slot-no-disponible::before {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      opacity: 0.1;
+    }
+
     .slot-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     .slot-date {
@@ -642,14 +690,16 @@ interface SlotDisponible {
     .slot-time {
       font-size: 1.2rem;
       font-weight: 700;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding-top: 0.8rem;
     }
 
     .slot-location {
       opacity: 0.8;
+      margin-bottom: 1rem;
     }
 
     .location-line {
@@ -666,6 +716,33 @@ interface SlotDisponible {
       right: 1rem;
       font-size: 1.5rem;
       color: rgba(255, 255, 255, 0.9);
+      z-index: 3;
+    }
+
+    .slot-status {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      z-index: 2;
+      margin-bottom:1rem;
+    }
+
+    .slot-status:not(.disponible) {
+      background: #dc3545;
+      color: white;
+    }
+
+    .slot-status.disponible {
+      background: #28a745;
+      color: white;
     }
 
     .slot-card.selected .slot-location,
@@ -1071,6 +1148,32 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   seleccionarSlot(slot: SlotDisponible) {
+    // Verificar si el slot específico está afectado por una excepción
+    if (this.slotAfectadoPorExcepcion(slot)) {
+      const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
+      const excepcionAfectante = excepcionesDelDia?.find(exc => {
+        if (exc.tipo === 'FERIADO') return true;
+        if ((exc.tipo === 'MANTENIMIENTO' || exc.tipo === 'ATENCION_ESPECIAL') && 
+            exc.horaInicio && exc.horaFin) {
+          const inicioSlot = this.convertirHoraAMinutos(slot.horaInicio);
+          const finSlot = this.convertirHoraAMinutos(slot.horaFin);
+          const inicioExc = this.convertirHoraAMinutos(exc.horaInicio);
+          const finExc = this.convertirHoraAMinutos(exc.horaFin);
+          return inicioSlot < finExc && finSlot > inicioExc;
+        }
+        return false;
+      });
+
+      if (excepcionAfectante) {
+        const tipoLabel = excepcionAfectante.tipo === 'FERIADO' ? 'Feriado' : 
+                          excepcionAfectante.tipo === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Atención Especial';
+        alert(`Este horario no está disponible por ${tipoLabel}. Por favor, selecciona otro horario.`);
+      } else {
+        alert('Este horario no está disponible. Por favor, selecciona otro horario.');
+      }
+      return;
+    }
+
     this.slotSeleccionado = slot;
     console.log('Slot seleccionado:', slot);
   }
@@ -1159,6 +1262,48 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   // Métodos para manejo de días excepcionales
   esDiaExcepcional(fecha: string): boolean {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
+  }
+
+  // Verificar si un slot específico está afectado por excepciones
+  slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
+    const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
+    
+    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
+      return false;
+    }
+
+    for (const excepcion of excepcionesDelDia) {
+      // Los feriados afectan todo el día
+      if (excepcion.tipo === 'FERIADO') {
+        return true;
+      }
+
+      // Para mantenimiento y atención especial, verificar horarios específicos
+      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
+          excepcion.horaInicio && excepcion.horaFin) {
+        
+        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
+        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
+        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
+        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
+
+        // Verificar si hay superposición entre el slot y la excepción
+        const hayConflicto = inicioSlotMinutos < finExcepcionMinutos && 
+                            finSlotMinutos > inicioExcepcionMinutos;
+
+        if (hayConflicto) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Función auxiliar para convertir hora "HH:mm" a minutos desde medianoche
+  convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 
   getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
