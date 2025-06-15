@@ -90,58 +90,63 @@ interface SlotDisponible {
           <p class="help-text">Puedes intentar contactar directamente con el centro médico para más opciones.</p>
         </div>
 
-        <!-- Slots Grid -->
-        <div class="slots-grid" *ngIf="!isLoadingSlots && slotsDisponibles.length > 0">
-          <div 
-            *ngFor="let slot of slotsDisponibles" 
-            class="slot-card"
-            [class.selected]="slotSeleccionado?.id === slot.id"
-            [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
-            [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
-            [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
-            [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
-            (click)="seleccionarSlot(slot)"
-          >
-            <!-- Indicador de día excepcional -->
-            <div class="slot-exception-indicator" *ngIf="esDiaExcepcional(slot.fecha)">
-              <span class="exception-icon">{{ getIconoExcepcion(slot.fecha) }}</span>
-              <span class="exception-label">{{ getTipoExcepcionLabel(slot.fecha) }}</span>
-            </div>
-
-            <div class="slot-header">
-              <div class="slot-date">
-                <i class="fas fa-calendar"></i>
-                {{ formatDateShort(slot.fecha) }}
-              </div>
-              <div class="slot-day">
-                {{ formatDayOfWeek(slot.fecha) }}
-              </div>
-            </div>
-            
-            <div class="slot-time">
-              <i class="fas fa-clock"></i>
-              {{ slot.horaInicio }} - {{ slot.horaFin }}
-            </div>
-            
-            <div class="slot-location">
-              <div class="location-line">
-                <i class="fas fa-door-open"></i>
-                {{ slot.consultorioNombre }}
-              </div>
-              <div class="location-line">
-                <i class="fas fa-map-marker-alt"></i>
-                {{ slot.nombreCentro }}
+        <!-- Slots Agrupados por Fecha -->
+        <div class="slots-grouped" *ngIf="!isLoadingSlots && slotsDisponibles.length > 0">
+          <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
+            <!-- Header de fecha -->
+            <div class="fecha-header" 
+                 [class.fecha-excepcional]="esDiaExcepcional(fecha)"
+                 [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
+                 [class.fecha-mantenimiento]="getTipoExcepcion(fecha) === 'MANTENIMIENTO'"
+                 [class.fecha-atencion-especial]="getTipoExcepcion(fecha) === 'ATENCION_ESPECIAL'">
+              <div class="fecha-info">
+                <h3 class="fecha-title">
+                  <i class="fas fa-calendar-day"></i>
+                  {{ formatearFecha(fecha) }}
+                </h3>
+                <!-- Indicador de día excepcional en header -->
+                <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha)">
+                  <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
+                  <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }}</span>
+                  <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
+                    - {{ getDescripcionExcepcion(fecha) }}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <!-- Descripción de día excepcional -->
-            <div class="slot-exception-description" *ngIf="esDiaExcepcional(slot.fecha) && getDescripcionExcepcion(slot.fecha)">
-              <i class="fas fa-info-circle"></i>
-              {{ getDescripcionExcepcion(slot.fecha) }}
-            </div>
+            <!-- Slots de la fecha -->
+            <div class="slots-grid">
+              <div 
+                *ngFor="let slot of slotsPorFecha[fecha]" 
+                class="slot-card"
+                [class.selected]="slotSeleccionado?.id === slot.id"
+                [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
+                [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
+                [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
+                [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
+                (click)="seleccionarSlot(slot)"
+              >
+                <div class="slot-time">
+                  <i class="fas fa-clock"></i>
+                  {{ slot.horaInicio }} - {{ slot.horaFin }}
+                </div>
+                
+                <div class="slot-location">
+                  <div class="location-line">
+                    <i class="fas fa-door-open"></i>
+                    {{ slot.consultorioNombre }}
+                  </div>
+                  <div class="location-line">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ slot.nombreCentro }}
+                  </div>
+                </div>
 
-            <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
-              <i class="fas fa-check-circle"></i>
+                <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -474,6 +479,96 @@ interface SlotDisponible {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 1.5rem;
+    }
+
+    /* Slots agrupados por fecha */
+    .slots-grouped {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .fecha-group {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .fecha-header {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-left: 4px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .fecha-header.fecha-excepcional {
+      background: rgba(220, 53, 69, 0.1);
+      border-left-color: #dc3545;
+    }
+
+    .fecha-header.fecha-feriado {
+      background: rgba(231, 76, 60, 0.1);
+      border-left-color: #e74c3c;
+    }
+
+    .fecha-header.fecha-mantenimiento {
+      background: rgba(255, 193, 7, 0.1);
+      border-left-color: #ffc107;
+    }
+
+    .fecha-header.fecha-atencion-especial {
+      background: rgba(23, 162, 184, 0.1);
+      border-left-color: #17a2b8;
+    }
+
+    .fecha-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .fecha-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      text-transform: capitalize;
+    }
+
+    .fecha-title i {
+      font-size: 1.1rem;
+      opacity: 0.8;
+    }
+
+    .fecha-exception-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+
+    .exception-icon {
+      font-size: 1rem;
+    }
+
+    .exception-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    .exception-description {
+      font-style: italic;
+      opacity: 0.8;
     }
 
     .slot-card {
@@ -865,6 +960,8 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   turnoId: number = 0;
   currentTurno: Turno | null = null;
   slotsDisponibles: SlotDisponible[] = [];
+  slotsPorFecha: { [fecha: string]: SlotDisponible[] } = {};
+  fechasOrdenadas: string[] = [];
   slotSeleccionado: SlotDisponible | null = null;
   isProcessing: boolean = false;
   isLoadingSlots: boolean = false;
@@ -929,6 +1026,7 @@ export class PacienteReagendarTurnoComponent implements OnInit {
         });
         
         console.log('Slots disponibles cargados:', this.slotsDisponibles);
+        this.agruparSlotsPorFecha();
         this.isLoadingSlots = false;
       },
       error: (error: any) => {
@@ -937,6 +1035,39 @@ export class PacienteReagendarTurnoComponent implements OnInit {
         this.isLoadingSlots = false;
       }
     });
+  }
+
+  agruparSlotsPorFecha() {
+    this.slotsPorFecha = {};
+    
+    // Agrupar slots por fecha
+    this.slotsDisponibles.forEach(slot => {
+      if (!this.slotsPorFecha[slot.fecha]) {
+        this.slotsPorFecha[slot.fecha] = [];
+      }
+      this.slotsPorFecha[slot.fecha].push(slot);
+    });
+    
+    // Ordenar fechas y horarios dentro de cada fecha
+    this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
+    
+    // Ordenar horarios dentro de cada fecha
+    Object.keys(this.slotsPorFecha).forEach(fecha => {
+      this.slotsPorFecha[fecha].sort((a, b) => 
+        a.horaInicio.localeCompare(b.horaInicio)
+      );
+    });
+  }
+
+  formatearFecha(fecha: string): string {
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
+    };
+    return fechaObj.toLocaleDateString('es-ES', options);
   }
 
   seleccionarSlot(slot: SlotDisponible) {

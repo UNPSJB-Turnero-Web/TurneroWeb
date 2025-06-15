@@ -125,6 +125,69 @@ public class ConfiguracionExcepcionalService {
     }
 
     /**
+     * Verificar si un horario específico está en conflicto con un mantenimiento
+     */
+    public boolean tieneMantenimientoEnHorario(LocalDate fecha, Integer consultorioId, 
+                                              LocalTime horaInicio, LocalTime horaFin) {
+        List<ConfiguracionExcepcional> mantenimientos = repository
+            .findByFechaAndConsultorio_IdAndActivoTrue(fecha, consultorioId);
+        
+        return mantenimientos.stream()
+            .filter(m -> m.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO)
+            .anyMatch(m -> hayConflictoHorario(
+                horaInicio, horaFin, 
+                m.getHoraInicio(), m.getHoraFin()
+            ));
+    }
+
+    /**
+     * Verificar si un turno específico está en conflicto con un mantenimiento
+     */
+    public boolean turnoEnConflictoConMantenimiento(LocalDate fecha, Integer consultorioId, 
+                                                   LocalTime horaTurno, Integer duracionTurno) {
+        LocalTime finTurno = horaTurno.plusMinutes(duracionTurno);
+        
+        // DEBUG: Log detailed maintenance check
+        List<ConfiguracionExcepcional> mantenimientos = repository
+            .findByFechaAndConsultorio_IdAndActivoTrue(fecha, consultorioId);
+        
+        System.out.println("=== MAINTENANCE CHECK DETAILS ===");
+        System.out.println("Checking slot: " + horaTurno + "-" + finTurno + " on " + fecha + " for consultorio " + consultorioId);
+        System.out.println("Found " + mantenimientos.size() + " maintenance configurations:");
+        
+        for (ConfiguracionExcepcional mant : mantenimientos) {
+            if (mant.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO) {
+                System.out.println("  - Maintenance: " + mant.getHoraInicio() + "-" + mant.getHoraFin() + " (" + mant.getDescripcion() + ")");
+                boolean conflict = hayConflictoHorario(horaTurno, finTurno, mant.getHoraInicio(), mant.getHoraFin());
+                System.out.println("    Conflict with slot " + horaTurno + "-" + finTurno + ": " + conflict);
+                if (conflict) {
+                    System.out.println("*** SLOT MARKED AS MAINTENANCE ***");
+                    return true;
+                }
+            }
+        }
+        
+        boolean result = tieneMantenimientoEnHorario(fecha, consultorioId, horaTurno, finTurno);
+        System.out.println("Final result for slot " + horaTurno + "-" + finTurno + ": " + result);
+        return result;
+    }
+
+    /**
+     * Método auxiliar para verificar si dos rangos de horarios se superponen
+     */
+    private boolean hayConflictoHorario(LocalTime inicio1, LocalTime fin1, 
+                                       LocalTime inicio2, LocalTime fin2) {
+        if (inicio1 == null || fin1 == null || inicio2 == null || fin2 == null) {
+            return false;
+        }
+        
+        // Dos rangos se superponen si:
+        // - El inicio del primero es antes del fin del segundo Y
+        // - El fin del primero es después del inicio del segundo
+        return inicio1.isBefore(fin2) && fin1.isAfter(inicio2);
+    }
+
+    /**
      * Obtener configuración de atención especial para un esquema en una fecha
      */
     public Optional<ConfiguracionExcepcional> obtenerAtencionEspecial(LocalDate fecha, Integer esquemaTurnoId) {

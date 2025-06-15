@@ -18,11 +18,7 @@ public class ConsultorioDTO {
     private Integer centroId;
     private String nombreCentro;
     
-    // Horarios por defecto del consultorio
-    private LocalTime horaAperturaDefault;
-    private LocalTime horaCierreDefault;
-    
-    // Horarios específicos por día de la semana
+    // Horarios específicos por día de la semama
     private List<HorarioConsultorioDTO> horariosSemanales;
     
     @Data

@@ -1,10 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CalendarModule, CalendarEvent, CalendarEventTitleFormatter, CalendarDateFormatter, CalendarView } from 'angular-calendar';
 import { HttpClient } from '@angular/common/http';
-import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 
 // Services
 import { TurnoService } from '../turnos/turno.service';
@@ -19,16 +17,30 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 import { DataPackage } from '../data.package';
 
+interface SlotDisponible {
+  id: number;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  staffMedicoId: number;
+  staffMedicoNombre: string;
+  staffMedicoApellido: string;
+  especialidadStaffMedico: string;
+  consultorioId: number;
+  consultorioNombre: string;
+  centroId: number;
+  nombreCentro: string;
+  ocupado?: boolean;
+  esSlot?: boolean;
+}
+
 @Component({
   selector: 'app-paciente-agenda',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
-    CalendarModule
+    FormsModule
   ],
-  providers: [CalendarEventTitleFormatter, CalendarDateFormatter],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="container-fluid mt-4">
       <!-- HEADER -->
@@ -179,47 +191,124 @@ import { DataPackage } from '../data.package';
         </div>
       </div>
 
-      <!-- CALENDARIO DE TURNOS DISPONIBLES -->
+      <!-- TURNOS DISPONIBLES AGRUPADOS POR FECHA -->
       <div class="row" *ngIf="showCalendar">
         <div class="col-12">
-          <div class="calendar-card">
-            <div class="calendar-header">
+          <div class="turnos-card">
+            <div class="turnos-header">
               <div class="d-flex justify-content-between align-items-center">
                 <h3><i class="fas fa-calendar-alt"></i> Turnos Disponibles</h3>
-                <div class="calendar-navigation">
-                  <button 
-                    type="button" 
-                    class="btn btn-header-glass" 
-                    (click)="previousWeek()">
-                    <i class="fas fa-chevron-left"></i> Anterior
-                  </button>
-                  <span class="current-period">
-                    {{ viewDate | date: 'MMMM yyyy' }}
-                  </span>
-                  <button 
-                    type="button" 
-                    class="btn btn-header-glass" 
-                    (click)="nextWeek()">
-                    Siguiente <i class="fas fa-chevron-right"></i>
-                  </button>
+                <div class="turnos-info">
+                  <span class="info-text">{{ slotsDisponibles.length }} turnos encontrados</span>
                 </div>
               </div>
             </div>
             
-            <div class="calendar-body">
-              <mwl-calendar-week-view
-                [viewDate]="viewDate"
-                [events]="turnosDisponibles"
-                [hourSegments]="4"
-                [dayStartHour]="7"
-                [dayEndHour]="20"
-                [weekStartsOn]="1"
-                [weekendDays]="[0, 6]"
-                [hourSegmentHeight]="60"
-                [hourSegmentModifier]="2"
-                (eventClicked)="onTurnoDisponibleSelected($event)"
-                (eventTimesChanged)="onEventTimesChanged($event)">
-              </mwl-calendar-week-view>
+            <div class="turnos-body">
+              <!-- Loading State -->
+              <div class="loading-turnos" *ngIf="isLoadingTurnos">
+                <i class="fas fa-spinner fa-spin"></i>
+                Cargando turnos disponibles...
+              </div>
+
+              <!-- Turnos Agrupados por Fecha -->
+              <div class="turnos-grouped" *ngIf="!isLoadingTurnos && slotsDisponibles.length > 0">
+                <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
+                  <!-- Header de fecha -->
+                  <div class="fecha-header" 
+                       [class.fecha-excepcional]="esDiaExcepcional(fecha)"
+                       [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
+                       [class.fecha-mantenimiento]="getTipoExcepcion(fecha) === 'MANTENIMIENTO'"
+                       [class.fecha-atencion-especial]="getTipoExcepcion(fecha) === 'ATENCION_ESPECIAL'">
+                    <div class="fecha-info">
+                      <h3 class="fecha-title">
+                        <i class="fas fa-calendar-day"></i>
+                        {{ formatearFecha(fecha) }}
+                      </h3>
+                      <!-- Indicador de día excepcional en header -->
+                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha)">
+                        <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
+                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }}</span>
+                        <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
+                          - {{ getDescripcionExcepcion(fecha) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Slots de la fecha -->
+                  <div class="slots-grid">
+                    <div 
+                      *ngFor="let slot of slotsPorFecha[fecha]" 
+                      class="slot-card"
+                      [class.selected]="slotSeleccionado?.id === slot.id"
+                      [class.slot-excepcional]="esDiaExcepcional(slot.fecha)"
+                      [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
+                      [class.slot-mantenimiento]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'"
+                      [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
+                      [class.slot-ocupado]="slot.ocupado"
+                      (click)="seleccionarSlot(slot)">
+                      
+                      <div class="slot-time">
+                        <i class="fas fa-clock"></i>
+                        {{ slot.horaInicio }} - {{ slot.horaFin }}
+                      </div>
+                      
+                      <div class="slot-medico">
+                        <i class="fas fa-user-md"></i>
+                        <strong>{{ slot.staffMedicoNombre }} {{ slot.staffMedicoApellido }}</strong>
+                      </div>
+                      
+                      <div class="slot-especialidad">
+                        <i class="fas fa-stethoscope"></i>
+                        {{ slot.especialidadStaffMedico }}
+                      </div>
+                      
+                      <div class="slot-location">
+                        <div class="location-line">
+                          <i class="fas fa-door-open"></i>
+                          {{ slot.consultorioNombre }}
+                        </div>
+                        <div class="location-line">
+                          <i class="fas fa-map-marker-alt"></i>
+                          {{ slot.nombreCentro }}
+                        </div>
+                      </div>
+
+                      <!-- Estado del slot -->
+                      <div class="slot-status" *ngIf="slot.ocupado">
+                        <i class="fas fa-lock"></i>
+                        Ocupado
+                      </div>
+                      <div class="slot-status disponible" *ngIf="!slot.ocupado">
+                        <i class="fas fa-check-circle"></i>
+                        Disponible
+                      </div>
+
+                      <!-- Información de día excepcional -->
+                      <div class="slot-exception" *ngIf="esDiaExcepcional(slot.fecha)">
+                        <div class="exception-badge">
+                          <span class="exception-icon">{{ getIconoExcepcion(slot.fecha) }}</span>
+                          <div class="exception-info">
+                            <span class="exception-type">{{ getTipoExcepcionLabel(slot.fecha) }}</span>
+                            <span class="exception-description" *ngIf="getDescripcionExcepcion(slot.fecha)">
+                              {{ getDescripcionExcepcion(slot.fecha) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="exception-warning">
+                          <i class="fas fa-exclamation-triangle"></i>
+                          <span>No disponible para reserva</span>
+                        </div>
+                      </div>
+
+                      <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -586,256 +675,362 @@ import { DataPackage } from '../data.package';
       transform: translateY(-2px);
     }
 
-    /* ACCIONES */
-    .filtros-actions {
-      margin-top: 2rem;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-
-    /* CALENDARIO */
-    .calendar-card {
+    /* TURNOS CARD-BASED FORMAT */
+    .turnos-card {
       background: white;
       border-radius: 15px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       overflow: hidden;
     }
 
-    .calendar-header {
+    .turnos-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 1.5rem;
     }
 
-    .calendar-header h3 {
+    .turnos-header h3 {
       margin: 0;
       font-weight: 600;
       color: white;
       text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
-    .calendar-navigation {
+    .turnos-info {
       display: flex;
       align-items: center;
       gap: 1rem;
     }
 
-    .current-period {
-      font-weight: 600;
+    .info-text {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .turnos-body {
+      padding: 1.5rem;
+      min-height: 400px;
+    }
+
+    .loading-turnos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: #6c757d;
+      font-size: 1.1rem;
+    }
+
+    .loading-turnos i {
+      margin-right: 0.5rem;
       font-size: 1.2rem;
-      color: white;
-      min-width: 200px;
-      text-align: center;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
 
-    .calendar-body {
-      padding: 1rem;
-      min-height: 600px;
+    /* FECHA GROUPS */
+    .fecha-group {
+      margin-bottom: 2rem;
     }
 
-    /* ESTILOS ESPECÍFICOS PARA ANGULAR-CALENDAR */
-    :host ::ng-deep .cal-week-view {
-      background-color: #fff;
-      border: 1px solid #e9ecef;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    :host ::ng-deep .cal-day-headers {
-      border-bottom: 2px solid #667eea;
+    .fecha-header {
       background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px 12px 0 0;
+      padding: 1rem 1.5rem;
+      border-left: 4px solid #667eea;
+      margin-bottom: 1rem;
     }
 
-    :host ::ng-deep .cal-day-headers .cal-header {
-      padding: 1rem 0.5rem;
+    .fecha-header.fecha-excepcional {
+      border-left-width: 6px;
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    }
+
+    .fecha-header.fecha-feriado {
+      border-left-color: #dc3545;
+      background: linear-gradient(135deg, #f8d7da 0%, #f1aeb5 100%);
+    }
+
+    .fecha-header.fecha-mantenimiento {
+      border-left-color: #fd7e14;
+      background: linear-gradient(135deg, #ffe8d1 0%, #ffc947 100%);
+    }
+
+    .fecha-header.fecha-atencion-especial {
+      border-left-color: #6f42c1;
+      background: linear-gradient(135deg, #e2d9f3 0%, #c8a4d8 100%);
+    }
+
+    .fecha-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .fecha-title {
+      margin: 0;
+      font-size: 1.4rem;
       font-weight: 600;
       color: #495057;
-      text-align: center;
-      border-right: 1px solid #dee2e6;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
-    :host ::ng-deep .cal-day-headers .cal-header:last-child {
-      border-right: none;
-    }
-
-    :host ::ng-deep .cal-day-columns {
-      min-height: 500px;
-    }
-
-    :host ::ng-deep .cal-day-column {
-      border-right: 1px solid #dee2e6;
-      position: relative;
-    }
-
-    :host ::ng-deep .cal-day-column:last-child {
-      border-right: none;
-    }
-
-    :host ::ng-deep .cal-hour-segment {
-      border-bottom: 1px solid #f1f3f4;
-      padding: 0;
-      position: relative;
-    }
-
-    :host ::ng-deep .cal-hour:nth-child(odd) .cal-hour-segment {
-      border-bottom: 1px solid #e9ecef;
-    }
-
-    :host ::ng-deep .cal-time {
-      font-size: 0.75rem;
-      color: #6c757d;
-      padding: 0.25rem 0.5rem;
-      width: 60px;
-      text-align: right;
-      background: #f8f9fa;
-      border-right: 1px solid #dee2e6;
-    }
-
-    :host ::ng-deep .cal-event {
-      border-radius: 4px;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
+    .fecha-exception-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 20px;
+      font-size: 0.85rem;
       font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      margin: 1px;
+      color: #495057;
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
-    :host ::ng-deep .cal-event:hover {
-      transform: scale(1.02);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    .exception-icon {
+      font-size: 1rem;
     }
 
-    :host ::ng-deep .cal-event-title {
+    .exception-label {
       font-weight: 600;
     }
 
-    :host ::ng-deep .cal-starts-within-week .cal-event {
-      border-top-left-radius: 4px;
-      border-bottom-left-radius: 4px;
+    .exception-description {
+      font-style: italic;
+      color: #6c757d;
     }
 
-    :host ::ng-deep .cal-ends-within-week .cal-event {
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
+    /* SLOTS GRID */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
     }
 
-    /* Eventos disponibles - Verde */
-    :host ::ng-deep .cal-event[style*="background-color: rgb(40, 167, 69)"] {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-      color: white !important;
-      border: 2px solid #1e7e34 !important;
-      cursor: pointer !important;
+    .slot-card {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
-    :host ::ng-deep .cal-event[style*="background-color: rgb(40, 167, 69)"]:hover {
-      background: linear-gradient(135deg, #218838 0%, #1abc9c 100%) !important;
-      transform: scale(1.05) !important;
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4) !important;
+    .slot-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
     }
 
-    /* Eventos ocupados - Rojo */
-    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"] {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
-      color: white !important;
-      border: 2px solid #bd2130 !important;
-      cursor: not-allowed !important;
-      opacity: 0.8;
+    .slot-card.selected {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .slot-card.slot-ocupado {
+      border-color: #dc3545;
+      background: rgba(220, 53, 69, 0.03);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .slot-card.slot-ocupado:hover {
+      transform: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Exceptional day slots */
+    .slot-card.slot-excepcional {
+      border-width: 3px;
+    }
+
+    .slot-card.slot-feriado {
+      border-color: #dc3545;
+      background: rgba(220, 53, 69, 0.05);
+    }
+
+    .slot-card.slot-mantenimiento {
+      border-color: #fd7e14;
+      background: rgba(253, 126, 20, 0.05);
+    }
+
+    .slot-card.slot-atencion-especial {
+      border-color: #6f42c1;
+      background: rgba(111, 66, 193, 0.05);
+    }
+
+    .slot-time {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 0.8rem;
+    }
+
+    .slot-medico {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      color: #495057;
+    }
+
+    .slot-especialidad {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.8rem;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .slot-location {
+      margin-bottom: 1rem;
+    }
+
+    .location-line {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
+
+    .slot-status {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .slot-status:not(.disponible) {
+      background: #dc3545;
+      color: white;
+    }
+
+    .slot-status.disponible {
+      background: #28a745;
+      color: white;
+    }
+
+    .slot-check {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      color: #667eea;
+      font-size: 1.5rem;
+      background: white;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Información de día excepcional en slots */
+    .slot-exception {
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: rgba(220, 53, 69, 0.05);
+      border: 2px solid rgba(220, 53, 69, 0.2);
+      border-radius: 8px;
       position: relative;
     }
 
-    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"]:hover {
-      opacity: 0.9;
-      transform: none !important;
+    .slot-card.slot-feriado .slot-exception {
+      background: rgba(220, 53, 69, 0.05);
+      border-color: rgba(220, 53, 69, 0.3);
     }
 
-    /* Agregar ícono de candado para turnos ocupados */
-    :host ::ng-deep .cal-event[style*="background-color: rgb(220, 53, 69)"]:before {
-      content: "🔒";
-      position: absolute;
-      top: 2px;
-      right: 4px;
-      font-size: 10px;
+    .slot-card.slot-mantenimiento .slot-exception {
+      background: rgba(253, 126, 20, 0.05);
+      border-color: rgba(253, 126, 20, 0.3);
     }
 
-    :host ::ng-deep .cal-week-view .cal-day-headers {
+    .slot-card.slot-atencion-especial .slot-exception {
+      background: rgba(111, 66, 193, 0.05);
+      border-color: rgba(111, 66, 193, 0.3);
+    }
+
+    .exception-badge {
       display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
     }
 
-    :host ::ng-deep .cal-week-view .cal-day-columns {
+    .exception-icon {
+      font-size: 1.2rem;
+      margin-top: 0.1rem;
+    }
+
+    .exception-info {
       display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
       flex: 1;
     }
 
-    :host ::ng-deep .cal-week-view .cal-day-column {
-      flex: 1;
-      min-height: 500px;
+    .exception-type {
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: #dc3545;
     }
 
-    :host ::ng-deep .cal-day-headers .cal-header {
-      color: #2c3e50;
-      text-align: center;
-      border-right: 1px solid #e9ecef;
+    .slot-card.slot-mantenimiento .exception-type {
+      color: #fd7e14;
     }
 
-    :host ::ng-deep .cal-day-headers .cal-header:last-child {
-      border-right: none;
+    .slot-card.slot-atencion-especial .exception-type {
+      color: #6f42c1;
     }
 
-    :host ::ng-deep .cal-day-column {
-      border-right: 1px solid #e9ecef;
-      min-width: 150px;
-    }
-
-    :host ::ng-deep .cal-day-column:last-child {
-      border-right: none;
-    }
-
-    :host ::ng-deep .cal-hour-segment {
-      border-bottom: 1px solid #f1f3f4;
-      background-color: #fafbff;
-      min-height: 40px;
-    }
-
-    :host ::ng-deep .cal-hour-segment:hover {
-      background-color: #f0f8ff;
-    }
-
-    :host ::ng-deep .cal-time {
-      font-size: 0.85rem;
+    .exception-description {
+      font-size: 0.8rem;
       color: #6c757d;
-      padding: 0.25rem;
+      font-style: italic;
+      line-height: 1.3;
     }
 
-    :host ::ng-deep .cal-event {
-      border-radius: 6px;
-      border: none;
-      font-weight: 500;
-      font-size: 0.85rem;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      margin: 1px;
-      transition: all 0.2s ease;
-    }
-
-    :host ::ng-deep .cal-event:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    :host ::ng-deep .cal-event-title {
+    .exception-warning {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       font-size: 0.8rem;
       font-weight: 600;
+      color: #dc3545;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    :host ::ng-deep .cal-week-view .cal-hour-rows {
-      overflow: visible;
+    .slot-card.slot-mantenimiento .exception-warning {
+      color: #fd7e14;
     }
 
-    :host ::ng-deep .cal-week-view .cal-time-events {
-      position: relative;
+    .slot-card.slot-atencion-especial .exception-warning {
+      color: #6f42c1;
+    }
+
+    .exception-warning i {
+      font-size: 0.9rem;
     }
 
     /* NO TURNOS */
@@ -1038,222 +1233,29 @@ import { DataPackage } from '../data.package';
         flex-direction: column;
       }
 
-      .calendar-navigation {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .current-period {
-        min-width: auto;
-        margin: 0.5rem 0;
-      }
-
-      .btn-nav {
-        width: 100%;
-        justify-content: center;
+      .slots-grid {
+        grid-template-columns: 1fr;
       }
 
       .paciente-modal {
         width: 95%;
         margin: 1rem;
       }
-    }
 
-    /* ============================================
-       ESTILOS PARA DÍAS EXCEPCIONALES - COLUMNAS COMPLETAS
-       ============================================ */
-    
-    /* Días excepcionales - FERIADO (Rojo intenso) */
-    :host ::ng-deep .cal-day-column.dia-feriado {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%) !important;
-      border-left: 4px solid #c0392b !important;
-      border-right: 4px solid #c0392b !important;
-      position: relative;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-feriado::before {
-      content: '🏛️ FERIADO';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(192, 57, 43, 0.95);
-      color: white;
-      text-align: center;
-      padding: 0.5rem;
-      font-weight: bold;
-      font-size: 0.8rem;
-      z-index: 10;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-feriado .cal-hour-segment {
-      background: rgba(255, 107, 107, 0.1) !important;
-      border-bottom: 1px solid rgba(192, 57, 43, 0.3) !important;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-feriado .cal-hour-segment:hover {
-      background: rgba(255, 107, 107, 0.2) !important;
-    }
-    
-    /* Días excepcionales - MANTENIMIENTO (Naranja) */
-    :host ::ng-deep .cal-day-column.dia-mantenimiento {
-      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
-      border-left: 4px solid #d68910 !important;
-      border-right: 4px solid #d68910 !important;
-      position: relative;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-mantenimiento::before {
-      content: '🔧 MANTENIMIENTO';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(214, 137, 16, 0.95);
-      color: white;
-      text-align: center;
-      padding: 0.5rem;
-      font-weight: bold;
-      font-size: 0.8rem;
-      z-index: 10;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-mantenimiento .cal-hour-segment {
-      background: rgba(243, 156, 18, 0.1) !important;
-      border-bottom: 1px solid rgba(214, 137, 16, 0.3) !important;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-mantenimiento .cal-hour-segment:hover {
-      background: rgba(243, 156, 18, 0.2) !important;
-    }
-    
-    /* Días excepcionales - ATENCIÓN ESPECIAL (Púrpura) */
-    :host ::ng-deep .cal-day-column.dia-atencion-especial {
-      background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%) !important;
-      border-left: 4px solid #7d3c98 !important;
-      border-right: 4px solid #7d3c98 !important;
-      position: relative;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-atencion-especial::before {
-      content: '⭐ ATENCIÓN ESPECIAL';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(125, 60, 152, 0.95);
-      color: white;
-      text-align: center;
-      padding: 0.5rem;
-      font-weight: bold;
-      font-size: 0.8rem;
-      z-index: 10;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-atencion-especial .cal-hour-segment {
-      background: rgba(155, 89, 182, 0.1) !important;
-      border-bottom: 1px solid rgba(125, 60, 152, 0.3) !important;
-    }
-    
-    :host ::ng-deep .cal-day-column.dia-atencion-especial .cal-hour-segment:hover {
-      background: rgba(155, 89, 182, 0.2) !important;
-    }
-    
-    /* Animación para días excepcionales */
-    :host ::ng-deep .cal-day-column.dia-feriado,
-    :host ::ng-deep .cal-day-column.dia-mantenimiento,
-    :host ::ng-deep .cal-day-column.dia-atencion-especial {
-      animation: exceptionalColumnPulse 3s ease-in-out infinite;
-    }
-    
-    @keyframes exceptionalColumnPulse {
-      0%, 100% {
-        box-shadow: 0 0 20px rgba(220, 53, 69, 0.3);
+      .fecha-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
       }
-      50% {
-        box-shadow: 0 0 30px rgba(220, 53, 69, 0.6);
-      }
-    }
-    
-    /* Ajustar headers para días excepcionales */
-    :host ::ng-deep .cal-day-headers .cal-header.dia-feriado {
-      background: linear-gradient(135deg, #c0392b 0%, #a93226 100%) !important;
-      color: white !important;
-      font-weight: bold !important;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
-      position: relative;
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header.dia-feriado::after {
-      content: ' 🏛️';
-      font-size: 1.2em;
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header.dia-mantenimiento {
-      background: linear-gradient(135deg, #d68910 0%, #b7950b 100%) !important;
-      color: white !important;
-      font-weight: bold !important;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header.dia-mantenimiento::after {
-      content: ' 🔧';
-      font-size: 1.2em;
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header.dia-atencion-especial {
-      background: linear-gradient(135deg, #7d3c98 0%, #6c3483 100%) !important;
-      color: white !important;
-      font-weight: bold !important;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header.dia-atencion-especial::after {
-      content: ' ⭐';
-      font-size: 1.2em;
-    }
 
-    /* Configuración de nombres de días en español */
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(1):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Lunes ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(2):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Martes ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(3):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Miércoles ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(4):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Jueves ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(5):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Viernes ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(6):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Sábado ';
-    }
-    
-    :host ::ng-deep .cal-day-headers .cal-header:nth-child(7):not(.dia-feriado):not(.dia-mantenimiento):not(.dia-atencion-especial)::before {
-      content: 'Domingo ';
+      .filter-tags {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
   `]
 })
 export class PacienteAgendaComponent implements OnInit {
-  // Vista del calendario
-  view: CalendarView = CalendarView.Week;
-  CalendarView = CalendarView;
-  
   // Estados de carga
   isLoadingTurnos = false;
   isLoadingEspecialidades = false;
@@ -1270,17 +1272,18 @@ export class PacienteAgendaComponent implements OnInit {
   staffMedicos: StaffMedico[] = [];
   centrosAtencion: CentroAtencion[] = [];
 
-  // Calendario
-  viewDate = new Date();
+  // Slots y calendario
   showCalendar = false;
-  turnosDisponibles: CalendarEvent[] = [];
-  events: CalendarEvent[] = [];
-  filteredEvents: CalendarEvent[] = [];
+  slotsDisponibles: SlotDisponible[] = [];
+  slotsPorFecha: { [fecha: string]: SlotDisponible[] } = {};
+  fechasOrdenadas: string[] = [];
+  turnosDisponibles: any[] = []; // Para compatibilidad con el template
   semanas: number = 4;
 
   // Modal de reserva
   showBookingModal = false;
-  selectedTurnoDisponible: CalendarEvent | null = null;
+  slotSeleccionado: SlotDisponible | null = null;
+  selectedTurnoDisponible: any = null; // Para el modal
   isBooking = false;
 
   constructor(
@@ -1379,19 +1382,21 @@ export class PacienteAgendaComponent implements OnInit {
 
   // Método llamado cuando cambia el staff médico
   onStaffMedicoChange() {
-    if (this.especialidadSeleccionada && this.events.length > 0) {
-      this.aplicarFiltros();
+    if (this.especialidadSeleccionada && this.slotsDisponibles.length > 0) {
+      this.aplicarFiltrosSlots();
+      this.agruparSlotsPorFecha();
     }
   }
 
   // Método llamado cuando cambia el centro de atención
   onCentroAtencionChange() {
-    if (this.especialidadSeleccionada && this.events.length > 0) {
-      this.aplicarFiltros();
+    if (this.especialidadSeleccionada && this.slotsDisponibles.length > 0) {
+      this.aplicarFiltrosSlots();
+      this.agruparSlotsPorFecha();
     }
   }
 
-  // Cargar turnos con filtros aplicados (usando el sistema del admin)
+  // Cargar turnos con filtros aplicados
   cargarTurnosConFiltros() {
     if (!this.especialidadSeleccionada) {
       this.showCalendar = false;
@@ -1403,251 +1408,179 @@ export class PacienteAgendaComponent implements OnInit {
     // Usar el mismo sistema que el admin para obtener turnos disponibles
     this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
       next: (eventosBackend) => {
-        // Transformar los eventos del backend en objetos CalendarEvent
-        this.events = this.mapEsquemasToEvents(eventosBackend);
-        this.aplicarFiltros();
+        // Transformar los eventos del backend en slots
+        this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
+        this.aplicarFiltrosSlots();
+        this.agruparSlotsPorFecha();
         this.showCalendar = true;
         this.isLoadingTurnos = false;
         this.cdr.detectChanges();
-        
-        // Aplicar estilos a columnas de días excepcionales después de un breve delay
-        setTimeout(() => {
-          this.aplicarEstilosColumnasExcepcionales();
-        }, 200);
       },
       error: (err: unknown) => {
         console.error('Error al cargar eventos:', err);
         this.isLoadingTurnos = false;
         this.showCalendar = true;
+        this.slotsDisponibles = [];
         this.turnosDisponibles = [];
       }
     });
   }
 
-  /**
-   * Aplica estilos CSS a las columnas del calendario para días excepcionales
-   */
-  private aplicarEstilosColumnasExcepcionales(): void {
-    // Obtener la fecha de inicio de la semana actual usando startOfWeek de date-fns
-    const inicioSemana = startOfWeek(this.viewDate, { weekStartsOn: 1 }); // Lunes = 1
+  // Transformar eventos del backend a slots
+  private mapEventosToSlots(eventosBackend: any[]): SlotDisponible[] {
+    const slots: SlotDisponible[] = [];
 
-    // Obtener todas las columnas del calendario
-    const columnas = document.querySelectorAll('.cal-day-column');
-    const headers = document.querySelectorAll('.cal-day-headers .cal-header');
-
-    // Limpiar clases previas
-    columnas.forEach(columna => {
-      columna.classList.remove('dia-feriado', 'dia-mantenimiento', 'dia-atencion-especial');
-    });
-    headers.forEach(header => {
-      header.classList.remove('dia-feriado', 'dia-mantenimiento', 'dia-atencion-especial');
-    });
-
-    // Aplicar clases para cada día de la semana
-    for (let i = 0; i < 7; i++) {
-      // Crear nueva fecha basada en el inicio de semana y sumar días usando UTC
-      const fechaDia = new Date(inicioSemana.getTime() + (i * 24 * 60 * 60 * 1000));
-      
-      // Formatear fecha como string en formato UTC para evitar offset de zona horaria
-      const year = fechaDia.getUTCFullYear();
-      const month = String(fechaDia.getUTCMonth() + 1).padStart(2, '0');
-      const day = String(fechaDia.getUTCDate()).padStart(2, '0');
-      const fechaStr = `${year}-${month}-${day}`;
-
-      if (this.diasExcepcionalesService.esDiaExcepcional(fechaStr)) {
-        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaStr);
-        let claseCSS = '';
-
-        switch (tipoExcepcion) {
-          case 'FERIADO':
-            claseCSS = 'dia-feriado';
-            break;
-          case 'MANTENIMIENTO':
-            claseCSS = 'dia-mantenimiento';
-            break;
-          case 'ATENCION_ESPECIAL':
-            claseCSS = 'dia-atencion-especial';
-            break;
-        }
-
-        if (claseCSS && columnas[i] && headers[i]) {
-          columnas[i].classList.add(claseCSS);
-          headers[i].classList.add(claseCSS);
-        }
+    eventosBackend.forEach(evento => {
+      // Validar que el evento tenga los datos necesarios
+      if (!evento.fecha || !evento.horaInicio || !evento.horaFin || !evento.esSlot) {
+        return;
       }
-    }
+
+      slots.push({
+        id: evento.id,
+        fecha: evento.fecha,
+        horaInicio: evento.horaInicio,
+        horaFin: evento.horaFin,
+        staffMedicoId: evento.staffMedicoId,
+        staffMedicoNombre: evento.staffMedicoNombre,
+        staffMedicoApellido: evento.staffMedicoApellido,
+        especialidadStaffMedico: evento.especialidadStaffMedico,
+        consultorioId: evento.consultorioId,
+        consultorioNombre: evento.consultorioNombre,
+        centroId: evento.centroId,
+        nombreCentro: evento.nombreCentro,
+        ocupado: evento.ocupado || false,
+        esSlot: true
+      });
+    });
+
+    return slots;
   }
 
-  // Aplicar filtros a los eventos cargados
-  aplicarFiltros() {
-    let eventosFiltrados = this.events;
+  // Aplicar filtros a los slots
+  aplicarFiltrosSlots() {
+    let slotsFiltrados = this.slotsDisponibles;
 
     // Filtrar por especialidad
     if (this.especialidadSeleccionada) {
-      eventosFiltrados = eventosFiltrados.filter(event =>
-        event.meta?.especialidadStaffMedico === this.especialidadSeleccionada
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.especialidadStaffMedico === this.especialidadSeleccionada
       );
     }
 
     // Filtrar por staff médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
-      eventosFiltrados = eventosFiltrados.filter(event =>
-        event.meta?.staffMedicoId === this.staffMedicoSeleccionado
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.staffMedicoId === this.staffMedicoSeleccionado
       );
     }
 
     // Filtrar por centro de atención si está seleccionado
     if (this.centroAtencionSeleccionado) {
-      eventosFiltrados = eventosFiltrados.filter(event =>
-        event.meta?.centroId === this.centroAtencionSeleccionado
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.centroId === this.centroAtencionSeleccionado
       );
     }
 
-    // Mostrar TODOS los slots (tanto disponibles como ocupados)
-    eventosFiltrados = eventosFiltrados.filter(event =>
-      event.meta?.esSlot === true
-    );
-
-    this.turnosDisponibles = eventosFiltrados;
+    this.slotsDisponibles = slotsFiltrados;
+    this.turnosDisponibles = slotsFiltrados; // Para compatibilidad con el template
   }
 
-  // Transformar eventos del backend (igual que en el admin)
-  private mapEsquemasToEvents(eventosBackend: any[]): CalendarEvent[] {
-    const events: CalendarEvent[] = [];
+  // Agrupar slots por fecha y ordenar
+  agruparSlotsPorFecha() {
+    this.slotsPorFecha = {};
 
-    eventosBackend.forEach(evento => {
-      // Validar que el evento tenga los datos necesarios
-      if (!evento.fecha || !evento.horaInicio || !evento.horaFin) {
-        console.warn('Evento con datos incompletos:', evento);
-        return;
+    this.slotsDisponibles.forEach(slot => {
+      if (!this.slotsPorFecha[slot.fecha]) {
+        this.slotsPorFecha[slot.fecha] = [];
       }
+      this.slotsPorFecha[slot.fecha].push(slot);
+    });
 
-      const start = new Date(`${evento.fecha}T${evento.horaInicio}`);
-      const end = new Date(`${evento.fecha}T${evento.horaFin}`);
-
-      // Validar que las fechas sean válidas
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        console.warn('Evento con fechas inválidas:', evento);
-        return;
-      }
-
-      // Aplicar colores basándose en el estado (frontend)
-      let color;
-      
-      // Verificar si es un día excepcional
-      const fechaEvento = evento.fecha;
-      const esDiaExcepcional = this.diasExcepcionalesService.esDiaExcepcional(fechaEvento);
-      
-      if (esDiaExcepcional) {
-        // Día excepcional - usar colores especiales según el tipo
-        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaEvento);
-        switch (tipoExcepcion) {
-          case 'FERIADO':
-            color = { 
-              primary: '#e74c3c', 
-              secondary: '#fadbd8' 
-            };
-            break;
-          case 'MANTENIMIENTO':
-            color = { 
-              primary: '#f39c12', 
-              secondary: '#fdeaa7' 
-            };
-            break;
-          case 'ATENCION_ESPECIAL':
-            color = { 
-              primary: '#9b59b6', 
-              secondary: '#e8daef' 
-            };
-            break;
-          default:
-            color = { 
-              primary: '#dc3545', 
-              secondary: '#f8d7da' 
-            };
-        }
-      } else if (evento.ocupado) {
-        // Slot ocupado - color rojo
-        color = { 
-          primary: '#dc3545', 
-          secondary: '#f8d7da' 
-        };
-      } else {
-        // Slot disponible - color verde
-        color = { 
-          primary: '#28a745', 
-          secondary: '#d4edda' 
-        };
-      }
-
-      // Título dinámico basado en el estado y días excepcionales
-      let title;
-      // Formatear hora de inicio para mostrar en el título
-      const horaInicio = start.getHours().toString().padStart(2, '0') + ':' + 
-                        start.getMinutes().toString().padStart(2, '0');
-      
-      if (esDiaExcepcional) {
-        const tipoExcepcion = this.diasExcepcionalesService.getTipoExcepcion(fechaEvento);
-        const iconoExcepcion = this.getIconoExcepcion(fechaEvento);
-        title = `${iconoExcepcion} ${tipoExcepcion} - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}`;
-      } else {
-        title = evento.ocupado ? 
-          `Ocupado - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}` : 
-          `Disponible - ${evento.staffMedicoNombre} ${evento.staffMedicoApellido}<br>${horaInicio}`;
-      }
-
-      events.push({
-        start,
-        end,
-        title: title,
-        color: color,
-        meta: {
-          id: evento.id,
-          staffMedicoNombre: evento.staffMedicoNombre,
-          staffMedicoApellido: evento.staffMedicoApellido,
-          especialidadStaffMedico: evento.especialidadStaffMedico,
-          centroId: evento.centroId,
-          staffMedicoId: evento.staffMedicoId,
-          consultorioId: evento.consultorioId,
-          consultorioNombre: evento.consultorioNombre,
-          centroAtencionNombre: evento.nombreCentro,
-          esSlot: evento.esSlot,
-          ocupado: evento.ocupado,
-          // Datos para el modal
-          especialidad: evento.especialidadStaffMedico,
-          medico: `${evento.staffMedicoNombre} ${evento.staffMedicoApellido}`,
-          centro: evento.nombreCentro,
-          consultorio: evento.consultorioNombre
-        }
+    // Ordenar slots dentro de cada fecha por hora
+    Object.keys(this.slotsPorFecha).forEach(fecha => {
+      this.slotsPorFecha[fecha].sort((a, b) => {
+        return a.horaInicio.localeCompare(b.horaInicio);
       });
     });
 
-    return events;
+    // Ordenar fechas
+    this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
   }
 
-  // Manejar clic en turno disponible
-  onTurnoDisponibleSelected(event: any) {
-    const turno = event.event;
-    
-    // Verificar si es un slot válido
-    if (!turno.meta?.esSlot) {
-      return;
-    }
+  // Formatear fecha para mostrar
+  formatearFecha(fecha: string): string {
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    const opciones: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    return fechaObj.toLocaleDateString('es-ES', opciones);
+  }
 
-    // Si el slot está ocupado, mostrar mensaje informativo
-    if (turno.meta?.ocupado) {
+  // Seleccionar slot
+  seleccionarSlot(slot: SlotDisponible) {
+    if (slot.ocupado) {
       alert('Este turno ya está ocupado. Por favor, selecciona otro horario disponible.');
       return;
     }
 
-    // Solo permitir reservar turnos disponibles (no ocupados)
-    this.selectedTurnoDisponible = turno;
+    this.slotSeleccionado = slot;
+    
+    // Crear objeto compatible con el modal existente
+    this.selectedTurnoDisponible = {
+      start: new Date(`${slot.fecha}T${slot.horaInicio}`),
+      end: new Date(`${slot.fecha}T${slot.horaFin}`),
+      meta: {
+        id: slot.id,
+        especialidad: slot.especialidadStaffMedico,
+        medico: `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`,
+        centro: slot.nombreCentro,
+        consultorio: slot.consultorioNombre,
+        staffMedicoId: slot.staffMedicoId,
+        staffMedicoNombre: slot.staffMedicoNombre,
+        staffMedicoApellido: slot.staffMedicoApellido,
+        especialidadStaffMedico: slot.especialidadStaffMedico,
+        consultorioId: slot.consultorioId,
+        consultorioNombre: slot.consultorioNombre,
+        centroId: slot.centroId,
+        centroAtencionNombre: slot.nombreCentro
+      }
+    };
+    
     this.showBookingModal = true;
+  }
+
+  // Navegación y otros métodos
+  goBack() {
+    this.router.navigate(['/paciente-dashboard']);
+  }
+
+  irASolicitarTurno() {
+    this.router.navigate(['/paciente-solicitar-turno']);
+  }
+
+  // Actualizar slot reservado inmediatamente
+  private actualizarSlotReservado(slotId: number) {
+    // Encontrar el slot en el array y marcarlo como ocupado
+    const slotEncontrado = this.slotsDisponibles.find(slot => slot.id === slotId);
+    
+    if (slotEncontrado) {
+      slotEncontrado.ocupado = true;
+      
+      // Reagrupar slots por fecha para actualizar la vista
+      this.agruparSlotsPorFecha();
+      
+      // Forzar detección de cambios
+      this.cdr.detectChanges();
+    }
   }
 
   // Confirmar reserva de turno
   confirmarReservaTurno() {
-    if (!this.selectedTurnoDisponible) return;
+    if (!this.selectedTurnoDisponible || !this.slotSeleccionado) return;
 
     const pacienteId = localStorage.getItem('pacienteId');
     if (!pacienteId) {
@@ -1655,53 +1588,50 @@ export class PacienteAgendaComponent implements OnInit {
       return;
     }
 
+    // Verificar si es un día excepcional y advertir al paciente
+    if (this.esDiaExcepcional(this.slotSeleccionado.fecha)) {
+      const tipoExcepcion = this.getTipoExcepcionLabel(this.slotSeleccionado.fecha);
+      const descripcion = this.getDescripcionExcepcion(this.slotSeleccionado.fecha);
+      
+      const mensaje = `⚠️ ADVERTENCIA: Día No Disponible ⚠️\n\n` +
+                     `La fecha seleccionada está marcada como "${tipoExcepcion}".\n` +
+                     (descripcion ? `Motivo: ${descripcion}\n\n` : '\n') +
+                     `Este turno NO PODRÁ REALIZARSE en la fecha programada.\n\n` +
+                     `Le recomendamos seleccionar otra fecha disponible.\n\n` +
+                     `¿Desea continuar con la reserva de todas formas?`;
+
+      if (!confirm(mensaje)) {
+        return; // El paciente canceló la reserva
+      }
+    }
+
     this.isBooking = true;
 
-    // Crear fechas locales sin conversión a UTC
-    const startDate = this.selectedTurnoDisponible.start;
-    const endDate = this.selectedTurnoDisponible.end;
-    
-    // Formatear fecha y hora en horario local (sin UTC)
-    const fechaLocal = startDate.getFullYear() + '-' + 
-                      String(startDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                      String(startDate.getDate()).padStart(2, '0');
-    
-    const horaInicioLocal = String(startDate.getHours()).padStart(2, '0') + ':' + 
-                           String(startDate.getMinutes()).padStart(2, '0') + ':' + 
-                           String(startDate.getSeconds()).padStart(2, '0');
-    
-    const horaFinLocal = endDate ? 
-                        String(endDate.getHours()).padStart(2, '0') + ':' + 
-                        String(endDate.getMinutes()).padStart(2, '0') + ':' + 
-                        String(endDate.getSeconds()).padStart(2, '0') : '';
-
     const turnoDTO = {
-      id: this.selectedTurnoDisponible.meta?.id,
-      fecha: fechaLocal,
-      horaInicio: horaInicioLocal,
-      horaFin: horaFinLocal,
+      id: this.slotSeleccionado.id,
+      fecha: this.slotSeleccionado.fecha,
+      horaInicio: this.slotSeleccionado.horaInicio,
+      horaFin: this.slotSeleccionado.horaFin,
       pacienteId: parseInt(pacienteId),
-      staffMedicoId: this.selectedTurnoDisponible.meta?.staffMedicoId,
-      staffMedicoNombre: this.selectedTurnoDisponible.meta?.staffMedicoNombre,
-      staffMedicoApellido: this.selectedTurnoDisponible.meta?.staffMedicoApellido,
-      especialidadStaffMedico: this.selectedTurnoDisponible.meta?.especialidadStaffMedico,
-      consultorioId: this.selectedTurnoDisponible.meta?.consultorioId,
-      consultorioNombre: this.selectedTurnoDisponible.meta?.consultorioNombre,
-      centroId: this.selectedTurnoDisponible.meta?.centroId,
-      nombreCentro: this.selectedTurnoDisponible.meta?.centroAtencionNombre,
+      staffMedicoId: this.slotSeleccionado.staffMedicoId,
+      staffMedicoNombre: this.slotSeleccionado.staffMedicoNombre,
+      staffMedicoApellido: this.slotSeleccionado.staffMedicoApellido,
+      especialidadStaffMedico: this.slotSeleccionado.especialidadStaffMedico,
+      consultorioId: this.slotSeleccionado.consultorioId,
+      consultorioNombre: this.slotSeleccionado.consultorioNombre,
+      centroId: this.slotSeleccionado.centroId,
+      nombreCentro: this.slotSeleccionado.nombreCentro,
       estado: 'PROGRAMADO'
     };
 
-    console.log('Enviando turno DTO:', turnoDTO); // Debug log
+    console.log('Enviando turno DTO:', turnoDTO);
 
     this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
       next: () => {
         alert('¡Turno reservado exitosamente!');
         
-        // Actualizar inmediatamente el slot en el calendario local
-        if (this.selectedTurnoDisponible) {
-          this.actualizarSlotReservado(this.selectedTurnoDisponible);
-        }
+        // Actualizar inmediatamente el slot en el array local
+        this.actualizarSlotReservado(this.slotSeleccionado!.id);
         
         this.closeBookingModal();
         
@@ -1722,29 +1652,8 @@ export class PacienteAgendaComponent implements OnInit {
   closeBookingModal() {
     this.showBookingModal = false;
     this.selectedTurnoDisponible = null;
+    this.slotSeleccionado = null;
     this.isBooking = false;
-  }
-
-  // Actualizar slot reservado inmediatamente en el calendario local
-  private actualizarSlotReservado(slot: CalendarEvent) {
-    // Encontrar el slot en el array de eventos y marcarlo como ocupado
-    const eventoEncontrado = this.events.find(event => 
-      event.meta?.id === slot.meta?.id &&
-      event.start.getTime() === slot.start.getTime()
-    );
-    
-    if (eventoEncontrado) {
-      // Actualizar metadatos
-      eventoEncontrado.meta.ocupado = true;
-      eventoEncontrado.title = 'Ocupado';
-      eventoEncontrado.color = { primary: '#dc3545', secondary: '#f8d7da' };
-      
-      // Aplicar filtros nuevamente para actualizar la vista
-      this.aplicarFiltros();
-      
-      // Forzar detección de cambios
-      this.cdr.detectChanges();
-    }
   }
 
   // Métodos de limpieza de filtros
@@ -1770,7 +1679,10 @@ export class PacienteAgendaComponent implements OnInit {
     this.staffMedicos = [];
     this.centrosAtencion = [];
     this.showCalendar = false;
+    this.slotsDisponibles = [];
     this.turnosDisponibles = [];
+    this.slotsPorFecha = {};
+    this.fechasOrdenadas = [];
   }
 
   // Métodos auxiliares para obtener nombres
@@ -1786,37 +1698,6 @@ export class PacienteAgendaComponent implements OnInit {
     return centro ? centro.nombre : 'Centro no encontrado';
   }
 
-  // Navegación del calendario
-  previousWeek() {
-    this.viewDate = new Date(this.viewDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-    // Recargar turnos si hay filtros aplicados
-    if (this.especialidadSeleccionada) {
-      this.cargarTurnosConFiltros();
-    }
-  }
-
-  nextWeek() {
-    this.viewDate = new Date(this.viewDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    // Recargar turnos si hay filtros aplicados
-    if (this.especialidadSeleccionada) {
-      this.cargarTurnosConFiltros();
-    }
-  }
-
-  // Método para manejar cambios en los eventos (requerido por el calendario)
-  onEventTimesChanged(event: any) {
-    // Este método es requerido por el calendario pero no lo usamos para cambiar eventos
-    // ya que los pacientes solo pueden reservar, no mover eventos
-  }
-
-  goBack() {
-    this.router.navigate(['/paciente-dashboard']);
-  }
-
-  irASolicitarTurno() {
-    this.router.navigate(['/paciente-solicitar-turno']);
-  }
-
   // Métodos para manejo de días excepcionales
   esDiaExcepcional(fecha: string): boolean {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
@@ -1824,6 +1705,20 @@ export class PacienteAgendaComponent implements OnInit {
 
   getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
     return this.diasExcepcionalesService.getTipoExcepcion(fecha);
+  }
+
+  getTipoExcepcionLabel(fecha: string): string {
+    const tipo = this.getTipoExcepcion(fecha);
+    switch (tipo) {
+      case 'FERIADO':
+        return 'Feriado';
+      case 'MANTENIMIENTO':
+        return 'Mantenimiento';
+      case 'ATENCION_ESPECIAL':
+        return 'Atención Especial';
+      default:
+        return 'Día Excepcional';
+    }
   }
 
   getDescripcionExcepcion(fecha: string): string | null {
@@ -1843,4 +1738,5 @@ export class PacienteAgendaComponent implements OnInit {
         return '⚠️';
     }
   }
+
 }

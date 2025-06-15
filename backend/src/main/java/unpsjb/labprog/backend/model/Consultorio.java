@@ -41,10 +41,6 @@ public class Consultorio {
     @JsonBackReference
     private CentroAtencion centroAtencion;
 
-    // Horarios por defecto del consultorio
-    private LocalTime horaAperturaDefault;
-    private LocalTime horaCierreDefault;
-
     // Horarios específicos por día de la semana
     @ElementCollection
     @CollectionTable(name = "consultorio_horarios", joinColumns = @JoinColumn(name = "consultorio_id"))

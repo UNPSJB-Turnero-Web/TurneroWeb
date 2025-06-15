@@ -55,8 +55,6 @@ public class ConsultorioService {
         dto.setId(c.getId());
         dto.setNumero(c.getNumero());
         dto.setNombre(c.getNombre());
-        dto.setHoraAperturaDefault(c.getHoraAperturaDefault());
-        dto.setHoraCierreDefault(c.getHoraCierreDefault());
         
         if (c.getCentroAtencion() != null) {
             dto.setCentroId(c.getCentroAtencion().getId());
@@ -83,8 +81,6 @@ public class ConsultorioService {
         consultorio.setId(dto.getId());
         consultorio.setNumero(dto.getNumero());
         consultorio.setNombre(dto.getNombre());
-        consultorio.setHoraAperturaDefault(dto.getHoraAperturaDefault());
-        consultorio.setHoraCierreDefault(dto.getHoraCierreDefault());
         
         if (dto.getCentroId() != null) {
             CentroAtencion centro = new CentroAtencion();
@@ -166,6 +162,11 @@ public class ConsultorioService {
             if (repository.existsByNombreAndCentroAtencion(consultorio.getNombre(), centro)) {
                 throw new IllegalStateException("El nombre del consultorio ya está en uso");
             }
+            
+            // Si no tiene horarios específicos, crear horarios por defecto de 8:00 a 17:00
+            if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
+                consultorio.setHorariosSemanales(crearHorariosDefault());
+            }
         } else {
             // MODIFICACIÓN
             Consultorio existente = repository.findById(consultorio.getId())
@@ -185,8 +186,6 @@ public class ConsultorioService {
             }
             existente.setNumero(consultorio.getNumero());
             existente.setNombre(consultorio.getNombre());
-            existente.setHoraAperturaDefault(consultorio.getHoraAperturaDefault());
-            existente.setHoraCierreDefault(consultorio.getHoraCierreDefault());
             existente.setHorariosSemanales(consultorio.getHorariosSemanales());
             consultorio = existente;
         }
@@ -241,33 +240,65 @@ public class ConsultorioService {
      */
     public boolean consultorioDisponibleEnHorario(Integer consultorioId, String diaSemana, 
                                                   java.time.LocalTime hora) {
+        System.out.println("=== DEBUG consultorioDisponibleEnHorario ===");
+        System.out.println("consultorioId: " + consultorioId + ", diaSemana: " + diaSemana + ", hora: " + hora);
+        
         Optional<ConsultorioDTO> consultorioOpt = findById(consultorioId);
         if (!consultorioOpt.isPresent()) {
+            System.out.println("Consultorio no encontrado - retornando false");
             return false;
         }
         
         ConsultorioDTO consultorio = consultorioOpt.get();
+        System.out.println("Consultorio encontrado: " + consultorio.getNombre());
+        System.out.println("Horarios semanales count: " + (consultorio.getHorariosSemanales() != null ? consultorio.getHorariosSemanales().size() : 0));
         
-        // Si tiene horarios específicos, verificar contra esos
+        // Verificar horarios específicos (única fuente de verdad)
         if (consultorio.getHorariosSemanales() != null && !consultorio.getHorariosSemanales().isEmpty()) {
-            return consultorio.getHorariosSemanales().stream()
-                .anyMatch(horario -> 
-                    horario.getDiaSemana().equalsIgnoreCase(diaSemana) &&
-                    horario.getActivo() &&
-                    horario.getHoraApertura() != null &&
-                    horario.getHoraCierre() != null &&
-                    !hora.isBefore(horario.getHoraApertura()) &&
-                    !hora.isAfter(horario.getHoraCierre())
-                );
+            System.out.println("Verificando horarios específicos...");
+            for (ConsultorioDTO.HorarioConsultorioDTO horario : consultorio.getHorariosSemanales()) {
+                System.out.println("  - Día: " + horario.getDiaSemana() + ", activo: " + horario.getActivo() + 
+                                 ", apertura: " + horario.getHoraApertura() + ", cierre: " + horario.getHoraCierre());
+            }
+            
+            boolean resultado = consultorio.getHorariosSemanales().stream()
+                .anyMatch(horario -> {
+                    boolean match = horario.getDiaSemana().equalsIgnoreCase(diaSemana) &&
+                                   horario.getActivo() &&
+                                   horario.getHoraApertura() != null &&
+                                   horario.getHoraCierre() != null &&
+                                   !hora.isBefore(horario.getHoraApertura()) &&
+                                   !hora.isAfter(horario.getHoraCierre());
+                    if (horario.getDiaSemana().equalsIgnoreCase(diaSemana)) {
+                        System.out.println("  >> Evaluando " + diaSemana + ": activo=" + horario.getActivo() + 
+                                         ", aperturaOK=" + (horario.getHoraApertura() != null) + 
+                                         ", cierreOK=" + (horario.getHoraCierre() != null));
+                        if (horario.getActivo() && horario.getHoraApertura() != null && horario.getHoraCierre() != null) {
+                            System.out.println("  >> Hora " + hora + " vs rango " + horario.getHoraApertura() + "-" + horario.getHoraCierre() + 
+                                             " = " + (!hora.isBefore(horario.getHoraApertura()) && !hora.isAfter(horario.getHoraCierre())));
+                        }
+                    }
+                    return match;
+                });
+            System.out.println("Resultado horarios específicos: " + resultado);
+            return resultado;
         }
         
-        // Si no tiene horarios específicos, usar horarios por defecto
-        if (consultorio.getHoraAperturaDefault() != null && consultorio.getHoraCierreDefault() != null) {
-            return !hora.isBefore(consultorio.getHoraAperturaDefault()) &&
-                   !hora.isAfter(consultorio.getHoraCierreDefault());
-        }
+        // Si no hay horarios específicos configurados, el consultorio no está disponible
+        System.out.println("Sin horarios específicos configurados - retornando false");
+        return false;
+    }
+    
+    /**
+     * Crea horarios por defecto de 8:00 a 17:00 para todos los días de la semana
+     */
+    private List<Consultorio.HorarioConsultorio> crearHorariosDefault() {
+        String[] diasSemana = {"LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"};
+        java.time.LocalTime horaApertura = java.time.LocalTime.of(8, 0);  // 8:00
+        java.time.LocalTime horaCierre = java.time.LocalTime.of(17, 0);   // 17:00
         
-        // Si no hay horarios definidos, asumir que está disponible
-        return true;
+        return java.util.Arrays.stream(diasSemana)
+            .map(dia -> new Consultorio.HorarioConsultorio(dia, horaApertura, horaCierre, true))
+            .collect(java.util.stream.Collectors.toList());
     }
 }

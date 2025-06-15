@@ -35,6 +35,7 @@ public class TurnoDTO {
     // Campos para manejo de slots en la agenda
     private Boolean esSlot;          // true = slot generado, false/null = turno real
     private Boolean ocupado;         // true = slot ocupado por un turno, false = disponible
+    private Boolean enMantenimiento; // true = slot afectado por mantenimiento, false/null = normal
     // Los colores se manejan en el frontend según el estado
 
 }

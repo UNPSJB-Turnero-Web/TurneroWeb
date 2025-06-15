@@ -24,27 +24,36 @@ export class DiasExcepcionalesService {
   private diasExcepcionales = new BehaviorSubject<DiaExcepcional[]>([]);
   public diasExcepcionales$ = this.diasExcepcionales.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Agregar datos de prueba para verificar la funcionalidad
-    this.initTestData();
-  }
+  constructor(private http: HttpClient) {}
 
   /**
-   * Método temporal para agregar datos de prueba
-   * TODO: Eliminar cuando el backend esté devolviendo datos correctos
+   * Carga días excepcionales para el calendario
+   * Carga las próximas 4 semanas desde la fecha actual
    */
-  private initTestData(): void {
-    const testData: DiaExcepcional[] = [
-      {
-        id: 1,
-        fecha: '2025-06-16', // Lunes 16 de junio de 2025
-        tipoAgenda: 'FERIADO',
-        descripcion: 'Día del Trabajador - Test'
+  cargarDiasExcepcionalesParaCalendario(): void {
+    const fechaActual = new Date();
+    const fechaInicio = new Date(fechaActual);
+    fechaInicio.setDate(fechaInicio.getDate() - 7); // Una semana hacia atrás
+
+    const fechaFin = new Date(fechaActual);
+    fechaFin.setDate(fechaFin.getDate() + (4 * 7)); // 4 semanas hacia adelante
+
+    const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
+    const fechaFinStr = fechaFin.toISOString().split('T')[0];
+
+    console.log('Cargando días excepcionales desde:', fechaInicioStr, 'hasta:', fechaFinStr);
+
+    this.cargarDiasExcepcionales(fechaInicioStr, fechaFinStr).subscribe({
+      next: (response) => {
+        console.log('Días excepcionales del backend:', response.data);
+        this.actualizarDiasExcepcionales(response.data || []);
+      },
+      error: (error) => {
+        console.error('Error al cargar días excepcionales para calendario:', error);
+        // Inicializar con array vacío si falla el backend
+        this.actualizarDiasExcepcionales([]);
       }
-    ];
-    
-    this.diasExcepcionales.next(testData);
-    console.log('Datos de prueba cargados:', testData);
+    });
   }
 
   /**
@@ -67,58 +76,6 @@ export class DiasExcepcionalesService {
    */
   actualizarDiasExcepcionales(dias: DiaExcepcional[]): void {
     this.diasExcepcionales.next(dias);
-  }
-
-  /**
-   * Verifica si una fecha es un día excepcional
-   */
-  esDiaExcepcional(fecha: string): boolean {
-    const dias = this.diasExcepcionales.value;
-    return dias.some(dia => dia.fecha === fecha);
-  }
-
-  /**
-   * Obtiene el tipo de excepción para una fecha específica
-   */
-  getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
-    const dias = this.diasExcepcionales.value;
-    const dia = dias.find(dia => dia.fecha === fecha);
-    return dia ? dia.tipoAgenda : null;
-  }
-
-  /**
-   * Obtiene la descripción del día excepcional
-   */
-  getDescripcionExcepcion(fecha: string): string | null {
-    const dias = this.diasExcepcionales.value;
-    const dia = dias.find(dia => dia.fecha === fecha);
-    return dia ? dia.descripcion || '' : null;
-  }
-
-  /**
-   * Carga días excepcionales para el calendario
-   * Carga las próximas 4 semanas desde la fecha actual
-   */
-  cargarDiasExcepcionalesParaCalendario(): void {
-    const fechaActual = new Date();
-    const fechaInicio = new Date(fechaActual);
-    fechaInicio.setDate(fechaInicio.getDate() - 7); // Una semana hacia atrás
-
-    const fechaFin = new Date(fechaActual);
-    fechaFin.setDate(fechaFin.getDate() + (4 * 7)); // 4 semanas hacia adelante
-
-    const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
-    const fechaFinStr = fechaFin.toISOString().split('T')[0];
-
-    this.cargarDiasExcepcionales(fechaInicioStr, fechaFinStr).subscribe({
-      next: (response) => {
-        this.actualizarDiasExcepcionales(response.data || []);
-      },
-      error: (error) => {
-        console.error('Error al cargar días excepcionales para calendario:', error);
-        this.actualizarDiasExcepcionales([]);
-      }
-    });
   }
 
   /**
@@ -151,6 +108,32 @@ export class DiasExcepcionalesService {
   esAtencionEspecial(fecha: string): boolean {
     const dias = this.diasExcepcionales.value;
     return dias.some(dia => dia.fecha === fecha && dia.tipoAgenda === 'ATENCION_ESPECIAL');
+  }
+
+  /**
+   * Verifica si una fecha es un día excepcional
+   */
+  esDiaExcepcional(fecha: string): boolean {
+    const dias = this.diasExcepcionales.value;
+    return dias.some(dia => dia.fecha === fecha);
+  }
+
+  /**
+   * Obtiene el tipo de excepción para una fecha específica
+   */
+  getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
+    const dias = this.diasExcepcionales.value;
+    const dia = dias.find(dia => dia.fecha === fecha);
+    return dia ? dia.tipoAgenda : null;
+  }
+
+  /**
+   * Obtiene la descripción del día excepcional
+   */
+  getDescripcionExcepcion(fecha: string): string | null {
+    const dias = this.diasExcepcionales.value;
+    const dia = dias.find(dia => dia.fecha === fecha);
+    return dia ? dia.descripcion || '' : null;
   }
 
   /**

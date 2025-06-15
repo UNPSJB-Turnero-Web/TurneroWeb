@@ -102,8 +102,8 @@ public class ConsultorioDistribucionService {
                 );
         }
         
-        // Si no hay horarios específicos, verificar si tiene horarios por defecto
-        return consultorio.getHoraAperturaDefault() != null && consultorio.getHoraCierreDefault() != null;
+        // Si no hay horarios específicos, el consultorio no está disponible
+        return false;
     }
 
     /**
