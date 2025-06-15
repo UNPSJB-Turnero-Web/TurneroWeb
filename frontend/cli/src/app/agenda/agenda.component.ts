@@ -156,9 +156,17 @@ interface SlotDisponible {
                         {{ formatearFecha(fecha) }}
                       </h3>
                       <!-- Indicador de día excepcional en header (solo para días excepcionales completos, no slots individuales) -->
-                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha)">
+                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha) && !tieneFranjaHoraria(fecha)">
                         <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
-                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }}</span>
+                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }} - Día Completo</span>
+                        <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
+                          - {{ getDescripcionExcepcion(fecha) }}
+                        </span>
+                      </div>
+                      <!-- Indicador si es día con configuración especial pero con franja horaria -->
+                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha) && tieneFranjaHoraria(fecha)">
+                        <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
+                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }} programado para este día</span>
                         <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
                           - {{ getDescripcionExcepcion(fecha) }}
                         </span>
@@ -166,7 +174,7 @@ interface SlotDisponible {
                       <!-- Indicador si hay slots en mantenimiento en esta fecha -->
                       <div class="fecha-maintenance-badge" *ngIf="!esDiaExcepcional(fecha) && tieneSlotsEnMantenimiento(fecha)">
                         <span class="maintenance-icon">🔧</span>
-                        <span class="maintenance-label">Algunos turnos en mantenimiento</span>
+                        <span class="maintenance-label">Mantenimiento programado para algunos horarios</span>
                       </div>
                     </div>
                   </div>
@@ -177,10 +185,11 @@ interface SlotDisponible {
                       *ngFor="let slot of slotsPorFecha[fecha]" 
                       class="slot-card admin-slot"
                       [class.selected]="slotSeleccionado?.id === slot.id"
-                      [class.slot-excepcional]="esDiaExcepcional(slot.fecha) || slot.enMantenimiento"
-                      [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO'"
-                      [class.slot-mantenimiento]="slot.enMantenimiento || (getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha))"
-                      [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'"
+                      [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
+                      [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO' && slotAfectadoPorExcepcion(slot)"
+                      [class.slot-mantenimiento-dia]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha)"
+                      [class.slot-mantenimiento-individual]="slot.enMantenimiento"
+                      [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)"
                       [class.slot-ocupado]="slot.ocupado"
                       (click)="seleccionarSlot(slot)">
                       
@@ -219,7 +228,7 @@ interface SlotDisponible {
                       </div>
 
                       <!-- Información de día excepcional -->
-                      <div class="slot-exception" *ngIf="esDiaExcepcional(slot.fecha) || slot.enMantenimiento">
+                      <div class="slot-exception" *ngIf="slotAfectadoPorExcepcion(slot)">
                         <div class="exception-badge">
                           <span class="exception-icon">{{ getIconoExcepcion(slot.fecha, slot) }}</span>
                           <div class="exception-info">
@@ -1615,6 +1624,11 @@ export class AgendaComponent implements OnInit {
 
   // Verificar si una fecha tiene slots individuales en mantenimiento (no días excepcionales completos)
   tieneSlotsEnMantenimiento(fecha: string): boolean {
+    // Solo contar slots en mantenimiento si NO es un día excepcional completo
+    if (this.esDiaExcepcional(fecha) && !this.tieneFranjaHoraria(fecha)) {
+      return false; // Es día excepcional completo, no slots individuales
+    }
+    
     const slotsDelDia = this.slotsPorFecha[fecha] || [];
     return slotsDelDia.some(slot => slot.enMantenimiento);
   }
@@ -1625,53 +1639,134 @@ export class AgendaComponent implements OnInit {
     return dias.some(dia => dia.apertura && dia.cierre);
   }
 
-  getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
-    // Si el slot tiene mantenimiento específico, priorizarlo
-    if (slot?.enMantenimiento) {
-      return 'Mantenimiento';
+  // Verificar si un slot específico está afectado por un día excepcional con franja horaria
+  slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
+    // Si el slot tiene mantenimiento individual, está afectado
+    if (slot.enMantenimiento) {
+      return true;
     }
     
-    const tipo = this.getTipoExcepcion(fecha);
-    switch (tipo) {
-      case 'FERIADO':
-        return 'Feriado';
-      case 'MANTENIMIENTO':
-        return 'Mantenimiento';
-      case 'ATENCION_ESPECIAL':
-        return 'Atención Especial';
-      default:
-        return 'Día Excepcional';
+    // Si no es un día excepcional, no está afectado
+    if (!this.esDiaExcepcional(slot.fecha)) {
+      return false;
     }
+    
+    // Si es día excepcional sin franja horaria (día completo), está afectado
+    if (!this.tieneFranjaHoraria(slot.fecha)) {
+      return true;
+    }
+    
+    // Verificar si el slot está dentro de la franja horaria específica del día excepcional
+    const diasExcepcionales = this.diasExcepcionalesService.getDiasExcepcionalesPorFecha(slot.fecha);
+    
+    // Convertir horas del slot a objetos Date para comparación
+    const horaInicioSlot = this.convertirHoraAMinutos(slot.horaInicio);
+    const horaFinSlot = this.convertirHoraAMinutos(slot.horaFin);
+    
+    return diasExcepcionales.some(dia => {
+      if (!dia.apertura || !dia.cierre) return false;
+      
+      const horaAperturaExcepcion = this.convertirHoraAMinutos(dia.apertura);
+      const horaCierreExcepcion = this.convertirHoraAMinutos(dia.cierre);
+      
+      // Verificar si hay solapamiento entre el slot y el rango excepcional
+      return horaInicioSlot < horaCierreExcepcion && horaFinSlot > horaAperturaExcepcion;
+    });
+  }
+
+  // Función auxiliar para convertir "HH:mm" a minutos desde medianoche
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
+  }
+
+  getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
+    // Priorizar mantenimiento específico del slot
+    if (slot?.enMantenimiento) {
+      return 'Mantenimiento del Slot';
+    }
+    
+    // Verificar si es día excepcional completo
+    const tipo = this.getTipoExcepcion(fecha);
+    if (tipo && !this.tieneFranjaHoraria(fecha)) {
+      // Es día excepcional completo (sin franja horaria específica)
+      switch (tipo) {
+        case 'FERIADO':
+          return 'Feriado';
+        case 'MANTENIMIENTO':
+          return 'Mantenimiento del Día';
+        case 'ATENCION_ESPECIAL':
+          return 'Atención Especial';
+        default:
+          return 'Día Excepcional';
+      }
+    }
+    
+    // Si tiene franja horaria, el día excepcional solo afecta ciertos horarios
+    if (tipo && this.tieneFranjaHoraria(fecha)) {
+      switch (tipo) {
+        case 'FERIADO':
+          return 'Feriado Parcial';
+        case 'MANTENIMIENTO':
+          return 'Mantenimiento Parcial';
+        case 'ATENCION_ESPECIAL':
+          return 'Atención Especial Parcial';
+        default:
+          return 'Día Excepcional Parcial';
+      }
+    }
+    
+    return 'Normal';
   }
 
   getDescripcionExcepcion(fecha: string, slot?: SlotDisponible): string | null {
-    // Si el slot tiene mantenimiento específico, usar el título del slot
+    // Priorizar descripción específica del slot en mantenimiento
     if (slot?.enMantenimiento && slot?.titulo) {
       // El título viene como "MANTENIMIENTO: descripción", extraer solo la descripción
       const match = slot.titulo.match(/MANTENIMIENTO:\s*(.+)/);
-      return match ? match[1] : 'Mantenimiento programado';
+      return match ? match[1] : 'Mantenimiento programado del slot';
     }
     
-    return this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
+    // Si es un slot individual en mantenimiento pero no tiene título específico
+    if (slot?.enMantenimiento) {
+      return 'Mantenimiento programado del slot';
+    }
+    
+    // Para días excepcionales (completos o parciales)
+    const descripcionDia = this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
+    if (descripcionDia && this.esDiaExcepcional(fecha)) {
+      const tieneFramja = this.tieneFranjaHoraria(fecha);
+      const sufijo = tieneFramja ? ' (horario específico)' : ' (día completo)';
+      return descripcionDia + sufijo;
+    }
+    
+    return descripcionDia;
   }
 
   getIconoExcepcion(fecha: string, slot?: SlotDisponible): string {
-    // Si el slot tiene mantenimiento específico, usar icono de mantenimiento
+    // Priorizar icono específico del slot en mantenimiento
     if (slot?.enMantenimiento) {
-      return '🔧';
+      return '🔧'; // Icono específico para mantenimiento de slot
     }
     
+    // Para días excepcionales
     const tipo = this.getTipoExcepcion(fecha);
-    switch (tipo) {
-      case 'FERIADO':
-        return '🏛️';
-      case 'MANTENIMIENTO':
-        return '🔧';
-      case 'ATENCION_ESPECIAL':
-        return '⭐';
-      default:
-        return '⚠️';
+    if (tipo) {
+      const tieneFramja = this.tieneFranjaHoraria(fecha);
+      
+      switch (tipo) {
+        case 'FERIADO':
+          return tieneFramja ? '🏛️' : '🏛️';
+        case 'MANTENIMIENTO':
+          return tieneFramja ? '⚙️' : '🚧'; // Diferente icono para mantenimiento parcial vs completo
+        case 'ATENCION_ESPECIAL':
+          return tieneFramja ? '⭐' : '🌟';
+        default:
+          return '⚠️';
+      }
     }
+    
+    return '📅'; // Día normal
   }
 
   asignarTurno(): void {

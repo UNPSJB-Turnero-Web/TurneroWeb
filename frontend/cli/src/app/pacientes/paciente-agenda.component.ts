@@ -32,6 +32,8 @@ interface SlotDisponible {
   nombreCentro: string;
   ocupado?: boolean;
   esSlot?: boolean;
+  enMantenimiento?: boolean;
+  titulo?: string;
 }
 
 @Component({
