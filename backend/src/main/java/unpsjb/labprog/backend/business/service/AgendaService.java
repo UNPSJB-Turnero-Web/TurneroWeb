@@ -383,10 +383,11 @@ public class AgendaService {
                     ConfiguracionExcepcional config = atencionEspecial.get();
                     System.out.println("Config atencion especial - Hora inicio: " + config.getHoraInicio() + ", Hora fin: " + config.getHoraFin());
                     if (config.getHoraInicio() != null && config.getHoraFin() != null) {
-                        System.out.println("Generando slots con horario especial");
-                        // Generar slots con horario especial
-                        eventos.addAll(generarSlotsParaHorario(fechaEvento, config.getHoraInicio(), config.getHoraFin(), 
-                            esquemaTurnoFinal, config.getTiempoSanitizacion(), eventoIdCounter));
+                        System.out.println("Generando slots excepcionales para atencion especial");
+                        // Para atención especial, generar slots para todo el día pero marcando los específicos como especiales
+                        List<TurnoDTO> slotsAtencionEspecial = generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
+                            esquemaTurnoFinal, configuracionesDelDia, eventoIdCounter);
+                        eventos.addAll(slotsAtencionEspecial);
                         eventoIdCounter += 50;
                         continue;
                     }

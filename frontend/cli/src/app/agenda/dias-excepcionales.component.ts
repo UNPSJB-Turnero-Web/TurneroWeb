@@ -25,7 +25,9 @@ interface DiaExcepcional {
   esquemaTurnoId?: number;
   horaInicio?: string;
   horaFin?: string;
+  duracionMinutos?: number; // Nueva propiedad para duración en minutos
   tiempoSanitizacion?: number;
+  tipoProcedimiento?: string; // Nuevo campo para tipo de procedimiento
 }
 
 @Component({
@@ -120,6 +122,13 @@ interface DiaExcepcional {
                   </td>
                   <td class="descripcion-cell">
                     <div class="descripcion-text">{{ dia.descripcion }}</div>
+                    <!-- Mostrar tipo de procedimiento si es atención especial -->
+                    <div *ngIf="dia.tipoAgenda === 'ATENCION_ESPECIAL' && dia.descripcion && getTipoProcedimientoFromDescription(dia.descripcion)" class="mt-1">
+                      <small class="badge bg-secondary">
+                        <i class="fas fa-medical-kit me-1"></i>
+                        {{ getTipoProcedimientoLabel(getTipoProcedimientoFromDescription(dia.descripcion)!) }}
+                      </small>
+                    </div>
                   </td>
                   <td>
                     <div *ngIf="dia.centroNombre" class="centro-info">
@@ -148,6 +157,13 @@ interface DiaExcepcional {
                     <div *ngIf="dia.apertura && dia.cierre">
                       <i class="fas fa-clock me-1"></i>
                       {{ dia.apertura }} - {{ dia.cierre }}
+                      <!-- Mostrar duración si es atención especial -->
+                      <div *ngIf="dia.tipoAgenda === 'ATENCION_ESPECIAL'" class="mt-1">
+                        <small class="badge bg-info">
+                          <i class="fas fa-stopwatch me-1"></i>
+                          {{ calcularDuracion(dia.apertura, dia.cierre) }} min
+                        </small>
+                      </div>
                     </div>
                     <div *ngIf="!dia.apertura">
                       <span class="text-muted">Todo el día</span>
@@ -215,11 +231,12 @@ interface DiaExcepcional {
                       <option value="MANTENIMIENTO">Mantenimiento</option>
                     </select>
                   </div>
-                  <div class="col-12">
+                  <!-- Descripción general para feriados -->
+                  <div class="col-12" *ngIf="diaActual.tipoAgenda === 'FERIADO'">
                     <label class="form-label">Descripción *</label>
                     <textarea class="form-control" [(ngModel)]="diaActual.descripcionExcepcion" 
                               name="descripcion" required rows="2" 
-                              placeholder="Ej: Día del Trabajador, Mantenimiento sistema eléctrico, etc."></textarea>
+                              placeholder="Ej: Día del Trabajador, Día de la Independencia, etc."></textarea>
                   </div>
                   
                   <!-- Solo para mantenimiento y atención especial -->
@@ -282,32 +299,65 @@ interface DiaExcepcional {
                     </div>
                   </div>
 
-                  <!-- Horarios especiales para atención especial -->
-                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
-                    <label class="form-label">Hora Inicio *</label>
-                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
-                           name="horaInicio" required>
-                  </div>
-                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
-                    <label class="form-label">Hora Fin *</label>
-                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaFin" 
-                           name="horaFin" required>
-                  </div>
+                  <!-- Campos específicos para atención especial -->
+                  <ng-container *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
+                    <div class="col-md-4">
+                      <label class="form-label">Hora de Inicio *</label>
+                      <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
+                             name="horaInicio" required>
+                      <small class="form-text text-muted">Hora exacta de inicio del procedimiento</small>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Duración (minutos) *</label>
+                      <input type="number" class="form-control" [(ngModel)]="diaActual.duracionMinutos" 
+                             name="duracionMinutos" required min="15" max="480" step="15"
+                             placeholder="Ej: 60">
+                      <small class="form-text text-muted">Duración total del procedimiento</small>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Tipo de Procedimiento *</label>
+                      <select class="form-select" [(ngModel)]="diaActual.tipoProcedimiento" 
+                              name="tipoProcedimiento" required>
+                        <option value="">Seleccionar tipo</option>
+                        <option value="CIRUGIA">Cirugía</option>
+                        <option value="ESTUDIO">Estudio Médico</option>
+                        <option value="PROCEDIMIENTO_ESPECIAL">Procedimiento Especial</option>
+                        <option value="CONSULTA_EXTENDIDA">Consulta Extendida</option>
+                        <option value="INTERCONSULTA">Interconsulta</option>
+                      </select>
+                      <small class="form-text text-muted">Categoría del procedimiento reservado</small>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Descripción del Procedimiento *</label>
+                      <textarea class="form-control" [(ngModel)]="diaActual.descripcionExcepcion" 
+                                name="descripcionExcepcion" required rows="3"
+                                placeholder="Ej: Cirugía de apendicitis - Paciente Juan Pérez"></textarea>
+                      <small class="form-text text-muted">Descripción detallada del procedimiento o motivo de la reserva</small>
+                    </div>
+                  </ng-container>
 
-                  <!-- Hora de inicio para mantenimiento -->
-                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda === 'MANTENIMIENTO'">
-                    <label class="form-label">Hora de Inicio del Mantenimiento *</label>
-                    <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
-                           name="horaInicioMantenimiento" required>
-                  </div>
-
-                  <!-- Tiempo de sanitización -->
-                  <div class="col-md-6" *ngIf="diaActual.tipoAgenda !== 'FERIADO'">
-                    <label class="form-label">Tiempo Sanitización (minutos)</label>
-                    <input type="number" class="form-control" [(ngModel)]="diaActual.tiempoSanitizacion" 
-                           name="tiempoSanitizacion" min="0" max="60"
-                           placeholder="Ej: 15">
-                  </div>
+                  <!-- Campos específicos para mantenimiento -->
+                  <ng-container *ngIf="diaActual.tipoAgenda === 'MANTENIMIENTO'">
+                    <div class="col-md-6">
+                      <label class="form-label">Hora de Inicio del Mantenimiento *</label>
+                      <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
+                             name="horaInicioMantenimiento" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Tiempo de Sanitización (minutos)</label>
+                      <input type="number" class="form-control" [(ngModel)]="diaActual.tiempoSanitizacion" 
+                             name="tiempoSanitizacion" min="0" max="60"
+                             placeholder="Ej: 15">
+                      <small class="form-text text-muted">Tiempo adicional para limpieza después del mantenimiento</small>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Descripción del Mantenimiento *</label>
+                      <textarea class="form-control" [(ngModel)]="diaActual.descripcionExcepcion" 
+                                name="descripcionMantenimiento" required rows="2"
+                                placeholder="Ej: Mantenimiento sistema eléctrico, Reparación equipos médicos, etc."></textarea>
+                      <small class="form-text text-muted">Descripción detallada del tipo de mantenimiento a realizar</small>
+                    </div>
+                  </ng-container>
                 </div>
               </form>
             </div>
@@ -643,6 +693,18 @@ export class DiasExcepcionalesComponent implements OnInit {
       this.diaActual.horaInicio = undefined;
       this.diaActual.horaFin = undefined;
       this.diaActual.tiempoSanitizacion = undefined;
+      this.diaActual.duracionMinutos = undefined;
+      this.diaActual.tipoProcedimiento = undefined;
+    } else if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+      // Para atención especial no se necesita tiempo de sanitización
+      this.diaActual.tiempoSanitizacion = undefined;
+      // Limpiar campos específicos de mantenimiento si se cambió desde allí
+      this.diaActual.horaFin = undefined;
+    } else if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+      // Para mantenimiento no se necesitan campos de procedimiento
+      this.diaActual.duracionMinutos = undefined;
+      this.diaActual.tipoProcedimiento = undefined;
+      this.diaActual.horaFin = undefined;
     }
   }
 
@@ -674,8 +736,16 @@ export class DiasExcepcionalesComponent implements OnInit {
     }
 
     if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
-      if (!this.diaActual.horaInicio || !this.diaActual.horaFin) {
-        alert('Debe especificar horarios para atención especial');
+      if (!this.diaActual.horaInicio || !this.diaActual.duracionMinutos || !this.diaActual.tipoProcedimiento) {
+        alert('Debe especificar hora de inicio, duración y tipo de procedimiento para atención especial');
+        return;
+      }
+      if (this.diaActual.duracionMinutos < 15 || this.diaActual.duracionMinutos > 480) {
+        alert('La duración debe estar entre 15 minutos y 8 horas (480 minutos)');
+        return;
+      }
+      if (!this.diaActual.descripcionExcepcion || this.diaActual.descripcionExcepcion.trim().length < 10) {
+        alert('Debe proporcionar una descripción detallada del procedimiento (mínimo 10 caracteres)');
         return;
       }
     }
@@ -706,7 +776,18 @@ export class DiasExcepcionalesComponent implements OnInit {
     // Agregar horarios si es atención especial
     if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
       params.horaInicio = this.diaActual.horaInicio;
-      params.horaFin = this.diaActual.horaFin;
+      params.duracionMinutos = this.diaActual.duracionMinutos;
+      params.tipoProcedimiento = this.diaActual.tipoProcedimiento;
+      
+      // Calcular hora fin basada en duración para compatibilidad con backend
+      if (this.diaActual.horaInicio && this.diaActual.duracionMinutos) {
+        const [horas, minutos] = this.diaActual.horaInicio.split(':').map(Number);
+        const inicioEnMinutos = horas * 60 + minutos;
+        const finEnMinutos = inicioEnMinutos + this.diaActual.duracionMinutos;
+        const horaFin = Math.floor(finEnMinutos / 60);
+        const minutoFin = finEnMinutos % 60;
+        params.horaFin = `${horaFin.toString().padStart(2, '0')}:${minutoFin.toString().padStart(2, '0')}`;
+      }
     }
 
     // Agregar hora de inicio si es mantenimiento
@@ -781,6 +862,46 @@ export class DiasExcepcionalesComponent implements OnInit {
       case 'FERIADO': return 'Feriado';
       case 'ATENCION_ESPECIAL': return 'Atención Especial';
       case 'MANTENIMIENTO': return 'Mantenimiento';
+      default: return tipo;
+    }
+  }
+
+  // Función para calcular duración en minutos entre dos horas
+  calcularDuracion(horaInicio: string, horaFin: string): number {
+    if (!horaInicio || !horaFin) return 0;
+    
+    const [horasInicio, minutosInicio] = horaInicio.split(':').map(Number);
+    const [horasFin, minutosFin] = horaFin.split(':').map(Number);
+    
+    const inicioEnMinutos = horasInicio * 60 + minutosInicio;
+    const finEnMinutos = horasFin * 60 + minutosFin;
+    
+    return finEnMinutos - inicioEnMinutos;
+  }
+
+  // Función para extraer tipo de procedimiento de la descripción
+  getTipoProcedimientoFromDescription(descripcion: string): string | null {
+    if (!descripcion) return null;
+    
+    // Buscar patrones en la descripción que indiquen el tipo
+    const descripcionLower = descripcion.toLowerCase();
+    if (descripcionLower.includes('cirugía') || descripcionLower.includes('cirugia')) return 'CIRUGIA';
+    if (descripcionLower.includes('estudio')) return 'ESTUDIO';
+    if (descripcionLower.includes('procedimiento')) return 'PROCEDIMIENTO_ESPECIAL';
+    if (descripcionLower.includes('consulta')) return 'CONSULTA_EXTENDIDA';
+    if (descripcionLower.includes('interconsulta')) return 'INTERCONSULTA';
+    
+    return null;
+  }
+
+  // Función para obtener etiqueta del tipo de procedimiento
+  getTipoProcedimientoLabel(tipo: string): string {
+    switch (tipo) {
+      case 'CIRUGIA': return 'Cirugía';
+      case 'ESTUDIO': return 'Estudio Médico';
+      case 'PROCEDIMIENTO_ESPECIAL': return 'Procedimiento Especial';
+      case 'CONSULTA_EXTENDIDA': return 'Consulta Extendida';
+      case 'INTERCONSULTA': return 'Interconsulta';
       default: return tipo;
     }
   }

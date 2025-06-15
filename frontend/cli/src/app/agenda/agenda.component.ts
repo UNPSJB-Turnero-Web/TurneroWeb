@@ -245,6 +245,10 @@ interface SlotDisponible {
                       </div>
 
                       <!-- Estado del slot -->
+                      <div class="slot-status special-attention" *ngIf="!slot.enMantenimiento && getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)">
+                        <i class="fas fa-hospital"></i>
+                        Especial
+                      </div>
                       <div class="slot-status maintenance" *ngIf="slot.enMantenimiento">
                         <i class="fas fa-wrench"></i>
                         Mantenimiento
@@ -889,7 +893,29 @@ interface SlotDisponible {
 
     .slot-card.slot-atencion-especial {
       border-color: #6f42c1;
-      background: rgba(111, 66, 193, 0.05);
+      background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, rgba(111, 66, 193, 0.03) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slot-card.slot-atencion-especial::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #6f42c1, #9c88ff, #6f42c1);
+      border-radius: 14px;
+      z-index: -1;
+      opacity: 0.3;
+    }
+
+    .slot-card.slot-atencion-especial:hover {
+      border-color: #6f42c1;
+      background: linear-gradient(135deg, rgba(111, 66, 193, 0.12) 0%, rgba(111, 66, 193, 0.06) 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(111, 66, 193, 0.25);
     }
 
     .slot-time {
@@ -971,8 +997,32 @@ interface SlotDisponible {
     }
 
     .slot-card.slot-atencion-especial .slot-exception {
-      background: rgba(111, 66, 193, 0.05);
-      border-color: rgba(111, 66, 193, 0.3);
+      background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, rgba(111, 66, 193, 0.05) 100%);
+      border: 2px solid rgba(111, 66, 193, 0.4);
+      border-radius: 10px;
+      box-shadow: 0 3px 12px rgba(111, 66, 193, 0.15);
+    }
+
+    .slot-card.slot-atencion-especial .exception-type {
+      color: #6f42c1;
+      font-size: 0.95rem;
+      text-shadow: 0 1px 2px rgba(111, 66, 193, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slot-card.slot-atencion-especial .exception-type::before {
+      content: '🏥';
+      font-size: 1.1rem;
+    }
+
+    .slot-card.slot-atencion-especial .exception-warning {
+      color: #6f42c1;
+      background: rgba(111, 66, 193, 0.1);
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid rgba(111, 66, 193, 0.3);
     }
 
     .exception-badge {
@@ -1075,6 +1125,14 @@ interface SlotDisponible {
     .slot-status.maintenance {
       background: #fd7e14;
       color: white;
+    }
+
+    .slot-status.special-attention {
+      background: linear-gradient(135deg, #6f42c1 0%, #9c88ff 100%);
+      color: white;
+      font-weight: 700;
+      box-shadow: 0 3px 10px rgba(111, 66, 193, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.5);
     }
 
     .slot-check {
@@ -1748,6 +1806,19 @@ export class AgendaComponent implements OnInit {
     const descripcionDia = this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
     if (descripcionDia && this.esDiaExcepcional(fecha)) {
       const tieneFramja = this.tieneFranjaHoraria(fecha);
+      const tipo = this.getTipoExcepcion(fecha);
+      
+      // Para atención especial, agregar información sobre el tipo de procedimiento
+      if (tipo === 'ATENCION_ESPECIAL') {
+        const tipoProcedimiento = this.getTipoProcedimientoFromDescription(descripcionDia);
+        const sufijo = tieneFramja ? ` (${slot?.horaInicio} - ${slot?.horaFin})` : ' (día completo)';
+        
+        if (tipoProcedimiento) {
+          return `${this.getTipoProcedimientoLabel(tipoProcedimiento)}: ${descripcionDia}${sufijo}`;
+        }
+        return `Procedimiento Especial: ${descripcionDia}${sufijo}`;
+      }
+      
       const sufijo = tieneFramja ? ' (horario específico)' : ' (día completo)';
       return descripcionDia + sufijo;
     }
@@ -1873,6 +1944,33 @@ export class AgendaComponent implements OnInit {
       
       // Forzar detección de cambios
       this.cdr.detectChanges();
+    }
+  }
+
+  // Función para extraer tipo de procedimiento de la descripción
+  getTipoProcedimientoFromDescription(descripcion: string): string | null {
+    if (!descripcion) return null;
+    
+    // Buscar patrones en la descripción que indiquen el tipo
+    const descripcionLower = descripcion.toLowerCase();
+    if (descripcionLower.includes('cirugía') || descripcionLower.includes('cirugia')) return 'CIRUGIA';
+    if (descripcionLower.includes('estudio')) return 'ESTUDIO';
+    if (descripcionLower.includes('procedimiento')) return 'PROCEDIMIENTO_ESPECIAL';
+    if (descripcionLower.includes('consulta')) return 'CONSULTA_EXTENDIDA';
+    if (descripcionLower.includes('interconsulta')) return 'INTERCONSULTA';
+    
+    return null;
+  }
+
+  // Función para obtener etiqueta del tipo de procedimiento
+  getTipoProcedimientoLabel(tipo: string): string {
+    switch (tipo) {
+      case 'CIRUGIA': return 'Cirugía';
+      case 'ESTUDIO': return 'Estudio Médico';
+      case 'PROCEDIMIENTO_ESPECIAL': return 'Procedimiento Especial';
+      case 'CONSULTA_EXTENDIDA': return 'Consulta Extendida';
+      case 'INTERCONSULTA': return 'Interconsulta';
+      default: return tipo;
     }
   }
 
