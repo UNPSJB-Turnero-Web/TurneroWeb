@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -242,7 +242,7 @@ interface SlotDisponible {
                       class="slot-card"
                       [class.selected]="slotSeleccionado?.id === slot.id"
                       [class.slot-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
-                      (click)="seleccionarSlot(slot)">
+                      (click)="seleccionarSlot(slot, $event)">
                       
                       <div class="slot-time">
                         <i class="fas fa-clock"></i>
@@ -332,7 +332,8 @@ interface SlotDisponible {
       </div>
 
       <!-- MODAL RESERVAR TURNO -->
-      <div *ngIf="showBookingModal" class="modal-overlay" (click)="closeBookingModal()">
+      <div *ngIf="showBookingModal" 
+           class="modal-contextual">
         <div class="modal-content paciente-modal" (click)="$event.stopPropagation()">
           <div class="modal-header">
             <h4><i class="fas fa-calendar-plus"></i> Reservar Turno</h4>
@@ -384,6 +385,12 @@ interface SlotDisponible {
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Backdrop para cerrar modal cuando se hace clic fuera -->
+      <div *ngIf="showBookingModal" 
+           class="modal-backdrop" 
+           (click)="closeBookingModal()">
       </div>
     </div>
   `,
@@ -913,7 +920,63 @@ interface SlotDisponible {
       margin-bottom: 0.5rem;
     }
 
-    /* MODAL */
+    /* MODAL CONTEXTUAL */
+    .modal-contextual {
+      position: fixed !important;
+      top: 50vh !important;
+      left: 50vw !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 1060;
+      max-width: 500px;
+      width: 90vw;
+      max-height: 90vh;
+      animation: modalFadeIn 0.2s ease-out;
+      pointer-events: auto;
+    }
+
+    .modal-contextual:hover {
+      position: fixed !important;
+      top: 50vh !important;
+      left: 50vw !important;
+      transform: translate(-50%, -50%) !important;
+    }
+
+    .modal-contextual * {
+      pointer-events: auto;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.1);
+      z-index: 1055;
+      animation: backdropFadeIn 0.2s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) translateY(0);
+      }
+    }
+
+    @keyframes backdropFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* MODAL LEGACY (mantener para compatibilidad) */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -931,10 +994,12 @@ interface SlotDisponible {
       background: white;
       border-radius: 15px;
       max-width: 500px;
-      width: 90%;
+      width: 100%;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      transform-origin: top left;
     }
 
     .modal-header {
@@ -1093,8 +1158,8 @@ interface SlotDisponible {
       }
 
       .paciente-modal {
-        width: 95%;
-        margin: 1rem;
+        width: 95% !important;
+        margin: 0 !important;
       }
 
       .fecha-info {
@@ -1110,7 +1175,7 @@ interface SlotDisponible {
     }
   `]
 })
-export class PacienteAgendaComponent implements OnInit {
+export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Estados de carga
   isLoadingTurnos = false;
   isLoadingEspecialidades = false;
@@ -1157,6 +1222,25 @@ export class PacienteAgendaComponent implements OnInit {
     // Cargar días excepcionales primero
     this.cargarDiasExcepcionales();
     this.cargarEspecialidades();
+    
+    // Listener para reposicionar modal en resize
+    this.resizeListener = () => {
+      if (this.showBookingModal) {
+        // Reposicionar modal si está abierto
+        this.modalPosition = { 
+          top: window.innerWidth <= 768 ? window.innerHeight / 2 - 200 : (window.innerHeight - 400) / 2,
+          left: window.innerWidth <= 768 ? window.innerWidth / 2 - 200 : (window.innerWidth - 500) / 2
+        };
+      }
+    };
+    window.addEventListener('resize', this.resizeListener);
+  }
+
+  ngOnDestroy() {
+    // Cleanup resize listener
+    if (this.resizeListener) {
+      window.removeEventListener('resize', this.resizeListener);
+    }
   }
 
   // Cargar días excepcionales para el calendario
@@ -1375,8 +1459,12 @@ export class PacienteAgendaComponent implements OnInit {
     return fechaObj.toLocaleDateString('es-ES', opciones);
   }
 
+  // Variables para posicionamiento del modal
+  modalPosition = { top: 0, left: 0 };
+  private resizeListener?: () => void;
+
   // Seleccionar slot
-  seleccionarSlot(slot: SlotDisponible) {
+  seleccionarSlot(slot: SlotDisponible, event?: MouseEvent) {
     if (slot.ocupado) {
       alert('Este turno ya está ocupado. Por favor, selecciona otro horario disponible.');
       return;
@@ -1408,6 +1496,11 @@ export class PacienteAgendaComponent implements OnInit {
       return;
     }
 
+    // Calcular posición del modal cerca del elemento clickeado
+    if (event) {
+      this.calculateModalPosition(event);
+    }
+
     this.slotSeleccionado = slot;
     
     // Crear objeto compatible con el modal existente
@@ -1432,6 +1525,63 @@ export class PacienteAgendaComponent implements OnInit {
     };
     
     this.showBookingModal = true;
+  }
+
+  // Calcular posición del modal cerca del elemento clickeado
+  private calculateModalPosition(event: MouseEvent) {
+    // En pantallas pequeñas, usar posicionamiento centrado
+    if (window.innerWidth <= 768) {
+      this.modalPosition = { 
+        top: window.innerHeight / 2 - 200, 
+        left: window.innerWidth / 2 - 200 
+      };
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    const slotCard = target.closest('.slot-card') as HTMLElement;
+    
+    if (slotCard) {
+      const rect = slotCard.getBoundingClientRect();
+      const modalWidth = 500; // Ancho aproximado del modal
+      const modalHeight = 400; // Alto aproximado del modal
+      const offset = 10; // Offset desde el elemento
+      
+      // Calcular posición preferida (a la derecha del slot)
+      let left = rect.right + offset;
+      let top = rect.top;
+      
+      // Verificar si el modal se sale de la pantalla por la derecha
+      if (left + modalWidth > window.innerWidth) {
+        // Posicionar a la izquierda del slot
+        left = rect.left - modalWidth - offset;
+      }
+      
+      // Verificar si el modal se sale de la pantalla por la izquierda
+      if (left < 0) {
+        // Centrar horizontalmente en la pantalla
+        left = (window.innerWidth - modalWidth) / 2;
+      }
+      
+      // Verificar si el modal se sale de la pantalla por abajo
+      if (top + modalHeight > window.innerHeight) {
+        // Ajustar para que aparezca arriba
+        top = window.innerHeight - modalHeight - offset;
+      }
+      
+      // Verificar si el modal se sale de la pantalla por arriba
+      if (top < 0) {
+        top = offset;
+      }
+      
+      this.modalPosition = { top, left };
+    } else {
+      // Fallback: centrar el modal
+      this.modalPosition = { 
+        top: (window.innerHeight - 400) / 2, 
+        left: (window.innerWidth - 500) / 2 
+      };
+    }
   }
 
   // Navegación y otros métodos

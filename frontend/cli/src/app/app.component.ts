@@ -239,7 +239,8 @@ import { filter } from 'rxjs/operators';
     /* NAVBAR MODERNA */
     .modern-navbar {
       background: var(--obra-social-gradient);
-      backdrop-filter: blur(20px);
+      backdrop-filter: blur(100px);
+      -webkit-backdrop-filter: blur(100px);
       border-bottom: 1px solid rgba(255,255,255,0.1);
       position: fixed;
       top: 0;
@@ -496,11 +497,8 @@ import { filter } from 'rxjs/operators';
     }
 
     .user-name {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: white;
-      line-height: 1.2;
-    }
+      font-weight: 600;      background: var(--obra-social-gradient);
+
 
     .user-role {
       font-size: 0.75rem;

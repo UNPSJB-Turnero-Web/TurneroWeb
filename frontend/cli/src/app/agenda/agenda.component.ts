@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef, LOCALE_ID } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef, LOCALE_ID } from '@angular/core';
 import { AgendaService } from './agenda.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -191,7 +191,7 @@ interface SlotDisponible {
                       [class.slot-mantenimiento-individual]="slot.enMantenimiento"
                       [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)"
                       [class.slot-ocupado]="slot.ocupado"
-                      (click)="seleccionarSlot(slot)">
+                      (click)="seleccionarSlot(slot, $event)">
                       
                       <div class="slot-time">
                         <i class="fas fa-clock"></i>
@@ -285,7 +285,8 @@ interface SlotDisponible {
           </div>
 
           <!-- MODAL PARA ASIGNAR PACIENTE -->
-          <div *ngIf="showModal" class="modern-modal-overlay" (click)="closeModal()">
+          <div *ngIf="showModal" 
+               class="modal-contextual">
             <div class="modern-modal" (click)="$event.stopPropagation()">
               <div class="modal-header-modern">
                 <div class="header-content">
@@ -352,7 +353,7 @@ interface SlotDisponible {
                   </div>
 
                   <!-- Información de día excepcional si aplica -->
-                  <div class="info-item-modal exception-modal" *ngIf="slotSeleccionado && (esDiaExcepcional(slotSeleccionado.fecha) || slotSeleccionado.enMantenimiento)">
+                  <div class="info-item-modal exception-modal" *ngIf="slotSeleccionado && slotAfectadoPorExcepcion(slotSeleccionado)">
                     <div class="info-label-modal">
                       <span class="info-icon-modal exception-icon">{{ getIconoExcepcion(slotSeleccionado.fecha, slotSeleccionado) }}</span>
                       {{ slotSeleccionado.enMantenimiento ? 'Slot en Mantenimiento' : 'Día Excepcional' }}
@@ -411,6 +412,12 @@ interface SlotDisponible {
               </div>
             </div>
           </div>
+
+          <!-- Backdrop para cerrar modal cuando se hace clic fuera -->
+          <div *ngIf="showModal" 
+               class="modal-backdrop" 
+               (click)="closeModal()">
+          </div>
         </div>
       </div>
     </div>
@@ -436,10 +443,7 @@ interface SlotDisponible {
       transition: all 0.3s ease;
     }
     
-    .modern-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
+    
     
     /* Header con gradiente calendario */
     .card-header {
@@ -1151,31 +1155,68 @@ interface SlotDisponible {
       box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
     }
     
-    /* Modal modernizado */
-    .modern-modal-overlay {
+    /* Modal contextual */
+    .modal-contextual {
+      position: fixed !important;
+      top: 50vh !important;
+      left: 50vw !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 1060;
+      max-width: 500px;
+      width: 90vw;
+      max-height: 90vh;
+      animation: modalFadeIn 0.2s ease-out;
+      pointer-events: auto;
+    }
+
+    .modal-contextual:hover {
+      position: fixed !important;
+      top: 50vh !important;
+      left: 50vw !important;
+      transform: translate(-50%, -50%) !important;
+    }
+
+    .modal-contextual * {
+      pointer-events: auto;
+    }
+
+    .modal-backdrop {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1050;
-      backdrop-filter: blur(5px);
-      animation: fadeIn 0.3s ease;
+      background: rgba(0,0,0,0.1);
+      z-index: 1055;
+      animation: backdropFadeIn 0.2s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes backdropFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
     
     .modern-modal {
       background: white;
       border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      max-width: 800px;
-      width: 90%;
-      max-height: 80vh;
+      width: 100%;
+      max-height: 90vh;
       overflow-y: auto;
       animation: slideUp 0.3s ease;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      transform-origin: top left;
     }
     
     .modal-header-modern {
@@ -1368,7 +1409,7 @@ interface SlotDisponible {
       color: white;
     }
     
-    /* Responsive */
+    /* RESPONSIVE */
     @media (max-width: 768px) {
       .container {
          padding: 1rem;
@@ -1463,6 +1504,10 @@ export class AgendaComponent implements OnInit {
   pacientes: { id: number; nombre: string; apellido: string }[] = [];
   pacienteId: number | null = null;
 
+  // Variables para posicionamiento del modal contextual
+  modalPosition = { top: 0, left: 0 };
+  private resizeListener?: () => void;
+
   constructor(
     private agendaService: AgendaService,
     private pacienteService: PacienteService, // Inyecta el servicio de pacientes
@@ -1476,6 +1521,24 @@ export class AgendaComponent implements OnInit {
     this.cargarTodosLosEventos();
     this.cargarPacientes();
     this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
+    
+    // Listener para reposicionar modal en resize
+    this.resizeListener = () => {
+      if (this.showModal) {
+        // Reposicionar modal si está abierto
+        const modalWidth = 500;
+        const modalHeight = 400;
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+          this.modalPosition = {
+            top: (window.innerHeight - modalHeight) / 2,
+            left: (window.innerWidth - Math.min(modalWidth, window.innerWidth - 40)) / 2
+          };
+        }
+      }
+    };
+    window.addEventListener('resize', this.resizeListener);
   }
 
   // Método para cargar eventos desde el backend y convertirlos a slots
@@ -1549,7 +1612,7 @@ export class AgendaComponent implements OnInit {
       slots.push(slot);
 
       // Separar solo para conteo los turnos afectados
-      if (this.esDiaExcepcional(slot.fecha) || slot.enMantenimiento) {
+      if (this.slotAfectadoPorExcepcion(slot)) {
         slotsAfectados.push(slot);
       }
     });
@@ -1630,10 +1693,55 @@ export class AgendaComponent implements OnInit {
   }
 
   // Seleccionar slot
-  seleccionarSlot(slot: SlotDisponible) {
+  seleccionarSlot(slot: SlotDisponible, event?: MouseEvent) {
+    // Calcular posición del modal cerca del elemento clickeado
+    if (event) {
+      this.calculateModalPosition(event);
+    }
+    
     this.slotSeleccionado = slot;
     this.showModal = true;
     this.pacienteId = null; // Reset paciente selection
+  }
+
+  // Calcular posición del modal contextual
+  private calculateModalPosition(event: MouseEvent) {
+    const modalWidth = 500;
+    const modalHeight = 400;
+    const padding = 20;
+
+    // Detectar si es móvil
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+      // En móviles, centrar en la pantalla
+      this.modalPosition = {
+        top: (window.innerHeight - modalHeight) / 2,
+        left: (window.innerWidth - Math.min(modalWidth, window.innerWidth - 40)) / 2
+      };
+      return;
+    }
+
+    // Posición del click
+    let top = event.clientY;
+    let left = event.clientX;
+
+    // Ajustar para que no se salga de la pantalla
+    if (left + modalWidth + padding > window.innerWidth) {
+      left = window.innerWidth - modalWidth - padding;
+    }
+    if (left < padding) {
+      left = padding;
+    }
+
+    if (top + modalHeight + padding > window.innerHeight) {
+      top = window.innerHeight - modalHeight - padding;
+    }
+    if (top < padding) {
+      top = padding;
+    }
+
+    this.modalPosition = { top, left };
   }
 
   cargarPacientes(): void {
@@ -1776,13 +1884,13 @@ export class AgendaComponent implements OnInit {
     if (tipo && this.tieneFranjaHoraria(fecha)) {
       switch (tipo) {
         case 'FERIADO':
-          return 'Feriado Parcial';
+          return 'Feriado ';
         case 'MANTENIMIENTO':
-          return 'Mantenimiento Parcial';
+          return 'Mantenimiento ';
         case 'ATENCION_ESPECIAL':
-          return 'Atención Especial Parcial';
+          return 'Atención Especial ';
         default:
-          return 'Día Excepcional Parcial';
+          return 'Día Excepcional ';
       }
     }
     
@@ -1859,7 +1967,7 @@ export class AgendaComponent implements OnInit {
     }
 
     // Verificar si es un día excepcional o slot en mantenimiento y confirmar con el usuario
-    if (this.esDiaExcepcional(this.slotSeleccionado.fecha) || this.slotSeleccionado.enMantenimiento) {
+    if (this.slotAfectadoPorExcepcion(this.slotSeleccionado)) {
       const tipoExcepcion = this.getTipoExcepcionLabel(this.slotSeleccionado.fecha, this.slotSeleccionado);
       const descripcion = this.getDescripcionExcepcion(this.slotSeleccionado.fecha, this.slotSeleccionado);
       
