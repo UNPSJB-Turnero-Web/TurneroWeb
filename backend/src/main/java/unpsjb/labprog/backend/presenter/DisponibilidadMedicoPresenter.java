@@ -56,12 +56,14 @@ public class DisponibilidadMedicoPresenter {
         }
     }
 
-    @PutMapping
-    public ResponseEntity<Object> update(@RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody DisponibilidadMedicoDTO disponibilidadDTO) {
         try {
-            if (disponibilidadDTO.getId() == null || disponibilidadDTO.getId() <= 0) {
+            if (id == null || id <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
+            // Ensure the DTO has the correct ID from the path variable
+            disponibilidadDTO.setId(id);
             DisponibilidadMedicoDTO updated = service.saveOrUpdate(disponibilidadDTO);
             return Response.ok(updated, "Disponibilidad actualizada correctamente");
         } catch (IllegalStateException e) {
