@@ -220,42 +220,63 @@
   box-shadow: 0 8px 32px var(--obra-social-shadow);
 }
 
-.btn-new {
-      background: rgba(255,255,255,0.2)!important;
-      border: 1px solid rgba(255,255,255,0.3)!important;
-      color: white!important;
-      padding: 0.75rem 1.5rem!important;
-      border-radius: 12px!important;
-      font-weight: 600!important;
-      backdrop-filter: blur(10px)!important;
-      transition: all 0.3s ease!important;
-    }
+/* ========================================
+   BOTONES TRANSPARENTES PARA BANNERS
+   ======================================== */
 
-    .btn-new:hover {
-      background: rgba(255,255,255,0.3)!important;
-      color: white!important;
-      transform: translateY(-2px)!important;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2)!important;
-    }
+.btn-new,
+.btn-banner {
+  background: rgba(255,255,255,0.2) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  color: white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  backdrop-filter: blur(10px) !important;
+  transition: all 0.3s ease !important;
+  position: relative;
+  z-index: 2;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 
+.btn-new:hover,
+.btn-banner:hover {
+  background: rgba(255,255,255,0.3) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+}
 
-    .btn-banner {
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 12px;
-      font-weight: 600;
-      backdrop-filter: blur(10px);
-      transition: all 0.3s ease;
-    }
+.btn-new:focus,
+.btn-banner:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3) !important;
+}
 
-    .btn-banner:hover {
-      background: rgba(255,255,255,0.3);
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    }
+.btn-new:active,
+.btn-banner:active {
+  transform: translateY(0) !important;
+  background: rgba(255,255,255,0.4) !important;
+}
+
+/* Override Bootstrap styles if needed */
+.btn-new.btn,
+.btn-banner.btn {
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  background: rgba(255,255,255,0.2) !important;
+  color: white !important;
+}
+
+.btn-new.btn:hover,
+.btn-banner.btn:hover {
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  background: rgba(255,255,255,0.3) !important;
+  color: white !important;
+}
 
 .banner-pacientes {
   background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
@@ -291,35 +312,6 @@
   background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
   border-radius: 50%;
   transform: translate(50%, -50%);
-}
-
-/* ========================================
-   BOTONES TRANSPARENTES PARA BANNERS
-   ======================================== */
-
-/* .btn-banner {
-  background: rgba(255,255,255,0.2);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 2;
-}
-
-.btn-banner:hover {
-  background: rgba(255,255,255,0.3);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-} */
-
-.btn-banner:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
 }
 
 /* ========================================
@@ -717,9 +709,10 @@
     font-size: 1.2rem;
   }
   
-  .btn-banner {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+  .btn-banner,
+  .btn-new {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem !important;
   }
   
   .avatar-centro-atencion,

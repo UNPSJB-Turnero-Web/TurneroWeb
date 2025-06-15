@@ -325,30 +325,38 @@ import { filter } from 'rxjs/operators';
     }
 
     .nav-button {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: white;
+      background: rgba(255,255,255,0.1) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: white !important;
       padding: 0.75rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
       font-size: 0.95rem;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       cursor: pointer;
+      text-decoration: none;
     }
 
     .nav-button:hover {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.2) !important;
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      color: white;
+      color: white !important;
+      border-color: rgba(255,255,255,0.3) !important;
+    }
+
+    .nav-button:focus {
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.3) !important;
     }
 
     .nav-button.active {
-      background: rgba(255,255,255,0.25);
-      border-color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.25) !important;
+      border-color: rgba(255,255,255,0.4) !important;
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     }
 
@@ -433,9 +441,9 @@ import { filter } from 'rxjs/operators';
     }
 
     .login-button {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: white;
+      background: rgba(255,255,255,0.1) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: white !important;
       padding: 0.75rem 1.5rem;
       border-radius: 12px;
       font-weight: 500;
@@ -445,20 +453,28 @@ import { filter } from 'rxjs/operators';
       gap: 0.5rem;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       cursor: pointer;
+      text-decoration: none;
     }
 
     .login-button:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.2) !important;
+      border-color: rgba(255,255,255,0.3) !important;
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      color: white !important;
+    }
+
+    .login-button:focus {
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.3) !important;
     }
 
     .user-button {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: white;
+      background: rgba(255,255,255,0.1) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      color: white !important;
       padding: 0.75rem 1rem;
       border-radius: 12px;
       display: flex;
@@ -466,15 +482,23 @@ import { filter } from 'rxjs/operators';
       gap: 0.75rem;
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       min-width: 200px;
       cursor: pointer;
+      text-decoration: none;
     }
 
     .user-button:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.2) !important;
+      border-color: rgba(255,255,255,0.3) !important;
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      color: white !important;
+    }
+
+    .user-button:focus {
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.3) !important;
     }
 
     .user-avatar {
@@ -497,8 +521,11 @@ import { filter } from 'rxjs/operators';
     }
 
     .user-name {
-      font-weight: 600;      background: var(--obra-social-gradient);
-
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: white;
+      line-height: 1.2;
+    }
 
     .user-role {
       font-size: 0.75rem;
