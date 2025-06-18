@@ -2163,40 +2163,9 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
   }
 
-  // Verificar si un slot específico está afectado por excepciones
+  // Verificar si un slot específico está afectado por excepciones - Usa servicio centralizado
   slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
-    const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
-    
-    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
-      return false;
-    }
-
-    for (const excepcion of excepcionesDelDia) {
-      // Los feriados afectan todo el día
-      if (excepcion.tipo === 'FERIADO') {
-        return true;
-      }
-
-      // Para mantenimiento y atención especial, verificar horarios específicos
-      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
-          excepcion.horaInicio && excepcion.horaFin) {
-        
-        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
-        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
-        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
-        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
-
-        // Verificar si hay superposición entre el slot y la excepción
-        const hayConflicto = inicioSlotMinutos < finExcepcionMinutos && 
-                            finSlotMinutos > inicioExcepcionMinutos;
-
-        if (hayConflicto) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return this.diasExcepcionalesService.slotAfectadoPorExcepcion(slot);
   }
 
   // Función auxiliar para convertir hora "HH:mm" a minutos desde medianoche

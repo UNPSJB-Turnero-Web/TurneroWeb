@@ -77,16 +77,6 @@ export class DiasExcepcionalesService {
   }
 
   /**
-   * DEPRECADO: Usa extraerDiasExcepcionalesDeEventos() en su lugar
-   * Carga días excepcionales para el calendario
-   */
-  cargarDiasExcepcionalesParaCalendario(): void {
-    console.warn('cargarDiasExcepcionalesParaCalendario() está deprecado. Usa extraerDiasExcepcionalesDeEventos() en su lugar.');
-    // Inicializar con array vacío - la información vendrá de los eventos
-    this.actualizarDiasExcepcionales([]);
-  }
-
-  /**
    * Carga días excepcionales por rango de fechas
    */
   cargarDiasExcepcionales(fechaInicio: string, fechaFin: string, centroId?: number): Observable<DataPackage<DiaExcepcional[]>> {
@@ -209,178 +199,204 @@ export class DiasExcepcionalesService {
    * Método centralizado para verificar si un slot específico está afectado por excepciones
    * Elimina duplicación de código entre componentes
    */
-  slotAfectadoPorExcepcion(slot: { fecha: string; horaInicio: string; horaFin: string }): boolean {
-    const excepcionesDelDia = this.getExcepcionesDelDia(slot.fecha);
+  slotAfectadoPorExcepcion(slot: { fecha: string; horaInicio: string; horaFin: string; enMantenimiento?: boolean; titulo?: string }): boolean {
+    // NUEVA LÓGICA SIMPLIFICADA: Confiar en el backend
+    // El backend ya determina si un slot está afectado por configuraciones excepcionales
+    // y lo refleja en el campo 'titulo'
     
-    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
-      return false;
-    }
-
-    for (const excepcion of excepcionesDelDia) {
-      // Los feriados afectan todo el día
-      if (excepcion.tipo === 'FERIADO') {
-        return true;
-      }
-
-      // Para mantenimiento y atención especial, verificar horarios específicos
-      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
-          excepcion.horaInicio && excepcion.horaFin) {
-        
-        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
-        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
-        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
-        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
-
-        // Verificar si hay superposición entre el slot y la excepción
-        if (inicioSlotMinutos < finExcepcionMinutos && finSlotMinutos > inicioExcepcionMinutos) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    // Un slot está afectado por excepción si:
+    // 1. Está en mantenimiento individual
+    // 2. El título contiene información especial diferente a "Disponible"
+    return !!slot.enMantenimiento || 
+           !!(slot.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado'));
   }
 
   /**
    * Obtiene información detallada sobre por qué un slot está afectado
    */
-  getInformacionAfectacion(slot: { fecha: string; horaInicio: string; horaFin: string }): {
-    afectado: boolean;
-    tipo?: 'FERIADO' | 'MANTENIMIENTO' | 'ATENCION_ESPECIAL';
-    descripcion?: string;
-    mensaje?: string;
-  } {
-    const excepcionesDelDia = this.getExcepcionesDelDia(slot.fecha);
-    
-    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
-      return { afectado: false };
+  getInformacionAfectacionSlot(slot: { fecha: string; horaInicio: string; horaFin: string; enMantenimiento?: boolean; titulo?: string }): {
+    tipo: string;
+    descripcion: string | null;
+    icono: string;
+  } | null {
+    if (!this.slotAfectadoPorExcepcion(slot)) {
+      return null;
     }
 
-    for (const excepcion of excepcionesDelDia) {
-      // Los feriados afectan todo el día
-      if (excepcion.tipo === 'FERIADO') {
-        return {
-          afectado: true,
-          tipo: 'FERIADO',
-          descripcion: excepcion.descripcion,
-          mensaje: `Este día es feriado${excepcion.descripcion ? ': ' + excepcion.descripcion : ''}`
-        };
-      }
-
-      // Para mantenimiento y atención especial, verificar horarios específicos
-      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
-          excepcion.horaInicio && excepcion.horaFin) {
-        
-        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
-        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
-        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
-        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
-
-        // Verificar si hay superposición entre el slot y la excepción
-        if (inicioSlotMinutos < finExcepcionMinutos && finSlotMinutos > inicioExcepcionMinutos) {
-          const tipoLabel = excepcion.tipo === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Atención Especial';
-          return {
-            afectado: true,
-            tipo: excepcion.tipo,
-            descripcion: excepcion.descripcion,
-            mensaje: `Este horario no está disponible por ${tipoLabel}${excepcion.descripcion ? ': ' + excepcion.descripcion : ''}`
-          };
-        }
-      }
-    }
-
-    return { afectado: false };
-  }
-
-  /**
-   * Determina el estado y mensaje para mostrar en un slot
-   */
-  getEstadoSlot(slot: { 
-    fecha: string; 
-    horaInicio: string; 
-    horaFin: string; 
-    ocupado?: boolean;
-    titulo?: string;
-    enMantenimiento?: boolean;
-  }): {
-    disponible: boolean;
-    estado: 'DISPONIBLE' | 'OCUPADO' | 'FERIADO' | 'MANTENIMIENTO' | 'ATENCION_ESPECIAL' | 'NO_DISPONIBLE';
-    mensaje: string;
-    clase: string;
-  } {
-    // Si está ocupado por un turno, no está disponible
-    if (slot.ocupado) {
-      return {
-        disponible: false,
-        estado: 'OCUPADO',
-        mensaje: 'Ocupado',
-        clase: 'ocupado'
-      };
-    }
-
-    // Verificar excepciones
-    const afectacion = this.getInformacionAfectacion(slot);
-    if (afectacion.afectado) {
-      return {
-        disponible: false,
-        estado: afectacion.tipo!,
-        mensaje: afectacion.mensaje!,
-        clase: afectacion.tipo!.toLowerCase().replace('_', '-')
-      };
-    }
-
-    // Verificar campos específicos del slot
+    // Información específica del slot
     if (slot.enMantenimiento) {
       return {
-        disponible: false,
-        estado: 'MANTENIMIENTO',
-        mensaje: 'En mantenimiento',
-        clase: 'mantenimiento'
+        tipo: 'Mantenimiento',
+        descripcion: 'Mantenimiento programado para este horario',
+        icono: '🔧'
       };
     }
 
-    // Si tiene título específico que no sea "Disponible", analizarlo
     if (slot.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado')) {
-      if (slot.titulo.includes('FERIADO')) {
-        return {
-          disponible: false,
-          estado: 'FERIADO',
-          mensaje: slot.titulo,
-          clase: 'feriado'
-        };
-      }
-      if (slot.titulo.includes('MANTENIMIENTO')) {
-        return {
-          disponible: false,
-          estado: 'MANTENIMIENTO',
-          mensaje: slot.titulo,
-          clase: 'mantenimiento'
-        };
-      }
+      let tipo = 'Día Excepcional';
+      let icono = '⚠️';
+      let descripcion = slot.titulo;
+
       if (slot.titulo.includes('ATENCION_ESPECIAL')) {
-        return {
-          disponible: true, // Atención especial puede estar disponible para turnos especiales
-          estado: 'ATENCION_ESPECIAL',
-          mensaje: slot.titulo,
-          clase: 'atencion-especial'
-        };
+        tipo = 'Atención Especial';
+        icono = '⭐';
+        if (slot.titulo.includes(':')) {
+          descripcion = slot.titulo.split(':').slice(1).join(':').trim();
+        }
+      } else if (slot.titulo.includes('MANTENIMIENTO')) {
+        tipo = 'Mantenimiento';
+        icono = '⚙️';
+        if (slot.titulo.includes(':')) {
+          descripcion = slot.titulo.split(':').slice(1).join(':').trim();
+        }
+      } else if (slot.titulo.includes('FERIADO')) {
+        tipo = 'Feriado';
+        icono = '🏛️';
+        if (slot.titulo.includes(':')) {
+          descripcion = slot.titulo.split(':').slice(1).join(':').trim();
+        }
       }
+
+      return { tipo, descripcion, icono };
     }
 
-    // Por defecto, disponible
-    return {
-      disponible: true,
-      estado: 'DISPONIBLE',
-      mensaje: 'Disponible',
-      clase: 'disponible'
-    };
+    // Fallback a días excepcionales generales
+    const tipoExcepcion = this.getTipoExcepcion(slot.fecha);
+    if (tipoExcepcion) {
+      let tipo = 'Día Excepcional';
+      let icono = '⚠️';
+      
+      switch (tipoExcepcion) {
+        case 'FERIADO':
+          tipo = 'Feriado';
+          icono = '🏛️';
+          break;
+        case 'MANTENIMIENTO':
+          tipo = 'Mantenimiento del Día';
+          icono = '🚧';
+          break;
+        case 'ATENCION_ESPECIAL':
+          tipo = 'Atención Especial';
+          icono = '🌟';
+          break;
+      }
+
+      return {
+        tipo,
+        descripcion: this.getDescripcionExcepcion(slot.fecha),
+        icono
+      };
+    }
+
+    return null;
   }
 
   /**
-   * Función auxiliar para convertir "HH:mm" a minutos desde medianoche
+   * Verifica si una fecha tiene franja horaria específica (no es día completo)
    */
-  private convertirHoraAMinutos(hora: string): number {
-    const [horas, minutos] = hora.split(':').map(Number);
-    return horas * 60 + minutos;
+  tieneFranjaHoraria(fecha: string): boolean {
+    const dias = this.getDiasExcepcionalesPorFecha(fecha);
+    return dias.some(dia => dia.apertura && dia.cierre);
+  }
+
+  /**
+   * Obtiene el icono apropiado para una excepción
+   */
+  getIconoExcepcion(fecha: string, slot?: { enMantenimiento?: boolean; titulo?: string }): string {
+    // Priorizar icono específico del slot en mantenimiento
+    if (slot?.enMantenimiento) {
+      return '🔧'; // Icono específico para mantenimiento de slot
+    }
+    
+    // Para días excepcionales
+    const tipo = this.getTipoExcepcion(fecha);
+    if (tipo) {
+      const tieneFramja = this.tieneFranjaHoraria(fecha);
+      
+      switch (tipo) {
+        case 'FERIADO':
+          return tieneFramja ? '🏛️' : '🏛️';
+        case 'MANTENIMIENTO':
+          return tieneFramja ? '⚙️' : '🚧'; // Diferente icono para mantenimiento parcial vs completo
+        case 'ATENCION_ESPECIAL':
+          return tieneFramja ? '⭐' : '🌟';
+        default:
+          return '⚠️';
+      }
+    }
+    
+    return '📅'; // Día normal
+  }
+
+  /**
+   * Obtiene la etiqueta del tipo de excepción
+   */
+  getTipoExcepcionLabel(fecha: string, slot?: { titulo?: string; enMantenimiento?: boolean }): string {
+    // NUEVA LÓGICA: Usar el título del slot como fuente de verdad
+    if (slot?.titulo) {
+      // Extraer el tipo del título
+      if (slot.titulo.includes('ATENCION_ESPECIAL')) {
+        return 'Atención Especial';
+      }
+      if (slot.titulo.includes('MANTENIMIENTO')) {
+        return 'Mantenimiento';
+      }
+      if (slot.titulo.includes('FERIADO')) {
+        return 'Feriado';
+      }
+      if (slot.enMantenimiento) {
+        return 'Mantenimiento';
+      }
+    }
+    
+    // Fallback a la lógica de día excepcional solo si no hay información en el slot
+    const tipo = this.getTipoExcepcion(fecha);
+    if (tipo && !this.tieneFranjaHoraria(fecha)) {
+      switch (tipo) {
+        case 'FERIADO':
+          return 'Feriado';
+        case 'MANTENIMIENTO':
+          return 'Mantenimiento del Día';
+        case 'ATENCION_ESPECIAL':
+          return 'Atención Especial';
+        default:
+          return 'Día Excepcional';
+      }
+    }
+    
+    return 'Disponible';
+  }
+
+  /**
+   * Obtiene la descripción de la excepción considerando tanto slot específico como día excepcional
+   */
+  getDescripcionExcepcionSlot(fecha: string, slot?: { titulo?: string }): string | null {
+    // NUEVA LÓGICA: Usar el título del slot como fuente de verdad
+    if (slot?.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado')) {
+      // Extraer la descripción del título
+      if (slot.titulo.includes(':')) {
+        const partes = slot.titulo.split(':');
+        if (partes.length > 1) {
+          return partes.slice(1).join(':').trim();
+        }
+      }
+      return slot.titulo;
+    }
+    
+    // Fallback a la lógica de día excepcional
+    return this.getDescripcionExcepcion(fecha);
+  }
+
+  /**
+   * Verifica si una fecha tiene slots individuales en mantenimiento (no días excepcionales completos)
+   */
+  tieneSlotsEnMantenimiento(fecha: string, slots: any[]): boolean {
+    // Solo contar slots en mantenimiento si NO es un día excepcional completo
+    if (this.esDiaExcepcional(fecha) && !this.tieneFranjaHoraria(fecha)) {
+      return false; // Es día excepcional completo, no slots individuales
+    }
+    
+    const slotsDelDia = slots.filter(slot => slot.fecha === fecha);
+    return slotsDelDia.some(slot => slot.enMantenimiento);
   }
 }

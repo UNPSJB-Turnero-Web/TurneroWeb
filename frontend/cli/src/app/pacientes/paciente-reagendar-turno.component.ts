@@ -1168,26 +1168,12 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   seleccionarSlot(slot: SlotDisponible) {
-    // Verificar si el slot específico está afectado por una excepción
+    // Verificar si el slot específico está afectado por una excepción usando el servicio centralizado
     if (this.slotAfectadoPorExcepcion(slot)) {
-      const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
-      const excepcionAfectante = excepcionesDelDia?.find(exc => {
-        if (exc.tipo === 'FERIADO') return true;
-        if ((exc.tipo === 'MANTENIMIENTO' || exc.tipo === 'ATENCION_ESPECIAL') && 
-            exc.horaInicio && exc.horaFin) {
-          const inicioSlot = this.convertirHoraAMinutos(slot.horaInicio);
-          const finSlot = this.convertirHoraAMinutos(slot.horaFin);
-          const inicioExc = this.convertirHoraAMinutos(exc.horaInicio);
-          const finExc = this.convertirHoraAMinutos(exc.horaFin);
-          return inicioSlot < finExc && finSlot > inicioExc;
-        }
-        return false;
-      });
-
-      if (excepcionAfectante) {
-        const tipoLabel = excepcionAfectante.tipo === 'FERIADO' ? 'Feriado' : 
-                          excepcionAfectante.tipo === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Atención Especial';
-        alert(`Este horario no está disponible por ${tipoLabel}. Por favor, selecciona otro horario.`);
+      // Obtener información detallada de la afectación usando métodos centralizados
+      const informacion = this.diasExcepcionalesService.getInformacionAfectacionSlot(slot);
+      if (informacion) {
+        alert(`Este horario no está disponible por ${informacion.tipo}. Por favor, selecciona otro horario.`);
       } else {
         alert('Este horario no está disponible. Por favor, selecciona otro horario.');
       }
@@ -1284,46 +1270,9 @@ export class PacienteReagendarTurnoComponent implements OnInit {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
   }
 
-  // Verificar si un slot específico está afectado por excepciones
+  // Verificar si un slot específico está afectado por excepciones - Delegado al servicio centralizado
   slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
-    const excepcionesDelDia = this.diasExcepcionalesService.getExcepcionesDelDia(slot.fecha);
-    
-    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
-      return false;
-    }
-
-    for (const excepcion of excepcionesDelDia) {
-      // Los feriados afectan todo el día
-      if (excepcion.tipo === 'FERIADO') {
-        return true;
-      }
-
-      // Para mantenimiento y atención especial, verificar horarios específicos
-      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
-          excepcion.horaInicio && excepcion.horaFin) {
-        
-        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
-        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
-        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
-        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
-
-        // Verificar si hay superposición entre el slot y la excepción
-        const hayConflicto = inicioSlotMinutos < finExcepcionMinutos && 
-                            finSlotMinutos > inicioExcepcionMinutos;
-
-        if (hayConflicto) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  // Función auxiliar para convertir hora "HH:mm" a minutos desde medianoche
-  convertirHoraAMinutos(hora: string): number {
-    const [horas, minutos] = hora.split(':').map(Number);
-    return horas * 60 + minutos;
+    return this.diasExcepcionalesService.slotAfectadoPorExcepcion(slot);
   }
 
   getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {

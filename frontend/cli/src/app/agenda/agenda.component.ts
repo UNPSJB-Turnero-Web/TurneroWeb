@@ -1520,7 +1520,6 @@ export class AgendaComponent implements OnInit {
   ngOnInit() {
     this.cargarTodosLosEventos();
     this.cargarPacientes();
-    this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
     
     // Listener para reposicionar modal en resize
     this.resizeListener = () => {
@@ -1550,6 +1549,10 @@ export class AgendaComponent implements OnInit {
         // Transformar los eventos del backend en slots
         this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
         this.events = eventosBackend; // Para compatibilidad con filtros
+        
+        // Extraer días excepcionales de los eventos
+        this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
+        
         this.aplicarFiltrosSlots();
         this.agruparSlotsPorFecha();
         this.isLoading = false;
@@ -1791,7 +1794,7 @@ export class AgendaComponent implements OnInit {
     this.pacienteId = null;
   }
 
-  // Métodos para manejo de días excepcionales
+  // Métodos para manejo de días excepcionales - Delegamos al servicio centralizado
   esDiaExcepcional(fecha: string): boolean {
     return this.diasExcepcionalesService.esDiaExcepcional(fecha);
   }
@@ -1800,130 +1803,29 @@ export class AgendaComponent implements OnInit {
     return this.diasExcepcionalesService.getTipoExcepcion(fecha);
   }
 
-  // Verificar si una fecha tiene slots individuales en mantenimiento (no días excepcionales completos)
   tieneSlotsEnMantenimiento(fecha: string): boolean {
-    // Solo contar slots en mantenimiento si NO es un día excepcional completo
-    if (this.esDiaExcepcional(fecha) && !this.tieneFranjaHoraria(fecha)) {
-      return false; // Es día excepcional completo, no slots individuales
-    }
-    
     const slotsDelDia = this.slotsPorFecha[fecha] || [];
-    return slotsDelDia.some(slot => slot.enMantenimiento);
+    return this.diasExcepcionalesService.tieneSlotsEnMantenimiento(fecha, slotsDelDia);
   }
 
-  // Verificar si un día excepcional tiene franja horaria específica (no es día completo)
   tieneFranjaHoraria(fecha: string): boolean {
-    const dias = this.diasExcepcionalesService.getDiasExcepcionalesPorFecha(fecha);
-    return dias.some(dia => dia.apertura && dia.cierre);
+    return this.diasExcepcionalesService.tieneFranjaHoraria(fecha);
   }
 
-  // Verificar si un slot específico está afectado por un día excepcional con franja horaria
   slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
-    // NUEVA LÓGICA SIMPLIFICADA: Confiar en el backend
-    // El backend ya determina si un slot está afectado por configuraciones excepcionales
-    // y lo refleja en el campo 'titulo'
-    
-    // Un slot está afectado por excepción si:
-    // 1. Está en mantenimiento individual
-    // 2. El título contiene información especial diferente a "Disponible"
-    return !!slot.enMantenimiento || 
-           !!(slot.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado'));
-  }
-
-  /**
-   * Determina si un slot tiene información especial pero sigue disponible
-   */
-  slotTieneInformacionEspecial(slot: SlotDisponible): boolean {
-    return !!(slot.titulo && 
-           slot.titulo !== 'Disponible' && 
-           !slot.titulo.startsWith('Ocupado') && 
-           !slot.ocupado && 
-           !slot.enMantenimiento);
-  }
-
-  // Función auxiliar para convertir "HH:mm" a minutos desde medianoche
-  private convertirHoraAMinutos(hora: string): number {
-    const [horas, minutos] = hora.split(':').map(Number);
-    return horas * 60 + minutos;
+    return this.diasExcepcionalesService.slotAfectadoPorExcepcion(slot);
   }
 
   getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
-    // NUEVA LÓGICA: Usar el título del slot como fuente de verdad
-    if (slot?.titulo) {
-      // Extraer el tipo del título
-      if (slot.titulo.includes('ATENCION_ESPECIAL')) {
-        return 'Atención Especial';
-      }
-      if (slot.titulo.includes('MANTENIMIENTO')) {
-        return 'Mantenimiento';
-      }
-      if (slot.titulo.includes('FERIADO')) {
-        return 'Feriado';
-      }
-      if (slot.enMantenimiento) {
-        return 'Mantenimiento';
-      }
-    }
-    
-    // Fallback a la lógica de día excepcional solo si no hay información en el slot
-    const tipo = this.getTipoExcepcion(fecha);
-    if (tipo && !this.tieneFranjaHoraria(fecha)) {
-      switch (tipo) {
-        case 'FERIADO':
-          return 'Feriado';
-        case 'MANTENIMIENTO':
-          return 'Mantenimiento del Día';
-        case 'ATENCION_ESPECIAL':
-          return 'Atención Especial';
-        default:
-          return 'Día Excepcional';
-      }
-    }
-    
-    return 'Disponible';
+    return this.diasExcepcionalesService.getTipoExcepcionLabel(fecha, slot);
   }
 
   getDescripcionExcepcion(fecha: string, slot?: SlotDisponible): string | null {
-    // NUEVA LÓGICA: Usar el título del slot como fuente de verdad
-    if (slot?.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado')) {
-      // Extraer la descripción del título
-      if (slot.titulo.includes(':')) {
-        const partes = slot.titulo.split(':');
-        if (partes.length > 1) {
-          return partes.slice(1).join(':').trim();
-        }
-      }
-      return slot.titulo;
-    }
-    
-    // Fallback a la lógica de día excepcional
-    return this.diasExcepcionalesService.getDescripcionExcepcion(fecha);
+    return this.diasExcepcionalesService.getDescripcionExcepcionSlot(fecha, slot);
   }
 
   getIconoExcepcion(fecha: string, slot?: SlotDisponible): string {
-    // Priorizar icono específico del slot en mantenimiento
-    if (slot?.enMantenimiento) {
-      return '🔧'; // Icono específico para mantenimiento de slot
-    }
-    
-    // Para días excepcionales
-    const tipo = this.getTipoExcepcion(fecha);
-    if (tipo) {
-      const tieneFramja = this.tieneFranjaHoraria(fecha);
-      
-      switch (tipo) {
-        case 'FERIADO':
-          return tieneFramja ? '🏛️' : '🏛️';
-        case 'MANTENIMIENTO':
-          return tieneFramja ? '⚙️' : '🚧'; // Diferente icono para mantenimiento parcial vs completo
-        case 'ATENCION_ESPECIAL':
-          return tieneFramja ? '⭐' : '🌟';
-        default:
-          return '⚠️';
-      }
-    }
-    
-    return '📅'; // Día normal
+    return this.diasExcepcionalesService.getIconoExcepcion(fecha, slot);
   }
 
   asignarTurno(): void {
@@ -2048,4 +1950,20 @@ export class AgendaComponent implements OnInit {
     }
   }
 
+  /**
+   * Determina si un slot tiene información especial pero sigue disponible
+   */
+  slotTieneInformacionEspecial(slot: SlotDisponible): boolean {
+    return !!(slot.titulo && 
+           slot.titulo !== 'Disponible' && 
+           !slot.titulo.startsWith('Ocupado') && 
+           !slot.ocupado && 
+           !slot.enMantenimiento);
+  }
+
+  // Función auxiliar para convertir "HH:mm" a minutos desde medianoche (mantener para compatibilidad local)
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
+  }
 }
