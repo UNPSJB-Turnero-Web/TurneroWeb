@@ -122,7 +122,65 @@ public class StaffMedicoPresenter {
         }
     }
 
-    
+    // ==================== ENDPOINTS PARA GESTIÓN DE PORCENTAJES ====================
+
+    /**
+     * Actualizar porcentajes de médicos de un centro
+     */
+    @PutMapping("/centrosAtencion/{centroId}/medicos/porcentajes")
+    public ResponseEntity<Object> actualizarPorcentajes(
+            @PathVariable Integer centroId,
+            @RequestBody List<StaffMedicoDTO> medicosConPorcentaje) {
+        try {
+            service.actualizarPorcentajes(centroId, medicosConPorcentaje);
+            return Response.ok(null, "Porcentajes actualizados correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al actualizar porcentajes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtener total de porcentajes asignados en un centro
+     */
+    @GetMapping("/centrosAtencion/{centroId}/medicos/porcentajes/total")
+    public ResponseEntity<Object> obtenerTotalPorcentajes(@PathVariable Integer centroId) {
+        try {
+            Double total = service.obtenerTotalPorcentajesPorCentro(centroId);
+            return Response.ok(total, "Total de porcentajes obtenido correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener total de porcentajes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Validar porcentajes de médicos de un centro
+     */
+    @PostMapping("/centrosAtencion/{centroId}/medicos/porcentajes/validar")
+    public ResponseEntity<Object> validarPorcentajes(
+            @PathVariable Integer centroId,
+            @RequestBody List<StaffMedicoDTO> medicosConPorcentaje) {
+        try {
+            boolean esValido = service.validarPorcentajesPorCentro(centroId, medicosConPorcentaje);
+            return Response.ok(esValido, esValido ? "Porcentajes válidos" : "Porcentajes inválidos");
+        } catch (Exception e) {
+            return Response.error(null, "Error al validar porcentajes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtener médicos con porcentajes de un centro
+     */
+    @GetMapping("/centrosAtencion/{centroId}/medicos/conPorcentajes")
+    public ResponseEntity<Object> getMedicosConPorcentajes(@PathVariable Integer centroId) {
+        try {
+            List<StaffMedicoDTO> medicos = service.getMedicosConPorcentajesPorCentro(centroId);
+            return Response.ok(medicos, "Médicos con porcentajes obtenidos correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener médicos con porcentajes: " + e.getMessage());
+        }
+    }
 
     // Otros endpoints según necesidad...
 }

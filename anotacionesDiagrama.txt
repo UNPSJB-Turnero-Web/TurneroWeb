@@ -34,3 +34,6 @@ sistema slotless de la agenda (que muestre los turnos ocupados )
 validaciones de dplicado de asignado de turnos
 
 Promocion: agenda geolocalizada, segun nuestra ubicacion nos tiene que sugerir lo mas cercano
+
+
+Cual es el sentido de asignar el consultorio en el esquematurno, si luego en el algoritmo de agenda automatizada va a relocalizar los medicos segun mejor convenga?

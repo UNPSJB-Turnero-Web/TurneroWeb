@@ -152,4 +152,36 @@ public class EsquemaTurnoPresenter {
             return Response.error(null, "Error al obtener la paginación: " + e.getMessage());
         }
     }
+
+    /**
+     * Redistribuir esquemas de turno existentes de un centro según porcentajes
+     */
+    @PostMapping("/centrosAtencion/{centroId}/redistribuir")
+    public ResponseEntity<Object> redistribuirEsquemas(@PathVariable Integer centroId) {
+        try {
+            int esquemasProcesados = service.redistribuirEsquemasPorCentro(centroId);
+            return Response.ok(esquemasProcesados, 
+                "Redistribución completada. " + esquemasProcesados + " esquemas procesados.");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al redistribuir esquemas: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Redistribuir esquemas de turno de un médico específico
+     */
+    @PostMapping("/medico/{medicoId}/redistribuir")
+    public ResponseEntity<Object> redistribuirEsquemasPorMedico(@PathVariable Integer medicoId) {
+        try {
+            int esquemasProcesados = service.redistribuirEsquemasPorMedico(medicoId);
+            return Response.ok(esquemasProcesados, 
+                "Redistribución completada para el médico. " + esquemasProcesados + " esquemas procesados.");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al redistribuir esquemas del médico: " + e.getMessage());
+        }
+    }
 }

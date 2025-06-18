@@ -311,4 +311,111 @@ public class ConsultorioDistribucionService {
         
         return hayMedicosSinConsultorio;
     }
+
+    /**
+     * Asigna un consultorio específico para un médico basado en sus porcentajes individuales.
+     * 
+     * @param staffMedicoId ID del staff médico
+     * @param centroId ID del centro de atención
+     * @return ID del consultorio asignado o null si no se puede asignar
+     */
+    public Integer asignarConsultorioSegunPorcentajes(Integer staffMedicoId, Integer centroId) {
+        // Obtener el staff médico
+        Optional<StaffMedico> staffOpt = staffMedicoRepository.findById(staffMedicoId);
+        if (!staffOpt.isPresent()) {
+            throw new IllegalArgumentException("Staff médico no encontrado con ID: " + staffMedicoId);
+        }
+        
+        StaffMedico staff = staffOpt.get();
+        
+        // Verificar que el médico tenga un porcentaje configurado
+        if (staff.getPorcentaje() == null || staff.getPorcentaje() <= 0) {
+            throw new IllegalStateException("El médico no tiene porcentaje configurado o es inválido");
+        }
+        
+        // Obtener todos los consultorios del centro
+        List<Consultorio> consultorios = consultorioRepository.findByCentroAtencionId(centroId);
+        if (consultorios.isEmpty()) {
+            throw new IllegalStateException("No hay consultorios disponibles en el centro");
+        }
+        
+        // Obtener todos los médicos del centro con porcentajes
+        List<StaffMedico> staffMedicos = staffMedicoRepository.findByCentroAtencionId(centroId)
+            .stream()
+            .filter(s -> s.getPorcentaje() != null && s.getPorcentaje() > 0)
+            .collect(Collectors.toList());
+        
+        if (staffMedicos.isEmpty()) {
+            throw new IllegalStateException("No hay médicos con porcentajes configurados en el centro");
+        }
+        
+        // Calcular la distribución de consultorios basada en porcentajes
+        int totalConsultorios = consultorios.size();
+        double porcentajeMedico = staff.getPorcentaje();
+        
+        // Calcular cuántos consultorios le corresponden a este médico
+        int consultoriosAsignados = (int) Math.round((porcentajeMedico / 100.0) * totalConsultorios);
+        
+        // Asegurar que al menos tenga 1 consultorio si tiene porcentaje > 0
+        if (consultoriosAsignados == 0 && porcentajeMedico > 0) {
+            consultoriosAsignados = 1;
+        }
+        
+        // Crear una distribución basada en porcentajes para todos los médicos
+        Map<Integer, List<Integer>> distribucionConsultorios = calcularDistribucionPorPorcentajes(
+            staffMedicos, consultorios);
+        
+        // Obtener los consultorios asignados a este médico
+        List<Integer> consultoriosDelMedico = distribucionConsultorios.get(staffMedicoId);
+        
+        if (consultoriosDelMedico == null || consultoriosDelMedico.isEmpty()) {
+            throw new IllegalStateException("No se pudieron asignar consultorios al médico según sus porcentajes");
+        }
+        
+        // Retornar el primer consultorio asignado
+        // En una implementación más sofisticada, podríamos usar un algoritmo para elegir el mejor
+        return consultoriosDelMedico.get(0);
+    }
+    
+    /**
+     * Calcula la distribución de consultorios entre médicos basada en sus porcentajes individuales.
+     */
+    private Map<Integer, List<Integer>> calcularDistribucionPorPorcentajes(
+            List<StaffMedico> staffMedicos, List<Consultorio> consultorios) {
+        
+        Map<Integer, List<Integer>> distribucion = new HashMap<>();
+        int totalConsultorios = consultorios.size();
+        int consultoriosAsignados = 0;
+        
+        // Ordenar médicos por porcentaje descendente para asegurar una distribución justa
+        List<StaffMedico> medicosOrdenados = staffMedicos.stream()
+            .sorted(Comparator.comparing(StaffMedico::getPorcentaje).reversed())
+            .collect(Collectors.toList());
+        
+        for (StaffMedico staff : medicosOrdenados) {
+            double porcentaje = staff.getPorcentaje();
+            int consultoriosParaEste = (int) Math.round((porcentaje / 100.0) * totalConsultorios);
+            
+            // Asegurar que no excedamos el total de consultorios disponibles
+            int consultoriosRestantes = totalConsultorios - consultoriosAsignados;
+            consultoriosParaEste = Math.min(consultoriosParaEste, consultoriosRestantes);
+            
+            // Asegurar al menos 1 consultorio si tiene porcentaje > 0 y quedan consultorios
+            if (consultoriosParaEste == 0 && porcentaje > 0 && consultoriosRestantes > 0) {
+                consultoriosParaEste = 1;
+            }
+            
+            List<Integer> consultoriosAsignadosAlMedico = new ArrayList<>();
+            for (int i = 0; i < consultoriosParaEste; i++) {
+                if (consultoriosAsignados < totalConsultorios) {
+                    consultoriosAsignadosAlMedico.add(consultorios.get(consultoriosAsignados).getId());
+                    consultoriosAsignados++;
+                }
+            }
+            
+            distribucion.put(staff.getId(), consultoriosAsignadosAlMedico);
+        }
+        
+        return distribucion;
+    }
 }

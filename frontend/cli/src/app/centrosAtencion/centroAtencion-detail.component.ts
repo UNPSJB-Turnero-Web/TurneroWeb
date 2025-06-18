@@ -74,6 +74,11 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   private isLoadingDisponibilidades: boolean = false;
   private disponibilidadesLoaded: boolean = false;
 
+  // Propiedades para gestión de porcentajes por médico
+  totalPorcentajeMedicos: number = 0;
+  porcentajeDisponibleMedicos: number = 100;
+  porcentajesOriginalesMedicos: { [staffMedicoId: number]: number } = {};
+
   // Cache invalidation methods
   private invalidateEsquemasCache(): void {
     this.esquemasLoaded = false;
@@ -526,7 +531,11 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   loadStaffMedico() {
     if (!this.centroAtencion?.id) return;
     this.staffMedicoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
-      next: (dp) => this.staffMedicoCentro = dp.data as StaffMedico[],
+      next: (dp) => {
+        this.staffMedicoCentro = dp.data as StaffMedico[];
+        // Cargar porcentajes después de cargar staff médico
+        this.cargarPorcentajesMedicos();
+      },
       error: (err) => {
         this.staffMedicoCentro = [];
         console.error('Error al cargar staff médico:', err);
@@ -1231,6 +1240,203 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
         centroAtencionId: this.centroAtencion.id,
         returnTo: 'centro-detail'
       } 
+    });
+  }
+
+  // ==================== MÉTODOS PARA GESTIÓN DE PORCENTAJES POR MÉDICO ====================
+
+  /**
+   * Se ejecuta cuando cambia algún porcentaje de médico para recalcular totales
+   */
+  onPorcentajeMedicoChange(): void {
+    this.calcularTotalesPorcentajeMedicos();
+  }
+
+  /**
+   * Calcula el total de porcentajes asignados a médicos y disponible
+   */
+  private calcularTotalesPorcentajeMedicos(): void {
+    this.totalPorcentajeMedicos = this.staffMedicoCentro
+      .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
+      .reduce((total, staff) => total + (staff.porcentaje || 0), 0);
+    
+    this.porcentajeDisponibleMedicos = 100 - this.totalPorcentajeMedicos;
+  }
+
+  /**
+   * Guarda el porcentaje de un médico específico
+   */
+  guardarPorcentajeMedico(staffMedico: StaffMedico): void {
+    if (!this.centroAtencion?.id || !staffMedico.id) return;
+    
+    if (staffMedico.porcentaje != null && (staffMedico.porcentaje < 0 || staffMedico.porcentaje > 100)) {
+      this.mostrarMensajeStaff('El porcentaje debe estar entre 0 y 100', 'danger');
+      return;
+    }
+    
+    // Validar que no exceda el 100%
+    const otrosMedicos = this.staffMedicoCentro.filter(s => s.id !== staffMedico.id);
+    const totalOtros = otrosMedicos
+      .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
+      .reduce((total, staff) => total + (staff.porcentaje || 0), 0);
+    
+    if (totalOtros + (staffMedico.porcentaje || 0) > 100) {
+      this.mostrarMensajeStaff('La suma de porcentajes no puede exceder 100%', 'danger');
+      return;
+    }
+    
+    const medicosParaActualizar = [staffMedico];
+    
+    this.staffMedicoService.actualizarPorcentajes(this.centroAtencion.id, medicosParaActualizar).subscribe({
+      next: (response) => {
+        const nombreMedico = `${staffMedico.medico?.apellido}, ${staffMedico.medico?.nombre}`;
+        this.mostrarMensajeStaff(`Porcentaje de ${nombreMedico} guardado correctamente`, 'success');
+        this.calcularTotalesPorcentajeMedicos();
+        // Actualizar el valor original para control de cambios
+        if (staffMedico.id) {
+          this.porcentajesOriginalesMedicos[staffMedico.id] = staffMedico.porcentaje || 0;
+        }
+      },
+      error: (err) => {
+        this.mostrarMensajeStaff(err.error?.status_text || 'Error al guardar el porcentaje', 'danger');
+      }
+    });
+  }
+
+  /**
+   * Guarda todos los porcentajes de los médicos
+   */
+  guardarTodosPorcentajesMedicos(): void {
+    if (!this.centroAtencion?.id) return;
+    
+    if (this.totalPorcentajeMedicos > 100) {
+      this.mostrarMensajeStaff('La suma de porcentajes no puede exceder 100%', 'danger');
+      return;
+    }
+    
+    // Filtrar médicos que tienen porcentaje definido
+    const medicosConPorcentaje = this.staffMedicoCentro.filter(staff => 
+      staff.porcentaje != null && staff.porcentaje >= 0
+    );
+    
+    if (medicosConPorcentaje.length === 0) {
+      this.mostrarMensajeStaff('No hay porcentajes para guardar', 'info');
+      return;
+    }
+    
+    this.staffMedicoService.actualizarPorcentajes(this.centroAtencion.id, medicosConPorcentaje).subscribe({
+      next: (response) => {
+        this.mostrarMensajeStaff('Todos los porcentajes guardados correctamente', 'success');
+        this.calcularTotalesPorcentajeMedicos();
+        // Actualizar valores originales
+        medicosConPorcentaje.forEach(staff => {
+          if (staff.id) {
+            this.porcentajesOriginalesMedicos[staff.id] = staff.porcentaje || 0;
+          }
+        });
+      },
+      error: (err) => {
+        this.mostrarMensajeStaff(err.error?.status_text || 'Error al guardar los porcentajes', 'danger');
+      }
+    });
+  }
+
+  /**
+   * Redistribuye los porcentajes equitativamente entre todos los médicos del centro
+   */
+  redistribuirPorcentajesMedicos(): void {
+    const numMedicos = this.staffMedicoCentro.length;
+    if (numMedicos === 0) {
+      this.mostrarMensajeStaff('No hay médicos para redistribuir', 'info');
+      return;
+    }
+    
+    // Calcular porcentaje exacto por médico: 100 / número de médicos
+    const porcentajePorMedico = 100 / numMedicos;
+    
+    // Asignar el mismo porcentaje a todos los médicos
+    this.staffMedicoCentro.forEach(staff => {
+      staff.porcentaje = Math.round(porcentajePorMedico * 100) / 100; // Redondear a 2 decimales
+    });
+    
+    this.calcularTotalesPorcentajeMedicos();
+    this.mostrarMensajeStaff(`Porcentajes redistribuidos equitativamente: ${porcentajePorMedico.toFixed(2)}% para cada uno de los ${numMedicos} médicos`, 'success');
+  }
+
+  /**
+   * Carga los porcentajes actuales de los médicos desde el servidor
+   */
+  private cargarPorcentajesMedicos(): void {
+    if (!this.centroAtencion?.id) return;
+    
+    this.staffMedicoService.getMedicosConPorcentajes(this.centroAtencion.id).subscribe({
+      next: (response) => {
+        // Actualizar porcentajes en médicos del centro
+        response.data.forEach(medicoConPorcentaje => {
+          const medicoLocal = this.staffMedicoCentro.find(s => s.id === medicoConPorcentaje.id);
+          if (medicoLocal) {
+            medicoLocal.porcentaje = medicoConPorcentaje.porcentaje;
+            if (medicoLocal.id) {
+              this.porcentajesOriginalesMedicos[medicoLocal.id] = medicoConPorcentaje.porcentaje || 0;
+            }
+          }
+        });
+        this.calcularTotalesPorcentajeMedicos();
+      },
+      error: (err) => {
+        console.error('Error cargando porcentajes de médicos:', err);
+      }
+    });
+  }
+
+  /**
+   * Redistribuye los esquemas de turno existentes según los porcentajes configurados
+   */
+  redistribuirEsquemasExistentes(): void {
+    if (!this.centroAtencion?.id) {
+      this.mostrarMensajeStaff('Error: No se puede redistribuir, centro no identificado', 'danger');
+      return;
+    }
+
+    // Validar que los porcentajes sumen 100%
+    if (this.totalPorcentajeMedicos !== 100) {
+      this.mostrarMensajeStaff(
+        `No se puede redistribuir. Los porcentajes deben sumar exactamente 100% (actual: ${this.totalPorcentajeMedicos}%)`, 
+        'danger'
+      );
+      return;
+    }
+
+    // Confirmar la acción con el usuario
+    this.modalService.confirm(
+      'Redistribuir Esquemas de Turno',
+      '¿Está seguro que desea redistribuir todos los esquemas de turno existentes?',
+      'Esta acción reasignará automáticamente los consultorios de todos los esquemas según los porcentajes configurados. Los esquemas sin consultorio asignado también serán procesados.'
+    ).then(() => {
+      // Mostrar mensaje de carga
+      this.mostrarMensajeStaff('Redistribuyendo esquemas de turno...', 'info');
+      
+      // Llamar al servicio de redistribución
+      this.esquemaTurnoService.redistribuirConsultorios(this.centroAtencion.id!).subscribe({
+        next: (response) => {
+          const esquemasProcesados = response.data || 0;
+          this.mostrarMensajeStaff(
+            `Redistribución completada exitosamente. Se procesaron ${esquemasProcesados} esquemas de turno.`,
+            'success'
+          );
+          
+          // Recargar los esquemas para mostrar los cambios
+          this.cargarEsquemasTurno();
+        },
+        error: (err) => {
+          console.error('Error en redistribución:', err);
+          const mensaje = err?.error?.message || 'Error al redistribuir esquemas de turno';
+          this.mostrarMensajeStaff(`Error: ${mensaje}`, 'danger');
+        }
+      });
+    }).catch(() => {
+      // Usuario canceló la operación
+      this.mostrarMensajeStaff('Redistribución cancelada', 'info');
     });
   }
 }

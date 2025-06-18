@@ -70,4 +70,26 @@ getByCentroAtencion(centroId: number): Observable<DataPackage<StaffMedico[]>> {
   desasociar(centroId: number, staffMedicoId: number) {
     return this.http.delete(`${this.url}/centrosAtencion/${centroId}/staff/${staffMedicoId}`);
   }
+
+  // ==================== MÉTODOS PARA GESTIÓN DE PORCENTAJES ====================
+
+  /** Actualizar porcentajes de médicos de un centro */
+  actualizarPorcentajes(centroId: number, medicosConPorcentaje: StaffMedico[]): Observable<DataPackage<any>> {
+    return this.http.put<DataPackage<any>>(`${this.url}/centrosAtencion/${centroId}/medicos/porcentajes`, medicosConPorcentaje);
+  }
+
+  /** Obtener total de porcentajes asignados en un centro */
+  getTotalPorcentajes(centroId: number): Observable<DataPackage<number>> {
+    return this.http.get<DataPackage<number>>(`${this.url}/centrosAtencion/${centroId}/medicos/porcentajes/total`);
+  }
+
+  /** Validar porcentajes de médicos de un centro */
+  validarPorcentajes(centroId: number, medicosConPorcentaje: StaffMedico[]): Observable<DataPackage<boolean>> {
+    return this.http.post<DataPackage<boolean>>(`${this.url}/centrosAtencion/${centroId}/medicos/porcentajes/validar`, medicosConPorcentaje);
+  }
+
+  /** Obtener médicos con porcentajes de un centro */
+  getMedicosConPorcentajes(centroId: number): Observable<DataPackage<StaffMedico[]>> {
+    return this.http.get<DataPackage<StaffMedico[]>>(`${this.url}/centrosAtencion/${centroId}/medicos/conPorcentajes`);
+  }
 }

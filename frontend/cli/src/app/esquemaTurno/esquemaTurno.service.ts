@@ -60,4 +60,19 @@ export class EsquemaTurnoService {
         map(res => res.data || [])
       );
   }
+
+  /** Redistribuye consultorios automáticamente para esquemas existentes de un centro */
+  redistribuirConsultorios(centroId: number): Observable<DataPackage<any>> {
+    return this.http.post<DataPackage<any>>(`${this.url}/centrosAtencion/${centroId}/redistribuir`, {});
+  }
+
+  /** Redistribuye consultorios para esquemas de un médico específico */
+  redistribuirEsquemasPorMedico(medicoId: number): Observable<DataPackage<any>> {
+    return this.http.post<DataPackage<any>>(`${this.url}/medico/${medicoId}/redistribuir`, {});
+  }
+
+  /** Obtiene estadísticas de distribución actual */
+  getEstadisticasDistribucion(centroId: number): Observable<DataPackage<any>> {
+    return this.http.get<DataPackage<any>>(`${this.url}/centrosAtencion/${centroId}/estadisticas-distribucion`);
+  }
 }

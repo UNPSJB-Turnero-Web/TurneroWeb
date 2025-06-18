@@ -14,6 +14,7 @@ public class StaffMedicoDTO {
     private EspecialidadDTO especialidad;
     private ConsultorioDTO consultorio; 
     private List<DisponibilidadMedicoDTO> disponibilidad;
+    private Double porcentaje;
 
     // Getters y Setters
 }

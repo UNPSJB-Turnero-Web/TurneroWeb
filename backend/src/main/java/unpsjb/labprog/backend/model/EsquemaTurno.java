@@ -40,7 +40,7 @@ public class EsquemaTurno {
     @ManyToOne(optional = false)
     private CentroAtencion centroAtencion;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = true)
     private Consultorio consultorio;
 
     // Nueva lista de horarios específicos para el esquema de turno

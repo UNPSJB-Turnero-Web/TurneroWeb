@@ -1094,4 +1094,324 @@
     transform: translateY(0);
   }
 }
+
+/* === GESTIÓN DE PORCENTAJES MÉDICOS === */
+.progress-info-card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.progress-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.info-card {
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 15px rgba(54, 185, 204, 0.15);
+}
+
+/* Tabla de porcentajes */
+.table-responsive .table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-responsive .table thead th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
+  vertical-align: middle;
+}
+
+.table-responsive .table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table-responsive .table tbody tr:hover {
+  background-color: rgba(54, 185, 204, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+/* Input de porcentaje mejorado */
+.input-group input.form-control {
+  border-radius: 8px 0 0 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  padding: 0.5rem 0.75rem;
+}
+
+.input-group input.form-control:focus {
+  border-color: #36b9cc;
+  box-shadow: 0 0 0 0.2rem rgba(54, 185, 204, 0.25);
+}
+
+.input-group-text {
+  border-radius: 0 8px 8px 0;
+  border: 2px solid #e9ecef;
+  border-left: none;
+  background: #f8f9fa;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+/* Progress bar mejorada */
+.progress {
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 0.6s ease;
+  background: linear-gradient(90deg, currentColor 0%, currentColor 100%);
+}
+
+/* Botones de acción para porcentajes */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Animaciones para alertas de porcentaje */
+.text-danger, .bg-danger {
+  animation: pulse-danger 1.5s infinite;
+}
+
+.text-success, .bg-success {
+  animation: pulse-success 2s infinite;
+}
+
+.text-warning, .bg-warning {
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes pulse-success {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Responsive adjustments para porcentajes */
+@media (max-width: 768px) {
+  .progress-info-card, .info-card {
+    padding: 1.5rem !important;
+    margin-bottom: 1rem;
+  }
+  
+  .table-responsive .table thead th,
+  .table-responsive .table tbody td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .input-group input.form-control {
+    font-size: 0.9rem;
+  }
+}
+
+/* Card de información específica para porcentajes */
+.card.border-info {
+  border: 2px solid #17a2b8 !important;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(23, 162, 184, 0.1);
+}
+
+.card.border-info .card-header {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  border: none;
+}
+
+/* Mejoras visuales para badges de especialidades en tabla de porcentajes */
+.table .badge-especialidades {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
+.progress-info-card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.progress-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.info-card {
+  transition: all 0.3s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 15px rgba(54, 185, 204, 0.15);
+}
+
+/* Tabla de porcentajes */
+.table-responsive .table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-responsive .table thead th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #495057;
+  vertical-align: middle;
+}
+
+.table-responsive .table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table-responsive .table tbody tr:hover {
+  background-color: rgba(54, 185, 204, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+/* Input de porcentaje mejorado */
+.input-group input.form-control {
+  border-radius: 8px 0 0 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+  padding: 0.5rem 0.75rem;
+}
+
+.input-group input.form-control:focus {
+  border-color: #36b9cc;
+  box-shadow: 0 0 0 0.2rem rgba(54, 185, 204, 0.25);
+}
+
+.input-group-text {
+  border-radius: 0 8px 8px 0;
+  border: 2px solid #e9ecef;
+  border-left: none;
+  background: #f8f9fa;
+  color: #6c757d;
+  font-weight: 600;
+}
+
+/* Progress bar mejorada */
+.progress {
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  transition: width 0.6s ease;
+  background: linear-gradient(90deg, currentColor 0%, currentColor 100%);
+}
+
+/* Botones de acción para porcentajes */
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Animaciones para alertas de porcentaje */
+.text-danger, .bg-danger {
+  animation: pulse-danger 1.5s infinite;
+}
+
+.text-success, .bg-success {
+  animation: pulse-success 2s infinite;
+}
+
+.text-warning, .bg-warning {
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes pulse-success {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Responsive adjustments para porcentajes */
+@media (max-width: 768px) {
+  .progress-info-card, .info-card {
+    padding: 1.5rem !important;
+    margin-bottom: 1rem;
+  }
+  
+  .table-responsive .table thead th,
+  .table-responsive .table tbody td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .input-group input.form-control {
+    font-size: 0.9rem;
+  }
+}
+
+/* Card de información específica para porcentajes */
+.card.border-info {
+  border: 2px solid #17a2b8 !important;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(23, 162, 184, 0.1);
+}
+
+.card.border-info .card-header {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  border: none;
+}
+
+/* Mejoras visuales para badges de especialidades en tabla de porcentajes */
+.table .badge-especialidades {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
 }

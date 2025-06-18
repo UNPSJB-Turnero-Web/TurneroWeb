@@ -32,4 +32,5 @@ export interface StaffMedico {
   };
   consultorio?: any;
   disponibilidad?: any[];
+  porcentaje?: number;
 }

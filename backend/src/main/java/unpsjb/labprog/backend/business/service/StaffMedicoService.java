@@ -106,6 +106,7 @@ public class StaffMedicoService {
         }
         dto.setDisponibilidad(toDisponibilidadDTOList(staff.getDisponibilidad()));
         dto.setConsultorio(toConsultorioDTO(staff.getConsultorio()));
+        dto.setPorcentaje(staff.getPorcentaje());
         return dto;
     }
 
@@ -204,5 +205,66 @@ public class StaffMedicoService {
             // agrega otros campos si es necesario
             return dto;
         }).toList();
+    }
+
+    // ==================== MÉTODOS PARA GESTIÓN DE PORCENTAJES ====================
+
+    /**
+     * Actualiza los porcentajes de médicos de un centro específico
+     */
+    @Transactional
+    public void actualizarPorcentajes(Integer centroId, List<StaffMedicoDTO> medicosConPorcentaje) {
+        // Validar que la suma no exceda 100%
+        double totalPorcentaje = medicosConPorcentaje.stream()
+            .mapToDouble(m -> m.getPorcentaje() != null ? m.getPorcentaje() : 0.0)
+            .sum();
+        
+        if (totalPorcentaje > 100.0) {
+            throw new IllegalArgumentException("La suma de porcentajes no puede exceder 100%");
+        }
+
+        // Actualizar cada médico
+        for (StaffMedicoDTO medicoDTO : medicosConPorcentaje) {
+            if (medicoDTO.getId() != null) {
+                Optional<StaffMedico> staffOpt = repository.findById(medicoDTO.getId());
+                if (staffOpt.isPresent()) {
+                    StaffMedico staff = staffOpt.get();
+                    if (staff.getCentroAtencion().getId().equals(centroId)) {
+                        staff.setPorcentaje(medicoDTO.getPorcentaje());
+                        repository.save(staff);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Obtiene el total de porcentajes asignados en un centro
+     */
+    public Double obtenerTotalPorcentajesPorCentro(Integer centroId) {
+        List<StaffMedico> staffMedicos = repository.findByCentroAtencionId(centroId);
+        return staffMedicos.stream()
+            .mapToDouble(staff -> staff.getPorcentaje() != null ? staff.getPorcentaje() : 0.0)
+            .sum();
+    }
+
+    /**
+     * Valida que los porcentajes no excedan 100% para un centro
+     */
+    public boolean validarPorcentajesPorCentro(Integer centroId, List<StaffMedicoDTO> medicosConPorcentaje) {
+        double totalPorcentaje = medicosConPorcentaje.stream()
+            .mapToDouble(m -> m.getPorcentaje() != null ? m.getPorcentaje() : 0.0)
+            .sum();
+        return totalPorcentaje <= 100.0;
+    }
+
+    /**
+     * Obtiene todos los médicos de un centro con sus porcentajes
+     */
+    public List<StaffMedicoDTO> getMedicosConPorcentajesPorCentro(Integer centroId) {
+        List<StaffMedico> staffMedicos = repository.findByCentroAtencionId(centroId);
+        return staffMedicos.stream()
+            .map(this::toDTO)
+            .toList();
     }
 }

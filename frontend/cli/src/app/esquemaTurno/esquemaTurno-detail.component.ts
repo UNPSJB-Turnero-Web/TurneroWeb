@@ -63,7 +63,19 @@ import { ModalService } from '../modal/modal.service';
                   Consultorio
                 </div>
                 <div class="info-value">
-                  {{ getConsultorioNombre() }}
+                  <span *ngIf="esquema.consultorioId && getConsultorioNombre(); else sinConsultorio">
+                    {{ getConsultorioNombre() }}
+                  </span>
+                  <ng-template #sinConsultorio>
+                    <span class="text-muted">
+                      <i class="fas fa-clock me-1"></i>
+                      Pendiente de asignación automática
+                    </span>
+                    <small class="d-block text-info mt-1">
+                      <i class="fas fa-info-circle me-1"></i>
+                      Se asignará según porcentajes configurados
+                    </small>
+                  </ng-template>
                 </div>
               </div>
 
@@ -208,21 +220,22 @@ import { ModalService } from '../modal/modal.service';
                 <div class="form-group-modern">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: var(--consultorios-gradient);">🚪</span>
-                    Consultorio
+                    Consultorio <span class="text-muted">(Opcional)</span>
                   </label>
                   <select
                     [(ngModel)]="esquema.consultorioId"
                     name="consultorioId"
                     class="form-control form-control-modern"
-                    required
                   >
-                    <option [ngValue]="null">Seleccione un consultorio...</option>
+                    <option [ngValue]="null">Sin asignar - Se asignará automáticamente</option>
                     <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
                       {{ consultorio.nombre }}
                     </option>
                   </select>
                   <div class="form-help">
-                    Consultorio donde se realizarán las consultas.
+                    <i class="fas fa-info-circle text-info me-1"></i>
+                    <strong>Nuevo flujo:</strong> Los consultorios se asignarán automáticamente según los porcentajes configurados por médico. 
+                    También puede asignar manualmente si lo prefiere.
                   </div>
                 </div>
               </div>
@@ -1150,9 +1163,15 @@ export class EsquemaTurnoDetailComponent {
     // Agregar un log para verificar el contenido del payload
     console.log('Payload enviado al backend:', payload);
 
-    // Validar que los campos requeridos no sean null
-    if (!payload.disponibilidadMedicoId || !payload.consultorioId || !payload.staffMedicoId || !payload.centroId) {
-      this.modalService.alert('Error', 'Debe completar todos los campos obligatorios.');
+    // Validar que los campos requeridos no sean null (consultorio es opcional y se asigna automáticamente)
+    if (!payload.disponibilidadMedicoId || !payload.staffMedicoId || !payload.centroId) {
+      this.modalService.alert('Error', 'Debe completar todos los campos obligatorios (médico, disponibilidad, centro).');
+      return;
+    }
+    
+    // Validar que hay horarios configurados
+    if (!payload.horarios || payload.horarios.length === 0) {
+      this.modalService.alert('Error', 'Debe configurar al menos un horario para el esquema.');
       return;
     }
 
@@ -1224,7 +1243,6 @@ export class EsquemaTurnoDetailComponent {
 
   allFieldsEmpty(): boolean {
     return !this.esquema.disponibilidadMedicoId || 
-           !this.esquema.consultorioId || 
            !this.esquema.intervalo ||
            this.esquema.horarios.length === 0;
   }

@@ -40,6 +40,11 @@ public class StaffMedico {
     @JsonManagedReference
     private List<DisponibilidadMedico> disponibilidad;
 
+    /**
+     * Porcentaje de distribución de consultorios asignado a este médico en el centro.
+     * Valor entre 0.0 y 100.0
+     */
+    private Double porcentaje;
 
     @ManyToOne
     private Consultorio consultorio;
