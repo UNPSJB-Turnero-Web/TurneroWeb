@@ -47,4 +47,11 @@ paciente se tiene que poder registrar desde la pantalla de reservar turno
 
 
 completar
-auditoria de turnos montar backend y sacar datos mock del front
+auditoria de turnos montar backend y sacar datos mock del front(hard)
+generacion de reportes(hard)
+registro de modificaciones(hard)
+
+maso
+busqueda de centros por ubicacion(easy)
+busqueda de centros por espepcialidad y ubicacion(easy)
+visualizacion de centros en un mapa (no tan hard)
