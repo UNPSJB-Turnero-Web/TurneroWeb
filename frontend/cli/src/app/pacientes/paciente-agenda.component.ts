@@ -289,56 +289,73 @@ interface SlotDisponible {
 
                   <!-- Slots de la fecha -->
                   <div class="slots-grid">
-                    <div 
-                      *ngFor="let slot of slotsPorFecha[fecha]" 
-                      class="slot-card"
-                      [class.selected]="slotSeleccionado?.id === slot.id"
-                      [class.slot-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
-                      (click)="seleccionarSlot(slot, $event)">
-                      
-                      <div class="slot-time">
-                        <i class="fas fa-clock"></i>
-                        {{ slot.horaInicio }} - {{ slot.horaFin }}
+                    <ng-container *ngFor="let slot of slotsPorFecha[fecha]; let i = index">
+                      <!-- Separador visual entre médicos diferentes -->
+                      <div *ngIf="esCambioMedico(fecha, i)" class="medico-separator">
+                        <div class="separator-line"></div>
+                        <div class="separator-label">
+                          <i class="fas fa-user-md"></i>
+                          <span>{{ getNombreMedico(slot) }}</span>
+                        </div>
+                        <div class="separator-line"></div>
                       </div>
                       
-                      <div class="slot-medico">
+                      <!-- Etiqueta de médico para el primer slot del día -->
+                      <div *ngIf="i === 0" class="medico-header">
                         <i class="fas fa-user-md"></i>
-                        <strong>{{ slot.staffMedicoNombre }} {{ slot.staffMedicoApellido }}</strong>
+                        <span>{{ getNombreMedico(slot) }}</span>
                       </div>
                       
-                      <div class="slot-especialidad">
-                        <i class="fas fa-stethoscope"></i>
-                        {{ slot.especialidadStaffMedico }}
-                      </div>
-                      
-                      <div class="slot-location">
-                        <div class="location-line">
-                          <i class="fas fa-door-open"></i>
-                          {{ slot.consultorioNombre }}
+                      <div 
+                        class="slot-card"
+                        [class.selected]="slotSeleccionado?.id === slot.id"
+                        [class.slot-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
+                        (click)="seleccionarSlot(slot, $event)">
+                        
+                        <div class="slot-time">
+                          <i class="fas fa-clock"></i>
+                          {{ slot.horaInicio }} - {{ slot.horaFin }}
                         </div>
-                        <div class="location-line">
-                          <i class="fas fa-map-marker-alt"></i>
-                          {{ slot.nombreCentro }}
-                          <span class="distance-badge" *ngIf="slot.distanciaKm !== undefined">
-                            {{ formatDistance(slot.distanciaKm) }}
-                          </span>
+                        
+                        <div class="slot-medico">
+                          <i class="fas fa-user-md"></i>
+                          <strong>{{ slot.staffMedicoNombre }} {{ slot.staffMedicoApellido }}</strong>
+                        </div>
+                        
+                        <div class="slot-especialidad">
+                          <i class="fas fa-stethoscope"></i>
+                          {{ slot.especialidadStaffMedico }}
+                        </div>
+                        
+                        <div class="slot-location">
+                          <div class="location-line">
+                            <i class="fas fa-door-open"></i>
+                            {{ slot.consultorioNombre }}
+                          </div>
+                          <div class="location-line">
+                            <i class="fas fa-map-marker-alt"></i>
+                            {{ slot.nombreCentro }}
+                            <span class="distance-badge" *ngIf="slot.distanciaKm !== undefined">
+                              {{ formatDistance(slot.distanciaKm) }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Estado del slot simplificado para pacientes -->
+                        <div class="slot-status" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
+                          <i class="fas fa-lock"></i>
+                          Ocupado
+                        </div>
+                        <div class="slot-status disponible" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
+                          <i class="fas fa-check-circle"></i>
+                          Disponible
+                        </div>
+
+                        <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+                          <i class="fas fa-check-circle"></i>
                         </div>
                       </div>
-
-                      <!-- Estado del slot simplificado para pacientes -->
-                      <div class="slot-status" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
-                        <i class="fas fa-lock"></i>
-                        Ocupado
-                      </div>
-                      <div class="slot-status disponible" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
-                        <i class="fas fa-check-circle"></i>
-                        Disponible
-                      </div>
-
-                      <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
-                        <i class="fas fa-check-circle"></i>
-                      </div>
-                    </div>
+                    </ng-container>
                   </div>
                 </div>
               </div>
@@ -900,6 +917,56 @@ interface SlotDisponible {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 1rem;
+    }
+
+    /* SEPARADORES DE MÉDICOS */
+    .medico-separator {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      gap: 1rem;
+    }
+
+    .separator-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+    }
+
+    .separator-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .separator-label i {
+      font-size: 0.8rem;
+    }
+
+    .medico-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    }
+
+    .medico-header i {
+      font-size: 1rem;
     }
 
     .slot-card {
@@ -2125,10 +2192,21 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
       this.slotsPorFecha[slot.fecha].push(slot);
     });
 
-    // Si no está ordenado por distancia, ordenar por hora dentro de cada fecha
+    // Si no está ordenado por distancia, ordenar por médico y luego por hora dentro de cada fecha
     if (!this.sortByDistance) {
       Object.keys(this.slotsPorFecha).forEach(fecha => {
-        this.slotsPorFecha[fecha].sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+        this.slotsPorFecha[fecha].sort((a, b) => {
+          // Primero agrupar por médico (nombre completo)
+          const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
+          const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
+          
+          if (medicoA !== medicoB) {
+            return medicoA.localeCompare(medicoB);
+          }
+          
+          // Si es el mismo médico, ordenar por hora
+          return a.horaInicio.localeCompare(b.horaInicio);
+        });
       });
     }
 
@@ -2214,6 +2292,31 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   formatDistance(distanciaKm: number | undefined): string {
     if (distanciaKm === undefined) return '';
     return this.geolocationService.formatDistance(distanciaKm);
+  }
+
+  /**
+   * Verifica si el médico ha cambiado respecto al slot anterior
+   */
+  esCambioMedico(fecha: string, index: number): boolean {
+    const slotsDelDia = this.slotsPorFecha[fecha];
+    if (!slotsDelDia || index === 0) {
+      return false; // No hay cambio si es el primer slot del día
+    }
+    
+    const slotActual = slotsDelDia[index];
+    const slotAnterior = slotsDelDia[index - 1];
+    
+    const medicoActual = `${slotActual.staffMedicoNombre} ${slotActual.staffMedicoApellido}`;
+    const medicoAnterior = `${slotAnterior.staffMedicoNombre} ${slotAnterior.staffMedicoApellido}`;
+    
+    return medicoActual !== medicoAnterior;
+  }
+
+  /**
+   * Obtiene el nombre completo del médico de un slot
+   */
+  getNombreMedico(slot: SlotDisponible): string {
+    return `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`;
   }
 
 }

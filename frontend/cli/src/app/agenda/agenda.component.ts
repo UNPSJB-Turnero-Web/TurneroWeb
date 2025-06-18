@@ -181,17 +181,34 @@ interface SlotDisponible {
 
                   <!-- Slots de la fecha -->
                   <div class="slots-grid">
-                    <div 
-                      *ngFor="let slot of slotsPorFecha[fecha]" 
-                      class="slot-card admin-slot"
-                      [class.selected]="slotSeleccionado?.id === slot.id"
-                      [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
-                      [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO' && slotAfectadoPorExcepcion(slot)"
-                      [class.slot-mantenimiento-dia]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha)"
-                      [class.slot-mantenimiento-individual]="slot.enMantenimiento"
-                      [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)"
-                      [class.slot-ocupado]="slot.ocupado"
-                      (click)="seleccionarSlot(slot, $event)">
+                    <ng-container *ngFor="let slot of slotsPorFecha[fecha]; let i = index">
+                      <!-- Separador visual entre médicos diferentes -->
+                      <div *ngIf="esCambioMedico(fecha, i)" class="medico-separator">
+                        <div class="separator-line"></div>
+                        <div class="separator-label">
+                          <i class="fas fa-user-md"></i>
+                          <span>{{ getNombreMedico(slot) }}</span>
+                        </div>
+                        <div class="separator-line"></div>
+                      </div>
+                      
+                      <!-- Etiqueta de médico para el primer slot del día -->
+                      <div *ngIf="i === 0" class="medico-header">
+                        <i class="fas fa-user-md"></i>
+                        <span>{{ getNombreMedico(slot) }}</span>
+                      </div>
+                      
+                      <div 
+                        class="slot-card admin-slot"
+                        [class.selected]="slotSeleccionado?.id === slot.id"
+                        [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
+                        [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO' && slotAfectadoPorExcepcion(slot)"
+                        [class.slot-mantenimiento-dia]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha)"
+                        [class.slot-mantenimiento-individual]="slot.enMantenimiento"
+                        [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)"
+                        [class.slot-ocupado]="slot.ocupado"
+                        (click)="seleccionarSlot(slot, $event)">
+                  
                       
                       <div class="slot-time">
                         <i class="fas fa-clock"></i>
@@ -242,7 +259,7 @@ interface SlotDisponible {
                           <i class="fas fa-exclamation-triangle"></i>
                           <span>Este turno no puede realizarse</span>
                         </div>
-                      </div>
+                      </div>  
 
                       <!-- Estado del slot -->
                       <div class="slot-status special-attention" *ngIf="!slot.enMantenimiento && getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)">
@@ -839,6 +856,56 @@ interface SlotDisponible {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1rem;
+    }
+
+    /* SEPARADORES DE MÉDICOS */
+    .medico-separator {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      gap: 1rem;
+    }
+
+    .separator-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #667eea, transparent);
+    }
+
+    .separator-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .separator-label i {
+      font-size: 0.8rem;
+    }
+
+    .medico-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    }
+
+    .medico-header i {
+      font-size: 1rem;
     }
 
     .slot-card {
@@ -1672,9 +1739,18 @@ export class AgendaComponent implements OnInit {
       }
     });
 
-    // Ordenar slots dentro de cada fecha por hora
+    // Ordenar slots dentro de cada fecha: PRIMERO por médico, LUEGO por hora
     Object.keys(this.slotsPorFecha).forEach(fecha => {
       this.slotsPorFecha[fecha].sort((a, b) => {
+        // Primero agrupar por médico (nombre completo)
+        const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
+        const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
+        
+        if (medicoA !== medicoB) {
+          return medicoA.localeCompare(medicoB);
+        }
+        
+        // Si es el mismo médico, ordenar por hora
         return a.horaInicio.localeCompare(b.horaInicio);
       });
     });
@@ -1965,5 +2041,30 @@ export class AgendaComponent implements OnInit {
   private convertirHoraAMinutos(hora: string): number {
     const [horas, minutos] = hora.split(':').map(Number);
     return horas * 60 + minutos;
+  }
+
+  /**
+   * Verifica si el médico ha cambiado respecto al slot anterior
+   */
+  esCambioMedico(fecha: string, index: number): boolean {
+    const slotsDelDia = this.slotsPorFecha[fecha];
+    if (!slotsDelDia || index === 0) {
+      return false; // No hay cambio si es el primer slot del día
+    }
+    
+    const slotActual = slotsDelDia[index];
+    const slotAnterior = slotsDelDia[index - 1];
+    
+    const medicoActual = `${slotActual.staffMedicoNombre} ${slotActual.staffMedicoApellido}`;
+    const medicoAnterior = `${slotAnterior.staffMedicoNombre} ${slotAnterior.staffMedicoApellido}`;
+    
+    return medicoActual !== medicoAnterior;
+  }
+
+  /**
+   * Obtiene el nombre completo del médico de un slot
+   */
+  getNombreMedico(slot: SlotDisponible): string {
+    return `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`;
   }
 }

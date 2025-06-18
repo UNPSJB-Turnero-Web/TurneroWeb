@@ -164,7 +164,7 @@ import { filter } from 'rxjs/operators';
               aria-label="Portal del paciente"
             >
               <i class="fas fa-user-injured me-2"></i>
-              <span>Mi Portal</span>
+              <span>Panel paciente</span>
               <i class="fas fa-chevron-down ms-2"></i>
             </button>
             <div ngbDropdownMenu class="modern-dropdown" aria-labelledby="pacienteDropdown">

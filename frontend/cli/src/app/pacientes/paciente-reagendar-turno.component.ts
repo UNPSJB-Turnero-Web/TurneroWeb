@@ -1148,11 +1148,20 @@ export class PacienteReagendarTurnoComponent implements OnInit {
     // Ordenar fechas y horarios dentro de cada fecha
     this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
     
-    // Ordenar horarios dentro de cada fecha
+    // Ordenar por médico y luego por horarios dentro de cada fecha
     Object.keys(this.slotsPorFecha).forEach(fecha => {
-      this.slotsPorFecha[fecha].sort((a, b) => 
-        a.horaInicio.localeCompare(b.horaInicio)
-      );
+      this.slotsPorFecha[fecha].sort((a, b) => {
+        // Primero agrupar por médico (nombre completo)
+        const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
+        const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
+        
+        if (medicoA !== medicoB) {
+          return medicoA.localeCompare(medicoB);
+        }
+        
+        // Si es el mismo médico, ordenar por hora
+        return a.horaInicio.localeCompare(b.horaInicio);
+      });
     });
   }
 
