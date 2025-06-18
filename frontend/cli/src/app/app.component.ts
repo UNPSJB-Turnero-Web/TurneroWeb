@@ -3,11 +3,12 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { NotificationsComponent } from './audit/notifications.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, NotificationsComponent],
   template: `
     <nav class="modern-navbar">
       <div class="navbar-container">
@@ -154,6 +155,44 @@ import { filter } from 'rxjs/operators';
             </div>
           </div>
 
+          <!-- Admin-only Menú Auditoría -->
+          <div ngbDropdown class="nav-dropdown" *ngIf="isAdmin()">
+            <button 
+              class="nav-button"
+              [class.active]="isRouteActive('/audit')"
+              ngbDropdownToggle
+              id="auditDropdown"
+              aria-label="Menú de auditoría y monitoreo"
+            >
+              <i class="fas fa-shield-alt me-2"></i>
+              <span>Auditoría</span>
+              <i class="fas fa-chevron-down ms-2"></i>
+            </button>
+            <div ngbDropdownMenu class="modern-dropdown" aria-labelledby="auditDropdown">
+              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/dashboard')" [class.active]="isRouteActive('/audit/dashboard')">
+                <i class="fas fa-tachometer-alt icon-item icon-audit-dashboard"></i>
+                <div class="item-content">
+                  <span class="item-title">Dashboard</span>
+                  <span class="item-desc">Panel de control</span>
+                </div>
+              </a>
+              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/logs')" [class.active]="isRouteActive('/audit/logs')">
+                <i class="fas fa-history icon-item icon-audit-logs"></i>
+                <div class="item-content">
+                  <span class="item-title">Historial</span>
+                  <span class="item-desc">Logs de auditoría</span>
+                </div>
+              </a>
+              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/notifications')" [class.active]="isRouteActive('/audit/notifications')">
+                <i class="fas fa-bell icon-item icon-audit-notifications"></i>
+                <div class="item-content">
+                  <span class="item-title">Notificaciones</span>
+                  <span class="item-desc">Alertas del sistema</span>
+                </div>
+              </a>
+            </div>
+          </div>
+
           <!-- Patient-only Menú -->
           <div ngbDropdown class="nav-dropdown" *ngIf="isPatient()">
             <button 
@@ -195,6 +234,17 @@ import { filter } from 'rxjs/operators';
 
         <!-- USER SECTION -->
         <div class="user-section">
+          <!-- Quick Access Audit Buttons (Admin only) -->
+          <div class="quick-access" *ngIf="isAdmin()">
+            <button class="quick-btn audit-btn" (click)="navigateTo('/audit/dashboard')" title="Dashboard de Auditoría">
+              <i class="fas fa-shield-alt"></i>
+            </button>
+            <button class="quick-btn notifications-btn" (click)="navigateTo('/audit/notifications')" title="Notificaciones del Sistema">
+              <i class="fas fa-bell"></i>
+              <span class="notification-badge" *ngIf="hasUnreadNotifications()">{{getUnreadCount()}}</span>
+            </button>
+          </div>
+
           <!-- Login Button (for non-authenticated users) -->
           <button class="login-button" *ngIf="!isAuthenticated()" (click)="goToLogin()">
             <i class="fas fa-sign-in-alt me-2"></i>
@@ -233,6 +283,9 @@ import { filter } from 'rxjs/operators';
 
     <main class="main-content">
       <router-outlet></router-outlet>
+      
+      <!-- Componente de notificaciones global -->
+      <app-notifications></app-notifications>
     </main>
   `,
   styles: [`
@@ -440,6 +493,74 @@ import { filter } from 'rxjs/operators';
       gap: 1rem;
     }
 
+    /* QUICK ACCESS BUTTONS */
+    .quick-access {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-right: 1rem;
+    }
+
+    .quick-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .quick-btn:hover {
+      background: rgba(255,255,255,0.2);
+      border-color: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    .audit-btn:hover {
+      background: var(--audit-primary);
+      border-color: var(--audit-secondary);
+      box-shadow: 0 8px 25px var(--audit-shadow);
+    }
+
+    .notifications-btn:hover {
+      background: var(--audit-notifications-primary);
+      border-color: var(--audit-notifications-secondary);
+      box-shadow: 0 8px 25px var(--audit-notifications-shadow);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff4757;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
     .login-button {
       background: rgba(255,255,255,0.1) !important;
       border: 1px solid rgba(255,255,255,0.2) !important;
@@ -559,6 +680,9 @@ import { filter } from 'rxjs/operators';
     .icon-agenda { background: var(--agenda-color); }
     .icon-dias-excepcionales { background: var(--dias-excepcionales-color); }
     .icon-turnos { background: var(--turnos-color); }
+    .icon-audit-dashboard { background: var(--audit-dashboard-color); }
+    .icon-audit-logs { background: var(--audit-logs-color); }
+    .icon-audit-notifications { background: var(--audit-notifications-color); }
     .icon-dashboard { background: var(--dashboard-color); }
     .icon-mis-turnos { background: var(--mis-turnos-color); }
     .icon-agendar { background: var(--agendar-color); }
@@ -598,6 +722,16 @@ import { filter } from 'rxjs/operators';
 
       .user-role {
         font-size: 0.7rem;
+      }
+
+      .quick-access {
+        margin-right: 0.5rem;
+      }
+
+      .quick-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
       }
     }
 
@@ -643,6 +777,16 @@ import { filter } from 'rxjs/operators';
         height: 45px;
         padding: 0;
         justify-content: center;
+      }
+
+      .quick-access {
+        margin-right: 0.25rem;
+      }
+
+      .quick-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
       }
     }
 
@@ -722,5 +866,18 @@ export class AppComponent implements OnInit {
 
   navigateTo(route: string): void {
     this.router.navigate([route]);
+  }
+
+  // Métodos para gestión de notificaciones de auditoría
+  hasUnreadNotifications(): boolean {
+    // Mock implementation - debería conectarse con el servicio de notificaciones
+    const unreadCount = localStorage.getItem('unreadNotifications');
+    return unreadCount ? parseInt(unreadCount) > 0 : false;
+  }
+
+  getUnreadCount(): number {
+    // Mock implementation - debería conectarse con el servicio de notificaciones
+    const unreadCount = localStorage.getItem('unreadNotifications');
+    return unreadCount ? parseInt(unreadCount) : 0;
   }
 }

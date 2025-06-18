@@ -26,6 +26,13 @@ import { PacienteDashboardComponent } from './pacientes/paciente-dashboard.compo
 import { PacienteTurnosComponent } from './pacientes/paciente-turnos.component';
 import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
 import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
+
+// Audit components
+import { AuditDashboardComponent } from './audit/audit-dashboard.component';
+import { AuditLogsComponent } from './audit/audit-logs.component';
+import { NotificationsComponent } from './audit/notifications.component';
+import { AuditTurnoDetailComponent } from './audit/audit-turno-detail.component';
+
 import { AdminGuard } from './guards/admin.guard';
 import { PatientGuard } from './guards/patient.guard';
 
@@ -72,5 +79,11 @@ export const routes: Routes = [
     { path: 'esquema-turno', component: EsquemaTurnoComponent, canActivate: [AdminGuard] },
     { path: 'esquema-turno/new', component: EsquemaTurnoDetailComponent, canActivate: [AdminGuard] },
     { path: 'esquema-turno/:id', component: EsquemaTurnoDetailComponent, canActivate: [AdminGuard] },
+
+    { path: 'audit', component: AuditDashboardComponent, canActivate: [AdminGuard] },
+    { path: 'audit/dashboard', component: AuditDashboardComponent, canActivate: [AdminGuard] },
+    { path: 'audit/logs', component: AuditLogsComponent, canActivate: [AdminGuard] },
+    { path: 'audit/notifications', component: NotificationsComponent, canActivate: [AdminGuard] },
+    { path: 'audit/turno/:id', component: AuditTurnoDetailComponent, canActivate: [AdminGuard] },
 
 ];

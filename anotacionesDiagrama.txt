@@ -37,3 +37,14 @@ Promocion: agenda geolocalizada, segun nuestra ubicacion nos tiene que sugerir l
 
 
 Cual es el sentido de asignar el consultorio en el esquematurno, si luego en el algoritmo de agenda automatizada va a relocalizar los medicos segun mejor convenga?
+
+bugs: filtros agenda, no encuentra lado paciente, verificar lado admin
+verifcar distribucion de consultorios
+verificar modal de mapa al agregar el centro de antencion
+verificar algortimo de distribucion de consultorios
+paciente se tiene que poder registrar desde la pantalla de reservar turno
+^se rompe porque tengo el acceso por dni, se deberia poder registrar ahi directo
+
+
+completar
+auditoria de turnos montar backend y sacar datos mock del front
