@@ -372,21 +372,50 @@ public class AgendaService {
                 }
                 
                 // NOTA: El mantenimiento se maneja slot por slot en generarSlotsParaHorario()
-                // No necesitamos lógica especial aquí - cada slot verifica individualmente
                 // si está en conflicto con un horario de mantenimiento
                 
                 // Verificar si hay atención especial específica para este esquema
                 Optional<ConfiguracionExcepcional> atencionEspecial = configuracionExcepcionalService.obtenerAtencionEspecial(fechaEvento, esquemaTurnoFinal.getId());
+                System.out.println("🔍 DEBUG ATENCIÓN ESPECIAL para Esquema ID: " + esquemaTurnoFinal.getId() + 
+                                  " (Médico: " + esquemaTurnoFinal.getStaffMedico().getMedico().getNombre() + " " + 
+                                  esquemaTurnoFinal.getStaffMedico().getMedico().getApellido() + ")");
                 System.out.println("Atencion especial presente: " + atencionEspecial.isPresent());
+                if (atencionEspecial.isPresent()) {
+                    ConfiguracionExcepcional config = atencionEspecial.get();
+                    System.out.println("  ✅ Config encontrada - ID: " + config.getId() + 
+                                      ", EsquemaTurno asociado: " + (config.getEsquemaTurno() != null ? config.getEsquemaTurno().getId() : "NULL"));
+                }
                 
                 if (atencionEspecial.isPresent()) {
                     ConfiguracionExcepcional config = atencionEspecial.get();
                     System.out.println("Config atencion especial - Hora inicio: " + config.getHoraInicio() + ", Hora fin: " + config.getHoraFin());
                     if (config.getHoraInicio() != null && config.getHoraFin() != null) {
                         System.out.println("Generando slots excepcionales para atencion especial");
-                        // Para atención especial, generar slots para todo el día pero marcando los específicos como especiales
+                        // CORRECCIÓN: Solo pasar la configuración específica del esquema actual
+                        List<ConfiguracionExcepcional> configuracionesEspecificas = configuracionesDelDia.stream()
+                            .filter(c -> {
+                                // Incluir feriados (aplican a todos)
+                                if (c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.FERIADO) {
+                                    return true;
+                                }
+                                // Incluir mantenimientos del consultorio específico
+                                if (c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO &&
+                                    c.getConsultorio() != null && 
+                                    c.getConsultorio().getId().equals(esquemaTurnoFinal.getConsultorio().getId())) {
+                                    return true;
+                                }
+                                // Incluir SOLO la atención especial del esquema específico
+                                if (c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL &&
+                                    c.getEsquemaTurno() != null && 
+                                    c.getEsquemaTurno().getId().equals(esquemaTurnoFinal.getId())) {
+                                    return true;
+                                }
+                                return false;
+                            })
+                            .collect(Collectors.toList());
+                        
                         List<TurnoDTO> slotsAtencionEspecial = generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
-                            esquemaTurnoFinal, configuracionesDelDia, eventoIdCounter);
+                            esquemaTurnoFinal, configuracionesEspecificas, eventoIdCounter);
                         eventos.addAll(slotsAtencionEspecial);
                         eventoIdCounter += 50;
                         continue;

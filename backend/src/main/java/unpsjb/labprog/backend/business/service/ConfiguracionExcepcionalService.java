@@ -199,11 +199,18 @@ public class ConfiguracionExcepcionalService {
      * Obtener configuración de atención especial para un esquema en una fecha
      */
     public Optional<ConfiguracionExcepcional> obtenerAtencionEspecial(LocalDate fecha, Integer esquemaTurnoId) {
-        List<ConfiguracionExcepcional> configuraciones = repository
-            .findByFechaAndEsquemaTurno_IdAndActivoTrue(fecha, esquemaTurnoId);
+        // Obtener TODAS las configuraciones del día
+        List<ConfiguracionExcepcional> todasConfiguraciones = repository.findByFechaAndActivoTrue(fecha);
         
-        return configuraciones.stream()
-            .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL)
+        // Filtrar por atención especial y esquema específico
+        return todasConfiguraciones.stream()
+            .filter(c -> {
+                boolean esAtencionEspecial = c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL;
+                boolean tieneEsquema = c.getEsquemaTurno() != null;
+                boolean esEsquemaCorrecto = tieneEsquema && c.getEsquemaTurno().getId().equals(esquemaTurnoId);
+                
+                return esAtencionEspecial && esEsquemaCorrecto;
+            })
             .findFirst();
     }
 

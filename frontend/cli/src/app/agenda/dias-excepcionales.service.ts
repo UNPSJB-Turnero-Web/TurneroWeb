@@ -15,6 +15,15 @@ export interface DiaExcepcional {
   consultorioId?: number;
   consultorioNombre?: string;
   esquemaTurnoId?: number;
+  
+  // Additional properties from ConfiguracionExcepcionalDTO
+  medicoNombre?: string;
+  medicoApellido?: string;
+  especialidadNombre?: string;
+  esquemaTurnoDescripcion?: string;
+  esquemaTurnoHoraInicio?: string;
+  esquemaTurnoHoraFin?: string;
+  esquemaTurnoDuracion?: number;
 }
 
 @Injectable({

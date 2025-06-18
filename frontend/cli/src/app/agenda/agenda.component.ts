@@ -1844,6 +1844,32 @@ export class AgendaComponent implements OnInit {
     return diasExcepcionales.some(dia => {
       if (!dia.apertura || !dia.cierre) return false;
       
+      // NUEVA LÓGICA: Para ATENCION_ESPECIAL, verificar que el slot pertenezca al mismo esquema específico
+      if (dia.tipoAgenda === 'ATENCION_ESPECIAL') {
+        // Verificar que el slot corresponda al esquema turno específico de la atención especial
+        // Comparar por médico, consultorio y centro para determinar si es el mismo esquema
+        const esMismoEsquema = dia.medicoNombre && dia.consultorioNombre && dia.centroNombre &&
+                               slot.staffMedicoNombre === dia.medicoNombre &&
+                               slot.consultorioNombre === dia.consultorioNombre &&
+                               slot.nombreCentro === dia.centroNombre;
+        
+        console.log('🏥 DEBUG ATENCION_ESPECIAL:', {
+          fecha: slot.fecha,
+          slotId: slot.id,
+          slotMedico: slot.staffMedicoNombre,
+          slotConsultorio: slot.consultorioNombre,
+          slotCentro: slot.nombreCentro,
+          diaMedico: dia.medicoNombre,
+          diaConsultorio: dia.consultorioNombre,
+          diaCentro: dia.centroNombre,
+          esMismoEsquema
+        });
+        
+        if (!esMismoEsquema) {
+          return false; // No es el mismo esquema, no está afectado
+        }
+      }
+      
       const horaAperturaExcepcion = this.convertirHoraAMinutos(dia.apertura);
       const horaCierreExcepcion = this.convertirHoraAMinutos(dia.cierre);
       
