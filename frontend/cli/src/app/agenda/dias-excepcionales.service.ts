@@ -2,29 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { DataPackage } from '../data.package';
-
-export interface DiaExcepcional {
-  id?: number;
-  fecha: string;
-  tipoAgenda: 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO';
-  descripcion?: string;
-  apertura?: string;
-  cierre?: string;
-  centroId?: number;
-  centroNombre?: string;
-  consultorioId?: number;
-  consultorioNombre?: string;
-  esquemaTurnoId?: number;
-  
-  // Additional properties from ConfiguracionExcepcionalDTO
-  medicoNombre?: string;
-  medicoApellido?: string;
-  especialidadNombre?: string;
-  esquemaTurnoDescripcion?: string;
-  esquemaTurnoHoraInicio?: string;
-  esquemaTurnoHoraFin?: string;
-  esquemaTurnoDuracion?: number;
-}
+import { DiaExcepcional } from './diaExcepcional';
 
 @Injectable({
   providedIn: 'root'
@@ -36,33 +14,76 @@ export class DiasExcepcionalesService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Carga días excepcionales para el calendario
-   * Carga las próximas 4 semanas desde la fecha actual
+   * Extrae información de días excepcionales de los eventos del calendario.
+   * Esto evita hacer una request separada ya que los eventos ya contienen esta información.
    */
-  cargarDiasExcepcionalesParaCalendario(): void {
-    const fechaActual = new Date();
-    const fechaInicio = new Date(fechaActual);
-    fechaInicio.setDate(fechaInicio.getDate() - 7); // Una semana hacia atrás
+  extraerDiasExcepcionalesDeEventos(eventos: any[]): void {
+    const diasExcepcionales: DiaExcepcional[] = [];
+    const fechasProcesadas = new Set<string>();
 
-    const fechaFin = new Date(fechaActual);
-    fechaFin.setDate(fechaFin.getDate() + (4 * 7)); // 4 semanas hacia adelante
+    eventos.forEach(evento => {
+      // Skip si ya procesamos esta fecha
+      if (fechasProcesadas.has(evento.fecha)) {
+        return;
+      }
 
-    const fechaInicioStr = fechaInicio.toISOString().split('T')[0];
-    const fechaFinStr = fechaFin.toISOString().split('T')[0];
+      // Verificar si es un evento excepcional
+      if (evento.titulo && (
+        evento.titulo.includes('FERIADO') || 
+        evento.titulo.includes('MANTENIMIENTO') || 
+        evento.titulo.includes('ATENCION_ESPECIAL')
+      )) {
+        let tipo: 'FERIADO' | 'MANTENIMIENTO' | 'ATENCION_ESPECIAL';
+        let descripcion = '';
 
-    console.log('Cargando días excepcionales desde:', fechaInicioStr, 'hasta:', fechaFinStr);
+        // Extraer tipo y descripción del título
+        if (evento.titulo.includes('FERIADO')) {
+          tipo = 'FERIADO';
+          descripcion = evento.titulo.replace('FERIADO:', '').trim();
+        } else if (evento.titulo.includes('MANTENIMIENTO')) {
+          tipo = 'MANTENIMIENTO';
+          descripcion = evento.titulo.replace('MANTENIMIENTO:', '').trim();
+        } else if (evento.titulo.includes('ATENCION_ESPECIAL')) {
+          tipo = 'ATENCION_ESPECIAL';
+          descripcion = evento.titulo.replace('ATENCION_ESPECIAL:', '').trim();
+        } else {
+          return; // No es un tipo reconocido
+        }
 
-    this.cargarDiasExcepcionales(fechaInicioStr, fechaFinStr).subscribe({
-      next: (response) => {
-        console.log('Días excepcionales del backend:', response.data);
-        this.actualizarDiasExcepcionales(response.data || []);
-      },
-      error: (error) => {
-        console.error('Error al cargar días excepcionales para calendario:', error);
-        // Inicializar con array vacío si falla el backend
-        this.actualizarDiasExcepcionales([]);
+        const diaExcepcional: DiaExcepcional = {
+          fecha: evento.fecha,
+          tipo: tipo,
+          descripcion: descripcion,
+          apertura: tipo !== 'FERIADO' ? evento.horaInicio : undefined,
+          cierre: tipo !== 'FERIADO' ? evento.horaFin : undefined,
+          centroId: evento.centroId,
+          centroNombre: evento.nombreCentro,
+          consultorioId: evento.consultorioId,
+          consultorioNombre: evento.consultorioNombre,
+          medicoId: evento.staffMedicoId,
+          medicoNombre: evento.staffMedicoNombre,
+          medicoApellido: evento.staffMedicoApellido,
+          especialidad: evento.especialidadStaffMedico,
+          activo: true
+        };
+
+        diasExcepcionales.push(diaExcepcional);
+        fechasProcesadas.add(evento.fecha);
       }
     });
+
+    console.log('Días excepcionales extraídos de eventos:', diasExcepcionales);
+    this.actualizarDiasExcepcionales(diasExcepcionales);
+  }
+
+  /**
+   * DEPRECADO: Usa extraerDiasExcepcionalesDeEventos() en su lugar
+   * Carga días excepcionales para el calendario
+   */
+  cargarDiasExcepcionalesParaCalendario(): void {
+    console.warn('cargarDiasExcepcionalesParaCalendario() está deprecado. Usa extraerDiasExcepcionalesDeEventos() en su lugar.');
+    // Inicializar con array vacío - la información vendrá de los eventos
+    this.actualizarDiasExcepcionales([]);
   }
 
   /**
@@ -100,7 +121,7 @@ export class DiasExcepcionalesService {
    */
   esFeriado(fecha: string): boolean {
     const dias = this.diasExcepcionales.value;
-    return dias.some(dia => dia.fecha === fecha && dia.tipoAgenda === 'FERIADO');
+    return dias.some(dia => dia.fecha === fecha && dia.tipo === 'FERIADO');
   }
 
   /**
@@ -108,7 +129,7 @@ export class DiasExcepcionalesService {
    */
   esMantenimiento(fecha: string): boolean {
     const dias = this.diasExcepcionales.value;
-    return dias.some(dia => dia.fecha === fecha && dia.tipoAgenda === 'MANTENIMIENTO');
+    return dias.some(dia => dia.fecha === fecha && dia.tipo === 'MANTENIMIENTO');
   }
 
   /**
@@ -116,7 +137,7 @@ export class DiasExcepcionalesService {
    */
   esAtencionEspecial(fecha: string): boolean {
     const dias = this.diasExcepcionales.value;
-    return dias.some(dia => dia.fecha === fecha && dia.tipoAgenda === 'ATENCION_ESPECIAL');
+    return dias.some(dia => dia.fecha === fecha && dia.tipo === 'ATENCION_ESPECIAL');
   }
 
   /**
@@ -133,7 +154,7 @@ export class DiasExcepcionalesService {
   getTipoExcepcion(fecha: string): 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO' | null {
     const dias = this.diasExcepcionales.value;
     const dia = dias.find(dia => dia.fecha === fecha);
-    return dia ? dia.tipoAgenda : null;
+    return dia ? dia.tipo : null;
   }
 
   /**
@@ -149,7 +170,7 @@ export class DiasExcepcionalesService {
     const excepcionesDelDia = dias.filter(dia => dia.fecha === fecha);
     
     return excepcionesDelDia.map(dia => ({
-      tipo: dia.tipoAgenda,
+      tipo: dia.tipo,
       descripcion: dia.descripcion,
       horaInicio: dia.apertura,
       horaFin: dia.cierre
@@ -182,5 +203,184 @@ export class DiasExcepcionalesService {
       return 'dia-excepcional';
     }
     return '';
+  }
+
+  /**
+   * Método centralizado para verificar si un slot específico está afectado por excepciones
+   * Elimina duplicación de código entre componentes
+   */
+  slotAfectadoPorExcepcion(slot: { fecha: string; horaInicio: string; horaFin: string }): boolean {
+    const excepcionesDelDia = this.getExcepcionesDelDia(slot.fecha);
+    
+    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
+      return false;
+    }
+
+    for (const excepcion of excepcionesDelDia) {
+      // Los feriados afectan todo el día
+      if (excepcion.tipo === 'FERIADO') {
+        return true;
+      }
+
+      // Para mantenimiento y atención especial, verificar horarios específicos
+      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
+          excepcion.horaInicio && excepcion.horaFin) {
+        
+        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
+        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
+        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
+        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
+
+        // Verificar si hay superposición entre el slot y la excepción
+        if (inicioSlotMinutos < finExcepcionMinutos && finSlotMinutos > inicioExcepcionMinutos) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Obtiene información detallada sobre por qué un slot está afectado
+   */
+  getInformacionAfectacion(slot: { fecha: string; horaInicio: string; horaFin: string }): {
+    afectado: boolean;
+    tipo?: 'FERIADO' | 'MANTENIMIENTO' | 'ATENCION_ESPECIAL';
+    descripcion?: string;
+    mensaje?: string;
+  } {
+    const excepcionesDelDia = this.getExcepcionesDelDia(slot.fecha);
+    
+    if (!excepcionesDelDia || excepcionesDelDia.length === 0) {
+      return { afectado: false };
+    }
+
+    for (const excepcion of excepcionesDelDia) {
+      // Los feriados afectan todo el día
+      if (excepcion.tipo === 'FERIADO') {
+        return {
+          afectado: true,
+          tipo: 'FERIADO',
+          descripcion: excepcion.descripcion,
+          mensaje: `Este día es feriado${excepcion.descripcion ? ': ' + excepcion.descripcion : ''}`
+        };
+      }
+
+      // Para mantenimiento y atención especial, verificar horarios específicos
+      if ((excepcion.tipo === 'MANTENIMIENTO' || excepcion.tipo === 'ATENCION_ESPECIAL') && 
+          excepcion.horaInicio && excepcion.horaFin) {
+        
+        const inicioSlotMinutos = this.convertirHoraAMinutos(slot.horaInicio);
+        const finSlotMinutos = this.convertirHoraAMinutos(slot.horaFin);
+        const inicioExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaInicio);
+        const finExcepcionMinutos = this.convertirHoraAMinutos(excepcion.horaFin);
+
+        // Verificar si hay superposición entre el slot y la excepción
+        if (inicioSlotMinutos < finExcepcionMinutos && finSlotMinutos > inicioExcepcionMinutos) {
+          const tipoLabel = excepcion.tipo === 'MANTENIMIENTO' ? 'Mantenimiento' : 'Atención Especial';
+          return {
+            afectado: true,
+            tipo: excepcion.tipo,
+            descripcion: excepcion.descripcion,
+            mensaje: `Este horario no está disponible por ${tipoLabel}${excepcion.descripcion ? ': ' + excepcion.descripcion : ''}`
+          };
+        }
+      }
+    }
+
+    return { afectado: false };
+  }
+
+  /**
+   * Determina el estado y mensaje para mostrar en un slot
+   */
+  getEstadoSlot(slot: { 
+    fecha: string; 
+    horaInicio: string; 
+    horaFin: string; 
+    ocupado?: boolean;
+    titulo?: string;
+    enMantenimiento?: boolean;
+  }): {
+    disponible: boolean;
+    estado: 'DISPONIBLE' | 'OCUPADO' | 'FERIADO' | 'MANTENIMIENTO' | 'ATENCION_ESPECIAL' | 'NO_DISPONIBLE';
+    mensaje: string;
+    clase: string;
+  } {
+    // Si está ocupado por un turno, no está disponible
+    if (slot.ocupado) {
+      return {
+        disponible: false,
+        estado: 'OCUPADO',
+        mensaje: 'Ocupado',
+        clase: 'ocupado'
+      };
+    }
+
+    // Verificar excepciones
+    const afectacion = this.getInformacionAfectacion(slot);
+    if (afectacion.afectado) {
+      return {
+        disponible: false,
+        estado: afectacion.tipo!,
+        mensaje: afectacion.mensaje!,
+        clase: afectacion.tipo!.toLowerCase().replace('_', '-')
+      };
+    }
+
+    // Verificar campos específicos del slot
+    if (slot.enMantenimiento) {
+      return {
+        disponible: false,
+        estado: 'MANTENIMIENTO',
+        mensaje: 'En mantenimiento',
+        clase: 'mantenimiento'
+      };
+    }
+
+    // Si tiene título específico que no sea "Disponible", analizarlo
+    if (slot.titulo && slot.titulo !== 'Disponible' && !slot.titulo.startsWith('Ocupado')) {
+      if (slot.titulo.includes('FERIADO')) {
+        return {
+          disponible: false,
+          estado: 'FERIADO',
+          mensaje: slot.titulo,
+          clase: 'feriado'
+        };
+      }
+      if (slot.titulo.includes('MANTENIMIENTO')) {
+        return {
+          disponible: false,
+          estado: 'MANTENIMIENTO',
+          mensaje: slot.titulo,
+          clase: 'mantenimiento'
+        };
+      }
+      if (slot.titulo.includes('ATENCION_ESPECIAL')) {
+        return {
+          disponible: true, // Atención especial puede estar disponible para turnos especiales
+          estado: 'ATENCION_ESPECIAL',
+          mensaje: slot.titulo,
+          clase: 'atencion-especial'
+        };
+      }
+    }
+
+    // Por defecto, disponible
+    return {
+      disponible: true,
+      estado: 'DISPONIBLE',
+      mensaje: 'Disponible',
+      clase: 'disponible'
+    };
+  }
+
+  /**
+   * Función auxiliar para convertir "HH:mm" a minutos desde medianoche
+   */
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 }

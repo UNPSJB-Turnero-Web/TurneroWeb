@@ -113,12 +113,7 @@ export class TurnoService {
     return this.http.post<DataPackage<any>>(`rest/agenda/dia-excepcional`, params);
   }
 
-  /** Configura tiempo de sanitización para un esquema de turno */
-  configurarSanitizacion(esquemaTurnoId: number, tiempoSanitizacion: number): Observable<DataPackage<any>> {
-    return this.http.put<DataPackage<any>>(`rest/agenda/esquema-turno/${esquemaTurnoId}/sanitizacion`, {
-      tiempoSanitizacion
-    });
-  }
+
 
   /** Obtiene días excepcionales por rango de fechas */
   getDiasExcepcionales(fechaInicio: string, fechaFin: string, centroId?: number): Observable<DataPackage<any[]>> {

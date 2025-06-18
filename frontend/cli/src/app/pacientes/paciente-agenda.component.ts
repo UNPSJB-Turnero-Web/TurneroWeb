@@ -1520,7 +1520,9 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Cargar días excepcionales para el calendario
   cargarDiasExcepcionales() {
-    this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
+    // Los días excepcionales se extraen automáticamente de los eventos en cargarTurnosConFiltros()
+    // No es necesaria una request adicional
+    console.log('Los días excepcionales se cargan automáticamente con los eventos');
   }
 
   // Cargar especialidades al inicializar
@@ -1624,6 +1626,10 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
       next: (eventosBackend) => {
         // Transformar los eventos del backend en slots
         this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
+        
+        // Extraer días excepcionales de los eventos (evita request redundante)
+        this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
+        
         this.aplicarFiltrosSlots();
         this.agruparSlotsPorFecha();
         this.showCalendar = true;

@@ -4,31 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TurnoService } from '../turnos/turno.service';
 import { EsquemaTurnoService } from '../esquemaTurno/esquemaTurno.service';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
-
-interface DiaExcepcional {
-  id?: number;
-  fecha: string;
-  tipoAgenda: 'FERIADO' | 'ATENCION_ESPECIAL' | 'MANTENIMIENTO';
-  descripcion?: string; // Campo del DTO del backend
-  apertura?: string;   // Hora inicio del DTO
-  cierre?: string;     // Hora fin del DTO
-  centroId?: number;
-  centroNombre?: string;
-  medicoId?: number;
-  medicoNombre?: string;
-  medicoApellido?: string;
-  especialidad?: string;
-  consultorioId?: number;
-  consultorioNombre?: string;
-  // Campos para el formulario
-  descripcionExcepcion?: string; // Para compatibilidad con formulario
-  esquemaTurnoId?: number;
-  horaInicio?: string;
-  horaFin?: string;
-  duracionMinutos?: number; // Nueva propiedad para duración en minutos
-  tiempoSanitizacion?: number;
-  tipoProcedimiento?: string; // Nuevo campo para tipo de procedimiento
-}
+import { DiaExcepcional } from './diaExcepcional';
 
 @Component({
   selector: 'app-dias-excepcionales',
@@ -103,7 +79,7 @@ interface DiaExcepcional {
                   <th>Descripción</th>
                   <th>Centro/Consultorio</th>
                   <th>Horario</th>
-                  <th>Sanitización</th>
+                  <th>Duración</th>
                   <th class="text-center">Acciones</th>
                 </tr>
               </thead>
@@ -115,15 +91,15 @@ interface DiaExcepcional {
                     <small class="text-muted">{{ dia.fecha | date:'EEEE' }}</small>
                   </td>
                   <td>
-                    <span class="badge fs-6" [ngClass]="getTipoBadgeClass(dia.tipoAgenda)">
-                      <i class="fas" [ngClass]="getTipoIcon(dia.tipoAgenda)" class="me-1"></i>
-                      {{ getTipoLabel(dia.tipoAgenda) }}
+                    <span class="badge fs-6" [ngClass]="getTipoBadgeClass(dia.tipo)">
+                      <i class="fas" [ngClass]="getTipoIcon(dia.tipo)" class="me-1"></i>
+                      {{ getTipoLabel(dia.tipo) }}
                     </span>
                   </td>
                   <td class="descripcion-cell">
                     <div class="descripcion-text">{{ dia.descripcion }}</div>
                     <!-- Mostrar tipo de procedimiento si es atención especial -->
-                    <div *ngIf="dia.tipoAgenda === 'ATENCION_ESPECIAL' && dia.descripcion && getTipoProcedimientoFromDescription(dia.descripcion)" class="mt-1">
+                    <div *ngIf="dia.tipo === 'ATENCION_ESPECIAL' && dia.descripcion && getTipoProcedimientoFromDescription(dia.descripcion)" class="mt-1">
                       <small class="badge bg-secondary">
                         <i class="fas fa-medical-kit me-1"></i>
                         {{ getTipoProcedimientoLabel(getTipoProcedimientoFromDescription(dia.descripcion)!) }}
@@ -158,7 +134,7 @@ interface DiaExcepcional {
                       <i class="fas fa-clock me-1"></i>
                       {{ dia.apertura }} - {{ dia.cierre }}
                       <!-- Mostrar duración si es atención especial -->
-                      <div *ngIf="dia.tipoAgenda === 'ATENCION_ESPECIAL'" class="mt-1">
+                      <div *ngIf="dia.tipo === 'ATENCION_ESPECIAL'" class="mt-1">
                         <small class="badge bg-info">
                           <i class="fas fa-stopwatch me-1"></i>
                           {{ calcularDuracion(dia.apertura, dia.cierre) }} min
@@ -170,11 +146,11 @@ interface DiaExcepcional {
                     </div>
                   </td>
                   <td>
-                    <div *ngIf="dia.tiempoSanitizacion">
-                      <i class="fas fa-spray-can me-1"></i>
-                      {{ dia.tiempoSanitizacion }} min
+                    <div *ngIf="dia.duracion">
+                      <i class="fas fa-clock me-1"></i>
+                      {{ dia.duracion }} min
                     </div>
-                    <div *ngIf="!dia.tiempoSanitizacion">
+                    <div *ngIf="!dia.duracion">
                       <span class="text-muted">-</span>
                     </div>
                   </td>
@@ -223,7 +199,7 @@ interface DiaExcepcional {
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Tipo *</label>
-                    <select class="form-select" [(ngModel)]="diaActual.tipoAgenda" 
+                    <select class="form-select" [(ngModel)]="diaActual.tipo" 
                             name="tipo" required (change)="onTipoChange()">
                       <option value="">Seleccione un tipo</option>
                       <option value="FERIADO">Feriado</option>
@@ -232,7 +208,7 @@ interface DiaExcepcional {
                     </select>
                   </div>
                   <!-- Descripción general para feriados -->
-                  <div class="col-12" *ngIf="diaActual.tipoAgenda === 'FERIADO'">
+                  <div class="col-12" *ngIf="diaActual.tipo === 'FERIADO'">
                     <label class="form-label">Descripción *</label>
                     <textarea class="form-control" [(ngModel)]="diaActual.descripcionExcepcion" 
                               name="descripcion" required rows="2" 
@@ -240,7 +216,7 @@ interface DiaExcepcional {
                   </div>
                   
                   <!-- Solo para mantenimiento y atención especial -->
-                  <div class="col-12" *ngIf="diaActual.tipoAgenda !== 'FERIADO'">
+                  <div class="col-12" *ngIf="diaActual.tipo !== 'FERIADO'">
                     <label class="form-label">Esquema de Turno *</label>
                     <select class="form-select" [(ngModel)]="diaActual.esquemaTurnoId" 
                             name="esquemaTurno" required (change)="onEsquemaTurnoChange()">
@@ -252,7 +228,7 @@ interface DiaExcepcional {
                   </div>
 
                   <!-- Mostrar horarios del esquema de turno seleccionado -->
-                  <div class="col-12" *ngIf="diaActual.tipoAgenda !== 'FERIADO' && getEsquemaSeleccionado()">
+                  <div class="col-12" *ngIf="diaActual.tipo !== 'FERIADO' && getEsquemaSeleccionado()">
                     <div class="esquema-horarios-info">
                       <h6 class="mb-3">
                         <i class="fas fa-clock text-primary me-2"></i>
@@ -300,7 +276,7 @@ interface DiaExcepcional {
                   </div>
 
                   <!-- Campos específicos para atención especial -->
-                  <ng-container *ngIf="diaActual.tipoAgenda === 'ATENCION_ESPECIAL'">
+                  <ng-container *ngIf="diaActual.tipo === 'ATENCION_ESPECIAL'">
                     <div class="col-md-4">
                       <label class="form-label">Hora de Inicio *</label>
                       <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
@@ -337,18 +313,18 @@ interface DiaExcepcional {
                   </ng-container>
 
                   <!-- Campos específicos para mantenimiento -->
-                  <ng-container *ngIf="diaActual.tipoAgenda === 'MANTENIMIENTO'">
+                  <ng-container *ngIf="diaActual.tipo === 'MANTENIMIENTO'">
                     <div class="col-md-6">
                       <label class="form-label">Hora de Inicio del Mantenimiento *</label>
                       <input type="time" class="form-control" [(ngModel)]="diaActual.horaInicio" 
                              name="horaInicioMantenimiento" required>
                     </div>
                     <div class="col-md-6">
-                      <label class="form-label">Tiempo de Sanitización (minutos)</label>
-                      <input type="number" class="form-control" [(ngModel)]="diaActual.tiempoSanitizacion" 
-                             name="tiempoSanitizacion" min="0" max="60"
+                      <label class="form-label">Duración Adicional (minutos)</label>
+                      <input type="number" class="form-control" [(ngModel)]="diaActual.duracion" 
+                             name="duracion" min="0" max="60"
                              placeholder="Ej: 15">
-                      <small class="form-text text-muted">Tiempo adicional para limpieza después del mantenimiento</small>
+                      <small class="form-text text-muted">Tiempo adicional después del mantenimiento</small>
                     </div>
                     <div class="col-12">
                       <label class="form-label">Descripción del Mantenimiento *</label>
@@ -408,7 +384,7 @@ interface DiaExcepcional {
     .table th:nth-child(3), .table td:nth-child(3) { width: 20%; } /* Descripción */
     .table th:nth-child(4), .table td:nth-child(4) { width: 25%; } /* Centro/Consultorio */
     .table th:nth-child(5), .table td:nth-child(5) { width: 12%; } /* Horario */
-    .table th:nth-child(6), .table td:nth-child(6) { width: 10%; } /* Sanitización */
+    .table th:nth-child(6), .table td:nth-child(6) { width: 10%; } /* duracion */
     .table th:nth-child(7), .table td:nth-child(7) { width: 6%; }  /* Acciones */
 
     .descripcion-cell {
@@ -593,7 +569,7 @@ export class DiasExcepcionalesComponent implements OnInit {
   
   diaActual: DiaExcepcional = {
     fecha: '',
-    tipoAgenda: 'FERIADO',
+    tipo: 'FERIADO',
     descripcionExcepcion: ''
   };
 
@@ -643,7 +619,8 @@ export class DiasExcepcionalesComponent implements OnInit {
     this.turnoService.getDiasExcepcionales(fechaInicio, fechaFin, 
       this.filtros.centroId ? Number(this.filtros.centroId) : undefined).subscribe({
       next: (response) => {
-        this.diasExcepcionales = response.data || [];
+        // Mapear datos del backend a propiedades de compatibilidad
+        this.diasExcepcionales = (response.data || []).map(dia => this.mapearDiaDesdeBackend(dia));
         this.aplicarFiltros();
       },
       error: (error) => {
@@ -652,11 +629,32 @@ export class DiasExcepcionalesComponent implements OnInit {
     });
   }
 
+  /**
+   * Mapea los datos del backend (ConfiguracionExcepcionalDTO) a las propiedades 
+   * de compatibilidad esperadas en el frontend
+   */
+  mapearDiaDesdeBackend(diaBackend: any): DiaExcepcional {
+    return {
+      ...diaBackend,
+      // Aliases para compatibilidad con el frontend
+      apertura: diaBackend.horaInicio,
+      cierre: diaBackend.horaFin,
+      centroId: diaBackend.centroAtencionId,
+      centroNombre: diaBackend.centroAtencionNombre,
+      especialidad: diaBackend.especialidadNombre,
+      // Campos de compatibilidad para formulario
+      descripcionExcepcion: diaBackend.descripcion,
+      // Mapear la duración - el backend devuelve "duracion", el frontend espera "duracion"
+      duracion: diaBackend.duracion,
+      duracionMinutos: diaBackend.duracion // Alias para formularios de atención especial
+    };
+  }
+
   aplicarFiltros() {
     this.diasFiltrados = this.diasExcepcionales.filter(dia => {
       let cumpleFiltros = true;
       
-      if (this.filtros.tipo && dia.tipoAgenda !== this.filtros.tipo) {
+      if (this.filtros.tipo && dia.tipo !== this.filtros.tipo) {
         cumpleFiltros = false;
       }
       
@@ -668,7 +666,7 @@ export class DiasExcepcionalesComponent implements OnInit {
     this.editando = false;
     this.diaActual = {
       fecha: '',
-      tipoAgenda: 'FERIADO',
+      tipo: 'FERIADO',
       descripcionExcepcion: ''
     };
     this.showModal = true;
@@ -688,19 +686,19 @@ export class DiasExcepcionalesComponent implements OnInit {
 
   onTipoChange() {
     // Limpiar campos específicos cuando cambia el tipo
-    if (this.diaActual.tipoAgenda === 'FERIADO') {
+    if (this.diaActual.tipo === 'FERIADO') {
       this.diaActual.esquemaTurnoId = undefined;
       this.diaActual.horaInicio = undefined;
       this.diaActual.horaFin = undefined;
-      this.diaActual.tiempoSanitizacion = undefined;
+      this.diaActual.duracion = undefined;
       this.diaActual.duracionMinutos = undefined;
       this.diaActual.tipoProcedimiento = undefined;
-    } else if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+    } else if (this.diaActual.tipo === 'ATENCION_ESPECIAL') {
       // Para atención especial no se necesita tiempo de sanitización
-      this.diaActual.tiempoSanitizacion = undefined;
+      this.diaActual.duracion = undefined;
       // Limpiar campos específicos de mantenimiento si se cambió desde allí
       this.diaActual.horaFin = undefined;
-    } else if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+    } else if (this.diaActual.tipo === 'MANTENIMIENTO') {
       // Para mantenimiento no se necesitan campos de procedimiento
       this.diaActual.duracionMinutos = undefined;
       this.diaActual.tipoProcedimiento = undefined;
@@ -722,20 +720,20 @@ export class DiasExcepcionalesComponent implements OnInit {
   }
 
   guardar() {
-    if (!this.diaActual.fecha || !this.diaActual.tipoAgenda || !this.diaActual.descripcionExcepcion) {
+    if (!this.diaActual.fecha || !this.diaActual.tipo|| !this.diaActual.descripcionExcepcion) {
       alert('Por favor complete todos los campos obligatorios');
       return;
     }
 
     // Validaciones específicas por tipo
-    if (this.diaActual.tipoAgenda !== 'FERIADO') {
+    if (this.diaActual.tipo !== 'FERIADO') {
       if (!this.diaActual.esquemaTurnoId) {
         alert('Debe seleccionar un esquema de turno para este tipo de día excepcional');
         return;
       }
     }
 
-    if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+    if (this.diaActual.tipo === 'ATENCION_ESPECIAL') {
       if (!this.diaActual.horaInicio || !this.diaActual.duracionMinutos || !this.diaActual.tipoProcedimiento) {
         alert('Debe especificar hora de inicio, duración y tipo de procedimiento para atención especial');
         return;
@@ -750,12 +748,12 @@ export class DiasExcepcionalesComponent implements OnInit {
       }
     }
 
-    if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+    if (this.diaActual.tipo === 'MANTENIMIENTO') {
       if (!this.diaActual.horaInicio) {
         alert('Debe especificar la hora de inicio del mantenimiento');
         return;
       }
-      if (!this.diaActual.tiempoSanitizacion || this.diaActual.tiempoSanitizacion <= 0) {
+      if (!this.diaActual.duracion || this.diaActual.duracion <= 0) {
         alert('Debe especificar un tiempo de duración válido para el mantenimiento');
         return;
       }
@@ -764,17 +762,17 @@ export class DiasExcepcionalesComponent implements OnInit {
     // Preparar datos para enviar
     const params: any = {
       fecha: this.diaActual.fecha,
-      tipoAgenda: this.diaActual.tipoAgenda,
+      tipoAgenda: this.diaActual.tipo,
       descripcion: this.diaActual.descripcionExcepcion
     };
 
     // Solo agregar esquemaTurnoId si no es feriado
-    if (this.diaActual.tipoAgenda !== 'FERIADO' && this.diaActual.esquemaTurnoId) {
+    if (this.diaActual.tipo !== 'FERIADO' && this.diaActual.esquemaTurnoId) {
       params.esquemaTurnoId = this.diaActual.esquemaTurnoId;
     }
 
     // Agregar horarios si es atención especial
-    if (this.diaActual.tipoAgenda === 'ATENCION_ESPECIAL') {
+    if (this.diaActual.tipo === 'ATENCION_ESPECIAL') {
       params.horaInicio = this.diaActual.horaInicio;
       params.duracionMinutos = this.diaActual.duracionMinutos;
       params.tipoProcedimiento = this.diaActual.tipoProcedimiento;
@@ -791,13 +789,13 @@ export class DiasExcepcionalesComponent implements OnInit {
     }
 
     // Agregar hora de inicio si es mantenimiento
-    if (this.diaActual.tipoAgenda === 'MANTENIMIENTO') {
+    if (this.diaActual.tipo === 'MANTENIMIENTO') {
       params.horaInicio = this.diaActual.horaInicio;
     }
 
-    // Agregar tiempo de sanitización si está especificado
-    if (this.diaActual.tiempoSanitizacion) {
-      params.tiempoSanitizacion = this.diaActual.tiempoSanitizacion;
+    // Agregar duración si está especificado
+    if (this.diaActual.duracion) {
+      params.duracion = this.diaActual.duracion;
     }
 
     // Usar el método apropiado según si estamos editando o creando

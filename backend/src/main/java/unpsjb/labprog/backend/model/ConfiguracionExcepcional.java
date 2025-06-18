@@ -40,7 +40,7 @@ public class ConfiguracionExcepcional {
     private LocalTime horaFin;
     
     // Para mantenimientos y atención especial
-    private Integer tiempoSanitizacion;
+    private Integer duracion;
     
     // Relaciones opcionales
     @ManyToOne(optional = true)

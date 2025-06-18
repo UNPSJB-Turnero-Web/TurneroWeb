@@ -61,12 +61,9 @@ public class EsquemaTurnoService {
             throw new IllegalArgumentException("El campo staffMedicoId es obligatorio.");
         }
 
-        // Validación: Consultorio
-        if (dto.getConsultorioId() == null) {
-            throw new IllegalArgumentException("El campo consultorio es obligatorio.");
-        }
-        if (!consultorioRepository.existsById(dto.getConsultorioId())) {
-            throw new IllegalArgumentException("El consultorio no existe.");
+        // Validación: Consultorio (opcional para permitir distribución automática)
+        if (dto.getConsultorioId() != null && !consultorioRepository.existsById(dto.getConsultorioId())) {
+            throw new IllegalArgumentException("El consultorio especificado no existe.");
         }
 
         // Validación: Intervalo
@@ -85,6 +82,9 @@ public class EsquemaTurnoService {
         }
 
         EsquemaTurno esquemaTurno = toEntity(dto);
+        
+        
+        
 
         // Validación: Conflictos entre esquemas de turnos existentes
         List<EsquemaTurno> existentes = esquemaTurnoRepository.findByStaffMedicoId(esquemaTurno.getStaffMedico().getId());
@@ -126,11 +126,28 @@ public class EsquemaTurnoService {
         }
 
         // Validación: Conflictos de horarios en el mismo consultorio
+        // Si hay conflicto, intentar usar el algoritmo de distribución automáticamente
         List<EsquemaTurno> esquemasEnConsultorio = esquemaTurnoRepository.findByConsultorioId(dto.getConsultorioId());
-        if (esquemasEnConsultorio.stream().anyMatch(existente ->
+        boolean hayConflictoConsultorio = esquemasEnConsultorio.stream().anyMatch(existente ->
                 !esquemaTurno.getId().equals(existente.getId()) &&
-                hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()))) {
-            throw new IllegalStateException("Conflicto: Horarios en conflicto en el mismo consultorio.");
+                hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()));
+        
+        if (hayConflictoConsultorio) {
+            // Intentar resolver automáticamente usando el algoritmo de distribución
+            Integer consultorioAlternativo = resolverConflictoConsultorioAutomaticamente(esquemaTurno);
+            
+            if (consultorioAlternativo != null) {
+                // Actualizar el DTO y la entidad con el consultorio alternativo
+                dto.setConsultorioId(consultorioAlternativo);
+                esquemaTurno.setConsultorio(consultorioRepository.findById(consultorioAlternativo)
+                    .orElseThrow(() -> new IllegalArgumentException("Consultorio alternativo no encontrado")));
+                
+                System.out.println("🔄 CONFLICTO RESUELTO: Se asignó automáticamente el consultorio " + 
+                                 consultorioAlternativo + " al médico " + 
+                                 esquemaTurno.getStaffMedico().getMedico().getNombre());
+            } else {
+                throw new IllegalStateException("Conflicto: No se encontró consultorio disponible para resolver el conflicto de horarios.");
+            }
         }
 
         // Validación: Conflictos de horarios para el mismo médico en diferentes consultorios
@@ -298,6 +315,77 @@ public class EsquemaTurnoService {
         }
         
         return conflictosResueltos;
+    }
+
+    /**
+     * Resuelve automáticamente un conflicto de consultorio usando el algoritmo de distribución.
+     * @param esquemaTurno El esquema de turno que tiene conflicto
+     * @return ID del consultorio alternativo, o null si no se puede resolver
+     */
+    private Integer resolverConflictoConsultorioAutomaticamente(EsquemaTurno esquemaTurno) {
+        try {
+            LocalDate hoy = LocalDate.now();
+            String diaSemana = hoy.getDayOfWeek().name();
+            
+            // Usar el algoritmo de distribución para obtener la asignación óptima
+            Map<Integer, Integer> distribucionOptima = consultorioDistribucionService.distribuirConsultorios(
+                esquemaTurno.getCentroAtencion().getId(), 
+                hoy, 
+                diaSemana
+            );
+            
+            // Buscar la asignación recomendada para este médico
+            Integer staffMedicoId = esquemaTurno.getStaffMedico().getId();
+            Integer consultorioRecomendado = distribucionOptima.get(staffMedicoId);
+            
+            if (consultorioRecomendado != null && !consultorioRecomendado.equals(esquemaTurno.getConsultorio().getId())) {
+                // Verificar que el consultorio recomendado no tenga conflictos
+                List<EsquemaTurno> esquemasEnConsultorioRecomendado = esquemaTurnoRepository.findByConsultorioId(consultorioRecomendado);
+                boolean hayConflictoEnRecomendado = esquemasEnConsultorioRecomendado.stream().anyMatch(existente ->
+                        !esquemaTurno.getId().equals(existente.getId()) &&
+                        hayConflictoDeHorarios(existente.getHorarios(), 
+                                              esquemaTurno.getHorarios().stream()
+                                                      .map(h -> {
+                                                          EsquemaTurnoDTO.DiaHorarioDTO dto = new EsquemaTurnoDTO.DiaHorarioDTO();
+                                                          dto.setDia(h.getDia());
+                                                          dto.setHoraInicio(h.getHoraInicio());
+                                                          dto.setHoraFin(h.getHoraFin());
+                                                          return dto;
+                                                      })
+                                                      .collect(Collectors.toList())));
+                
+                if (!hayConflictoEnRecomendado) {
+                    return consultorioRecomendado;
+                }
+            }
+            
+            // Si el algoritmo no encuentra solución, buscar cualquier consultorio disponible
+            List<Integer> consultoriosDisponibles = consultorioRepository.findByCentroAtencionId(esquemaTurno.getCentroAtencion().getId())
+                .stream()
+                .map(c -> c.getId())
+                .filter(consultorioId -> {
+                    List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByConsultorioId(consultorioId);
+                    return esquemas.stream().noneMatch(existente ->
+                            !esquemaTurno.getId().equals(existente.getId()) &&
+                            hayConflictoDeHorarios(existente.getHorarios(), 
+                                                  esquemaTurno.getHorarios().stream()
+                                                          .map(h -> {
+                                                              EsquemaTurnoDTO.DiaHorarioDTO dto = new EsquemaTurnoDTO.DiaHorarioDTO();
+                                                              dto.setDia(h.getDia());
+                                                              dto.setHoraInicio(h.getHoraInicio());
+                                                              dto.setHoraFin(h.getHoraFin());
+                                                              return dto;
+                                                          })
+                                                          .collect(Collectors.toList())));
+                })
+                .collect(Collectors.toList());
+            
+            return consultoriosDisponibles.isEmpty() ? null : consultoriosDisponibles.get(0);
+            
+        } catch (Exception e) {
+            System.err.println("Error al resolver conflicto automáticamente: " + e.getMessage());
+            return null;
+        }
     }
 
     private EsquemaTurnoDTO toDTO(EsquemaTurno esquema) {

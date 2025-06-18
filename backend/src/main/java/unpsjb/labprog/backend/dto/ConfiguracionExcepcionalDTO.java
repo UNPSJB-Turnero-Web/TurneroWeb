@@ -22,7 +22,7 @@ public class ConfiguracionExcepcionalDTO {
     private String descripcion;
     private LocalTime horaInicio;
     private LocalTime horaFin;
-    private Integer tiempoSanitizacion;
+    private Integer duracion;
     private boolean activo;
     
     // IDs de las entidades relacionadas para evitar circular references
@@ -41,6 +41,7 @@ public class ConfiguracionExcepcionalDTO {
     private Integer esquemaTurnoDuracion;
     
     // Información adicional del médico
+    private String medicoId; 
     private String medicoNombre;
     private String medicoApellido;
     private String especialidadNombre;
@@ -60,7 +61,7 @@ public class ConfiguracionExcepcionalDTO {
         dto.setDescripcion(entity.getDescripcion());
         dto.setHoraInicio(entity.getHoraInicio());
         dto.setHoraFin(entity.getHoraFin());
-        dto.setTiempoSanitizacion(entity.getTiempoSanitizacion());
+        dto.setDuracion(entity.getDuracion());
         dto.setActivo(entity.isActivo());
 
         // Centro de atención
@@ -80,11 +81,9 @@ public class ConfiguracionExcepcionalDTO {
             dto.setEsquemaTurnoId(entity.getEsquemaTurno().getId());
             dto.setEsquemaTurnoDuracion(entity.getEsquemaTurno().getIntervalo());
             
-            // Información del médico si está disponible
-            if (entity.getEsquemaTurno().getDisponibilidadMedico() != null &&
-                entity.getEsquemaTurno().getDisponibilidadMedico().getStaffMedico() != null) {
-                
-                var staffMedico = entity.getEsquemaTurno().getDisponibilidadMedico().getStaffMedico();
+            // Información del médico a través de StaffMedico directamente
+            if (entity.getEsquemaTurno().getStaffMedico() != null) {
+                var staffMedico = entity.getEsquemaTurno().getStaffMedico();
                 if (staffMedico.getMedico() != null) {
                     dto.setMedicoNombre(staffMedico.getMedico().getNombre());
                     dto.setMedicoApellido(staffMedico.getMedico().getApellido());

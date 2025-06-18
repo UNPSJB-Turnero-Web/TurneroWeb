@@ -1063,7 +1063,27 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   cargarDiasExcepcionales() {
-    this.diasExcepcionalesService.cargarDiasExcepcionalesParaCalendario();
+    // Para este componente, usamos el método original ya que obtenerSlotsDisponiblesPorMedico
+    // no incluye información completa de días excepcionales como obtenerTodosLosEventos
+    // Pero primero intentamos obtener desde la cache del servicio
+    const fechaActual = new Date();
+    const fechaInicio = new Date(fechaActual);
+    fechaInicio.setDate(fechaInicio.getDate() - 7);
+    const fechaFin = new Date(fechaActual);
+    fechaFin.setDate(fechaFin.getDate() + (4 * 7));
+    
+    this.diasExcepcionalesService.cargarDiasExcepcionales(
+      fechaInicio.toISOString().split('T')[0],
+      fechaFin.toISOString().split('T')[0]
+    ).subscribe({
+      next: (response) => {
+        this.diasExcepcionalesService.actualizarDiasExcepcionales(response.data || []);
+      },
+      error: (error) => {
+        console.error('Error al cargar días excepcionales:', error);
+        this.diasExcepcionalesService.actualizarDiasExcepcionales([]);
+      }
+    });
   }
 
   cargarTurnoActual() {

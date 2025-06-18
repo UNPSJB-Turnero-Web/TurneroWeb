@@ -55,7 +55,7 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcional crearMantenimiento(LocalDate fecha, String descripcion, 
                                                       Integer consultorioId, LocalTime horaInicio, 
-                                                      Integer tiempoSanitizacion) {
+                                                      Integer duracion) {
         Optional<Consultorio> consultorio = consultorioRepository.findById(consultorioId);
         if (!consultorio.isPresent()) {
             throw new IllegalArgumentException("Consultorio no encontrado con ID: " + consultorioId);
@@ -68,11 +68,11 @@ public class ConfiguracionExcepcionalService {
         config.setConsultorio(consultorio.get());
         config.setCentroAtencion(consultorio.get().getCentroAtencion());
         config.setHoraInicio(horaInicio);
-        // Para mantenimiento, horaFin se calcula como horaInicio + tiempoSanitizacion
-        if (horaInicio != null && tiempoSanitizacion != null) {
-            config.setHoraFin(horaInicio.plusMinutes(tiempoSanitizacion));
+        // Para mantenimiento, horaFin se calcula como horaInicio + duracion
+        if (horaInicio != null && duracion != null) {
+            config.setHoraFin(horaInicio.plusMinutes(duracion));
         }
-        config.setTiempoSanitizacion(tiempoSanitizacion);
+        config.setDuracion(duracion);
         config.setActivo(true);
         
         return repository.save(config);
@@ -84,7 +84,7 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcional crearAtencionEspecial(LocalDate fecha, String descripcion,
                                                          Integer esquemaTurnoId, LocalTime horaInicio, 
-                                                         LocalTime horaFin, Integer tiempoSanitizacion) {
+                                                         LocalTime horaFin, Integer duracion) {
         Optional<EsquemaTurno> esquema = esquemaTurnoRepository.findById(esquemaTurnoId);
         if (!esquema.isPresent()) {
             throw new IllegalArgumentException("EsquemaTurno no encontrado con ID: " + esquemaTurnoId);
@@ -99,7 +99,7 @@ public class ConfiguracionExcepcionalService {
         config.setConsultorio(esquema.get().getConsultorio());
         config.setHoraInicio(horaInicio);
         config.setHoraFin(horaFin);
-        config.setTiempoSanitizacion(tiempoSanitizacion);
+        config.setDuracion(duracion);
         config.setActivo(true);
         
         return repository.save(config);
@@ -285,7 +285,7 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcional actualizarMantenimiento(Integer configId, LocalDate fecha, String descripcion, 
                                                            Integer consultorioId, LocalTime horaInicio, 
-                                                           Integer tiempoSanitizacion) {
+                                                           Integer duracion) {
         Optional<ConfiguracionExcepcional> configOpt = repository.findById(configId);
         if (!configOpt.isPresent()) {
             throw new IllegalArgumentException("Configuración no encontrada con ID: " + configId);
@@ -306,11 +306,11 @@ public class ConfiguracionExcepcionalService {
         config.setConsultorio(consultorio.get());
         config.setCentroAtencion(consultorio.get().getCentroAtencion());
         config.setHoraInicio(horaInicio);
-        // Para mantenimiento, horaFin se calcula como horaInicio + tiempoSanitizacion
-        if (horaInicio != null && tiempoSanitizacion != null) {
-            config.setHoraFin(horaInicio.plusMinutes(tiempoSanitizacion));
+        // Para mantenimiento, horaFin se calcula como horaInicio + duracion
+        if (horaInicio != null && duracion != null) {
+            config.setHoraFin(horaInicio.plusMinutes(duracion));
         }
-        config.setTiempoSanitizacion(tiempoSanitizacion);
+        config.setDuracion(duracion);
         
         return repository.save(config);
     }
@@ -321,7 +321,7 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcional actualizarAtencionEspecial(Integer configId, LocalDate fecha, String descripcion,
                                                               Integer esquemaTurnoId, LocalTime horaInicio, 
-                                                              LocalTime horaFin, Integer tiempoSanitizacion) {
+                                                              LocalTime horaFin, Integer duracion) {
         Optional<ConfiguracionExcepcional> configOpt = repository.findById(configId);
         if (!configOpt.isPresent()) {
             throw new IllegalArgumentException("Configuración no encontrada con ID: " + configId);
@@ -344,7 +344,7 @@ public class ConfiguracionExcepcionalService {
         config.setConsultorio(esquema.get().getConsultorio());
         config.setHoraInicio(horaInicio);
         config.setHoraFin(horaFin);
-        config.setTiempoSanitizacion(tiempoSanitizacion);
+        config.setDuracion(duracion);
         
         return repository.save(config);
     }
@@ -356,7 +356,7 @@ public class ConfiguracionExcepcionalService {
     public ConfiguracionExcepcional saveOrUpdate(Integer configId, LocalDate fecha, String tipoExcepcion, 
                                                 String descripcion, Integer esquemaTurnoId, 
                                                 LocalTime horaInicio, LocalTime horaFin, 
-                                                Integer tiempoSanitizacion) {
+                                                Integer duracion) {
         
         if (configId != null && configId > 0) {
             // Actualizar existente
@@ -373,12 +373,12 @@ public class ConfiguracionExcepcionalService {
                             EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
                                 .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
                             return actualizarMantenimiento(configId, fecha, descripcion, 
-                                esquema.getConsultorio().getId(), horaInicio, tiempoSanitizacion);
+                                esquema.getConsultorio().getId(), horaInicio, duracion);
                         }
                         break;
                     case ATENCION_ESPECIAL:
                         return actualizarAtencionEspecial(configId, fecha, descripcion, 
-                            esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+                            esquemaTurnoId, horaInicio, horaFin, duracion);
                 }
             }
         }
@@ -395,12 +395,12 @@ public class ConfiguracionExcepcionalService {
                     EsquemaTurno esquema = esquemaTurnoRepository.findById(esquemaTurnoId)
                         .orElseThrow(() -> new IllegalArgumentException("EsquemaTurno no encontrado"));
                     return crearMantenimiento(fecha, descripcion, 
-                        esquema.getConsultorio().getId(), horaInicio, tiempoSanitizacion);
+                        esquema.getConsultorio().getId(), horaInicio, duracion);
                 }
                 break;
             case ATENCION_ESPECIAL:
                 return crearAtencionEspecial(fecha, descripcion, 
-                    esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+                    esquemaTurnoId, horaInicio, horaFin, duracion);
         }
         
         throw new IllegalArgumentException("Tipo de excepción no válido o faltan parámetros requeridos");
@@ -421,7 +421,7 @@ public class ConfiguracionExcepcionalService {
             dto.getEsquemaTurnoId(),
             dto.getHoraInicio(),
             dto.getHoraFin(),
-            dto.getTiempoSanitizacion()
+            dto.getDuracion()
         );
         
         return ConfiguracionExcepcionalDTO.fromEntity(entity);
@@ -442,8 +442,8 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcionalDTO crearMantenimientoDTO(LocalDate fecha, String descripcion, 
                                                            Integer consultorioId, LocalTime horaInicio, 
-                                                           Integer tiempoSanitizacion) {
-        ConfiguracionExcepcional entity = crearMantenimiento(fecha, descripcion, consultorioId, horaInicio, tiempoSanitizacion);
+                                                           Integer duracion) {
+        ConfiguracionExcepcional entity = crearMantenimiento(fecha, descripcion, consultorioId, horaInicio, duracion);
         return ConfiguracionExcepcionalDTO.fromEntity(entity);
     }
 
@@ -453,8 +453,8 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcionalDTO crearAtencionEspecialDTO(LocalDate fecha, String descripcion,
                                                               Integer esquemaTurnoId, LocalTime horaInicio, 
-                                                              LocalTime horaFin, Integer tiempoSanitizacion) {
-        ConfiguracionExcepcional entity = crearAtencionEspecial(fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+                                                              LocalTime horaFin, Integer duracion) {
+        ConfiguracionExcepcional entity = crearAtencionEspecial(fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, duracion);
         return ConfiguracionExcepcionalDTO.fromEntity(entity);
     }
 
@@ -523,8 +523,8 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcionalDTO actualizarMantenimientoDTO(Integer configId, LocalDate fecha, String descripcion, 
                                                                 Integer consultorioId, LocalTime horaInicio, 
-                                                                Integer tiempoSanitizacion) {
-        ConfiguracionExcepcional entity = actualizarMantenimiento(configId, fecha, descripcion, consultorioId, horaInicio, tiempoSanitizacion);
+                                                                Integer duracion) {
+        ConfiguracionExcepcional entity = actualizarMantenimiento(configId, fecha, descripcion, consultorioId, horaInicio, duracion);
         return ConfiguracionExcepcionalDTO.fromEntity(entity);
     }
 
@@ -534,8 +534,8 @@ public class ConfiguracionExcepcionalService {
     @Transactional
     public ConfiguracionExcepcionalDTO actualizarAtencionEspecialDTO(Integer configId, LocalDate fecha, String descripcion,
                                                                    Integer esquemaTurnoId, LocalTime horaInicio, 
-                                                                   LocalTime horaFin, Integer tiempoSanitizacion) {
-        ConfiguracionExcepcional entity = actualizarAtencionEspecial(configId, fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, tiempoSanitizacion);
+                                                                   LocalTime horaFin, Integer duracion) {
+        ConfiguracionExcepcional entity = actualizarAtencionEspecial(configId, fecha, descripcion, esquemaTurnoId, horaInicio, horaFin, duracion);
         return ConfiguracionExcepcionalDTO.fromEntity(entity);
     }
 }
