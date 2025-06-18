@@ -182,18 +182,8 @@ interface SlotDisponible {
                   <!-- Slots de la fecha -->
                   <div class="slots-grid">
                     <ng-container *ngFor="let slot of slotsPorFecha[fecha]; let i = index">
-                      <!-- Separador visual entre médicos diferentes -->
-                      <div *ngIf="esCambioMedico(fecha, i)" class="medico-separator">
-                        <div class="separator-line"></div>
-                        <div class="separator-label">
-                          <i class="fas fa-user-md"></i>
-                          <span>{{ getNombreMedico(slot) }}</span>
-                        </div>
-                        <div class="separator-line"></div>
-                      </div>
-                      
-                      <!-- Etiqueta de médico para el primer slot del día -->
-                      <div *ngIf="i === 0" class="medico-header">
+                      <!-- Etiqueta de médico para el primer slot del día o cuando cambia el médico -->
+                      <div *ngIf="i === 0 || esCambioMedico(fecha, i)" class="medico-header">
                         <i class="fas fa-user-md"></i>
                         <span>{{ getNombreMedico(slot) }}</span>
                       </div>
@@ -274,7 +264,11 @@ interface SlotDisponible {
                         <i class="fas fa-user-check"></i>
                         Asignado
                       </div>
-                      <div class="slot-status disponible" *ngIf="!slot.enMantenimiento && !slot.ocupado">
+                      <div class="slot-status no-disponible" *ngIf="!slot.enMantenimiento && !slot.ocupado && slotAfectadoPorExcepcion(slot) && getTipoExcepcion(slot.fecha) === 'FERIADO'">
+                        <i class="fas fa-ban"></i>
+                        No Disponible
+                      </div>
+                      <div class="slot-status disponible" *ngIf="!slot.enMantenimiento && !slot.ocupado && !slotAfectadoPorExcepcion(slot)">
                         <i class="fas fa-plus-circle"></i>
                         Disponible
                       </div>
@@ -283,8 +277,8 @@ interface SlotDisponible {
                         <i class="fas fa-check-circle"></i>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  
+                </ng-container>
               </div>
 
               <!-- MENSAJE CUANDO NO HAY TURNOS -->
@@ -1193,6 +1187,11 @@ interface SlotDisponible {
       color: white;
     }
 
+    .slot-status.no-disponible {
+      background: #dc3545;
+      color: white;
+    }
+
     .slot-status.maintenance {
       background: #fd7e14;
       color: white;
@@ -1666,17 +1665,7 @@ export class AgendaComponent implements OnInit {
         titulo: evento.titulo
       };
 
-      // DEBUG: Log para slots con mantenimiento
-      if (slot.enMantenimiento) {
-        console.log(`🔧 SLOT EN MANTENIMIENTO procesado:`, {
-          id: slot.id,
-          fecha: slot.fecha,
-          horario: `${slot.horaInicio}-${slot.horaFin}`,
-          titulo: slot.titulo,
-          enMantenimiento: slot.enMantenimiento,
-          eventoOriginal: evento
-        });
-      }
+  
 
       // Incluir TODOS los slots (afectados y no afectados) en la vista principal
       slots.push(slot);
@@ -1730,14 +1719,6 @@ export class AgendaComponent implements OnInit {
       this.slotsPorFecha[slot.fecha].push(slot);
     });
 
-    // DEBUG: Log para investigar el problema de mantenimiento
-    Object.keys(this.slotsPorFecha).forEach(fecha => {
-      const slotsEnMantenimiento = this.slotsPorFecha[fecha].filter(slot => slot.enMantenimiento);
-      if (slotsEnMantenimiento.length > 0) {
-        console.log(`🔧 FECHA ${fecha} - Slots en mantenimiento:`, slotsEnMantenimiento.map(s => `${s.horaInicio}-${s.horaFin} (ID: ${s.id}, titulo: ${s.titulo})`));
-        console.log(`📋 FECHA ${fecha} - Todos los slots:`, this.slotsPorFecha[fecha].map(s => `${s.horaInicio}-${s.horaFin} (ID: ${s.id}, enMantenimiento: ${s.enMantenimiento}, titulo: ${s.titulo})`));
-      }
-    });
 
     // Ordenar slots dentro de cada fecha: PRIMERO por médico, LUEGO por hora
     Object.keys(this.slotsPorFecha).forEach(fecha => {
