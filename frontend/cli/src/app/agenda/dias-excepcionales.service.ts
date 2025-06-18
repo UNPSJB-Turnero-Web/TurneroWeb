@@ -349,25 +349,16 @@ export class DiasExcepcionalesService {
       }
     }
     
-    // Si el slot está en mantenimiento específico
-    if (slot?.enMantenimiento) {
-      return 'Mantenimiento';
-    }
-    
-    // Fallback a la lógica de día excepcional
+    // Fallback a la lógica de día excepcional solo si no hay información en el slot
     const tipo = this.getTipoExcepcion(fecha);
-    if (tipo) {
-      const tieneFranja = this.tieneFranjaHoraria(fecha);
-      
+    if (tipo && !this.tieneFranjaHoraria(fecha)) {
       switch (tipo) {
         case 'FERIADO':
-          return 'No Disponible';
+          return 'Feriado';
         case 'MANTENIMIENTO':
-          return tieneFranja ? 'Mantenimiento' : 'Mantenimiento del Día';
+          return 'Mantenimiento del Día';
         case 'ATENCION_ESPECIAL':
-          // CORRECCIÓN CRÍTICA: Para atención especial, siempre mostrar "no disponible" 
-          // independientemente de si tiene franja horaria o no
-          return 'No Disponible';
+          return 'Atención Especial';
         default:
           return 'Día Excepcional';
       }
