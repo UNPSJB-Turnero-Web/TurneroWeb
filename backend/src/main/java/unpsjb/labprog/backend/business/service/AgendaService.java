@@ -420,8 +420,9 @@ public class AgendaService {
         String diaSemana = fecha.getDayOfWeek().name();
         
         // Usar el servicio especializado para distribuir consultorios
+        // CRÍTICO: Limpiar asignaciones anteriores para redistribución limpia
         Map<Integer, Integer> asignacion = consultorioDistribucionService.distribuirConsultorios(
-            centroAtencionId, fecha, diaSemana);
+            centroAtencionId, fecha, diaSemana, true);
         
         // Actualizar los EsquemaTurno con la nueva asignación de consultorios
         for (Map.Entry<Integer, Integer> entry : asignacion.entrySet()) {

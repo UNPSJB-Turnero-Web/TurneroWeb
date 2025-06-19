@@ -1256,11 +1256,14 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
    * Calcula el total de porcentajes asignados a médicos y disponible
    */
   private calcularTotalesPorcentajeMedicos(): void {
-    this.totalPorcentajeMedicos = this.staffMedicoCentro
+    // Usar reduce con precisión mejorada
+    const total = this.staffMedicoCentro
       .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
       .reduce((total, staff) => total + (staff.porcentaje || 0), 0);
     
-    this.porcentajeDisponibleMedicos = 100 - this.totalPorcentajeMedicos;
+    // Redondear a 2 decimales para evitar problemas de precisión flotante
+    this.totalPorcentajeMedicos = Math.round(total * 100) / 100;
+    this.porcentajeDisponibleMedicos = Math.round((100 - this.totalPorcentajeMedicos) * 100) / 100;
   }
 
   /**
@@ -1351,16 +1354,42 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       return;
     }
     
-    // Calcular porcentaje exacto por médico: 100 / número de médicos
-    const porcentajePorMedico = 100 / numMedicos;
+    // Algoritmo mejorado para distribución exacta del 100%
+    // Trabajar con enteros (centésimas) para evitar errores de punto flotante
+    const totalCentesimas = 10000; // 100.00%
+    const porcentajeBaseCentesimas = Math.floor(totalCentesimas / numMedicos);
+    const restoCentesimas = totalCentesimas - (porcentajeBaseCentesimas * numMedicos);
     
-    // Asignar el mismo porcentaje a todos los médicos
-    this.staffMedicoCentro.forEach(staff => {
-      staff.porcentaje = Math.round(porcentajePorMedico * 100) / 100; // Redondear a 2 decimales
+    // Asignar porcentajes
+    this.staffMedicoCentro.forEach((staff, index) => {
+      // Porcentaje base para todos
+      let porcentajeFinalCentesimas = porcentajeBaseCentesimas;
+      
+      // Distribuir el resto entre los primeros médicos (un centésimo a cada uno)
+      if (index < restoCentesimas) {
+        porcentajeFinalCentesimas += 1;
+      }
+      
+      // Convertir de centésimas a porcentaje decimal
+      staff.porcentaje = porcentajeFinalCentesimas / 100;
     });
+
+    // Verificación final - debe sumar exactamente 100.00
+    const totalVerificacion = this.staffMedicoCentro.reduce((sum, staff) => sum + (staff.porcentaje || 0), 0);
     
     this.calcularTotalesPorcentajeMedicos();
-    this.mostrarMensajeStaff(`Porcentajes redistribuidos equitativamente: ${porcentajePorMedico.toFixed(2)}% para cada uno de los ${numMedicos} médicos`, 'success');
+    this.mostrarMensajeStaff(
+      `Porcentajes redistribuidos equitativamente entre ${numMedicos} médicos. Total: ${this.totalPorcentajeMedicos}%`, 
+      'success'
+    );
+    
+    // Log para debugging
+    console.log('Redistribución completada:', {
+      numMedicos,
+      porcentajes: this.staffMedicoCentro.map(s => s.porcentaje),
+      total: totalVerificacion,
+      totalCalculado: this.totalPorcentajeMedicos
+    });
   }
 
   /**

@@ -290,12 +290,13 @@ public class ConsultorioService {
     }
     
     /**
-     * Crea horarios por defecto de 8:00 a 17:00 para todos los días de la semana
+     * Crea horarios por defecto de 8:00 a 19:00 para todos los días de la semana
+     * ACTUALIZADO: Extendido hasta las 19:00 para acomodar horarios médicos
      */
     private List<Consultorio.HorarioConsultorio> crearHorariosDefault() {
         String[] diasSemana = {"LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"};
         java.time.LocalTime horaApertura = java.time.LocalTime.of(8, 0);  // 8:00
-        java.time.LocalTime horaCierre = java.time.LocalTime.of(17, 0);   // 17:00
+        java.time.LocalTime horaCierre = java.time.LocalTime.of(19, 0);   // 19:00 (extendido)
         
         return java.util.Arrays.stream(diasSemana)
             .map(dia -> new Consultorio.HorarioConsultorio(dia, horaApertura, horaCierre, true))

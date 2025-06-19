@@ -2,6 +2,7 @@ package unpsjb.labprog.backend.business.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -226,6 +227,7 @@ public class EsquemaTurnoService {
 
     /**
      * Redistribuir esquemas de turno de un centro según porcentajes configurados
+     * También crea esquemas automáticamente para disponibilidades sin esquemas
      */
     @Transactional
     public int redistribuirEsquemasPorCentro(Integer centroId) {
@@ -234,14 +236,11 @@ public class EsquemaTurnoService {
             throw new IllegalArgumentException("Centro de atención no encontrado con ID: " + centroId);
         }
 
-        // Obtener todos los esquemas del centro
+        int procesados = 0;
+
+        // PASO 1: Redistribuir esquemas existentes
         List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByCentroAtencionId(centroId);
         
-        if (esquemas.isEmpty()) {
-            return 0;
-        }
-
-        int procesados = 0;
         for (EsquemaTurno esquema : esquemas) {
             try {
                 Integer nuevoConsultorioId = consultorioDistribucionService
@@ -260,7 +259,93 @@ public class EsquemaTurnoService {
             }
         }
 
+        // PASO 2: Crear esquemas automáticamente para disponibilidades sin esquemas
+        try {
+            int esquemasCreadosAutomaticamente = crearEsquemasDesdeDisponibilidades(centroId);
+            procesados += esquemasCreadosAutomaticamente;
+            
+            if (esquemasCreadosAutomaticamente > 0) {
+                System.out.println("✓ Se crearon automáticamente " + esquemasCreadosAutomaticamente + 
+                                 " esquemas desde disponibilidades médicas");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al crear esquemas automáticos: " + e.getMessage());
+        }
+
         return procesados;
+    }
+
+    /**
+     * Crea esquemas de turno automáticamente desde las disponibilidades médicas que no tienen esquemas asociados
+     */
+    @Transactional
+    public int crearEsquemasDesdeDisponibilidades(Integer centroId) {
+        // Obtener todas las disponibilidades médicas del centro
+        List<DisponibilidadMedico> disponibilidades = disponibilidadMedicoRepository
+            .findByStaffMedico_CentroAtencionId(centroId);
+        
+        // Obtener IDs de disponibilidades que ya tienen esquemas asociados
+        List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByCentroAtencionId(centroId);
+        Set<Integer> disponibilidadesConEsquema = esquemas.stream()
+            .map(e -> e.getDisponibilidadMedico().getId())
+            .collect(Collectors.toSet());
+        
+        // Filtrar disponibilidades sin esquemas
+        List<DisponibilidadMedico> disponibilidadesSinEsquema = disponibilidades.stream()
+            .filter(d -> !disponibilidadesConEsquema.contains(d.getId()))
+            .collect(Collectors.toList());
+        
+        int esquemasCreadps = 0;
+        
+        for (DisponibilidadMedico disponibilidad : disponibilidadesSinEsquema) {
+            try {
+                // Crear esquema automático con intervalo por defecto de 30 minutos
+                EsquemaTurno nuevoEsquema = new EsquemaTurno();
+                nuevoEsquema.setDisponibilidadMedico(disponibilidad);
+                nuevoEsquema.setStaffMedico(disponibilidad.getStaffMedico());
+                nuevoEsquema.setCentroAtencion(centroAtencionRepository.findById(centroId)
+                    .orElseThrow(() -> new IllegalArgumentException("Centro no encontrado")));
+                nuevoEsquema.setIntervalo(30); // Intervalo por defecto de 30 minutos
+                
+                // Copiar horarios desde la disponibilidad
+                List<EsquemaTurno.Horario> horariosEsquema = disponibilidad.getHorarios().stream()
+                    .map(horario -> {
+                        EsquemaTurno.Horario nuevoHorario = new EsquemaTurno.Horario();
+                        nuevoHorario.setDia(horario.getDia());
+                        nuevoHorario.setHoraInicio(horario.getHoraInicio());
+                        nuevoHorario.setHoraFin(horario.getHoraFin());
+                        return nuevoHorario;
+                    })
+                    .collect(Collectors.toList());
+                
+                nuevoEsquema.setHorarios(horariosEsquema);
+                
+                // Asignar consultorio según porcentajes
+                Integer consultorioId = consultorioDistribucionService
+                    .asignarConsultorioSegunPorcentajes(disponibilidad.getStaffMedico().getId(), centroId);
+                
+                if (consultorioId != null) {
+                    nuevoEsquema.setConsultorio(consultorioRepository.findById(consultorioId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                            "Consultorio no encontrado con ID: " + consultorioId)));
+                }
+                
+                // Guardar el nuevo esquema
+                esquemaTurnoRepository.save(nuevoEsquema);
+                esquemasCreadps++;
+                
+                System.out.println("✓ Esquema creado automáticamente para " + 
+                                 disponibilidad.getStaffMedico().getMedico().getNombre() + " " +
+                                 disponibilidad.getStaffMedico().getMedico().getApellido());
+                
+            } catch (Exception e) {
+                System.err.println("Error al crear esquema automático para disponibilidad ID " + 
+                                 disponibilidad.getId() + ": " + e.getMessage());
+                // Continuar con la siguiente disponibilidad
+            }
+        }
+        
+        return esquemasCreadps;
     }
 
     /**
