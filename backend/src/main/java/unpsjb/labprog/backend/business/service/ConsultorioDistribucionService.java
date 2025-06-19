@@ -26,13 +26,7 @@ import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.StaffMedico;
 
 /**
- * Servicio para gestionar la distribución inteligente de consultorios entre médicos.
- * 
- * ALGORITMO COMPLETO que considera:
- * 1. Compatibilidad de horarios médico-consultorio
- * 2. Evita solapamientos entre médicos en el mismo consultorio
- * 3. Respeta porcentajes de asignación de turnos
- * 4. Optimiza distribución cuando hay más médicos que consultorios
+ * Servicio para la distribución inteligente de consultorios entre médicos.
  */
 @Service
 public class ConsultorioDistribucionService {
@@ -49,28 +43,9 @@ public class ConsultorioDistribucionService {
     @Autowired
     private ConsultorioService consultorioService;
     
-    // ===============================================
-    // ESTADO COMPARTIDO PARA ASIGNACIONES EN LOTE
-    // ===============================================
-    
-    /**
-     * Mapa compartido de asignaciones temporales para procesos en lote
-     * Clave: ID del consultorio, Valor: Lista de bloques horarios asignados
-     */
     private final Map<Integer, List<BloqueHorario>> asignacionesTemporales = new HashMap<>();
-    
-    /**
-     * Flag para indicar si estamos en un proceso de asignación en lote
-     */
     private boolean procesoEnLoteActivo = false;
 
-    // ===============================================
-    // ESTRUCTURAS DE DATOS PARA EL ALGORITMO
-    // ===============================================
-
-    /**
-     * Representa un bloque de tiempo específico
-     */
     public static class BloqueHorario {
         private String dia;
         private LocalTime inicio;
@@ -86,7 +61,6 @@ public class ConsultorioDistribucionService {
             this.consultorioId = consultorioId;
         }
 
-        // Getters and setters
         public String getDia() { return dia; }
         public void setDia(String dia) { this.dia = dia; }
         public LocalTime getInicio() { return inicio; }
@@ -98,9 +72,6 @@ public class ConsultorioDistribucionService {
         public Integer getConsultorioId() { return consultorioId; }
         public void setConsultorioId(Integer consultorioId) { this.consultorioId = consultorioId; }
 
-        /**
-         * Verifica si este bloque se solapa con otro
-         */
         public boolean seSolapaCon(BloqueHorario otro) {
             if (!this.dia.equalsIgnoreCase(otro.dia)) {
                 return false;
@@ -115,9 +86,6 @@ public class ConsultorioDistribucionService {
         }
     }
 
-    /**
-     * Resultado de la asignación de un médico
-     */
     public static class ResultadoAsignacion {
         private final Integer medicoId;
         private final Integer consultorioId;
@@ -135,7 +103,6 @@ public class ConsultorioDistribucionService {
             this.motivoAsignacion = motivoAsignacion;
         }
 
-        // Getters
         public Integer getMedicoId() { return medicoId; }
         public Integer getConsultorioId() { return consultorioId; }
         public List<BloqueHorario> getBloquesAsignados() { return bloquesAsignados; }
@@ -143,26 +110,12 @@ public class ConsultorioDistribucionService {
         public String getMotivoAsignacion() { return motivoAsignacion; }
     }
 
-    // ===============================================
-    // MÉTODOS PRINCIPALES DEL ALGORITMO
-    // ===============================================
-    
-    /**
-     * Inicia un proceso de asignación en lote para múltiples médicos
-     * Mantiene estado compartido de asignaciones temporales
-     */
     public void iniciarProcesoEnLote() {
-        System.out.println("🚀 INICIANDO PROCESO DE ASIGNACIÓN EN LOTE");
         procesoEnLoteActivo = true;
         asignacionesTemporales.clear();
     }
     
-    /**
-     * Finaliza el proceso de asignación en lote
-     * Limpia el estado temporal
-     */
     public void finalizarProcesoEnLote() {
-        System.out.println("🏁 FINALIZANDO PROCESO DE ASIGNACIÓN EN LOTE");
         procesoEnLoteActivo = false;
         asignacionesTemporales.clear();
     }
@@ -410,12 +363,8 @@ public class ConsultorioDistribucionService {
             List<StaffMedico> todosMedicos, List<Consultorio> consultorios) {
         
         try {
-            System.out.println(String.format("\n🔒 EVALUACIÓN ESTRICTA Consultorio %d para Médico %s (%d bloques)", 
-                consultorio.getId(), medico.getMedico().getNombre(), bloquesDelMedico.size()));
-            
             ConsultorioDTO consultorioDTO = consultorioService.findById(consultorio.getId()).orElse(null);
             if (consultorioDTO == null) {
-                System.out.println(String.format("❌ Consultorio %d - DTO no encontrado", consultorio.getId()));
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     new ArrayList<>(), 0.0, "DTO no encontrado");
             }
@@ -426,13 +375,9 @@ public class ConsultorioDistribucionService {
             
             if (bloquesCompatibles.isEmpty()) {
                 String motivo = String.format("RECHAZADO - Médico trabaja fuera de horarios del consultorio");
-                System.out.println(String.format("❌ Consultorio %d - %s", consultorio.getId(), motivo));
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     new ArrayList<>(), 0.0, motivo);
             }
-            
-            System.out.println(String.format("✅ Consultorio %d - %d/%d bloques dentro de horarios válidos", 
-                consultorio.getId(), bloquesCompatibles.size(), bloquesDelMedico.size()));
             
             // 2. RESTRICCIÓN CRÍTICA #2: Validar conflictos con otros médicos
             List<BloqueHorario> asignacionesConsultorio = asignacionesActuales.getOrDefault(consultorio.getId(), new ArrayList<>());
@@ -443,7 +388,6 @@ public class ConsultorioDistribucionService {
             if (bloquesSinConflicto.size() != bloquesCompatibles.size()) {
                 int bloquesConConflicto = bloquesCompatibles.size() - bloquesSinConflicto.size();
                 String motivo = String.format("RECHAZADO - %d bloques con conflictos con otros médicos", bloquesConConflicto);
-                System.out.println(String.format("❌ Consultorio %d - %s", consultorio.getId(), motivo));
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     bloquesSinConflicto, 0.0, motivo);
             }
@@ -452,7 +396,6 @@ public class ConsultorioDistribucionService {
             double cobertura = (double) bloquesSinConflicto.size() / bloquesDelMedico.size();
             if (cobertura < 0.8) { // Aumentar umbral a 80% para ser más estricto
                 String motivo = String.format("RECHAZADO - Cobertura insuficiente (%.1f%% < 80%%)", cobertura * 100);
-                System.out.println(String.format("❌ Consultorio %d - %s", consultorio.getId(), motivo));
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     bloquesSinConflicto, 0.0, motivo);
             }
@@ -465,14 +408,11 @@ public class ConsultorioDistribucionService {
             String motivo = String.format("VÁLIDO - Cobertura: %.1f%% (%d/%d), Sin conflictos, Puntuación: %.3f", 
                 cobertura * 100, bloquesSinConflicto.size(), bloquesDelMedico.size(), puntuacion);
             
-            System.out.println(String.format("✅ Consultorio %d - Médico %s: %s", 
-                consultorio.getId(), medico.getMedico().getNombre(), motivo));
-            
             return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                 bloquesSinConflicto, puntuacion, motivo);
             
         } catch (Exception e) {
-            System.err.println(String.format("💥 Error en evaluación estricta consultorio %d: %s", consultorio.getId(), e.getMessage()));
+            System.err.println(String.format("Error en evaluación estricta consultorio %d: %s", consultorio.getId(), e.getMessage()));
             return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                 new ArrayList<>(), 0.0, "Error en evaluación: " + e.getMessage());
         }
@@ -515,10 +455,6 @@ public class ConsultorioDistribucionService {
     // MÉTODOS DE PROCESAMIENTO DE HORARIOS
     // ===============================================
 
-    /**
-     * Extrae todos los bloques de horario de las disponibilidades de un médico
-     * Versión mejorada con mejor manejo de errores y validaciones
-     */
     private List<BloqueHorario> extraerBloquesHorarioDelMedico(StaffMedico medico) {
         List<BloqueHorario> bloques = new ArrayList<>();
         
@@ -572,125 +508,57 @@ public class ConsultorioDistribucionService {
         return bloques;
     }
 
-    /**
-     * Filtra bloques que son compatibles con los horarios del consultorio
-     */
-    private List<BloqueHorario> filtrarBloquesCompatiblesConConsultorio(
-            List<BloqueHorario> bloquesDelMedico, ConsultorioDTO consultorio) {
-        
-        List<BloqueHorario> bloquesCompatibles = new ArrayList<>();
-        
-        for (BloqueHorario bloque : bloquesDelMedico) {
-            if (esBloqueCompatibleConConsultorio(bloque, consultorio)) {
-                bloquesCompatibles.add(bloque);
-            }
-        }
-        
-        return bloquesCompatibles;
-    }
-
-    /**
-     * Verifica si un bloque de horario del médico es compatible con el consultorio
-     * NUEVA VERSIÓN: Ajusta automáticamente los horarios que excedan los límites del consultorio
-     */
     private boolean esBloqueCompatibleConConsultorio(BloqueHorario bloque, ConsultorioDTO consultorio) {
         try {
-            // Verificar que el consultorio tenga horarios configurados
             if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
-                System.out.println(String.format("⚠️ Consultorio %d sin horarios configurados", consultorio.getId()));
                 return false;
             }
             
-            // Normalizar el día para comparación (mapear nombres de días en español)
             String diaBloque = normalizarDia(bloque.getDia());
             
-            System.out.println(String.format("🔍 Verificando compatibilidad - Bloque: %s %s-%s con Consultorio %d", 
-                diaBloque, bloque.getInicio(), bloque.getFin(), consultorio.getId()));
-            
-            // Buscar horario específico del consultorio para este día
             for (ConsultorioDTO.HorarioConsultorioDTO horarioConsultorio : consultorio.getHorariosSemanales()) {
                 String diaConsultorio = normalizarDia(horarioConsultorio.getDiaSemana());
                 
-                System.out.println(String.format("   📋 Consultorio horario: %s %s-%s (Activo: %s)", 
-                    diaConsultorio, 
-                    horarioConsultorio.getHoraApertura(), 
-                    horarioConsultorio.getHoraCierre(),
-                    horarioConsultorio.getActivo()));
-                
                 if (diaConsultorio.equals(diaBloque)) {
-                    // Verificar si el día está activo
                     if (!horarioConsultorio.getActivo()) {
-                        System.out.println(String.format("❌ Consultorio %d - Día %s inactivo", 
-                            consultorio.getId(), diaBloque));
                         return false;
                     }
                     
-                    // Verificar horarios de apertura y cierre
                     if (horarioConsultorio.getHoraApertura() == null || 
                         horarioConsultorio.getHoraCierre() == null) {
-                        System.out.println(String.format("❌ Consultorio %d - Horarios nulos para %s", 
-                            consultorio.getId(), diaBloque));
                         return false;
                     }
                     
                     LocalTime apertura = horarioConsultorio.getHoraApertura();
                     LocalTime cierre = horarioConsultorio.getHoraCierre();
                     
-                    // **NUEVA LÓGICA: AJUSTE AUTOMÁTICO DE HORARIOS**
+                    // Ajuste automático de horarios
                     LocalTime inicioAjustado = bloque.getInicio();
                     LocalTime finAjustado = bloque.getFin();
-                    boolean fueAjustado = false;
                     
-                    // Ajustar inicio si es antes de la apertura
                     if (inicioAjustado.isBefore(apertura)) {
                         inicioAjustado = apertura;
-                        fueAjustado = true;
-                        System.out.println(String.format("   🔧 AJUSTE: Inicio movido de %s a %s (apertura)", 
-                            bloque.getInicio(), inicioAjustado));
                     }
                     
-                    // Ajustar fin si es después del cierre
                     if (finAjustado.isAfter(cierre)) {
                         finAjustado = cierre;
-                        fueAjustado = true;
-                        System.out.println(String.format("   🔧 AJUSTE: Fin movido de %s a %s (cierre)", 
-                            bloque.getFin(), finAjustado));
                     }
                     
-                    // Verificar que el horario ajustado tenga sentido (inicio < fin)
                     if (!inicioAjustado.isBefore(finAjustado)) {
-                        System.out.println(String.format("❌ Consultorio %d - Horario ajustado inválido: %s-%s", 
-                            consultorio.getId(), inicioAjustado, finAjustado));
                         return false;
                     }
                     
-                    // APLICAR EL AJUSTE AL BLOQUE ORIGINAL
+                    // Aplicar ajuste al bloque
                     bloque.setInicio(inicioAjustado);
                     bloque.setFin(finAjustado);
-                    
-                    if (fueAjustado) {
-                        System.out.println(String.format("✅ HORARIO AJUSTADO - Médico %s: %s %s-%s → %s-%s (Consultorio %d)", 
-                            diaBloque, diaBloque, 
-                            bloque.getInicio(), bloque.getFin(),
-                            inicioAjustado, finAjustado, consultorio.getId()));
-                    } else {
-                        System.out.println(String.format("✅ COMPATIBLE SIN AJUSTES - Médico %s %s-%s ⊆ Consultorio %d %s-%s", 
-                            diaBloque, bloque.getInicio(), bloque.getFin(), 
-                            consultorio.getId(), apertura, cierre));
-                    }
                     
                     return true;
                 }
             }
             
-            // Si llegamos aquí, no se encontró configuración para este día
-            System.out.println(String.format("❌ Consultorio %d - No configurado para %s", 
-                consultorio.getId(), diaBloque));
             return false;
             
         } catch (Exception e) {
-            System.err.println(String.format("❌ Error verificando compatibilidad consultorio %d: %s", 
-                consultorio.getId(), e.getMessage()));
             return false;
         }
     }
@@ -716,42 +584,20 @@ public class ConsultorioDistribucionService {
         };
     }
 
-    /**
-     * Filtra bloques que no tienen conflicto con asignaciones existentes
-     * VERSIÓN MEJORADA: detección más estricta de solapamientos
-     */
     private List<BloqueHorario> filtrarBloquesSinConflictos(
             List<BloqueHorario> bloquesCompatibles, List<BloqueHorario> asignacionesEnConsultorio) {
         
         List<BloqueHorario> bloquesSinConflicto = new ArrayList<>();
         
-        System.out.println(String.format("🔍 ANÁLISIS DE CONFLICTOS - %d bloques compatibles vs %d asignaciones existentes", 
-            bloquesCompatibles.size(), asignacionesEnConsultorio.size()));
-        
         for (BloqueHorario bloque : bloquesCompatibles) {
             boolean tieneConflicto = false;
-            String detalleConflicto = "";
             
-            // Verificar conflictos con cada asignación existente en el consultorio
             for (BloqueHorario asignacionExistente : asignacionesEnConsultorio) {
-                // Solo verificar conflictos con otros médicos (no con el mismo)
                 if (!asignacionExistente.getMedicoId().equals(bloque.getMedicoId())) {
-                    
-                    // Verificar solapamiento más estricto
                     boolean conflictoDetectado = verificarSolapamientoEstricto(bloque, asignacionExistente);
                     
                     if (conflictoDetectado) {
                         tieneConflicto = true;
-                        detalleConflicto = String.format("CONFLICTO con Médico %d (%s %s-%s)", 
-                            asignacionExistente.getMedicoId(), 
-                            asignacionExistente.getDia(), 
-                            asignacionExistente.getInicio(), 
-                            asignacionExistente.getFin());
-                        
-                        System.out.println(String.format("⚡ CONFLICTO DETECTADO - Médico %d (%s %s-%s) ⚔️ Médico %d (%s %s-%s)", 
-                            bloque.getMedicoId(), bloque.getDia(), bloque.getInicio(), bloque.getFin(),
-                            asignacionExistente.getMedicoId(), asignacionExistente.getDia(), 
-                            asignacionExistente.getInicio(), asignacionExistente.getFin()));
                         break;
                     }
                 }
@@ -759,54 +605,21 @@ public class ConsultorioDistribucionService {
             
             if (!tieneConflicto) {
                 bloquesSinConflicto.add(bloque);
-                System.out.println(String.format("✅ SIN CONFLICTO - Médico %d (%s %s-%s)", 
-                    bloque.getMedicoId(), bloque.getDia(), bloque.getInicio(), bloque.getFin()));
-            } else {
-                System.out.println(String.format("❌ RECHAZADO - Médico %d (%s %s-%s) - %s", 
-                    bloque.getMedicoId(), bloque.getDia(), bloque.getInicio(), bloque.getFin(), detalleConflicto));
             }
         }
-        
-        System.out.println(String.format("📊 RESULTADO FILTRO - %d/%d bloques SIN conflicto", 
-            bloquesSinConflicto.size(), bloquesCompatibles.size()));
         
         return bloquesSinConflicto;
     }
     
-    /**
-     * Verifica solapamiento estricto entre dos bloques horarios
-     * CORREGIDO: Lógica simplificada que permite horarios adyacentes (edge-to-edge)
-     */
     private boolean verificarSolapamientoEstricto(BloqueHorario bloque1, BloqueHorario bloque2) {
         // Si no son del mismo día, no hay conflicto
         if (!normalizarDia(bloque1.getDia()).equals(normalizarDia(bloque2.getDia()))) {
             return false;
         }
         
-        // LÓGICA CORREGIDA: Detectar solapamiento real excluyendo horarios adyacentes
-        // Dos bloques se solapan REALMENTE si uno empieza ANTES de que termine el otro
-        // Y el fin de uno es DESPUÉS del inicio del otro
-        // Para horarios adyacentes (08:00-16:00 y 16:00-20:00):
-        // - 08:00 < 20:00 (true) Y 16:00 > 16:00 (false) = NO hay solapamiento
-        boolean hayConflictoReal = bloque1.getInicio().isBefore(bloque2.getFin()) && 
-                                  bloque1.getFin().isAfter(bloque2.getInicio());
-        
-        if (hayConflictoReal) {
-            System.out.println(String.format("⚠️ CONFLICTO REAL detectado: %s %s-%s vs %s %s-%s", 
-                bloque1.getDia(), bloque1.getInicio(), bloque1.getFin(),
-                bloque2.getDia(), bloque2.getInicio(), bloque2.getFin()));
-        } else {
-            // Verificar si son adyacentes (edge-to-edge) para mostrar info
-            boolean sonAdyacentes = bloque1.getFin().equals(bloque2.getInicio()) || 
-                                   bloque2.getFin().equals(bloque1.getInicio());
-            if (sonAdyacentes) {
-                System.out.println(String.format("✅ Horarios ADYACENTES (permitidos): %s %s-%s vs %s %s-%s", 
-                    bloque1.getDia(), bloque1.getInicio(), bloque1.getFin(),
-                    bloque2.getDia(), bloque2.getInicio(), bloque2.getFin()));
-            }
-        }
-        
-        return hayConflictoReal;
+        // Detectar solapamiento real excluyendo horarios adyacentes
+        return bloque1.getInicio().isBefore(bloque2.getFin()) && 
+               bloque1.getFin().isAfter(bloque2.getInicio());
     }
 
     /**
@@ -822,8 +635,6 @@ public class ConsultorioDistribucionService {
                 .stream()
                 .filter(esquema -> esquema.getConsultorio() != null)
                 .collect(Collectors.toList());
-            
-            System.out.println(String.format("📋 Encontrados %d esquemas con consultorios asignados", esquemasExistentes.size()));
             
             // Mapear esquemas existentes a bloques horarios
             for (EsquemaTurno esquema : esquemasExistentes) {
@@ -846,31 +657,15 @@ public class ConsultorioDistribucionService {
             
             // CRÍTICO: Agregar asignaciones temporales del proceso en lote
             if (procesoEnLoteActivo && !asignacionesTemporales.isEmpty()) {
-                System.out.println("🔄 INCLUYENDO ASIGNACIONES TEMPORALES del proceso en lote");
-                
                 for (Map.Entry<Integer, List<BloqueHorario>> entry : asignacionesTemporales.entrySet()) {
                     Integer consultorioId = entry.getKey();
                     List<BloqueHorario> bloquesTemporales = entry.getValue();
-                    
                     asignaciones.computeIfAbsent(consultorioId, k -> new ArrayList<>()).addAll(bloquesTemporales);
-                    
-                    System.out.println(String.format("   📌 Consultorio %d: +%d bloques temporales", 
-                        consultorioId, bloquesTemporales.size()));
                 }
             }
             
-            // Log de asignaciones actuales (BD + temporales)
-            asignaciones.forEach((consultorioId, bloques) -> {
-                Set<Integer> medicosUnicos = bloques.stream()
-                    .map(BloqueHorario::getMedicoId)
-                    .collect(Collectors.toSet());
-                System.out.println(String.format("🏥 Consultorio %d: %d médicos asignados (%d bloques horarios)", 
-                    consultorioId, medicosUnicos.size(), bloques.size()));
-            });
-            
         } catch (Exception e) {
-            System.err.println("⚠️ Error al obtener asignaciones actuales: " + e.getMessage());
-            // Fallback: crear mapa vacío para evitar errores
+            System.err.println("Error al obtener asignaciones actuales: " + e.getMessage());
         }
         
         return asignaciones;
@@ -975,9 +770,6 @@ public class ConsultorioDistribucionService {
             double sobrecarga = (numMedicosActuales - ocupacionPromedio) / ocupacionPromedio;
             factor = Math.max(0.1, 0.5 - sobrecarga * 0.3);
         }
-        
-        System.out.println(String.format("⚖️ Balance consultorio %d: %d médicos (promedio: %.1f) → Factor: %.3f", 
-            consultorio.getId(), numMedicosActuales, ocupacionPromedio, factor));
         
         return Math.max(0.0, Math.min(1.0, factor));
     }
@@ -1096,8 +888,6 @@ public class ConsultorioDistribucionService {
         
         List<BloqueHorario> bloquesValidos = new ArrayList<>();
         
-        System.out.println(String.format("🔒 VALIDACIÓN Y AJUSTE AUTOMÁTICO - Consultorio %d", consultorio.getId()));
-        
         for (BloqueHorario bloque : bloquesDelMedico) {
             // Crear una copia del bloque para no modificar el original
             BloqueHorario bloqueAjustado = new BloqueHorario(
@@ -1111,16 +901,8 @@ public class ConsultorioDistribucionService {
             // Usar la lógica de ajuste automático
             if (esBloqueCompatibleConConsultorio(bloqueAjustado, consultorio)) {
                 bloquesValidos.add(bloqueAjustado);
-                System.out.println(String.format("   ✅ VÁLIDO (posiblemente ajustado): %s %s-%s", 
-                    bloqueAjustado.getDia(), bloqueAjustado.getInicio(), bloqueAjustado.getFin()));
-            } else {
-                System.out.println(String.format("   ❌ INVÁLIDO: %s %s-%s (día inactivo o sin configurar)", 
-                    bloque.getDia(), bloque.getInicio(), bloque.getFin()));
             }
         }
-        
-        System.out.println(String.format("📊 RESULTADO VALIDACIÓN CON AJUSTE: %d/%d bloques válidos", 
-            bloquesValidos.size(), bloquesDelMedico.size()));
         
         return bloquesValidos;
     }
@@ -1130,71 +912,12 @@ public class ConsultorioDistribucionService {
      * NUEVA VERSIÓN: Usa la lógica optimizada de filtrado de conflictos
      */
     private List<BloqueHorario> validarConflictosMedicosEstricto(
-            List<BloqueHorario> bloquesCompatibles, List<BloqueHorario> asignacionesConsultorio, Integer medicoId) {
-        
-        System.out.println(String.format("🔒 VALIDACIÓN CONFLICTOS - %d bloques vs %d asignaciones", 
-            bloquesCompatibles.size(), asignacionesConsultorio.size()));
+            List<BloqueHorario> bloquesCompatibles, List<BloqueHorario> asignacionesConsultorio, @SuppressWarnings("unused") Integer medicoId) {
         
         // Usar la lógica de filtrado existente que ya está optimizada
         return filtrarBloquesSinConflictos(bloquesCompatibles, asignacionesConsultorio);
     }
 
-    /**
-     * Versión estricta de validación de compatibilidad con consultorio
-     * NO permite ninguna flexibilidad en horarios
-     */
-    private boolean esBloqueCompatibleConConsultorioEstricto(BloqueHorario bloque, ConsultorioDTO consultorio) {
-        try {
-            // Verificar que el consultorio tenga horarios configurados
-            if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
-                return false; // Sin horarios = incompatible
-            }
-            
-            String diaBloque = normalizarDia(bloque.getDia());
-            
-            // Buscar horario específico del consultorio para este día
-            for (ConsultorioDTO.HorarioConsultorioDTO horarioConsultorio : consultorio.getHorariosSemanales()) {
-                String diaConsultorio = normalizarDia(horarioConsultorio.getDiaSemana());
-                
-                if (diaConsultorio.equals(diaBloque)) {
-                    // VALIDACIÓN ESTRICTA: día debe estar activo
-                    if (!horarioConsultorio.getActivo()) {
-                        return false;
-                    }
-                    
-                    // VALIDACIÓN ESTRICTA: horarios no pueden ser nulos
-                    if (horarioConsultorio.getHoraApertura() == null || 
-                        horarioConsultorio.getHoraCierre() == null) {
-                        return false;
-                    }
-                    
-                    LocalTime apertura = horarioConsultorio.getHoraApertura();
-                    LocalTime cierre = horarioConsultorio.getHoraCierre();
-                    
-                    // VALIDACIÓN ESTRICTA: horario del médico debe estar COMPLETAMENTE dentro del consultorio
-                    // NO se permite ningún minuto fuera del rango
-                    boolean dentroDelRango = !bloque.getInicio().isBefore(apertura) && 
-                                           !bloque.getFin().isAfter(cierre) &&
-                                           bloque.getInicio().isBefore(bloque.getFin()) &&
-                                           apertura.isBefore(cierre);
-                    
-                    return dentroDelRango;
-                }
-            }
-            
-            // Si no se encuentra configuración para el día, es incompatible
-            return false;
-            
-        } catch (Exception e) {
-            System.err.println(String.format("❌ Error en validación estricta: %s", e.getMessage()));
-            return false;
-        }
-    }
-
-    /**
-     * Busca consultorios alternativos cuando no se encuentran opciones que cumplan todas las restricciones
-     * Aplica criterios relajados de manera controlada
-     */
     private ResultadoAsignacion buscarConsultorioAlternativo(
             StaffMedico medico, List<Consultorio> consultorios, List<BloqueHorario> bloquesDelMedico,
             Map<Integer, List<BloqueHorario>> asignacionesActuales, @SuppressWarnings("unused") List<ResultadoAsignacion> candidatosRechazados) {
@@ -1285,21 +1008,7 @@ public class ConsultorioDistribucionService {
         // CRÍTICO: Si estamos en proceso en lote, también actualizar asignaciones temporales
         if (procesoEnLoteActivo) {
             asignacionesTemporales.computeIfAbsent(consultorioId, k -> new ArrayList<>()).addAll(bloquesAsignados);
-            
-            System.out.println(String.format("🔄 ACTUALIZACIÓN TEMPORAL - Consultorio %d: +%d bloques (Médico %d)", 
-                consultorioId, bloquesAsignados.size(), nuevaAsignacion.getMedicoId()));
-        } else {
-            System.out.println(String.format("🔄 ACTUALIZACIÓN LOCAL - Consultorio %d: +%d bloques (Médico %d)", 
-                consultorioId, bloquesAsignados.size(), nuevaAsignacion.getMedicoId()));
         }
-        
-        // Log del estado actualizado
-        Set<Integer> medicosUnicos = asignacionesActuales.get(consultorioId).stream()
-            .map(BloqueHorario::getMedicoId)
-            .collect(Collectors.toSet());
-        
-        System.out.println(String.format("📊 ESTADO ACTUALIZADO - Consultorio %d: %d médicos (%d bloques totales)", 
-            consultorioId, medicosUnicos.size(), asignacionesActuales.get(consultorioId).size()));
     }
 }
 
