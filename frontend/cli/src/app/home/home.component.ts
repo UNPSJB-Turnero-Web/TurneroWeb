@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PacienteService } from '../pacientes/paciente.service';
+import { Paciente } from '../pacientes/paciente';
 
 @Component({
   selector: 'app-home',
@@ -103,11 +104,123 @@ import { PacienteService } from '../pacientes/paciente.service';
             <!-- Registration prompt -->
             <div class="registration-prompt" *ngIf="showRegistrationPrompt">
               <p>No encontramos tu DNI en el sistema.</p>
-              <button class="btn btn-register" (click)="registerPatient()">
+              <button class="btn btn-register" (click)="showRegistrationForm = true">
                 <i class="fas fa-user-plus"></i>
                 Registrarse como Paciente
               </button>
             </div>
+          </div>
+
+          <!-- Patient Registration Form -->
+          <div class="login-form" *ngIf="showRegistrationForm">
+            <h3>Registro de Paciente</h3>
+            <form (ngSubmit)="submitRegistration()" #registrationForm="ngForm">
+              <div class="form-group">
+                <label for="regDni">DNI:</label>
+                <input 
+                  type="text" 
+                  id="regDni" 
+                  name="regDni"
+                  [(ngModel)]="registrationData.dni"
+                  class="form-control"
+                  required
+                  readonly
+                  [value]="patientCredentials.dni"
+                >
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="nombre">Nombre:</label>
+                  <input 
+                    type="text" 
+                    id="nombre" 
+                    name="nombre"
+                    [(ngModel)]="registrationData.nombre"
+                    class="form-control"
+                    required
+                    placeholder="Tu nombre"
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="apellido">Apellido:</label>
+                  <input 
+                    type="text" 
+                    id="apellido" 
+                    name="apellido"
+                    [(ngModel)]="registrationData.apellido"
+                    class="form-control"
+                    required
+                    placeholder="Tu apellido"
+                  >
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email:</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email"
+                  [(ngModel)]="registrationData.email"
+                  class="form-control"
+                  required
+                  placeholder="tu@email.com"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="telefono">Teléfono:</label>
+                <input 
+                  type="tel" 
+                  id="telefono" 
+                  name="telefono"
+                  [(ngModel)]="registrationData.telefono"
+                  class="form-control"
+                  required
+                  placeholder="Tu número de teléfono"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+                <input 
+                  type="date" 
+                  id="fechaNacimiento" 
+                  name="fechaNacimiento"
+                  [(ngModel)]="registrationData.fechaNacimiento"
+                  class="form-control"
+                  required
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="obraSocial">Obra Social (opcional):</label>
+                <select 
+                  id="obraSocial" 
+                  name="obraSocial"
+                  [(ngModel)]="registrationData.obraSocialId"
+                  class="form-control"
+                >
+                  <option value="">Sin obra social</option>
+                  <option *ngFor="let obra of obrasSociales" [value]="obra.id">
+                    {{ obra.nombre }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-register" [disabled]="!registrationForm.valid || isRegistering">
+                  <i class="fas fa-user-plus" *ngIf="!isRegistering"></i>
+                  <i class="fas fa-spinner fa-spin" *ngIf="isRegistering"></i>
+                  {{ isRegistering ? 'Registrando...' : 'Registrar' }}
+                </button>
+                <button type="button" class="btn btn-back" (click)="cancelRegistration()">
+                  <i class="fas fa-arrow-left"></i>
+                  Cancelar
+                </button>
+              </div>
+            </form>
           </div>
 
           <!-- Error Messages -->
@@ -433,6 +546,17 @@ import { PacienteService } from '../pacientes/paciente.service';
       color: #6c757d;
     }
 
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    input[readonly] {
+      background-color: #f8f9fa;
+      color: #6c757d;
+    }
+
     .error-message {
       background: #fee;
       color: #dc3545;
@@ -523,6 +647,10 @@ import { PacienteService } from '../pacientes/paciente.service';
       .form-actions {
         flex-direction: column;
       }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
       
       .features-grid {
         grid-template-columns: 1fr;
@@ -533,8 +661,11 @@ import { PacienteService } from '../pacientes/paciente.service';
 export class HomeComponent {
   selectedRole: 'admin' | 'patient' | null = null;
   isLoading = false;
+  isRegistering = false;
   errorMessage = '';
   showRegistrationPrompt = false;
+  showRegistrationForm = false;
+  obrasSociales: any[] = [];
 
   adminCredentials = {
     username: '',
@@ -545,7 +676,19 @@ export class HomeComponent {
     dni: ''
   };
 
-  constructor(private router: Router, private pacienteService: PacienteService) {}
+  registrationData = {
+    dni: '',
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    fechaNacimiento: '',
+    obraSocialId: ''
+  };
+
+  constructor(private router: Router, private pacienteService: PacienteService) {
+    this.loadObrasSociales();
+  }
 
   selectRole(role: 'admin' | 'patient') {
     this.selectedRole = role;
@@ -557,8 +700,10 @@ export class HomeComponent {
     this.selectedRole = null;
     this.errorMessage = '';
     this.showRegistrationPrompt = false;
+    this.showRegistrationForm = false;
     this.adminCredentials = { username: '', password: '' };
     this.patientCredentials = { dni: '' };
+    this.resetRegistrationData();
   }
 
   async loginAdmin() {
@@ -636,10 +781,93 @@ export class HomeComponent {
   }
 
   registerPatient() {
-    // In a real app, this would navigate to a patient registration form
-    // For now, we'll simulate successful registration
-    localStorage.setItem('userRole', 'patient');
-    localStorage.setItem('patientDNI', this.patientCredentials.dni);
-    this.router.navigate(['/paciente-dashboard']);
+    this.showRegistrationForm = true;
+    this.showRegistrationPrompt = false;
+    this.registrationData.dni = this.patientCredentials.dni;
+  }
+
+  loadObrasSociales() {
+    this.pacienteService.getObrasSociales().subscribe({
+      next: (response) => {
+        if (response && response.data) {
+          this.obrasSociales = response.data;
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar obras sociales:', error);
+        this.obrasSociales = [];
+      }
+    });
+  }
+
+  async submitRegistration() {
+    this.isRegistering = true;
+    this.errorMessage = '';
+
+    try {
+      // Preparar datos del paciente
+      const nuevoPaciente: Partial<Paciente> = {
+        nombre: this.registrationData.nombre,
+        apellido: this.registrationData.apellido,
+        email: this.registrationData.email,
+        telefono: this.registrationData.telefono,
+        dni: parseInt(this.registrationData.dni),
+        fechaNacimiento: this.registrationData.fechaNacimiento
+      };
+
+      // Agregar obra social si se seleccionó
+      if (this.registrationData.obraSocialId) {
+        const obraSocial = this.obrasSociales.find(o => o.id == this.registrationData.obraSocialId);
+        if (obraSocial) {
+          nuevoPaciente.obraSocial = obraSocial;
+        }
+      }
+
+      // Crear paciente
+      this.pacienteService.create(nuevoPaciente as Paciente).subscribe({
+        next: (response) => {
+          if (response && response.data) {
+            // Registro exitoso - iniciar sesión automáticamente
+            localStorage.setItem('userRole', 'patient');
+            localStorage.setItem('patientDNI', this.registrationData.dni);
+            localStorage.setItem('patientData', JSON.stringify(response.data));
+            localStorage.setItem('pacienteId', response.data.id.toString());
+            localStorage.setItem('userName', `${response.data.nombre} ${response.data.apellido}`);
+            
+            this.isRegistering = false;
+            this.router.navigate(['/paciente-dashboard']);
+          } else {
+            throw new Error('No se recibieron datos del paciente creado');
+          }
+        },
+        error: (error) => {
+          console.error('Error al registrar paciente:', error);
+          this.errorMessage = 'Error al registrar el paciente. Verifica que todos los datos sean correctos.';
+          this.isRegistering = false;
+        }
+      });
+    } catch (error) {
+      this.errorMessage = 'Error inesperado durante el registro. Por favor intenta nuevamente.';
+      this.isRegistering = false;
+    }
+  }
+
+  cancelRegistration() {
+    this.showRegistrationForm = false;
+    this.showRegistrationPrompt = true;
+    this.resetRegistrationData();
+    this.errorMessage = '';
+  }
+
+  resetRegistrationData() {
+    this.registrationData = {
+      dni: '',
+      nombre: '',
+      apellido: '',
+      email: '',
+      telefono: '',
+      fechaNacimiento: '',
+      obraSocialId: ''
+    };
   }
 }
