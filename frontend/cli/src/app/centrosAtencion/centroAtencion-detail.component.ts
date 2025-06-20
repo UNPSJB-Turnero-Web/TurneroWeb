@@ -1037,7 +1037,7 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
         if (err.status === 404) {
           console.warn(`No se encontraron disponibilidades para el staff médico ID: ${staffMedico.id}`);
           this.mostrarMensajeStaff(
-            `No hay disponibilidades configuradas para Dr. ${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`,
+            `No hay disponibilidades configuradas para ${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`,
             'info'
           );
         } else {
@@ -1089,7 +1089,7 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
    * Elimina una disponibilidad médica
    */
   eliminarDisponibilidad(staffMedico: StaffMedico, disponibilidad: DisponibilidadMedico): void {
-    const medicoNombre = `Dr. ${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`;
+    const medicoNombre = `${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`;
     if (confirm(`¿Está seguro de eliminar la disponibilidad de ${medicoNombre}?`)) {
       this.disponibilidadMedicoService.remove(disponibilidad.id).subscribe({
         next: () => {

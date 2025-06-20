@@ -207,7 +207,7 @@ interface SlotDisponible {
                       
                       <div class="slot-medico">
                         <i class="fas fa-user-md"></i>
-                        <strong>{{ slot.staffMedicoNombre }} {{ slot.staffMedicoApellido }}</strong>
+                        <strong>{{ getNombreMedico(slot) }}</strong>
                       </div>
                       
                       <div class="slot-especialidad">
@@ -852,38 +852,7 @@ interface SlotDisponible {
       gap: 1rem;
     }
 
-    /* SEPARADORES DE MÉDICOS */
-    .medico-separator {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      margin: 1.5rem 0;
-      gap: 1rem;
-    }
-
-    .separator-line {
-      flex: 1;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #667eea, transparent);
-    }
-
-    .separator-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .separator-label i {
-      font-size: 0.8rem;
-    }
-
+    /* CABECERA DE MÉDICOS */
     .medico-header {
       grid-column: 1 / -1;
       display: flex;
@@ -998,7 +967,12 @@ interface SlotDisponible {
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
-      color: #495057;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(40, 167, 69, 0.15);
     }
 
     .slot-especialidad {

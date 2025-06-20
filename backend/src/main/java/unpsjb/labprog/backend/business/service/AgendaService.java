@@ -656,6 +656,8 @@ public class AgendaService {
             if (feriado.isPresent()) {
                 tipoExcepcion = "FERIADO";
                 descripcionExcepcion = feriado.get().getDescripcion();
+                // CORRECCIÓN: Los slots en feriados deben marcarse como ocupados (no disponibles)
+                slotOcupado = true;
             }
             // Verificar si este slot específico se solapa con el horario de mantenimiento
             else if (mantenimiento.isPresent()) {
@@ -669,6 +671,8 @@ public class AgendaService {
                         tipoExcepcion = "MANTENIMIENTO";
                         descripcionExcepcion = mant.getDescripcion();
                         esMantenimiento = true;
+                        // CORRECCIÓN: Los slots en mantenimiento deben marcarse como ocupados (no disponibles)
+                        slotOcupado = true;
                     }
                 }
             }
@@ -682,6 +686,8 @@ public class AgendaService {
                     if (seSuperpone) {
                         tipoExcepcion = "ATENCION_ESPECIAL";
                         descripcionExcepcion = atEsp.getDescripcion();
+                        // CORRECCIÓN: Los slots de atención especial deben marcarse como ocupados (no disponibles)
+                        slotOcupado = true;
                     }
                 }
             }

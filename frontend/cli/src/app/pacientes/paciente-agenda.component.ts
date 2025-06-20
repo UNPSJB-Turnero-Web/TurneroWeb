@@ -290,18 +290,8 @@ interface SlotDisponible {
                   <!-- Slots de la fecha -->
                   <div class="slots-grid">
                     <ng-container *ngFor="let slot of slotsPorFecha[fecha]; let i = index">
-                      <!-- Separador visual entre médicos diferentes -->
-                      <div *ngIf="esCambioMedico(fecha, i)" class="medico-separator">
-                        <div class="separator-line"></div>
-                        <div class="separator-label">
-                          <i class="fas fa-user-md"></i>
-                          <span>{{ getNombreMedico(slot) }}</span>
-                        </div>
-                        <div class="separator-line"></div>
-                      </div>
-                      
-                      <!-- Etiqueta de médico para el primer slot del día -->
-                      <div *ngIf="i === 0" class="medico-header">
+                      <!-- Cabecera de médico unificada (primer slot o cambio de médico) -->
+                      <div *ngIf="i === 0 || esCambioMedico(fecha, i)" class="medico-header">
                         <i class="fas fa-user-md"></i>
                         <span>{{ getNombreMedico(slot) }}</span>
                       </div>
@@ -319,7 +309,7 @@ interface SlotDisponible {
                         
                         <div class="slot-medico">
                           <i class="fas fa-user-md"></i>
-                          <strong>{{ slot.staffMedicoNombre }} {{ slot.staffMedicoApellido }}</strong>
+                          <strong>{{ getNombreMedico(slot) }}</strong>
                         </div>
                         
                         <div class="slot-especialidad">
@@ -919,38 +909,7 @@ interface SlotDisponible {
       gap: 1rem;
     }
 
-    /* SEPARADORES DE MÉDICOS */
-    .medico-separator {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      margin: 1.5rem 0;
-      gap: 1rem;
-    }
-
-    .separator-line {
-      flex: 1;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #667eea, transparent);
-    }
-
-    .separator-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .separator-label i {
-      font-size: 0.8rem;
-    }
-
+    /* CABECERA DE MÉDICOS */
     .medico-header {
       grid-column: 1 / -1;
       display: flex;
