@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,127 +24,128 @@ import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
 /**
- * Servicio simplificado para Agenda - solo maneja agendas operacionales.
- * Las configuraciones excepcionales se manejan en ConfiguracionExcepcionalService.
+ * Servicio refactorizado para Agenda aplicando principios SOLID.
+ * Usa clases internas especializadas para cumplir SRP (Single Responsibility Principle).
  */
 @Service
 public class AgendaService {
 
+    // === DEPENDENCIAS (DIP - Dependency Inversion Principle) ===
+    private final TurnoRepository turnoRepository;
+    private final EsquemaTurnoRepository esquemaTurnoRepository;
+    private final ConsultorioService consultorioService;
+    private final ConsultorioDistribucionService consultorioDistribucionService;
+    private final ConfiguracionExcepcionalService configuracionExcepcionalService;
 
-    @Autowired
-    private TurnoRepository turnoRepository;
+    // === COMPONENTES ESPECIALIZADOS (SRP) ===
+    private final SlotGenerator slotGenerator;
+    private final DisponibilidadValidator disponibilidadValidator;
+    private final ConsultorioOptimizer consultorioOptimizer;
+    private final ConflictResolver conflictResolver;
+    private final ExceptionalConfigurationHandler exceptionalHandler;
 
-    @Autowired
-    private EsquemaTurnoRepository esquemaTurnoRepository;
-
-    @Autowired
-    private ConsultorioService consultorioService;
-    
-    @Autowired
-    private ConsultorioDistribucionService consultorioDistribucionService;
-    
-    @Autowired
-    private ConfiguracionExcepcionalService configuracionExcepcionalService;
-
-    /**
-     * Verificar si una fecha es excepcional usando el nuevo servicio
-     */
-    public boolean esFechaExcepcional(LocalDate fecha, Integer esquemaTurnoId) {
-        // Usar el nuevo servicio para verificar excepciones
-        return configuracionExcepcionalService.esFeriado(fecha) ||
-               configuracionExcepcionalService.tieneMantenimiento(fecha, esquemaTurnoId) ||
-               configuracionExcepcionalService.obtenerAtencionEspecial(fecha, esquemaTurnoId).isPresent();
+    // Constructor injection (DIP)
+    public AgendaService(
+            TurnoRepository turnoRepository,
+            EsquemaTurnoRepository esquemaTurnoRepository,
+            ConsultorioService consultorioService,
+            ConsultorioDistribucionService consultorioDistribucionService,
+            ConfiguracionExcepcionalService configuracionExcepcionalService) {
+        
+        this.turnoRepository = turnoRepository;
+        this.esquemaTurnoRepository = esquemaTurnoRepository;
+        this.consultorioService = consultorioService;
+        this.consultorioDistribucionService = consultorioDistribucionService;
+        this.configuracionExcepcionalService = configuracionExcepcionalService;
+        
+        // Inicializar componentes especializados
+        this.slotGenerator = new SlotGenerator();
+        this.disponibilidadValidator = new DisponibilidadValidator();
+        this.consultorioOptimizer = new ConsultorioOptimizer();
+        this.conflictResolver = new ConflictResolver();
+        this.exceptionalHandler = new ExceptionalConfigurationHandler();
     }
 
-
+    // ===============================================
+    // CLASES INTERNAS ESPECIALIZADAS (SRP)
+    // ===============================================
 
     /**
-     * Validar disponibilidad considerando días excepcionales y horarios del consultorio
+     * Generador de slots especializado (SRP)
      */
-    public boolean validarDisponibilidad(LocalDate fecha, LocalTime horaInicio, Integer consultorioId,
-            Integer staffMedicoId) {
-        // Verificar si es feriado usando el nuevo servicio
-        if (configuracionExcepcionalService.esFeriado(fecha)) {
-            return false;
-        }
-
-        // Verificar si hay mantenimiento que afecte específicamente este horario
-        // Asumir duración de turno de 20 minutos (puede ser configurable)
-        if (configuracionExcepcionalService.turnoEnConflictoConMantenimiento(fecha, consultorioId, horaInicio, 20)) {
-            return false;
-        }
-
-        // NUEVA VALIDACIÓN: Verificar horarios del consultorio
-        String diaSemana = fecha.getDayOfWeek().name();
-        if (!consultorioService.consultorioDisponibleEnHorario(consultorioId, diaSemana, horaInicio)) {
-            return false;
-        }
-
-        // Verificar si ya existe un turno en ese horario
-        return !turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
-                fecha, horaInicio, staffMedicoId, EstadoTurno.CANCELADO);
-    }
-    
-    /**
-     * Método auxiliar para generar slots para un horario específico
-     */
-    private List<TurnoDTO> generarSlotsParaHorario(LocalDate fecha, LocalTime inicio, LocalTime fin, 
-                                                  EsquemaTurno esquemaTurno, Integer duracion,
-                                                  int eventoIdCounter) {
-        List<TurnoDTO> slots = new ArrayList<>();
-        int intervalo = esquemaTurno.getIntervalo();
-        int tiempoDuracion = duracion != null ? duracion : 0;
-        int intervaloConDuracion = intervalo + duracion;
+    private class SlotGenerator {
         
-        LocalTime slotStart = inicio;
-        
-        while (slotStart.isBefore(fin)) {
-            LocalTime nextSlot = slotStart.plusMinutes(intervalo);
+        public List<TurnoDTO> generarSlotsParaHorario(LocalDate fecha, LocalTime inicio, LocalTime fin, 
+                                                      EsquemaTurno esquemaTurno, Integer duracion,
+                                                      int eventoIdCounter) {
+            List<TurnoDTO> slots = new ArrayList<>();
+            int intervalo = esquemaTurno.getIntervalo();
+            int duracionSanitizacion = duracion != null ? duracion : 0;
+            int intervaloConDuracion = intervalo + duracionSanitizacion;
             
-            if (nextSlot.isAfter(fin)) {
-                break;
-            }
+            LocalTime slotStart = inicio;
+            
+            while (slotStart.isBefore(fin)) {
+                LocalTime nextSlot = slotStart.plusMinutes(intervalo);
+                
+                if (nextSlot.isAfter(fin)) {
+                    break;
+                }
 
+                SlotInfo slotInfo = crearSlotInfo(fecha, slotStart, esquemaTurno, intervalo);
+                TurnoDTO evento = crearEventoDesdeSlotInfo(slotInfo, eventoIdCounter++);
+                evento.setFecha(fecha);
+                evento.setHoraInicio(slotStart);
+                evento.setHoraFin(nextSlot);
+                
+                // Asignar datos del esquema usando el método especializado
+                asignarDatosEsquema(evento, esquemaTurno);
+                
+                slots.add(evento);
+                slotStart = slotStart.plusMinutes(intervaloConDuracion);
+            }
+            
+            return slots;
+        }
+        
+        private SlotInfo crearSlotInfo(LocalDate fecha, LocalTime slotStart, 
+                                      EsquemaTurno esquemaTurno, int intervalo) {
             boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
                 fecha, slotStart, esquemaTurno.getStaffMedico().getId(), EstadoTurno.CANCELADO);
 
-            // Verificar si este slot específico está en conflicto con un mantenimiento
             boolean enMantenimiento = configuracionExcepcionalService.turnoEnConflictoConMantenimiento(
                 fecha, esquemaTurno.getConsultorio().getId(), slotStart, intervalo);
 
-            // DEBUG: Log para mantenimiento del 27 de junio
-            if (fecha.toString().equals("2025-06-27")) {
-                System.out.println("🔧 SLOT " + slotStart + "-" + nextSlot + " en consultorio " + esquemaTurno.getConsultorio().getId() + 
-                                  " -> enMantenimiento: " + enMantenimiento);
-            }
-
-            // Si está en mantenimiento, marcar como ocupado y cambiar el título
             if (enMantenimiento) {
                 slotOcupado = true;
             }
 
-            TurnoDTO evento = new TurnoDTO();
-            evento.setId(eventoIdCounter++);
-            evento.setFecha(fecha);
-            evento.setHoraInicio(slotStart);
-            evento.setHoraFin(nextSlot);
+            String titulo = determinarTitulo(slotOcupado, enMantenimiento);
             
-            // Determinar el título según el estado
-            String titulo;
+            return new SlotInfo(slotOcupado, enMantenimiento, titulo);
+        }
+        
+        private String determinarTitulo(boolean slotOcupado, boolean enMantenimiento) {
             if (enMantenimiento) {
-                titulo = "Mantenimiento";
+                return "Mantenimiento";
             } else if (slotOcupado) {
-                titulo = "Ocupado";
+                return "Ocupado";
             } else {
-                titulo = "Disponible";
+                return "Disponible";
             }
-            
-            evento.setTitulo(titulo);
+        }
+        
+        private TurnoDTO crearEventoDesdeSlotInfo(SlotInfo slotInfo, int eventoId) {
+            TurnoDTO evento = new TurnoDTO();
+            evento.setId(eventoId);
+            evento.setTitulo(slotInfo.titulo);
             evento.setEsSlot(true);
-            evento.setOcupado(slotOcupado);
-            evento.setEnMantenimiento(enMantenimiento); // Nuevo campo para distinguir mantenimiento
-            
-            // Asignar datos del esquema
+            evento.setOcupado(slotInfo.ocupado);
+            evento.setEnMantenimiento(slotInfo.enMantenimiento);
+            return evento;
+        }
+        
+        public void asignarDatosEsquema(TurnoDTO evento, EsquemaTurno esquemaTurno) {
             evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
             evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
             evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
@@ -155,14 +155,393 @@ public class AgendaService {
             evento.setConsultorioNombre(esquemaTurno.getConsultorio().getNombre());
             evento.setCentroId(esquemaTurno.getCentroAtencion().getId());
             evento.setNombreCentro(esquemaTurno.getCentroAtencion().getNombre());
-            
-            slots.add(evento);
-            
-            // Avanzar considerando sanitización
-            slotStart = slotStart.plusMinutes(intervaloConDuracion);
+        }
+    }
+
+    /**
+     * Validador de disponibilidad especializado (SRP)
+     */
+    private class DisponibilidadValidator {
+        
+        public boolean validarDisponibilidad(LocalDate fecha, LocalTime horaInicio, Integer consultorioId,
+                Integer staffMedicoId) {
+            if (configuracionExcepcionalService.esFeriado(fecha)) {
+                return false;
+            }
+
+            if (configuracionExcepcionalService.turnoEnConflictoConMantenimiento(fecha, consultorioId, horaInicio, 20)) {
+                return false;
+            }
+
+            String diaSemana = fecha.getDayOfWeek().name();
+            if (!consultorioService.consultorioDisponibleEnHorario(consultorioId, diaSemana, horaInicio)) {
+                return false;
+            }
+
+            return !turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
+                    fecha, horaInicio, staffMedicoId, EstadoTurno.CANCELADO);
         }
         
-        return slots;
+        public boolean esFechaExcepcional(LocalDate fecha, Integer esquemaTurnoId) {
+            return configuracionExcepcionalService.esFeriado(fecha) ||
+                   configuracionExcepcionalService.tieneMantenimiento(fecha, esquemaTurnoId) ||
+                   configuracionExcepcionalService.obtenerAtencionEspecial(fecha, esquemaTurnoId).isPresent();
+        }
+    }
+
+    /**
+     * Optimizador de consultorios especializado (SRP)
+     */
+    private class ConsultorioOptimizer {
+        
+        @Transactional
+        public Map<Integer, Integer> optimizarDistribucionConsultorios(Integer centroAtencionId, LocalDate fecha) {
+            String diaSemana = fecha.getDayOfWeek().name();
+            
+            Map<Integer, Integer> asignacion = consultorioDistribucionService.distribuirConsultorios(
+                centroAtencionId, fecha, diaSemana);
+            
+            actualizarEsquemasConNuevaAsignacion(asignacion, diaSemana);
+            
+            return asignacion;
+        }
+        
+        private void actualizarEsquemasConNuevaAsignacion(Map<Integer, Integer> asignacion, String diaSemana) {
+            for (Map.Entry<Integer, Integer> entry : asignacion.entrySet()) {
+                Integer staffMedicoId = entry.getKey();
+                Integer consultorioId = entry.getValue();
+                
+                List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId);
+                
+                for (EsquemaTurno esquema : esquemas) {
+                    boolean incluyeEsteDia = esquema.getHorarios().stream()
+                        .anyMatch(horario -> horario.getDia().equalsIgnoreCase(diaSemana));
+                    
+                    if (incluyeEsteDia) {
+                        Consultorio consultorio = new Consultorio();
+                        consultorio.setId(consultorioId);
+                        esquema.setConsultorio(consultorio);
+                        esquemaTurnoRepository.save(esquema);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Resolvedor de conflictos especializado (SRP)
+     */
+    private class ConflictResolver {
+        
+        @Transactional
+        public void resolverConflictosConsultorios(Integer centroAtencionId, Integer especialidadId, LocalDate fecha) {
+            String diaSemana = fecha.getDayOfWeek().name();
+            
+            List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedico_Medico_Especialidad_IdAndCentroAtencion_Id(
+                especialidadId, centroAtencionId);
+            
+            Map<Integer, List<EsquemaTurno>> esquemasPorConsultorio = esquemas.stream()
+                .collect(Collectors.groupingBy(e -> e.getConsultorio().getId()));
+            
+            for (Map.Entry<Integer, List<EsquemaTurno>> entry : esquemasPorConsultorio.entrySet()) {
+                List<EsquemaTurno> esquemasMismoConsultorio = entry.getValue();
+                
+                if (esquemasMismoConsultorio.size() > 1) {
+                    resolverConflictosMismoConsultorio(esquemasMismoConsultorio, diaSemana);
+                }
+            }
+        }
+        
+        private void resolverConflictosMismoConsultorio(List<EsquemaTurno> esquemas, String diaSemana) {
+            esquemas.sort((e1, e2) -> e1.getId().compareTo(e2.getId()));
+            
+            for (int i = 0; i < esquemas.size(); i++) {
+                EsquemaTurno esquema1 = esquemas.get(i);
+                
+                List<EsquemaTurno.Horario> horariosEsquema1 = esquema1.getHorarios().stream()
+                    .filter(h -> h.getDia().equalsIgnoreCase(diaSemana))
+                    .collect(Collectors.toList());
+                    
+                if (horariosEsquema1.isEmpty()) {
+                    continue;
+                }
+                
+                for (int j = i + 1; j < esquemas.size(); j++) {
+                    EsquemaTurno esquema2 = esquemas.get(j);
+                    
+                    if (tieneConflictoHorario(esquema1, esquema2, diaSemana)) {
+                        reasignarConsultorio(esquema2);
+                    }
+                }
+            }
+        }
+        
+        private boolean tieneConflictoHorario(EsquemaTurno esquema1, EsquemaTurno esquema2, String diaSemana) {
+            List<EsquemaTurno.Horario> horariosEsquema1 = esquema1.getHorarios().stream()
+                .filter(h -> h.getDia().equalsIgnoreCase(diaSemana))
+                .collect(Collectors.toList());
+                
+            List<EsquemaTurno.Horario> horariosEsquema2 = esquema2.getHorarios().stream()
+                .filter(h -> h.getDia().equalsIgnoreCase(diaSemana))
+                .collect(Collectors.toList());
+            
+            for (EsquemaTurno.Horario h1 : horariosEsquema1) {
+                for (EsquemaTurno.Horario h2 : horariosEsquema2) {
+                    if (h1.getHoraInicio().isBefore(h2.getHoraFin()) && 
+                        h1.getHoraFin().isAfter(h2.getHoraInicio())) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        private void reasignarConsultorio(EsquemaTurno esquema) {
+            List<Consultorio> consultoriosDisponibles = consultorioService.findByCentroAtencionId(
+                esquema.getCentroAtencion().getId())
+                .stream()
+                .filter(c -> !c.getId().equals(esquema.getConsultorio().getId()))
+                .map(dto -> {
+                    Consultorio c = new Consultorio();
+                    c.setId(dto.getId());
+                    return c;
+                })
+                .collect(Collectors.toList());
+            
+            if (!consultoriosDisponibles.isEmpty()) {
+                esquema.setConsultorio(consultoriosDisponibles.get(0));
+                esquemaTurnoRepository.save(esquema);
+            }
+        }
+    }
+
+    /**
+     * Manejador de configuraciones excepcionales especializado (SRP)
+     */
+    private class ExceptionalConfigurationHandler {
+        
+        public List<TurnoDTO> generarSlotsParaDiaExcepcional(LocalDate fecha, LocalTime inicio, LocalTime fin, 
+                                                             EsquemaTurno esquemaTurno, 
+                                                             List<ConfiguracionExcepcional> configuraciones,
+                                                             int eventoIdCounter) {
+            List<TurnoDTO> slots = new ArrayList<>();
+            int intervalo = esquemaTurno.getIntervalo();
+            
+            ExceptionalDayContext context = analizarConfiguracionesExcepcionales(configuraciones, esquemaTurno);
+            
+            LocalTime slotStart = inicio;
+            
+            while (slotStart.isBefore(fin)) {
+                LocalTime nextSlot = slotStart.plusMinutes(intervalo);
+                
+                if (nextSlot.isAfter(fin)) {
+                    break;
+                }
+                
+                ExceptionalSlotInfo slotInfo = determinarTipoExcepcion(slotStart, nextSlot, context, fecha, esquemaTurno);
+                TurnoDTO evento = crearEventoExcepcional(slotInfo, eventoIdCounter++, fecha, slotStart, nextSlot, esquemaTurno);
+                
+                slots.add(evento);
+                slotStart = slotStart.plusMinutes(intervalo);
+            }
+            
+            return slots;
+        }
+        
+        private ExceptionalDayContext analizarConfiguracionesExcepcionales(List<ConfiguracionExcepcional> configuraciones, EsquemaTurno esquemaTurno) {
+            Optional<ConfiguracionExcepcional> feriado = configuraciones.stream()
+                .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.FERIADO)
+                .findFirst();
+                
+            Optional<ConfiguracionExcepcional> mantenimiento = configuraciones.stream()
+                .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO)
+                .filter(c -> c.getConsultorio() != null && 
+                           c.getConsultorio().getId().equals(esquemaTurno.getConsultorio().getId()))
+                .findFirst();
+                
+            Optional<ConfiguracionExcepcional> atencionEspecial = configuraciones.stream()
+                .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL)
+                .filter(c -> c.getEsquemaTurno() != null && 
+                           c.getEsquemaTurno().getId().equals(esquemaTurno.getId()))
+                .findFirst();
+                
+            return new ExceptionalDayContext(feriado, mantenimiento, atencionEspecial);
+        }
+        
+        private ExceptionalSlotInfo determinarTipoExcepcion(LocalTime slotStart, LocalTime nextSlot, 
+                                                           ExceptionalDayContext context, LocalDate fecha, 
+                                                           EsquemaTurno esquemaTurno) {
+            boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
+                fecha, slotStart, esquemaTurno.getStaffMedico().getId(), EstadoTurno.CANCELADO);
+            
+            if (context.feriado.isPresent()) {
+                return new ExceptionalSlotInfo("FERIADO", context.feriado.get().getDescripcion(), true, false);
+            }
+            
+            if (context.mantenimiento.isPresent()) {
+                ConfiguracionExcepcional mant = context.mantenimiento.get();
+                if (mant.getHoraInicio() != null && mant.getHoraFin() != null) {
+                    boolean seSuperpone = slotStart.isBefore(mant.getHoraFin()) && 
+                                         nextSlot.isAfter(mant.getHoraInicio());
+                    if (seSuperpone) {
+                        return new ExceptionalSlotInfo("MANTENIMIENTO", mant.getDescripcion(), true, true);
+                    }
+                }
+            }
+            
+            if (context.atencionEspecial.isPresent()) {
+                ConfiguracionExcepcional atEsp = context.atencionEspecial.get();
+                if (atEsp.getHoraInicio() != null && atEsp.getHoraFin() != null) {
+                    boolean seSuperpone = slotStart.isBefore(atEsp.getHoraFin()) && 
+                                         nextSlot.isAfter(atEsp.getHoraInicio());
+                    if (seSuperpone) {
+                        return new ExceptionalSlotInfo("ATENCION_ESPECIAL", atEsp.getDescripcion(), true, false);
+                    }
+                }
+            }
+            
+            return new ExceptionalSlotInfo(null, null, slotOcupado, false);
+        }
+        
+        private TurnoDTO crearEventoExcepcional(ExceptionalSlotInfo slotInfo, int eventoId, LocalDate fecha, 
+                                               LocalTime slotStart, LocalTime nextSlot, EsquemaTurno esquemaTurno) {
+            TurnoDTO evento = new TurnoDTO();
+            evento.setId(eventoId);
+            evento.setFecha(fecha);
+            evento.setHoraInicio(slotStart);
+            evento.setHoraFin(nextSlot);
+            
+            String titulo = construirTituloExcepcional(slotInfo);
+            evento.setTitulo(titulo);
+            evento.setEsSlot(true);
+            evento.setOcupado(slotInfo.ocupado);
+            evento.setEnMantenimiento(slotInfo.esMantenimiento);
+            
+            asignarDatosEsquema(evento, esquemaTurno);
+            
+            if (slotInfo.ocupado && slotInfo.tipoExcepcion == null) {
+                asignarDatosPaciente(evento, fecha, slotStart, esquemaTurno);
+            }
+            
+            return evento;
+        }
+        
+        private String construirTituloExcepcional(ExceptionalSlotInfo slotInfo) {
+            if (slotInfo.tipoExcepcion != null) {
+                String titulo = slotInfo.tipoExcepcion;
+                if (slotInfo.descripcion != null && !slotInfo.descripcion.isEmpty()) {
+                    titulo += ": " + slotInfo.descripcion;
+                }
+                if (slotInfo.ocupado) {
+                    titulo = "Ocupado (" + titulo + ")";
+                }
+                return titulo;
+            } else {
+                return slotInfo.ocupado ? "Ocupado" : "Disponible";
+            }
+        }
+        
+        private void asignarDatosEsquema(TurnoDTO evento, EsquemaTurno esquemaTurno) {
+            evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
+            evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
+            evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
+            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico().getMedico()
+                    .getEspecialidad().getNombre());
+            evento.setConsultorioId(esquemaTurno.getConsultorio().getId());
+            evento.setConsultorioNombre(esquemaTurno.getConsultorio().getNombre());
+            evento.setCentroId(esquemaTurno.getCentroAtencion().getId());
+            evento.setNombreCentro(esquemaTurno.getCentroAtencion().getNombre());
+        }
+        
+        private void asignarDatosPaciente(TurnoDTO evento, LocalDate fecha, LocalTime slotStart, EsquemaTurno esquemaTurno) {
+            List<Turno> turnosEnFecha = turnoRepository.findByFechaAndStaffMedico_Id(
+                fecha, esquemaTurno.getStaffMedico().getId());
+            
+            final LocalTime horaSlot = slotStart;
+            Optional<Turno> turnoExistente = turnosEnFecha.stream()
+                .filter(t -> t.getHoraInicio().equals(horaSlot))
+                .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
+                .findFirst();
+            
+            if (turnoExistente.isPresent()) {
+                Turno turno = turnoExistente.get();
+                evento.setPacienteId(turno.getPaciente().getId());
+                evento.setNombrePaciente(turno.getPaciente().getNombre());
+                evento.setApellidoPaciente(turno.getPaciente().getApellido());
+            }
+        }
+    }
+
+    // ===============================================
+    // VALUE OBJECTS PARA DATOS (SRP)
+    // ===============================================
+    
+    private static class SlotInfo {
+        final boolean ocupado;
+        final boolean enMantenimiento;
+        final String titulo;
+        
+        SlotInfo(boolean ocupado, boolean enMantenimiento, String titulo) {
+            this.ocupado = ocupado;
+            this.enMantenimiento = enMantenimiento;
+            this.titulo = titulo;
+        }
+    }
+    
+    private static class ExceptionalDayContext {
+        final Optional<ConfiguracionExcepcional> feriado;
+        final Optional<ConfiguracionExcepcional> mantenimiento;
+        final Optional<ConfiguracionExcepcional> atencionEspecial;
+        
+        ExceptionalDayContext(Optional<ConfiguracionExcepcional> feriado, 
+                             Optional<ConfiguracionExcepcional> mantenimiento,
+                             Optional<ConfiguracionExcepcional> atencionEspecial) {
+            this.feriado = feriado;
+            this.mantenimiento = mantenimiento;
+            this.atencionEspecial = atencionEspecial;
+        }
+    }
+    
+    private static class ExceptionalSlotInfo {
+        final String tipoExcepcion;
+        final String descripcion;
+        final boolean ocupado;
+        final boolean esMantenimiento;
+        
+        ExceptionalSlotInfo(String tipoExcepcion, String descripcion, boolean ocupado, boolean esMantenimiento) {
+            this.tipoExcepcion = tipoExcepcion;
+            this.descripcion = descripcion;
+            this.ocupado = ocupado;
+            this.esMantenimiento = esMantenimiento;
+        }
+    }
+
+    // ===============================================
+    // MÉTODOS PÚBLICOS (API FACADE)
+    // ===============================================
+
+    /**
+     * Verificar si una fecha es excepcional usando el validador especializado
+     */
+    public boolean esFechaExcepcional(LocalDate fecha, Integer esquemaTurnoId) {
+        return disponibilidadValidator.esFechaExcepcional(fecha, esquemaTurnoId);
+    }
+
+    /**
+     * Validar disponibilidad usando el validador especializado
+     */
+    public boolean validarDisponibilidad(LocalDate fecha, LocalTime horaInicio, Integer consultorioId,
+            Integer staffMedicoId) {
+        return disponibilidadValidator.validarDisponibilidad(fecha, horaInicio, consultorioId, staffMedicoId);
+    }
+    
+    /**
+     * Método auxiliar para generar slots para un horario específico
+     */
+    private List<TurnoDTO> generarSlotsParaHorario(LocalDate fecha, LocalTime inicio, LocalTime fin, 
+                                                  EsquemaTurno esquemaTurno, Integer duracion,
+                                                  int eventoIdCounter) {
+        return slotGenerator.generarSlotsParaHorario(fecha, inicio, fin, esquemaTurno, duracion, eventoIdCounter);
     }
 
     private static DayOfWeek parseDiaSemana(String dia) {
@@ -206,14 +585,14 @@ public class AgendaService {
         
         // Ejecutar la optimización de distribución de consultorios si el esquema tiene centro de atención
         if (esquemaTurno.getCentroAtencion() != null) {
-            optimizarDistribucionConsultorios(esquemaTurno.getCentroAtencion().getId(), hoy);
+            consultorioOptimizer.optimizarDistribucionConsultorios(esquemaTurno.getCentroAtencion().getId(), hoy);
             
             // Si el médico tiene una especialidad, resolver posibles conflictos
             if (esquemaTurno.getStaffMedico() != null && 
                 esquemaTurno.getStaffMedico().getMedico() != null && 
                 esquemaTurno.getStaffMedico().getMedico().getEspecialidad() != null) {
                 
-                resolverConflictosConsultorios(
+                conflictResolver.resolverConflictosConsultorios(
                     esquemaTurno.getCentroAtencion().getId(),
                     esquemaTurno.getStaffMedico().getMedico().getEspecialidad().getId(),
                     hoy
@@ -274,7 +653,7 @@ public class AgendaService {
                 if (esFeriado) {
                     System.out.println("Generando slots excepcionales para feriado");
                     // Para feriados, generar slots especiales para todo el día
-                    List<TurnoDTO> slotsFeriado = generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
+                    List<TurnoDTO> slotsFeriado = exceptionalHandler.generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
                         esquemaTurnoFinal, configuracionesDelDia, eventoIdCounter);
                     eventos.addAll(slotsFeriado);
                     System.out.println(">>> Se generaron " + slotsFeriado.size() + " slots para feriado en " + fechaEvento);
@@ -316,16 +695,13 @@ public class AgendaService {
                                     return true;
                                 }
                                 // Incluir SOLO la atención especial del esquema específico
-                                if (c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL &&
+                                return c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL &&
                                     c.getEsquemaTurno() != null && 
-                                    c.getEsquemaTurno().getId().equals(esquemaTurnoFinal.getId())) {
-                                    return true;
-                                }
-                                return false;
+                                    c.getEsquemaTurno().getId().equals(esquemaTurnoFinal.getId());
                             })
                             .collect(Collectors.toList());
                         
-                        List<TurnoDTO> slotsAtencionEspecial = generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
+                        List<TurnoDTO> slotsAtencionEspecial = exceptionalHandler.generarSlotsParaDiaExcepcional(fechaEvento, horario.getHoraInicio(), horario.getHoraFin(), 
                             esquemaTurnoFinal, configuracionesEspecificas, eventoIdCounter);
                         eventos.addAll(slotsAtencionEspecial);
                         eventoIdCounter += 50;
@@ -337,8 +713,7 @@ public class AgendaService {
                 int duracion = atencionEspecial.map(ConfiguracionExcepcional::getDuracion).orElse(0);
                 
                 // NUEVA VALIDACIÓN: Verificar horarios del consultorio y ajustar ventana temporal
-                String diaSemana = fechaEvento.getDayOfWeek().name();
-                String diaSemanaEspanol = convertirDiaInglesToEspanol(diaSemana);
+                String diaSemana = convertirDiaInglesToEspanol(fechaEvento.getDayOfWeek().name());
                 // System.out.println("Verificando disponibilidad consultorio " + consultorio.getId() + " para dia " + diaSemana + " (" + diaSemanaEspanol + ")");
                 
                 // Obtener información del consultorio
@@ -417,37 +792,7 @@ public class AgendaService {
      */
     @Transactional
     public Map<Integer, Integer> optimizarDistribucionConsultorios(Integer centroAtencionId, LocalDate fecha) {
-        String diaSemana = fecha.getDayOfWeek().name();
-        
-        // Usar el servicio especializado para distribuir consultorios
-        // CRÍTICO: Limpiar asignaciones anteriores para redistribución limpia
-        Map<Integer, Integer> asignacion = consultorioDistribucionService.distribuirConsultorios(
-            centroAtencionId, fecha, diaSemana);
-        
-        // Actualizar los EsquemaTurno con la nueva asignación de consultorios
-        for (Map.Entry<Integer, Integer> entry : asignacion.entrySet()) {
-            Integer staffMedicoId = entry.getKey();
-            Integer consultorioId = entry.getValue();
-            
-            // Buscar todos los esquemas de turno para este médico
-            List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedicoId(staffMedicoId);
-            
-            for (EsquemaTurno esquema : esquemas) {
-                // Verificar si el horario del esquema incluye este día
-                boolean incluyeEsteDia = esquema.getHorarios().stream()
-                    .anyMatch(horario -> horario.getDia().equalsIgnoreCase(diaSemana));
-                
-                if (incluyeEsteDia) {
-                    // Actualizar el consultorio asignado
-                    Consultorio consultorio = new Consultorio();
-                    consultorio.setId(consultorioId);
-                    esquema.setConsultorio(consultorio);
-                    esquemaTurnoRepository.save(esquema);
-                }
-            }
-        }
-        
-        return asignacion;
+        return consultorioOptimizer.optimizarDistribucionConsultorios(centroAtencionId, fecha);
     }
     
     /**
@@ -460,25 +805,7 @@ public class AgendaService {
      */
     @Transactional
     public void resolverConflictosConsultorios(Integer centroAtencionId, Integer especialidadId, LocalDate fecha) {
-        String diaSemana = fecha.getDayOfWeek().name();
-        
-        // Buscar todos los esquemas de turno para esta especialidad en este centro
-        List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedico_Medico_Especialidad_IdAndCentroAtencion_Id(
-            especialidadId, centroAtencionId);
-        
-        // Agrupar esquemas por consultorio
-        Map<Integer, List<EsquemaTurno>> esquemasPorConsultorio = esquemas.stream()
-            .collect(Collectors.groupingBy(e -> e.getConsultorio().getId()));
-        
-        // Para cada consultorio, verificar y resolver conflictos de horario
-        for (Map.Entry<Integer, List<EsquemaTurno>> entry : esquemasPorConsultorio.entrySet()) {
-            List<EsquemaTurno> esquemasMismoConsultorio = entry.getValue();
-            
-            // Si hay más de un esquema para el mismo consultorio, verificar conflictos
-            if (esquemasMismoConsultorio.size() > 1) {
-                resolverConflictosMismoConsultorio(esquemasMismoConsultorio, diaSemana);
-            }
-        }
+        conflictResolver.resolverConflictosConsultorios(centroAtencionId, especialidadId, fecha);
     }
     
     /**
@@ -488,71 +815,8 @@ public class AgendaService {
      * @param diaSemana Día de la semana para verificar conflictos
      */
     private void resolverConflictosMismoConsultorio(List<EsquemaTurno> esquemas, String diaSemana) {
-        // Ordenar esquemas por prioridad (podría ser por cantidad de pacientes, antigüedad, etc.)
-        // En este caso usamos el ID como criterio simple
-        esquemas.sort((e1, e2) -> e1.getId().compareTo(e2.getId()));
-        
-        for (int i = 0; i < esquemas.size(); i++) {
-            EsquemaTurno esquema1 = esquemas.get(i);
-            
-            // Solo procesar esquemas que tengan horarios para este día
-            List<EsquemaTurno.Horario> horariosEsquema1 = esquema1.getHorarios().stream()
-                .filter(h -> h.getDia().equalsIgnoreCase(diaSemana))
-                .collect(Collectors.toList());
-                
-            if (horariosEsquema1.isEmpty()) {
-                continue;
-            }
-            
-            // Comparar con los demás esquemas de menor prioridad
-            for (int j = i + 1; j < esquemas.size(); j++) {
-                EsquemaTurno esquema2 = esquemas.get(j);
-                
-                List<EsquemaTurno.Horario> horariosEsquema2 = esquema2.getHorarios().stream()
-                    .filter(h -> h.getDia().equalsIgnoreCase(diaSemana))
-                    .collect(Collectors.toList());
-                
-                if (horariosEsquema2.isEmpty()) {
-                    continue;
-                }
-                
-                // Verificar si hay conflicto de horarios
-                boolean hayConflicto = false;
-                for (EsquemaTurno.Horario h1 : horariosEsquema1) {
-                    for (EsquemaTurno.Horario h2 : horariosEsquema2) {
-                        if (h1.getHoraInicio().isBefore(h2.getHoraFin()) && 
-                            h1.getHoraFin().isAfter(h2.getHoraInicio())) {
-                            hayConflicto = true;
-                            break;
-                        }
-                    }
-                    if (hayConflicto) break;
-                }
-                
-                // Si hay conflicto, intentar reasignar el esquema de menor prioridad
-                if (hayConflicto) {
-                    // Buscar otro consultorio disponible
-                    List<Consultorio> consultoriosDisponibles = consultorioService.findByCentroAtencionId(
-                        esquema2.getCentroAtencion().getId())
-                        .stream()
-                        .filter(c -> !c.getId().equals(esquema2.getConsultorio().getId()))
-                        .map(dto -> {
-                            Consultorio c = new Consultorio();
-                            c.setId(dto.getId());
-                            return c;
-                        })
-                        .collect(Collectors.toList());
-                    
-                    if (!consultoriosDisponibles.isEmpty()) {
-                        // Asignar el primer consultorio disponible
-                        esquema2.setConsultorio(consultoriosDisponibles.get(0));
-                        esquemaTurnoRepository.save(esquema2);
-                    }
-                    // Si no hay consultorios disponibles, queda en conflicto
-                    // (se podría implementar una política más sofisticada)
-                }
-            }
-        }
+        // Delegado al ConflictResolver
+        conflictResolver.resolverConflictosMismoConsultorio(esquemas, diaSemana);
     }
 
     /**
@@ -612,148 +876,6 @@ public class AgendaService {
                                                          EsquemaTurno esquemaTurno, 
                                                          List<ConfiguracionExcepcional> configuraciones,
                                                          int eventoIdCounter) {
-        List<TurnoDTO> slots = new ArrayList<>();
-        int intervalo = esquemaTurno.getIntervalo();
-        
-        // Verificar si es feriado (afecta todo el día)
-        Optional<ConfiguracionExcepcional> feriado = configuraciones.stream()
-            .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.FERIADO)
-            .findFirst();
-            
-        // Obtener configuración de mantenimiento para este consultorio
-        Optional<ConfiguracionExcepcional> mantenimiento = configuraciones.stream()
-            .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.MANTENIMIENTO)
-            .filter(c -> c.getConsultorio() != null && 
-                       c.getConsultorio().getId().equals(esquemaTurno.getConsultorio().getId()))
-            .findFirst();
-            
-        // Obtener configuración de atención especial para este esquema
-        Optional<ConfiguracionExcepcional> atencionEspecial = configuraciones.stream()
-            .filter(c -> c.getTipo() == ConfiguracionExcepcional.TipoExcepcion.ATENCION_ESPECIAL)
-            .filter(c -> c.getEsquemaTurno() != null && 
-                       c.getEsquemaTurno().getId().equals(esquemaTurno.getId()))
-            .findFirst();
-        
-        LocalTime slotStart = inicio;
-        
-        while (slotStart.isBefore(fin)) {
-            LocalTime nextSlot = slotStart.plusMinutes(intervalo);
-            
-            if (nextSlot.isAfter(fin)) {
-                break;
-            }
-
-            // Verificar si existe un turno real en este horario
-            boolean slotOcupado = turnoRepository.existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
-                fecha, slotStart, esquemaTurno.getStaffMedico().getId(), EstadoTurno.CANCELADO);
-
-            // Determinar el tipo de excepción para este slot específico
-            String tipoExcepcion = null;
-            String descripcionExcepcion = null;
-            boolean esMantenimiento = false;
-            
-            // Verificar si es feriado (afecta todo el día)
-            if (feriado.isPresent()) {
-                tipoExcepcion = "FERIADO";
-                descripcionExcepcion = feriado.get().getDescripcion();
-                // CORRECCIÓN: Los slots en feriados deben marcarse como ocupados (no disponibles)
-                slotOcupado = true;
-            }
-            // Verificar si este slot específico se solapa con el horario de mantenimiento
-            else if (mantenimiento.isPresent()) {
-                ConfiguracionExcepcional mant = mantenimiento.get();
-                // Solo marcar como mantenimiento si el slot se solapa con el horario específico
-                if (mant.getHoraInicio() != null && mant.getHoraFin() != null) {
-                    // Verificar si hay solapamiento entre el slot y el horario de mantenimiento
-                    boolean seSuperpone = slotStart.isBefore(mant.getHoraFin()) && 
-                                         nextSlot.isAfter(mant.getHoraInicio());
-                    if (seSuperpone) {
-                        tipoExcepcion = "MANTENIMIENTO";
-                        descripcionExcepcion = mant.getDescripcion();
-                        esMantenimiento = true;
-                        // CORRECCIÓN: Los slots en mantenimiento deben marcarse como ocupados (no disponibles)
-                        slotOcupado = true;
-                    }
-                }
-            }
-            // Verificar si este slot se solapa con atención especial
-            else if (atencionEspecial.isPresent()) {
-                ConfiguracionExcepcional atEsp = atencionEspecial.get();
-                if (atEsp.getHoraInicio() != null && atEsp.getHoraFin() != null) {
-                    // Verificar si hay solapamiento entre el slot y el horario de atención especial
-                    boolean seSuperpone = slotStart.isBefore(atEsp.getHoraFin()) && 
-                                         nextSlot.isAfter(atEsp.getHoraInicio());
-                    if (seSuperpone) {
-                        tipoExcepcion = "ATENCION_ESPECIAL";
-                        descripcionExcepcion = atEsp.getDescripcion();
-                        // CORRECCIÓN: Los slots de atención especial deben marcarse como ocupados (no disponibles)
-                        slotOcupado = true;
-                    }
-                }
-            }
-
-            TurnoDTO evento = new TurnoDTO();
-            evento.setId(eventoIdCounter++);
-            evento.setFecha(fecha);
-            evento.setHoraInicio(slotStart);
-            evento.setHoraFin(nextSlot);
-            
-            // Configurar el título según el tipo de excepción
-            String titulo;
-            if (tipoExcepcion != null) {
-                titulo = tipoExcepcion;
-                if (descripcionExcepcion != null && !descripcionExcepcion.isEmpty()) {
-                    titulo += ": " + descripcionExcepcion;
-                }
-                if (slotOcupado) {
-                    titulo = "Ocupado (" + titulo + ")";
-                }
-            } else {
-                // Slot normal (sin excepción)
-                titulo = slotOcupado ? "Ocupado" : "Disponible";
-            }
-            
-            evento.setTitulo(titulo);
-            evento.setEsSlot(true);
-            evento.setOcupado(slotOcupado);
-            evento.setEnMantenimiento(esMantenimiento);
-            
-            // Asignar datos del esquema
-            evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
-            evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
-            evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
-            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico().getMedico()
-                    .getEspecialidad().getNombre());
-            evento.setConsultorioId(esquemaTurno.getConsultorio().getId());
-            evento.setConsultorioNombre(esquemaTurno.getConsultorio().getNombre());
-            evento.setCentroId(esquemaTurno.getCentroAtencion().getId());
-            evento.setNombreCentro(esquemaTurno.getCentroAtencion().getNombre());
-
-            // Si hay un turno ocupado, obtener datos del paciente
-            if (slotOcupado && tipoExcepcion == null) { // Solo para slots normales ocupados
-                List<Turno> turnosEnFecha = turnoRepository.findByFechaAndStaffMedico_Id(
-                    fecha, esquemaTurno.getStaffMedico().getId());
-                
-                final LocalTime horaSlot = slotStart;
-                Optional<Turno> turnoExistente = turnosEnFecha.stream()
-                    .filter(t -> t.getHoraInicio().equals(horaSlot))
-                    .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
-                    .findFirst();
-                
-                if (turnoExistente.isPresent()) {
-                    Turno turno = turnoExistente.get();
-                    evento.setPacienteId(turno.getPaciente().getId());
-                    evento.setNombrePaciente(turno.getPaciente().getNombre());
-                    evento.setApellidoPaciente(turno.getPaciente().getApellido());
-                }
-            }
-
-            slots.add(evento);
-            
-            // Avanzar al siguiente slot
-            slotStart = slotStart.plusMinutes(intervalo);
-        }
-        
-        return slots;
+        return exceptionalHandler.generarSlotsParaDiaExcepcional(fecha, inicio, fin, esquemaTurno, configuraciones, eventoIdCounter);
     }
 }

@@ -305,7 +305,7 @@ public class EsquemaTurnoService {
                 nuevoEsquema.setStaffMedico(disponibilidad.getStaffMedico());
                 nuevoEsquema.setCentroAtencion(centroAtencionRepository.findById(centroId)
                     .orElseThrow(() -> new IllegalArgumentException("Centro no encontrado")));
-                nuevoEsquema.setIntervalo(30); // Intervalo por defecto de 30 minutos
+                nuevoEsquema.setIntervalo(20); // Intervalo por defecto de 20 minutos
                 
                 // Copiar horarios desde la disponibilidad
                 List<EsquemaTurno.Horario> horariosEsquema = disponibilidad.getHorarios().stream()

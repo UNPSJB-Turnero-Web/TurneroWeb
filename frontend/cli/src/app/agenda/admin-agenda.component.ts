@@ -32,7 +32,7 @@ interface SlotDisponible {
 
 
 @Component({
-  selector: 'app-agenda',
+  selector: 'app-admin-agenda',
   standalone: true,
   imports: [
     CommonModule,
@@ -51,9 +51,8 @@ interface SlotDisponible {
             <div class="header-icon">
               <i class="fas fa-calendar-alt"></i>
             </div>
-            <div class="header-text">
-              <h1>Agenda de Turnos</h1>
-              <p>Gestione y visualice todos los turnos médicos</p>
+            <div class="header-text">                <h1>Agenda Administrativa</h1>
+                <p>Vista completa para administradores - Gestione turnos, días excepcionales y asignaciones</p>
             </div>
           </div>
         </div>
@@ -191,12 +190,11 @@ interface SlotDisponible {
                       <div 
                         class="slot-card admin-slot"
                         [class.selected]="slotSeleccionado?.id === slot.id"
-                        [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
-                        [class.slot-feriado]="getTipoExcepcion(slot.fecha) === 'FERIADO' && slotAfectadoPorExcepcion(slot)"
-                        [class.slot-mantenimiento-dia]="getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO' && !tieneFranjaHoraria(slot.fecha)"
-                        [class.slot-mantenimiento-individual]="slot.enMantenimiento"
-                        [class.slot-atencion-especial]="getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)"
-                        [class.slot-ocupado]="slot.ocupado"
+                        [class.slot-excepcional]="esConfiguracionEspecial(slot)"
+                        [class.slot-feriado]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'FERIADO'"
+                        [class.slot-mantenimiento-individual]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO'"
+                        [class.slot-atencion-especial]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'ATENCION_ESPECIAL'"
+                        [class.slot-ocupado]="!esConfiguracionEspecial(slot) && slot.ocupado && slot.pacienteNombre"
                         (click)="seleccionarSlot(slot, $event)">
                   
                       
@@ -234,8 +232,8 @@ interface SlotDisponible {
                         </div>
                       </div>
 
-                      <!-- Información de día excepcional -->
-                      <div class="slot-exception" *ngIf="slotAfectadoPorExcepcion(slot)">
+                      <!-- Información de configuración especial -->
+                      <div class="slot-exception" *ngIf="esConfiguracionEspecial(slot)">
                         <div class="exception-badge">
                           <span class="exception-icon">{{ getIconoExcepcion(slot.fecha, slot) }}</span>
                           <div class="exception-info">
@@ -247,28 +245,35 @@ interface SlotDisponible {
                         </div>
                         <div class="exception-warning">
                           <i class="fas fa-exclamation-triangle"></i>
-                          <span>Este turno no puede realizarse</span>
+                          <span>{{ getTipoConfiguracionEspecial(slot) === 'FERIADO' ? 'No disponible por feriado' : 
+                                   getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO' ? 'Consultorio en mantenimiento' : 
+                                   'Reservado para atención especial' }}</span>
                         </div>
                       </div>  
 
-                      <!-- Estado del slot -->
-                      <div class="slot-status special-attention" *ngIf="!slot.enMantenimiento && getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL' && slotAfectadoPorExcepcion(slot)">
+                      <!-- Estado del slot mejorado -->
+                      <!-- Configuración especial: Atención Especial -->
+                      <div class="slot-status special-attention" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'ATENCION_ESPECIAL'">
                         <i class="fas fa-hospital"></i>
-                        Especial
+                        Atención Especial
                       </div>
-                      <div class="slot-status maintenance" *ngIf="slot.enMantenimiento">
+                      <!-- Configuración especial: Mantenimiento -->
+                      <div class="slot-status maintenance" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO'">
                         <i class="fas fa-wrench"></i>
                         Mantenimiento
                       </div>
-                      <div class="slot-status" *ngIf="!slot.enMantenimiento && slot.ocupado">
+                      <!-- Configuración especial: Feriado -->
+                      <div class="slot-status no-disponible" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'FERIADO'">
+                        <i class="fas fa-calendar-times"></i>
+                        Feriado
+                      </div>
+                      <!-- Turno realmente ocupado por paciente -->
+                      <div class="slot-status" *ngIf="!esConfiguracionEspecial(slot) && slot.ocupado && slot.pacienteNombre">
                         <i class="fas fa-user-check"></i>
                         Asignado
                       </div>
-                      <div class="slot-status no-disponible" *ngIf="!slot.enMantenimiento && !slot.ocupado && slotAfectadoPorExcepcion(slot) && getTipoExcepcion(slot.fecha) === 'FERIADO'">
-                        <i class="fas fa-ban"></i>
-                        No Disponible
-                      </div>
-                      <div class="slot-status disponible" *ngIf="!slot.enMantenimiento && !slot.ocupado && !slotAfectadoPorExcepcion(slot)">
+                      <!-- Slot disponible -->
+                      <div class="slot-status disponible" *ngIf="!esConfiguracionEspecial(slot) && !slot.ocupado">
                         <i class="fas fa-plus-circle"></i>
                         Disponible
                       </div>
@@ -354,8 +359,8 @@ interface SlotDisponible {
                     <div class="info-value-modal">{{ formatearFecha(slotSeleccionado?.fecha || '') }} - {{ slotSeleccionado?.horaInicio }} a {{ slotSeleccionado?.horaFin }}</div>
                   </div>
 
-                  <!-- Mostrar paciente asignado si está ocupado -->
-                  <div class="info-item-modal" *ngIf="slotSeleccionado?.ocupado && slotSeleccionado?.pacienteNombre">
+                  <!-- Mostrar paciente asignado solo si realmente está ocupado por un paciente -->
+                  <div class="info-item-modal" *ngIf="slotSeleccionado && !esConfiguracionEspecial(slotSeleccionado) && slotSeleccionado?.ocupado && slotSeleccionado?.pacienteNombre">
                     <div class="info-label-modal">
                       <span class="info-icon-modal" style="background: linear-gradient(135deg, #e83e8c 0%, #e91e63 100%);">👤</span>
                       Paciente Asignado
@@ -363,11 +368,11 @@ interface SlotDisponible {
                     <div class="info-value-modal">{{ slotSeleccionado?.pacienteNombre }} {{ slotSeleccionado?.pacienteApellido }}</div>
                   </div>
 
-                  <!-- Información de día excepcional si aplica -->
-                  <div class="info-item-modal exception-modal" *ngIf="slotSeleccionado && slotAfectadoPorExcepcion(slotSeleccionado)">
+                  <!-- Información de configuración especial -->
+                  <div class="info-item-modal exception-modal" *ngIf="slotSeleccionado && esConfiguracionEspecial(slotSeleccionado)">
                     <div class="info-label-modal">
                       <span class="info-icon-modal exception-icon">{{ getIconoExcepcion(slotSeleccionado.fecha, slotSeleccionado) }}</span>
-                      {{ slotSeleccionado.enMantenimiento ? 'Slot en Mantenimiento' : 'Día Excepcional' }}
+                      Configuración Especial
                     </div>
                     <div class="info-value-modal exception-details">
                       <div class="exception-type-modal">{{ getTipoExcepcionLabel(slotSeleccionado.fecha, slotSeleccionado) }}</div>
@@ -382,8 +387,8 @@ interface SlotDisponible {
                   </div>
                 </div>
 
-                <!-- Sección de asignación de paciente (solo si no está ocupado) -->
-                <div class="patient-assignment" *ngIf="!slotSeleccionado?.ocupado">
+                <!-- Sección de asignación de paciente (solo si no está ocupado y no es configuración especial) -->
+                <div class="patient-assignment" *ngIf="slotSeleccionado && !slotSeleccionado.ocupado && !esConfiguracionEspecial(slotSeleccionado)">
                   <div class="assignment-header">
                     <span class="assignment-icon">👥</span>
                     <h4>Asignar Paciente</h4>
@@ -404,6 +409,20 @@ interface SlotDisponible {
                     </select>
                   </div>
                 </div>
+
+                <!-- Mensaje informativo para configuraciones especiales -->
+                <div class="special-config-info" *ngIf="slotSeleccionado && esConfiguracionEspecial(slotSeleccionado)">
+                  <div class="info-header">
+                    <span class="info-icon">ℹ️</span>
+                    <h4>Información de Configuración</h4>
+                  </div>
+                  <p>Este horario no está disponible para asignar pacientes debido a la configuración especial del sistema.</p>
+                  <div class="config-details">
+                    <strong>Tipo:</strong> {{ getTipoExcepcionLabel(slotSeleccionado.fecha, slotSeleccionado) }}
+                    <br>
+                    <strong>Descripción:</strong> {{ getDescripcionExcepcion(slotSeleccionado.fecha, slotSeleccionado) || 'Sin descripción adicional' }}
+                  </div>
+                </div>
               </div>
               
               <div class="modal-footer-modern">
@@ -411,7 +430,7 @@ interface SlotDisponible {
                   type="button" 
                   class="btn btn-modern btn-assign" 
                   (click)="asignarTurno()"
-                  *ngIf="!slotSeleccionado?.ocupado"
+                  *ngIf="slotSeleccionado && !slotSeleccionado.ocupado && !esConfiguracionEspecial(slotSeleccionado)"
                   [disabled]="!pacienteId || isAssigning">
                   <i class="fas fa-save"></i>
                   {{ isAssigning ? 'Asignando...' : 'Asignar Turno' }}
@@ -967,12 +986,9 @@ interface SlotDisponible {
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(40, 167, 69, 0.15);
+      color: black;
+
+      
     }
 
     .slot-especialidad {
@@ -1516,9 +1532,52 @@ interface SlotDisponible {
         gap: 0.5rem;
       }
     }
+
+    /* Información de configuración especial en modal */
+    .special-config-info {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      border: 2px solid rgba(255, 193, 7, 0.3);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+    
+    .special-config-info .info-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid rgba(255, 193, 7, 0.2);
+    }
+    
+    .special-config-info .info-icon {
+      font-size: 1.3rem;
+    }
+    
+    .special-config-info h4 {
+      margin: 0;
+      color: #856404;
+      font-weight: 600;
+    }
+    
+    .special-config-info p {
+      color: #856404;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    
+    .config-details {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 0.75rem;
+      border-radius: 8px;
+      color: #6c5500;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
   `]
 })
-export class AgendaComponent implements OnInit {
+export class AdminAgendaComponent implements OnInit {
   // Estados de carga
   isLoading = false;
   isAssigning = false;
@@ -1586,9 +1645,17 @@ export class AgendaComponent implements OnInit {
     
     this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
       next: (eventosBackend) => {
+        console.log('=== DATOS DEL BACKEND ===');
+        console.log('Total eventos recibidos:', eventosBackend.length);
+        console.log('Primeros 3 eventos:', eventosBackend.slice(0, 3));
+        
         // Transformar los eventos del backend en slots
         this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
         this.events = eventosBackend; // Para compatibilidad con filtros
+        
+        console.log('=== SLOTS PROCESADOS ===');
+        console.log('Total slots disponibles:', this.slotsDisponibles.length);
+        console.log('Primeros 3 slots:', this.slotsDisponibles.slice(0, 3));
         
         // Extraer días excepcionales de los eventos
         this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
@@ -1611,10 +1678,40 @@ export class AgendaComponent implements OnInit {
     const slots: SlotDisponible[] = [];
     const slotsAfectados: SlotDisponible[] = [];
 
-    eventosBackend.forEach(evento => {
+    console.log('=== MAPEANDO EVENTOS A SLOTS ===');
+    let eventosProcesados = 0;
+    let eventosDescartados = 0;
+
+    eventosBackend.forEach((evento, index) => {
       // Validar que el evento tenga los datos necesarios
       if (!evento.fecha || !evento.horaInicio || !evento.horaFin || !evento.esSlot) {
+        eventosDescartados++;
+        if (index < 3) {
+          console.log(`Evento ${index} descartado:`, evento);
+        }
         return;
+      }
+
+      eventosProcesados++;
+
+      // Determinar si realmente está ocupado por un paciente vs día excepcional
+      const esOcupadoPorPaciente = evento.ocupado && evento.pacienteId && evento.pacienteNombre;
+      const esConfiguracionEspecial = evento.ocupado && !evento.pacienteId && evento.titulo && 
+        (evento.titulo.includes('FERIADO') || evento.titulo.includes('MANTENIMIENTO') || evento.titulo.includes('ATENCION_ESPECIAL'));
+
+      if (index < 3) {
+        console.log(`=== EVENTO ${index} ===`);
+        console.log('Datos originales:', {
+          ocupado: evento.ocupado,
+          pacienteId: evento.pacienteId,
+          pacienteNombre: evento.pacienteNombre,
+          titulo: evento.titulo,
+          enMantenimiento: evento.enMantenimiento
+        });
+        console.log('Análisis:', {
+          esOcupadoPorPaciente,
+          esConfiguracionEspecial
+        });
       }
 
       const slot: SlotDisponible = {
@@ -1630,16 +1727,19 @@ export class AgendaComponent implements OnInit {
         consultorioNombre: evento.consultorioNombre,
         centroId: evento.centroId,
         nombreCentro: evento.nombreCentro,
-        ocupado: evento.ocupado || false,
+        // Solo marcar como ocupado si realmente tiene un paciente asignado
+        ocupado: esOcupadoPorPaciente,
         esSlot: true,
         pacienteId: evento.pacienteId,
         pacienteNombre: evento.pacienteNombre,
         pacienteApellido: evento.pacienteApellido,
-        enMantenimiento: evento.enMantenimiento || false,
+        enMantenimiento: evento.enMantenimiento,
         titulo: evento.titulo
       };
 
-  
+      if (index < 3) {
+        console.log('Slot resultante:', slot);
+      }
 
       // Incluir TODOS los slots (afectados y no afectados) en la vista principal
       slots.push(slot);
@@ -1652,6 +1752,12 @@ export class AgendaComponent implements OnInit {
 
     // Actualizar la lista de turnos afectados solo para el contador informativo
     this.turnosAfectados = slotsAfectados;
+
+    console.log('=== RESUMEN MAPEO ===');
+    console.log(`Eventos procesados: ${eventosProcesados}`);
+    console.log(`Eventos descartados: ${eventosDescartados}`);
+    console.log(`Total slots creados: ${slots.length}`);
+    console.log(`Slots afectados: ${slotsAfectados.length}`);
 
     return slots;
   }
@@ -1843,20 +1949,64 @@ export class AgendaComponent implements OnInit {
     return this.diasExcepcionalesService.tieneFranjaHoraria(fecha);
   }
 
+  /**
+   * Detecta si un slot es una configuración especial (feriado, mantenimiento, atención especial)
+   * basándose en el título del evento, la propiedad enMantenimiento y la ausencia de paciente
+   */
+  esConfiguracionEspecial(slot: SlotDisponible): boolean {
+    // Si tiene paciente asignado, no es configuración especial
+    if (slot.pacienteId && slot.pacienteNombre) return false;
+    
+    // Verificar si está marcado como mantenimiento
+    if (slot.enMantenimiento) return true;
+    
+    // Detectar patrones en el título que indican configuración especial
+    if (slot.titulo) {
+      return slot.titulo.includes('FERIADO') || 
+             slot.titulo.includes('MANTENIMIENTO') || 
+             slot.titulo.includes('ATENCION_ESPECIAL');
+    }
+    
+    return false;
+  }
+
+  /**
+   * Obtiene el tipo de configuración especial desde el título del slot o la propiedad enMantenimiento
+   */
+  getTipoConfiguracionEspecial(slot: SlotDisponible): string | null {
+    if (!this.esConfiguracionEspecial(slot)) return null;
+    
+    // Verificar primero si está marcado como mantenimiento
+    if (slot.enMantenimiento) return 'MANTENIMIENTO';
+    
+    // Si no, verificar por título
+    if (slot.titulo?.includes('FERIADO')) return 'FERIADO';
+    if (slot.titulo?.includes('MANTENIMIENTO')) return 'MANTENIMIENTO';
+    if (slot.titulo?.includes('ATENCION_ESPECIAL')) return 'ATENCION_ESPECIAL';
+    
+    return null;
+  }
+
+  /**
+   * Obtiene la descripción de la configuración especial desde el título
+   */
+  getDescripcionConfiguracionEspecial(slot: SlotDisponible): string | null {
+    if (!this.esConfiguracionEspecial(slot) || !slot.titulo) return null;
+    
+    // El formato del título es: "TIPO: descripción" o "Ocupado (TIPO: descripción)"
+    const match = slot.titulo.match(/(?:FERIADO|MANTENIMIENTO|ATENCION_ESPECIAL):\s*(.+)/);
+    return match ? match[1].trim() : null;
+  }
+
+  /**
+   * Mejora del método slotAfectadoPorExcepcion para incluir configuraciones especiales
+   */
   slotAfectadoPorExcepcion(slot: SlotDisponible): boolean {
+    // Primero verificar si es una configuración especial basada en el título
+    if (this.esConfiguracionEspecial(slot)) return true;
+    
+    // Fallback al método original del servicio
     return this.diasExcepcionalesService.slotAfectadoPorExcepcion(slot);
-  }
-
-  getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
-    return this.diasExcepcionalesService.getTipoExcepcionLabel(fecha, slot);
-  }
-
-  getDescripcionExcepcion(fecha: string, slot?: SlotDisponible): string | null {
-    return this.diasExcepcionalesService.getDescripcionExcepcionSlot(fecha, slot);
-  }
-
-  getIconoExcepcion(fecha: string, slot?: SlotDisponible): string {
-    return this.diasExcepcionalesService.getIconoExcepcion(fecha, slot);
   }
 
   asignarTurno(): void {
@@ -2021,5 +2171,47 @@ export class AgendaComponent implements OnInit {
    */
   getNombreMedico(slot: SlotDisponible): string {
     return `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`;
+  }
+
+  getTipoExcepcionLabel(fecha: string, slot?: SlotDisponible): string {
+    // Primero verificar si es una configuración especial del slot
+    if (slot && this.esConfiguracionEspecial(slot)) {
+      const tipo = this.getTipoConfiguracionEspecial(slot);
+      switch (tipo) {
+        case 'FERIADO': return 'Feriado';
+        case 'MANTENIMIENTO': return 'Mantenimiento';
+        case 'ATENCION_ESPECIAL': return 'Atención Especial';
+        default: return 'Configuración Especial';
+      }
+    }
+    
+    // Fallback al servicio original
+    return this.diasExcepcionalesService.getTipoExcepcionLabel(fecha, slot);
+  }
+
+  getDescripcionExcepcion(fecha: string, slot?: SlotDisponible): string | null {
+    // Primero verificar si es una configuración especial del slot
+    if (slot && this.esConfiguracionEspecial(slot)) {
+      return this.getDescripcionConfiguracionEspecial(slot);
+    }
+    
+    // Fallback al servicio original
+    return this.diasExcepcionalesService.getDescripcionExcepcionSlot(fecha, slot);
+  }
+
+  getIconoExcepcion(fecha: string, slot?: SlotDisponible): string {
+    // Primero verificar si es una configuración especial del slot
+    if (slot && this.esConfiguracionEspecial(slot)) {
+      const tipo = this.getTipoConfiguracionEspecial(slot);
+      switch (tipo) {
+        case 'FERIADO': return '🏖️';
+        case 'MANTENIMIENTO': return '🔧';
+        case 'ATENCION_ESPECIAL': return '🏥';
+        default: return '⚠️';
+      }
+    }
+    
+    // Fallback al servicio original
+    return this.diasExcepcionalesService.getIconoExcepcion(fecha, slot);
   }
 }
