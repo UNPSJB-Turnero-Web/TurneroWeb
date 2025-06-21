@@ -1042,6 +1042,163 @@
               </small>
             </div>
           </ng-template>
+
+          <div *ngIf="staffMedicoCentro.length > 0" class="mt-4">
+            <div class="row">
+              <!-- Panel de Control de Porcentajes -->
+              <div class="col-12">
+                <div class="card border-info">
+                  <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                      <i class="fa fa-chart-pie me-2"></i>
+                      Distribución de Porcentajes por Médico
+                    </h6>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-outline-light" 
+                              (click)="redistribuirPorcentajesMedicos()"
+                              title="Distribuir 100% equitativamente entre todos los médicos">
+                        <i class="fa fa-balance-scale me-1"></i>Redistribuir
+                      </button>
+                      <button class="btn btn-sm btn-warning" 
+                              (click)="redistribuirEsquemasExistentes()"
+                              title="Aplicar porcentajes a esquemas de turno">
+                        <i class="fa fa-cogs me-1"></i>Redistribuir Esquemas
+                      </button>
+                      <button class="btn btn-sm btn-light" 
+                              (click)="guardarTodosPorcentajesMedicos()"
+                              [disabled]="totalPorcentajeMedicos > 100">
+                        <i class="fa fa-save me-1"></i>Guardar Porcentajes
+                      </button>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <!-- Indicador de Total de Porcentajes -->
+                    <div class="row mb-3">
+                      <div class="col-md-6">
+                        <div class="progress-info-card p-3" 
+                             [style.background]="totalPorcentajeMedicos > 100 ? 'rgba(220, 53, 69, 0.1)' : 
+                                                 totalPorcentajeMedicos === 100 ? 'rgba(40, 167, 69, 0.1)' : 
+                                                 'rgba(255, 193, 7, 0.1)'"
+                             [style.border]="totalPorcentajeMedicos > 100 ? '2px solid rgba(220, 53, 69, 0.3)' : 
+                                            totalPorcentajeMedicos === 100 ? '2px solid rgba(40, 167, 69, 0.3)' : 
+                                            '2px solid rgba(255, 193, 7, 0.3)'"
+                             style="border-radius: 12px;">
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0" 
+                                [class.text-danger]="totalPorcentajeMedicos > 100"
+                                [class.text-success]="totalPorcentajeMedicos === 100"
+                                [class.text-warning]="totalPorcentajeMedicos < 100">
+                              <i class="fa fa-percentage me-2"></i>Total Asignado
+                            </h6>
+                            <span class="h4 mb-0 fw-bold"
+                                  [class.text-danger]="totalPorcentajeMedicos > 100"
+                                  [class.text-success]="totalPorcentajeMedicos === 100"
+                                  [class.text-warning]="totalPorcentajeMedicos < 100">
+                              {{ totalPorcentajeMedicos }}%
+                            </span>
+                          </div>
+                          <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" 
+                                 [class.bg-danger]="totalPorcentajeMedicos > 100"
+                                 [class.bg-success]="totalPorcentajeMedicos === 100"
+                                 [class.bg-warning]="totalPorcentajeMedicos < 100"
+                                 [style.width.%]="totalPorcentajeMedicos > 100 ? 100 : totalPorcentajeMedicos"></div>
+                          </div>
+                          <small class="text-muted mt-1 d-block">
+                            <span *ngIf="totalPorcentajeMedicos > 100" class="text-danger">
+                              <i class="fa fa-exclamation-triangle me-1"></i>
+                              Excede el 100%. Ajuste los porcentajes.
+                            </span>
+                            <span *ngIf="totalPorcentajeMedicos === 100" class="text-success">
+                              <i class="fa fa-check-circle me-1"></i>
+                              Distribución completa y balanceada.
+                            </span>
+                            <span *ngIf="totalPorcentajeMedicos < 100" class="text-warning">
+                              <i class="fa fa-info-circle me-1"></i>
+                              Disponible: {{ porcentajeDisponibleMedicos }}%
+                            </span>
+                          </small>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="info-card p-3" style="background: rgba(54, 185, 204, 0.1); border: 2px solid rgba(54, 185, 204, 0.3); border-radius: 12px;">
+                          <h6 class="mb-2 text-info">
+                            <i class="fa fa-info-circle me-2"></i>Información de Porcentajes
+                          </h6>
+                          <small class="text-muted">
+                            <p class="mb-1">• Los porcentajes determinan la distribución de consultorios entre médicos</p>
+                            <p class="mb-1">• El total debe ser exactamente 100% para una distribución válida</p>
+                            <p class="mb-0">• Use "Redistribuir" para asignar porcentajes equitativos automáticamente</p>
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Tabla de Porcentajes por Médico -->
+                    <div class="table-responsive">
+                      <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th width="45%">
+                              <i class="fa fa-user-md me-1 text-primary"></i>Médico
+                            </th>
+                            <th width="25%">
+                              <i class="fa fa-stethoscope me-1 text-success"></i>Especialidad
+                            </th>
+                            <th width="20%">
+                              <i class="fa fa-percentage me-1 text-info"></i>Porcentaje
+                            </th>
+                            <th width="10%">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let staff of staffMedicoCentro">
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <div class="avatar-medicos me-3">
+                                  Dr
+                                </div>
+                                <div>
+                                  <div class="fw-semibold">Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</div>
+                                  <small class="text-muted">Matrícula: {{ staff.medico?.matricula }}</small>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <span class="badge-especialidades">
+                                <i class="fa fa-stethoscope me-1"></i>{{ staff.especialidad?.nombre }}
+                              </span>
+                            </td>
+                            <td>
+                              <div class="input-group">
+                                <input type="number" 
+                                       class="form-control" 
+                                       [(ngModel)]="staff.porcentaje"
+                                       (ngModelChange)="onPorcentajeMedicoChange()"
+                                       min="0" 
+                                       max="100" 
+                                       step="0.1"
+                                       placeholder="0">
+                                <span class="input-group-text">%</span>
+                              </div>
+                            </td>
+                            <td>
+                              <button class="btn btn-sm btn-outline-primary" 
+                                      (click)="guardarPorcentajeMedico(staff)"
+                                      [disabled]="!staff.porcentaje || staff.porcentaje < 0 || staff.porcentaje > 100"
+                                      title="Guardar porcentaje individual">
+                                <i class="fa fa-save"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1468,162 +1625,7 @@
           </div>
           
           <!-- Panel de Gestión de Porcentajes Médicos -->
-          <div *ngIf="staffMedicoCentro.length > 0" class="mt-4">
-            <div class="row">
-              <!-- Panel de Control de Porcentajes -->
-              <div class="col-12">
-                <div class="card border-info">
-                  <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                      <i class="fa fa-chart-pie me-2"></i>
-                      Distribución de Porcentajes por Médico
-                    </h6>
-                    <div class="d-flex gap-2">
-                      <button class="btn btn-sm btn-outline-light" 
-                              (click)="redistribuirPorcentajesMedicos()"
-                              title="Distribuir 100% equitativamente entre todos los médicos">
-                        <i class="fa fa-balance-scale me-1"></i>Redistribuir
-                      </button>
-                      <button class="btn btn-sm btn-warning" 
-                              (click)="redistribuirEsquemasExistentes()"
-                              title="Aplicar porcentajes a esquemas de turno ya creados">
-                        <i class="fa fa-cogs me-1"></i>Redistribuir Esquemas
-                      </button>
-                      <button class="btn btn-sm btn-light" 
-                              (click)="guardarTodosPorcentajesMedicos()"
-                              [disabled]="totalPorcentajeMedicos > 100">
-                        <i class="fa fa-save me-1"></i>Guardar Todo
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <!-- Indicador de Total de Porcentajes -->
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <div class="progress-info-card p-3" 
-                             [style.background]="totalPorcentajeMedicos > 100 ? 'rgba(220, 53, 69, 0.1)' : 
-                                                 totalPorcentajeMedicos === 100 ? 'rgba(40, 167, 69, 0.1)' : 
-                                                 'rgba(255, 193, 7, 0.1)'"
-                             [style.border]="totalPorcentajeMedicos > 100 ? '2px solid rgba(220, 53, 69, 0.3)' : 
-                                            totalPorcentajeMedicos === 100 ? '2px solid rgba(40, 167, 69, 0.3)' : 
-                                            '2px solid rgba(255, 193, 7, 0.3)'"
-                             style="border-radius: 12px;">
-                          <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0" 
-                                [class.text-danger]="totalPorcentajeMedicos > 100"
-                                [class.text-success]="totalPorcentajeMedicos === 100"
-                                [class.text-warning]="totalPorcentajeMedicos < 100">
-                              <i class="fa fa-percentage me-2"></i>Total Asignado
-                            </h6>
-                            <span class="h4 mb-0 fw-bold"
-                                  [class.text-danger]="totalPorcentajeMedicos > 100"
-                                  [class.text-success]="totalPorcentajeMedicos === 100"
-                                  [class.text-warning]="totalPorcentajeMedicos < 100">
-                              {{ totalPorcentajeMedicos }}%
-                            </span>
-                          </div>
-                          <div class="progress" style="height: 8px;">
-                            <div class="progress-bar" 
-                                 [class.bg-danger]="totalPorcentajeMedicos > 100"
-                                 [class.bg-success]="totalPorcentajeMedicos === 100"
-                                 [class.bg-warning]="totalPorcentajeMedicos < 100"
-                                 [style.width.%]="totalPorcentajeMedicos > 100 ? 100 : totalPorcentajeMedicos"></div>
-                          </div>
-                          <small class="text-muted mt-1 d-block">
-                            <span *ngIf="totalPorcentajeMedicos > 100" class="text-danger">
-                              <i class="fa fa-exclamation-triangle me-1"></i>
-                              Excede el 100%. Ajuste los porcentajes.
-                            </span>
-                            <span *ngIf="totalPorcentajeMedicos === 100" class="text-success">
-                              <i class="fa fa-check-circle me-1"></i>
-                              Distribución completa y balanceada.
-                            </span>
-                            <span *ngIf="totalPorcentajeMedicos < 100" class="text-warning">
-                              <i class="fa fa-info-circle me-1"></i>
-                              Disponible: {{ porcentajeDisponibleMedicos }}%
-                            </span>
-                          </small>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="info-card p-3" style="background: rgba(54, 185, 204, 0.1); border: 2px solid rgba(54, 185, 204, 0.3); border-radius: 12px;">
-                          <h6 class="mb-2 text-info">
-                            <i class="fa fa-info-circle me-2"></i>Información de Porcentajes
-                          </h6>
-                          <small class="text-muted">
-                            <p class="mb-1">• Los porcentajes determinan la distribución de consultorios entre médicos</p>
-                            <p class="mb-1">• El total debe ser exactamente 100% para una distribución válida</p>
-                            <p class="mb-0">• Use "Redistribuir" para asignar porcentajes equitativos automáticamente</p>
-                          </small>
-                        </div>
-                      </div>
-                    </div>
 
-                    <!-- Tabla de Porcentajes por Médico -->
-                    <div class="table-responsive">
-                      <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                          <tr>
-                            <th width="45%">
-                              <i class="fa fa-user-md me-1 text-primary"></i>Médico
-                            </th>
-                            <th width="25%">
-                              <i class="fa fa-stethoscope me-1 text-success"></i>Especialidad
-                            </th>
-                            <th width="20%">
-                              <i class="fa fa-percentage me-1 text-info"></i>Porcentaje
-                            </th>
-                            <th width="10%">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let staff of staffMedicoCentro">
-                            <td>
-                              <div class="d-flex align-items-center">
-                                <div class="avatar-medicos me-3">
-                                  Dr
-                                </div>
-                                <div>
-                                  <div class="fw-semibold">Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</div>
-                                  <small class="text-muted">Matrícula: {{ staff.medico?.matricula }}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span class="badge-especialidades">
-                                <i class="fa fa-stethoscope me-1"></i>{{ staff.especialidad?.nombre }}
-                              </span>
-                            </td>
-                            <td>
-                              <div class="input-group">
-                                <input type="number" 
-                                       class="form-control" 
-                                       [(ngModel)]="staff.porcentaje"
-                                       (ngModelChange)="onPorcentajeMedicoChange()"
-                                       min="0" 
-                                       max="100" 
-                                       step="0.1"
-                                       placeholder="0">
-                                <span class="input-group-text">%</span>
-                              </div>
-                            </td>
-                            <td>
-                              <button class="btn btn-sm btn-outline-primary" 
-                                      (click)="guardarPorcentajeMedico(staff)"
-                                      [disabled]="!staff.porcentaje || staff.porcentaje < 0 || staff.porcentaje > 100"
-                                      title="Guardar porcentaje individual">
-                                <i class="fa fa-save"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- Información sobre Gestión de Disponibilidades -->
           <div *ngIf="staffMedicoCentro.length > 0" class="mt-4 p-3" style="background: rgba(40, 167, 69, 0.05); border-radius: 15px; border: 2px solid rgba(40, 167, 69, 0.2);">

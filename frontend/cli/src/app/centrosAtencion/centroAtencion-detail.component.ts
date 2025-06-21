@@ -32,77 +32,88 @@ import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibil
 
 })
 export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
+  // ==================== PROPIEDADES PRINCIPALES ====================
   centroAtencion!: CentroAtencion;
+  form: any = { invalid: false, valid: true };
+  activeTab: string = 'detalle';
+  modoEdicion = false;
+
+  // ==================== DATOS DE DOMINIO (SRP) ====================
+  consultorios: Consultorio[] = [];
+  staffMedicoCentro: StaffMedico[] = [];
+  medicosDisponibles: Medico[] = [];
+  especialidadesAsociadas: Especialidad[] = [];
+  especialidadesDisponibles: Especialidad[] = [];
+  esquemasSemana: EsquemaTurno[] = [];
+  disponibilidadesMedico: DisponibilidadMedico[] = [];
+
+  // ==================== ESTADO DE UI (SRP) ====================
+  especialidadSeleccionada: Especialidad | null = null;
+  especialidadesMedico: Especialidad[] = [];
+  medicoSeleccionado: Medico | null = null;
+  consultorioExpandido: { [consultorioId: number]: boolean } = {};
+  esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
+  staffMedicoExpandido: { [staffMedicoId: number]: boolean } = {};
+  disponibilidadesStaff: { [staffMedicoId: number]: DisponibilidadMedico[] } = {};
+
+  // ==================== ESTADO DE CONSULTORIOS (SRP) ====================
+  modoCrearConsultorio: boolean = false;
+  editConsultorioIndex: number | null = null;
+  nuevoConsultorio: { numero: number | null, nombre: string } = { numero: null, nombre: '' };
+
+  // ==================== ESTADO DE MAPA (SRP) ====================
   coordenadas: string = '';
   showMap: boolean = false;
   private map!: L.Map;
   searchQuery: string = '';
-  consultorios: Consultorio[] = [];
-  staffMedicoCentro: StaffMedico[] = [];
-  medicosDisponibles: Medico[] = [];
-  form: any = { invalid: false, valid: true };
 
-  modoEdicion = false;
-  especialidadesAsociadas: Especialidad[] = [];
-  especialidadSeleccionada: Especialidad | null = null;
-  especialidadesDisponibles: Especialidad[] = [];
-  especialidadesMedico: Especialidad[] = [];
+  // ==================== GESTIÓN DE PORCENTAJES (SRP) ====================
+  totalPorcentajeMedicos: number = 0;
+  porcentajeDisponibleMedicos: number = 100;
+  porcentajesOriginalesMedicos: { [staffMedicoId: number]: number } = {};
+  semanaSeleccionada: string = '';
+
+  // ==================== MENSAJES DE UI (SRP) ====================
   mensaje: string = '';
   tipoMensaje: string = '';
   mensajeConsultorio: string = '';
   tipoMensajeConsultorio: string = '';
   mensajeStaff: string = '';
   tipoMensajeStaff: string = '';
-  activeTab: string = 'detalle';
-  modoCrearConsultorio: boolean = false;
-  editConsultorioIndex: number | null = null;
-  nuevoConsultorio: { numero: number | null, nombre: string } = { numero: null, nombre: '' };
-  medicoSeleccionado: Medico | null = null;
-  consultorioExpandido: { [consultorioId: number]: boolean } = {};
-  esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
-  staffMedicoExpandido: { [staffMedicoId: number]: boolean } = {};
-  disponibilidadesStaff: { [staffMedicoId: number]: DisponibilidadMedico[] } = {};
-  disponibilidadesMedico: DisponibilidadMedico[] = [];
-  
-  // Control de carga para evitar requests duplicados
-  private isLoadingEsquemas: boolean = false;
-  private esquemasLoaded: boolean = false;
-  private isLoadingEspecialidades: boolean = false;
-  private especialidadesLoaded: boolean = false;
-  private isLoadingMedicos: boolean = false;
-  private medicosLoaded: boolean = false;
-  private isLoadingDisponibilidades: boolean = false;
-  private disponibilidadesLoaded: boolean = false;
 
-  // Propiedades para gestión de porcentajes por médico
-  totalPorcentajeMedicos: number = 0;
-  porcentajeDisponibleMedicos: number = 100;
-  porcentajesOriginalesMedicos: { [staffMedicoId: number]: number } = {};
+  // ==================== CONTROL DE CARGA (SRP) ====================
+  private loadingState = {
+    esquemas: { loading: false, loaded: false },
+    especialidades: { loading: false, loaded: false },
+    medicos: { loading: false, loaded: false },
+    disponibilidades: { loading: false, loaded: false }
+  };
 
-  // Propiedades para el tab de esquemas de turno
-  semanaSeleccionada: string = '';
-  esquemasSemana: EsquemaTurno[] = [];
+  // Legacy properties for compatibility
+  private get isLoadingEsquemas(): boolean { return this.loadingState.esquemas.loading; }
+  private set isLoadingEsquemas(value: boolean) { this.loadingState.esquemas.loading = value; }
+  private get esquemasLoaded(): boolean { return this.loadingState.esquemas.loaded; }
+  private set esquemasLoaded(value: boolean) { this.loadingState.esquemas.loaded = value; }
+  private get isLoadingEspecialidades(): boolean { return this.loadingState.especialidades.loading; }
+  private set isLoadingEspecialidades(value: boolean) { this.loadingState.especialidades.loading = value; }
+  private get especialidadesLoaded(): boolean { return this.loadingState.especialidades.loaded; }
+  private set especialidadesLoaded(value: boolean) { this.loadingState.especialidades.loaded = value; }
+  private get isLoadingMedicos(): boolean { return this.loadingState.medicos.loading; }
+  private set isLoadingMedicos(value: boolean) { this.loadingState.medicos.loading = value; }
+  private get medicosLoaded(): boolean { return this.loadingState.medicos.loaded; }
+  private set medicosLoaded(value: boolean) { this.loadingState.medicos.loaded = value; }
 
-  // Cache invalidation methods
-  private invalidateEsquemasCache(): void {
-    this.esquemasLoaded = false;
-    this.isLoadingEsquemas = false;
-  }
-
-  private invalidateEspecialidadesCache(): void {
-    this.especialidadesLoaded = false;
-    this.isLoadingEspecialidades = false;
-  }
-
-  private invalidateMedicosCache(): void {
-    this.medicosLoaded = false;
-    this.isLoadingMedicos = false;
-  }
-
-  private invalidateDisponibilidadesCache(): void {
-    this.disponibilidadesLoaded = false;
-    this.isLoadingDisponibilidades = false;
-  }
+  // ==================== HELPERS ESPECIALIZADOS (SRP) ====================
+  private readonly dataLoader = this.createDataLoader();
+  private readonly uiManager = this.createUIManager();
+  private readonly validationHelper = this.createValidationHelper();
+  private readonly messageHandler = this.createMessageHandler();
+  private readonly percentageCalculator = this.createPercentageCalculator();
+  private readonly dataProcessor = this.createDataProcessor();
+  private readonly mapHandler = this.createMapHandler();
+  private readonly consultorioManager = this.createConsultorioManager();
+  private readonly staffManager = this.createStaffManager();
+  private readonly esquemaManager = this.createEsquemaManager();
 
   constructor(
     private route: ActivatedRoute,
@@ -118,16 +129,312 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     private router: Router
   ) { }
 
+  // ==================== FACTORY METHODS PARA HELPERS (SRP) ====================
+  
+  private createDataLoader() {
+    return {
+      loadAllData: () => this.cargarTodosLosDatos(),
+      loadConsultorios: () => this.getConsultorios(),
+      loadEspecialidades: () => this.cargarEspecialidades(),
+      loadEspecialidadesAsociadas: () => this.cargarEspecialidadesAsociadas(),
+      loadStaffMedico: () => this.loadStaffMedico(),
+      loadMedicosYEspecialidades: () => this.cargarMedicosYEspecialidades(),
+      loadPorcentajesMedicos: () => this.cargarPorcentajesMedicos(),
+      loadEsquemasParaSemana: () => this.cargarEsquemasParaSemana(),
+      invalidateCache: {
+        esquemas: () => this.invalidateEsquemasCache(),
+        especialidades: () => this.invalidateEspecialidadesCache(),
+        medicos: () => this.invalidateMedicosCache(),
+        disponibilidades: () => this.invalidateDisponibilidadesCache()
+      }
+    };
+  }
+
+  private createMessageHandler() {
+    return {
+      alert: (title: string, message: string) => this.modalService.alert(title, message),
+      confirm: (title: string, message: string, details?: string) => 
+        details ? this.modalService.confirm(title, message, details) : this.modalService.confirm(title, message, ''),
+      mostrarMensaje: (mensaje: string, tipo: string) => this.mostrarMensaje(mensaje, tipo),
+      mostrarMensajeConsultorio: (mensaje: string, tipo: string) => this.mostrarMensajeConsultorio(mensaje, tipo),
+      mostrarMensajeStaff: (mensaje: string, tipo: string) => this.mostrarMensajeStaff(mensaje, tipo)
+    };
+  }
+
+  private createStaffManager() {
+    return {
+      expandir: (staffMedico: StaffMedico) => this.toggleStaffMedicoExpansion(staffMedico)
+    };
+  }
+
+  private createUIManager() {
+    return {
+      toggleMap: () => this.toggleMap(),
+      activarEdicion: () => this.activarEdicion(),
+      cancelarEdicion: () => this.cancelarEdicion(),
+      setActiveTab: (tab: string) => this.setActiveTab(tab)
+    };
+  }
+
+  private createValidationHelper() {
+    return {
+      validarPorcentaje: (porcentaje: number) => this.validarPorcentaje(porcentaje),
+      validarPorcentajesTotales: () => this.validarPorcentajesTotales(),
+      validarConsultorio: (consultorio: Consultorio) => this.validarNumeroConsultorio(consultorio.numero),
+      validateConsultorio: (numero: number, nombre: string) => ({
+        numeroExists: !this.validarNumeroConsultorio(numero),
+        nombreExists: this.consultorios.some(c => c.nombre === nombre)
+      }),
+      validatePorcentajeSum: (staffMedico: StaffMedico) => {
+        const totalOtros = this.staffMedicoCentro
+          .filter(s => s.id !== staffMedico.id)
+          .reduce((sum, s) => sum + (s.porcentaje || 0), 0);
+        return (totalOtros + (staffMedico.porcentaje || 0)) <= 100;
+      }
+    };
+  }
+
+  private createPercentageCalculator() {
+    return {
+      calcularPorcentajeTotal: () => this.calcularPorcentajeTotal(),
+      calcularPorcentajeRestante: () => 100 - this.calcularPorcentajeTotal(),
+      calcularTotales: () => this.calcularTotalesPorcentajeMedicos()
+    };
+  }
+
+  private createDataProcessor() {
+    return {
+      procesarEspecialidades: () => this.cargarEspecialidadesAsociadas(),
+      procesarStaff: () => this.loadStaffMedico(),
+      procesarConsultorios: () => this.getConsultorios(),
+      formatCoordinates: (lat: number, lng: number) => `${lat}, ${lng}`,
+      processCoordinates: (coords: string) => {
+        const parts = coords.split(',').map(p => parseFloat(p.trim()));
+        return parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) ? { latitud: parts[0], longitud: parts[1] } : null;
+      }
+    };
+  }
+
+  private createMapHandler() {
+    return {
+      initialize: () => this.initializeMap(),
+      toggle: () => this.toggleMap()
+    };
+  }
+
+  private createConsultorioManager() {
+    return {
+      crear: () => this.crearConsultorio(),
+      validar: (numero: number) => this.validarNumeroConsultorio(numero)
+    };
+  }
+
+  private createEsquemaManager() {
+    return {
+      cargar: () => this.cargarEsquemasTurno(),
+      cargarParaConsultorio: (consultorio: Consultorio) => this.cargarEsquemasConsultorio(consultorio),
+      cargarParaSemana: () => this.cargarEsquemasParaSemana()
+    };
+  }
+
+  // ==================== CACHE INVALIDATION METHODS (SRP) ====================
+  
+  private invalidateEsquemasCache(): void {
+    this.loadingState.esquemas.loaded = false;
+    this.loadingState.esquemas.loading = false;
+  }
+
+  private invalidateEspecialidadesCache(): void {
+    this.loadingState.especialidades.loaded = false;
+    this.loadingState.especialidades.loading = false;
+  }
+
+  private invalidateMedicosCache(): void {
+    this.loadingState.medicos.loaded = false;
+    this.loadingState.medicos.loading = false;
+  }
+
+  private invalidateDisponibilidadesCache(): void {
+    this.loadingState.disponibilidades.loaded = false;
+    this.loadingState.disponibilidades.loading = false;
+  }
+
+  // ==================== LIFECYCLE METHODS (SRP) ====================
+  
   ngAfterViewInit(): void {
     if (this.showMap) {
-      this.initializeMap();
+      this.mapHandler.initialize();
     }
   }
+
+  ngOnInit(): void {
+    this.get();
+    this.dataLoader.loadEsquemasParaSemana();
+    
+    // Manejar activación de tab desde query params (para navegación de retorno)
+    this.route.queryParams.subscribe(params => {
+      const activeTabParam = params['activeTab'];
+      if (activeTabParam && ['detalle', 'consultorios', 'esquemas', 'especialidades', 'staff'].includes(activeTabParam)) {
+        this.activeTab = activeTabParam;
+      }
+    });
+  }
+
+  // ==================== UI MANAGEMENT METHODS (SRP) ====================
 
   toggleMap(): void {
     this.showMap = !this.showMap;
   }
 
+  activarEdicion(): void {
+    this.modoEdicion = true;
+  }
+
+  cancelar(): void {
+    this.modoEdicion = false;
+    this.get(); // Reload original data
+  }
+
+  goBack(): void {
+    this.router.navigate(['/centrosAtencion']);
+  }
+
+  // ==================== CENTRO ATENCION CRUD METHODS (SRP) ====================
+
+  get(): void {
+    const path = this.route.snapshot.routeConfig?.path;
+
+    if (path === 'centrosAtencion/new') {
+      this.initializeNewCentro();
+    } else if (path === 'centrosAtencion/:id') {
+      this.loadExistingCentro();
+    } else {
+      this.modoEdicion = false;
+    }
+  }
+
+  private initializeNewCentro(): void {
+    this.modoEdicion = true;
+    this.centroAtencion = {
+      nombre: '',
+      code: '',
+      direccion: '',
+      localidad: '',
+      provincia: '',
+      telefono: '',
+      latitud: 0,
+      longitud: 0
+    } as CentroAtencion;
+    this.coordenadas = '';
+    this.consultorios = [];
+  }
+
+  private loadExistingCentro(): void {
+    this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) return;
+    
+    const id = Number(idParam);
+    if (isNaN(id)) return;
+    
+    this.centroAtencionService.get(id).subscribe({
+      next: (dataPackage) => {
+        this.centroAtencion = <CentroAtencion>dataPackage.data;
+        this.centroAtencion.code = String(this.centroAtencion.id);
+        this.processCoordinates();
+        this.dataLoader.loadAllData();
+      },
+      error: (err) => {
+        this.messageHandler.alert('Error', 'No se pudo cargar el centro de atención. Intente nuevamente.');
+      }
+    });
+  }
+
+  private processCoordinates(): void {
+    if (
+      this.centroAtencion.latitud !== undefined &&
+      this.centroAtencion.longitud !== undefined &&
+      this.centroAtencion.latitud !== 0 &&
+      this.centroAtencion.longitud !== 0
+    ) {
+      this.coordenadas = this.dataProcessor.formatCoordinates(
+        this.centroAtencion.latitud, 
+        this.centroAtencion.longitud
+      );
+    } else {
+      this.coordenadas = '';
+    }
+  }
+
+  save(): void {
+    try {
+      if (this.coordenadas) {
+        const coords = this.dataProcessor.processCoordinates(this.coordenadas);
+        if (coords) {
+          this.centroAtencion.latitud = coords.latitud;
+          this.centroAtencion.longitud = coords.longitud;
+        }
+      }
+      
+      if (this.centroAtencion.id) {
+        this.centroAtencion.code = String(this.centroAtencion.id);
+      }
+      
+      this.centroAtencionService.save(this.centroAtencion).subscribe({
+        next: (dataPackage) => {
+          this.centroAtencion = <CentroAtencion>dataPackage.data;
+          this.modoEdicion = false;
+          this.dataLoader.loadConsultorios();
+          this.messageHandler.alert('Éxito', 'Centro de atención guardado correctamente.');
+        },
+        error: (err) => {
+          console.error('Error al guardar el centro de atención:', err);
+          this.messageHandler.alert('Error', 'No se pudo guardar el centro de atención. Intente nuevamente.');
+        }
+      });
+    } catch (error) {
+      console.error('Error en save():', error);
+      this.messageHandler.alert('Error', 'Ocurrió un error inesperado al guardar.');
+    }
+  }
+
+  confirmDelete(centro: CentroAtencion): void {
+    if (centro.id === undefined) {
+      this.messageHandler.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
+      return;
+    }
+    
+    this.messageHandler.confirm(
+      "Eliminar centro de atención",
+      "¿Está seguro que desea eliminar el centro de atención?",
+      "Si elimina el centro no lo podrá utilizar luego"
+    ).then(() => {
+      this.remove(centro);
+    }).catch(() => {
+      // User cancelled
+    });
+  }
+
+  remove(centro: CentroAtencion): void {
+    if (centro.id === undefined) {
+      this.messageHandler.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
+      return;
+    }
+    
+    this.centroAtencionService.delete(centro.id!).subscribe({
+      next: () => {
+        this.messageHandler.alert('Éxito', 'Centro de atención eliminado correctamente.');
+        this.goBack();
+      },
+      error: (err) => {
+        console.error('Error al eliminar el centro de atención:', err);
+        this.messageHandler.alert('Error', 'No se pudo eliminar el centro de atención. Intente nuevamente.');
+      }
+    });
+  }
+
+  // ==================== MAP METHODS (SRP) ====================
+  
   initializeMap(): void {
     this.map = L.map('map').setView([-38.4161, -63.6167], 5); // Coordenadas iniciales (Centro de Argentina)
 
@@ -168,145 +475,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/centrosAtencion']);
-  }
-
-  activarEdicion(): void {
-    this.modoEdicion = true;
-  }
-
-  cancelar(): void {
-    this.modoEdicion = false;
-    this.get(); // Reload original data
-  }
-
-  confirmDelete(centro: CentroAtencion): void {
-    if (centro.id === undefined) {
-      this.modalService.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
-      return;
-    }
-    
-    this.modalService
-      .confirm(
-        "Eliminar centro de atención",
-        "¿Está seguro que desea eliminar el centro de atención?",
-        "Si elimina el centro no lo podrá utilizar luego"
-      )
-      .then(() => {
-        this.remove(centro);
-      })
-      .catch(() => {
-        // User cancelled
-      });
-  }
-
-  save(): void {
-    try {
-      // Si hay coordenadas, separarlas y asignarlas a latitud/longitud
-      if (this.coordenadas) {
-        const [lat, lng] = this.coordenadas.split(',').map(c => Number(c.trim()));
-        this.centroAtencion.latitud = lat;
-        this.centroAtencion.longitud = lng;
-      }
-      // El código siempre es el id (si existe)
-      if (this.centroAtencion.id) {
-        this.centroAtencion.code = String(this.centroAtencion.id);
-      }
-      
-      this.centroAtencionService.save(this.centroAtencion).subscribe({
-        next: (dataPackage) => {
-          this.centroAtencion = <CentroAtencion>dataPackage.data;
-          this.modoEdicion = false;
-          this.getConsultorios();
-          this.modalService.alert('Éxito', 'Centro de atención guardado correctamente.');
-        },
-        error: (err) => {
-          console.error('Error al guardar el centro de atención:', err);
-          this.modalService.alert('Error', 'No se pudo guardar el centro de atención. Intente nuevamente.');
-        }
-      });
-    } catch (error) {
-      console.error('Error en save():', error);
-      this.modalService.alert('Error', 'Ocurrió un error inesperado al guardar.');
-    }
-  }
-
-  remove(centro: CentroAtencion): void {
-    if (centro.id === undefined) {
-      this.modalService.alert('Error', 'No se puede eliminar: el centro no tiene ID.');
-      return;
-    }
-    
-    this.centroAtencionService.delete(centro.id!).subscribe({
-      next: () => {
-        this.modalService.alert('Éxito', 'Centro de atención eliminado correctamente.');
-        this.goBack();
-      },
-      error: (err) => {
-        console.error('Error al eliminar el centro de atención:', err);
-        this.modalService.alert('Error', 'No se pudo eliminar el centro de atención. Intente nuevamente.');
-      }
-    });
-  }
-
-  get(): void {
-    const path = this.route.snapshot.routeConfig?.path;
-
-    if (path === 'centrosAtencion/new') {
-      // Nuevo centro
-      this.modoEdicion = true;
-      this.centroAtencion = {
-        nombre: '',
-        code: '',
-        direccion: '',
-        localidad: '',
-        provincia: '',
-        telefono: '',
-        latitud: 0,
-        longitud: 0
-      } as CentroAtencion;
-      this.coordenadas = '';
-      this.consultorios = [];
-    } else if (path === 'centrosAtencion/:id') {
-      // Detalle o edición
-      this.modoEdicion = this.route.snapshot.queryParamMap.get('edit') === 'true';
-      const idParam = this.route.snapshot.paramMap.get('id');
-      if (!idParam) return;
-      const id = Number(idParam);
-      if (isNaN(id)) return;
-      this.centroAtencionService.get(id).subscribe({
-        next: (dataPackage) => {
-          this.centroAtencion = <CentroAtencion>dataPackage.data;
-          this.centroAtencion.code = String(this.centroAtencion.id);
-          if (
-            this.centroAtencion.latitud !== undefined &&
-            this.centroAtencion.longitud !== undefined &&
-            this.centroAtencion.latitud !== 0 &&
-            this.centroAtencion.longitud !== 0
-          ) {
-            this.coordenadas = `${this.centroAtencion.latitud},${this.centroAtencion.longitud}`;
-          } else {
-            this.coordenadas = '';
-          }
-          // Cargar todos los datos en paralelo para optimizar performance
-          this.cargarTodosLosDatos();
-        },
-        error: (err) => {
-          alert('No se pudo cargar el centro de atención. Intente nuevamente.');
-        }
-      });
-    } else {
-      // Ruta no reconocida
-      this.modoEdicion = false;
-    }
-  }
-
-  ngOnInit(): void {
-    this.get();
-    this.cargarEsquemasParaSemana(); // Cargar esquemas directamente
-  }
-
   onLocationSelected(coords: { latitud: number, longitud: number } | null): void {
     if (coords) {
       this.centroAtencion.latitud = coords.latitud;
@@ -317,14 +485,21 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.showMap = false;
   }
 
+  // ==================== VALIDATION METHODS (SRP) ====================
+
   allFieldsEmpty(): boolean {
     // Check if the minimum required fields are empty
     return !this.centroAtencion.nombre || !this.centroAtencion.direccion || 
            !this.centroAtencion.localidad || !this.centroAtencion.provincia;
   }
-  
 
+  medicoYaAsociado(): boolean {
+    return !!this.staffMedicoCentro.find(staff =>
+      staff.medicoId === this.medicoSeleccionado?.id
+    );
+  }
 
+  // ==================== DATA LOADING METHODS (SRP) ====================
   
   getConsultorios(): void {
     if (this.centroAtencion?.id) {
@@ -334,16 +509,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       });
     }
   }
-  getEspecialidades(): void {
-    if (this.centroAtencion?.id) {
-      this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
-        next: (data: any) => this.consultorios = data.data,
-        error: () => this.consultorios = []
-      });
-    }
-  }
-
-  // Inicialización de variables
 
   // Método para cargar especialidades disponibles
   cargarEspecialidades() {
@@ -378,6 +543,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       }
     });
   }
+
   cargarEspecialidadesAsociadas() {
     if (!this.centroAtencion?.id) return;
 
@@ -391,146 +557,6 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         console.log('Error al cargar las especialidades asociadas al centro.');
       }
     });
-  }
-  
-  /**
-   * Controla la expansión y colapso del panel de consultorios
-   */
-  toggleConsultorioExpansion(consultorio: Consultorio): void {
-    if (!consultorio.id) return;
-    
-    // Invierte el estado de expansión del consultorio
-    this.consultorioExpandido[consultorio.id] = !this.consultorioExpandido[consultorio.id];
-    
-    // Si se está expandiendo, recargar esquemas específicos para este consultorio
-    if (this.consultorioExpandido[consultorio.id]) {
-      this.cargarEsquemasConsultorio(consultorio);
-    }
-  }
-
-  /**
-   * Controla la expansión y colapso del panel de staff médico
-   */
-  toggleStaffMedicoExpansion(staffMedico: StaffMedico): void {
-    if (!staffMedico.id) return;
-    
-    // Invierte el estado de expansión del staff médico
-    this.staffMedicoExpandido[staffMedico.id] = !this.staffMedicoExpandido[staffMedico.id];
-    
-    // Si se está expandiendo, cargar disponibilidades específicas para este staff médico
-    if (this.staffMedicoExpandido[staffMedico.id]) {
-      this.cargarDisponibilidadesStaff(staffMedico);
-    }
-  }
-
-  asociarEspecialidad() {
-    if (!this.especialidadSeleccionada || !this.centroAtencion?.id) return;
-    this.especialidadService.asociar(this.centroAtencion.id!, this.especialidadSeleccionada.id!)
-      .subscribe({
-        next: () => {
-          this.mostrarMensaje('Especialidad asociada correctamente.', 'success');
-          // Invalidate cache and reload
-          this.invalidateEspecialidadesCache();
-          this.cargarEspecialidades();
-          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
-          this.especialidadSeleccionada = null;
-        },
-        error: err => {
-          this.mostrarMensaje('No se pudo asociar la especialidad.', 'danger');
-        }
-      });
-  }
-
-  desasociarEspecialidad(esp: Especialidad) {
-    if (!this.centroAtencion?.id || !esp.id) return;
-    this.especialidadService.desasociar(this.centroAtencion.id!, esp.id!)
-      .subscribe({
-        next: () => {
-          this.mensaje = 'Especialidad desasociada correctamente';
-          // Invalidate cache and reload
-          this.invalidateEspecialidadesCache();
-          this.cargarEspecialidades();
-          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
-        },
-        error: err => {
-          this.mensaje = err.error?.status_text || 'No se pudo desasociar la especialidad';
-        }
-      });
-  }
-
-
-
-  cancelarEdicion() {
-    this.modoEdicion = false;
-    // Opcional: recargar datos originales
-  }
-
-  crearConsultorio() {
-    if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.nombre) return;
-
-    // Verificar si ya existe un consultorio con el mismo número
-    if (this.consultorios.some(c => c.numero === this.nuevoConsultorio.numero)) {
-      this.mensajeConsultorio = 'Ya existe un consultorio con ese número en este centro.';
-      setTimeout(() => this.mensajeConsultorio = '', 5000);
-      return;
-    }
-
-    // Crear el objeto consultorio con la referencia al centro de atención
-    const consultorio: Consultorio = {
-      numero: this.nuevoConsultorio.numero,
-      nombre: this.nuevoConsultorio.nombre,
-      centroId: this.centroAtencion.id // Asignar el ID del centro
-    };
-
-    // Enviar el consultorio al backend
-    this.consultorioService.create(consultorio).subscribe({
-      next: () => {
-        this.mensajeConsultorio = 'Consultorio creado correctamente';
-        setTimeout(() => this.mensajeConsultorio = '', 3000);
-        this.getConsultorios(); // Recargar la lista de consultorios
-        this.nuevoConsultorio = { numero: null, nombre: '' }; // Limpiar el formulario
-        this.modoCrearConsultorio = false; // Salir del modo de creación
-      },
-      error: (err: any) => {
-        this.mensajeConsultorio = err.error?.status_text || 'No se pudo crear el consultorio';
-        setTimeout(() => this.mensajeConsultorio = '', 5000);
-      }
-    });
-  }
-
-  editarConsultorio(i: number) {
-    this.editConsultorioIndex = i;
-  }
-
-  guardarEdicionConsultorio(i: number) {
-    const c = this.consultorios[i];
-    if (this.consultorios.some((x, idx) => x.numero === c.numero && idx !== i)) {
-      this.mensajeConsultorio = 'Ya existe un consultorio con ese número.';
-      return;
-    }
-    if (!c.id) {
-      this.mensajeConsultorio = 'No se puede actualizar un consultorio sin ID.';
-      return;
-    }
-    this.consultorioService.update(c.id, {
-      ...c,
-      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
-    }).subscribe({
-      next: () => {
-        this.mensajeConsultorio = 'Consultorio actualizado correctamente';
-        this.getConsultorios();
-        this.editConsultorioIndex = null;
-      },
-      error: (err: any) => {
-        this.mensajeConsultorio = err.error?.status_text || 'No se pudo actualizar el consultorio';
-      }
-    });
-  }
-
-  cancelarEdicionConsultorio() {
-    this.editConsultorioIndex = null;
-    this.getConsultorios();
-
   }
 
   loadStaffMedico() {
@@ -567,194 +593,200 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     }
     // No cargar especialidades aquí para evitar duplicados - se cargan en cargarEspecialidades()
   }
+  
+  /**
+   * Controla la expansión y colapso del panel de consultorios
+   */
+  // ==================== UI EXPANSION METHODS (SRP) ====================
+  
+  /**
+   * Controla la expansión y colapso del panel de consultorios
+   */
+  toggleConsultorioExpansion(consultorio: Consultorio): void {
+    if (!consultorio.id) return;
+    
+    // Invierte el estado de expansión del consultorio
+    this.consultorioExpandido[consultorio.id] = !this.consultorioExpandido[consultorio.id];
+    
+    // Si se está expandiendo, recargar esquemas específicos para este consultorio
+    if (this.consultorioExpandido[consultorio.id]) {
+      this.cargarEsquemasConsultorio(consultorio);
+    }
+  }
 
-  cargarEsquemasTurno() {
-    if (!this.centroAtencion?.id) {
-      console.log('No hay centro de atención ID para cargar esquemas');
-      return;
-    }
+  /**
+   * Controla la expansión y colapso del panel de staff médico
+   */
+  toggleStaffMedicoExpansion(staffMedico: StaffMedico): void {
+    if (!staffMedico.id) return;
     
-    // Evitar llamadas redundantes
-    if (this.isLoadingEsquemas) {
-      console.log('Ya se están cargando los esquemas, evitando llamada duplicada');
-      return;
+    // Invierte el estado de expansión del staff médico
+    this.staffMedicoExpandido[staffMedico.id] = !this.staffMedicoExpandido[staffMedico.id];
+    
+    // Si se está expandiendo, cargar disponibilidades específicas para este staff médico
+    if (this.staffMedicoExpandido[staffMedico.id]) {
+      this.cargarDisponibilidadesStaff(staffMedico);
     }
+  }
 
-    // Si ya se cargaron y no han cambiado los datos, no recargar
-    if (this.esquemasLoaded) {
-      console.log('Esquemas ya cargados, usando datos en caché');
-      return;
-    }
+  cargarDisponibilidadesStaff(staffMedico: StaffMedico): void {
+    if (!staffMedico.id) return;
     
-    this.isLoadingEsquemas = true;
-    console.log('Cargando esquemas de turno para centro ID:', this.centroAtencion.id);
-    
-    // Usar Promise.all para optimizar las llamadas paralelas
-    Promise.all([
-      // Esquemas del centro
-      this.esquemaTurnoService.getByCentroAtencion(this.centroAtencion.id).toPromise(),
-      // Disponibilidades médicas
-      this.disponibilidadMedicoService.all().toPromise()
-    ]).then(([esquemasResponse, disponibilidadesResponse]) => {
-      console.log('Respuesta esquemas de turno:', esquemasResponse);
-      console.log('Respuesta disponibilidades médicas:', disponibilidadesResponse);
-      
-      // Procesar esquemas
-      const esquemas = esquemasResponse?.data as EsquemaTurno[] || [];
-      console.log('Esquemas obtenidos:', esquemas);
-      
-      // Asignar esquemas para el tab de esquemas de turno
-      this.esquemasSemana = esquemas;
-      
-      // Agrupar esquemas por consultorio
-      this.esquemasConsultorio = {};
-      esquemas.forEach(esquema => {
-        if (esquema.consultorioId) {
-          if (!this.esquemasConsultorio[esquema.consultorioId]) {
-            this.esquemasConsultorio[esquema.consultorioId] = [];
-          }
-          this.esquemasConsultorio[esquema.consultorioId].push(esquema);
+    // Cargar disponibilidades específicas para este staff médico
+    this.disponibilidadMedicoService.byStaffMedico(staffMedico.id).subscribe({
+      next: (response: any) => {
+        if (!this.disponibilidadesStaff[staffMedico.id]) {
+          this.disponibilidadesStaff[staffMedico.id] = [];
+        }
+        this.disponibilidadesStaff[staffMedico.id] = response.data as DisponibilidadMedico[] || [];
+      },
+      error: (error: any) => {
+        console.error('Error cargando disponibilidades para staff médico:', error);
+        this.disponibilidadesStaff[staffMedico.id] = [];
+      }
+    });
+  }
+
+  // ==================== ESPECIALIDAD MANAGEMENT METHODS (SRP) ====================
+
+  asociarEspecialidad() {
+    if (!this.especialidadSeleccionada || !this.centroAtencion?.id) return;
+    this.especialidadService.asociar(this.centroAtencion.id!, this.especialidadSeleccionada.id!)
+      .subscribe({
+        next: () => {
+          this.messageHandler.mostrarMensaje('Especialidad asociada correctamente.', 'success');
+          // Invalidate cache and reload
+          this.dataLoader.invalidateCache.especialidades();
+          this.cargarEspecialidades();
+          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
+          this.especialidadSeleccionada = null;
+        },
+        error: err => {
+          this.messageHandler.mostrarMensaje('No se pudo asociar la especialidad.', 'danger');
         }
       });
-      console.log('Esquemas agrupados por consultorio:', this.esquemasConsultorio);
-      
-      // Procesar disponibilidades
-      const todasDisponibilidades = disponibilidadesResponse?.data as DisponibilidadMedico[] || [];
-      this.disponibilidadesMedico = todasDisponibilidades.filter(disp => 
-        disp.staffMedico?.centroAtencionId === this.centroAtencion.id
-      );
-      console.log('Disponibilidades filtradas para el centro:', this.disponibilidadesMedico);
-      
-      // Marcar como cargado
-      this.esquemasLoaded = true;
-      this.isLoadingEsquemas = false;
-      
-    }).catch(error => {
-      console.error('Error cargando datos de esquemas:', error);
-      this.isLoadingEsquemas = false;
-    });
   }
 
-  medicoYaAsociado(): boolean {
-    return !!this.staffMedicoCentro.find(staff =>
-      staff.medicoId === this.medicoSeleccionado?.id
-    );
+  desasociarEspecialidad(esp: Especialidad) {
+    if (!this.centroAtencion?.id || !esp.id) return;
+    this.especialidadService.desasociar(this.centroAtencion.id!, esp.id!)
+      .subscribe({
+        next: () => {
+          this.mensaje = 'Especialidad desasociada correctamente';
+          // Invalidate cache and reload
+          this.dataLoader.invalidateCache.especialidades();
+          this.cargarEspecialidades();
+          this.cargarEspecialidadesAsociadas(); // <--- refresca la lista
+        },
+        error: err => {
+          this.mensaje = err.error?.status_text || 'No se pudo desasociar la especialidad';
+        }
+      });
   }
 
-  asociarMedico() {
-    if (!this.centroAtencion?.id || !this.medicoSeleccionado || !this.especialidadSeleccionada) return;
+  // ==================== CONSULTORIO MANAGEMENT METHODS (SRP) ====================
 
-    // Validar si la especialidad seleccionada está asociada al centro
-    const especialidadAsociada = this.especialidadesAsociadas.some(
-      e => e.id === this.especialidadSeleccionada!.id
+  crearConsultorio() {
+    if (!this.nuevoConsultorio.numero || !this.nuevoConsultorio.nombre) return;
+
+    // Usar el helper de validación
+    const validation = this.validationHelper.validateConsultorio(
+      this.nuevoConsultorio.numero, 
+      this.nuevoConsultorio.nombre
     );
 
-    if (!especialidadAsociada) {
-      this.mostrarMensajeStaff(
-        `La especialidad "${this.especialidadSeleccionada.nombre}" no está asociada al centro.`,
-        'danger'
-      );
+    if (validation.numeroExists) {
+      this.messageHandler.mostrarMensajeConsultorio('Ya existe un consultorio con ese número en este centro.', 'danger');
       return;
     }
 
-    const nuevoStaff: StaffMedico = {
-      id: 0,
-      centroAtencionId: this.centroAtencion.id,
-      medicoId: this.medicoSeleccionado.id,
-      especialidadId: this.especialidadSeleccionada.id,
-      medico: this.medicoSeleccionado,
-      especialidad: this.especialidadSeleccionada,
-      centro: { id: this.centroAtencion.id, nombre: this.centroAtencion.nombre }
+    // Crear el objeto consultorio con la referencia al centro de atención
+    const consultorio: Consultorio = {
+      numero: this.nuevoConsultorio.numero,
+      nombre: this.nuevoConsultorio.nombre,
+      centroId: this.centroAtencion.id // Asignar el ID del centro
     };
 
-    this.staffMedicoService.create(nuevoStaff).subscribe({
+    // Enviar el consultorio al backend
+    this.consultorioService.create(consultorio).subscribe({
       next: () => {
-        this.mostrarMensajeStaff('Médico asociado correctamente.', 'success');
-        this.loadStaffMedico();
-        this.medicoSeleccionado = null;
-        this.especialidadSeleccionada = null;
+        this.messageHandler.mostrarMensajeConsultorio('Consultorio creado correctamente', 'success');
+        this.getConsultorios(); // Recargar la lista de consultorios
+        this.nuevoConsultorio = { numero: null, nombre: '' }; // Limpiar el formulario
+        this.modoCrearConsultorio = false; // Salir del modo de creación
       },
-      error: (err) => {
-        const mensajeError = err?.error?.message || 'Error al asociar médico.';
-        this.mostrarMensajeStaff(mensajeError, 'danger');
+      error: (err: any) => {
+        const mensaje = err.error?.status_text || 'No se pudo crear el consultorio';
+        this.messageHandler.mostrarMensajeConsultorio(mensaje, 'danger');
       }
     });
   }
 
-  desasociarMedico(staff: StaffMedico) {
-    if (!staff.id) return;
-    if (!confirm('¿Está seguro que desea desasociar este médico?')) return;
-    this.staffMedicoService.remove(staff.id).subscribe({
+  editarConsultorio(i: number) {
+    this.editConsultorioIndex = i;
+  }
+
+  guardarEdicionConsultorio(i: number) {
+    const c = this.consultorios[i];
+    const validation = this.validationHelper.validateConsultorio(c.numero!, c.nombre);
+    
+    if (this.consultorios.some((x, idx) => x.numero === c.numero && idx !== i)) {
+      this.messageHandler.mostrarMensajeConsultorio('Ya existe un consultorio con ese número.', 'danger');
+      return;
+    }
+    
+    if (!c.id) {
+      this.messageHandler.mostrarMensajeConsultorio('No se puede actualizar un consultorio sin ID.', 'danger');
+      return;
+    }
+    
+    this.consultorioService.update(c.id, {
+      ...c,
+      centroAtencion: { id: this.centroAtencion.id } as CentroAtencion
+    }).subscribe({
       next: () => {
-        this.mensajeStaff = 'Médico desasociado correctamente.';
-        this.loadStaffMedico();
+        this.messageHandler.mostrarMensajeConsultorio('Consultorio actualizado correctamente', 'success');
+        this.getConsultorios();
+        this.editConsultorioIndex = null;
       },
-      error: (err) => {
-        // El backend debe devolver un mensaje claro si hay turnos activos
-        this.mensajeStaff = err?.error?.status_text || 'No se puede desasociar: el médico tiene turnos activos o hubo un error.';
+      error: (err: any) => {
+        const mensaje = err.error?.status_text || 'No se pudo actualizar el consultorio';
+        this.messageHandler.mostrarMensajeConsultorio(mensaje, 'danger');
       }
     });
+  }
+
+  cancelarEdicionConsultorio() {
+    this.editConsultorioIndex = null;
+    this.getConsultorios();
   }
 
   eliminarConsultorio(consultorio: Consultorio): void {
-  if (!consultorio.id) {
-    alert('No se puede eliminar un consultorio sin ID.');
-    return;
-  }
-
-  const confirmar = confirm(`¿Está seguro que desea eliminar el consultorio "${consultorio.nombre}"?`);
-  if (!confirmar) return;
-
-  this.consultorioService.delete(consultorio.id).subscribe({
-    next: () => {
-      this.mostrarMensajeConsultorio('Consultorio eliminado correctamente.', 'success');
-      this.getConsultorios(); // Recargar la lista de consultorios
-    },
-    error: (err) => {
-      const mensajeError = err?.error?.status_text || 'No se pudo eliminar el consultorio.';
-      this.mostrarMensajeConsultorio(mensajeError, 'danger');
-    }
-  });
-}
-
-  /**
-   * Edita un esquema de turno, navegando al componente de edición
-   */
-  editarEsquema(esquema: EsquemaTurno): void {
-    if (!esquema.id) {
-      this.mostrarMensajeConsultorio('No se puede editar un esquema sin ID', 'danger');
+    if (!consultorio.id) {
+      this.messageHandler.alert('Error', 'No se puede eliminar un consultorio sin ID.');
       return;
     }
-    
-    // Navegar al componente de edición de esquemas de turno
-    this.router.navigate(['/esquema-turno', esquema.id], { 
-      queryParams: { 
-        edit: 'true',
-        centroAtencionId: this.centroAtencion.id
-      } 
+
+    this.messageHandler.confirm(
+      'Eliminar Consultorio',
+      `¿Está seguro que desea eliminar el consultorio "${consultorio.nombre}"?`
+    ).then(() => {
+      this.consultorioService.delete(consultorio.id!).subscribe({
+        next: () => {
+          this.messageHandler.mostrarMensajeConsultorio('Consultorio eliminado correctamente.', 'success');
+          this.getConsultorios(); // Recargar la lista de consultorios
+        },
+        error: (err) => {
+          const mensajeError = err?.error?.status_text || 'No se pudo eliminar el consultorio.';
+          this.messageHandler.mostrarMensajeConsultorio(mensajeError, 'danger');
+        }
+      });
+    }).catch(() => {
+      // User cancelled
     });
   }
 
-  eliminarEsquema(consultorio: Consultorio, esquema: EsquemaTurno): void {
-    if (!esquema.id) {
-      this.mostrarMensajeConsultorio('No se puede eliminar un esquema sin ID', 'danger');
-      return;
-    }
-
-    if (confirm('¿Está seguro de que desea eliminar este esquema de turno?')) {
-      this.esquemaTurnoService.remove(esquema.id).subscribe({
-        next: () => {
-          this.mostrarMensajeConsultorio('Esquema de turno eliminado exitosamente', 'success');
-          // Recargar los esquemas del consultorio
-          this.cargarEsquemasConsultorio(consultorio);
-        },
-        error: (error: any) => {
-          console.error('Error al eliminar esquema:', error);
-          this.mostrarMensajeConsultorio('Error al eliminar el esquema de turno', 'danger');
-        }
-      });
-    }
-  }
+  // ==================== DATA PROCESSING METHODS (SRP) ====================
 
   // Helper methods for esquemas display
   getMedicoInitials(esquema: any): string {
@@ -811,6 +843,16 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     return 'Sin especialidad';
   }
 
+  getConsultorioNombre(esquema: EsquemaTurno): string {
+    const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
+    return consultorio?.nombre || 'Sin consultorio';
+  }
+
+  getConsultorioNumero(esquema: EsquemaTurno): number | null {
+    const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
+    return consultorio?.numero || null;
+  }
+
   getDisponibilidadFromEsquema(esquema: any): DisponibilidadMedico | null {
     return this.disponibilidadesMedico.find(d => d.id === esquema.disponibilidadMedicoId) || null;
   }
@@ -851,317 +893,82 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     return esquema.estado || 'Activo'; // Default to 'Activo' if no estado
   }
 
-  // Method for adding availability/quick assignment
-  agregarDisponibilidad(staff: any) {
-    // Navigate to create a new esquema with pre-selected staff
-    this.router.navigate(['/esquemaTurno'], {
-      queryParams: {
-        centroAtencionId: this.centroAtencion.id,
-        consultorioId: this.consultorioExpandido,
-        medicoId: staff.id
-      }
-    });
-  }
-
-  mostrarMensaje(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
-    this.mensaje = mensaje;
-    this.tipoMensaje = tipo;
-    setTimeout(() => this.mensaje = '', ms);
-  }
-
-  mostrarMensajeStaff(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
-    this.mensajeStaff = mensaje;
-    this.tipoMensajeStaff = tipo;
-    setTimeout(() => this.mensajeStaff = '', ms);
-  }
-
-  mostrarMensajeConsultorio(mensaje: string, tipo: 'info' | 'danger' | 'success' = 'info', ms: number = 3500) {
-    this.mensajeConsultorio = mensaje;
-    this.tipoMensajeConsultorio = tipo;
-    setTimeout(() => this.mensajeConsultorio = '', ms);
-  }
-
-onMedicoSeleccionado() {
-  if (!this.medicoSeleccionado) {
-    // Si no hay médico seleccionado, limpiar las especialidades del médico
-    console.log('No hay médico seleccionado.');
-    this.especialidadesMedico = [];
-    this.especialidadSeleccionada = null;
-    return;
-  }
-
-  // Obtener la especialidad del médico seleccionado directamente del objeto
-  const especialidadMedico = this.medicoSeleccionado.especialidad;
-
-  if (!especialidadMedico) {
-    // Si el médico no tiene especialidad, limpiar las especialidades del médico
-    console.log('El médico seleccionado no tiene especialidad.');
-    this.especialidadesMedico = [];
-    this.especialidadSeleccionada = null;
-    return;
-  }
-
-  console.log('Especialidad del médico seleccionado:', especialidadMedico);
-
-  // Asignar la especialidad del médico al desplegable
-  this.especialidadesMedico = [especialidadMedico];
-  this.especialidadSeleccionada = especialidadMedico;
-
-  // IDs de especialidades asociadas al centro
-  const especialidadesCentroIds = this.especialidadesAsociadas.map(e => e.id);
-
-  // Validar si la especialidad del médico está asociada al centro
-  if (!especialidadesCentroIds.includes(especialidadMedico.id)) {
-    // Si no está asociada, mostrar mensaje de confirmación
-    console.log('La especialidad del médico no está asociada al centro.');
-    const confirmar = confirm(`La especialidad "${especialidadMedico.nombre}" no está asociada al centro. ¿Desea agregarla?`);
-    if (confirmar) {
-      this.asociarEspecialidadAlCentro(especialidadMedico);
-    }
-  } else {
-    console.log('La especialidad del médico está asociada al centro.');
-  }
-}
-asociarEspecialidadAlCentro(especialidad: Especialidad) {
-  if (!this.centroAtencion?.id || !especialidad.id) return;
-
-  this.especialidadService.asociar(this.centroAtencion.id, especialidad.id).subscribe({
-    next: () => {
-      this.mostrarMensaje(`Especialidad "${especialidad.nombre}" asociada al centro correctamente.`, 'success');
-      // Invalidate cache and reload las especialidades asociadas
-      this.invalidateEspecialidadesCache();
-      this.cargarEspecialidadesAsociadas();
-      // Actualizar las especialidades disponibles
-      this.cargarEspecialidades();
-    },
-    error: (err) => {
-      const mensajeError = err?.error?.status_text || 'No se pudo asociar la especialidad al centro.';
-      this.mostrarMensaje(mensajeError, 'danger');
-    }
-  });
-}
-
-// Métodos para gestión de esquemas de turno
-
-gestionarEsquemaTurno(consultorio: Consultorio): void {
-  // Navegar al componente de esquemas de turno con parámetros del consultorio
-  this.router.navigate(['/esquema-turno/new'], { 
-    queryParams: { 
-      centroAtencionId: this.centroAtencion.id,
-      consultorioId: consultorio.id,
-      consultorioNombre: consultorio.nombre
-    } 
-  });
-}
-
-verEsquemasConsultorio(consultorio: Consultorio): EsquemaTurno[] {
-  return this.esquemasConsultorio[consultorio.id!] || [];
-}
-
-/**
- * Crea un nuevo esquema rápido para un consultorio
- */
-crearNuevoEsquema(consultorio: Consultorio): void {
-  // Navegar al formulario de creación de esquemas con el consultorio ID como queryParam
-  this.router.navigate(['/esquema-turno/new'], { 
-    queryParams: { 
-      consultorioId: consultorio.id,
-      centroAtencionId: this.centroAtencion.id,
-      returnTo: 'centro-detail'
-    } 
-  });
-}
-
-/**
- * Edita los horarios de atención de un consultorio
- */
-editarHorariosConsultorio(consultorio: Consultorio): void {
-  if (!consultorio.id) {
-    this.modalService.alert('Error', 'No se puede editar: el consultorio no tiene ID.');
-    return;
-  }
-  
-  // Navegar al formulario de detalle del consultorio en modo edición
-  this.router.navigate(['/consultorios', consultorio.id], { 
-    queryParams: { 
-      edit: 'true',
-      tab: 'horarios', // Parámetro para indicar que se debe enfocar en la pestaña de horarios
-      returnTo: 'centro-detail',
-      centroAtencionId: this.centroAtencion.id
-    } 
-  });
-}
-
-gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
-  // Navegar a disponibilidad médica con más opciones
-  this.router.navigate(['/disponibilidades-medico/new'], { 
-    queryParams: { 
-      staffMedicoId: staff.id,
-      centroAtencionId: this.centroAtencion.id,
-      modo: 'avanzado'
-    } 
-  });
-}  /**
-   * Carga los esquemas asignados específicamente a un consultorio
-   */
-  cargarEsquemasConsultorio(consultorio: Consultorio): void {
-    if (!consultorio.id || !this.centroAtencion?.id) return;
-    
-    // Filtrar esquemas ya cargados por consultorio
-    const esquemasFiltrados = Object.values(this.esquemasConsultorio).flat()
-      .filter(esquema => esquema.consultorioId === consultorio.id);
-    
-    this.esquemasConsultorio[consultorio.id] = esquemasFiltrados;
-    
-    // Si no hay esquemas cargados, intentar recargar desde el servidor
-    if (esquemasFiltrados.length === 0) {
-      this.cargarEsquemasTurno();
-    }
-  }
-
-  /**
-   * Carga las disponibilidades asignadas específicamente a un staff médico
-   */
-  cargarDisponibilidadesStaff(staffMedico: StaffMedico): void {
-    if (!staffMedico.id || !this.centroAtencion?.id) return;
-    
-    // Verificar si ya hay disponibilidades cargadas para este staff médico
-    if (this.disponibilidadesStaff[staffMedico.id] && this.disponibilidadesStaff[staffMedico.id].length > 0) {
-      return;
-    }
-    
-    // Cargar disponibilidades desde el servidor
-    this.disponibilidadMedicoService.byStaffMedico(staffMedico.id).subscribe({
-      next: (dataPackage: any) => {
-        const disponibilidades = dataPackage.data || [];
-        this.disponibilidadesStaff[staffMedico.id!] = disponibilidades;
-        console.log(`Disponibilidades cargadas para staff médico ${staffMedico.id}:`, disponibilidades.length);
-      },
-      error: (err: any) => {
-        console.error('Error al cargar disponibilidades del staff médico:', err);
-        this.disponibilidadesStaff[staffMedico.id!] = [];
-        
-        // Mostrar mensaje de error más específico
-        if (err.status === 404) {
-          console.warn(`No se encontraron disponibilidades para el staff médico ID: ${staffMedico.id}`);
-          this.mostrarMensajeStaff(
-            `No hay disponibilidades configuradas para ${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`,
-            'info'
-          );
-        } else {
-          this.mostrarMensajeStaff(
-            'Error al cargar las disponibilidades médicas',
-            'danger'
-          );
+  getEsquemasPorDia(dia: string): EsquemaTurno[] {
+    // Filtrar esquemas que tienen horarios para el día específico
+    const esquemasFiltrados = this.esquemasSemana.filter(esquema => {
+      // Verificar si el esquema tiene horarios para el día solicitado
+      if (esquema.horarios && Array.isArray(esquema.horarios)) {
+        const tieneHorario = esquema.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
         }
       }
-    });
-  }
-
-  /**
-   * Retorna las disponibilidades de un staff médico específico
-   */
-  verDisponibilidadesStaff(staffMedico: StaffMedico): DisponibilidadMedico[] {
-    if (!staffMedico.id) return [];
-    return this.disponibilidadesStaff[staffMedico.id] || [];
-  }
-
-  /**
-   * Crea una nueva disponibilidad para un staff médico
-   */
-  crearNuevaDisponibilidad(staffMedico: StaffMedico): void {
-    // Navegar al formulario de creación de disponibilidades con el staff médico ID como parámetro
-    this.router.navigate(['/disponibilidades-medico/new'], { 
-      queryParams: { 
-        staffMedicoId: staffMedico.id,
-        centroAtencionId: this.centroAtencion.id,
-        returnTo: 'centro-detail'
-      } 
-    });
-  }
-
-  /**
-   * Edita una disponibilidad médica existente
-   */
-  editarDisponibilidad(disponibilidad: DisponibilidadMedico): void {
-    this.router.navigate(['/disponibilidades-medico', disponibilidad.id], {
-      queryParams: {
-        edit: 'true',
-        returnTo: 'centro-detail',
-        centroAtencionId: this.centroAtencion.id
-      }
-    });
-  }
-
-  /**
-   * Elimina una disponibilidad médica
-   */
-  eliminarDisponibilidad(staffMedico: StaffMedico, disponibilidad: DisponibilidadMedico): void {
-    const medicoNombre = `${staffMedico.medico?.nombre} ${staffMedico.medico?.apellido}`;
-    if (confirm(`¿Está seguro de eliminar la disponibilidad de ${medicoNombre}?`)) {
-      this.disponibilidadMedicoService.remove(disponibilidad.id).subscribe({
-        next: () => {
-          this.mostrarMensajeStaff(
-            `Disponibilidad eliminada para ${medicoNombre}`,
-            'success'
-          );
-          // Recargar las disponibilidades del staff médico
-          if (staffMedico.id) {
-            this.disponibilidadesStaff[staffMedico.id] = [];
-            this.cargarDisponibilidadesStaff(staffMedico);
-          }
-        },
-        error: (err: any) => {
-          const mensajeError = err?.error?.status_text || 'Error al eliminar la disponibilidad';
-          this.mostrarMensajeStaff(mensajeError, 'danger');
-          console.error('Error al eliminar disponibilidad:', err);
+      
+      // Si no tiene horarios directos, verificar en la disponibilidad médica
+      if (esquema.disponibilidadMedico?.horarios && Array.isArray(esquema.disponibilidadMedico.horarios)) {
+        const tieneHorario = esquema.disponibilidadMedico.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
         }
-      });
-    }
+      }
+      
+      // Si no encuentra horarios específicos, buscar en las disponibilidades cargadas
+      const disponibilidad = this.disponibilidadesMedico.find(d => d.id === esquema.disponibilidadMedicoId);
+      if (disponibilidad?.horarios && Array.isArray(disponibilidad.horarios)) {
+        const tieneHorario = disponibilidad.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
+        }
+      }
+      
+      return false;
+    });
+    
+    return esquemasFiltrados;
   }
 
-  /**
-   * Calcula la duración de un horario específico
-   */
-  calcularDuracionHorario(horario: any): string {
-    if (!horario.horaInicio || !horario.horaFin) {
-      return 'N/A';
+  getHorariosPorDia(esquema: EsquemaTurno, dia: string): any[] {
+    // Primero intentar obtener horarios del esquema
+    if (esquema.horarios && Array.isArray(esquema.horarios)) {
+      const horariosEsquema = esquema.horarios.filter(horario => 
+        horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+      );
+      if (horariosEsquema.length > 0) {
+        return horariosEsquema;
+      }
     }
     
-    try {
-      const [horasInicio, minutosInicio] = horario.horaInicio.split(':').map(Number);
-      const [horasFin, minutosFin] = horario.horaFin.split(':').map(Number);
-      
-      const inicioEnMinutos = horasInicio * 60 + minutosInicio;
-      const finEnMinutos = horasFin * 60 + minutosFin;
-      
-      let duracionMinutos = finEnMinutos - inicioEnMinutos;
-      
-      // Manejar casos donde el horario cruza medianoche
-      if (duracionMinutos < 0) {
-        duracionMinutos += 24 * 60; // Agregar 24 horas
+    // Si no tiene horarios directos, obtener de la disponibilidad médica
+    if (esquema.disponibilidadMedico?.horarios && Array.isArray(esquema.disponibilidadMedico.horarios)) {
+      const horariosDisponibilidad = esquema.disponibilidadMedico.horarios.filter(horario => 
+        horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+      );
+      if (horariosDisponibilidad.length > 0) {
+        return horariosDisponibilidad;
       }
-      
-      const horas = Math.floor(duracionMinutos / 60);
-      const minutos = duracionMinutos % 60;
-      
-      if (horas === 0) {
-        return `${minutos}min`;
-      } else if (minutos === 0) {
-        return `${horas}h`;
-      } else {
-        return `${horas}h ${minutos}min`;
-      }
-    } catch (error) {
-      console.error('Error calculando duración:', error);
-      return 'Error';
     }
+    
+    // Si no encuentra horarios específicos, buscar en las disponibilidades cargadas
+    const disponibilidad = this.disponibilidadesMedico.find(d => d.id === esquema.disponibilidadMedicoId);
+    if (disponibilidad?.horarios && Array.isArray(disponibilidad.horarios)) {
+      return disponibilidad.horarios.filter(horario => 
+        horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+      );
+    }
+    
+    return [];
   }
 
   /**
    * Carga todos los datos necesarios en paralelo para optimizar performance
    */
-  cargarTodosLosDatos() {
+  cargarTodosLosDatos() { 
     if (!this.centroAtencion?.id) return;
     
     console.log('Cargando todos los datos en paralelo...');
@@ -1230,32 +1037,40 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       
       // Procesar disponibilidades médicas
       const todasDisponibilidades = disponibilidadesResponse?.data as DisponibilidadMedico[] || [];
-      this.disponibilidadesMedico = todasDisponibilidades.filter(disp => 
-        disp.staffMedico?.centroAtencionId === this.centroAtencion.id
-      );
+      console.log('Todas las disponibilidades cargadas:', todasDisponibilidades.length, todasDisponibilidades);
+      console.log('Staff médico del centro:', this.staffMedicoCentro);
+      
+      // Obtener IDs del staff médico del centro
+      const staffMedicoIds = this.staffMedicoCentro.map(staff => staff.id);
+      console.log('IDs de staff médico del centro:', staffMedicoIds);
+      
+      // Filtrar disponibilidades por staffMedicoId
+      this.disponibilidadesMedico = todasDisponibilidades.filter(disp => {
+        const pertenece = staffMedicoIds.includes(disp.staffMedicoId);
+        console.log(`Disponibilidad ${disp.id} - staffMedicoId: ${disp.staffMedicoId}, pertenece al centro: ${pertenece}`);
+        return pertenece;
+      });
+      
+      console.log('Disponibilidades filtradas para el centro:', this.disponibilidadesMedico.length, this.disponibilidadesMedico);
       
       // Marcar todos los datos como cargados
+      this.esquemasLoaded = true;
       this.especialidadesLoaded = true;
       this.medicosLoaded = true;
-      this.esquemasLoaded = true;
-      
-      console.log('Todos los datos cargados exitosamente');
       
     }).catch(error => {
-      console.error('Error cargando datos:', error);
+      console.error('Error cargando todos los datos:', error);
     });
   }
 
-  /**
-   * Navega al formulario de creación de consultorios con parámetros de retorno
-   */
-  crearNuevoConsultorio(): void {
-    this.router.navigate(['/consultorios/new'], { 
-      queryParams: { 
-        centroAtencionId: this.centroAtencion.id,
-        returnTo: 'centro-detail'
-      } 
-    });
+  cargarEsquemasParaSemana(): void {
+    // Cargar esquemas para la vista semanal
+    this.cargarEsquemasTurno();
+  }
+
+  cargarPorcentajesMedicos(): void {
+    // Implementar carga de porcentajes si es necesario
+    this.percentageCalculator.calcularTotales();
   }
 
   // ==================== MÉTODOS PARA GESTIÓN DE PORCENTAJES POR MÉDICO ====================
@@ -1288,18 +1103,13 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
     if (!this.centroAtencion?.id || !staffMedico.id) return;
     
     if (staffMedico.porcentaje != null && (staffMedico.porcentaje < 0 || staffMedico.porcentaje > 100)) {
-      this.mostrarMensajeStaff('El porcentaje debe estar entre 0 y 100', 'danger');
+      this.messageHandler.mostrarMensajeStaff('El porcentaje debe estar entre 0 y 100', 'danger');
       return;
     }
     
     // Validar que no exceda el 100%
-    const otrosMedicos = this.staffMedicoCentro.filter(s => s.id !== staffMedico.id);
-    const totalOtros = otrosMedicos
-      .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
-      .reduce((total, staff) => total + (staff.porcentaje || 0), 0);
-    
-    if (totalOtros + (staffMedico.porcentaje || 0) > 100) {
-      this.mostrarMensajeStaff('La suma de porcentajes no puede exceder 100%', 'danger');
+    if (!this.validationHelper.validatePorcentajeSum(staffMedico)) {
+      this.messageHandler.mostrarMensajeStaff('El total de porcentajes no puede exceder 100%', 'danger');
       return;
     }
     
@@ -1307,16 +1117,11 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
     
     this.staffMedicoService.actualizarPorcentajes(this.centroAtencion.id, medicosParaActualizar).subscribe({
       next: (response) => {
-        const nombreMedico = `${staffMedico.medico?.apellido}, ${staffMedico.medico?.nombre}`;
-        this.mostrarMensajeStaff(`Porcentaje de ${nombreMedico} guardado correctamente`, 'success');
-        this.calcularTotalesPorcentajeMedicos();
-        // Actualizar el valor original para control de cambios
-        if (staffMedico.id) {
-          this.porcentajesOriginalesMedicos[staffMedico.id] = staffMedico.porcentaje || 0;
-        }
+        this.messageHandler.mostrarMensajeStaff('Porcentaje guardado correctamente', 'success');
+        this.percentageCalculator.calcularTotales();
       },
       error: (err) => {
-        this.mostrarMensajeStaff(err.error?.status_text || 'Error al guardar el porcentaje', 'danger');
+        this.messageHandler.mostrarMensajeStaff('Error al guardar el porcentaje', 'danger');
       }
     });
   }
@@ -1327,34 +1132,13 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
   guardarTodosPorcentajesMedicos(): void {
     if (!this.centroAtencion?.id) return;
     
-    if (this.totalPorcentajeMedicos > 100) {
-      this.mostrarMensajeStaff('La suma de porcentajes no puede exceder 100%', 'danger');
-      return;
-    }
-    
-    // Filtrar médicos que tienen porcentaje definido
-    const medicosConPorcentaje = this.staffMedicoCentro.filter(staff => 
-      staff.porcentaje != null && staff.porcentaje >= 0
-    );
-    
-    if (medicosConPorcentaje.length === 0) {
-      this.mostrarMensajeStaff('No hay porcentajes para guardar', 'info');
-      return;
-    }
-    
-    this.staffMedicoService.actualizarPorcentajes(this.centroAtencion.id, medicosConPorcentaje).subscribe({
+    this.staffMedicoService.actualizarPorcentajes(this.centroAtencion.id, this.staffMedicoCentro).subscribe({
       next: (response) => {
-        this.mostrarMensajeStaff('Todos los porcentajes guardados correctamente', 'success');
-        this.calcularTotalesPorcentajeMedicos();
-        // Actualizar valores originales
-        medicosConPorcentaje.forEach(staff => {
-          if (staff.id) {
-            this.porcentajesOriginalesMedicos[staff.id] = staff.porcentaje || 0;
-          }
-        });
+        this.messageHandler.mostrarMensajeStaff('Todos los porcentajes guardados correctamente', 'success');
+        this.percentageCalculator.calcularTotales();
       },
       error: (err) => {
-        this.mostrarMensajeStaff(err.error?.status_text || 'Error al guardar los porcentajes', 'danger');
+        this.messageHandler.mostrarMensajeStaff('Error al guardar los porcentajes', 'danger');
       }
     });
   }
@@ -1363,244 +1147,335 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
    * Redistribuye los porcentajes equitativamente entre todos los médicos del centro
    */
   redistribuirPorcentajesMedicos(): void {
-    const numMedicos = this.staffMedicoCentro.length;
-    if (numMedicos === 0) {
-      this.mostrarMensajeStaff('No hay médicos para redistribuir', 'info');
-      return;
-    }
+    if (this.staffMedicoCentro.length === 0) return;
     
-    // Algoritmo mejorado para distribución exacta del 100%
-    // Trabajar con enteros (centésimas) para evitar errores de punto flotante
-    const totalCentesimas = 10000; // 100.00%
-    const porcentajeBaseCentesimas = Math.floor(totalCentesimas / numMedicos);
-    const restoCentesimas = totalCentesimas - (porcentajeBaseCentesimas * numMedicos);
+    // Calcular porcentaje exacto con 2 decimales de precisión
+    const porcentajeEquitativo = Math.round((100 / this.staffMedicoCentro.length) * 100) / 100;
     
-    // Asignar porcentajes
-    this.staffMedicoCentro.forEach((staff, index) => {
-      // Porcentaje base para todos
-      let porcentajeFinalCentesimas = porcentajeBaseCentesimas;
-      
-      // Distribuir el resto entre los primeros médicos (un centésimo a cada uno)
-      if (index < restoCentesimas) {
-        porcentajeFinalCentesimas += 1;
-      }
-      
-      // Convertir de centésimas a porcentaje decimal
-      staff.porcentaje = porcentajeFinalCentesimas / 100;
+    // Asignar el mismo porcentaje a todos los médicos
+    this.staffMedicoCentro.forEach((staff) => {
+      staff.porcentaje = porcentajeEquitativo;
     });
-
-    // Verificación final - debe sumar exactamente 100.00
-    const totalVerificacion = this.staffMedicoCentro.reduce((sum, staff) => sum + (staff.porcentaje || 0), 0);
     
-    this.calcularTotalesPorcentajeMedicos();
-    this.mostrarMensajeStaff(
-      `Porcentajes redistribuidos equitativamente entre ${numMedicos} médicos. Total: ${this.totalPorcentajeMedicos}%`, 
-      'success'
-    );
-    
-    // Log para debugging
-    console.log('Redistribución completada:', {
-      numMedicos,
-      porcentajes: this.staffMedicoCentro.map(s => s.porcentaje),
-      total: totalVerificacion,
-      totalCalculado: this.totalPorcentajeMedicos
-    });
+    this.percentageCalculator.calcularTotales();
   }
 
-  /**
-   * Carga los porcentajes actuales de los médicos desde el servidor
-   */
-  private cargarPorcentajesMedicos(): void {
-    if (!this.centroAtencion?.id) return;
-    
-    this.staffMedicoService.getMedicosConPorcentajes(this.centroAtencion.id).subscribe({
-      next: (response) => {
-        // Actualizar porcentajes en médicos del centro
-        response.data.forEach(medicoConPorcentaje => {
-          const medicoLocal = this.staffMedicoCentro.find(s => s.id === medicoConPorcentaje.id);
-          if (medicoLocal) {
-            medicoLocal.porcentaje = medicoConPorcentaje.porcentaje;
-            if (medicoLocal.id) {
-              this.porcentajesOriginalesMedicos[medicoLocal.id] = medicoConPorcentaje.porcentaje || 0;
-            }
-          }
-        });
-        this.calcularTotalesPorcentajeMedicos();
-      },
-      error: (err) => {
-        console.error('Error cargando porcentajes de médicos:', err);
-      }
-    });
-  }
-
-  /**
-   * Redistribuye los esquemas de turno existentes según los porcentajes configurados
-   */
   redistribuirEsquemasExistentes(): void {
     if (!this.centroAtencion?.id) {
-      this.mostrarMensajeStaff('Error: No se puede redistribuir, centro no identificado', 'danger');
+      this.mostrarMensaje('Error: No se ha seleccionado un centro de atención válido', 'danger');
       return;
     }
 
-    // Validar que los porcentajes sumen 100%
+    // Validar que haya esquemas para redistribuir
+    if (!this.esquemasSemana || this.esquemasSemana.length === 0) {
+      this.mostrarMensaje('No hay esquemas de turno para redistribuir en este centro', 'warning');
+      return;
+    }
+
+    // Validar que los porcentajes estén correctamente asignados
     if (this.totalPorcentajeMedicos !== 100) {
-      this.mostrarMensajeStaff(
-        `No se puede redistribuir. Los porcentajes deben sumar exactamente 100% (actual: ${this.totalPorcentajeMedicos}%)`, 
-        'danger'
-      );
+      this.mostrarMensaje('Los porcentajes deben sumar exactamente 100% antes de redistribuir esquemas', 'warning');
       return;
     }
 
-    // Confirmar la acción con el usuario
+    // Mostrar confirmación antes de proceder
     this.modalService.confirm(
       'Redistribuir Esquemas de Turno',
-      '¿Está seguro que desea redistribuir todos los esquemas de turno existentes?',
-      'Esta acción reasignará automáticamente los consultorios de todos los esquemas según los porcentajes configurados. Los esquemas sin consultorio asignado también serán procesados.'
+      '¿Está seguro que desea redistribuir los consultorios de los esquemas existentes?',
+      'Esta acción reasignará automáticamente los consultorios según los porcentajes configurados por médico. Los esquemas mantienen sus horarios pero pueden cambiar de consultorio.'
     ).then(() => {
-      // Mostrar mensaje de carga
-      this.mostrarMensajeStaff('Redistribuyendo esquemas de turno...', 'info');
-      
+      // Validación adicional antes de llamar al servicio
+      if (!this.centroAtencion?.id) {
+        this.mostrarMensaje('Error: ID del centro de atención no válido', 'danger');
+        return;
+      }
+
       // Llamar al servicio de redistribución
-      this.esquemaTurnoService.redistribuirConsultorios(this.centroAtencion.id!).subscribe({
+      this.esquemaTurnoService.redistribuirConsultorios(this.centroAtencion.id).subscribe({
         next: (response) => {
           const esquemasProcesados = response.data || 0;
-          this.mostrarMensajeStaff(
-            `Redistribución completada exitosamente. Se procesaron ${esquemasProcesados} esquemas de turno.`,
+          this.mostrarMensaje(
+            `Redistribución completada exitosamente. ${esquemasProcesados} esquemas procesados.`, 
             'success'
           );
           
           // Recargar los esquemas para mostrar los cambios
           this.cargarEsquemasTurno();
         },
-        error: (err) => {
-          console.error('Error en redistribución:', err);
-          const mensaje = err?.error?.message || 'Error al redistribuir esquemas de turno';
-          this.mostrarMensajeStaff(`Error: ${mensaje}`, 'danger');
+        error: (error) => {
+          const mensaje = this.extraerMensajeError(error);
+          this.mostrarMensaje(`Error al redistribuir esquemas: ${mensaje}`, 'danger');
+          console.error('Error en redistribución:', error);
         }
       });
     }).catch(() => {
       // Usuario canceló la operación
-      this.mostrarMensajeStaff('Redistribución cancelada', 'info');
+      console.log('Redistribución cancelada por el usuario');
     });
   }
 
-  // ====== MÉTODOS PARA TAB DE ESQUEMAS DE TURNO ======
-
-  /**
-   * Inicializa la semana actual cuando se carga el componente
-   */
-  private inicializarSemanaActual(): void {
-    const hoy = new Date();
-    const año = hoy.getFullYear();
-    const inicioAño = new Date(año, 0, 1);
-    const diasTranscurridos = Math.floor((hoy.getTime() - inicioAño.getTime()) / (24 * 60 * 60 * 1000));
-    const numeroSemana = Math.ceil((diasTranscurridos + inicioAño.getDay() + 1) / 7);
-    
-    this.semanaSeleccionada = `${año}-W${numeroSemana.toString().padStart(2, '0')}`;
+  // ==================== MÉTODOS DE UI MANAGEMENT (SRP) ====================
+  
+  cancelarEdicion(): void {
+    this.modoEdicion = false;
+    // Recargar datos originales si es necesario
+    this.get();
   }
 
-  /**
-   * Carga los esquemas de turno para la semana seleccionada
-   */
-  cargarEsquemasParaSemana(): void {
-    if (!this.centroAtencion?.id) {
-      this.esquemasSemana = [];
-      return;
-    }
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+  }
 
-    // Cargar todos los esquemas del centro
+  // ==================== MÉTODOS DE MENSAJERÍA (SRP) ====================
+  
+  mostrarMensaje(mensaje: string, tipo: string): void {
+    // Implementar lógica de mostrado de mensajes
+    console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+  }
+
+  mostrarMensajeConsultorio(mensaje: string, tipo: string): void {
+    this.mensajeConsultorio = mensaje;
+    this.tipoMensajeConsultorio = tipo;
+    setTimeout(() => {
+      this.mensajeConsultorio = '';
+      this.tipoMensajeConsultorio = '';
+    }, 5000);
+  }
+
+  mostrarMensajeStaff(mensaje: string, tipo: string): void {
+    this.mensajeStaff = mensaje;
+    this.tipoMensajeStaff = tipo;
+    setTimeout(() => {
+      this.mensajeStaff = '';
+      this.tipoMensajeStaff = '';
+    }, 5000);
+  }
+
+  // ==================== MÉTODOS DE VALIDACIÓN (SRP) ====================
+  
+  validarPorcentaje(porcentaje: number): boolean {
+    return porcentaje >= 0 && porcentaje <= 100;
+  }
+
+  validarPorcentajesTotales(): boolean {
+    const total = this.calcularPorcentajeTotal();
+    return total <= 100;
+  }
+
+  validarNumeroConsultorio(numero: number): boolean {
+    return this.consultorios.every(c => c.numero !== numero);
+  }
+
+  // ==================== MÉTODOS DE CÁLCULO (SRP) ====================
+  
+  calcularPorcentajeTotal(): number {
+    return this.staffMedicoCentro
+      .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
+      .reduce((total, staff) => total + (staff.porcentaje || 0), 0);
+  }
+
+  // ==================== MÉTODOS DE GESTIÓN DE ESQUEMAS (SRP) ====================
+  
+  cargarEsquemasTurno(): void {
+    if (!this.centroAtencion?.id || this.isLoadingEsquemas) return;
+    
+    this.isLoadingEsquemas = true;
     this.esquemaTurnoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
       next: (response) => {
-        this.esquemasSemana = response.data || [];
-        console.log('Esquemas cargados:', this.esquemasSemana);
+        this.esquemasSemana = response.data as EsquemaTurno[] || [];
+        this.esquemasLoaded = true;
+        this.isLoadingEsquemas = false;
       },
-      error: (err) => {
-        console.error('Error al cargar esquemas:', err);
-        this.esquemasSemana = [];
+      error: (error) => {
+        console.error('Error cargando esquemas:', error);
+        this.isLoadingEsquemas = false;
       }
     });
   }
 
-  /**
-   * Obtiene los esquemas que tienen horarios para un día específico
-   */
-  getEsquemasPorDia(dia: string): EsquemaTurno[] {
-    if (!this.esquemasSemana) return [];
+  cargarEsquemasConsultorio(consultorio: Consultorio): void {
+    if (!consultorio.id || !this.esquemasLoaded) return;
     
-    return this.esquemasSemana.filter(esquema => {
-      if (!esquema.horarios || esquema.horarios.length === 0) return false;
-      
-      return esquema.horarios.some(horario => 
-        horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
-      );
+    const esquemas = this.esquemasSemana.filter(e => e.consultorioId === consultorio.id);
+    if (!this.esquemasConsultorio[consultorio.id]) {
+      this.esquemasConsultorio[consultorio.id] = [];
+    }
+    this.esquemasConsultorio[consultorio.id] = esquemas;
+  }
+
+  // ==================== MÉTODOS AUXILIARES (SRP) ====================
+  
+  private extraerMensajeError(error: any): string {
+    return error?.error?.message || error?.message || 'Error desconocido';
+  }
+
+  // ==================== MÉTODOS FALTANTES PARA TEMPLATE (SRP) ====================
+  
+  crearNuevoConsultorio(): void {
+    // Delegate to the existing crearConsultorio method
+    this.crearConsultorio();
+  }
+
+  editarHorariosConsultorio(consultorio: Consultorio): void {
+    // Navigate to consultorio detail page for schedule editing
+    // Pass context parameters so the consultorio knows to return to centro detail
+    if (consultorio.id) {
+      this.router.navigate(['/consultorios', consultorio.id], {
+        queryParams: {
+          fromCentro: this.centroAtencion.id,
+          returnTab: 'consultorios'
+        }
+      });
+    }
+  }
+
+  verDetalleEsquema(esquema: EsquemaTurno): void {
+    // Navigate to esquema detail with return navigation parameters
+    this.router.navigate(['/esquema-turno', esquema.id], {
+      queryParams: {
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'esquemas-turno'
+      }
     });
   }
 
-  /**
-   * Obtiene los horarios de un esquema para un día específico
-   */
-  getHorariosPorDia(esquema: EsquemaTurno, dia: string): any[] {
-    if (!esquema.horarios) return [];
-    
-    return esquema.horarios.filter(horario => 
-      horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
-    );
+  onMedicoSeleccionado(medico?: Medico, event?: any): void {
+    if (event && event.target.checked) {
+      this.medicoSeleccionado = medico || null;
+    } else {
+      this.medicoSeleccionado = null;
+    }
   }
 
-  /**
-   * Obtiene el nombre del consultorio para un esquema
-   */
-  getConsultorioNombre(esquema: EsquemaTurno): string {
-    if (!esquema.consultorioId) return 'Sin consultorio';
-    
-    // Buscar el consultorio en la lista de consultorios cargados
-    // Usar comparación flexible para manejar strings vs numbers
-    const consultorio = this.consultorios.find(c => c.id == esquema.consultorioId);
-    if (consultorio) {
-      return consultorio.nombre || `Consultorio ${consultorio.numero}`;
-    }
-    
-    // Fallback: usar el objeto consultorio si existe
-    if (esquema.consultorio) {
-      return esquema.consultorio.nombre || `Consultorio ${esquema.consultorio.numero}`;
-    }
-    
-    // Solo mostrar debug en casos de error
-    console.warn('No se encontró consultorio para esquema:', esquema.consultorioId, 'Consultorios disponibles:', this.consultorios.map(c => ({id: c.id, nombre: c.nombre})));
-    return `Sin consultorio (ID: ${esquema.consultorioId})`;
+  asociarMedico(): void {
+    if (!this.medicoSeleccionado || !this.centroAtencion?.id) return;
+
+    // Create a new StaffMedico object
+    const nuevoStaff: Partial<StaffMedico> = {
+      medico: this.medicoSeleccionado,
+      centroAtencionId: this.centroAtencion.id,
+      medicoId: this.medicoSeleccionado.id,
+      porcentaje: 0
+    };
+
+    this.staffMedicoService.create(nuevoStaff as StaffMedico).subscribe({
+      next: (response: any) => {
+        this.loadStaffMedico();
+        this.medicoSeleccionado = null;
+        this.mostrarMensajeStaff('Médico asociado correctamente', 'success');
+      },
+      error: (error: any) => {
+        this.mostrarMensajeStaff('Error al asociar médico', 'danger');
+      }
+    });
   }
 
-  /**
-   * Obtiene el número del consultorio para un esquema
-   */
-  getConsultorioNumero(esquema: EsquemaTurno): string {
-    if (!esquema.consultorioId) return 'N/A';
-    
-    // Buscar el consultorio en la lista de consultorios cargados
-    // Usar comparación flexible para manejar strings vs numbers
-    const consultorio = this.consultorios.find(c => c.id == esquema.consultorioId);
-    if (consultorio?.numero) {
-      return consultorio.numero.toString();
-    }
-    
-    // Fallback: usar el objeto consultorio si existe
-    if (esquema.consultorio?.numero) {
-      return esquema.consultorio.numero.toString();
-    }
-    
-    return 'N/A';
+  agregarDisponibilidad(staff: StaffMedico): void {
+    // Navigate to create disponibilidad with return navigation parameters
+    this.router.navigate(['/disponibilidades-medico/new'], { 
+      queryParams: { 
+        staffMedicoId: staff.id,
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'staff-medico'
+      } 
+    });
   }
 
-  /**
-   * Abre el detalle completo de un esquema de turno
-   */
-  verDetalleEsquema(esquema: EsquemaTurno): void {
-    if (!esquema.id) {
-      console.warn('Esquema sin ID:', esquema);
-      return;
-    }
+  gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
+    // Navigate to advanced disponibilidad management with return navigation parameters
+    this.router.navigate(['/disponibilidades-medico'], { 
+      queryParams: { 
+        staffMedicoId: staff.id,
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'staff-medico'
+      } 
+    });
+  }
+
+  desasociarMedico(staff: StaffMedico): void {
+    if (!staff.id) return;
+
+    this.messageHandler.confirm(
+      'Confirmar desasociación',
+      `¿Está seguro que desea desasociar al médico ${this.getMedicoNombre(staff)}?`,
+      'Esta acción no se puede deshacer.'
+    ).then((result) => {
+      if (result) {
+        this.staffMedicoService.remove(staff.id!).subscribe({
+          next: () => {
+            this.loadStaffMedico();
+            this.mostrarMensajeStaff('Médico desasociado correctamente', 'success');
+          },
+          error: (error: any) => {
+            this.mostrarMensajeStaff('Error al desasociar médico', 'danger');
+          }
+        });
+      }
+    });
+  }
+
+  crearNuevaDisponibilidad(staff: StaffMedico): void {
+    // Navigate to create new disponibilidad with return navigation parameters
+    this.router.navigate(['/disponibilidades-medico/new'], { 
+      queryParams: { 
+        staffMedicoId: staff.id,
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'staff-medico'
+      } 
+    });
+  }
+
+  verDisponibilidadesStaff(staff: StaffMedico): DisponibilidadMedico[] {
+    // Return disponibilidades for this staff member
+    return this.disponibilidadesMedico.filter(d => d.staffMedicoId === staff.id);
+  }
+
+  calcularDuracionHorario(horario: any): string {
+    if (!horario.horaInicio || !horario.horaFin) return '';
     
-    // Navegar al detalle del esquema
-    this.router.navigate(['/esquemas', esquema.id]);
+    const inicio = new Date(`1970-01-01T${horario.horaInicio}`);
+    const fin = new Date(`1970-01-01T${horario.horaFin}`);
+    const duracion = (fin.getTime() - inicio.getTime()) / (1000 * 60 * 60); // En horas
+    
+    return `${duracion.toFixed(1)}h`;
+  }
+
+  editarDisponibilidad(disponibilidad: DisponibilidadMedico): void {
+    // Navigate to edit disponibilidad with return navigation parameters
+    this.router.navigate(['/disponibilidades-medico', disponibilidad.id], {
+      queryParams: {
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'staff-medico'
+      }
+    });
+  }
+
+  eliminarDisponibilidad(disponibilidadOrStaff: DisponibilidadMedico | StaffMedico, disponibilidad?: DisponibilidadMedico): void {
+    // Handle both calling patterns
+    const targetDisponibilidad = disponibilidad || disponibilidadOrStaff as DisponibilidadMedico;
+    
+    if (!targetDisponibilidad.id) return;
+
+    this.messageHandler.confirm(
+      'Confirmar eliminación',
+      '¿Está seguro que desea eliminar esta disponibilidad?',
+      'Esta acción no se puede deshacer.'
+    ).then((result) => {
+      if (result) {
+        this.disponibilidadMedicoService.remove(targetDisponibilidad.id!).subscribe({
+          next: () => {
+            // Reload disponibilidades for the staff member
+            const staff = this.staffMedicoCentro.find(s => s.id === targetDisponibilidad.staffMedicoId);
+            if (staff) {
+              this.cargarDisponibilidadesStaff(staff);
+            }
+            this.mostrarMensajeStaff('Disponibilidad eliminada correctamente', 'success');
+          },
+          error: (error: any) => {
+            this.mostrarMensajeStaff('Error al eliminar disponibilidad', 'danger');
+          }
+        });
+      }
+    });
   }
 }

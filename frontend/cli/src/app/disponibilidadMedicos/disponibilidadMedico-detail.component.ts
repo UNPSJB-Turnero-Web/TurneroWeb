@@ -610,8 +610,8 @@ export class DisponibilidadMedicoDetailComponent {
   esNuevo = false;
 
   // Parámetros de navegación de retorno
-  returnTo: string | null = null;
-  centroAtencionId: string | null = null;
+  fromCentro: string | null = null;
+  returnTab: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -626,8 +626,8 @@ export class DisponibilidadMedicoDetailComponent {
     const staffMedicoIdParam = this.route.snapshot.queryParamMap.get('staffMedicoId');
 
     // Capturar parámetros de navegación de retorno
-    this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-    this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+    this.fromCentro = this.route.snapshot.queryParamMap.get('fromCentro');
+    this.returnTab = this.route.snapshot.queryParamMap.get('returnTab');
 
     if (idParam) {
       this.get();
@@ -654,8 +654,8 @@ export class DisponibilidadMedicoDetailComponent {
       this.esNuevo = false;
 
       // Capturar parámetros de navegación de retorno también en modo edición
-      this.returnTo = this.route.snapshot.queryParamMap.get('returnTo');
-      this.centroAtencionId = this.route.snapshot.queryParamMap.get('centroAtencionId');
+      this.fromCentro = this.route.snapshot.queryParamMap.get('fromCentro');
+      this.returnTab = this.route.snapshot.queryParamMap.get('returnTab');
 
       const id = Number(idParam);
       if (isNaN(id)) {
@@ -729,12 +729,17 @@ export class DisponibilidadMedicoDetailComponent {
   }
 
   /**
-   * Navega de vuelta según el parámetro returnTo
+   * Navega de vuelta según los parámetros de retorno
    */
   private navigateBack(): void {
-    if (this.returnTo === 'centro-detail' && this.centroAtencionId) {
-      // Regresar al detalle del centro de atención
-      this.router.navigate(['/centrosAtencion', this.centroAtencionId]);
+    if (this.fromCentro && this.returnTab) {
+      // Regresar al detalle del centro de atención con el tab específico
+      this.router.navigate(['/centrosAtencion', this.fromCentro], {
+        queryParams: { activeTab: this.returnTab }
+      });
+    } else if (this.fromCentro) {
+      // Regresar al detalle del centro de atención sin tab específico
+      this.router.navigate(['/centrosAtencion', this.fromCentro]);
     } else {
       // Regresar a la lista de disponibilidades médicas por defecto
       this.router.navigate(['/disponibilidades-medico']);
