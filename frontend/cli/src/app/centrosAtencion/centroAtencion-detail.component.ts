@@ -79,6 +79,10 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   porcentajeDisponibleMedicos: number = 100;
   porcentajesOriginalesMedicos: { [staffMedicoId: number]: number } = {};
 
+  // Propiedades para el tab de esquemas de turno
+  semanaSeleccionada: string = '';
+  esquemasSemana: EsquemaTurno[] = [];
+
   // Cache invalidation methods
   private invalidateEsquemasCache(): void {
     this.esquemasLoaded = false;
@@ -300,6 +304,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   ngOnInit(): void {
     this.get();
+    this.cargarEsquemasParaSemana(); // Cargar esquemas directamente
   }
 
   onLocationSelected(coords: { latitud: number, longitud: number } | null): void {
@@ -597,6 +602,9 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       // Procesar esquemas
       const esquemas = esquemasResponse?.data as EsquemaTurno[] || [];
       console.log('Esquemas obtenidos:', esquemas);
+      
+      // Asignar esquemas para el tab de esquemas de turno
+      this.esquemasSemana = esquemas;
       
       // Agrupar esquemas por consultorio
       this.esquemasConsultorio = {};
@@ -1185,6 +1193,7 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
     ]) => {
       // Procesar consultorios
       this.consultorios = consultoriosResponse?.data || [];
+      console.log('Consultorios cargados:', this.consultorios.length, this.consultorios);
       
       // Procesar especialidades
       this.especialidadesAsociadas = Array.isArray(especialidadesAsociadasResponse?.data) 
@@ -1203,6 +1212,12 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       
       // Procesar esquemas de turno
       const esquemas = esquemasResponse?.data as EsquemaTurno[] || [];
+      console.log('Esquemas de turno cargados:', esquemas.length, esquemas);
+      
+      // Asignar todos los esquemas al tab de esquemas de turno
+      this.esquemasSemana = esquemas;
+      
+      // Agrupar esquemas por consultorio para el tab de consultorios
       this.esquemasConsultorio = {};
       esquemas.forEach(esquema => {
         if (esquema.consultorioId) {
@@ -1467,5 +1482,125 @@ gestionarDisponibilidadAvanzada(staff: StaffMedico): void {
       // Usuario canceló la operación
       this.mostrarMensajeStaff('Redistribución cancelada', 'info');
     });
+  }
+
+  // ====== MÉTODOS PARA TAB DE ESQUEMAS DE TURNO ======
+
+  /**
+   * Inicializa la semana actual cuando se carga el componente
+   */
+  private inicializarSemanaActual(): void {
+    const hoy = new Date();
+    const año = hoy.getFullYear();
+    const inicioAño = new Date(año, 0, 1);
+    const diasTranscurridos = Math.floor((hoy.getTime() - inicioAño.getTime()) / (24 * 60 * 60 * 1000));
+    const numeroSemana = Math.ceil((diasTranscurridos + inicioAño.getDay() + 1) / 7);
+    
+    this.semanaSeleccionada = `${año}-W${numeroSemana.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Carga los esquemas de turno para la semana seleccionada
+   */
+  cargarEsquemasParaSemana(): void {
+    if (!this.centroAtencion?.id) {
+      this.esquemasSemana = [];
+      return;
+    }
+
+    // Cargar todos los esquemas del centro
+    this.esquemaTurnoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
+      next: (response) => {
+        this.esquemasSemana = response.data || [];
+        console.log('Esquemas cargados:', this.esquemasSemana);
+      },
+      error: (err) => {
+        console.error('Error al cargar esquemas:', err);
+        this.esquemasSemana = [];
+      }
+    });
+  }
+
+  /**
+   * Obtiene los esquemas que tienen horarios para un día específico
+   */
+  getEsquemasPorDia(dia: string): EsquemaTurno[] {
+    if (!this.esquemasSemana) return [];
+    
+    return this.esquemasSemana.filter(esquema => {
+      if (!esquema.horarios || esquema.horarios.length === 0) return false;
+      
+      return esquema.horarios.some(horario => 
+        horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+      );
+    });
+  }
+
+  /**
+   * Obtiene los horarios de un esquema para un día específico
+   */
+  getHorariosPorDia(esquema: EsquemaTurno, dia: string): any[] {
+    if (!esquema.horarios) return [];
+    
+    return esquema.horarios.filter(horario => 
+      horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+    );
+  }
+
+  /**
+   * Obtiene el nombre del consultorio para un esquema
+   */
+  getConsultorioNombre(esquema: EsquemaTurno): string {
+    if (!esquema.consultorioId) return 'Sin consultorio';
+    
+    // Buscar el consultorio en la lista de consultorios cargados
+    // Usar comparación flexible para manejar strings vs numbers
+    const consultorio = this.consultorios.find(c => c.id == esquema.consultorioId);
+    if (consultorio) {
+      return consultorio.nombre || `Consultorio ${consultorio.numero}`;
+    }
+    
+    // Fallback: usar el objeto consultorio si existe
+    if (esquema.consultorio) {
+      return esquema.consultorio.nombre || `Consultorio ${esquema.consultorio.numero}`;
+    }
+    
+    // Solo mostrar debug en casos de error
+    console.warn('No se encontró consultorio para esquema:', esquema.consultorioId, 'Consultorios disponibles:', this.consultorios.map(c => ({id: c.id, nombre: c.nombre})));
+    return `Sin consultorio (ID: ${esquema.consultorioId})`;
+  }
+
+  /**
+   * Obtiene el número del consultorio para un esquema
+   */
+  getConsultorioNumero(esquema: EsquemaTurno): string {
+    if (!esquema.consultorioId) return 'N/A';
+    
+    // Buscar el consultorio en la lista de consultorios cargados
+    // Usar comparación flexible para manejar strings vs numbers
+    const consultorio = this.consultorios.find(c => c.id == esquema.consultorioId);
+    if (consultorio?.numero) {
+      return consultorio.numero.toString();
+    }
+    
+    // Fallback: usar el objeto consultorio si existe
+    if (esquema.consultorio?.numero) {
+      return esquema.consultorio.numero.toString();
+    }
+    
+    return 'N/A';
+  }
+
+  /**
+   * Abre el detalle completo de un esquema de turno
+   */
+  verDetalleEsquema(esquema: EsquemaTurno): void {
+    if (!esquema.id) {
+      console.warn('Esquema sin ID:', esquema);
+      return;
+    }
+    
+    // Navegar al detalle del esquema
+    this.router.navigate(['/esquemas', esquema.id]);
   }
 }
