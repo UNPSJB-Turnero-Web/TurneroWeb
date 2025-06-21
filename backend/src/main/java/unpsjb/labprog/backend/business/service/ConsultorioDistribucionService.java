@@ -361,6 +361,98 @@ public class ConsultorioDistribucionService {
     }
 
     /**
+     * Ajusta automáticamente los horarios de un esquema para que encajen dentro del horario del consultorio
+     * @param horariosEsquema Lista de horarios del esquema que pueden ser modificados
+     * @param consultorioId ID del consultorio a verificar
+     * @return Lista de advertencias sobre los ajustes realizados
+     */
+    public List<String> ajustarHorariosEsquemaAConsultorio(List<EsquemaTurno.Horario> horariosEsquema, Integer consultorioId) {
+        List<String> advertencias = new ArrayList<>();
+        
+        try {
+            Optional<ConsultorioDTO> consultorioOpt = consultorioService.findById(consultorioId);
+            if (!consultorioOpt.isPresent()) {
+                advertencias.add("Consultorio no encontrado - no se realizaron ajustes");
+                return advertencias;
+            }
+            
+            ConsultorioDTO consultorio = consultorioOpt.get();
+            System.out.println(String.format("🔧 AJUSTANDO HORARIOS DE ESQUEMA - Consultorio: %s", consultorio.getNombre()));
+            
+            // Crear una lista para horarios que no se pueden ajustar (muy cortos)
+            List<EsquemaTurno.Horario> horariosAEliminar = new ArrayList<>();
+            
+            for (EsquemaTurno.Horario horario : horariosEsquema) {
+                LocalTime horaInicioOriginal = horario.getHoraInicio();
+                LocalTime horaFinOriginal = horario.getHoraFin();
+                
+                BloqueHorario bloque = new BloqueHorario(
+                    horario.getDia(),
+                    horaInicioOriginal,
+                    horaFinOriginal,
+                    null, // medicoId no necesario para ajuste
+                    consultorioId
+                );
+                
+                System.out.println(String.format("Ajustando horario %s: %s-%s", 
+                    horario.getDia(), horaInicioOriginal, horaFinOriginal));
+                
+                // Usar el método que ajusta automáticamente
+                boolean esCompatible = esBloqueCompatibleConConsultorio(bloque, consultorio);
+                
+                if (esCompatible) {
+                    // El bloque fue ajustado automáticamente por esBloqueCompatibleConConsultorio
+                    LocalTime nuevaHoraInicio = bloque.getInicio();
+                    LocalTime nuevaHoraFin = bloque.getFin();
+                    
+                    // Verificar si se realizó algún ajuste
+                    boolean seAjusto = !horaInicioOriginal.equals(nuevaHoraInicio) || !horaFinOriginal.equals(nuevaHoraFin);
+                    
+                    if (seAjusto) {
+                        // Aplicar los cambios al horario original
+                        horario.setHoraInicio(nuevaHoraInicio);
+                        horario.setHoraFin(nuevaHoraFin);
+                        
+                        advertencias.add(String.format(
+                            "Horario del %s ajustado automáticamente: %s-%s → %s-%s (para encajar en consultorio)",
+                            horario.getDia(),
+                            horaInicioOriginal, horaFinOriginal,
+                            nuevaHoraInicio, nuevaHoraFin
+                        ));
+                        
+                        System.out.println(String.format("  ✓ AJUSTADO: %s-%s → %s-%s", 
+                            horaInicioOriginal, horaFinOriginal, nuevaHoraInicio, nuevaHoraFin));
+                    } else {
+                        System.out.println("  ✓ SIN CAMBIOS: ya estaba dentro del rango");
+                    }
+                } else {
+                    // El bloque no se pudo ajustar (probablemente muy corto después del ajuste)
+                    horariosAEliminar.add(horario);
+                    advertencias.add(String.format(
+                        "Horario del %s (%s-%s) eliminado: no se pudo ajustar al horario del consultorio (resultaría muy corto)",
+                        horario.getDia(), horaInicioOriginal, horaFinOriginal
+                    ));
+                    
+                    System.out.println(String.format("  ✗ ELIMINADO: %s-%s (no se pudo ajustar)", 
+                        horaInicioOriginal, horaFinOriginal));
+                }
+            }
+            
+            // Eliminar horarios que no se pudieron ajustar
+            horariosEsquema.removeAll(horariosAEliminar);
+            
+            System.out.println(String.format("🔧 AJUSTE COMPLETADO - %d horarios finales, %d advertencias", 
+                horariosEsquema.size(), advertencias.size()));
+            
+        } catch (Exception e) {
+            advertencias.add("Error al ajustar horarios: " + e.getMessage());
+            System.err.println("Error en ajustarHorariosEsquemaAConsultorio: " + e.getMessage());
+        }
+        
+        return advertencias;
+    }
+
+    /**
      * Valida si los horarios de un esquema de turno son compatibles con los horarios del consultorio.
      * Este método público puede ser usado por otros servicios para validar antes de crear esquemas.
      * 
@@ -764,31 +856,26 @@ public class ConsultorioDistribucionService {
     }
     
     /**
-     * Valida que un bloque horario esté completamente dentro del rango de horarios del consultorio
+     * Obtiene el horario de un consultorio para un día específico de la semana
      */
-    private static boolean validarBloqueEnRangoHorario(BloqueHorario bloque, LocalTime aperturaConsultorio, LocalTime cierreConsultorio) {
-        LocalTime inicioBloque = bloque.getInicio();
-        LocalTime finBloque = bloque.getFin();
+    private static ConsultorioDTO.HorarioConsultorioDTO obtenerHorarioPorDia(ConsultorioDTO consultorio, String dia) {
+        if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
+            return null;
+        }
         
-        // El bloque debe empezar después o en el horario de apertura
-        // y terminar antes o en el horario de cierre
-        boolean inicioValidado = !inicioBloque.isBefore(aperturaConsultorio);
-        boolean finValidado = !finBloque.isAfter(cierreConsultorio);
+        String diaBloque = normalizarDia(dia);
         
-        boolean esValido = inicioValidado && finValidado;
+        for (ConsultorioDTO.HorarioConsultorioDTO horario : consultorio.getHorariosSemanales()) {
+            String diaConsultorio = normalizarDia(horario.getDiaSemana());
+            if (diaConsultorio.equals(diaBloque)) {
+                return horario;
+            }
+        }
         
-        // Log para debugging (remover en producción)
-        System.out.println(String.format(
-            "Validando bloque %s-%s del día %s contra consultorio %s-%s: %s (inicio: %s, fin: %s)", 
-            inicioBloque, finBloque, bloque.getDia(),
-            aperturaConsultorio, cierreConsultorio, 
-            esValido ? "VÁLIDO" : "INVÁLIDO",
-            inicioValidado ? "OK" : "FUERA DE RANGO", 
-            finValidado ? "OK" : "FUERA DE RANGO"
-        ));
-        
-        return esValido;
+        return null;
     }
+    
+  
 
     private static boolean verificarSolapamiento(BloqueHorario bloque1, BloqueHorario bloque2) {
         if (!normalizarDia(bloque1.getDia()).equals(normalizarDia(bloque2.getDia()))) {

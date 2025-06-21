@@ -182,6 +182,23 @@ public class EsquemaTurnoService {
             }
         }
 
+        // NUEVO: Ajustar automáticamente los horarios del esquema para que encajen en el consultorio
+        if (esquemaTurno.getConsultorio() != null) {
+            try {
+                System.out.println("🔧 APLICANDO AJUSTE AUTOMÁTICO DE HORARIOS");
+                List<String> advertencias = consultorioDistribucionService.ajustarHorariosEsquemaAConsultorio(
+                    esquemaTurno.getHorarios(), esquemaTurno.getConsultorio().getId());
+                
+                if (!advertencias.isEmpty()) {
+                    System.out.println("⚠️ ADVERTENCIAS DE AJUSTE:");
+                    advertencias.forEach(System.out::println);
+                }
+            } catch (Exception e) {
+                System.err.println("Error al ajustar horarios automáticamente: " + e.getMessage());
+                // Continuar con las validaciones normales
+            }
+        }
+
         // Validación: Conflictos de horarios en el mismo consultorio
         // Si hay conflicto, intentar usar el algoritmo de distribución automáticamente
         if (esquemaTurno.getConsultorio() != null) {
@@ -250,6 +267,21 @@ public class EsquemaTurnoService {
                     esquema.setConsultorio(consultorioRepository.findById(nuevoConsultorioId)
                         .orElseThrow(() -> new IllegalArgumentException(
                             "Consultorio no encontrado con ID: " + nuevoConsultorioId)));
+                    
+                    // AJUSTE AUTOMÁTICO: Ajustar horarios del esquema al consultorio asignado
+                    try {
+                        List<String> advertencias = consultorioDistribucionService
+                            .ajustarHorariosEsquemaAConsultorio(esquema.getHorarios(), nuevoConsultorioId);
+                        
+                        if (!advertencias.isEmpty()) {
+                            System.out.println("🔧 AJUSTES APLICADOS al esquema ID " + esquema.getId() + ":");
+                            advertencias.forEach(adv -> System.out.println("  - " + adv));
+                        }
+                    } catch (Exception adjustError) {
+                        System.err.println("Error al ajustar horarios del esquema ID " + esquema.getId() + ": " + adjustError.getMessage());
+                        // Continuar sin ajustar horarios
+                    }
+                    
                     esquemaTurnoRepository.save(esquema);
                     procesados++;
                 }
@@ -328,6 +360,21 @@ public class EsquemaTurnoService {
                     nuevoEsquema.setConsultorio(consultorioRepository.findById(consultorioId)
                         .orElseThrow(() -> new IllegalArgumentException(
                             "Consultorio no encontrado con ID: " + consultorioId)));
+                    
+                    // AJUSTE AUTOMÁTICO: Ajustar horarios del esquema al consultorio asignado
+                    try {
+                        List<String> advertencias = consultorioDistribucionService
+                            .ajustarHorariosEsquemaAConsultorio(horariosEsquema, consultorioId);
+                        
+                        if (!advertencias.isEmpty()) {
+                            System.out.println("🔧 AJUSTES APLICADOS al nuevo esquema de " + 
+                                             disponibilidad.getStaffMedico().getMedico().getNombre() + ":");
+                            advertencias.forEach(adv -> System.out.println("  - " + adv));
+                        }
+                    } catch (Exception adjustError) {
+                        System.err.println("Error al ajustar horarios del nuevo esquema: " + adjustError.getMessage());
+                        // Continuar sin ajustar horarios
+                    }
                 }
                 
                 // Guardar el nuevo esquema
@@ -470,14 +517,38 @@ public class EsquemaTurnoService {
 
     /**
      * Valida que el consultorio esté disponible para el esquema de turno.
-     * Verifica conflictos de horarios con otros médicos usando el mismo consultorio.
+     * Primero ajusta automáticamente los horarios para que encajen en el consultorio.
+     * Luego verifica conflictos de horarios con otros médicos usando el mismo consultorio.
      */
     private void validarDisponibilidadConsultorio(EsquemaTurno esquemaTurno) {
         if (esquemaTurno.getConsultorio() == null) {
             return; // Ya validado en saveOrUpdate
         }
         
-        // Obtener esquemas existentes que usan el mismo consultorio
+        // PASO 1: Ajustar automáticamente los horarios del esquema al consultorio
+        List<String> advertencias = consultorioDistribucionService.ajustarHorariosEsquemaAConsultorio(
+            esquemaTurno.getHorarios(), 
+            esquemaTurno.getConsultorio().getId()
+        );
+        
+        // Mostrar advertencias sobre los ajustes realizados
+        if (!advertencias.isEmpty()) {
+            System.out.println("🔧 AJUSTES AUTOMÁTICOS REALIZADOS:");
+            for (String advertencia : advertencias) {
+                System.out.println("  - " + advertencia);
+            }
+        }
+        
+        // Verificar que después del ajuste aún queden horarios válidos
+        if (esquemaTurno.getHorarios().isEmpty()) {
+            throw new IllegalStateException(String.format(
+                "Después del ajuste automático no quedaron horarios válidos para el consultorio %s. " +
+                "Los horarios del médico no se superponen con los horarios de atención del consultorio.",
+                esquemaTurno.getConsultorio().getNombre()
+            ));
+        }
+        
+        // PASO 2: Obtener esquemas existentes que usan el mismo consultorio
         List<EsquemaTurno> esquemasExistentes = esquemaTurnoRepository.findByConsultorioId(esquemaTurno.getConsultorio().getId());
         
         // Filtrar el esquema actual si está siendo actualizado
@@ -487,7 +558,7 @@ public class EsquemaTurnoService {
                 .collect(Collectors.toList());
         }
         
-        // Verificar conflictos de horario
+        // PASO 3: Verificar conflictos de horario con otros médicos
         for (EsquemaTurno.Horario nuevoHorario : esquemaTurno.getHorarios()) {
             for (EsquemaTurno esquemaExistente : esquemasExistentes) {
                 for (EsquemaTurno.Horario horarioExistente : esquemaExistente.getHorarios()) {
