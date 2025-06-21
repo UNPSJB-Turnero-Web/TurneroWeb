@@ -469,9 +469,9 @@
                       </div>
                     </th>
                     <th width="60%">
-                    <div class="d-flex align-items-center">
+                      <div class="d-flex align-items-center">
                         <div class="icon-consultorios me-2"></div>
-                        Nombre / Esquemas de Turno
+                        Nombre
                       </div>
                     </th>
                     <th width="20%">
@@ -505,10 +505,6 @@
                             <div class="d-flex align-items-center">
                               <i class="icon-consultorios me-2"></i>
                               <strong>{{ consultorio.nombre }}</strong>
-                              <span class="ms-3 text-muted">
-                                <i class="fa fa-clock me-1"></i>
-                                {{ verEsquemasConsultorio(consultorio).length }} esquema(s) de turno
-                              </span>
                             </div>
                           </div>
                           <div *ngIf="editConsultorioIndex === i" class="w-100">
@@ -554,14 +550,14 @@
                       </td>
                     </tr>
                     
-                    <!-- Fila Expandible - Gestión de Esquemas de Turno -->
+                    <!-- Fila Expandible - Solo Horarios del Consultorio -->
                     <tr *ngIf="consultorioExpandido[consultorio.id || 0]" class="expansion-row">
                       <td colspan="4" class="p-0">
                         <div class="expansion-content">
                           <div class="row g-4">
                             
                             <!-- Panel de Horarios del Consultorio -->
-                            <div class="col-md-6">
+                            <div class="col-12">
                               <div class="card">
                                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                                   <h6 class="mb-0">
@@ -615,158 +611,6 @@
                               </div>
                             </div>
                             
-                            <!-- Panel Principal: Tabla de Esquemas de Turno -->
-                            <div class="col-md-6">
-                              <div class="card">
-                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                  <h6 class="mb-0">
-                                    <i class="fa fa-calendar-alt me-2"></i>
-                                    Esquemas de Turno
-                                  </h6>
-                                  <button class="btn btn-sm btn-light" 
-                                          (click)="crearNuevoEsquema(consultorio)">
-                                    <i class="fa fa-plus me-1"></i>Nuevo Esquema
-                                  </button>
-                                </div>
-                                <div class="card-body p-0">
-                                  <!-- Tabla de Esquemas -->
-                                  <div *ngIf="verEsquemasConsultorio(consultorio).length > 0; else noEsquemasTable" 
-                                       class="table-responsive">
-                                    <table class="table table-hover mb-0 esquemas-detail-table">
-                                      <thead class="table-light">
-                                        <tr>
-                                          <th width="25%">
-                                            <i class="fa fa-user-md me-1 text-primary"></i>Médico
-                                          </th>
-                                          <th width="15%">
-                                            <i class="fa fa-stethoscope me-1 text-success"></i>Especialidad
-                                          </th>
-                                          <th width="30%">
-                                            <i class="fa fa-clock me-1 text-info"></i>Horarios
-                                          </th>
-                                          <th width="10%">
-                                            <i class="fa fa-hourglass-half me-1 text-warning"></i>Intervalo
-                                          </th>
-                                          <th width="10%">
-                                            <i class="fa fa-toggle-on me-1 text-secondary"></i>Estado
-                                          </th>
-                                          <th width="10%">Acciones</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        <tr *ngFor="let esquema of verEsquemasConsultorio(consultorio)" 
-                                            class="esquema-detail-row">
-                                          <!-- Médico -->
-                                          <td>
-                                            <div class="d-flex align-items-center">
-                                              <div class="medico-avatar me-2">
-                                                {{ getMedicoInitials(esquema) }}
-                                              </div>
-                                              <div>
-                                                <div class="fw-bold">
-                                                  {{ getMedicoNombre(esquema) }}
-                                                </div>
-                                                <small class="text-muted">
-                                                  ID: {{ esquema.staffMedicoId || 'N/A' }}
-                                                </small>
-                                              </div>
-                                            </div>
-                                          </td>
-                                          
-                                          <!-- Especialidad -->
-                                          <td>
-                                            <span class="badge bg-success-subtle text-success-emphasis">
-                                              {{ getEspecialidadNombre(esquema) }}
-                                            </span>
-                                          </td>
-                                          
-                                          <!-- Horarios -->
-                                          <td>
-                                            <div class="horarios-container">
-                                              <div *ngIf="esquema.horarios && esquema.horarios.length > 0; else noHorarios">
-                                                <div *ngFor="let horario of esquema.horarios" 
-                                                     class="horario-item d-flex align-items-center mb-1">
-                                                  <span class="badge bg-info-subtle text-info-emphasis me-2">
-                                                    {{ horario.dia }}
-                                                  </span>
-                                                  <span class="text-sm">
-                                                    {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                                  </span>
-                                                </div>
-                                              </div>
-                                              <ng-template #noHorarios>
-                                                <small class="text-muted">
-                                                  <i class="fa fa-exclamation-triangle me-1"></i>
-                                                  Sin horarios configurados
-                                                </small>
-                                              </ng-template>
-                                            </div>
-                                          </td>
-                                          
-                                          <!-- Intervalo -->
-                                          <td>
-                                            <div class="text-center">
-                                              <span class="badge bg-warning-subtle text-warning-emphasis">
-                                                <i class="fa fa-clock me-1"></i>
-                                                {{ esquema.intervalo || 'N/A' }} min
-                                              </span>
-                                            </div>
-                                          </td>
-                                          
-                                          <!-- Estado -->
-                                          <td>
-                                            <div class="text-center">
-                                              <span class="badge" 
-                                                    [class]="getEstadoBadgeClass(esquema)">
-                                                <i class="fa" [class]="getEstadoIcon(esquema)"></i>
-                                                {{ getEstadoTexto(esquema) }}
-                                              </span>
-                                            </div>
-                                          </td>
-                                          
-                                          <!-- Acciones -->
-                                          <td>
-                                            <div class="btn-group-vertical btn-group-sm">
-                                              <button class="btn btn-outline-primary btn-sm" 
-                                                      (click)="editarEsquema(esquema)"
-                                                      title="Editar esquema">
-                                                <i class="fa fa-edit"></i>
-                                              </button>
-                                              <button class="btn btn-outline-danger btn-sm" 
-                                                      (click)="eliminarEsquema(consultorio, esquema)"
-                                                      title="Eliminar esquema">
-                                                <i class="fa fa-trash"></i>
-                                              </button>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                  
-                                  <!-- Estado cuando no hay esquemas -->
-                                  <ng-template #noEsquemasTable>
-                                    <div class="no-esquemas-panel text-center py-5">
-                                      <i class="fa fa-calendar-times fa-4x text-muted mb-3"></i>
-                                      <h5 class="text-muted mb-2">No hay esquemas de turno configurados</h5>
-                                      <p class="text-muted mb-4">
-                                        Configure al menos un esquema de turno para que los pacientes puedan solicitar citas en este consultorio.
-                                      </p>
-                                      <button class="btn btn-primary btn-lg" 
-                                              (click)="crearNuevoEsquema(consultorio)">
-                                        <i class="fa fa-plus me-2"></i>Crear Primer Esquema
-                                      </button>
-                                    </div>
-                                  </ng-template>
-                                </div>
-                              </div>
-                              
-                     
-                            </div>
-                            
-                            <!-- Panel Derecho: Asignar Nuevos Esquemas -->
-                            
-                            
                           </div>
                         </div>
                       </td>
@@ -774,28 +618,6 @@
                   </ng-container>
                 </tbody>
               </table>
-            </div>
-          </div>
-          
-          <!-- Información sobre Esquemas de Turno -->
-          <div *ngIf="consultorios.length > 0" class="mt-4 p-3" style="background: rgba(40, 167, 69, 0.05); border-radius: 15px; border: 2px solid rgba(40, 167, 69, 0.2);">
-            <h6 class="mb-2 text-success">
-              <i class="fa fa-info-circle me-2"></i>Gestión de Esquemas de Turno
-            </h6>
-            <div class="small text-muted mb-2">
-              <p class="mb-1"><strong>Botones disponibles:</strong></p>
-              <p class="mb-1">
-                <i class="fa fa-calendar-alt text-primary me-2"></i><strong>Gestionar esquemas:</strong> Accede al editor completo de esquemas de turno
-              </p>
-              <p class="mb-1">
-                <i class="fa fa-plus-circle text-success me-2"></i><strong>Crear esquema:</strong> Crea un nuevo esquema de turno para el consultorio
-              </p>
-              <p class="mb-0">
-                <small class="text-info">
-                  <i class="fa fa-lightbulb me-1"></i>
-                  Primero asocie médicos y configure sus disponibilidades en el tab "Staff Médico" antes de crear esquemas de turno.
-                </small>
-              </p>
             </div>
           </div>
           
