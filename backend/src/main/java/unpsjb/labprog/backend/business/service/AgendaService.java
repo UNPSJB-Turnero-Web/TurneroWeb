@@ -578,32 +578,16 @@ public class AgendaService {
         };
     }
 
+    /**
+     * Genera eventos (turnos) desde un esquema de turno para las próximas semanas especificadas.
+     * Este método SOLO genera eventos basándose en el esquema existente, SIN ejecutar optimizaciones automáticas.
+     * Los esquemas de turno ya deben tener asignados sus consultorios cuando se crean.
+     */
     public List<TurnoDTO> generarEventosDesdeEsquemaTurno(EsquemaTurno esquemaTurno, int semanas) {
         List<TurnoDTO> eventos = new ArrayList<>();
         LocalDate hoy = LocalDate.now();
         int eventoIdCounter = 1; // Contador para generar IDs únicos
         
-        // Ejecutar la optimización de distribución de consultorios si el esquema tiene centro de atención
-        if (esquemaTurno.getCentroAtencion() != null) {
-            consultorioOptimizer.optimizarDistribucionConsultorios(esquemaTurno.getCentroAtencion().getId(), hoy);
-            
-            // Si el médico tiene una especialidad, resolver posibles conflictos
-            if (esquemaTurno.getStaffMedico() != null && 
-                esquemaTurno.getStaffMedico().getMedico() != null && 
-                esquemaTurno.getStaffMedico().getMedico().getEspecialidad() != null) {
-                
-                conflictResolver.resolverConflictosConsultorios(
-                    esquemaTurno.getCentroAtencion().getId(),
-                    esquemaTurno.getStaffMedico().getMedico().getEspecialidad().getId(),
-                    hoy
-                );
-            }
-            
-            // Recargar el esquema de turno para asegurarnos de tener la asignación de consultorio actualizada
-            esquemaTurno = esquemaTurnoRepository.findById(esquemaTurno.getId())
-                .orElseThrow(() -> new IllegalStateException("No se pudo recargar el esquema de turno"));
-        }
-
         // Crear una referencia final para usar en lambdas
         final EsquemaTurno esquemaTurnoFinal = esquemaTurno;
 
@@ -621,10 +605,10 @@ public class AgendaService {
             DayOfWeek dayOfWeek = parseDiaSemana(horario.getDia());
             LocalDate fecha = hoy.with(TemporalAdjusters.nextOrSame(dayOfWeek));
             
-            System.out.println("=== PROCESANDO HORARIO ===");
-            System.out.println("Dia de horario: " + horario.getDia() + " (" + horario.getHoraInicio() + "-" + horario.getHoraFin() + ")");
-            System.out.println("DayOfWeek calculado: " + dayOfWeek);
-            System.out.println("Primera fecha para este dia: " + fecha);
+            // System.out.println("=== PROCESANDO HORARIO ===");
+            // System.out.println("Dia de horario: " + horario.getDia() + " (" + horario.getHoraInicio() + "-" + horario.getHoraFin() + ")");
+            // System.out.println("DayOfWeek calculado: " + dayOfWeek);
+            // System.out.println("Primera fecha para este dia: " + fecha);
             
             for (int i = 0; i < semanas; i++) {
                 LocalDate fechaEvento = fecha.plusWeeks(i);
