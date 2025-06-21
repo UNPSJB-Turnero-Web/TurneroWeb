@@ -29,5 +29,57 @@ export interface Turno {
     // Campos para manejo de SLOTS en la agenda
     esSlot?: boolean;               // true = slot generado, false/undefined = turno real
     ocupado?: boolean;              // true = slot ocupado por un turno, false = disponible
-    // Los colores se manejan en el frontend según el estado
+    
+    // === CAMPOS DE AUDITORÍA ===
+    ultimoUsuarioModificacion?: string;    // Usuario que realizó la última modificación
+    fechaUltimaModificacion?: string;      // Fecha/hora de la última modificación como string
+    motivoUltimaModificacion?: string;     // Motivo de la última modificación
+    totalModificaciones?: number;          // Número total de modificaciones
+}
+
+// Interfaz para los filtros de búsqueda avanzada
+export interface TurnoFilter {
+    // Filtros básicos
+    estado?: string;
+    pacienteId?: number;
+    nombrePaciente?: string;
+    staffMedicoId?: number;
+    nombreMedico?: string;
+    especialidadId?: number;
+    nombreEspecialidad?: string;
+    centroAtencionId?: number;
+    nombreCentro?: string;
+    consultorioId?: number;
+    
+    // Filtros de fecha
+    fechaDesde?: string;
+    fechaHasta?: string;
+    fechaExacta?: string;
+    
+    // Filtros de auditoría
+    usuarioModificacion?: string;
+    conModificaciones?: boolean;
+    
+    // Paginación y ordenamiento
+    page?: number;
+    size?: number;
+    sortBy?: string;
+    sortDirection?: string;
+    
+    // Formato de exportación
+    exportFormat?: string;  // CSV, PDF
+}
+
+// Interfaz para los logs de auditoría
+export interface AuditLog {
+    id?: number;
+    turnoId: number;
+    action: string;
+    previousStatus?: string;
+    newStatus?: string;
+    reason?: string;
+    performedBy: string;
+    performedAt: string;
+    oldValues?: any;
+    newValues?: any;
 }

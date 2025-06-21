@@ -65,7 +65,7 @@ public class AgendaPresenter {
     public ResponseEntity<Object> crearDiaExcepcional(@RequestBody Map<String, Object> params) {
         try {
             LocalDate fecha = LocalDate.parse((String) params.get("fecha"));
-            String tipoAgenda = (String) params.get("tipo");
+            String tipoAgenda = (String) params.get("tipoAgenda");
             String descripcion = (String) params.get("descripcion");
             Integer esquemaTurnoId = params.get("esquemaTurnoId") != null ? 
                 Integer.valueOf(params.get("esquemaTurnoId").toString()) : null;
@@ -193,7 +193,7 @@ public class AgendaPresenter {
     public ResponseEntity<Object> actualizarDiaExcepcional(@PathVariable Integer configId, @RequestBody Map<String, Object> params) {
         try {
             LocalDate fecha = LocalDate.parse((String) params.get("fecha"));
-            String tipoAgenda = (String) params.get("tipo");
+            String tipoAgenda = (String) params.get("tipoAgenda");
             String descripcion = (String) params.get("descripcion");
             Integer esquemaTurnoId = params.get("esquemaTurnoId") != null ? 
                 Integer.valueOf(params.get("esquemaTurnoId").toString()) : null;

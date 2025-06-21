@@ -3,12 +3,11 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
-import { NotificationsComponent } from './audit/notifications.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule, NotificationsComponent],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, ],
   template: `
     <nav class="modern-navbar">
       <div class="navbar-container">
@@ -155,43 +154,6 @@ import { NotificationsComponent } from './audit/notifications.component';
             </div>
           </div>
 
-          <!-- Admin-only Menú Auditoría -->
-          <div ngbDropdown class="nav-dropdown" *ngIf="isAdmin()">
-            <button 
-              class="nav-button"
-              [class.active]="isRouteActive('/audit')"
-              ngbDropdownToggle
-              id="auditDropdown"
-              aria-label="Menú de auditoría y monitoreo"
-            >
-              <i class="fas fa-shield-alt me-2"></i>
-              <span>Auditoría</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-            </button>
-            <div ngbDropdownMenu class="modern-dropdown" aria-labelledby="auditDropdown">
-              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/dashboard')" [class.active]="isRouteActive('/audit/dashboard')">
-                <i class="fas fa-tachometer-alt icon-item icon-audit-dashboard"></i>
-                <div class="item-content">
-                  <span class="item-title">Dashboard</span>
-                  <span class="item-desc">Panel de control</span>
-                </div>
-              </a>
-              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/logs')" [class.active]="isRouteActive('/audit/logs')">
-                <i class="fas fa-history icon-item icon-audit-logs"></i>
-                <div class="item-content">
-                  <span class="item-title">Historial</span>
-                  <span class="item-desc">Logs de auditoría</span>
-                </div>
-              </a>
-              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/audit/notifications')" [class.active]="isRouteActive('/audit/notifications')">
-                <i class="fas fa-bell icon-item icon-audit-notifications"></i>
-                <div class="item-content">
-                  <span class="item-title">Notificaciones</span>
-                  <span class="item-desc">Alertas del sistema</span>
-                </div>
-              </a>
-            </div>
-          </div>
 
           <!-- Patient-only Menú -->
           <div ngbDropdown class="nav-dropdown" *ngIf="isPatient()">
@@ -285,7 +247,7 @@ import { NotificationsComponent } from './audit/notifications.component';
       <router-outlet></router-outlet>
       
       <!-- Componente de notificaciones global -->
-      <app-notifications></app-notifications>
+    
     </main>
   `,
   styles: [`

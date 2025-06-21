@@ -194,7 +194,7 @@ interface SlotDisponible {
                         [class.slot-feriado]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'FERIADO'"
                         [class.slot-mantenimiento-individual]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO'"
                         [class.slot-atencion-especial]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'ATENCION_ESPECIAL'"
-                        [class.slot-ocupado]="!esConfiguracionEspecial(slot) && slot.ocupado && slot.pacienteNombre"
+                        [class.slot-ocupado]="!esConfiguracionEspecial(slot) && slot.ocupado"
                         (click)="seleccionarSlot(slot, $event)">
                   
                       
@@ -268,7 +268,7 @@ interface SlotDisponible {
                         Feriado
                       </div>
                       <!-- Turno realmente ocupado por paciente -->
-                      <div class="slot-status" *ngIf="!esConfiguracionEspecial(slot) && slot.ocupado && slot.pacienteNombre">
+                      <div class="slot-status" *ngIf="!esConfiguracionEspecial(slot) && slot.ocupado">
                         <i class="fas fa-user-check"></i>
                         Asignado
                       </div>
@@ -1727,8 +1727,8 @@ export class AdminAgendaComponent implements OnInit {
         consultorioNombre: evento.consultorioNombre,
         centroId: evento.centroId,
         nombreCentro: evento.nombreCentro,
-        // Solo marcar como ocupado si realmente tiene un paciente asignado
-        ocupado: esOcupadoPorPaciente,
+        // Confiar en lo que dice el backend: si dice ocupado, está ocupado
+        ocupado: evento.ocupado || false,
         esSlot: true,
         pacienteId: evento.pacienteId,
         pacienteNombre: evento.pacienteNombre,

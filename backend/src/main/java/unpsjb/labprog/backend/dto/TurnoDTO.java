@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.dto;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import lombok.Getter;
@@ -38,4 +39,9 @@ public class TurnoDTO {
     private Boolean enMantenimiento; // true = slot afectado por mantenimiento, false/null = normal
     // Los colores se manejan en el frontend según el estado
 
+    // === CAMPOS DE AUDITORÍA PARA CONSULTAS ===
+    private String ultimoUsuarioModificacion;  // Usuario que realizó la última modificación
+    private LocalDateTime fechaUltimaModificacion; // Fecha/hora de la última modificación
+    private String motivoUltimaModificacion;   // Motivo de la última modificación
+    private Integer totalModificaciones;       // Número total de modificaciones
 }

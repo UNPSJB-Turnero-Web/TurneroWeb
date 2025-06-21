@@ -140,6 +140,65 @@
                   </div>
                 </div>
               </div>
+
+              <!-- INFORMACIÓN DE AUDITORÍA -->
+              <div class="col-12" *ngIf="turno.id && (turno.totalModificaciones || turno.fechaUltimaModificacion)">
+                <div class="audit-section mt-4">
+                  <h5 class="audit-title">
+                    <i class="fas fa-history"></i> Información de Auditoría
+                  </h5>
+                  <div class="row">
+                    <div class="col-md-6" *ngIf="turno.totalModificaciones">
+                      <div class="info-item d-flex align-items-center">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
+                          🔢
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="info-label">Total Modificaciones</div>
+                          <div class="info-value">
+                            <span class="badge bg-primary">{{ turno.totalModificaciones }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6" *ngIf="turno.fechaUltimaModificacion">
+                      <div class="info-item d-flex align-items-center">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #dc3545 0%, #6f42c1 100%);">
+                          ⏰
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="info-label">Última Modificación</div>
+                          <div class="info-value">
+                            <small>{{ formatDateTime(turno.fechaUltimaModificacion) }}</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12" *ngIf="turno.ultimoUsuarioModificacion">
+                      <div class="info-item d-flex align-items-center">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);">
+                          👨‍💼
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="info-label">Modificado por</div>
+                          <div class="info-value">{{ turno.ultimoUsuarioModificacion }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-12" *ngIf="turno.motivoUltimaModificacion">
+                      <div class="info-item d-flex align-items-center">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);">
+                          💭
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="info-label">Motivo</div>
+                          <div class="info-value">{{ turno.motivoUltimaModificacion }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -301,6 +360,22 @@
               </button>
               <button 
                 type="button" 
+                class="btn btn-modern btn-info" 
+                (click)="toggleAuditPanel()"
+                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0"
+              >
+                📊 Auditoría ({{ turno.totalModificaciones }})
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-modern btn-success" 
+                (click)="verifyAuditIntegrity()"
+                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0"
+              >
+                🛡️ Verificar
+              </button>
+              <button 
+                type="button" 
                 class="btn btn-modern btn-delete ms-auto" 
                 (click)="remove(turno)"
                 *ngIf="turno.id"
@@ -323,6 +398,75 @@
                 ❌ Cancelar
               </button>
             </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DE AUDITORÍA -->
+      <div class="card mt-4" *ngIf="showAuditPanel && turno.id">
+        <div class="card-header bg-info text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <div class="info-icon me-3" style="background: rgba(255,255,255,0.2);">
+                📊
+              </div>
+              <div>
+                <h5 class="mb-0">Historial de Auditoría</h5>
+                <small class="opacity-75">Turno #{{ turno.id }}</small>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-light" (click)="toggleAuditPanel()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div *ngIf="loadingAudit" class="text-center py-4">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p class="mt-2 text-muted">Cargando historial de auditoría...</p>
+          </div>
+
+          <div *ngIf="!loadingAudit && auditHistory.length === 0" class="text-center py-4">
+            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No se encontraron registros de auditoría para este turno</p>
+          </div>
+
+          <div *ngIf="!loadingAudit && auditHistory.length > 0">
+            <div class="audit-timeline">
+              <div class="audit-entry" *ngFor="let log of auditHistory; let i = index">
+                <div class="audit-entry-content">
+                  <div class="audit-header">
+                    <span [class]="getActionClass(log.action)">
+                      <i [class]="getActionIcon(log.action)"></i>
+                      {{ log.action }}
+                    </span>
+                    <small class="text-muted">{{ formatDateTime(log.performedAt) }}</small>
+                  </div>
+                  
+                  <div class="audit-details">
+                    <div class="row">
+                      <div class="col-md-6" *ngIf="log.performedBy">
+                        <strong>Usuario:</strong> {{ log.performedBy }}
+                      </div>
+                      <div class="col-md-6" *ngIf="log.previousStatus || log.newStatus">
+                        <strong>Estado:</strong>
+                        <span class="badge bg-secondary me-1" *ngIf="log.previousStatus">{{ log.previousStatus }}</span>
+                        <i class="fas fa-arrow-right" *ngIf="log.previousStatus && log.newStatus"></i>
+                        <span class="badge bg-primary ms-1" *ngIf="log.newStatus">{{ log.newStatus }}</span>
+                      </div>
+                    </div>
+                    <div class="row mt-2" *ngIf="log.reason">
+                      <div class="col-12">
+                        <strong>Motivo:</strong> {{ log.reason }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="audit-line" *ngIf="i < auditHistory.length - 1"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

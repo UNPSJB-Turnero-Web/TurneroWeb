@@ -26,13 +26,33 @@ import { PaginationComponent } from '../pagination/pagination.component';
                 <p>Gestión de citas y consultas médicas</p>
               </div>
             </div>
-            <button 
-              class="btn btn-new"
-              (click)="router.navigate(['/turnos/new'])"
-            >
-              <i class="fas fa-plus me-2"></i>
-              Nuevo Turno
-            </button>
+            <div class="header-actions">
+              <div class="btn-group me-2">
+                <button 
+                  class="btn btn-outline-info"
+                  (click)="router.navigate(['/turnos/audit-dashboard'])"
+                  title="Dashboard de Auditoría"
+                >
+                  <i class="fas fa-chart-bar me-2"></i>
+                  Dashboard
+                </button>
+                <button 
+                  class="btn btn-outline-primary"
+                  (click)="router.navigate(['/turnos/advanced-search'])"
+                  title="Búsqueda Avanzada"
+                >
+                  <i class="fas fa-search me-2"></i>
+                  Búsqueda Avanzada
+                </button>
+              </div>
+              <button 
+                class="btn btn-new"
+                (click)="router.navigate(['/turnos/new'])"
+              >
+                <i class="fas fa-plus me-2"></i>
+                Nuevo Turno
+              </button>
+            </div>
           </div>
         </div>
 
@@ -95,6 +115,14 @@ import { PaginationComponent } from '../pagination/pagination.component';
                       <i class="fas fa-info-circle"></i>
                     </div>
                     Estado
+                  </div>
+                </th>
+                <th>
+                  <div class="header-cell">
+                    <div class="icon-circle icon-medico">
+                      <i class="fas fa-history"></i>
+                    </div>
+                    Auditoría
                   </div>
                 </th>
                 <th>
@@ -166,7 +194,36 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </td>
                 <td>
+                  <div class="audit-info">
+                    <div class="audit-summary" *ngIf="turno.totalModificaciones && turno.totalModificaciones > 0">
+                      <span class="badge bg-warning">
+                        <i class="fas fa-edit"></i>
+                        {{ turno.totalModificaciones }} modificaciones
+                      </span>
+                      <div class="audit-details">
+                        <small class="text-muted">
+                          Último: {{ turno.ultimoUsuarioModificacion }}
+                        </small>
+                      </div>
+                    </div>
+                    <div class="audit-summary" *ngIf="!turno.totalModificaciones || turno.totalModificaciones === 0">
+                      <span class="badge bg-success">
+                        <i class="fas fa-check"></i>
+                        Sin modificaciones
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td>
                   <div class="action-buttons">
+                    <button 
+                      class="btn-action btn-info"
+                      (click)="showAuditHistory(turno); $event.stopPropagation()" 
+                      title="Ver historial de auditoría"
+                      *ngIf="turno.totalModificaciones && turno.totalModificaciones > 0"
+                    >
+                      <i class="fas fa-history"></i>
+                    </button>
                     <button 
                       class="btn-action btn-edit"
                       (click)="goToEdit(turno.id); $event.stopPropagation()" 
@@ -350,6 +407,48 @@ import { PaginationComponent } from '../pagination/pagination.component';
       box-shadow: 0 4px 12px rgba(23,162,184,0.3);
     }
 
+    /* === ESTILOS PARA INFORMACIÓN DE AUDITORÍA === */
+    .audit-info {
+      text-align: center;
+      padding: 0.5rem;
+    }
+
+    .audit-summary {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .audit-summary .badge {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .audit-summary .badge.bg-warning {
+      background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%) !important;
+      color: #000;
+    }
+
+    .audit-summary .badge.bg-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+      color: white;
+    }
+
+    .audit-details {
+      margin-top: 0.25rem;
+    }
+
+    .audit-details small {
+      font-size: 0.7rem;
+      color: #6c757d;
+    }
+
     .action-buttons {
       display: flex;
       justify-content: center;
@@ -378,6 +477,16 @@ import { PaginationComponent } from '../pagination/pagination.component';
     .btn-edit:hover {
       transform: translateY(-2px) scale(1.05);
       box-shadow: 0 6px 20px var(--action-edit-shadow);
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+    }
+
+    .btn-info:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(23,162,184,0.4);
     }
 
     .btn-delete {
@@ -632,5 +741,18 @@ export class TurnosComponent {
     const n = nombre?.charAt(0) || '';
     const a = apellido?.charAt(0) || '';
     return `${n}${a}`.toUpperCase() || 'M';
+  }
+
+  // === MÉTODOS DE AUDITORÍA ===
+
+  /** Muestra el historial de auditoría de un turno */
+  showAuditHistory(turno: Turno): void {
+    // Navegar al componente de búsqueda avanzada con el turno preseleccionado
+    this.router.navigate(['/turnos/advanced-search'], { 
+      queryParams: { 
+        turnoId: turno.id,
+        showAudit: true 
+      } 
+    });
   }
 }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TurnoService } from './turno.service';
-import { Turno } from './turno';
+import { Turno, AuditLog } from './turno';
 import { DataPackage } from '../data.package';
 import { PacienteService } from '../pacientes/paciente.service';
 import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
@@ -289,6 +289,121 @@ import { ModalService } from '../modal/modal.service';
       color: #721c24;
     }
     
+    /* === ESTILOS PARA AUDITORÍA === */
+    .audit-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border-left: 4px solid #17a2b8;
+    }
+    
+    .audit-title {
+      color: #17a2b8;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .audit-timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+    
+    .audit-timeline::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    }
+    
+    .audit-entry {
+      position: relative;
+      margin-bottom: 1.5rem;
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border-left: 3px solid #17a2b8;
+    }
+    
+    .audit-entry::before {
+      content: '';
+      position: absolute;
+      left: -23px;
+      top: 20px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #17a2b8;
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px #17a2b8;
+    }
+    
+    .audit-entry-content {
+      position: relative;
+    }
+    
+    .audit-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 0.5rem;
+    }
+    
+    .audit-details {
+      font-size: 0.9rem;
+      color: #495057;
+    }
+    
+    .audit-details strong {
+      color: #212529;
+      font-weight: 600;
+    }
+    
+    .audit-details .badge {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+    
+    .audit-entry:last-child {
+      margin-bottom: 0;
+    }
+    
+    .audit-entry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    }
+    
+    /* Botón de verificación de integridad */
+    .btn-info {
+      background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+      color: white;
+      border: none;
+    }
+    
+    .btn-info:hover {
+      background: linear-gradient(135deg, #138496 0%, #17a2b8 100%);
+      transform: translateY(-2px);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
+      transform: translateY(-2px);
+    }
+
     /* Animaciones */
     @keyframes slideInUp {
       from {
@@ -351,6 +466,12 @@ export class TurnoDetailComponent {
   pacientes: Paciente[] = [];
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
+
+  // === PROPIEDADES DE AUDITORÍA ===
+  auditHistory: AuditLog[] = [];
+  showAuditPanel = false;
+  loadingAudit = false;
+  auditIntegrityValid = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -482,7 +603,7 @@ export class TurnoDetailComponent {
       case 'CANCELADO':
         return 'estado-display estado-cancelado';
       default:
-        return 'estado-display bg-secondary text-white';
+        return 'estado-display bg-secondary';
     }
   }
 
@@ -512,5 +633,88 @@ export class TurnoDetailComponent {
 
   allFieldsEmpty(): boolean {
     return !this.turno?.pacienteId && !this.turno?.staffMedicoId && !this.turno?.consultorioId;
+  }
+
+  // === MÉTODOS DE AUDITORÍA ===
+
+  /** Carga el historial de auditoría del turno */
+  loadAuditHistory(): void {
+    if (!this.turno.id) return;
+    
+    this.loadingAudit = true;
+    this.turnoService.getAuditHistory(this.turno.id).subscribe({
+      next: (response: DataPackage<AuditLog[]>) => {
+        if (response.status === 1) {
+          this.auditHistory = response.data || [];
+        }
+        this.loadingAudit = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar historial:', error);
+        this.loadingAudit = false;
+      }
+    });
+  }
+
+  /** Muestra/oculta el panel de auditoría */
+  toggleAuditPanel(): void {
+    this.showAuditPanel = !this.showAuditPanel;
+    if (this.showAuditPanel && this.auditHistory.length === 0) {
+      this.loadAuditHistory();
+    }
+  }
+
+  /** Verifica la integridad del historial de auditoría */
+  verifyAuditIntegrity(): void {
+    if (!this.turno.id) return;
+    
+    this.turnoService.verifyAuditIntegrity(this.turno.id).subscribe({
+      next: (response: DataPackage<{isValid: boolean}>) => {
+        if (response.status === 1) {
+          this.auditIntegrityValid = response.data.isValid;
+          const message = this.auditIntegrityValid 
+            ? 'El historial de auditoría es íntegro y válido' 
+            : 'Se detectaron inconsistencias en el historial de auditoría';
+          this.modalService.alert('Verificación de Integridad', message);
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar integridad:', error);
+        this.modalService.alert('Error', 'No se pudo verificar la integridad del historial');
+      }
+    });
+  }
+
+  /** Formatea una fecha y hora para mostrar */
+  formatDateTime(dateTimeString: string): string {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    return date.toLocaleString('es-ES');
+  }
+
+  /** Obtiene la clase CSS para el tipo de acción de auditoría */
+  getActionClass(action: string): string {
+    const classes: any = {
+      'CREATED': 'badge bg-info',
+      'STATUS_CHANGED': 'badge bg-primary',
+      'CANCELED': 'badge bg-danger',
+      'CONFIRMED': 'badge bg-success',
+      'RESCHEDULED': 'badge bg-warning',
+      'DELETED': 'badge bg-dark'
+    };
+    return classes[action] || 'badge bg-secondary';
+  }
+
+  /** Obtiene el icono para el tipo de acción */
+  getActionIcon(action: string): string {
+    const icons: any = {
+      'CREATED': 'fas fa-plus-circle',
+      'STATUS_CHANGED': 'fas fa-edit',
+      'CANCELED': 'fas fa-times-circle',
+      'CONFIRMED': 'fas fa-check-circle',
+      'RESCHEDULED': 'fas fa-calendar-alt',
+      'DELETED': 'fas fa-trash'
+    };
+    return icons[action] || 'fas fa-question-circle';
   }
 }

@@ -1,0 +1,218 @@
+/* Estilos para el componente de búsqueda avanzada */
+
+.container-fluid {
+  padding: 20px;
+}
+
+.card {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: none;
+  border-radius: 8px;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.btn-group .btn {
+  margin-right: 5px;
+}
+
+.btn-group:last-child .btn {
+  margin-right: 0;
+}
+
+/* Estilos para la tabla */
+.table-responsive {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table th[style*="cursor: pointer"]:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 0.875rem;
+}
+
+.table-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* Estilos para badges */
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.5rem;
+}
+
+/* Estilos para botones */
+.btn-outline-primary:hover,
+.btn-outline-info:hover,
+.btn-outline-warning:hover,
+.btn-outline-success:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Estilos para el modal */
+.modal-content {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+.modal-backdrop {
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* Estilos para filtros */
+.form-control:focus,
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Estilos para paginación */
+.pagination .page-link {
+  color: #667eea;
+  border-color: #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.pagination .page-link:hover {
+  color: #4e5fd1;
+  background-color: #e9ecef;
+}
+
+/* Estilos para alertas */
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* Animaciones */
+.btn, .badge, .form-control, .form-select {
+  transition: all 0.3s ease;
+}
+
+.table tbody tr {
+  transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding: 10px;
+  }
+  
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-group .btn {
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+  
+  .table-responsive {
+    font-size: 0.8rem;
+  }
+  
+  .btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Estilos para loading */
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos para elementos deshabilitados */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Estilos para información de auditoría */
+.card-body h6 {
+  color: #495057;
+  font-weight: 600;
+}
+
+.card-text strong {
+  color: #343a40;
+}
+
+/* Estilos para iconos */
+.fas {
+  margin-right: 4px;
+}
+
+.btn .fas {
+  margin-right: 6px;
+}
+
+/* Mejoras visuales adicionales */
+.card-tools .btn-tool {
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.card-tools .btn-tool:hover {
+  background-color: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.table-dark th {
+  background-color: #343a40;
+  border-color: #454d55;
+}
+
+/* Estilos para elementos de estado */
+.badge.bg-primary { background-color: #0d6efd !important; }
+.badge.bg-success { background-color: #198754 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; }
+.badge.bg-warning { background-color: #ffc107 !important; color: #000; }
+.badge.bg-info { background-color: #0dcaf0 !important; color: #000; }
+.badge.bg-secondary { background-color: #6c757d !important; }
+.badge.bg-dark { background-color: #212529 !important; }

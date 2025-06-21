@@ -1,0 +1,251 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+          <i class="fas fa-chart-bar"></i> Dashboard de Auditoría
+        </h2>
+        <div class="btn-group">
+          <button type="button" class="btn btn-primary" (click)="refreshData()" [disabled]="loading">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+            Actualizar
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="goToAdvancedSearch()">
+            <i class="fas fa-search"></i>
+            Búsqueda Avanzada
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estadísticas generales -->
+  <div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{auditStatistics.totalAcciones || 0}}</h4>
+              <p class="card-text">Total Acciones</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{auditStatistics.porAccion?.CONFIRMED || 0}}</h4>
+              <p class="card-text">Turnos Confirmados</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-check-circle fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-danger text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{auditStatistics.porAccion?.CANCELED || 0}}</h4>
+              <p class="card-text">Turnos Cancelados</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-times-circle fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{auditStatistics.porAccion?.RESCHEDULED || 0}}</h4>
+              <p class="card-text">Turnos Reagendados</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Gráfico de acciones -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-chart-pie"></i> Distribución de Acciones
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let action of getObjectKeys(auditStatistics.porAccion)" class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span>
+                <i [class]="getActionIcon(action)"></i>
+                {{action}}
+              </span>
+              <span class="fw-bold">
+                {{auditStatistics.porAccion[action]}} ({{getActionPercentage(auditStatistics.porAccion[action])}}%)
+              </span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar" 
+                   [class]="getProgressBarClass(action)"
+                   [style.width.%]="getActionPercentage(auditStatistics.porAccion[action])">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="getObjectKeys(auditStatistics.porAccion).length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-chart-pie fa-3x mb-3 opacity-50"></i>
+            <p>No hay datos de acciones disponibles</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actividad por usuario -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-users"></i> Actividad por Usuario
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let user of getObjectKeys(auditStatistics.porUsuario)" class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span>
+                <i class="fas fa-user"></i>
+                {{user}}
+              </span>
+              <span class="fw-bold">{{auditStatistics.porUsuario[user]}} acciones</span>
+            </div>
+            <div class="progress" style="height: 6px;">
+              <div class="progress-bar bg-info"
+                   [style.width.%]="(auditStatistics.porUsuario[user] / auditStatistics.totalAcciones) * 100">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="getObjectKeys(auditStatistics.porUsuario).length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-users fa-3x mb-3 opacity-50"></i>
+            <p>No hay datos de usuarios disponibles</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs recientes -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-history"></i> Actividad Reciente
+            </h5>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm" [(ngModel)]="selectedAction" style="width: auto;">
+                <option value="">Todas las acciones</option>
+                <option *ngFor="let action of availableActions" [value]="action">{{action}}</option>
+              </select>
+              <input type="text" class="form-control form-control-sm" 
+                     [(ngModel)]="selectedUser" placeholder="Filtrar por usuario..." style="width: 200px;">
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Fecha/Hora</th>
+                  <th>Turno ID</th>
+                  <th>Acción</th>
+                  <th>Usuario</th>
+                  <th>Estado Anterior</th>
+                  <th>Estado Nuevo</th>
+                  <th>Motivo</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let log of filteredLogs">
+                  <td>
+                    <small>{{formatDateTime(log.performedAt)}}</small>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-link btn-sm p-0" 
+                            (click)="goToTurnoDetail(log.turnoId)">
+                      #{{log.turnoId}}
+                    </button>
+                  </td>
+                  <td>
+                    <span [class]="getActionClass(log.action)">
+                      <i [class]="getActionIcon(log.action)"></i>
+                      {{log.action}}
+                    </span>
+                  </td>
+                  <td>
+                    <i class="fas fa-user text-muted"></i>
+                    <small>{{log.performedBy}}</small>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary" *ngIf="log.previousStatus">{{log.previousStatus}}</span>
+                    <span class="text-muted" *ngIf="!log.previousStatus">-</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-primary" *ngIf="log.newStatus">{{log.newStatus}}</span>
+                    <span class="text-muted" *ngIf="!log.newStatus">-</span>
+                  </td>
+                  <td>
+                    <small class="text-muted">{{log.reason || 'Sin motivo'}}</small>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                            (click)="goToTurnoDetail(log.turnoId)" title="Ver turno">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredLogs.length === 0 && !loading">
+                  <td colspan="8" class="text-center text-muted py-4">
+                    <i class="fas fa-history fa-2x mb-2 opacity-50"></i>
+                    <br>
+                    <span *ngIf="recentLogs.length === 0">No hay actividad reciente registrada</span>
+                    <span *ngIf="recentLogs.length > 0 && filteredLogs.length === 0">No hay resultados para los filtros aplicados</span>
+                  </td>
+                </tr>
+                <tr *ngIf="loading">
+                  <td colspan="8" class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <br>
+                    <span>Cargando actividad reciente...</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
