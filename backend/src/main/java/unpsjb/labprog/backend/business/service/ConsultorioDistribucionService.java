@@ -3,7 +3,6 @@ package unpsjb.labprog.backend.business.service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
@@ -100,7 +98,15 @@ public class ConsultorioDistribucionService {
                 List<BloqueHorario> bloquesDelMedico, ConsultorioDTO consultorio) {
             List<BloqueHorario> bloquesValidos = new ArrayList<>();
             
+            System.out.println(String.format(
+                "=== VALIDANDO HORARIOS CONSULTORIO %s ===", 
+                consultorio.getNombre()
+            ));
+            System.out.println(String.format("Bloques del médico a validar: %d", bloquesDelMedico.size()));
+            
             for (BloqueHorario bloque : bloquesDelMedico) {
+                System.out.println(String.format("Validando bloque: %s", bloque.toString()));
+                
                 BloqueHorario bloqueAjustado = new BloqueHorario(
                     bloque.getDia(), bloque.getInicio(), bloque.getFin(), 
                     bloque.getMedicoId(), bloque.getConsultorioId()
@@ -108,8 +114,13 @@ public class ConsultorioDistribucionService {
                 
                 if (esBloqueCompatibleConConsultorio(bloqueAjustado, consultorio)) {
                     bloquesValidos.add(bloqueAjustado);
+                    System.out.println("  ✓ Bloque ACEPTADO");
+                } else {
+                    System.out.println("  ✗ Bloque RECHAZADO - fuera de horarios del consultorio");
                 }
             }
+            
+            System.out.println(String.format("Resultado: %d/%d bloques válidos", bloquesValidos.size(), bloquesDelMedico.size()));
             return bloquesValidos;
         }
 
@@ -350,6 +361,53 @@ public class ConsultorioDistribucionService {
     }
 
     /**
+     * Valida si los horarios de un esquema de turno son compatibles con los horarios del consultorio.
+     * Este método público puede ser usado por otros servicios para validar antes de crear esquemas.
+     * 
+     * @param horariosEsquema Lista de horarios del esquema de turno
+     * @param consultorioId ID del consultorio a validar
+     * @return Lista de mensajes de error. Si está vacía, todos los horarios son válidos.
+     */
+    public List<String> validarHorariosEsquemaContraConsultorio(List<EsquemaTurno.Horario> horariosEsquema, Integer consultorioId) {
+        List<String> errores = new ArrayList<>();
+        
+        try {
+            Optional<ConsultorioDTO> consultorioOpt = consultorioService.findById(consultorioId);
+            if (!consultorioOpt.isPresent()) {
+                errores.add("Consultorio no encontrado");
+                return errores;
+            }
+            
+            ConsultorioDTO consultorio = consultorioOpt.get();
+            
+            for (EsquemaTurno.Horario horario : horariosEsquema) {
+                BloqueHorario bloque = new BloqueHorario(
+                    horario.getDia(),
+                    horario.getHoraInicio(),
+                    horario.getHoraFin(),
+                    null, // medicoId no necesario para validación
+                    consultorioId
+                );
+                
+                if (!esBloqueCompatibleConConsultorio(bloque, consultorio)) {
+                    errores.add(String.format(
+                        "El horario del %s de %s a %s está fuera del horario de atención del consultorio %s",
+                        horario.getDia(),
+                        horario.getHoraInicio(),
+                        horario.getHoraFin(),
+                        consultorio.getNombre()
+                    ));
+                }
+            }
+            
+        } catch (Exception e) {
+            errores.add("Error al validar horarios: " + e.getMessage());
+        }
+        
+        return errores;
+    }
+
+    /**
      * Asigna un consultorio específico para un médico basado en algoritmo inteligente completo.
      */
     public Integer asignarConsultorioSegunPorcentajes(Integer staffMedicoId, Integer centroId) {
@@ -408,7 +466,7 @@ public class ConsultorioDistribucionService {
     // ===============================================
 
     private ResultadoAsignacion ejecutarAlgoritmoCompleto(StaffMedico medico, List<StaffMedico> todosMedicos, List<Consultorio> consultorios) {
-        Map<Integer, List<BloqueHorario>> asignacionesActuales = obtenerAsignacionesActuales(todosMedicos);
+        Map<Integer, List<BloqueHorario>> asignacionesActuales = obtenerAsignacionesActuales();
         List<BloqueHorario> bloquesDelMedico = extraerBloquesHorarioDelMedico(medico);
         
         if (bloquesDelMedico.isEmpty()) {
@@ -457,8 +515,14 @@ public class ConsultorioDistribucionService {
                 bloquesDelMedico, consultorioDTO);
             
             if (bloquesCompatibles.isEmpty()) {
+                String mensaje = String.format(
+                    "Los horarios del médico %s no están dentro de la disponibilidad del consultorio %s. " +
+                    "Verifique que los horarios del esquema estén completamente contenidos dentro de los horarios de atención del consultorio.",
+                    medico.getMedico().getNombre() + " " + medico.getMedico().getApellido(),
+                    consultorioDTO.getNombre()
+                );
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
-                    new ArrayList<>(), 0.0, "Sin horarios compatibles");
+                    new ArrayList<>(), 0.0, mensaje);
             }
             
             // Validar conflictos con otros médicos
@@ -550,7 +614,7 @@ public class ConsultorioDistribucionService {
         return bloques;
     }
 
-    private Map<Integer, List<BloqueHorario>> obtenerAsignacionesActuales(List<StaffMedico> todosMedicos) {
+    private Map<Integer, List<BloqueHorario>> obtenerAsignacionesActuales() {
         Map<Integer, List<BloqueHorario>> asignaciones = new HashMap<>();
         
         // Obtener asignaciones de la base de datos
@@ -624,6 +688,7 @@ public class ConsultorioDistribucionService {
 
     private static boolean esBloqueCompatibleConConsultorio(BloqueHorario bloque, ConsultorioDTO consultorio) {
         if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
+            // Si no hay horarios específicos configurados, no es compatible
             return false;
         }
         
@@ -636,21 +701,93 @@ public class ConsultorioDistribucionService {
                 if (horarioConsultorio.getHoraApertura() != null && 
                     horarioConsultorio.getHoraCierre() != null) {
                     
-                    LocalTime apertura = horarioConsultorio.getHoraApertura();
-                    LocalTime cierre = horarioConsultorio.getHoraCierre();
-                    
-                    LocalTime inicioAjustado = bloque.getInicio().isBefore(apertura) ? apertura : bloque.getInicio();
-                    LocalTime finAjustado = bloque.getFin().isAfter(cierre) ? cierre : bloque.getFin();
-                    
-                    if (inicioAjustado.isBefore(finAjustado)) {
-                        bloque.setInicio(inicioAjustado);
-                        bloque.setFin(finAjustado);
-                        return true;
-                    }
+                    // AJUSTE AUTOMÁTICO: Recortar el bloque del médico para que encaje en el consultorio
+                    return ajustarBloqueAConsultorio(bloque, 
+                        horarioConsultorio.getHoraApertura(), 
+                        horarioConsultorio.getHoraCierre());
                 }
             }
         }
         return false;
+    }
+    
+    /**
+     * Ajusta automáticamente un bloque horario para que encaje dentro del horario del consultorio
+     */
+    private static boolean ajustarBloqueAConsultorio(BloqueHorario bloque, LocalTime aperturaConsultorio, LocalTime cierreConsultorio) {
+        LocalTime inicioBloque = bloque.getInicio();
+        LocalTime finBloque = bloque.getFin();
+        
+        // Verificar si hay alguna intersección
+        if (finBloque.isBefore(aperturaConsultorio) || inicioBloque.isAfter(cierreConsultorio)) {
+            // No hay intersección posible
+            System.out.println(String.format(
+                "Bloque %s-%s del día %s NO tiene intersección con consultorio %s-%s - RECHAZADO", 
+                inicioBloque, finBloque, bloque.getDia(), aperturaConsultorio, cierreConsultorio
+            ));
+            return false;
+        }
+        
+        // Ajustar el inicio del bloque
+        LocalTime nuevoInicio = inicioBloque.isBefore(aperturaConsultorio) ? aperturaConsultorio : inicioBloque;
+        
+        // Ajustar el fin del bloque
+        LocalTime nuevoFin = finBloque.isAfter(cierreConsultorio) ? cierreConsultorio : finBloque;
+        
+        // Verificar que el bloque ajustado tenga al menos 30 minutos
+        if (java.time.Duration.between(nuevoInicio, nuevoFin).toMinutes() < 30) {
+            System.out.println(String.format(
+                "Bloque ajustado %s-%s del día %s es muy corto (< 30 min) - RECHAZADO", 
+                nuevoInicio, nuevoFin, bloque.getDia()
+            ));
+            return false;
+        }
+        
+        // Aplicar los ajustes al bloque
+        boolean seAjusto = !nuevoInicio.equals(inicioBloque) || !nuevoFin.equals(finBloque);
+        bloque.setInicio(nuevoInicio);
+        bloque.setFin(nuevoFin);
+        
+        System.out.println(String.format(
+            "Bloque %s del día %s: %s%s-%s contra consultorio %s-%s: AJUSTADO %s", 
+            seAjusto ? "AJUSTADO" : "ORIGINAL",
+            bloque.getDia(),
+            seAjusto ? inicioBloque + "→" : "",
+            nuevoInicio, 
+            nuevoFin,
+            aperturaConsultorio, 
+            cierreConsultorio,
+            seAjusto ? "(se recortó para encajar)" : "(ya estaba dentro)"
+        ));
+        
+        return true;
+    }
+    
+    /**
+     * Valida que un bloque horario esté completamente dentro del rango de horarios del consultorio
+     */
+    private static boolean validarBloqueEnRangoHorario(BloqueHorario bloque, LocalTime aperturaConsultorio, LocalTime cierreConsultorio) {
+        LocalTime inicioBloque = bloque.getInicio();
+        LocalTime finBloque = bloque.getFin();
+        
+        // El bloque debe empezar después o en el horario de apertura
+        // y terminar antes o en el horario de cierre
+        boolean inicioValidado = !inicioBloque.isBefore(aperturaConsultorio);
+        boolean finValidado = !finBloque.isAfter(cierreConsultorio);
+        
+        boolean esValido = inicioValidado && finValidado;
+        
+        // Log para debugging (remover en producción)
+        System.out.println(String.format(
+            "Validando bloque %s-%s del día %s contra consultorio %s-%s: %s (inicio: %s, fin: %s)", 
+            inicioBloque, finBloque, bloque.getDia(),
+            aperturaConsultorio, cierreConsultorio, 
+            esValido ? "VÁLIDO" : "INVÁLIDO",
+            inicioValidado ? "OK" : "FUERA DE RANGO", 
+            finValidado ? "OK" : "FUERA DE RANGO"
+        ));
+        
+        return esValido;
     }
 
     private static boolean verificarSolapamiento(BloqueHorario bloque1, BloqueHorario bloque2) {
