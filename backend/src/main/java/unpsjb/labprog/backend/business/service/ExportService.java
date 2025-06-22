@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.format.DateTimeFormatter;
@@ -7,6 +8,15 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
 
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
@@ -147,48 +157,75 @@ public class ExportService {
         List<TurnoDTO> turnos = turnoService.findForExport(filter);
         
         try {
-            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             
-            // Crear documento PDF simple sin dependencias externas
-            String content = generatePDFContent(turnos);
-            outputStream.write(content.getBytes("UTF-8"));
+            // Crear el documento PDF con iText7
+            PdfWriter writer = new PdfWriter(outputStream);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            Document document = new Document(pdfDoc);
+            
+            // Título del documento
+            Paragraph title = new Paragraph("REPORTE DE TURNOS MÉDICOS")
+                    .setFontSize(18)
+                    .setBold()
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(title);
+            
+            // Información del reporte
+            Paragraph info = new Paragraph("Generado el: " + java.time.LocalDateTime.now().format(DATETIME_FORMATTER))
+                    .setFontSize(10)
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(info);
+            
+            Paragraph totalTurnos = new Paragraph("Total de turnos: " + turnos.size())
+                    .setFontSize(12)
+                    .setBold()
+                    .setTextAlignment(TextAlignment.LEFT);
+            document.add(totalTurnos);
+            
+            // Espacio
+            document.add(new Paragraph("\n"));
+            
+            // Crear tabla
+            float[] columnWidths = {1, 2, 1.5f, 1.5f, 2, 3, 3, 2.5f};
+            Table table = new Table(UnitValue.createPercentArray(columnWidths))
+                    .setWidth(UnitValue.createPercentValue(100));
+            
+            // Encabezados de la tabla
+            table.addHeaderCell(new Cell().add(new Paragraph("ID").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Fecha").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Inicio").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Fin").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Estado").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Paciente").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Médico").setBold()));
+            table.addHeaderCell(new Cell().add(new Paragraph("Especialidad").setBold()));
+            
+            // Agregar datos a la tabla
+            for (TurnoDTO turno : turnos) {
+                table.addCell(new Cell().add(new Paragraph(String.valueOf(turno.getId()))));
+                table.addCell(new Cell().add(new Paragraph(turno.getFecha().format(DATE_FORMATTER))));
+                table.addCell(new Cell().add(new Paragraph(turno.getHoraInicio().format(TIME_FORMATTER))));
+                table.addCell(new Cell().add(new Paragraph(turno.getHoraFin().format(TIME_FORMATTER))));
+                table.addCell(new Cell().add(new Paragraph(turno.getEstado())));
+                table.addCell(new Cell().add(new Paragraph(
+                    truncate(turno.getNombrePaciente() + " " + turno.getApellidoPaciente(), 25))));
+                table.addCell(new Cell().add(new Paragraph(
+                    truncate(turno.getStaffMedicoNombre() + " " + turno.getStaffMedicoApellido(), 25))));
+                table.addCell(new Cell().add(new Paragraph(
+                    truncate(turno.getEspecialidadStaffMedico(), 20))));
+            }
+            
+            document.add(table);
+            
+            // Cerrar el documento
+            document.close();
             
             return outputStream.toByteArray();
             
         } catch (Exception e) {
             throw new RuntimeException("Error al generar PDF: " + e.getMessage(), e);
         }
-    }
-    
-    /**
-     * Genera contenido de texto para PDF (simplificado)
-     */
-    private String generatePDFContent(List<TurnoDTO> turnos) {
-        StringBuilder content = new StringBuilder();
-        
-        content.append("REPORTE DE TURNOS MÉDICOS\n");
-        content.append("=========================\n");
-        content.append("Generado el: ").append(java.time.LocalDateTime.now().format(DATETIME_FORMATTER)).append("\n\n");
-        
-        content.append("Total de turnos: ").append(turnos.size()).append("\n\n");
-        
-        content.append(String.format("%-5s %-12s %-8s %-8s %-12s %-25s %-25s %-20s%n",
-                "ID", "Fecha", "Inicio", "Fin", "Estado", "Paciente", "Médico", "Especialidad"));
-        content.append("-".repeat(120)).append("\n");
-        
-        for (TurnoDTO turno : turnos) {
-            content.append(String.format("%-5d %-12s %-8s %-8s %-12s %-25s %-25s %-20s%n",
-                    turno.getId(),
-                    turno.getFecha().format(DATE_FORMATTER),
-                    turno.getHoraInicio().format(TIME_FORMATTER),
-                    turno.getHoraFin().format(TIME_FORMATTER),
-                    turno.getEstado(),
-                    truncate(turno.getNombrePaciente() + " " + turno.getApellidoPaciente(), 25),
-                    truncate(turno.getStaffMedicoNombre() + " " + turno.getStaffMedicoApellido(), 25),
-                    truncate(turno.getEspecialidadStaffMedico(), 20)));
-        }
-        
-        return content.toString();
     }
     
     /**

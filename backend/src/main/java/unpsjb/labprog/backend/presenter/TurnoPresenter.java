@@ -490,4 +490,39 @@ public class TurnoPresenter {
                     .body(("Error al exportar PDF: " + e.getMessage()).getBytes());
         }
     }
+    
+    /**
+     * Exportar turnos a PDF usando POST con filtros en el cuerpo
+     */
+    @PostMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportToPDFPost(@RequestBody TurnoFilterDTO filter) {
+        
+        try {
+            System.out.println("PDF Export POST - Filtros recibidos: " + filter);
+            
+            byte[] pdfContent = exportService.exportToPDF(filter);
+            
+            if (pdfContent == null || pdfContent.length == 0) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Error: PDF generado está vacío".getBytes());
+            }
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "turnos.pdf");
+            headers.setContentLength(pdfContent.length);
+            
+            System.out.println("PDF Export POST - Generado correctamente, tamaño: " + pdfContent.length + " bytes");
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfContent);
+                    
+        } catch (Exception e) {
+            System.err.println("PDF Export POST - Error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error al exportar PDF: " + e.getMessage()).getBytes());
+        }
+    }
 }

@@ -214,18 +214,18 @@ export class TurnoService {
 
   /** Exporta turnos a CSV (descarga archivo) */
   exportToCSVDownload(filter: TurnoFilter): Observable<Blob> {
-    const params: any = {};
-    if (filter.estado) params.estado = filter.estado;
-    if (filter.fechaDesde) params.fechaDesde = filter.fechaDesde;
-    if (filter.fechaHasta) params.fechaHasta = filter.fechaHasta;
-    if (filter.pacienteId) params.pacienteId = filter.pacienteId;
-    if (filter.staffMedicoId) params.staffMedicoId = filter.staffMedicoId;
-    if (filter.centroId) params.centroId = filter.centroId;
-    return this.http.get(`/turno/export/csv`, { params, responseType: 'blob' });
+    // Usar POST en lugar de GET para enviar filtros complejos
+    return this.http.post(`rest/turno/export/csv`, filter, { responseType: 'blob' });
   }
 
   /** Exporta turnos a PDF (descarga archivo) */
   exportToPDFDownload(filter: TurnoFilter): Observable<Blob> {
+    // Usar POST en lugar de GET para enviar filtros complejos
+    return this.http.post(`rest/turno/export/pdf`, filter, { responseType: 'blob' });
+  }
+
+  /** Exporta turnos a PDF usando GET (alternativo) */
+  exportToPDFDownloadGET(filter: TurnoFilter): Observable<Blob> {
     const params: any = {};
     if (filter.estado) params.estado = filter.estado;
     if (filter.fechaDesde) params.fechaDesde = filter.fechaDesde;
@@ -233,7 +233,10 @@ export class TurnoService {
     if (filter.pacienteId) params.pacienteId = filter.pacienteId;
     if (filter.staffMedicoId) params.staffMedicoId = filter.staffMedicoId;
     if (filter.centroId) params.centroId = filter.centroId;
-    return this.http.get(`/turno/export/pdf`, { params, responseType: 'blob' });
+    if (filter.nombrePaciente) params.nombrePaciente = filter.nombrePaciente;
+    if (filter.nombreMedico) params.nombreMedico = filter.nombreMedico;
+    if (filter.nombreCentro) params.nombreCentro = filter.nombreCentro;
+    return this.http.get(`rest/turno/export/pdf`, { params, responseType: 'blob' });
   }
 
   /** Obtiene estadísticas para exportación */

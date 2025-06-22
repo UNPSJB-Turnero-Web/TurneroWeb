@@ -23,15 +23,13 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     sortDirection: 'DESC'
   };
 
-  // Resultados con getter/setter para monitoreo
+  // Resultados
   private _turnos: Turno[] = [];
   get turnos(): Turno[] {
     return this._turnos;
   }
   set turnos(value: Turno[]) {
-    
     this._turnos = value;
-    
   }
 
   totalElements: number = 0;
@@ -68,17 +66,7 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  /** Verifica si la respuesta es exitosa considerando ambos formatos */
-  private isSuccessfulResponse(response: any): boolean {
-    return response.status === 1 || response.status_code === 200;
-  }
-
   ngOnInit(): void {
-   
-    // TEMPORAL: Quitar filtro de estado para probar
-    this.filter.estado = '';
-  
-    
     this.search();
     this.loadAuditStatistics();
     this.loadRecentLogs();
@@ -87,79 +75,42 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   /** Realiza la búsqueda con los filtros actuales */
   search(): void {
     this.loading = true;
-   
     
     this.turnoService.searchWithFilters(this.filter).subscribe({
       next: (response: DataPackage<any>) => {
-      
-        
         // Verificar tanto el formato nuevo (status_code: 200) como el antiguo (status: 1)
         const isSuccessful = response.status === 1 || (response as any).status_code === 200;
-
         
         if (isSuccessful) {
           const data = response.data;
-    
           
-          // Limpiar primero el array actual - CON LOG DETALLADO
-     
+          // Limpiar primero el array actual
           this.turnos = [];
-   
           this.totalElements = 0;
           this.totalPages = 0;
           this.currentPage = 0;
           
           // Verificar si hay contenido en content o directamente en data
           if (data && data.content && Array.isArray(data.content)) {
-         
-            
-            // Asignar cada campo por separado para debug
-            const newTurnos = [...data.content];
-           
-            
-            // ASIGNACIÓN PASO A PASO
-      
-            this.turnos = newTurnos;
-          
-            
+            this.turnos = [...data.content];
             this.totalElements = data.totalElements || 0;
             this.totalPages = data.totalPages || 1;
             this.currentPage = data.number || 0;
-         
-            
-            // Verificar inmediatamente después de la asignación
-            setTimeout(() => {
-   
-            }, 0);
-            
           } else if (Array.isArray(data)) {
-        
             this.turnos = [...data];
             this.totalElements = data.length;
             this.totalPages = 1;
             this.currentPage = 0;
-     
           }
-          
-        
         } else {
-          
           this.turnos = [];
           this.totalElements = 0;
           this.totalPages = 0;
           this.currentPage = 0;
         }
         
-
         this.loading = false;
-  
-        
-        // Forzar detección de cambios después de cambiar loading
         this.cdr.detectChanges();
-       
-        
-        // Log final para verificar el estado del componente
-
         
       },
       error: (error) => {
@@ -299,15 +250,39 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 /** Exporta a CSV */
 exportCSV(): void {
   this.exportLoading = true;
-  const exportFilter = { ...this.filter, exportFormat: 'CSV' };
+  console.log('CSV Export - Iniciando exportación con filtros:', this.filter);
+  
+  // Crear una copia limpia del filtro
+  const exportFilter = { ...this.filter };
+  delete (exportFilter as any).exportFormat;
 
   this.turnoService.exportToCSVDownload(exportFilter).subscribe({
     next: (blob: Blob) => {
+      console.log('CSV Export - Blob recibido:', blob);
+      console.log('CSV Export - Blob type:', blob.type);
+      console.log('CSV Export - Blob size:', blob.size);
+      
+      if (blob.type === 'text/html' || blob.size < 50) {
+        console.error('Error: El archivo CSV parece ser HTML o está vacío');
+        
+        // Leer el contenido para debug
+        const reader = new FileReader();
+        reader.onload = () => {
+          console.log('Contenido CSV:', reader.result as string);
+        };
+        reader.readAsText(blob);
+        
+        alert('Error: El servidor devolvió HTML en lugar de CSV. Verifique el endpoint del backend.');
+        this.exportLoading = false;
+        return;
+      }
+      
       this.downloadFile(blob, 'turnos.csv', 'text/csv');
       this.exportLoading = false;
     },
     error: (error) => {
       console.error('Error al exportar CSV:', error);
+      alert('Error al exportar CSV: ' + (error.message || error));
       this.exportLoading = false;
     }
   });
@@ -316,18 +291,97 @@ exportCSV(): void {
 /** Exporta a PDF */
 exportPDF(): void {
   this.exportLoading = true;
-  const exportFilter = { ...this.filter, exportFormat: 'PDF' };
+  console.log('PDF Export - Iniciando exportación con filtros:', this.filter);
+  
+  // Crear una copia limpia del filtro sin el campo exportFormat
+  const exportFilter = { ...this.filter };
+  delete (exportFilter as any).exportFormat;
+  
+  console.log('PDF Export - Filtro limpio enviado:', exportFilter);
 
+  // Intentar primero con POST
   this.turnoService.exportToPDFDownload(exportFilter).subscribe({
     next: (blob: Blob) => {
-      this.downloadFile(blob, 'turnos.pdf', 'application/pdf');
-      this.exportLoading = false;
+      this.handlePDFResponse(blob);
     },
     error: (error) => {
-      console.error('Error al exportar PDF:', error);
-      this.exportLoading = false;
+      console.warn('PDF Export - POST falló, intentando con GET:', error);
+      
+      // Si POST falla, intentar con GET
+      this.turnoService.exportToPDFDownloadGET(exportFilter).subscribe({
+        next: (blob: Blob) => {
+          console.log('PDF Export - GET exitoso');
+          this.handlePDFResponse(blob);
+        },
+        error: (getError) => {
+          this.handlePDFError(getError);
+        }
+      });
     }
   });
+}
+
+/** Maneja la respuesta del PDF */
+private handlePDFResponse(blob: Blob): void {
+  console.log('PDF Export - Blob recibido:', blob);
+  console.log('PDF Export - Blob type:', blob.type);
+  console.log('PDF Export - Blob size:', blob.size);
+  
+  // Si el blob es muy pequeño, hay un error
+  if (blob.size < 100) {
+    console.error('Error: El archivo PDF es demasiado pequeño');
+    alert('Error: El archivo PDF está vacío o es demasiado pequeño.');
+    this.exportLoading = false;
+    return;
+  }
+  
+  // Verificar si es HTML/texto en lugar de PDF
+  if (blob.type === 'text/html' || blob.type === 'text/plain' || blob.type === '') {
+    console.error('Error: El archivo PDF no tiene el tipo correcto. Tipo recibido:', blob.type);
+    
+    // Leer el contenido para debug
+    const reader = new FileReader();
+    reader.onload = () => {
+      const content = reader.result as string;
+      console.log('Contenido del blob completo:', content);
+      console.log('Primeros 500 chars:', content.substring(0, 500));
+    };
+    reader.readAsText(blob);
+    
+    alert('Error: El servidor devolvió contenido de tipo "' + blob.type + '" en lugar de PDF. Verifique el endpoint del backend.');
+    this.exportLoading = false;
+    return;
+  }
+  
+  // Si llegamos aquí, el PDF parece estar bien
+  console.log('PDF Export - Descargando archivo PDF válido');
+  this.downloadFile(blob, 'turnos.pdf', 'application/pdf');
+  this.exportLoading = false;
+}
+
+/** Maneja errores del PDF */
+private handlePDFError(error: any): void {
+  console.error('Error al exportar PDF:', error);
+  console.error('Error details:', {
+    status: error.status,
+    statusText: error.statusText,
+    message: error.message,
+    url: error.url
+  });
+  
+  let errorMessage = 'Error al exportar PDF: ';
+  if (error.status === 404) {
+    errorMessage += 'Endpoint no encontrado (404). Verifique que el backend tenga implementado rest/turno/export/pdf';
+  } else if (error.status === 500) {
+    errorMessage += 'Error interno del servidor (500). Revise los logs del backend.';
+  } else if (error.status === 405) {
+    errorMessage += 'Método no permitido (405). El backend no acepta POST ni GET para este endpoint.';
+  } else {
+    errorMessage += error.message || error.statusText || 'Error desconocido';
+  }
+  
+  alert(errorMessage);
+  this.exportLoading = false;
 }
 
 /** Descarga un archivo */
