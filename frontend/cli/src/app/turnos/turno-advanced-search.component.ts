@@ -6,6 +6,10 @@ import { TurnoService } from './turno.service';
 import { Turno, TurnoFilter, AuditLog } from './turno';
 import { DataPackage } from '../data.package';
 
+// Declaraciones para librerías externas
+declare var html2canvas: any;
+declare var jsPDF: any;
+
 @Component({
   selector: 'app-turno-advanced-search',
   standalone: true,
@@ -335,14 +339,13 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     });
   }
 
-  /** Obtiene el texto descriptivo para un estado */
+  /** Obtiene la etiqueta legible del estado */
   getEstadoLabel(estado: string): string {
     const labels: any = {
       'PROGRAMADO': 'Programado',
       'CONFIRMADO': 'Confirmado',
       'CANCELADO': 'Cancelado',
       'REAGENDADO': 'Reagendado',
-      'COMPLETADO': 'Completado',
       'COMPLETO': 'Completado'
     };
     return labels[estado] || estado;
@@ -462,16 +465,17 @@ export class TurnoAdvancedSearchComponent implements OnInit {
       return;
     }
 
-    const csvData = this.generateReportCSVData();
-    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reporte_${this.tipoVista}_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    console.log('📊 Iniciando exportación de reporte a CSV...');
+    this.exportLoading = true;
+    
+    try {
+      this.exportReportToCSV();
+    } catch (error) {
+      console.error('Error al exportar reporte a CSV:', error);
+      alert('Error al generar el CSV del reporte');
+    } finally {
+      this.exportLoading = false;
+    }
   }
 
   private generateReportCSVData(): string {
@@ -553,9 +557,17 @@ export class TurnoAdvancedSearchComponent implements OnInit {
       return;
     }
 
-    // Implementar exportación PDF de reportes usando jsPDF o similar
-    console.log('Exportar reporte PDF - Por implementar con jsPDF');
-    alert('Funcionalidad de exportar reporte a PDF será implementada próximamente');
+    this.exportLoading = true;
+    console.log('🎯 Iniciando exportación de reporte a PDF...');
+    
+    try {
+      const fileName = this.generateReportFileName('pdf');
+      this.generateAdvancedPDF(fileName);
+    } catch (error) {
+      console.error('Error al exportar reporte a PDF:', error);
+      alert('Error al generar el PDF del reporte');
+      this.exportLoading = false;
+    }
   }
 
   /** Maneja la respuesta del PDF */
@@ -1070,19 +1082,24 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     const fileName = this.generateReportFileName('csv');
     let csvContent = '';
 
+    // Agregar encabezado del reporte
+    const headerInfo = `"Reporte de Auditoría de Turnos"\n` +
+                      `"Período: ${this.formatDate(this.filter.fechaDesde || '')} - ${this.formatDate(this.filter.fechaHasta || '')}"\n` +
+                      `"Generado el: ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}"\n\n`;
+
     switch (this.tipoVista) {
-      case 'turnos-dia-consultorio':
-        csvContent = this.generateCSVForTurnosDiaConsultorio();
+      case 'reporte-dia-consultorio':
+        csvContent = headerInfo + '"Turnos por Día y Consultorio"\n' + this.generateCSVForTurnosDiaConsultorio();
         break;
-      case 'turnos-especialidad-medico':
-        csvContent = this.generateCSVForTurnosEspecialidadMedico();
+      case 'reporte-especialidad-medico':
+        csvContent = headerInfo + '"Turnos por Especialidad y Médico"\n' + this.generateCSVForTurnosEspecialidadMedico();
         break;
-      case 'cancelaciones-reprogramaciones':
-        csvContent = this.generateCSVForCancelacionesReprogramaciones();
+      case 'reporte-cancelaciones':
+        csvContent = headerInfo + '"Cancelaciones y Reprogramaciones"\n' + this.generateCSVForCancelacionesReprogramaciones();
         break;
     }
 
-    this.downloadFileFromContent(csvContent, fileName, 'text/csv');
+    this.downloadFileFromContent(csvContent, fileName, 'text/csv;charset=utf-8;');
   }
 
   /** Exportar reporte a PDF */
@@ -1092,12 +1109,179 @@ export class TurnoAdvancedSearchComponent implements OnInit {
       return;
     }
 
-    // Generar contenido HTML del reporte
     const fileName = this.generateReportFileName('pdf');
-    const htmlContent = this.generateHTMLForReport();
+    this.generateAdvancedPDF(fileName);
+  }
+
+  /** Generar PDF avanzado usando canvas */
+  private generateAdvancedPDF(fileName: string): void {
+    const printContent = this.generatePrintableHTML();
     
-    // Crear un PDF usando la API del navegador
-    this.generatePDFFromHTML(htmlContent, fileName);
+    // Crear un div temporal para renderizar el contenido
+    const printDiv = document.createElement('div');
+    printDiv.innerHTML = printContent;
+    printDiv.style.position = 'absolute';
+    printDiv.style.left = '-9999px';
+    printDiv.style.top = '-9999px';
+    printDiv.style.width = '210mm'; // A4 width
+    printDiv.style.fontFamily = 'Arial, sans-serif';
+    printDiv.style.fontSize = '12px';
+    printDiv.style.backgroundColor = 'white';
+    printDiv.style.padding = '20px';
+    
+    document.body.appendChild(printDiv);
+    
+    // Usar html2canvas para convertir a imagen y luego a PDF
+    this.createPDFFromElement(printDiv, fileName).finally(() => {
+      document.body.removeChild(printDiv);
+    });
+  }
+
+  /** Crear PDF desde elemento DOM */
+  private async createPDFFromElement(element: HTMLElement, fileName: string): Promise<void> {
+    try {
+      // Si html2canvas está disponible, usarlo
+      if ((window as any).html2canvas) {
+        const canvas = await (window as any).html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        // Crear PDF con jsPDF si está disponible
+        if ((window as any).jsPDF) {
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new (window as any).jsPDF('p', 'mm', 'a4');
+          const imgWidth = 210;
+          const pageHeight = 295;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          let heightLeft = imgHeight;
+          let position = 0;
+
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+
+          pdf.save(fileName);
+          return;
+        }
+      }
+      
+      // Fallback: usar window.print()
+      this.fallbackPrintPDF(element);
+      
+    } catch (error) {
+      console.error('Error generando PDF:', error);
+      // Fallback en caso de error
+      this.fallbackPrintPDF(element);
+    }
+  }
+
+  /** Fallback para generar PDF usando window.print() */
+  private fallbackPrintPDF(element: HTMLElement): void {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      const printDocument = printWindow.document;
+      printDocument.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Reporte de Turnos</title>
+            <style>
+              @media print {
+                body { margin: 0; }
+                @page { margin: 20mm; }
+              }
+              body { 
+                font-family: Arial, sans-serif; 
+                font-size: 12px;
+                line-height: 1.4;
+              }
+              table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-top: 10px;
+                break-inside: auto;
+              }
+              th, td { 
+                border: 1px solid #333; 
+                padding: 8px; 
+                text-align: left;
+                font-size: 11px;
+              }
+              th { 
+                background-color: #f0f0f0; 
+                font-weight: bold;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 20px; 
+              }
+              .header h1 {
+                margin: 0 0 10px 0;
+                font-size: 18px;
+              }
+              .date-range { 
+                margin-bottom: 15px; 
+                font-weight: bold;
+                text-align: center;
+              }
+              .report-title {
+                font-size: 16px;
+                font-weight: bold;
+                margin: 20px 0 10px 0;
+              }
+            </style>
+          </head>
+          <body>
+            ${element.innerHTML}
+          </body>
+        </html>
+      `);
+      printDocument.close();
+      
+      // Esperar a que se cargue y luego imprimir
+      printWindow.setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
+  }
+
+  /** Generar HTML imprimible para el reporte */
+  private generatePrintableHTML(): string {
+    let html = `
+      <div class="header">
+        <h1>Reporte de Auditoría de Turnos</h1>
+        <div class="date-range">
+          Período: ${this.formatDate(this.filter.fechaDesde || '')} - ${this.formatDate(this.filter.fechaHasta || '')}
+        </div>
+        <div class="date-range">
+          Generado el: ${new Date().toLocaleDateString('es-ES')} a las ${new Date().toLocaleTimeString('es-ES')}
+        </div>
+      </div>
+    `;
+
+    switch (this.tipoVista) {
+      case 'reporte-dia-consultorio':
+        html += this.generateHTMLForTurnosDiaConsultorio();
+        break;
+      case 'reporte-especialidad-medico':
+        html += this.generateHTMLForTurnosEspecialidadMedico();
+        break;
+      case 'reporte-cancelaciones':
+        html += this.generateHTMLForCancelacionesReprogramaciones();
+        break;
+    }
+
+    return html;
   }
 
   /** Generar HTML para el reporte */
@@ -1272,8 +1456,10 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
   /** Generar nombre de archivo para el reporte */
   private generateReportFileName(extension: string): string {
-    const fechaInicio = this.filter.fechaDesde!.replace(/-/g, '');
-    const fechaFin = this.filter.fechaHasta!.replace(/-/g, '');
+    // Convertir fechas de yyyy-MM-dd a yyyyMMdd
+    const fechaInicio = this.filter.fechaDesde?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '');
+    const fechaFin = this.filter.fechaHasta?.replace(/-/g, '') || new Date().toISOString().split('T')[0].replace(/-/g, '');
+    
     return `report_turnos_${fechaInicio}a${fechaFin}.${extension}`;
   }
 

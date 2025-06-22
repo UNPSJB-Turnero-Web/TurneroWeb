@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,10 +50,30 @@ public class TurnoService {
     private AuditLogService auditLogService;
 
     @Autowired
-    private TurnoValidationService turnoValidationService;
-
-    @Autowired
     private NotificacionService notificacionService;
+
+    // === VALIDACIONES DE TRANSICIÓN DE ESTADO ===
+    
+    // Definir transiciones de estado válidas
+    private static final Map<EstadoTurno, List<EstadoTurno>> VALID_TRANSITIONS = new HashMap<>();
+    
+    static {
+        // PROGRAMADO puede ir a: CONFIRMADO, CANCELADO, REAGENDADO
+        VALID_TRANSITIONS.put(EstadoTurno.PROGRAMADO, 
+            Arrays.asList(EstadoTurno.CONFIRMADO, EstadoTurno.CANCELADO, EstadoTurno.REAGENDADO));
+            
+        // CONFIRMADO puede ir a: COMPLETO, CANCELADO, REAGENDADO
+        VALID_TRANSITIONS.put(EstadoTurno.CONFIRMADO, 
+            Arrays.asList(EstadoTurno.COMPLETO, EstadoTurno.CANCELADO, EstadoTurno.REAGENDADO));
+            
+        // REAGENDADO puede ir a: CONFIRMADO, CANCELADO
+        VALID_TRANSITIONS.put(EstadoTurno.REAGENDADO, 
+            Arrays.asList(EstadoTurno.CONFIRMADO, EstadoTurno.CANCELADO));
+            
+        // CANCELADO y COMPLETO son estados finales (no pueden cambiar)
+        VALID_TRANSITIONS.put(EstadoTurno.CANCELADO, Arrays.asList());
+        VALID_TRANSITIONS.put(EstadoTurno.COMPLETO, Arrays.asList());
+    }
 
     // Obtener todos los turnos como DTOs
     public List<TurnoDTO> findAll() {
@@ -173,7 +195,7 @@ public class TurnoService {
         validarCancelacion(turno);
         
         // Validar que se proporcione un motivo válido para la cancelación
-        if (!turnoValidationService.isValidCancellationReason(motivo)) {
+        if (!isValidCancellationReason(motivo)) {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
         }
         
@@ -245,7 +267,7 @@ public class TurnoService {
         validarReagendamiento(turno);
         
         // Validar que se proporcione un motivo válido para el reagendamiento
-        if (!turnoValidationService.isValidReschedulingReason(motivo)) {
+        if (!isValidReschedulingReason(motivo)) {
             throw new IllegalArgumentException("El motivo de reagendamiento es obligatorio y debe tener al menos 5 caracteres");
         }
         
@@ -275,7 +297,7 @@ public class TurnoService {
             throw new IllegalArgumentException("Turno no encontrado con ID: " + turnoId);
         }
         
-        return turnoValidationService.getValidNextStates(turnoOpt.get().getEstado());
+        return getValidNextStates(turnoOpt.get().getEstado());
     }
     
     /**
@@ -292,27 +314,27 @@ public class TurnoService {
         EstadoTurno previousStatus = turno.getEstado();
         
         // Validar que el usuario tiene permisos
-        if (!turnoValidationService.hasPermissionToModifyTurno(performedBy)) {
+        if (!hasPermissionToModifyTurno(performedBy)) {
             throw new IllegalArgumentException("Usuario sin permisos para modificar turnos");
         }
         
         // Validar que el turno puede ser modificado
-        if (!turnoValidationService.canTurnoBeModified(turno)) {
+        if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede modificar un turno cancelado");
         }
         
         // Validar transición de estado
-        if (!turnoValidationService.isValidStateTransition(previousStatus, newState)) {
+        if (!isValidStateTransition(previousStatus, newState)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            previousStatus + " a " + newState);
         }
         
         // Validar motivo si es requerido
-        if (turnoValidationService.requiresReason(previousStatus, newState)) {
-            if (newState == EstadoTurno.CANCELADO && !turnoValidationService.isValidCancellationReason(motivo)) {
+        if (requiresReason(newState)) {
+            if (newState == EstadoTurno.CANCELADO && !isValidCancellationReason(motivo)) {
                 throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
             }
-            if (newState == EstadoTurno.REAGENDADO && !turnoValidationService.isValidReschedulingReason(motivo)) {
+            if (newState == EstadoTurno.REAGENDADO && !isValidReschedulingReason(motivo)) {
                 throw new IllegalArgumentException("El motivo de reagendamiento es obligatorio y debe tener al menos 5 caracteres");
             }
         }
@@ -344,15 +366,15 @@ public class TurnoService {
         return toDTO(savedTurno);
     }
 
-    // Métodos de validación de reglas de negocio usando TurnoValidationService
+    // Métodos de validación de reglas de negocio
     private void validarCancelacion(Turno turno) {
         // Validar que el turno puede ser modificado
-        if (!turnoValidationService.canTurnoBeModified(turno)) {
+        if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede cancelar un turno que ya está cancelado");
         }
         
         // Validar transiciones de estado válidas
-        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.CANCELADO)) {
+        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.CANCELADO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a CANCELADO");
         }
@@ -366,12 +388,12 @@ public class TurnoService {
 
     private void validarConfirmacion(Turno turno) {
         // Validar que el turno puede ser modificado
-        if (!turnoValidationService.canTurnoBeModified(turno)) {
+        if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede confirmar un turno cancelado");
         }
         
         // Validar transiciones de estado válidas
-        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.CONFIRMADO)) {
+        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.CONFIRMADO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a CONFIRMADO");
         }
@@ -379,12 +401,12 @@ public class TurnoService {
 
     private void validarReagendamiento(Turno turno) {
         // Validar que el turno puede ser modificado
-        if (!turnoValidationService.canTurnoBeModified(turno)) {
+        if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede reagendar un turno cancelado");
         }
         
         // Validar transiciones de estado válidas
-        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.REAGENDADO)) {
+        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.REAGENDADO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a REAGENDADO");
         }
@@ -563,39 +585,45 @@ public class TurnoService {
 
     // Consultas avanzadas con filtros (versión simplificada sin CriteriaBuilder)
     public List<TurnoDTO> findByFilters(TurnoFilterDTO filter) {
+        // Validar y limpiar el filtro
+        TurnoFilterDTO cleanFilter = validateAndCleanFilter(filter);
+        
         // Usar los métodos del repositorio en lugar de CriteriaBuilder
-        if (filter.getEstado() != null && !filter.getEstado().isEmpty()) {
+        if (cleanFilter.getEstado() != null && !cleanFilter.getEstado().isEmpty()) {
             try {
-                EstadoTurno estadoEnum = EstadoTurno.valueOf(filter.getEstado().toUpperCase());
+                EstadoTurno estadoEnum = EstadoTurno.valueOf(cleanFilter.getEstado().toUpperCase());
                 return repository.findByEstado(estadoEnum).stream()
                     .map(this::toDTO)
                     .collect(Collectors.toList());
             } catch (IllegalArgumentException e) {
+                System.err.println("Estado inválido en filtro simple: " + cleanFilter.getEstado());
                 // Estado inválido, retornar lista vacía
                 return Collections.emptyList();
             }
         }
         
-        if (filter.getPacienteId() != null) {
-            return repository.findByPaciente_Id(filter.getPacienteId()).stream()
+        if (cleanFilter.getPacienteId() != null) {
+            return repository.findByPaciente_Id(cleanFilter.getPacienteId()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         }
         
-        if (filter.getStaffMedicoId() != null) {
-            return repository.findByStaffMedico_Id(filter.getStaffMedicoId()).stream()
+        if (cleanFilter.getStaffMedicoId() != null) {
+            return repository.findByStaffMedico_Id(cleanFilter.getStaffMedicoId()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         }
         
-        if (filter.getFechaExacta() != null) {
-            return repository.findByFecha(filter.getFechaExacta()).stream()
+        if (cleanFilter.getFechaExacta() != null) {
+            System.out.println("🔍 DEBUG: Buscando turnos por fecha exacta: " + cleanFilter.getFechaExacta());
+            return repository.findByFecha(cleanFilter.getFechaExacta()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         }
         
-        if (filter.getFechaDesde() != null && filter.getFechaHasta() != null) {
-            return repository.findByFechaBetween(filter.getFechaDesde(), filter.getFechaHasta()).stream()
+        if (cleanFilter.getFechaDesde() != null && cleanFilter.getFechaHasta() != null) {
+            System.out.println("🔍 DEBUG: Buscando turnos entre fechas: " + cleanFilter.getFechaDesde() + " y " + cleanFilter.getFechaHasta());
+            return repository.findByFechaBetween(cleanFilter.getFechaDesde(), cleanFilter.getFechaHasta()).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
         }
@@ -612,35 +640,58 @@ public class TurnoService {
      * Busca turnos aplicando filtros múltiples con paginación
      */
     public Page<TurnoDTO> findByAdvancedFilters(TurnoFilterDTO filter) {
+        // Validar y limpiar el filtro
+        TurnoFilterDTO cleanFilter = validateAndCleanFilter(filter);
+        
         EstadoTurno estadoEnum = null;
-        if (filter.getEstado() != null && !filter.getEstado().isEmpty()) {
+        if (cleanFilter.getEstado() != null && !cleanFilter.getEstado().isEmpty()) {
             try {
-                estadoEnum = EstadoTurno.valueOf(filter.getEstado().toUpperCase());
+                estadoEnum = EstadoTurno.valueOf(cleanFilter.getEstado().toUpperCase());
             } catch (IllegalArgumentException e) {
+                System.err.println("Estado inválido en filtro: " + cleanFilter.getEstado());
                 // Si el estado no es válido, no se aplica este filtro
             }
         }
         
         // Crear el objeto Pageable para paginación y ordenamiento
         Sort sort = Sort.by(
-            "DESC".equalsIgnoreCase(filter.getSortDirection()) ? 
+            "DESC".equalsIgnoreCase(cleanFilter.getSortDirection()) ? 
                 Sort.Direction.DESC : Sort.Direction.ASC, 
-            filter.getSortBy()
+            cleanFilter.getSortBy()
         );
-        org.springframework.data.domain.Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(cleanFilter.getPage(), cleanFilter.getSize(), sort);
         
-        // Usar el método del repositorio con filtros
-        Page<Turno> turnosPage = repository.findByFilters(
+        System.out.println("🔍 DEBUG: Ejecutando búsqueda avanzada con filtros:");
+        System.out.println("   - Estado: " + estadoEnum);
+        System.out.println("   - PacienteId: " + cleanFilter.getPacienteId());
+        System.out.println("   - StaffMedicoId: " + cleanFilter.getStaffMedicoId());
+        System.out.println("   - EspecialidadId: " + cleanFilter.getEspecialidadId());
+        System.out.println("   - CentroId: " + cleanFilter.getCentroAtencionId());
+        System.out.println("   - ConsultorioId: " + cleanFilter.getConsultorioId());
+        System.out.println("   - FechaDesde: " + cleanFilter.getFechaDesde());
+        System.out.println("   - FechaHasta: " + cleanFilter.getFechaHasta());
+        
+        // Crear especificación usando métodos estáticos del repositorio
+        Specification<Turno> spec = TurnoRepository.buildSpecification(
             estadoEnum,
-            filter.getPacienteId(),
-            filter.getStaffMedicoId(),
-            filter.getEspecialidadId(),
-            filter.getCentroAtencionId(),
-            filter.getConsultorioId(),
-            filter.getFechaDesde(),
-            filter.getFechaHasta(),
-            pageable
+            cleanFilter.getPacienteId(),
+            cleanFilter.getStaffMedicoId(),
+            cleanFilter.getEspecialidadId(),
+            cleanFilter.getCentroAtencionId(),
+            cleanFilter.getConsultorioId(),
+            cleanFilter.getFechaDesde(),
+            cleanFilter.getFechaHasta(),
+            cleanFilter.getFechaExacta(),
+            cleanFilter.getNombrePaciente(),
+            cleanFilter.getNombreMedico(),
+            cleanFilter.getNombreEspecialidad(),
+            cleanFilter.getNombreCentro()
         );
+        
+        // Usar el método de JpaSpecificationExecutor
+        Page<Turno> turnosPage = repository.findAll(spec, pageable);
+        
+        System.out.println("✅ DEBUG: Búsqueda completada. Resultados encontrados: " + turnosPage.getTotalElements());
         
         // Convertir a DTOs con información de auditoría
         return turnosPage.map(this::toDTOWithAuditInfo);
@@ -650,26 +701,56 @@ public class TurnoService {
      * Busca turnos para exportación (sin paginación)
      */
     public List<TurnoDTO> findForExport(TurnoFilterDTO filter) {
+        // Validar y limpiar el filtro
+        TurnoFilterDTO cleanFilter = validateAndCleanFilter(filter);
+        
         EstadoTurno estadoEnum = null;
-        if (filter.getEstado() != null && !filter.getEstado().isEmpty()) {
+        if (cleanFilter.getEstado() != null && !cleanFilter.getEstado().isEmpty()) {
             try {
-                estadoEnum = EstadoTurno.valueOf(filter.getEstado().toUpperCase());
+                estadoEnum = EstadoTurno.valueOf(cleanFilter.getEstado().toUpperCase());
             } catch (IllegalArgumentException e) {
+                System.err.println("Estado inválido en filtro de exportación: " + cleanFilter.getEstado());
                 // Si el estado no es válido, no se aplica este filtro
             }
         }
         
-        // Usar el método del repositorio para exportación
-        List<Turno> turnos = repository.findByFiltersForExport(
+        System.out.println("🔍 DEBUG: Ejecutando búsqueda para exportación con filtros:");
+        System.out.println("   - Estado: " + estadoEnum);
+        System.out.println("   - PacienteId: " + cleanFilter.getPacienteId());
+        System.out.println("   - StaffMedicoId: " + cleanFilter.getStaffMedicoId());
+        System.out.println("   - EspecialidadId: " + cleanFilter.getEspecialidadId());
+        System.out.println("   - CentroId: " + cleanFilter.getCentroAtencionId());
+        System.out.println("   - ConsultorioId: " + cleanFilter.getConsultorioId());
+        System.out.println("   - FechaDesde: " + cleanFilter.getFechaDesde());
+        System.out.println("   - FechaHasta: " + cleanFilter.getFechaHasta());
+        
+        // Crear especificación usando métodos estáticos del repositorio  
+        Specification<Turno> spec = TurnoRepository.buildSpecification(
             estadoEnum,
-            filter.getPacienteId(),
-            filter.getStaffMedicoId(),
-            filter.getEspecialidadId(),
-            filter.getCentroAtencionId(),
-            filter.getConsultorioId(),
-            filter.getFechaDesde(),
-            filter.getFechaHasta()
+            cleanFilter.getPacienteId(),
+            cleanFilter.getStaffMedicoId(),
+            cleanFilter.getEspecialidadId(),
+            cleanFilter.getCentroAtencionId(),
+            cleanFilter.getConsultorioId(),
+            cleanFilter.getFechaDesde(),
+            cleanFilter.getFechaHasta(),
+            cleanFilter.getFechaExacta(),
+            cleanFilter.getNombrePaciente(),
+            cleanFilter.getNombreMedico(),
+            cleanFilter.getNombreEspecialidad(),
+            cleanFilter.getNombreCentro()
         );
+        
+        // Usar JpaSpecificationExecutor sin paginación para exportación
+        Sort sort = Sort.by(
+            "DESC".equalsIgnoreCase(cleanFilter.getSortDirection()) ? 
+                Sort.Direction.DESC : Sort.Direction.ASC, 
+            cleanFilter.getSortBy()
+        );
+        
+        List<Turno> turnos = repository.findAll(spec, sort);
+        
+        System.out.println("✅ DEBUG: Búsqueda para exportación completada. Resultados encontrados: " + turnos.size());
         
         // Convertir a DTOs con información de auditoría
         return turnos.stream()
@@ -821,7 +902,7 @@ public class TurnoService {
 
     private void validarComplecion(Turno turno) {
         // Validar que el turno puede ser modificado
-        if (!turnoValidationService.canTurnoBeModified(turno)) {
+        if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede completar un turno cancelado o ya completado");
         }
         
@@ -831,7 +912,7 @@ public class TurnoService {
         }
         
         // Validar transiciones de estado válidas
-        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.COMPLETO)) {
+        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.COMPLETO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a COMPLETO");
         }
@@ -979,5 +1060,169 @@ public class TurnoService {
             return turno.getStaffMedico().getMedico().getNombre() + " " + turno.getStaffMedico().getMedico().getApellido();
         }
         return "Médico no disponible";
+    }
+    
+    /**
+     * Valida y limpia los filtros antes de usarlos en las consultas
+     * Maneja especialmente los campos de fecha que pueden venir como null o strings vacíos
+     */
+    private TurnoFilterDTO validateAndCleanFilter(TurnoFilterDTO filter) {
+        if (filter == null) {
+            filter = new TurnoFilterDTO();
+        }
+        
+        // Crear una copia limpia del filtro
+        TurnoFilterDTO cleanFilter = new TurnoFilterDTO();
+        
+        // Copiar campos básicos, validando y limpiando
+        cleanFilter.setEstado(cleanAndValidateString(filter.getEstado()));
+        cleanFilter.setPacienteId(filter.getPacienteId());
+        cleanFilter.setStaffMedicoId(filter.getStaffMedicoId());
+        cleanFilter.setEspecialidadId(filter.getEspecialidadId());
+        cleanFilter.setCentroAtencionId(filter.getCentroAtencionId());
+        cleanFilter.setConsultorioId(filter.getConsultorioId());
+        cleanFilter.setCentroId(filter.getCentroId()); // alias para centroAtencionId
+        cleanFilter.setMedicoId(filter.getMedicoId()); // alias para staffMedicoId
+        
+        // Validar y limpiar fechas - CRÍTICO para evitar errores SQL
+        cleanFilter.setFechaDesde(validateDate(filter.getFechaDesde(), "fechaDesde"));
+        cleanFilter.setFechaHasta(validateDate(filter.getFechaHasta(), "fechaHasta"));
+        cleanFilter.setFechaExacta(validateDate(filter.getFechaExacta(), "fechaExacta"));
+        
+        // Validar orden de fechas
+        if (cleanFilter.getFechaDesde() != null && cleanFilter.getFechaHasta() != null) {
+            if (cleanFilter.getFechaDesde().isAfter(cleanFilter.getFechaHasta())) {
+                System.err.println("⚠️  WARNING: fechaDesde (" + cleanFilter.getFechaDesde() + 
+                                 ") es posterior a fechaHasta (" + cleanFilter.getFechaHasta() + "). Intercambiando valores.");
+                LocalDate temp = cleanFilter.getFechaDesde();
+                cleanFilter.setFechaDesde(cleanFilter.getFechaHasta());
+                cleanFilter.setFechaHasta(temp);
+            }
+        }
+        
+        // Copiar campos de paginación con valores por defecto
+        cleanFilter.setPage(filter.getPage() != null ? Math.max(0, filter.getPage()) : 0);
+        cleanFilter.setSize(filter.getSize() != null ? Math.min(Math.max(1, filter.getSize()), 100) : 20);
+        cleanFilter.setSortBy(cleanAndValidateString(filter.getSortBy()) != null ? filter.getSortBy() : "fecha");
+        cleanFilter.setSortDirection(cleanAndValidateString(filter.getSortDirection()) != null ? filter.getSortDirection() : "ASC");
+        
+        // Campos de auditoría y búsqueda de texto
+        cleanFilter.setNombrePaciente(cleanAndValidateString(filter.getNombrePaciente()));
+        cleanFilter.setNombreMedico(cleanAndValidateString(filter.getNombreMedico()));
+        cleanFilter.setNombreEspecialidad(cleanAndValidateString(filter.getNombreEspecialidad()));
+        cleanFilter.setNombreCentro(cleanAndValidateString(filter.getNombreCentro()));
+        cleanFilter.setUsuarioModificacion(cleanAndValidateString(filter.getUsuarioModificacion()));
+        cleanFilter.setConModificaciones(filter.getConModificaciones());
+        cleanFilter.setExportFormat(cleanAndValidateString(filter.getExportFormat()));
+        
+        return cleanFilter;
+    }
+    
+    // === MÉTODOS DE VALIDACIÓN INTEGRADOS ===
+    
+    /**
+     * Valida si una transición de estado es válida
+     */
+    private boolean isValidStateTransition(EstadoTurno currentState, EstadoTurno newState) {
+        if (currentState == null || newState == null) {
+            return false;
+        }
+        
+        List<EstadoTurno> validNextStates = VALID_TRANSITIONS.get(currentState);
+        return validNextStates != null && validNextStates.contains(newState);
+    }
+
+    /**
+     * Valida si un turno puede ser modificado
+     */
+    private boolean canTurnoBeModified(Turno turno) {
+        if (turno == null) {
+            return false;
+        }
+        
+        // No se pueden modificar turnos cancelados o completados
+        return turno.getEstado() != EstadoTurno.CANCELADO && 
+               turno.getEstado() != EstadoTurno.COMPLETO;
+    }
+
+    /**
+     * Valida si se requiere motivo para una transición específica
+     */
+    private boolean requiresReason(EstadoTurno newState) {
+        // Cancelaciones y reagendamientos siempre requieren motivo
+        return newState == EstadoTurno.CANCELADO || newState == EstadoTurno.REAGENDADO;
+    }
+
+    /**
+     * Valida permisos de usuario (simplificado - en producción integrar con sistema de autenticación)
+     */
+    private boolean hasPermissionToModifyTurno(String userId) {
+        // Por ahora, permitir a todos los usuarios autenticados
+        // En producción, verificar roles específicos como ADMIN, STAFF_MEDICO, etc.
+        return userId != null && !userId.trim().isEmpty();
+    }
+
+    /**
+     * Obtiene los estados válidos para una transición desde el estado actual
+     */
+    private List<EstadoTurno> getValidNextStates(EstadoTurno currentState) {
+        return VALID_TRANSITIONS.getOrDefault(currentState, Arrays.asList());
+    }
+
+    /**
+     * Valida motivo de cancelación
+     */
+    private boolean isValidCancellationReason(String reason) {
+        return reason != null && reason.trim().length() >= 5; // Mínimo 5 caracteres
+    }
+
+    /**
+     * Valida motivo de reagendamiento
+     */
+    private boolean isValidReschedulingReason(String reason) {
+        return reason != null && reason.trim().length() >= 5; // Mínimo 5 caracteres
+    }
+
+    /**
+     * Valida y limpia strings eliminando espacios y convirtiendo vacíos a null
+     */
+    private String cleanAndValidateString(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+    
+    /**
+     * Valida un campo de fecha y lo convierte a LocalDate si es válido
+     * Si hay error, retorna null y registra el problema
+     */
+    private LocalDate validateDate(LocalDate date, String fieldName) {
+        if (date == null) {
+            return null;
+        }
+        
+        try {
+            // Si la fecha ya es LocalDate, solo validamos que sea razonable
+            LocalDate now = LocalDate.now();
+            LocalDate minDate = now.minusYears(2); // No más de 2 años en el pasado
+            LocalDate maxDate = now.plusYears(2);  // No más de 2 años en el futuro
+            
+            if (date.isBefore(minDate)) {
+                System.err.println("⚠️  WARNING: " + fieldName + " (" + date + ") es demasiado antigua. Usando fecha mínima: " + minDate);
+                return minDate;
+            }
+            
+            if (date.isAfter(maxDate)) {
+                System.err.println("⚠️  WARNING: " + fieldName + " (" + date + ") es demasiado futura. Usando fecha máxima: " + maxDate);
+                return maxDate;
+            }
+            
+            return date;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: No se pudo validar la fecha " + fieldName + ": " + e.getMessage());
+            return null;
+        }
     }
 }

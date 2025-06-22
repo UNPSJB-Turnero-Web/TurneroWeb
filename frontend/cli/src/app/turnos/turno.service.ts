@@ -215,7 +215,89 @@ export class TurnoService {
 
   /** Búsqueda avanzada con filtros múltiples */
   searchWithFilters(filter: TurnoFilter): Observable<DataPackage<any>> {
-    return this.http.post<DataPackage<any>>(`${this.url}/search`, filter);
+    console.log('🔍 DEBUG Frontend - Filtro original:', filter);
+    
+    // Convertir fechas al formato esperado por el backend (dd-MM-yyyy)
+    const convertedFilter = this.convertDateFormat(filter);
+    
+    console.log('🔍 DEBUG Frontend - Filtro convertido:', convertedFilter);
+    
+    return this.http.post<DataPackage<any>>(`${this.url}/search`, convertedFilter);
+  }
+
+  /** Convierte fechas del formato ISO (yyyy-MM-dd) al formato del backend (dd-MM-yyyy) */
+  private convertDateFormat(filter: TurnoFilter): TurnoFilter {
+    const convertedFilter = { ...filter };
+    
+    if (convertedFilter.fechaDesde) {
+      const original = convertedFilter.fechaDesde;
+      convertedFilter.fechaDesde = this.formatDateForBackend(convertedFilter.fechaDesde as any);
+      console.log(`📅 DEBUG fechaDesde: ${original} → ${convertedFilter.fechaDesde}`);
+    }
+    
+    if (convertedFilter.fechaHasta) {
+      const original = convertedFilter.fechaHasta;
+      convertedFilter.fechaHasta = this.formatDateForBackend(convertedFilter.fechaHasta as any);
+      console.log(`📅 DEBUG fechaHasta: ${original} → ${convertedFilter.fechaHasta}`);
+    }
+    
+    if (convertedFilter.fechaExacta) {
+      const original = convertedFilter.fechaExacta;
+      convertedFilter.fechaExacta = this.formatDateForBackend(convertedFilter.fechaExacta as any);
+      console.log(`📅 DEBUG fechaExacta: ${original} → ${convertedFilter.fechaExacta}`);
+    }
+    
+    return convertedFilter;
+  }
+
+  /** Convierte una fecha de formato yyyy-MM-dd a dd-MM-yyyy */
+  private formatDateForBackend(dateString: string | any): string {
+    if (!dateString) return dateString;
+    
+    console.log(`🔧 formatDateForBackend input: "${dateString}" (type: ${typeof dateString})`);
+    
+    // Convertir a string si es un Date object
+    let dateStr = dateString;
+    if (dateString instanceof Date) {
+      dateStr = dateString.toISOString().split('T')[0]; // yyyy-MM-dd
+      console.log(`🔧 Date object convertido a: ${dateStr}`);
+    } else if (typeof dateString === 'object' && dateString.toString) {
+      dateStr = dateString.toString();
+      console.log(`🔧 Object convertido a string: ${dateStr}`);
+    } else {
+      dateStr = String(dateString);
+    }
+    
+    // Si ya está en el formato correcto (dd-MM-yyyy), no hacer nada
+    if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+      console.log(`✅ Ya está en formato dd-MM-yyyy: ${dateStr}`);
+      return dateStr;
+    }
+    
+    // Si está en formato ISO (yyyy-MM-dd), convertir
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = dateStr.split('-');
+      const converted = `${parts[2]}-${parts[1]}-${parts[0]}`; // dd-MM-yyyy
+      console.log(`🔄 Convertido de yyyy-MM-dd a dd-MM-yyyy: ${dateStr} → ${converted}`);
+      return converted;
+    }
+    
+    // Si es una fecha completa ISO, extraer solo la fecha
+    if (dateStr.includes('T')) {
+      const datePart = dateStr.split('T')[0];
+      const parts = datePart.split('-');
+      const converted = `${parts[2]}-${parts[1]}-${parts[0]}`; // dd-MM-yyyy
+      console.log(`🔄 Convertido de ISO completo a dd-MM-yyyy: ${dateStr} → ${converted}`);
+      return converted;
+    }
+    
+    console.log(`⚠️ No se pudo convertir la fecha: ${dateStr}`);
+    return dateStr; // Retornar sin cambios si no se puede procesar
+  }
+
+  /** Método público para testing de conversión de fechas */
+  public testFormatDateForBackend(dateString: string | any): string {
+    return this.formatDateForBackend(dateString);
   }
 
   /** Búsqueda por texto simple */
@@ -233,7 +315,8 @@ export class TurnoService {
 
   /** Filtros simples (sin paginación) */
   searchWithSimpleFilters(filter: TurnoFilter): Observable<DataPackage<Turno[]>> {
-    return this.http.post<DataPackage<Turno[]>>(`${this.url}/filters/simple`, filter);
+    const convertedFilter = this.convertDateFormat(filter);
+    return this.http.post<DataPackage<Turno[]>>(`${this.url}/filters/simple`, convertedFilter);
   }
 
   // === MÉTODOS DE EXPORTACIÓN ===
@@ -241,21 +324,23 @@ export class TurnoService {
   /** Exporta turnos a CSV (descarga archivo) */
   exportToCSVDownload(filter: TurnoFilter): Observable<Blob> {
     // Usar POST en lugar de GET para enviar filtros complejos
-    return this.http.post(`rest/turno/export/csv`, filter, { responseType: 'blob' });
+    const convertedFilter = this.convertDateFormat(filter);
+    return this.http.post(`rest/turno/export/csv`, convertedFilter, { responseType: 'blob' });
   }
 
   /** Exporta turnos a PDF (descarga archivo) */
   exportToPDFDownload(filter: TurnoFilter): Observable<Blob> {
     // Usar POST en lugar de GET para enviar filtros complejos
-    return this.http.post(`rest/turno/export/pdf`, filter, { responseType: 'blob' });
+    const convertedFilter = this.convertDateFormat(filter);
+    return this.http.post(`rest/turno/export/pdf`, convertedFilter, { responseType: 'blob' });
   }
 
   /** Exporta turnos a PDF usando GET (alternativo) */
   exportToPDFDownloadGET(filter: TurnoFilter): Observable<Blob> {
     const params: any = {};
     if (filter.estado) params.estado = filter.estado;
-    if (filter.fechaDesde) params.fechaDesde = filter.fechaDesde;
-    if (filter.fechaHasta) params.fechaHasta = filter.fechaHasta;
+    if (filter.fechaDesde) params.fechaDesde = this.formatDateForBackend(filter.fechaDesde);
+    if (filter.fechaHasta) params.fechaHasta = this.formatDateForBackend(filter.fechaHasta);
     if (filter.pacienteId) params.pacienteId = filter.pacienteId;
     if (filter.staffMedicoId) params.staffMedicoId = filter.staffMedicoId;
     if (filter.centroId) params.centroId = filter.centroId;
@@ -267,7 +352,8 @@ export class TurnoService {
 
   /** Obtiene estadísticas para exportación */
   getExportStatistics(filter: TurnoFilter): Observable<DataPackage<any>> {
-    return this.http.post<DataPackage<any>>(`rest/export/turnos/statistics`, filter);
+    const convertedFilter = this.convertDateFormat(filter);
+    return this.http.post<DataPackage<any>>(`rest/export/turnos/statistics`, convertedFilter);
   }
 
   // === MÉTODOS DE GESTIÓN CON AUDITORÍA ===

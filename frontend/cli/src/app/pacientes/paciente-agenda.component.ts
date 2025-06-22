@@ -417,7 +417,7 @@ interface SlotDisponible {
                 <strong>Consultorio:</strong> {{ selectedTurnoDisponible?.meta?.consultorio }}
               </div>
               <div class="detail-item">
-                <strong>Fecha:</strong> {{ selectedTurnoDisponible?.start | date: 'EEEE, dd MMMM yyyy' }}
+                <strong>Fecha:</strong> {{ selectedTurnoDisponible?.start | date: 'EEEE, dd MM yyyy' }}
               </div>
               <div class="detail-item">
                 <strong>Horario:</strong> {{ selectedTurnoDisponible?.start | date: 'HH:mm' }} - {{ selectedTurnoDisponible?.end | date: 'HH:mm' }}

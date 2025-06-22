@@ -3,15 +3,15 @@ export interface Agenda {
   titulo: string;
   especialidadId: number;
   especialidadNombre: string;
-  diaInicio: string; // ISO yyyy-MM-dd
-  diaFin: string;    // ISO yyyy-MM-dd
+  diaInicio: string; // ISO dd-MM-yyyy
+  diaFin: string;    // ISO dd-MM-yyyy
   dias: Dia[];
-  feriados?: string[]; // Fechas ISO yyyy-MM-dd
+  feriados?: string[]; // Fechas ISO dd-MM-yyyy
   diasExcepcionales?: DiaExcepcional[];
 }
 
 export interface Dia {
-  fecha: string; // ISO yyyy-MM-dd
+  fecha: string; // ISO dd-MM-yyyy
   diaSemana: string;
   apertura: string; // HH:mm
   cierre: string;   // HH:mm
@@ -22,7 +22,7 @@ export interface Dia {
 
 export interface Slot {
   id?: number;
-  fecha?: string; // ISO yyyy-MM-dd
+  fecha?: string; // ISO dd-MM-yyyy
   diaSemana?: string;
   horaInicio: string; // HH:mm
   horaFin: string;    // HH:mm
@@ -39,7 +39,7 @@ export interface Slot {
 }
 
 export interface DiaExcepcional {
-  fecha: string; // ISO yyyy-MM-dd
+  fecha: string; // ISO dd-MM-yyyy
   descripcion: string;
   apertura: string; // HH:mm
   cierre: string;   // HH:mm

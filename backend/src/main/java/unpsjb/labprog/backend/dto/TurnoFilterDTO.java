@@ -2,6 +2,8 @@ package unpsjb.labprog.backend.dto;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,8 +30,13 @@ public class TurnoFilterDTO {
     private Integer medicoId;                // ID del médico (alias)
     
     // Filtros de fecha
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate fechaDesde;             // Fecha desde (inclusive)
+    
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate fechaHasta;             // Fecha hasta (inclusive)
+    
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate fechaExacta;            // Fecha exacta (si se proporciona, ignora desde/hasta)
     
     // Filtros de auditoría
