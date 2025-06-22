@@ -70,4 +70,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
 
     // Eliminar logs antiguos (para limpieza de datos)
     void deleteByPerformedAtBefore(LocalDateTime cutoffDate);
+
+    // Obtener estadísticas de actividad por usuario
+    @Query("SELECT a.performedBy, COUNT(a) FROM AuditLog a GROUP BY a.performedBy ORDER BY COUNT(a) DESC")
+    List<Object[]> findUserActivityStatistics();
 }

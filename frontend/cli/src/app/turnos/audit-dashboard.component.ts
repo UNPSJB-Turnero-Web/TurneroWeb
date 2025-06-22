@@ -19,6 +19,7 @@ export class AuditDashboardComponent implements OnInit {
   auditStatistics: any = {};
   recentLogs: AuditLog[] = [];
   loading: boolean = false;
+  turnos: any[] = [];
   
   // Filtros para los logs recientes
   selectedAction: string = '';
@@ -43,7 +44,9 @@ export class AuditDashboardComponent implements OnInit {
     // Cargar estadísticas y logs en paralelo
     Promise.all([
       this.loadAuditStatistics(),
-      this.loadRecentLogs()
+      this.loadRecentLogs(),
+      this.loadUserStatistics(),
+      this.loadTurnos()
     ]).finally(() => {
       this.loading = false;
     });
@@ -92,6 +95,35 @@ export class AuditDashboardComponent implements OnInit {
           reject(error);
         }
       });
+    });
+  }
+
+  /** Carga todos los turnos del sistema */
+  loadTurnos(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.turnoService.all().subscribe({
+        next: (response: any) => {
+          if (response.status === 200) {
+            this.turnos = response.data || [];
+            console.log('Turnos cargados:', this.turnos.length);
+          } else {
+            console.warn('No se pudieron cargar los turnos:', response.status);
+          }
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar turnos:', error);
+          reject(error);
+        }
+      });
+    });
+  }
+
+  /** Carga estadísticas de actividad por usuario */
+  loadUserStatistics(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Si no tienes endpoint, simplemente resuelve vacío
+      resolve();
     });
   }
 

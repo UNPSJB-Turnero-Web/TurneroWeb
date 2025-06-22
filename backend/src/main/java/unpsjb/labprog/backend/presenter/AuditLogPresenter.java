@@ -130,9 +130,13 @@ public class AuditLogPresenter {
     @GetMapping("/statistics")
     public ResponseEntity<Object> getAuditStatistics() {
         try {
+            System.out.println("🔍 DEBUG AuditLogPresenter: Llamada a /audit/statistics");
             List<Object[]> statistics = auditLogService.getActionStatistics();
+            System.out.println("✅ DEBUG AuditLogPresenter: Estadísticas obtenidas: " + statistics.size() + " elementos");
             return Response.ok(statistics, "Estadísticas de auditoría recuperadas correctamente");
         } catch (Exception e) {
+            System.err.println("❌ ERROR AuditLogPresenter: " + e.getMessage());
+            e.printStackTrace();
             return Response.error(null, "Error al recuperar las estadísticas: " + e.getMessage());
         }
     }
@@ -225,32 +229,36 @@ public class AuditLogPresenter {
     }
 
     /**
-     * Dashboard con información general de auditoría
+     * Obtiene estadísticas detalladas para el dashboard
      */
     @GetMapping("/dashboard")
-    public ResponseEntity<Object> getAuditDashboard() {
+    public ResponseEntity<Object> getDashboardStatistics() {
         try {
-            // Estadísticas generales
-            List<Object[]> actionStats = auditLogService.getActionStatistics();
-            List<AuditLog> recentLogs = auditLogService.getRecentLogs();
-            List<String> uniqueUsers = auditLogService.getUniqueUsers();
-            
-            // Estadísticas de los últimos 7 días
-            LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
-            List<Object[]> weeklyStats = auditLogService.getActionStatsByDay(weekAgo);
-            
-            Map<String, Object> dashboard = Map.of(
-                "actionStatistics", actionStats,
-                "recentLogs", recentLogs,
-                "uniqueUsers", uniqueUsers,
-                "weeklyStatistics", weeklyStats,
-                "totalUsers", uniqueUsers.size(),
-                "recentLogsCount", recentLogs.size()
-            );
-            
-            return Response.ok(dashboard, "Dashboard de auditoría recuperado correctamente");
+            System.out.println("🔍 DEBUG AuditLogPresenter: Llamada a /audit/dashboard");
+            Map<String, Object> dashboardStats = auditLogService.getDashboardStatistics();
+            System.out.println("✅ DEBUG AuditLogPresenter: Estadísticas del dashboard obtenidas: " + dashboardStats.keySet());
+            return Response.ok(dashboardStats, "Estadísticas del dashboard recuperadas correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al recuperar el dashboard: " + e.getMessage());
+            System.err.println("❌ ERROR AuditLogPresenter: Error en dashboard - " + e.getMessage());
+            e.printStackTrace();
+            return Response.error(null, "Error al recuperar las estadísticas del dashboard: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de actividad por usuario
+     */
+    @GetMapping("/users/activity")
+    public ResponseEntity<Object> getUserActivityStatistics() {
+        try {
+            System.out.println("🔍 DEBUG AuditLogPresenter: Llamada a /audit/users/activity");
+            List<Object[]> userStats = auditLogService.getUserActivityStatistics();
+            System.out.println("✅ DEBUG AuditLogPresenter: Estadísticas de usuarios obtenidas: " + userStats.size() + " usuarios");
+            return Response.ok(userStats, "Estadísticas de actividad por usuario recuperadas correctamente");
+        } catch (Exception e) {
+            System.err.println("❌ ERROR AuditLogPresenter: Error en actividad de usuarios - " + e.getMessage());
+            e.printStackTrace();
+            return Response.error(null, "Error al recuperar las estadísticas de usuarios: " + e.getMessage());
         }
     }
 }

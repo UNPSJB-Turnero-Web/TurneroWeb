@@ -244,4 +244,5 @@ export class TurnoService {
     const payload = { ...nuevosDatos, motivo, usuario };
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/reagendar`, payload);
   }
+
 }

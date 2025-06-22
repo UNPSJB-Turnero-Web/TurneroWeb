@@ -1,7 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,8 @@ public class AuditLogService {
                                   String previousStatus, String newStatus, 
                                   Object oldValues, Object newValues, String reason) {
         
+        System.out.println("🔍 DEBUG logTurnoAction: Turno ID: " + turno.getId() + ", Acción: " + action + ", Usuario: " + performedBy);
+        
         try {
             String oldValuesJson = oldValues != null ? objectMapper.writeValueAsString(oldValues) : null;
             String newValuesJson = newValues != null ? objectMapper.writeValueAsString(newValues) : null;
@@ -46,11 +50,19 @@ public class AuditLogService {
                 oldValuesJson, newValuesJson, reason
             );
 
+            System.out.println("🔍 DEBUG: Guardando en base de datos...");
             // Guardar de forma inmutable
-            return auditLogRepository.save(auditLog);
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: AuditLog guardado con ID: " + saved.getId() + ", Fecha: " + saved.getPerformedAt());
+            return saved;
             
         } catch (JsonProcessingException e) {
+            System.err.println("❌ ERROR: Error al serializar datos de auditoría: " + e.getMessage());
             throw new RuntimeException("Error al serializar datos de auditoría", e);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al guardar AuditLog: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 
@@ -59,9 +71,12 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoCreated(Turno turno, String performedBy) {
-        return logTurnoAction(turno, AuditLog.Actions.CREATE, performedBy, 
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoCreated para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+        AuditLog result = logTurnoAction(turno, AuditLog.Actions.CREATE, performedBy, 
                             null, turno.getEstado().name(), 
                             null, turno, null);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
@@ -172,7 +187,11 @@ public class AuditLogService {
      * Obtiene estadísticas de acciones
      */
     public List<Object[]> getActionStatistics() {
-        return auditLogRepository.findActionStatistics();
+        System.out.println("🔍 DEBUG: Obteniendo estadísticas de acciones...");
+        List<Object[]> stats = auditLogRepository.findActionStatistics();
+        System.out.println("✅ DEBUG: Estadísticas obtenidas: " + stats.size() + " resultados");
+        stats.forEach(stat -> System.out.println("  - " + stat[0] + ": " + stat[1]));
+        return stats;
     }
 
     /**
@@ -249,5 +268,74 @@ public class AuditLogService {
         }
         
         return true;
+    }
+
+    /**
+     * Obtiene estadísticas detalladas de turnos por estado y acción
+     */
+    public Map<String, Object> getDetailedTurnoStatistics() {
+        System.out.println("🔍 DEBUG: Obteniendo estadísticas detalladas de turnos...");
+        
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Contar turnos por acción específica
+        Long confirmedCount = auditLogRepository.countByAction("CONFIRM");
+        Long canceledCount = auditLogRepository.countByAction("CANCEL");
+        Long rescheduledCount = auditLogRepository.countByAction("RESCHEDULE");
+        Long statusChangedCount = auditLogRepository.countByAction("UPDATE_STATUS");
+        Long createdCount = auditLogRepository.countByAction("CREATE");
+        
+        stats.put("turnosConfirmados", confirmedCount != null ? confirmedCount : 0);
+        stats.put("turnosCancelados", canceledCount != null ? canceledCount : 0);
+        stats.put("turnosReagendados", rescheduledCount != null ? rescheduledCount : 0);
+        stats.put("turnosModificados", statusChangedCount != null ? statusChangedCount : 0);
+        stats.put("turnosCreados", createdCount != null ? createdCount : 0);
+        
+        // Total de acciones
+        stats.put("totalAcciones", 
+            (Long) stats.get("turnosConfirmados") +
+            (Long) stats.get("turnosCancelados") +
+            (Long) stats.get("turnosReagendados") +
+            (Long) stats.get("turnosModificados") +
+            (Long) stats.get("turnosCreados")
+        );
+        
+        System.out.println("✅ DEBUG: Estadísticas detalladas calculadas: " + stats);
+        return stats;
+    }
+
+    /**
+     * Obtiene estadísticas de actividad por usuario
+     */
+    public List<Object[]> getUserActivityStatistics() {
+        System.out.println("🔍 DEBUG: Obteniendo estadísticas de actividad por usuario...");
+        List<Object[]> userStats = auditLogRepository.findUserActivityStatistics();
+        System.out.println("✅ DEBUG: Estadísticas de usuario obtenidas: " + userStats.size() + " resultados");
+        userStats.forEach(stat -> System.out.println("  - " + stat[0] + ": " + stat[1] + " acciones"));
+        return userStats;
+    }
+
+    /**
+     * Obtiene estadísticas combinadas para el dashboard
+     */
+    public Map<String, Object> getDashboardStatistics() {
+        System.out.println("🔍 DEBUG: Obteniendo estadísticas del dashboard...");
+        
+        Map<String, Object> dashboardStats = new HashMap<>();
+        
+        // Estadísticas detalladas de turnos
+        Map<String, Object> turnoStats = getDetailedTurnoStatistics();
+        dashboardStats.putAll(turnoStats);
+        
+        // Estadísticas por acción (formato array para compatibilidad)
+        List<Object[]> actionStats = getActionStatistics();
+        dashboardStats.put("actionStatistics", actionStats);
+        
+        // Estadísticas por usuario
+        List<Object[]> userStats = getUserActivityStatistics();
+        dashboardStats.put("userStatistics", userStats);
+        
+        System.out.println("✅ DEBUG: Estadísticas del dashboard completadas");
+        return dashboardStats;
     }
 }

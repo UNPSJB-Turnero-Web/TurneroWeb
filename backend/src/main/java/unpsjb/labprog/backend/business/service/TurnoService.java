@@ -93,9 +93,13 @@ public class TurnoService {
             
             // Registrar auditoría
             if (isNewTurno) {
+                System.out.println("🔍 DEBUG: Creando log de auditoría para nuevo turno ID: " + saved.getId() + ", Usuario: " + performedBy);
                 auditLogService.logTurnoCreated(saved, performedBy);
+                System.out.println("✅ DEBUG: Log de auditoría creado exitosamente");
             } else if (previousStatus != null && !previousStatus.equals(saved.getEstado())) {
+                System.out.println("🔍 DEBUG: Creando log de cambio de estado para turno ID: " + saved.getId());
                 auditLogService.logStatusChange(saved, previousStatus.name(), performedBy, "Actualización de turno");
+                System.out.println("✅ DEBUG: Log de cambio de estado creado exitosamente");
             }
             
             return toDTO(saved); // Convertir entidad a DTO y retornar
