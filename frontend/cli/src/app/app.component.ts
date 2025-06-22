@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { NotificacionService } from './services/notificacion.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -159,7 +161,7 @@ import { filter } from 'rxjs/operators';
           <div ngbDropdown class="nav-dropdown" *ngIf="isPatient()">
             <button 
               class="nav-button"
-              [class.active]="isRouteActive('/paciente-dashboard') || isRouteActive('/paciente-turnos') || isRouteActive('/paciente-agenda')"
+              [class.active]="isRouteActive('/paciente-dashboard') || isRouteActive('/paciente-turnos') || isRouteActive('/paciente-agenda') || isRouteActive('/paciente-notificaciones')"
               ngbDropdownToggle
               id="pacienteDropdown"
               aria-label="Portal del paciente"
@@ -167,6 +169,7 @@ import { filter } from 'rxjs/operators';
               <i class="fas fa-user-injured me-2"></i>
               <span>Panel paciente</span>
               <i class="fas fa-chevron-down ms-2"></i>
+              <span class="notification-indicator" *ngIf="getPatientNotificationCount() > 0"></span>
             </button>
             <div ngbDropdownMenu class="modern-dropdown" aria-labelledby="pacienteDropdown">
               <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/paciente-dashboard')" [class.active]="isRouteActive('/paciente-dashboard')">
@@ -189,6 +192,14 @@ import { filter } from 'rxjs/operators';
                   <span class="item-title">Agendar Turno</span>
                   <span class="item-desc">Solicitar nueva cita</span>
                 </div>
+              </a>
+              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/paciente-notificaciones')" [class.active]="isRouteActive('/paciente-notificaciones')">
+                <i class="fas fa-bell icon-item icon-notificaciones"></i>
+                <div class="item-content">
+                  <span class="item-title">Notificaciones</span>
+                  <span class="item-desc">Mensajes y alertas</span>
+                </div>
+                <span class="notification-count" *ngIf="getPatientNotificationCount() > 0">{{getPatientNotificationCount()}}</span>
               </a>
             </div>
           </div>
@@ -354,6 +365,25 @@ import { filter } from 'rxjs/operators';
       align-items: center;
       cursor: pointer;
       text-decoration: none;
+      position: relative;
+    }
+
+    .notification-indicator {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #dc3545;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+      animation: pulse-indicator 2s infinite;
+    }
+
+    @keyframes pulse-indicator {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     .nav-button:hover {
@@ -373,6 +403,18 @@ import { filter } from 'rxjs/operators';
       background: rgba(255,255,255,0.25) !important;
       border-color: rgba(255,255,255,0.4) !important;
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .notification-indicator {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      background: #ff4757;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+      animation: pulse 2s infinite;
     }
 
     /* DROPDOWN MODERNO */
@@ -398,6 +440,23 @@ import { filter } from 'rxjs/operators';
       border: none;
       background: transparent !important;
       cursor: pointer;
+      position: relative;
+    }
+
+    .notification-count {
+      position: absolute;
+      right: 1rem;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
     }
 
     .dropdown-item:hover {
@@ -648,6 +707,7 @@ import { filter } from 'rxjs/operators';
     .icon-dashboard { background: var(--dashboard-color); }
     .icon-mis-turnos { background: var(--mis-turnos-color); }
     .icon-agendar { background: var(--agendar-color); }
+    .icon-notificaciones { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
     .icon-configuracion { background: var(--configuracion-color); }
     .icon-logout { background: var(--logout-color); }
 
@@ -768,11 +828,16 @@ import { filter } from 'rxjs/operators';
     }
   `]
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'CheTurno';
   currentRoute = '';
+  patientNotificationCount = 0;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private notificacionService: NotificacionService
+  ) {}
 
   ngOnInit() {
     // Escuchar cambios de ruta para actualizar el estado activo
@@ -780,7 +845,39 @@ export class AppComponent implements OnInit {
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
         this.currentRoute = event.url;
+        
+        // Cargar notificaciones del paciente cuando cambie la ruta si es paciente
+        if (this.isPatient()) {
+          this.cargarNotificacionesPaciente();
+        }
       });
+
+    // Cargar notificaciones iniciales si es paciente
+    if (this.isPatient()) {
+      this.cargarNotificacionesPaciente();
+    }
+
+    // Suscribirse al contador de notificaciones
+    const notificationSub = this.notificacionService.contadorNoLeidas$.subscribe(
+      count => this.patientNotificationCount = count
+    );
+    this.subscriptions.push(notificationSub);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private cargarNotificacionesPaciente() {
+    const pacienteId = this.getPacienteId();
+    if (pacienteId) {
+      this.notificacionService.actualizarContador(pacienteId);
+    }
+  }
+
+  private getPacienteId(): number | null {
+    const pacienteId = localStorage.getItem('pacienteId');
+    return pacienteId ? parseInt(pacienteId) : null;
   }
 
   isAuthenticated(): boolean {
@@ -841,5 +938,13 @@ export class AppComponent implements OnInit {
     // Mock implementation - debería conectarse con el servicio de notificaciones
     const unreadCount = localStorage.getItem('unreadNotifications');
     return unreadCount ? parseInt(unreadCount) : 0;
+  }
+
+  // Método para obtener el contador de notificaciones del paciente
+  getPatientNotificationCount(): number {
+    if (!this.isPatient()) {
+      return 0;
+    }
+    return this.patientNotificationCount;
   }
 }

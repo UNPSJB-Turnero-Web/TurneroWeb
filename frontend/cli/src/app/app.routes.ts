@@ -26,6 +26,7 @@ import { PacienteDashboardComponent } from './pacientes/paciente-dashboard.compo
 import { PacienteTurnosComponent } from './pacientes/paciente-turnos.component';
 import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
 import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
+import { PacienteNotificacionesComponent } from './pacientes/paciente-notificaciones.component';
 
 // Audit components
 import { TurnoAdvancedSearchComponent } from './turnos/turno-advanced-search.component';
@@ -41,6 +42,7 @@ export const routes: Routes = [
     { path: 'paciente-dashboard', component: PacienteDashboardComponent, canActivate: [PatientGuard] },
     { path: 'paciente-turnos', component: PacienteTurnosComponent, canActivate: [PatientGuard] },
     { path: 'paciente-agenda', component: PacienteAgendaComponent, canActivate: [PatientGuard] },
+    { path: 'paciente-notificaciones', component: PacienteNotificacionesComponent, canActivate: [PatientGuard] },
     { path: 'paciente-reagendar-turno/:id', component: PacienteReagendarTurnoComponent, canActivate: [PatientGuard] },
     
 

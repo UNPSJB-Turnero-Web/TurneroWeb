@@ -936,7 +936,7 @@ export class PacienteTurnosComponent implements OnInit {
   }
 
   scheduleNew() {
-    this.router.navigate(['/paciente-solicitar-turno']);
+    this.router.navigate(['/paciente-agenda']);
   }
 
   reschedule(turno: any) {

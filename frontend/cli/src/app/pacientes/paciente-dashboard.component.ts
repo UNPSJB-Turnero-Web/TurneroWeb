@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
+import { NotificacionService } from '../services/notificacion.service';
 
 @Component({
   selector: 'app-paciente-dashboard',
@@ -46,6 +47,13 @@ import { DataPackage } from '../data.package';
             <i class="fas fa-user-circle"></i>
             <h3>Mi Perfil</h3>
             <p>Ver y actualizar información personal</p>
+          </div>
+          
+          <div class="action-card" (click)="viewNotifications()">
+            <i class="fas fa-bell"></i>
+            <h3>Notificaciones</h3>
+            <p>Ver mensajes y alertas del sistema</p>
+            <span *ngIf="contadorNotificaciones > 0" class="notification-badge">{{contadorNotificaciones}}</span>
           </div>
           
           <div class="action-card" (click)="viewHistory()">
@@ -392,6 +400,24 @@ import { DataPackage } from '../data.package';
       position: relative;
       z-index: 1;
     }
+
+    .notification-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 25px;
+      height: 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      z-index: 2;
+    }
+
     .recent-appointments {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 25px;
@@ -901,6 +927,9 @@ export class PacienteDashboardComponent implements OnInit {
   proximosTurnos: any[] = [];
   isLoadingTurnos = false;
 
+  // Notificaciones
+  contadorNotificaciones = 0;
+
   // Modal de cancelación con motivo
   showReasonModal: boolean = false;
   selectedTurno: any = null;
@@ -909,13 +938,29 @@ export class PacienteDashboardComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private turnoService: TurnoService
+    private turnoService: TurnoService,
+    private notificacionService: NotificacionService
   ) {
     this.patientDNI = localStorage.getItem('patientDNI') || '';
   }
 
   ngOnInit() {
     this.cargarProximosTurnos();
+    this.cargarContadorNotificaciones();
+  }
+
+  private cargarContadorNotificaciones() {
+    const pacienteId = parseInt(localStorage.getItem('pacienteId') || '0');
+    if (pacienteId > 0) {
+      this.notificacionService.contarNotificacionesNoLeidas(pacienteId).subscribe({
+        next: (count) => {
+          this.contadorNotificaciones = count;
+        },
+        error: (error) => {
+          console.error('Error cargando contador de notificaciones:', error);
+        }
+      });
+    }
   }
 
   cargarProximosTurnos() {
@@ -1107,7 +1152,7 @@ export class PacienteDashboardComponent implements OnInit {
   }
 
   scheduleAppointment() {
-    this.router.navigate(['/paciente-solicitar-turno']);
+    this.router.navigate(['/paciente-agenda']);
   }
 
   viewAgenda() {
@@ -1117,6 +1162,10 @@ export class PacienteDashboardComponent implements OnInit {
   viewProfile() {
     // Navigate to profile
     console.log('Ver perfil');
+  }
+
+  viewNotifications() {
+    this.router.navigate(['/paciente-notificaciones']);
   }
 
   viewHistory() {

@@ -26,6 +26,7 @@ import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.StaffMedico;
+import unpsjb.labprog.backend.model.TipoNotificacion;
 import unpsjb.labprog.backend.model.Turno;
 
 @Service
@@ -48,6 +49,9 @@ public class TurnoService {
 
     @Autowired
     private TurnoValidationService turnoValidationService;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     // Obtener todos los turnos como DTOs
     public List<TurnoDTO> findAll() {
@@ -99,6 +103,10 @@ public class TurnoService {
                 System.out.println("🔍 DEBUG: Creando log de auditoría para nuevo turno ID: " + saved.getId() + ", Usuario: " + performedBy);
                 auditLogService.logTurnoCreated(saved, performedBy);
                 System.out.println("✅ DEBUG: Log de auditoría creado exitosamente");
+                
+                // Crear notificación de nuevo turno para el paciente
+                crearNotificacionNuevoTurno(saved);
+                
             } else if (previousStatus != null && !previousStatus.equals(saved.getEstado())) {
                 System.out.println("🔍 DEBUG: Creando log de cambio de estado para turno ID: " + saved.getId());
                 auditLogService.logStatusChange(saved, previousStatus.name(), performedBy, "Actualización de turno");
@@ -175,6 +183,9 @@ public class TurnoService {
         // Registrar auditoría de cancelación
         auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
         
+        // Crear notificación de cancelación para el paciente
+        crearNotificacionCancelacion(savedTurno, motivo);
+        
         return toDTO(savedTurno);
     }
 
@@ -201,6 +212,9 @@ public class TurnoService {
         
         // Registrar auditoría de confirmación
         auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
+        
+        // Crear notificación de confirmación para el paciente
+        crearNotificacionConfirmacion(savedTurno);
         
         return toDTO(savedTurno);
     }
@@ -245,6 +259,9 @@ public class TurnoService {
         
         // Registrar auditoría de reagendamiento
         auditLogService.logTurnoRescheduled(savedTurno, previousStatus.name(), oldValues, performedBy, motivo);
+        
+        // Crear notificación de reagendamiento para el paciente
+        crearNotificacionReagendamiento(savedTurno, oldValues);
         
         return toDTO(savedTurno);
     }
@@ -307,9 +324,17 @@ public class TurnoService {
         switch (newState) {
             case CANCELADO:
                 auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
+                // Crear notificación de cancelación
+                crearNotificacionCancelacion(savedTurno, motivo != null ? motivo : "Cancelado por el sistema");
                 break;
             case CONFIRMADO:
                 auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
+                // Crear notificación de confirmación
+                crearNotificacionConfirmacion(savedTurno);
+                break;
+            case REAGENDADO:
+                auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
+                // Nota: Para reagendamiento completo se debe usar el método reagendarTurno() que incluye nueva fecha
                 break;
             default:
                 auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
@@ -771,6 +796,26 @@ public class TurnoService {
         // Registrar auditoría de completar turno
         auditLogService.logTurnoCompleted(savedTurno, previousStatus.name(), performedBy);
         
+        // Crear notificación de turno completado (opcional, puede ser útil para el paciente)
+        try {
+            String fechaTurno = formatearFechaTurno(savedTurno);
+            String especialidad = obtenerEspecialidadTurno(savedTurno);
+            String medico = obtenerNombreMedico(savedTurno);
+            
+            notificacionService.crearNotificacion(
+                savedTurno.getPaciente().getId(),
+                "Turno Completado",
+                String.format("Su turno del %s con Dr/a %s en %s ha sido completado exitosamente", 
+                             fechaTurno, medico, especialidad),
+                TipoNotificacion.CONFIRMACION,
+                savedTurno.getId(),
+                "SISTEMA"
+            );
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al crear notificación de turno completado: " + e.getMessage());
+        }
+        
         return toDTO(savedTurno);
     }
 
@@ -835,5 +880,104 @@ public class TurnoService {
         
         return new org.springframework.data.domain.PageImpl<>(
             list.subList(start, end), pageRequest, list.size());
+    }
+
+    // Métodos auxiliares para crear notificaciones
+    private void crearNotificacionCancelacion(Turno turno, String motivo) {
+        try {
+            String fechaTurno = formatearFechaTurno(turno);
+            String especialidad = obtenerEspecialidadTurno(turno);
+            
+            notificacionService.crearNotificacionCancelacion(
+                turno.getPaciente().getId(),
+                turno.getId(),
+                fechaTurno,
+                especialidad,
+                motivo
+            );
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al crear notificación de cancelación: " + e.getMessage());
+        }
+    }
+
+    private void crearNotificacionConfirmacion(Turno turno) {
+        try {
+            String fechaTurno = formatearFechaTurno(turno);
+            String especialidad = obtenerEspecialidadTurno(turno);
+            String medico = obtenerNombreMedico(turno);
+            
+            notificacionService.crearNotificacionConfirmacion(
+                turno.getPaciente().getId(),
+                turno.getId(),
+                fechaTurno,
+                especialidad,
+                medico
+            );
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al crear notificación de confirmación: " + e.getMessage());
+        }
+    }
+
+    private void crearNotificacionReagendamiento(Turno turno, Map<String, Object> oldValues) {
+        try {
+            String fechaAnterior = formatearFechaDesdeString(oldValues.get("fecha").toString());
+            String fechaNueva = formatearFechaTurno(turno);
+            String especialidad = obtenerEspecialidadTurno(turno);
+            
+            notificacionService.crearNotificacionReagendamiento(
+                turno.getPaciente().getId(),
+                turno.getId(),
+                fechaAnterior,
+                fechaNueva,
+                especialidad
+            );
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al crear notificación de reagendamiento: " + e.getMessage());
+        }
+    }
+
+    private void crearNotificacionNuevoTurno(Turno turno) {
+        try {
+            String fechaTurno = formatearFechaTurno(turno);
+            String especialidad = obtenerEspecialidadTurno(turno);
+            String medico = obtenerNombreMedico(turno);
+            
+            notificacionService.crearNotificacionNuevoTurno(
+                turno.getPaciente().getId(),
+                turno.getId(),
+                fechaTurno,
+                especialidad,
+                medico
+            );
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al crear notificación de nuevo turno: " + e.getMessage());
+        }
+    }
+
+    private String formatearFechaTurno(Turno turno) {
+        return turno.getFecha().toString() + " " + turno.getHoraInicio().toString();
+    }
+
+    private String formatearFechaDesdeString(String fechaString) {
+        return fechaString; // Podría mejorarse el formateo
+    }
+
+    private String obtenerEspecialidadTurno(Turno turno) {
+        if (turno.getStaffMedico() != null && turno.getStaffMedico().getMedico() != null 
+            && turno.getStaffMedico().getMedico().getEspecialidad() != null) {
+            return turno.getStaffMedico().getMedico().getEspecialidad().getNombre();
+        }
+        return "Especialidad no disponible";
+    }
+
+    private String obtenerNombreMedico(Turno turno) {
+        if (turno.getStaffMedico() != null && turno.getStaffMedico().getMedico() != null) {
+            return turno.getStaffMedico().getMedico().getNombre() + " " + turno.getStaffMedico().getMedico().getApellido();
+        }
+        return "Médico no disponible";
     }
 }
