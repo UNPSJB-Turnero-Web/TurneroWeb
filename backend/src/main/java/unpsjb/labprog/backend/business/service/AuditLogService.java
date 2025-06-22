@@ -114,6 +114,16 @@ public class AuditLogService {
     }
 
     /**
+     * Registra la finalización/completar de un turno
+     */
+    @Transactional
+    public AuditLog logTurnoCompleted(Turno turno, String previousStatus, String performedBy) {
+        return logTurnoAction(turno, AuditLog.Actions.COMPLETE, performedBy,
+                            previousStatus, turno.getEstado().name(),
+                            null, null, null);
+    }
+
+    /**
      * Registra el reagendamiento de un turno
      */
     @Transactional

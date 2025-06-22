@@ -20,9 +20,12 @@ public class TurnoFilterDTO {
     private String nombreMedico;              // Buscar por nombre del médico (parcial)
     private Integer especialidadId;           // ID de la especialidad
     private String nombreEspecialidad;       // Buscar por nombre de especialidad (parcial)
+    private String especialidad;             // Buscar por nombre de especialidad (alias)
     private Integer centroAtencionId;         // ID del centro de atención
     private String nombreCentro;             // Buscar por nombre del centro (parcial)
+    private Integer centroId;                // ID del centro (alias)
     private Integer consultorioId;            // ID del consultorio
+    private Integer medicoId;                // ID del médico (alias)
     
     // Filtros de fecha
     private LocalDate fechaDesde;             // Fecha desde (inclusive)

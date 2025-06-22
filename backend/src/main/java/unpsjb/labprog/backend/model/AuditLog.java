@@ -82,6 +82,7 @@ public class AuditLog {
         public static final String UPDATE_STATUS = "UPDATE_STATUS";
         public static final String CANCEL = "CANCEL";
         public static final String CONFIRM = "CONFIRM";
+        public static final String COMPLETE = "COMPLETE";
         public static final String RESCHEDULE = "RESCHEDULE";
         public static final String DELETE = "DELETE";
         public static final String ASSIGN = "ASSIGN";

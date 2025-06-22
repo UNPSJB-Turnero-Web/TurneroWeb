@@ -22,6 +22,7 @@ import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
 import unpsjb.labprog.backend.model.AuditLog;
+import unpsjb.labprog.backend.model.EstadoTurno;
 
 @RestController
 @RequestMapping("turno")
@@ -112,64 +113,118 @@ public class TurnoPresenter {
         }
     }
 
+    // ========== ENDPOINTS PARA CAMBIOS DE ESTADO ==========
+    
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<Object> cancelarTurno(@PathVariable Integer id, 
-                                               @RequestParam(required = false) String motivo,
+                                               @RequestBody Map<String, String> body,
                                                HttpServletRequest request) {
         try {
-            String currentUser = getCurrentUser(request);
-            
-            // Si no se proporciona motivo, usar uno por defecto
-            String cancelReason = motivo != null && !motivo.trim().isEmpty() ? 
-                                 motivo : "Cancelación solicitada por administrador";
-            
-            TurnoDTO turno = service.cancelarTurno(id, cancelReason, currentUser);
-            return Response.ok(turno, "Turno cancelado correctamente.");
+            String motivo = body.get("motivo");
+            String user = getCurrentUser(request);
+            TurnoDTO turno = service.cancelarTurno(id, motivo, user);
+            return Response.ok(turno, "Turno cancelado correctamente");
         } catch (IllegalArgumentException e) {
-            return Response.notFound("Turno no encontrado");
+            return Response.error(null, e.getMessage());
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage());
+            return Response.error(null, e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error al cancelar el turno: " + e.getMessage());
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
         }
     }
 
     @PutMapping("/{id}/confirmar")
-    public ResponseEntity<Object> confirmarTurno(@PathVariable Integer id, HttpServletRequest request) {
+    public ResponseEntity<Object> confirmarTurno(@PathVariable Integer id,
+                                                HttpServletRequest request) {
         try {
-            String currentUser = getCurrentUser(request);
-            
-            TurnoDTO turno = service.confirmarTurno(id, currentUser);
-            return Response.ok(turno, "Turno confirmado correctamente.");
+            String user = getCurrentUser(request);
+            TurnoDTO turno = service.confirmarTurno(id, user);
+            return Response.ok(turno, "Turno confirmado correctamente");
         } catch (IllegalArgumentException e) {
-            return Response.notFound("Turno no encontrado");
+            return Response.error(null, e.getMessage());
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage());
+            return Response.error(null, e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error al confirmar el turno: " + e.getMessage());
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/completar")
+    public ResponseEntity<Object> completarTurno(@PathVariable Integer id,
+                                                HttpServletRequest request) {
+        try {
+            String user = getCurrentUser(request);
+            TurnoDTO turno = service.completarTurno(id, user);
+            return Response.ok(turno, "Turno completado correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
         }
     }
 
     @PutMapping("/{id}/reagendar")
-    public ResponseEntity<Object> reagendarTurno(@PathVariable Integer id, 
-                                                @RequestBody TurnoDTO nuevosDatos,
-                                                @RequestParam(required = false) String motivo,
+    public ResponseEntity<Object> reagendarTurno(@PathVariable Integer id,
+                                                @RequestBody Map<String, Object> body,
                                                 HttpServletRequest request) {
         try {
-            String currentUser = getCurrentUser(request);
+            TurnoDTO nuevosDatos = new TurnoDTO();
+            // Parsear los nuevos datos del turno desde el body
+            if (body.containsKey("fecha")) {
+                nuevosDatos.setFecha(java.time.LocalDate.parse((String) body.get("fecha")));
+            }
+            if (body.containsKey("horaInicio")) {
+                nuevosDatos.setHoraInicio(java.time.LocalTime.parse((String) body.get("horaInicio")));
+            }
+            if (body.containsKey("horaFin")) {
+                nuevosDatos.setHoraFin(java.time.LocalTime.parse((String) body.get("horaFin")));
+            }
             
-            // Si no se proporciona motivo, usar uno por defecto
-            String reason = motivo != null && !motivo.trim().isEmpty() ? 
-                           motivo : "Reagendamiento solicitado por administrador";
-            
-            TurnoDTO turno = service.reagendarTurno(id, nuevosDatos, reason, currentUser);
-            return Response.ok(turno, "Turno reagendado correctamente.");
+            String motivo = (String) body.get("motivo");
+            String user = getCurrentUser(request);
+            TurnoDTO turno = service.reagendarTurno(id, nuevosDatos, motivo, user);
+            return Response.ok(turno, "Turno reagendado correctamente");
         } catch (IllegalArgumentException e) {
-            return Response.notFound("Turno no encontrado");
+            return Response.error(null, e.getMessage());
         } catch (IllegalStateException e) {
-            return Response.dbError(e.getMessage());
+            return Response.error(null, e.getMessage());
         } catch (Exception e) {
-            return Response.error(null, "Error al reagendar el turno: " + e.getMessage());
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Object> cambiarEstado(@PathVariable Integer id,
+                                               @RequestBody Map<String, String> body,
+                                               HttpServletRequest request) {
+        try {
+            String estadoStr = body.get("estado");
+            String motivo = body.get("motivo");
+            String user = getCurrentUser(request);
+            
+            EstadoTurno newState = EstadoTurno.valueOf(estadoStr.toUpperCase());
+            TurnoDTO turno = service.changeEstado(id, newState, motivo, user);
+            return Response.ok(turno, "Estado del turno cambiado correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/estados-validos")
+    public ResponseEntity<Object> getEstadosValidos(@PathVariable Integer id) {
+        try {
+            List<EstadoTurno> estados = service.getValidNextStates(id);
+            return Response.ok(estados, "Estados válidos recuperados correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
         }
     }
 
@@ -312,6 +367,45 @@ public class TurnoPresenter {
             return Response.ok(turnos, "Turnos filtrados recuperados correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al aplicar filtros: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/filtrar")
+    public ResponseEntity<Object> filtrarTurnos(
+            @RequestParam(value = "estado", required = false) String estado,
+            @RequestParam(value = "fechaDesde", required = false) String fechaDesde,
+            @RequestParam(value = "fechaHasta", required = false) String fechaHasta,
+            @RequestParam(value = "especialidad", required = false) String especialidad,
+            @RequestParam(value = "centro", required = false) Integer centroId,
+            @RequestParam(value = "medico", required = false) Integer medicoId,
+            @RequestParam(value = "paciente", required = false) Integer pacienteId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        try {
+            TurnoFilterDTO filterDTO = new TurnoFilterDTO();
+            if (estado != null) filterDTO.setEstado(estado);
+            if (fechaDesde != null) filterDTO.setFechaDesde(java.time.LocalDate.parse(fechaDesde));
+            if (fechaHasta != null) filterDTO.setFechaHasta(java.time.LocalDate.parse(fechaHasta));
+            if (especialidad != null) filterDTO.setEspecialidad(especialidad);
+            if (centroId != null) filterDTO.setCentroId(centroId);
+            if (medicoId != null) filterDTO.setMedicoId(medicoId);
+            if (pacienteId != null) filterDTO.setPacienteId(pacienteId);
+            
+            Page<TurnoDTO> result = service.findByFilters(filterDTO, page, size);
+            
+            Map<String, Object> response = Map.of(
+                "turnos", result.getContent(),
+                "page", result.getNumber(),
+                "size", result.getSize(),
+                "totalElements", result.getTotalElements(),
+                "totalPages", result.getTotalPages(),
+                "first", result.isFirst(),
+                "last", result.isLast()
+            );
+            
+            return Response.ok(response, "Turnos filtrados recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al filtrar turnos: " + e.getMessage());
         }
     }
 }

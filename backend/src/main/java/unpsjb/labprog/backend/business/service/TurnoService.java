@@ -46,6 +46,9 @@ public class TurnoService {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private TurnoValidationService turnoValidationService;
+
     // Obtener todos los turnos como DTOs
     public List<TurnoDTO> findAll() {
         return repository.findAll().stream()
@@ -161,9 +164,9 @@ public class TurnoService {
         // Validaciones de negocio para cancelación
         validarCancelacion(turno);
         
-        // Validar que se proporcione un motivo para la cancelación
-        if (motivo == null || motivo.trim().isEmpty()) {
-            throw new IllegalArgumentException("El motivo de cancelación es obligatorio");
+        // Validar que se proporcione un motivo válido para la cancelación
+        if (!turnoValidationService.isValidCancellationReason(motivo)) {
+            throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
         }
         
         turno.setEstado(EstadoTurno.CANCELADO);
@@ -227,6 +230,11 @@ public class TurnoService {
         // Validaciones de negocio para reagendamiento
         validarReagendamiento(turno);
         
+        // Validar que se proporcione un motivo válido para el reagendamiento
+        if (!turnoValidationService.isValidReschedulingReason(motivo)) {
+            throw new IllegalArgumentException("El motivo de reagendamiento es obligatorio y debe tener al menos 5 caracteres");
+        }
+        
         // Actualizar datos del turno
         turno.setFecha(nuevosDatos.getFecha());
         turno.setHoraInicio(nuevosDatos.getHoraInicio());
@@ -241,11 +249,87 @@ public class TurnoService {
         return toDTO(savedTurno);
     }
 
-    // Métodos de validación de reglas de negocio mejorados con auditoría
+    /**
+     * Obtiene los estados válidos para una transición desde el estado actual
+     */
+    public List<EstadoTurno> getValidNextStates(Integer turnoId) {
+        Optional<Turno> turnoOpt = repository.findById(turnoId);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + turnoId);
+        }
+        
+        return turnoValidationService.getValidNextStates(turnoOpt.get().getEstado());
+    }
+    
+    /**
+     * Cambia el estado de un turno con validaciones
+     */
+    @Transactional
+    public TurnoDTO changeEstado(Integer id, EstadoTurno newState, String motivo, String performedBy) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        EstadoTurno previousStatus = turno.getEstado();
+        
+        // Validar que el usuario tiene permisos
+        if (!turnoValidationService.hasPermissionToModifyTurno(performedBy)) {
+            throw new IllegalArgumentException("Usuario sin permisos para modificar turnos");
+        }
+        
+        // Validar que el turno puede ser modificado
+        if (!turnoValidationService.canTurnoBeModified(turno)) {
+            throw new IllegalStateException("No se puede modificar un turno cancelado");
+        }
+        
+        // Validar transición de estado
+        if (!turnoValidationService.isValidStateTransition(previousStatus, newState)) {
+            throw new IllegalStateException("Transición de estado inválida de " + 
+                                           previousStatus + " a " + newState);
+        }
+        
+        // Validar motivo si es requerido
+        if (turnoValidationService.requiresReason(previousStatus, newState)) {
+            if (newState == EstadoTurno.CANCELADO && !turnoValidationService.isValidCancellationReason(motivo)) {
+                throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
+            }
+            if (newState == EstadoTurno.REAGENDADO && !turnoValidationService.isValidReschedulingReason(motivo)) {
+                throw new IllegalArgumentException("El motivo de reagendamiento es obligatorio y debe tener al menos 5 caracteres");
+            }
+        }
+        
+        turno.setEstado(newState);
+        Turno savedTurno = repository.save(turno);
+        
+        // Registrar auditoría según el tipo de cambio
+        switch (newState) {
+            case CANCELADO:
+                auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
+                break;
+            case CONFIRMADO:
+                auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
+                break;
+            default:
+                auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
+                break;
+        }
+        
+        return toDTO(savedTurno);
+    }
+
+    // Métodos de validación de reglas de negocio usando TurnoValidationService
     private void validarCancelacion(Turno turno) {
-        // Un turno cancelado no puede ser reactivado
-        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+        // Validar que el turno puede ser modificado
+        if (!turnoValidationService.canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede cancelar un turno que ya está cancelado");
+        }
+        
+        // Validar transiciones de estado válidas
+        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.CANCELADO)) {
+            throw new IllegalStateException("Transición de estado inválida de " + 
+                                           turno.getEstado() + " a CANCELADO");
         }
         
         // No se pueden cancelar turnos el mismo día de la cita sin justificación válida
@@ -253,76 +337,31 @@ public class TurnoService {
         if (turno.getFecha().equals(hoy)) {
             throw new IllegalStateException("No se pueden cancelar turnos el mismo día de la cita");
         }
-        
-        // Validar transiciones de estado válidas
-        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.CANCELADO)) {
-            throw new IllegalStateException("Transición de estado inválida de " + 
-                                           turno.getEstado() + " a CANCELADO");
-        }
     }
 
     private void validarConfirmacion(Turno turno) {
-        // Solo se pueden confirmar turnos en estado PROGRAMADO
-        if (turno.getEstado() != EstadoTurno.PROGRAMADO) {
-            throw new IllegalStateException("Solo se pueden confirmar turnos en estado PROGRAMADO. Estado actual: " + turno.getEstado());
+        // Validar que el turno puede ser modificado
+        if (!turnoValidationService.canTurnoBeModified(turno)) {
+            throw new IllegalStateException("No se puede confirmar un turno cancelado");
         }
         
         // Validar transiciones de estado válidas
-        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.CONFIRMADO)) {
+        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.CONFIRMADO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a CONFIRMADO");
         }
     }
 
     private void validarReagendamiento(Turno turno) {
-        // Un turno cancelado no puede ser reagendado
-        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+        // Validar que el turno puede ser modificado
+        if (!turnoValidationService.canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede reagendar un turno cancelado");
         }
         
-        // Solo se pueden reagendar turnos en estado PROGRAMADO o CONFIRMADO
-        if (turno.getEstado() != EstadoTurno.PROGRAMADO && turno.getEstado() != EstadoTurno.CONFIRMADO) {
-            throw new IllegalStateException("Solo se pueden reagendar turnos en estado PROGRAMADO o CONFIRMADO. Estado actual: " + turno.getEstado());
-        }
-        
         // Validar transiciones de estado válidas
-        if (!isValidStateTransition(turno.getEstado(), EstadoTurno.REAGENDADO)) {
+        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.REAGENDADO)) {
             throw new IllegalStateException("Transición de estado inválida de " + 
                                            turno.getEstado() + " a REAGENDADO");
-        }
-    }
-
-    /**
-     * Valida si una transición de estado es permitida según las reglas de negocio
-     */
-    private boolean isValidStateTransition(EstadoTurno fromState, EstadoTurno toState) {
-        if (fromState == null || toState == null) {
-            return false;
-        }
-
-        switch (fromState) {
-            case PROGRAMADO:
-                // Desde PROGRAMADO se puede ir a cualquier estado
-                return toState == EstadoTurno.CONFIRMADO || 
-                       toState == EstadoTurno.CANCELADO || 
-                       toState == EstadoTurno.REAGENDADO;
-                       
-            case CONFIRMADO:
-                // Desde CONFIRMADO solo se puede cancelar o reagendar
-                return toState == EstadoTurno.CANCELADO || 
-                       toState == EstadoTurno.REAGENDADO;
-                       
-            case REAGENDADO:
-                // Desde REAGENDADO solo se puede cancelar o confirmar
-                return toState == EstadoTurno.CANCELADO || 
-                       toState == EstadoTurno.CONFIRMADO;
-                       
-            case CANCELADO:
-                // Desde CANCELADO no se puede ir a ningún otro estado
-                return false;
-                
-            default:
-                return false;
         }
     }
 
@@ -706,5 +745,95 @@ public class TurnoService {
         );
         
         return turnosPage.map(this::toDTOWithAuditInfo);
+    }
+    
+    @Transactional
+    public TurnoDTO completarTurno(Integer id) {
+        return completarTurno(id, "SYSTEM");
+    }
+
+    @Transactional
+    public TurnoDTO completarTurno(Integer id, String performedBy) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        EstadoTurno previousStatus = turno.getEstado();
+        
+        // Validaciones de negocio para completar turno
+        validarComplecion(turno);
+        
+        turno.setEstado(EstadoTurno.COMPLETO);
+        Turno savedTurno = repository.save(turno);
+        
+        // Registrar auditoría de completar turno
+        auditLogService.logTurnoCompleted(savedTurno, previousStatus.name(), performedBy);
+        
+        return toDTO(savedTurno);
+    }
+
+    private void validarComplecion(Turno turno) {
+        // Validar que el turno puede ser modificado
+        if (!turnoValidationService.canTurnoBeModified(turno)) {
+            throw new IllegalStateException("No se puede completar un turno cancelado o ya completado");
+        }
+        
+        // Solo se pueden completar turnos confirmados
+        if (turno.getEstado() != EstadoTurno.CONFIRMADO) {
+            throw new IllegalStateException("Solo se pueden completar turnos confirmados. Estado actual: " + turno.getEstado());
+        }
+        
+        // Validar transiciones de estado válidas
+        if (!turnoValidationService.isValidStateTransition(turno.getEstado(), EstadoTurno.COMPLETO)) {
+            throw new IllegalStateException("Transición de estado inválida de " + 
+                                           turno.getEstado() + " a COMPLETO");
+        }
+    }
+
+    /**
+     * Buscar turnos con filtros y paginación
+     */
+    public Page<TurnoDTO> findByFilters(TurnoFilterDTO filter, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        
+        // Por simplicidad, implementar filtros básicos
+        // En producción, usar Specifications de JPA para filtros más complejos
+        
+        if (filter.getEstado() != null && !filter.getEstado().isEmpty()) {
+            try {
+                EstadoTurno estadoEnum = EstadoTurno.valueOf(filter.getEstado().toUpperCase());
+                // Obtener todos y filtrar - no ideal para producción pero funcional
+                List<Turno> allTurnos = repository.findByEstado(estadoEnum);
+                return createPageFromList(allTurnos, pageRequest).map(this::toDTO);
+            } catch (IllegalArgumentException e) {
+                return Page.empty(pageRequest);
+            }
+        }
+        
+        if (filter.getPacienteId() != null) {
+            List<Turno> allTurnos = repository.findByPaciente_Id(filter.getPacienteId());
+            return createPageFromList(allTurnos, pageRequest).map(this::toDTO);
+        }
+        
+        // Si no hay filtros específicos, retornar todos paginados
+        return repository.findAll(pageRequest).map(this::toDTO);
+    }
+    
+    /**
+     * Crear página desde lista - método auxiliar
+     */
+    private Page<Turno> createPageFromList(List<Turno> list, PageRequest pageRequest) {
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), list.size());
+        
+        if (start > list.size()) {
+            return new org.springframework.data.domain.PageImpl<>(
+                Collections.emptyList(), pageRequest, list.size());
+        }
+        
+        return new org.springframework.data.domain.PageImpl<>(
+            list.subList(start, end), pageRequest, list.size());
     }
 }
