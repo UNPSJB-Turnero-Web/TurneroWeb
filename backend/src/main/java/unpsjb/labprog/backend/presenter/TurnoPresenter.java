@@ -1,10 +1,14 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import unpsjb.labprog.backend.Response;
+import unpsjb.labprog.backend.business.service.ExportService;
 import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
@@ -30,6 +35,9 @@ public class TurnoPresenter {
 
     @Autowired
     private TurnoService service;
+
+    @Autowired
+    private ExportService exportService;
 
     // Método auxiliar para auditoría
     private String getCurrentUser(HttpServletRequest request) {
@@ -406,6 +414,80 @@ public class TurnoPresenter {
             return Response.ok(response, "Turnos filtrados recuperados correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al filtrar turnos: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exportar turnos a CSV
+     */
+    @GetMapping("/export/csv")
+    public ResponseEntity<String> exportToCSV(
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String fechaDesde,
+            @RequestParam(required = false) String fechaHasta,
+            @RequestParam(required = false) Integer pacienteId,
+            @RequestParam(required = false) Integer staffMedicoId,
+            @RequestParam(required = false) Integer centroId) {
+        
+        try {
+            TurnoFilterDTO filter = new TurnoFilterDTO();
+            filter.setEstado(estado);
+            filter.setFechaDesde(fechaDesde != null ? LocalDate.parse(fechaDesde) : null);
+            filter.setFechaHasta(fechaHasta != null ? LocalDate.parse(fechaHasta) : null);
+            filter.setPacienteId(pacienteId);
+            filter.setStaffMedicoId(staffMedicoId);
+            filter.setCentroId(centroId);
+            
+            String csvContent = exportService.exportToCSV(filter);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.TEXT_PLAIN);
+            headers.setContentDispositionFormData("attachment", "turnos.csv");
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(csvContent);
+                    
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al exportar CSV: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Exportar turnos a PDF
+     */
+    @GetMapping("/export/pdf")
+    public ResponseEntity<byte[]> exportToPDF(
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String fechaDesde,
+            @RequestParam(required = false) String fechaHasta,
+            @RequestParam(required = false) Integer pacienteId,
+            @RequestParam(required = false) Integer staffMedicoId,
+            @RequestParam(required = false) Integer centroId) {
+        
+        try {
+            TurnoFilterDTO filter = new TurnoFilterDTO();
+            filter.setEstado(estado);
+            filter.setFechaDesde(fechaDesde != null ? LocalDate.parse(fechaDesde) : null);
+            filter.setFechaHasta(fechaHasta != null ? LocalDate.parse(fechaHasta) : null);
+            filter.setPacienteId(pacienteId);
+            filter.setStaffMedicoId(staffMedicoId);
+            filter.setCentroId(centroId);
+            
+            byte[] pdfContent = exportService.exportToPDF(filter);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "turnos.pdf");
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfContent);
+                    
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error al exportar PDF: " + e.getMessage()).getBytes());
         }
     }
 }

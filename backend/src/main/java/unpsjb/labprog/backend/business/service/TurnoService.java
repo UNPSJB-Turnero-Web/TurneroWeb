@@ -220,12 +220,12 @@ public class TurnoService {
         Turno turno = turnoOpt.get();
         EstadoTurno previousStatus = turno.getEstado();
         
-        // Capturar los valores antiguos para auditoría
+        // Capturar los valores antiguos para auditoría (convertir a String para serialización)
         Map<String, Object> oldValues = new HashMap<>();
-        oldValues.put("fecha", turno.getFecha());
-        oldValues.put("horaInicio", turno.getHoraInicio());
-        oldValues.put("horaFin", turno.getHoraFin());
-        oldValues.put("estado", turno.getEstado());
+        oldValues.put("fecha", turno.getFecha().toString());
+        oldValues.put("horaInicio", turno.getHoraInicio().toString());
+        oldValues.put("horaFin", turno.getHoraFin().toString());
+        oldValues.put("estado", turno.getEstado().name());
         
         // Validaciones de negocio para reagendamiento
         validarReagendamiento(turno);

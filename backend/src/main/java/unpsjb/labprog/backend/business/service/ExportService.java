@@ -141,6 +141,65 @@ public class ExportService {
     }
 
     /**
+     * Exporta turnos a formato PDF
+     */
+    public byte[] exportToPDF(TurnoFilterDTO filter) {
+        List<TurnoDTO> turnos = turnoService.findForExport(filter);
+        
+        try {
+            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            
+            // Crear documento PDF simple sin dependencias externas
+            String content = generatePDFContent(turnos);
+            outputStream.write(content.getBytes("UTF-8"));
+            
+            return outputStream.toByteArray();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar PDF: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Genera contenido de texto para PDF (simplificado)
+     */
+    private String generatePDFContent(List<TurnoDTO> turnos) {
+        StringBuilder content = new StringBuilder();
+        
+        content.append("REPORTE DE TURNOS MÉDICOS\n");
+        content.append("=========================\n");
+        content.append("Generado el: ").append(java.time.LocalDateTime.now().format(DATETIME_FORMATTER)).append("\n\n");
+        
+        content.append("Total de turnos: ").append(turnos.size()).append("\n\n");
+        
+        content.append(String.format("%-5s %-12s %-8s %-8s %-12s %-25s %-25s %-20s%n",
+                "ID", "Fecha", "Inicio", "Fin", "Estado", "Paciente", "Médico", "Especialidad"));
+        content.append("-".repeat(120)).append("\n");
+        
+        for (TurnoDTO turno : turnos) {
+            content.append(String.format("%-5d %-12s %-8s %-8s %-12s %-25s %-25s %-20s%n",
+                    turno.getId(),
+                    turno.getFecha().format(DATE_FORMATTER),
+                    turno.getHoraInicio().format(TIME_FORMATTER),
+                    turno.getHoraFin().format(TIME_FORMATTER),
+                    turno.getEstado(),
+                    truncate(turno.getNombrePaciente() + " " + turno.getApellidoPaciente(), 25),
+                    truncate(turno.getStaffMedicoNombre() + " " + turno.getStaffMedicoApellido(), 25),
+                    truncate(turno.getEspecialidadStaffMedico(), 20)));
+        }
+        
+        return content.toString();
+    }
+    
+    /**
+     * Trunca un string a una longitud máxima
+     */
+    private String truncate(String text, int maxLength) {
+        if (text == null) return "";
+        return text.length() > maxLength ? text.substring(0, maxLength - 3) + "..." : text;
+    }
+
+    /**
      * Obtiene estadísticas de exportación
      */
     public java.util.Map<String, Object> getExportStatistics(TurnoFilterDTO filter) {

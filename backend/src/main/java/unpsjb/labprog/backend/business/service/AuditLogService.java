@@ -129,9 +129,16 @@ public class AuditLogService {
     @Transactional
     public AuditLog logTurnoRescheduled(Turno turno, String previousStatus, Object oldValues, 
                                        String performedBy, String reason) {
+        // Crear nuevos valores simplificados para evitar problemas de serialización
+        Map<String, Object> newValues = new HashMap<>();
+        newValues.put("fecha", turno.getFecha().toString());
+        newValues.put("horaInicio", turno.getHoraInicio().toString());
+        newValues.put("horaFin", turno.getHoraFin().toString());
+        newValues.put("estado", turno.getEstado().name());
+        
         return logTurnoAction(turno, AuditLog.Actions.RESCHEDULE, performedBy,
                             previousStatus, turno.getEstado().name(),
-                            oldValues, turno, reason);
+                            oldValues, newValues, reason);
     }
 
     /**
