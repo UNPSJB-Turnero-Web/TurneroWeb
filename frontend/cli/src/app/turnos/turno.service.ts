@@ -12,6 +12,37 @@ export class TurnoService {
 
   constructor(private http: HttpClient) {}
 
+  // === MÉTODOS UTILITARIOS ===
+
+  /** Obtiene la información del usuario actual desde localStorage */
+  private getCurrentUser(): string {
+    const userRole = localStorage.getItem('userRole');
+    const userName = localStorage.getItem('userName');
+    
+    // // console.log('🔍 DEBUG TurnoService: Obteniendo información del usuario:');
+    // console.log('   - userRole:', userRole);
+    // console.log('   - userName:', userName);
+    
+    let currentUser = 'UNKNOWN';
+    
+    if (userRole === 'patient') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      console.log('   - patientDNI:', patientDNI);
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+    } else if (userRole === 'admin') {
+      currentUser = 'ADMIN';
+    } else if (userRole === 'medico') {
+      currentUser = 'MEDICO';
+    } else {
+      console.log('   - Rol no reconocido, usando AUDITOR_DASHBOARD');
+      currentUser = 'AUDITOR_DASHBOARD';
+    }
+    
+    console.log('   - currentUser final:', currentUser);
+    
+    return currentUser;
+  }
+
   /** Obtiene todos los turnos */
   all(): Observable<DataPackage<Turno[]>> {
     return this.http.get<DataPackage<Turno[]>>(this.url);
@@ -54,37 +85,13 @@ export class TurnoService {
 
   /** Cancela un turno */
   cancelar(id: number): Observable<DataPackage<Turno>> {
-    // Obtener información del usuario actual
-    const userRole = localStorage.getItem('userRole');
-    let currentUser = 'UNKNOWN';
-    
-    if (userRole === 'PACIENTE') {
-      const patientDNI = localStorage.getItem('patientDNI');
-      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
-    } else if (userRole === 'ADMIN') {
-      currentUser = 'ADMIN';
-    } else if (userRole === 'MEDICO') {
-      currentUser = 'MEDICO';
-    }
-    
+    const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { usuario: currentUser });
   }
 
   /** Confirma un turno */
   confirmar(id: number): Observable<DataPackage<Turno>> {
-    // Obtener información del usuario actual
-    const userRole = localStorage.getItem('userRole');
-    let currentUser = 'UNKNOWN';
-    
-    if (userRole === 'PACIENTE') {
-      const patientDNI = localStorage.getItem('patientDNI');
-      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
-    } else if (userRole === 'ADMIN') {
-      currentUser = 'ADMIN';
-    } else if (userRole === 'MEDICO') {
-      currentUser = 'MEDICO';
-    }
-    
+    const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/confirmar`, { usuario: currentUser });
   }
 
@@ -215,12 +222,12 @@ export class TurnoService {
 
   /** Búsqueda avanzada con filtros múltiples */
   searchWithFilters(filter: TurnoFilter): Observable<DataPackage<any>> {
-    console.log('🔍 DEBUG Frontend - Filtro original:', filter);
+    // console.log('🔍 DEBUG Frontend - Filtro original:', filter);
     
     // Convertir fechas al formato esperado por el backend (dd-MM-yyyy)
     const convertedFilter = this.convertDateFormat(filter);
     
-    console.log('🔍 DEBUG Frontend - Filtro convertido:', convertedFilter);
+    // console.log('🔍 DEBUG Frontend - Filtro convertido:', convertedFilter);
     
     return this.http.post<DataPackage<any>>(`${this.url}/search`, convertedFilter);
   }
@@ -232,19 +239,19 @@ export class TurnoService {
     if (convertedFilter.fechaDesde) {
       const original = convertedFilter.fechaDesde;
       convertedFilter.fechaDesde = this.formatDateForBackend(convertedFilter.fechaDesde as any);
-      console.log(`📅 DEBUG fechaDesde: ${original} → ${convertedFilter.fechaDesde}`);
+      // console.log(`📅 DEBUG fechaDesde: ${original} → ${convertedFilter.fechaDesde}`);
     }
     
     if (convertedFilter.fechaHasta) {
       const original = convertedFilter.fechaHasta;
       convertedFilter.fechaHasta = this.formatDateForBackend(convertedFilter.fechaHasta as any);
-      console.log(`📅 DEBUG fechaHasta: ${original} → ${convertedFilter.fechaHasta}`);
+      // console.log(`📅 DEBUG fechaHasta: ${original} → ${convertedFilter.fechaHasta}`);
     }
     
     if (convertedFilter.fechaExacta) {
       const original = convertedFilter.fechaExacta;
       convertedFilter.fechaExacta = this.formatDateForBackend(convertedFilter.fechaExacta as any);
-      console.log(`📅 DEBUG fechaExacta: ${original} → ${convertedFilter.fechaExacta}`);
+      // console.log(`📅 DEBUG fechaExacta: ${original} → ${convertedFilter.fechaExacta}`);
     }
     
     return convertedFilter;
@@ -360,19 +367,7 @@ export class TurnoService {
 
   /** Cancela un turno con motivo */
   cancelarConMotivo(id: number, motivo: string): Observable<DataPackage<Turno>> {
-    // Obtener información del usuario actual
-    const userRole = localStorage.getItem('userRole');
-    let currentUser = 'UNKNOWN';
-    
-    if (userRole === 'PACIENTE') {
-      const patientDNI = localStorage.getItem('patientDNI');
-      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
-    } else if (userRole === 'ADMIN') {
-      currentUser = 'ADMIN';
-    } else if (userRole === 'MEDICO') {
-      currentUser = 'MEDICO';
-    }
-    
+    const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { 
       motivo: motivo,
       usuario: currentUser 
@@ -398,19 +393,7 @@ export class TurnoService {
     let currentUser = usuario;
     
     if (!currentUser) {
-      const userRole = localStorage.getItem('userRole');
-      
-      if (userRole === 'PACIENTE') {
-        const patientDNI = localStorage.getItem('patientDNI');
-        currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
-      } else if (userRole === 'ADMIN' || userRole === 'admin') {
-        currentUser = 'ADMIN';
-      } else if (userRole === 'MEDICO') {
-        currentUser = 'MEDICO';
-      } else {
-        // Fallback para dashboard de auditoría u otros casos
-        currentUser = 'ADMIN';
-      }
+      currentUser = this.getCurrentUser();
     }
     
     const body = {

@@ -1645,17 +1645,17 @@ export class AdminAgendaComponent implements OnInit {
     
     this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
       next: (eventosBackend) => {
-        console.log('=== DATOS DEL BACKEND ===');
-        console.log('Total eventos recibidos:', eventosBackend.length);
-        console.log('Primeros 3 eventos:', eventosBackend.slice(0, 3));
+        // console.log('=== DATOS DEL BACKEND ===');
+        // console.log('Total eventos recibidos:', eventosBackend.length);
+        // console.log('Primeros 3 eventos:', eventosBackend.slice(0, 3));
         
         // Transformar los eventos del backend en slots
         this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
         this.events = eventosBackend; // Para compatibilidad con filtros
         
-        console.log('=== SLOTS PROCESADOS ===');
-        console.log('Total slots disponibles:', this.slotsDisponibles.length);
-        console.log('Primeros 3 slots:', this.slotsDisponibles.slice(0, 3));
+        // console.log('=== SLOTS PROCESADOS ===');
+        // console.log('Total slots disponibles:', this.slotsDisponibles.length);
+        // console.log('Primeros 3 slots:', this.slotsDisponibles.slice(0, 3));
         
         // Extraer días excepcionales de los eventos
         this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
@@ -1666,7 +1666,7 @@ export class AdminAgendaComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: (err: unknown) => {
-        console.error('Error al cargar todos los eventos:', err);
+        // console.error('Error al cargar todos los eventos:', err);
         alert('No se pudieron cargar los eventos. Intente nuevamente.');
         this.isLoading = false;
       }
@@ -1678,7 +1678,7 @@ export class AdminAgendaComponent implements OnInit {
     const slots: SlotDisponible[] = [];
     const slotsAfectados: SlotDisponible[] = [];
 
-    console.log('=== MAPEANDO EVENTOS A SLOTS ===');
+    // console.log('=== MAPEANDO EVENTOS A SLOTS ===');
     let eventosProcesados = 0;
     let eventosDescartados = 0;
 
@@ -1687,7 +1687,7 @@ export class AdminAgendaComponent implements OnInit {
       if (!evento.fecha || !evento.horaInicio || !evento.horaFin || !evento.esSlot) {
         eventosDescartados++;
         if (index < 3) {
-          console.log(`Evento ${index} descartado:`, evento);
+          // console.log(`Evento ${index} descartado:`, evento);
         }
         return;
       }
@@ -1753,11 +1753,11 @@ export class AdminAgendaComponent implements OnInit {
     // Actualizar la lista de turnos afectados solo para el contador informativo
     this.turnosAfectados = slotsAfectados;
 
-    console.log('=== RESUMEN MAPEO ===');
-    console.log(`Eventos procesados: ${eventosProcesados}`);
-    console.log(`Eventos descartados: ${eventosDescartados}`);
-    console.log(`Total slots creados: ${slots.length}`);
-    console.log(`Slots afectados: ${slotsAfectados.length}`);
+    // console.log('=== RESUMEN MAPEO ===');
+    // console.log(`Eventos procesados: ${eventosProcesados}`);
+    // console.log(`Eventos descartados: ${eventosDescartados}`);
+    // console.log(`Total slots creados: ${slots.length}`);
+    // console.log(`Slots afectados: ${slotsAfectados.length}`);
 
     return slots;
   }
@@ -1890,7 +1890,7 @@ export class AdminAgendaComponent implements OnInit {
         this.pacientes = dataPackage.data; // Asigna los pacientes recibidos
       },
       error: (err) => {
-        console.error('Error al cargar pacientes:', err);
+        // console.error('Error al cargar pacientes:', err);
         alert('No se pudieron cargar los pacientes. Intente nuevamente.');
       },
     });
@@ -2057,7 +2057,7 @@ export class AdminAgendaComponent implements OnInit {
       estado: 'PROGRAMADO'
     };
 
-    console.log('Enviando turno DTO (admin):', turnoDTO);
+    // console.log('Enviando turno DTO (admin):', turnoDTO);
 
     this.http.post(`/rest/turno/asignar`, turnoDTO).subscribe({
       next: () => {
@@ -2074,7 +2074,7 @@ export class AdminAgendaComponent implements OnInit {
         }, 500);
       },
       error: (err: any) => {
-        console.error('Error al asignar el turno:', err);
+        // console.error('Error al asignar el turno:', err);
         alert('No se pudo asignar el turno. Intente nuevamente.');
         this.isAssigning = false;
       },

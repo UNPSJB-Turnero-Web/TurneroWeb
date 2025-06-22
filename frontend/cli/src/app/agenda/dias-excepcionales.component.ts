@@ -596,7 +596,7 @@ export class DiasExcepcionalesComponent implements OnInit {
         this.centros = response.data || [];
       },
       error: (error) => {
-        console.error('Error al cargar centros:', error);
+        // console.error('Error al cargar centros:', error);
       }
     });
   }
@@ -607,7 +607,7 @@ export class DiasExcepcionalesComponent implements OnInit {
         this.esquemasTurno = response.data || [];
       },
       error: (error) => {
-        console.error('Error al cargar esquemas de turno:', error);
+        // console.error('Error al cargar esquemas de turno:', error);
       }
     });
   }
@@ -624,7 +624,7 @@ export class DiasExcepcionalesComponent implements OnInit {
         this.aplicarFiltros();
       },
       error: (error) => {
-        console.error('Error al cargar días excepcionales:', error);
+        // console.error('Error al cargar días excepcionales:', error);
       }
     });
   }
@@ -810,7 +810,7 @@ export class DiasExcepcionalesComponent implements OnInit {
         this.cargarDiasExcepcionales();
       },
       error: (error) => {
-        console.error('Error al guardar día excepcional:', error);
+        // console.error('Error al guardar día excepcional:', error);
         const mensaje = error.error?.status_text || error.error?.message || 'Error al guardar el día excepcional';
         alert(mensaje);
       }
@@ -825,7 +825,7 @@ export class DiasExcepcionalesComponent implements OnInit {
           this.cargarDiasExcepcionales();
         },
         error: (error) => {
-          console.error('Error al eliminar día excepcional:', error);
+          // console.error('Error al eliminar día excepcional:', error);
           alert('Error al eliminar el día excepcional: ' + (error.error?.message || 'Error desconocido'));
         }
       });

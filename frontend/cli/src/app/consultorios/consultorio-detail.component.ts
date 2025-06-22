@@ -651,13 +651,13 @@ export class ConsultorioDetailComponent implements OnInit {
     this.consultorio.centroId = this.selectedCentroAtencion.id;
     this.consultorio.nombreCentro = this.selectedCentroAtencion.nombre;
 
-    console.log('Horarios antes de procesar:', this.consultorio.horariosSemanales);
-    console.log('Horarios por defecto:', {
-      apertura: this.consultorio.horaAperturaDefault,
-      cierre: this.consultorio.horaCierreDefault
-    });
+    // console.log('Horarios antes de procesar:', this.consultorio.horariosSemanales);
+    // console.log('Horarios por defecto:', {
+    //   apertura: this.consultorio.horaAperturaDefault,
+    //   cierre: this.consultorio.horaCierreDefault
+    // });
 
-    console.log('=== DEBUG: Procesando horarios según tipo:', this.tipoHorario);
+    // console.log('=== DEBUG: Procesando horarios según tipo:', this.tipoHorario);
     
     // Procesar según el tipo de horario seleccionado
     if (this.tipoHorario === 'general') {
@@ -691,7 +691,7 @@ export class ConsultorioDetailComponent implements OnInit {
       })) || [];
     }
 
-    console.log('Horarios después de procesar:', this.consultorio.horariosSemanales);
+    // console.log('Horarios después de procesar:', this.consultorio.horariosSemanales);
 
     // Crear copia del consultorio para envío
     const consultorioParaEnvio = {
@@ -701,10 +701,10 @@ export class ConsultorioDetailComponent implements OnInit {
       horaCierreDefault: this.convertTimeToBackend(this.consultorio.horaCierreDefault || '')
     };
 
-    console.log('=== DEBUG: Valores convertidos para envío ===');
-    console.log('horaAperturaDefault para envío:', consultorioParaEnvio.horaAperturaDefault);
-    console.log('horaCierreDefault para envío:', consultorioParaEnvio.horaCierreDefault);
-    console.log('Datos del consultorio a enviar:', consultorioParaEnvio);
+    // console.log('=== DEBUG: Valores convertidos para envío ===');
+    // console.log('horaAperturaDefault para envío:', consultorioParaEnvio.horaAperturaDefault);
+    // console.log('horaCierreDefault para envío:', consultorioParaEnvio.horaCierreDefault);
+    // console.log('Datos del consultorio a enviar:', consultorioParaEnvio);
 
     const op = this.consultorio.id
       ? this.consultorioService.update(this.consultorio.id, consultorioParaEnvio)
@@ -712,7 +712,7 @@ export class ConsultorioDetailComponent implements OnInit {
 
     op.subscribe({
       next: (response) => {
-        console.log('Consultorio guardado exitosamente:', response);
+        // console.log('Consultorio guardado exitosamente:', response);
         this.navigateBack();
       },
       error: (err) => {
@@ -746,10 +746,10 @@ export class ConsultorioDetailComponent implements OnInit {
     const id = Number(this.route.snapshot.paramMap.get("id"));
     this.consultorioService.getById(id).subscribe({
       next: (pkg) => {
-        console.log('Consultorio cargado:', pkg.data);
-        console.log('=== DEBUG: Valores de horarios del backend ===');
-        console.log('horaAperturaDefault del backend:', pkg.data.horaAperturaDefault);
-        console.log('horaCierreDefault del backend:', pkg.data.horaCierreDefault);
+        // console.log('Consultorio cargado:', pkg.data);
+        // console.log('=== DEBUG: Valores de horarios del backend ===');
+        // console.log('horaAperturaDefault del backend:', pkg.data.horaAperturaDefault);
+        // console.log('horaCierreDefault del backend:', pkg.data.horaCierreDefault);
         
         this.consultorio = pkg.data;
 
@@ -761,9 +761,9 @@ export class ConsultorioDetailComponent implements OnInit {
           this.consultorio.horaCierreDefault = this.convertTimeFromBackend(this.consultorio.horaCierreDefault);
         }
 
-        console.log('=== DEBUG: Valores después de conversión ===');
-        console.log('horaAperturaDefault convertida:', this.consultorio.horaAperturaDefault);
-        console.log('horaCierreDefault convertida:', this.consultorio.horaCierreDefault);
+        // console.log('=== DEBUG: Valores después de conversión ===');
+        // console.log('horaAperturaDefault convertida:', this.consultorio.horaAperturaDefault);
+        // console.log('horaCierreDefault convertida:', this.consultorio.horaCierreDefault);
 
         // Asignar el centro de atención usando los datos que ya vienen del backend
         if (this.consultorio.centroId && this.consultorio.nombreCentro) {
@@ -774,7 +774,7 @@ export class ConsultorioDetailComponent implements OnInit {
           this.selectedCentroAtencion = this.consultorio.centroAtencion;
           // Inicializar el campo de búsqueda con el nombre del centro
           this.centroSearch = this.consultorio.nombreCentro;
-          console.log('Centro de atención asignado:', this.selectedCentroAtencion);
+          // console.log('Centro de atención asignado:', this.selectedCentroAtencion);
         }
 
         // Inicializar horarios si no existen o están vacíos

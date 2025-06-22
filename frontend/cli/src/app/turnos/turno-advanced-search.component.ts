@@ -101,6 +101,47 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  // === MÉTODOS UTILITARIOS ===
+
+  /** Obtiene la información del usuario actual desde localStorage */
+  private getCurrentUser(): { role: string; user: string; displayName: string } {
+    const userRole = localStorage.getItem('userRole');
+    const userName = localStorage.getItem('userName');
+    
+    console.log('🔍 DEBUG: Obteniendo información del usuario:');
+    console.log('   - userRole:', userRole);
+    console.log('   - userName:', userName);
+    
+    let currentUser = 'UNKNOWN';
+    let displayName = userName || 'Usuario Desconocido';
+    
+    if (userRole === 'patient') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      console.log('   - patientDNI:', patientDNI);
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+      displayName = userName || `Paciente ${patientDNI || 'Desconocido'}`;
+    } else if (userRole === 'admin') {
+      currentUser = 'ADMIN';
+      displayName = userName || 'Administrador';
+    } else if (userRole === 'medico') {
+      currentUser = 'MEDICO';
+      displayName = userName || 'Médico';
+    } else {
+      console.log('   - Rol no reconocido, usando AUDITOR_DASHBOARD');
+      currentUser = 'AUDITOR_DASHBOARD';
+      displayName = 'Auditor Dashboard';
+    }
+    
+    console.log('   - currentUser final:', currentUser);
+    console.log('   - displayName:', displayName);
+    
+    return {
+      role: userRole || 'unknown',
+      user: currentUser,
+      displayName: displayName
+    };
+  }
+
   ngOnInit(): void {
     this.search();
     this.loadAuditStatistics();
@@ -328,21 +369,9 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
     this.loading = true;
 
-    // Obtener el usuario actual de manera más específica
-    const userRole = localStorage.getItem('userRole');
-    let currentUser = 'UNKNOWN';
-    
-    if (userRole === 'PACIENTE') {
-      const patientDNI = localStorage.getItem('patientDNI');
-      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
-    } else if (userRole === 'ADMIN' || userRole === 'admin') {
-      currentUser = 'ADMIN';
-    } else if (userRole === 'MEDICO') {
-      currentUser = 'MEDICO';
-    } else {
-      // Para el dashboard de auditoría u otros contextos
-      currentUser = 'AUDITOR_DASHBOARD';
-    }
+    // Obtener el usuario actual usando la función utilitaria
+    const userInfo = this.getCurrentUser();
+    const currentUser = userInfo.user;
 
     this.turnoService.updateEstado(
       this.selectedTurno.id!, 
