@@ -203,13 +203,10 @@ import { Subscription } from 'rxjs';
         <div class="user-section">
           <!-- Quick Access Audit Buttons (Admin only) -->
           <div class="quick-access" *ngIf="isAdmin()">
-            <button class="quick-btn audit-btn" (click)="navigateTo('/audit/dashboard')" title="Dashboard de Auditoría">
+            <button class="quick-btn audit-btn" (click)="navigateTo('/turnos/audit-dashboard')" title="Dashboard de Auditoría">
               <i class="fas fa-shield-alt"></i>
             </button>
-            <button class="quick-btn notifications-btn" (click)="navigateTo('/audit/notifications')" title="Notificaciones del Sistema">
-              <i class="fas fa-bell"></i>
-              <span class="notification-badge" *ngIf="hasUnreadNotifications()">{{getUnreadCount()}}</span>
-            </button>
+
           </div>
 
           <!-- Login Button (for non-authenticated users) -->
