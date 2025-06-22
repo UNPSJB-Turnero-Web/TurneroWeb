@@ -167,13 +167,51 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
   /** Reinicia los filtros */
   resetFilters(): void {
+    // Limpiar todos los filtros
     this.filter = {
       page: 0,
       size: 20,
       sortBy: 'fecha',
-      sortDirection: 'DESC'
+      sortDirection: 'DESC',
+      // Resetear todos los campos de filtro a valores por defecto
+      estado: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      fechaExacta: '',
+      pacienteId: undefined,
+      staffMedicoId: undefined,
+      especialidadId: undefined,
+      centroAtencionId: undefined,
+      consultorioId: undefined,
+      nombrePaciente: '',
+      nombreMedico: '',
+      nombreEspecialidad: '',
+      nombreCentro: '',
+      nombreConsultorio: ''
     };
-    this.search();
+    
+    // Limpiar resultados anteriores
+    this.turnos = [];
+    this.totalElements = 0;
+    this.totalPages = 0;
+    
+    // Limpiar datos de reportes
+    this.reportData = {
+      turnosPorDiaConsultorio: [],
+      turnosPorEspecialidadMedico: [],
+      cancelacionesReprogramaciones: []
+    };
+    
+    // Limpiar estados de carga
+    this.loading = false;
+    this.reportesLoading = false;
+    this.exportLoading = false;
+    
+    // Si estamos en modo búsqueda, ejecutar búsqueda vacía para mostrar todos los turnos
+    // Si estamos en modo reporte, no ejecutar nada hasta que el usuario configure fechas
+    if (this.tipoVista === 'busqueda') {
+      this.search();
+    }
   }
 
   /** Cambia de página */
