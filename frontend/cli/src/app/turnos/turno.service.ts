@@ -54,12 +54,38 @@ export class TurnoService {
 
   /** Cancela un turno */
   cancelar(id: number): Observable<DataPackage<Turno>> {
-    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, {});
+    // Obtener información del usuario actual
+    const userRole = localStorage.getItem('userRole');
+    let currentUser = 'UNKNOWN';
+    
+    if (userRole === 'PACIENTE') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+    } else if (userRole === 'ADMIN') {
+      currentUser = 'ADMIN';
+    } else if (userRole === 'MEDICO') {
+      currentUser = 'MEDICO';
+    }
+    
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { usuario: currentUser });
   }
 
   /** Confirma un turno */
   confirmar(id: number): Observable<DataPackage<Turno>> {
-    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/confirmar`, {});
+    // Obtener información del usuario actual
+    const userRole = localStorage.getItem('userRole');
+    let currentUser = 'UNKNOWN';
+    
+    if (userRole === 'PACIENTE') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+    } else if (userRole === 'ADMIN') {
+      currentUser = 'ADMIN';
+    } else if (userRole === 'MEDICO') {
+      currentUser = 'MEDICO';
+    }
+    
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/confirmar`, { usuario: currentUser });
   }
 
   /** Reagenda un turno */
@@ -248,7 +274,23 @@ export class TurnoService {
 
   /** Cancela un turno con motivo */
   cancelarConMotivo(id: number, motivo: string): Observable<DataPackage<Turno>> {
-    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { motivo });
+    // Obtener información del usuario actual
+    const userRole = localStorage.getItem('userRole');
+    let currentUser = 'UNKNOWN';
+    
+    if (userRole === 'PACIENTE') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+    } else if (userRole === 'ADMIN') {
+      currentUser = 'ADMIN';
+    } else if (userRole === 'MEDICO') {
+      currentUser = 'MEDICO';
+    }
+    
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { 
+      motivo: motivo,
+      usuario: currentUser 
+    });
   }
 
   /** Confirma un turno con usuario */
@@ -265,10 +307,30 @@ export class TurnoService {
   // === MÉTODOS DE CAMBIO DE ESTADO ===
 
   /** Cambia el estado de un turno */
-  updateEstado(turnoId: number, nuevoEstado: string, motivo?: string): Observable<DataPackage<Turno>> {
+  updateEstado(turnoId: number, nuevoEstado: string, motivo?: string, usuario?: string): Observable<DataPackage<Turno>> {
+    // Si se proporciona usuario específico, usarlo; si no, detectar automáticamente
+    let currentUser = usuario;
+    
+    if (!currentUser) {
+      const userRole = localStorage.getItem('userRole');
+      
+      if (userRole === 'PACIENTE') {
+        const patientDNI = localStorage.getItem('patientDNI');
+        currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+      } else if (userRole === 'ADMIN' || userRole === 'admin') {
+        currentUser = 'ADMIN';
+      } else if (userRole === 'MEDICO') {
+        currentUser = 'MEDICO';
+      } else {
+        // Fallback para dashboard de auditoría u otros casos
+        currentUser = 'ADMIN';
+      }
+    }
+    
     const body = {
       estado: nuevoEstado,
-      motivo: motivo || ''
+      motivo: motivo || '',
+      usuario: currentUser
     };
     
     return this.http.put<DataPackage<Turno>>(`${this.url}/${turnoId}/estado`, body);

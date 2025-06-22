@@ -129,7 +129,13 @@ public class TurnoPresenter {
                                                HttpServletRequest request) {
         try {
             String motivo = body.get("motivo");
-            String user = getCurrentUser(request);
+            String user = body.get("usuario"); // Usar el usuario del body
+            
+            // Si no viene usuario en el body, usar el método anterior como fallback
+            if (user == null || user.trim().isEmpty()) {
+                user = getCurrentUser(request);
+            }
+            
             TurnoDTO turno = service.cancelarTurno(id, motivo, user);
             return Response.ok(turno, "Turno cancelado correctamente");
         } catch (IllegalArgumentException e) {
@@ -143,9 +149,21 @@ public class TurnoPresenter {
 
     @PutMapping("/{id}/confirmar")
     public ResponseEntity<Object> confirmarTurno(@PathVariable Integer id,
+                                                @RequestBody(required = false) Map<String, String> body,
                                                 HttpServletRequest request) {
         try {
-            String user = getCurrentUser(request);
+            String user = null;
+            
+            // Intentar obtener usuario del body primero
+            if (body != null) {
+                user = body.get("usuario");
+            }
+            
+            // Si no viene usuario en el body, usar el método anterior como fallback
+            if (user == null || user.trim().isEmpty()) {
+                user = getCurrentUser(request);
+            }
+            
             TurnoDTO turno = service.confirmarTurno(id, user);
             return Response.ok(turno, "Turno confirmado correctamente");
         } catch (IllegalArgumentException e) {
@@ -210,7 +228,12 @@ public class TurnoPresenter {
         try {
             String estadoStr = body.get("estado");
             String motivo = body.get("motivo");
-            String user = getCurrentUser(request);
+            String user = body.get("usuario"); // Usar el usuario del body
+            
+            // Si no viene usuario en el body, usar el método anterior como fallback
+            if (user == null || user.trim().isEmpty()) {
+                user = getCurrentUser(request);
+            }
             
             EstadoTurno newState = EstadoTurno.valueOf(estadoStr.toUpperCase());
             TurnoDTO turno = service.changeEstado(id, newState, motivo, user);

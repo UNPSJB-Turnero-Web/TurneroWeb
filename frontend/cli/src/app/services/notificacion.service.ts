@@ -37,7 +37,7 @@ export interface PageNotificacion {
 })
 export class NotificacionService {
 
-  private baseUrl = 'http://localhost:8080/api/notificaciones';
+  private baseUrl = 'rest/notificaciones';
   
   // Subject para el contador de notificaciones no leídas
   private contadorNoLeidasSubject = new BehaviorSubject<number>(0);

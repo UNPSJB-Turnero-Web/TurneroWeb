@@ -362,7 +362,7 @@ export class PacienteNotificacionesComponent implements OnInit, OnDestroy {
 
   verTurno(turnoId: number, event: Event): void {
     event.stopPropagation();
-    this.router.navigate(['/paciente/turnos'], { 
+    this.router.navigate(['/paciente-turnos'], { 
       queryParams: { turnoId: turnoId } 
     });
   }

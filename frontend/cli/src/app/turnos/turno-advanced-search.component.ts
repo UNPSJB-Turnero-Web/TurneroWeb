@@ -261,10 +261,27 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
     this.loading = true;
 
+    // Obtener el usuario actual de manera más específica
+    const userRole = localStorage.getItem('userRole');
+    let currentUser = 'UNKNOWN';
+    
+    if (userRole === 'PACIENTE') {
+      const patientDNI = localStorage.getItem('patientDNI');
+      currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
+    } else if (userRole === 'ADMIN' || userRole === 'admin') {
+      currentUser = 'ADMIN';
+    } else if (userRole === 'MEDICO') {
+      currentUser = 'MEDICO';
+    } else {
+      // Para el dashboard de auditoría u otros contextos
+      currentUser = 'AUDITOR_DASHBOARD';
+    }
+
     this.turnoService.updateEstado(
       this.selectedTurno.id!, 
       this.changeStateForm.nuevoEstado,
-      this.changeStateForm.motivo?.trim()
+      this.changeStateForm.motivo?.trim(),
+      currentUser
     ).subscribe({
       next: (response) => {
         const isSuccessful = response.status === 1 || (response as any).status_code === 200;
