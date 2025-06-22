@@ -160,8 +160,39 @@ interface SlotDisponible {
         </div>
       </div>
 
+      <!-- Motivo del Reagendamiento -->
+      <div class="motivo-section" *ngIf="slotSeleccionado">
+        <h2>
+          <i class="fas fa-comment-alt"></i>
+          Motivo del Reagendamiento
+        </h2>
+        <div class="motivo-form">
+          <label for="motivoReagendamiento" class="form-label">
+            Indique el motivo por el cual reagenda su turno <span class="required">*</span>
+            <small class="text-muted">(mínimo 5 caracteres)</small>
+          </label>
+          <textarea 
+            id="motivoReagendamiento" 
+            class="form-control motivo-textarea"
+            [(ngModel)]="motivoReagendamiento" 
+            name="motivoReagendamiento"
+            rows="4" 
+            placeholder="Ej: Cambio en mi horario de trabajo, emergencia familiar, conflicto con otra cita..."
+            maxlength="500"
+            required>
+          </textarea>
+          <div class="char-counter">
+            {{ motivoReagendamiento?.length || 0 }}/500 caracteres
+          </div>
+          <div class="validation-message" *ngIf="motivoReagendamiento && motivoReagendamiento.length < 5">
+            <i class="fas fa-exclamation-circle"></i>
+            El motivo debe tener al menos 5 caracteres
+          </div>
+        </div>
+      </div>
+
       <!-- Confirmation Section -->
-      <div class="confirmation-section" *ngIf="slotSeleccionado">
+      <div class="confirmation-section" *ngIf="slotSeleccionado && motivoReagendamiento && motivoReagendamiento.length >= 5">
         <h2>
           <i class="fas fa-check-circle"></i>
           Confirmar Reagendamiento
@@ -872,6 +903,110 @@ interface SlotDisponible {
       }
     }
 
+    .motivo-section {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+      border-left: 6px solid #ffc107;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .motivo-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(45deg, #ffc107, #fd7e14);
+      border-radius: 50%;
+      opacity: 0.05;
+      transform: translate(30px, -30px);
+    }
+
+    .motivo-section h2 {
+      color: #333;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .motivo-section h2 i {
+      color: #ffc107;
+    }
+
+    .motivo-form {
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .required {
+      color: #dc3545;
+    }
+
+    .text-muted {
+      color: #6c757d !important;
+      font-size: 0.875rem;
+      font-weight: 400;
+    }
+
+    .motivo-textarea {
+      width: 100%;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 120px;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .motivo-textarea:focus {
+      border-color: #ffc107;
+      box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+      outline: none;
+      background: white;
+    }
+
+    .char-counter {
+      text-align: right;
+      font-size: 0.875rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+    }
+
+    .validation-message {
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      background: rgba(220, 53, 69, 0.1);
+      border: 1px solid rgba(220, 53, 69, 0.2);
+      border-radius: 8px;
+      color: #dc3545;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
     .confirmation-section {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
@@ -1043,6 +1178,7 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   isProcessing: boolean = false;
   isLoadingSlots: boolean = false;
   errorMessage: string = '';
+  motivoReagendamiento: string = '';
 
   constructor(
     private router: Router,
@@ -1195,39 +1331,58 @@ export class PacienteReagendarTurnoComponent implements OnInit {
 
   cancelarSeleccion() {
     this.slotSeleccionado = null;
+    this.motivoReagendamiento = '';
   }
 
   confirmarReagendamiento() {
     if (!this.currentTurno || !this.slotSeleccionado) return;
 
+    // Validar motivo
+    if (!this.motivoReagendamiento || this.motivoReagendamiento.trim().length < 5) {
+      this.errorMessage = 'Debe ingresar un motivo de al menos 5 caracteres para reagendar el turno';
+      return;
+    }
+
     this.isProcessing = true;
     this.errorMessage = '';
 
-    const nuevosDatos = {
-      fecha: this.slotSeleccionado.fecha,
-      horaInicio: this.slotSeleccionado.horaInicio,
-      horaFin: this.slotSeleccionado.horaFin,
-      pacienteId: this.currentTurno.pacienteId,
-      staffMedicoId: this.slotSeleccionado.staffMedicoId,
-      consultorioId: this.slotSeleccionado.consultorioId
-    };
-
-    this.turnoService.reagendar(this.turnoId, nuevosDatos).subscribe({
+    // Usar el nuevo sistema de updateEstado para reagendamiento
+    this.turnoService.updateEstado(this.turnoId, 'REAGENDADO', this.motivoReagendamiento.trim()).subscribe({
       next: (response) => {
-        console.log('Turno reagendado exitosamente:', response);
-        this.isProcessing = false;
-        alert(`¡Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nNueva hora: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}`);
-        this.router.navigate(['/paciente-turnos']);
+        console.log('Estado cambiado a REAGENDADO exitosamente:', response);
+        
+        // Ahora crear el nuevo turno con los datos seleccionados
+        const nuevoTurno = {
+          fecha: this.slotSeleccionado!.fecha,
+          horaInicio: this.slotSeleccionado!.horaInicio,
+          horaFin: this.slotSeleccionado!.horaFin,
+          pacienteId: this.currentTurno!.pacienteId,
+          staffMedicoId: this.slotSeleccionado!.staffMedicoId,
+          consultorioId: this.slotSeleccionado!.consultorioId,
+          estado: 'PROGRAMADO'
+        };
+
+        // Crear el nuevo turno
+        this.turnoService.create(nuevoTurno).subscribe({
+          next: (createResponse) => {
+            console.log('Nuevo turno creado exitosamente:', createResponse);
+            this.isProcessing = false;
+            
+            alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
+            
+            this.router.navigate(['/paciente-turnos']);
+          },
+          error: (createError) => {
+            console.error('Error creando nuevo turno:', createError);
+            this.isProcessing = false;
+            this.errorMessage = 'Error al crear el nuevo turno. El turno original fue marcado como reagendado, pero no se pudo crear la nueva cita.';
+          }
+        });
       },
       error: (error) => {
-        console.error('Error reagendando turno:', error);
+        console.error('Error marcando turno como reagendado:', error);
         this.isProcessing = false;
-        
-        if (error.error && error.error.message) {
-          this.errorMessage = error.error.message;
-        } else {
-          this.errorMessage = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
-        }
+        this.errorMessage = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
       }
     });
   }

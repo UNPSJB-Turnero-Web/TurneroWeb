@@ -41,8 +41,19 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   showAdvancedFilters: boolean = false;
   showAuditPanel: boolean = false;
   
-  // Auditoría
+  // Modal de cambio de estado
+  showChangeStateModal: boolean = false;
   selectedTurno: Turno | null = null;
+  changeStateForm: {
+    nuevoEstado: string;
+    motivo: string;
+  } = {
+    nuevoEstado: '',
+    motivo: ''
+  };
+  validNextStates: string[] = [];
+  
+  // Auditoría
   auditHistory: AuditLog[] = [];
   auditStatistics: any = {};
   recentLogs: AuditLog[] = [];
@@ -186,6 +197,113 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     this.showAuditPanel = false;
     this.selectedTurno = null;
     this.auditHistory = [];
+  }
+
+  // === MÉTODOS DE CAMBIO DE ESTADO ===
+
+  /** Abre modal para cambio de estado */
+  openChangeStateModal(turno: Turno): void {
+    this.selectedTurno = turno;
+    this.showChangeStateModal = true;
+    this.changeStateForm = {
+      nuevoEstado: '',
+      motivo: ''
+    };
+    
+    // Cargar estados válidos para este turno
+    if (turno.id) {
+      this.turnoService.getValidNextStates(turno.id).subscribe({
+        next: (response: DataPackage<string[]>) => {
+          const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+          if (isSuccessful) {
+            this.validNextStates = response.data || [];
+          }
+        },
+        error: (error) => {
+          console.error('Error al cargar estados válidos:', error);
+          this.validNextStates = [];
+        }
+      });
+    }
+  }
+
+  /** Cierra el modal de cambio de estado */
+  closeChangeStateModal(): void {
+    this.showChangeStateModal = false;
+    this.selectedTurno = null;
+    this.changeStateForm = {
+      nuevoEstado: '',
+      motivo: ''
+    };
+    this.validNextStates = [];
+  }
+
+  /** Cambia el estado del turno */
+  changeState(): void {
+    if (!this.selectedTurno || !this.changeStateForm.nuevoEstado) {
+      alert('Debe seleccionar un estado');
+      return;
+    }
+
+    // Validar motivo para cancelaciones y reagendamientos
+    if ((this.changeStateForm.nuevoEstado === 'CANCELADO' || 
+         this.changeStateForm.nuevoEstado === 'REAGENDADO') && 
+        !this.changeStateForm.motivo?.trim()) {
+      alert('El motivo es obligatorio para cancelaciones y reagendamientos');
+      return;
+    }
+
+    // Validar longitud mínima del motivo
+    if (this.changeStateForm.motivo && this.changeStateForm.motivo.trim().length < 5) {
+      alert('El motivo debe tener al menos 5 caracteres');
+      return;
+    }
+
+    this.loading = true;
+
+    this.turnoService.updateEstado(
+      this.selectedTurno.id!, 
+      this.changeStateForm.nuevoEstado,
+      this.changeStateForm.motivo?.trim()
+    ).subscribe({
+      next: (response) => {
+        const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+        if (isSuccessful) {
+          alert('Estado actualizado correctamente');
+          this.closeChangeStateModal();
+          this.search(); // Recargar la tabla
+        } else {
+          alert('Error al cambiar estado: ' + (response as any).status_text || 'Error desconocido');
+        }
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al cambiar estado:', error);
+        let errorMessage = 'Error al cambiar estado';
+        
+        if (error.error && error.error.status_text) {
+          errorMessage += ': ' + error.error.status_text;
+        } else if (error.message) {
+          errorMessage += ': ' + error.message;
+        }
+        
+        alert(errorMessage);
+        this.loading = false;
+      }
+    });
+  }
+
+  /** Obtiene el texto descriptivo para un estado */
+  getEstadoLabel(estado: string): string {
+    const labels: any = {
+      'PROGRAMADO': 'Programado',
+      'CONFIRMADO': 'Confirmado',
+      'CANCELADO': 'Cancelado',
+      'REAGENDADO': 'Reagendado',
+      'COMPLETADO': 'Completado',
+      'COMPLETO': 'Completado'
+    };
+    return labels[estado] || estado;
   }
 
   /** Verifica la integridad del historial */

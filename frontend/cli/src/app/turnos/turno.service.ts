@@ -262,4 +262,21 @@ export class TurnoService {
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/reagendar`, payload);
   }
 
+  // === MÉTODOS DE CAMBIO DE ESTADO ===
+
+  /** Cambia el estado de un turno */
+  updateEstado(turnoId: number, nuevoEstado: string, motivo?: string): Observable<DataPackage<Turno>> {
+    const body = {
+      estado: nuevoEstado,
+      motivo: motivo || ''
+    };
+    
+    return this.http.put<DataPackage<Turno>>(`${this.url}/${turnoId}/estado`, body);
+  }
+
+  /** Obtiene los estados válidos para un turno */
+  getValidNextStates(turnoId: number): Observable<DataPackage<string[]>> {
+    return this.http.get<DataPackage<string[]>>(`${this.url}/${turnoId}/estados-validos`);
+  }
+
 }

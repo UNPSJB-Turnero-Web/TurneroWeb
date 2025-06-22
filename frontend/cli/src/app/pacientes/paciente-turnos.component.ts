@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
@@ -7,7 +8,7 @@ import { DataPackage } from '../data.package';
 
 @Component({
   selector: 'app-paciente-turnos',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="paciente-turnos">
       <!-- Header -->
@@ -118,6 +119,45 @@ import { DataPackage } from '../data.package';
             <i class="fas fa-plus"></i>
             Solicitar Turno
           </button>
+        </div>
+      </div>
+
+      <!-- Modal for Cancel -->
+      <div class="modal" *ngIf="showModal">
+        <div class="modal-content">
+          <span class="close" (click)="closeModal()">&times;</span>
+          <h2>Cancelar Turno</h2>
+          
+          <div class="turno-info" *ngIf="selectedTurno">
+            <p><strong>Fecha:</strong> {{ selectedTurno.day }}/{{ selectedTurno.month }}</p>
+            <p><strong>Hora:</strong> {{ selectedTurno.time }}</p>
+            <p><strong>Médico:</strong> {{ selectedTurno.doctor }}</p>
+            <p><strong>Especialidad:</strong> {{ selectedTurno.specialty }}</p>
+          </div>
+          
+          <label for="motivo">Motivo <span style="color: red;">*</span>:</label>
+          <small style="color: #6c757d; font-size: 0.875rem;">Mínimo 5 caracteres</small>
+          <textarea id="motivo" [(ngModel)]="motivo" rows="3" 
+                    placeholder="Ingrese el motivo de la cancelación (obligatorio)..."
+                    style="width: 100%; margin-top: 0.5rem; padding: 0.75rem; border: 1px solid #ddd; border-radius: 5px;"
+                    required></textarea>
+          <div *ngIf="motivo && motivo.length < 5" 
+               style="color: #dc3545; font-size: 0.875rem; margin-top: 0.5rem;">
+            ⚠️ El motivo debe tener al menos 5 caracteres
+          </div>
+          
+          <div class="modal-actions">
+            <button class="btn btn-danger" (click)="executeCancel()" 
+                    [disabled]="!motivo || motivo.length < 5 || isSubmitting">
+              <span *ngIf="isSubmitting" style="margin-right: 0.5rem;">⏳</span>
+              <i class="fas fa-times" *ngIf="!isSubmitting"></i>
+              Cancelar Turno
+            </button>
+            <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
+              <i class="fas fa-times"></i>
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -673,6 +713,77 @@ import { DataPackage } from '../data.package';
         flex-wrap: wrap;
       }
     }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+
+    .close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: #6c757d;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Custom Scrollbar for Modal */
+    .modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal-content::-webkit-scrollbar-thumb {
+      background: #667eea;
+      border-radius: 10px;
+    }
+
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .turno-info {
+      background: rgba(102, 126, 234, 0.1);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      border-left: 4px solid #667eea;
+    }
+
+    .turno-info p {
+      margin: 0.5rem 0;
+      color: #333;
+    }
+
+    .turno-info strong {
+      color: #667eea;
+    }
   `
 })
 export class PacienteTurnosComponent implements OnInit {
@@ -680,6 +791,12 @@ export class PacienteTurnosComponent implements OnInit {
   patientDNI: string = '';
   turnos: any[] = [];
   isLoadingTurnos = false;
+  
+  // Modal de cancelación
+  showModal = false;
+  selectedTurno: any = null;
+  motivo = '';
+  isSubmitting = false;
 
   constructor(
     private router: Router,
@@ -823,6 +940,7 @@ export class PacienteTurnosComponent implements OnInit {
   }
 
   reschedule(turno: any) {
+    // Redirigir al componente de reagendamiento con el ID del turno
     this.router.navigate(['/paciente-reagendar-turno', turno.id]);
   }
 
@@ -849,24 +967,45 @@ export class PacienteTurnosComponent implements OnInit {
   }
 
   cancel(turno: any) {
-    const confirmMessage = `¿Estás seguro de que deseas cancelar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
-    
-    if (confirm(confirmMessage)) {
-      this.turnoService.cancelar(turno.id).subscribe({
-        next: (response) => {
-          console.log('Turno cancelado exitosamente:', response);
-          // Actualizar el estado localmente
-          turno.status = 'cancelado';
-          // Mostrar mensaje de éxito
-          alert('Turno cancelado exitosamente. El horario quedará disponible para otros pacientes.');
-          // Recargar la lista de turnos para reflejar cambios
-          this.cargarTurnosPaciente();
-        },
-        error: (error) => {
-          console.error('Error cancelando el turno:', error);
-          alert('No se pudo cancelar el turno. Por favor, intenta nuevamente.');
-        }
-      });
+    this.selectedTurno = turno;
+    this.motivo = '';
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+    this.selectedTurno = null;
+    this.motivo = '';
+  }
+
+  executeCancel() {
+    if (!this.selectedTurno || !this.motivo?.trim()) {
+      alert('Debe ingresar un motivo para continuar');
+      return;
     }
+
+    if (this.motivo.trim().length < 5) {
+      alert('El motivo debe tener al menos 5 caracteres');
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    // Usar updateEstado para cancelar con motivo
+    this.turnoService.updateEstado(this.selectedTurno.id, 'CANCELADO', this.motivo.trim()).subscribe({
+      next: (response) => {
+        console.log('Turno cancelado exitosamente:', response);
+        this.selectedTurno.status = 'cancelado';
+        alert('Turno cancelado exitosamente. El horario quedará disponible para otros pacientes.');
+        this.cargarTurnosPaciente();
+        this.closeModal();
+        this.isSubmitting = false;
+      },
+      error: (error) => {
+        console.error('Error cancelando el turno:', error);
+        alert('No se pudo cancelar el turno. Por favor, intenta nuevamente.');
+        this.isSubmitting = false;
+      }
+    });
   }
 }

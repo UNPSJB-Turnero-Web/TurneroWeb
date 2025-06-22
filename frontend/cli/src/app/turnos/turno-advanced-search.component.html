@@ -144,6 +144,10 @@
                       <button type="button" class="btn btn-outline-info" (click)="showAuditHistory(turno)" title="Ver auditoría">
                         <i class="fas fa-history"></i>
                       </button>
+                      <button type="button" class="btn btn-outline-secondary" (click)="openChangeStateModal(turno)" title="Cambiar estado"
+                              [disabled]="turno.estado === 'CANCELADO' || turno.estado === 'COMPLETADO' || turno.estado === 'COMPLETO'">
+                        <i class="fas fa-exchange-alt"></i>
+                      </button>
                       <button type="button" class="btn btn-outline-warning" (click)="editTurno(turno)" title="Editar">
                         <i class="fas fa-edit"></i>
                       </button>
@@ -303,3 +307,75 @@
 
 <!-- Backdrop del modal -->
 <div class="modal-backdrop fade show" *ngIf="showAuditPanel" (click)="closeAuditPanel()"></div>
+
+<!-- Modal de cambio de estado -->
+<div class="modal fade" [class.show]="showChangeStateModal" [style.display]="showChangeStateModal ? 'block' : 'none'" 
+     tabindex="-1" *ngIf="showChangeStateModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-exchange-alt"></i> Cambiar Estado del Turno
+        </h5>
+        <button type="button" class="btn-close" (click)="closeChangeStateModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedTurno">
+          <div class="mb-3">
+            <strong>Turno ID:</strong> {{selectedTurno.id}}<br>
+            <strong>Paciente:</strong> {{selectedTurno.nombrePaciente}} {{selectedTurno.apellidoPaciente}}<br>
+            <strong>Médico:</strong> {{selectedTurno.staffMedicoNombre}} {{selectedTurno.staffMedicoApellido}}<br>
+            <strong>Fecha:</strong> {{formatDate(selectedTurno.fecha)}}<br>
+            <strong>Estado actual:</strong> 
+            <span [class]="getEstadoClass(selectedTurno.estado)">{{getEstadoLabel(selectedTurno.estado)}}</span>
+          </div>
+
+          <hr>
+
+          <form>
+            <div class="mb-3">
+              <label for="nuevoEstado" class="form-label">Nuevo Estado <span class="text-danger">*</span></label>
+              <select id="nuevoEstado" class="form-select" [(ngModel)]="changeStateForm.nuevoEstado" name="nuevoEstado" required>
+                <option value="">Seleccione un estado...</option>
+                <option *ngFor="let estado of validNextStates" [value]="estado">
+                  {{getEstadoLabel(estado)}}
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3" *ngIf="changeStateForm.nuevoEstado === 'CANCELADO' || changeStateForm.nuevoEstado === 'REAGENDADO'">
+              <label for="motivo" class="form-label">
+                Motivo <span class="text-danger">*</span>
+                <small class="text-muted">(mínimo 5 caracteres)</small>
+              </label>
+              <textarea id="motivo" class="form-control" [(ngModel)]="changeStateForm.motivo" name="motivo" 
+                        rows="3" placeholder="Ingrese el motivo del cambio..." required></textarea>
+            </div>
+
+            <div class="mb-3" *ngIf="changeStateForm.nuevoEstado && changeStateForm.nuevoEstado !== 'CANCELADO' && changeStateForm.nuevoEstado !== 'REAGENDADO'">
+              <label for="motivo" class="form-label">
+                Motivo <small class="text-muted">(opcional)</small>
+              </label>
+              <textarea id="motivo" class="form-control" [(ngModel)]="changeStateForm.motivo" name="motivo" 
+                        rows="2" placeholder="Motivo del cambio (opcional)..."></textarea>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeChangeStateModal()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="changeState()" 
+                [disabled]="!changeStateForm.nuevoEstado || loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!loading" class="fas fa-check"></i>
+          Cambiar Estado
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del modal -->
+<div class="modal-backdrop fade" [class.show]="showChangeStateModal" *ngIf="showChangeStateModal"></div>
