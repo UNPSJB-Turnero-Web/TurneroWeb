@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -23,8 +23,17 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     sortDirection: 'DESC'
   };
 
-  // Resultados
-  turnos: Turno[] = [];
+  // Resultados con getter/setter para monitoreo
+  private _turnos: Turno[] = [];
+  get turnos(): Turno[] {
+    return this._turnos;
+  }
+  set turnos(value: Turno[]) {
+    
+    this._turnos = value;
+    
+  }
+
   totalElements: number = 0;
   totalPages: number = 0;
   currentPage: number = 0;
@@ -49,15 +58,27 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     { value: 'PROGRAMADO', label: 'Programado' },
     { value: 'CONFIRMADO', label: 'Confirmado' },
     { value: 'CANCELADO', label: 'Cancelado' },
-    { value: 'REAGENDADO', label: 'Reagendado' }
+    { value: 'REAGENDADO', label: 'Reagendado' },
+    {value: 'COMPLETADO', label: 'Completado' }    
   ];
 
   constructor(
     private turnoService: TurnoService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
+  /** Verifica si la respuesta es exitosa considerando ambos formatos */
+  private isSuccessfulResponse(response: any): boolean {
+    return response.status === 1 || response.status_code === 200;
+  }
+
   ngOnInit(): void {
+   
+    // TEMPORAL: Quitar filtro de estado para probar
+    this.filter.estado = '';
+  
+    
     this.search();
     this.loadAuditStatistics();
     this.loadRecentLogs();
@@ -66,20 +87,89 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   /** Realiza la búsqueda con los filtros actuales */
   search(): void {
     this.loading = true;
+   
     
     this.turnoService.searchWithFilters(this.filter).subscribe({
       next: (response: DataPackage<any>) => {
-        if (response.status === 1) {
-          this.turnos = response.data.content || [];
-          this.totalElements = response.data.totalElements || 0;
-          this.totalPages = response.data.totalPages || 0;
-          this.currentPage = response.data.number || 0;
+      
+        
+        // Verificar tanto el formato nuevo (status_code: 200) como el antiguo (status: 1)
+        const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+
+        
+        if (isSuccessful) {
+          const data = response.data;
+    
+          
+          // Limpiar primero el array actual - CON LOG DETALLADO
+     
+          this.turnos = [];
+   
+          this.totalElements = 0;
+          this.totalPages = 0;
+          this.currentPage = 0;
+          
+          // Verificar si hay contenido en content o directamente en data
+          if (data && data.content && Array.isArray(data.content)) {
+         
+            
+            // Asignar cada campo por separado para debug
+            const newTurnos = [...data.content];
+           
+            
+            // ASIGNACIÓN PASO A PASO
+      
+            this.turnos = newTurnos;
+          
+            
+            this.totalElements = data.totalElements || 0;
+            this.totalPages = data.totalPages || 1;
+            this.currentPage = data.number || 0;
+         
+            
+            // Verificar inmediatamente después de la asignación
+            setTimeout(() => {
+   
+            }, 0);
+            
+          } else if (Array.isArray(data)) {
+        
+            this.turnos = [...data];
+            this.totalElements = data.length;
+            this.totalPages = 1;
+            this.currentPage = 0;
+     
+          }
+          
+        
+        } else {
+          
+          this.turnos = [];
+          this.totalElements = 0;
+          this.totalPages = 0;
+          this.currentPage = 0;
         }
+        
+
         this.loading = false;
+  
+        
+        // Forzar detección de cambios después de cambiar loading
+        this.cdr.detectChanges();
+       
+        
+        // Log final para verificar el estado del componente
+
+        
       },
       error: (error) => {
         console.error('Error en búsqueda:', error);
+        this.turnos = [];
+        this.totalElements = 0;
+        this.totalPages = 0;
+        this.currentPage = 0;
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -128,7 +218,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     if (turno.id) {
       this.turnoService.getAuditHistory(turno.id).subscribe({
         next: (response: DataPackage<AuditLog[]>) => {
-          if (response.status === 1) {
+          const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+          if (isSuccessful) {
             this.auditHistory = response.data || [];
           }
         },
@@ -150,7 +241,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   verifyIntegrity(turnoId: number): void {
     this.turnoService.verifyAuditIntegrity(turnoId).subscribe({
       next: (response: DataPackage<{isValid: boolean}>) => {
-        if (response.status === 1) {
+        const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+        if (isSuccessful) {
           const isValid = response.data.isValid;
           alert(isValid ? 'El historial de auditoría es íntegro' : 'Se detectaron inconsistencias en el historial');
         }
@@ -166,7 +258,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   loadAuditStatistics(): void {
     this.turnoService.getAuditStatistics().subscribe({
       next: (response: DataPackage<any[]>) => {
-        if (response.status === 1) {
+        const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+        if (isSuccessful) {
           this.auditStatistics = this.processStatistics(response.data);
         }
       },
@@ -180,7 +273,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   loadRecentLogs(): void {
     this.turnoService.getRecentAuditLogs().subscribe({
       next: (response: DataPackage<AuditLog[]>) => {
-        if (response.status === 1) {
+        const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+        if (isSuccessful) {
           this.recentLogs = response.data || [];
         }
       },
@@ -202,57 +296,52 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   }
 
   // === MÉTODOS DE EXPORTACIÓN ===
+/** Exporta a CSV */
+exportCSV(): void {
+  this.exportLoading = true;
+  const exportFilter = { ...this.filter, exportFormat: 'CSV' };
 
-  /** Exporta a CSV */
-  exportCSV(): void {
-    this.exportLoading = true;
-    const exportFilter = { ...this.filter, exportFormat: 'CSV' };
-    
-    this.turnoService.exportToCSV(exportFilter).subscribe({
-      next: (csvContent: string) => {
-        this.downloadFile(csvContent, 'turnos.csv', 'text/csv');
-        this.exportLoading = false;
-      },
-      error: (error) => {
-        console.error('Error al exportar CSV:', error);
-        this.exportLoading = false;
-      }
-    });
-  }
+  this.turnoService.exportToCSVDownload(exportFilter).subscribe({
+    next: (blob: Blob) => {
+      this.downloadFile(blob, 'turnos.csv', 'text/csv');
+      this.exportLoading = false;
+    },
+    error: (error) => {
+      console.error('Error al exportar CSV:', error);
+      this.exportLoading = false;
+    }
+  });
+}
 
-  /** Exporta a PDF */
-  exportPDF(): void {
-    this.exportLoading = true;
-    const exportFilter = { ...this.filter, exportFormat: 'PDF' };
-    
-    this.turnoService.exportToPDF(exportFilter).subscribe({
-      next: (htmlContent: string) => {
-        // Abrir en nueva ventana para que el usuario pueda imprimir o guardar como PDF
-        const newWindow = window.open();
-        if (newWindow) {
-          newWindow.document.write(htmlContent);
-          newWindow.document.close();
-        }
-        this.exportLoading = false;
-      },
-      error: (error) => {
-        console.error('Error al exportar PDF:', error);
-        this.exportLoading = false;
-      }
-    });
-  }
+/** Exporta a PDF */
+exportPDF(): void {
+  this.exportLoading = true;
+  const exportFilter = { ...this.filter, exportFormat: 'PDF' };
 
-  /** Descarga un archivo */
-  private downloadFile(content: string, filename: string, contentType: string): void {
-    const blob = new Blob([content], { type: contentType });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
+  this.turnoService.exportToPDFDownload(exportFilter).subscribe({
+    next: (blob: Blob) => {
+      this.downloadFile(blob, 'turnos.pdf', 'application/pdf');
+      this.exportLoading = false;
+    },
+    error: (error) => {
+      console.error('Error al exportar PDF:', error);
+      this.exportLoading = false;
+    }
+  });
+}
 
+/** Descarga un archivo */
+private downloadFile(blob: Blob, filename: string, contentType: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  // Para navegadores modernos, simular click y limpiar el objeto URL
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
   // === MÉTODOS DE NAVEGACIÓN ===
 
   /** Navega al detalle de un turno */
@@ -308,4 +397,14 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     };
     return classes[action] || 'badge bg-secondary';
   }
+
+
+  /** TrackBy function para optimizar ngFor */
+  trackByTurnoId(index: number, turno: Turno): any {
+    return turno.id || index;
+  }
+
+
+
+
 }

@@ -50,6 +50,7 @@ export interface TurnoFilter {
     centroAtencionId?: number;
     nombreCentro?: string;
     consultorioId?: number;
+    centroId?: number; // Agregado para compatibilidad con backend y servicio de exportación
     
     // Filtros de fecha
     fechaDesde?: string;

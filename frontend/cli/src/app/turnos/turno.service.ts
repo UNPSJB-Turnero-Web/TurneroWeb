@@ -212,19 +212,28 @@ export class TurnoService {
 
   // === MÉTODOS DE EXPORTACIÓN ===
 
-  /** Exporta turnos a CSV */
-  exportToCSV(filter: TurnoFilter): Observable<string> {
-    return this.http.post(`rest/export/turnos/csv`, filter, { responseType: 'text' });
+  /** Exporta turnos a CSV (descarga archivo) */
+  exportToCSVDownload(filter: TurnoFilter): Observable<Blob> {
+    const params: any = {};
+    if (filter.estado) params.estado = filter.estado;
+    if (filter.fechaDesde) params.fechaDesde = filter.fechaDesde;
+    if (filter.fechaHasta) params.fechaHasta = filter.fechaHasta;
+    if (filter.pacienteId) params.pacienteId = filter.pacienteId;
+    if (filter.staffMedicoId) params.staffMedicoId = filter.staffMedicoId;
+    if (filter.centroId) params.centroId = filter.centroId;
+    return this.http.get(`/turno/export/csv`, { params, responseType: 'blob' });
   }
 
-  /** Exporta turnos a HTML para PDF */
-  exportToHTML(filter: TurnoFilter): Observable<string> {
-    return this.http.post(`rest/export/turnos/html`, filter, { responseType: 'text' });
-  }
-
-  /** Exporta turnos a PDF */
-  exportToPDF(filter: TurnoFilter): Observable<string> {
-    return this.http.post(`rest/export/turnos/pdf`, filter, { responseType: 'text' });
+  /** Exporta turnos a PDF (descarga archivo) */
+  exportToPDFDownload(filter: TurnoFilter): Observable<Blob> {
+    const params: any = {};
+    if (filter.estado) params.estado = filter.estado;
+    if (filter.fechaDesde) params.fechaDesde = filter.fechaDesde;
+    if (filter.fechaHasta) params.fechaHasta = filter.fechaHasta;
+    if (filter.pacienteId) params.pacienteId = filter.pacienteId;
+    if (filter.staffMedicoId) params.staffMedicoId = filter.staffMedicoId;
+    if (filter.centroId) params.centroId = filter.centroId;
+    return this.http.get(`/turno/export/pdf`, { params, responseType: 'blob' });
   }
 
   /** Obtiene estadísticas para exportación */

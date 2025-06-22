@@ -755,4 +755,26 @@ export class TurnosComponent {
       } 
     });
   }
+
+  exportarCSV() {
+    this.turnoService.exportToCSVDownload({}).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'turnos.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+  }
+
+  exportarPDF() {
+    this.turnoService.exportToPDFDownload({}).subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'turnos.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    });
+  }
 }

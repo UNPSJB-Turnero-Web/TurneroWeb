@@ -84,17 +84,6 @@
             </div>
           </div>
 
-          <!-- Información de resultados -->
-          <div class="row mb-3" *ngIf="!loading">
-            <div class="col-12">
-              <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i>
-                Se encontraron <strong>{{totalElements}}</strong> turnos. 
-                Página {{currentPage + 1}} de {{totalPages}}.
-              </div>
-            </div>
-          </div>
-
           <!-- Tabla de resultados -->
           <div class="table-responsive">
             <table class="table table-striped table-hover">
@@ -128,7 +117,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let turno of turnos" [class.table-warning]="turno.totalModificaciones && turno.totalModificaciones > 0">
+                <tr *ngFor="let turno of turnos; trackBy: trackByTurnoId" [class.table-warning]="turno.totalModificaciones && turno.totalModificaciones > 0">
                   <td>{{turno.id}}</td>
                   <td>{{formatDate(turno.fecha)}}</td>
                   <td>{{turno.horaInicio}} - {{turno.horaFin}}</td>
