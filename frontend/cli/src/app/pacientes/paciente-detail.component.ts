@@ -325,7 +325,7 @@ import { ModalService } from '../modal/modal.service';
                 Cancelar
               </button>
               
-              <button *ngIf="paciente.id && !esNuevo()" 
+              <button *ngIf="paciente.id && !esNuevo() && !esPacienteVendoSuPerfil()" 
                       type="button" 
                       class="btn btn-danger-gradient btn-lg rounded-pill px-4" 
                       (click)="confirmDelete()">
@@ -641,7 +641,23 @@ export class PacienteDetailComponent implements OnInit {
     if (path === 'pacientes/new') {
       this.modoEdicion = true;
     } else {
-      const id = +this.route.snapshot.paramMap.get('id')!;
+      let id: number;
+      
+      // Si estamos en la ruta del perfil del paciente, usar el ID del localStorage
+      if (path === 'paciente-perfil') {
+        const pacienteId = localStorage.getItem('pacienteId');
+        if (!pacienteId) {
+          console.error('No se encontró el ID del paciente en localStorage');
+          alert('No se pudo cargar el perfil. Por favor, intenta nuevamente.');
+          this.router.navigate(['/paciente-dashboard']);
+          return;
+        }
+        id = parseInt(pacienteId);
+      } else {
+        // Para rutas de admin, usar el parámetro de la URL
+        id = +this.route.snapshot.paramMap.get('id')!;
+      }
+      
       this.pacienteService.get(id).subscribe((dp: DataPackage<Paciente>) => {
         this.paciente = dp.data;
 
@@ -697,7 +713,14 @@ export class PacienteDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/pacientes']);
+    const path = this.route.snapshot.routeConfig?.path;
+    if (path === 'paciente-perfil') {
+      // Si es un paciente viendo su perfil, volver al dashboard del paciente
+      this.router.navigate(['/paciente-dashboard']);
+    } else {
+      // Si es un admin, volver a la lista de pacientes
+      this.router.navigate(['/pacientes']);
+    }
   }
 
   cancelar(): void {
@@ -747,5 +770,10 @@ export class PacienteDetailComponent implements OnInit {
       )
       .then(() => this.remove())
       .catch(() => {});
+  }
+
+  esPacienteVendoSuPerfil(): boolean {
+    const path = this.route.snapshot.routeConfig?.path;
+    return path === 'paciente-perfil';
   }
 }

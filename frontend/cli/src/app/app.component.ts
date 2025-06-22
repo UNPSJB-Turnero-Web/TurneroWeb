@@ -179,13 +179,7 @@ import { Subscription } from 'rxjs';
                   <span class="item-desc">Panel principal</span>
                 </div>
               </a>
-              <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/paciente-turnos')" [class.active]="isRouteActive('/paciente-turnos')">
-                <i class="fas fa-calendar-check icon-item icon-mis-turnos"></i>
-                <div class="item-content">
-                  <span class="item-title">Mis Turnos</span>
-                  <span class="item-desc">Ver y gestionar turnos</span>
-                </div>
-              </a>
+             
               <a ngbDropdownItem class="dropdown-item" (click)="navigateTo('/paciente-agenda')" [class.active]="isRouteActive('/paciente-agenda')">
                 <i class="fas fa-calendar-plus icon-item icon-agendar"></i>
                 <div class="item-content">
