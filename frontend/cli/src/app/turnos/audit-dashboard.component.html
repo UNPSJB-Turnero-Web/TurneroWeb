@@ -19,18 +19,19 @@
     </div>
   </div>
 
-  <!-- Estadísticas generales -->
+
+  <!-- Estadísticas de turnos -->
   <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-3">
-      <div class="card bg-primary text-white">
+      <div class="card bg-info text-white">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
-              <h4 class="card-title">{{auditStatistics.totalAcciones || 0}}</h4>
-              <p class="card-text">Total Acciones</p>
+              <h4 class="card-title">{{totalTurnos}}</h4>
+              <p class="card-text">Total Turnos</p>
             </div>
             <div class="align-self-center">
-              <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+              <i class="fas fa-calendar-check fa-2x opacity-75"></i>
             </div>
           </div>
         </div>
@@ -42,27 +43,41 @@
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
-              <h4 class="card-title">{{auditStatistics.porAccion?.CONFIRMED || 0}}</h4>
-              <p class="card-text">Turnos Confirmados</p>
+              <h4 class="card-title">{{turnosPorEstado.PROGRAMADO || 0}}</h4>
+              <p class="card-text">Programados</p>
             </div>
             <div class="align-self-center">
-              <i class="fas fa-check-circle fa-2x opacity-75"></i>
+              <i class="fas fa-clock fa-2x opacity-75"></i>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <div class="col-lg-3 col-md-6 mb-3">
-      <div class="card bg-danger text-white">
+     <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-success text-white">
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
-              <h4 class="card-title">{{auditStatistics.porAccion?.CANCELED || 0}}</h4>
-              <p class="card-text">Turnos Cancelados</p>
+              <h4 class="card-title">{{turnosPorEstado.CONFIRMADO || 0}}</h4>
+              <p class="card-text">Confirmados</p>
             </div>
             <div class="align-self-center">
-              <i class="fas fa-times-circle fa-2x opacity-75"></i>
+              <i class="fas fa-clock fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+     <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{turnosPorEstado.COMPLETO || 0}}</h4>
+              <p class="card-text">Completados</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-clock fa-2x opacity-75"></i>
             </div>
           </div>
         </div>
@@ -74,11 +89,27 @@
         <div class="card-body">
           <div class="d-flex justify-content-between">
             <div>
-              <h4 class="card-title">{{auditStatistics.porAccion?.RESCHEDULED || 0}}</h4>
-              <p class="card-text">Turnos Reagendados</p>
+              <h4 class="card-title">{{turnosPorEstado.REAGENDADO || 0}}</h4>
+              <p class="card-text">Reagendados</p>
             </div>
             <div class="align-self-center">
-              <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+              <i class="fas fa-calendar-times fa-2x opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+      <div class="card bg-secondary text-white">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <div>
+              <h4 class="card-title">{{turnosPorEstado.CANCELADO || 0}}</h4>
+              <p class="card-text">Cancelados</p>
+            </div>
+            <div class="align-self-center">
+              <i class="fas fa-ban fa-2x opacity-75"></i>
             </div>
           </div>
         </div>
@@ -147,6 +178,75 @@
           <div *ngIf="getObjectKeys(auditStatistics.porUsuario).length === 0" class="text-center text-muted py-4">
             <i class="fas fa-users fa-3x mb-3 opacity-50"></i>
             <p>No hay datos de usuarios disponibles</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos de turnos -->
+  <div class="row">
+    <!-- Turnos por especialidad -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-stethoscope"></i> Turnos por Especialidad
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let especialidad of getObjectKeys(turnosPorEspecialidad)" class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span>
+                <i class="fas fa-user-md"></i>
+                {{especialidad}}
+              </span>
+              <span class="fw-bold">
+                {{turnosPorEspecialidad[especialidad]}} turnos ({{getTurnoPercentage(turnosPorEspecialidad[especialidad])}}%)
+              </span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar bg-primary"
+                   [style.width.%]="getTurnoPercentage(turnosPorEspecialidad[especialidad])">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="getObjectKeys(turnosPorEspecialidad).length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-stethoscope fa-3x mb-3 opacity-50"></i>
+            <p>No hay turnos disponibles</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Turnos por centro -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-hospital"></i> Turnos por Centro
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngFor="let centro of getObjectKeys(turnosPorCentro)" class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span>
+                <i class="fas fa-map-marker-alt"></i>
+                {{centro}}
+              </span>
+              <span class="fw-bold">
+                {{turnosPorCentro[centro]}} turnos ({{getTurnoPercentage(turnosPorCentro[centro])}}%)
+              </span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar bg-success"
+                   [style.width.%]="getTurnoPercentage(turnosPorCentro[centro])">
+              </div>
+            </div>
+          </div>
+          <div *ngIf="getObjectKeys(turnosPorCentro).length === 0" class="text-center text-muted py-4">
+            <i class="fas fa-hospital fa-3x mb-3 opacity-50"></i>
+            <p>No hay turnos disponibles</p>
           </div>
         </div>
       </div>

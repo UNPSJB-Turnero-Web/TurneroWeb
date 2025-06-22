@@ -55,20 +55,26 @@ export class AuditDashboardComponent implements OnInit {
   /** Carga estadísticas de auditoría */
   loadAuditStatistics(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log('Cargando estadísticas de auditoría...');
-      this.turnoService.getAuditStatistics().subscribe({
-        next: (response: DataPackage<any[]>) => {
-          console.log('Respuesta de estadísticas:', response);
-          if (response.status === 1) {
-            this.auditStatistics = this.processStatistics(response.data);
+      console.log('Cargando estadísticas del dashboard...');
+      this.turnoService.getDashboardStatistics().subscribe({
+        next: (resp) => {
+          const response = resp as any;
+          console.log('Respuesta de estadísticas del dashboard:', response);
+          if ((response.status && response.status === 1) || (response.status_code && response.status_code === 200)) {
+            if (typeof response.data === 'object' && response.data !== null) {
+              // Formato objeto dashboard
+              this.auditStatistics = this.processDashboardStatistics(response.data);
+            } else {
+              this.auditStatistics = {};
+            }
             console.log('Estadísticas procesadas:', this.auditStatistics);
           } else {
-            console.warn('Estado de respuesta no exitoso:', response.status);
+            console.warn('Estado de respuesta no exitoso:', response.status || response.status_code);
           }
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar estadísticas:', error);
+          console.error('Error al cargar estadísticas del dashboard:', error);
           reject(error);
         }
       });
@@ -80,13 +86,14 @@ export class AuditDashboardComponent implements OnInit {
     return new Promise((resolve, reject) => {
       console.log('Cargando logs recientes...');
       this.turnoService.getRecentAuditLogs().subscribe({
-        next: (response: DataPackage<AuditLog[]>) => {
+        next: (resp) => {
+          const response = resp as any;
           console.log('Respuesta de logs recientes:', response);
-          if (response.status === 1) {
+          if ((response.status && response.status === 1) || (response.status_code && response.status_code === 200)) {
             this.recentLogs = response.data || [];
             console.log('Logs recientes procesados:', this.recentLogs);
           } else {
-            console.warn('Estado de respuesta no exitoso:', response.status);
+            console.warn('Estado de respuesta no exitoso:', response.status || response.status_code);
           }
           resolve();
         },
@@ -102,12 +109,13 @@ export class AuditDashboardComponent implements OnInit {
   loadTurnos(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.turnoService.all().subscribe({
-        next: (response: any) => {
-          if (response.status === 200) {
+        next: (resp) => {
+          const response = resp as any;
+          if ((response.status && response.status === 1) || (response.status_code && response.status_code === 200)) {
             this.turnos = response.data || [];
             console.log('Turnos cargados:', this.turnos.length);
           } else {
-            console.warn('No se pudieron cargar los turnos:', response.status);
+            console.warn('No se pudieron cargar los turnos:', response.status || response.status_code);
           }
           resolve();
         },
@@ -127,7 +135,7 @@ export class AuditDashboardComponent implements OnInit {
     });
   }
 
-  /** Procesa las estadísticas para mostrar */
+  /** Procesa las estadísticas para mostrar (formato array legacy) */
   private processStatistics(data: any[]): any {
     const stats: any = {
       totalAcciones: 0,
@@ -145,7 +153,6 @@ export class AuditDashboardComponent implements OnInit {
       if (Array.isArray(item) && item.length >= 2) {
         const key = item[0];
         const value = item[1];
-        
         if (key.includes('ACTION_')) {
           stats.porAccion[key.replace('ACTION_', '')] = value;
           stats.totalAcciones += value;
@@ -154,7 +161,56 @@ export class AuditDashboardComponent implements OnInit {
         }
       }
     });
+    return stats;
+  }
 
+  /** Procesa las estadísticas para mostrar (formato objeto dashboard) */
+  private processDashboardStatistics(data: any): any {
+    console.log('Procesando estadísticas del dashboard:', data);
+    
+    const stats: any = {
+      totalAcciones: 0,
+      porAccion: {},
+      porUsuario: {},
+      resumen: {},
+    };
+    
+    // Procesar actionStatistics (array de arrays)
+    if (Array.isArray(data.actionStatistics)) {
+      console.log('Procesando actionStatistics:', data.actionStatistics);
+      data.actionStatistics.forEach((item: any) => {
+        if (Array.isArray(item) && item.length >= 2) {
+          const key = item[0];
+          const value = item[1];
+          const actionKey = key.replace('ACTION_', '');
+          stats.porAccion[actionKey] = value;
+          stats.totalAcciones += value;
+          console.log(`Acción ${actionKey}: ${value}`);
+        }
+      });
+    }
+    
+    // Procesar userStatistics (array de arrays)
+    if (Array.isArray(data.userStatistics)) {
+      console.log('Procesando userStatistics:', data.userStatistics);
+      data.userStatistics.forEach((item: any) => {
+        if (Array.isArray(item) && item.length >= 2) {
+          const key = item[0];
+          const value = item[1];
+          stats.porUsuario[key] = value;
+          console.log(`Usuario ${key}: ${value}`);
+        }
+      });
+    }
+    
+    // Copiar cualquier otro resumen si existe
+    Object.keys(data).forEach(key => {
+      if (!['actionStatistics', 'userStatistics'].includes(key)) {
+        stats.resumen[key] = data[key];
+      }
+    });
+    
+    console.log('Estadísticas procesadas finales:', stats);
     return stats;
   }
 
@@ -228,6 +284,12 @@ export class AuditDashboardComponent implements OnInit {
     return Math.round((count / this.auditStatistics.totalAcciones) * 100);
   }
 
+  /** Obtiene el porcentaje de turnos respecto al total */
+  getTurnoPercentage(count: number): number {
+    if (this.totalTurnos === 0) return 0;
+    return Math.round((count / this.totalTurnos) * 100);
+  }
+
   /** Obtiene la clase de color para las barras de progreso */
   getProgressBarClass(action: string): string {
     const classes: any = {
@@ -239,5 +301,48 @@ export class AuditDashboardComponent implements OnInit {
       'DELETED': 'bg-dark'
     };
     return classes[action] || 'bg-secondary';
+  }
+
+  // === GETTERS PARA ESTADÍSTICAS DE TURNOS ===
+
+  /** Obtiene el total de turnos */
+  get totalTurnos(): number {
+    return this.turnos.length;
+  }
+
+  /** Obtiene turnos agrupados por estado */
+  get turnosPorEstado(): any {
+    const estadisticas: any = {};
+    
+    this.turnos.forEach(turno => {
+      const estado = turno.estado || 'SIN_ESTADO';
+      estadisticas[estado] = (estadisticas[estado] || 0) + 1;
+    });
+    
+    return estadisticas;
+  }
+
+  /** Obtiene turnos por especialidad */
+  get turnosPorEspecialidad(): any {
+    const estadisticas: any = {};
+    
+    this.turnos.forEach(turno => {
+      const especialidad = turno.especialidadStaffMedico || 'Sin especialidad';
+      estadisticas[especialidad] = (estadisticas[especialidad] || 0) + 1;
+    });
+    
+    return estadisticas;
+  }
+
+  /** Obtiene turnos por centro de atención */
+  get turnosPorCentro(): any {
+    const estadisticas: any = {};
+    
+    this.turnos.forEach(turno => {
+      const centro = turno.nombreCentro || 'Sin centro';
+      estadisticas[centro] = (estadisticas[centro] || 0) + 1;
+    });
+    
+    return estadisticas;
   }
 }

@@ -172,12 +172,17 @@ export class TurnoService {
 
   /** Obtiene estadísticas generales de auditoría */
   getAuditStatistics(): Observable<DataPackage<any[]>> {
-    return this.http.get<DataPackage<any[]>>(`${this.url}/audit/statistics`);
+    return this.http.get<DataPackage<any[]>>(`rest/audit/statistics`);
+  }
+
+  /** Obtiene estadísticas del dashboard de auditoría */
+  getDashboardStatistics(): Observable<DataPackage<any>> {
+    return this.http.get<DataPackage<any>>(`rest/audit/dashboard`);
   }
 
   /** Obtiene logs recientes del sistema */
   getRecentAuditLogs(): Observable<DataPackage<AuditLog[]>> {
-    return this.http.get<DataPackage<AuditLog[]>>(`${this.url}/audit/recent`);
+    return this.http.get<DataPackage<AuditLog[]>>(`rest/audit/recent`);
   }
 
   // === MÉTODOS DE CONSULTA AVANZADA ===
