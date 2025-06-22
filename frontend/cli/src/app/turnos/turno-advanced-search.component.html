@@ -3,7 +3,10 @@
     <div class="col-12">
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Búsqueda Avanzada de Turnos</h3>
+          <h3 class="card-title">
+            <i [class]="getCurrentTipoVistaIcon()"></i> 
+            {{getCurrentTipoVistaLabel()}}
+          </h3>
           <div class="card-tools">
             <button type="button" class="btn btn-tool" (click)="showAdvancedFilters = !showAdvancedFilters">
               <i class="fas fa-filter"></i> Filtros Avanzados
@@ -12,47 +15,92 @@
         </div>
         
         <div class="card-body">
+          <!-- Selector de tipo de vista/reporte -->
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="tipoVista" class="form-label">
+                <i class="fas fa-eye"></i> Tipo de Vista/Reporte
+              </label>
+              <select id="tipoVista" class="form-select" [(ngModel)]="tipoVista" (change)="onTipoVistaChange()">
+                <option *ngFor="let tipo of tiposVista" [value]="tipo.value">
+                  {{tipo.label}}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-8" *ngIf="tipoVista !== 'busqueda'">
+              <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle"></i>
+                <strong>Modo Reporte:</strong> Los filtros de fecha son obligatorios para generar reportes.
+              </div>
+            </div>
+          </div>
+
           <!-- Filtros básicos siempre visibles -->
           <div class="row mb-3">
-            <div class="col-md-3">
+            <!-- Estado - Solo para búsqueda normal -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda'">
               <label for="estado" class="form-label">Estado</label>
               <select id="estado" class="form-select" [(ngModel)]="filter.estado" (change)="search()">
                 <option *ngFor="let estado of estadosDisponibles" [value]="estado.value">{{estado.label}}</option>
               </select>
             </div>
-            <div class="col-md-3">
-              <label for="fechaDesde" class="form-label">Fecha Desde</label>
-              <input type="date" id="fechaDesde" class="form-control" [(ngModel)]="filter.fechaDesde" (change)="search()">
+            
+            <!-- Fechas - Siempre visibles pero obligatorias para reportes -->
+            <div [class]="tipoVista === 'busqueda' ? 'col-md-3' : 'col-md-4'">
+              <label for="fechaDesde" class="form-label">
+                Fecha Desde 
+                <span class="text-danger" *ngIf="tipoVista !== 'busqueda'">*</span>
+              </label>
+              <input type="date" id="fechaDesde" class="form-control" [(ngModel)]="filter.fechaDesde" (change)="onFilterChange()">
             </div>
-            <div class="col-md-3">
-              <label for="fechaHasta" class="form-label">Fecha Hasta</label>
-              <input type="date" id="fechaHasta" class="form-control" [(ngModel)]="filter.fechaHasta" (change)="search()">
+            <div [class]="tipoVista === 'busqueda' ? 'col-md-3' : 'col-md-4'">
+              <label for="fechaHasta" class="form-label">
+                Fecha Hasta 
+                <span class="text-danger" *ngIf="tipoVista !== 'busqueda'">*</span>
+              </label>
+              <input type="date" id="fechaHasta" class="form-control" [(ngModel)]="filter.fechaHasta" (change)="onFilterChange()">
             </div>
-            <div class="col-md-3">
+            
+            <!-- Nombre Paciente - Solo para búsqueda normal -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda'">
               <label for="nombrePaciente" class="form-label">Nombre Paciente</label>
               <input type="text" id="nombrePaciente" class="form-control" [(ngModel)]="filter.nombrePaciente" 
                      placeholder="Buscar por nombre..." (keyup.enter)="search()">
+            </div>
+            
+            <!-- Consultorio - Para reportes que lo requieren -->
+            <div class="col-md-4" *ngIf="tipoVista === 'reporte-dia-consultorio' || tipoVista === 'reporte-cancelaciones'">
+              <label for="nombreConsultorio" class="form-label">Consultorio</label>
+              <input type="text" id="nombreConsultorio" class="form-control" [(ngModel)]="filter.nombreConsultorio" 
+                     placeholder="Filtrar por consultorio..." (change)="onFilterChange()">
             </div>
           </div>
 
           <!-- Filtros avanzados (colapsable) -->
           <div class="row mb-3" *ngIf="showAdvancedFilters">
-            <div class="col-md-3">
+            <!-- Médico - Visible según el tipo de vista -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda' || tipoVista === 'reporte-especialidad-medico'">
               <label for="nombreMedico" class="form-label">Nombre Médico</label>
               <input type="text" id="nombreMedico" class="form-control" [(ngModel)]="filter.nombreMedico" 
-                     placeholder="Buscar por médico..." (keyup.enter)="search()">
+                     placeholder="Buscar por médico..." (keyup.enter)="tipoVista === 'busqueda' ? search() : onFilterChange()">
             </div>
-            <div class="col-md-3">
+            
+            <!-- Especialidad - Visible según el tipo de vista -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda' || tipoVista === 'reporte-especialidad-medico' || tipoVista === 'reporte-cancelaciones'">
               <label for="nombreEspecialidad" class="form-label">Especialidad</label>
               <input type="text" id="nombreEspecialidad" class="form-control" [(ngModel)]="filter.nombreEspecialidad" 
-                     placeholder="Buscar por especialidad..." (keyup.enter)="search()">
+                     placeholder="Buscar por especialidad..." (keyup.enter)="tipoVista === 'busqueda' ? search() : onFilterChange()">
             </div>
-            <div class="col-md-3">
+            
+            <!-- Centro de Atención - Solo para búsqueda normal -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda'">
               <label for="nombreCentro" class="form-label">Centro de Atención</label>
               <input type="text" id="nombreCentro" class="form-control" [(ngModel)]="filter.nombreCentro" 
                      placeholder="Buscar por centro..." (keyup.enter)="search()">
             </div>
-            <div class="col-md-3">
+            
+            <!-- Usuario Modificación - Solo para búsqueda normal -->
+            <div class="col-md-3" *ngIf="tipoVista === 'busqueda'">
               <label for="usuarioModificacion" class="form-label">Usuario Modificación</label>
               <input type="text" id="usuarioModificacion" class="form-control" [(ngModel)]="filter.usuarioModificacion" 
                      placeholder="Usuario que modificó..." (keyup.enter)="search()">
@@ -63,17 +111,20 @@
           <div class="row mb-3">
             <div class="col-12">
               <div class="btn-group me-2">
-                <button type="button" class="btn btn-primary" (click)="search()" [disabled]="loading">
-                  <i class="fas fa-search" *ngIf="!loading"></i>
+                <!-- Botón dinámico según el tipo de vista -->
+                <button type="button" class="btn btn-primary" (click)="executeSearch()" [disabled]="loading">
+                  <i class="fas fa-search" *ngIf="!loading && tipoVista === 'busqueda'"></i>
+                  <i class="fas fa-chart-line" *ngIf="!loading && tipoVista !== 'busqueda'"></i>
                   <i class="fas fa-spinner fa-spin" *ngIf="loading"></i>
-                  Buscar
+                  {{tipoVista === 'busqueda' ? 'Buscar' : 'Generar Reporte'}}
                 </button>
                 <button type="button" class="btn btn-secondary" (click)="resetFilters()">
                   <i class="fas fa-undo"></i> Limpiar
                 </button>
               </div>
               
-              <div class="btn-group">
+              <!-- Botones de exportación -->
+              <div class="btn-group" *ngIf="(tipoVista === 'busqueda' && turnos.length > 0) || (tipoVista !== 'busqueda' && hasReportData())">
                 <button type="button" class="btn btn-success" (click)="exportCSV()" [disabled]="exportLoading">
                   <i class="fas fa-file-csv"></i> Exportar CSV
                 </button>
@@ -82,6 +133,110 @@
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- Mensaje de validación para reportes -->
+          <div class="alert alert-warning" *ngIf="tipoVista !== 'busqueda' && (!filter.fechaDesde || !filter.fechaHasta)">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Atención:</strong> Debe seleccionar las fechas "Desde" y "Hasta" para generar reportes.
+          </div>
+
+          <!-- Resultados de Reportes -->
+          <div class="card mb-3" *ngIf="tipoVista !== 'busqueda' && hasReportData()">
+            <div class="card-header bg-info text-white">
+              <h5 class="card-title mb-0">
+                <i [class]="getCurrentTipoVistaIcon()"></i> 
+                {{getCurrentTipoVistaLabel()}}
+              </h5>
+            </div>
+            <div class="card-body">
+              
+              <!-- Reporte: Turnos por Día y Consultorio -->
+              <div *ngIf="tipoVista === 'reporte-dia-consultorio'" class="table-responsive">
+                <table class="table table-striped table-sm">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Consultorio</th>
+                      <th>Médico</th>
+                      <th>Especialidad</th>
+                      <th>Total Turnos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of reportData.turnosPorDiaConsultorio">
+                      <td>{{formatDate(item.fecha)}}</td>
+                      <td>{{item.consultorio}}</td>
+                      <td>{{item.medico}}</td>
+                      <td>{{item.especialidad}}</td>
+                      <td><span class="badge bg-primary">{{item.cantidad}}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Reporte: Turnos por Especialidad y Médico -->
+              <div *ngIf="tipoVista === 'reporte-especialidad-medico'" class="table-responsive">
+                <table class="table table-striped table-sm">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Médico</th>
+                      <th>Especialidad</th>
+                      <th>Total Turnos</th>
+                      <th>Atendidos</th>
+                      <th>Cancelados</th>
+                      <th>Reagendados</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of reportData.turnosPorEspecialidadMedico">
+                      <td>{{item.medico}}</td>
+                      <td>{{item.especialidad}}</td>
+                      <td><span class="badge bg-info">{{item.totalTurnos}}</span></td>
+                      <td><span class="badge bg-success">{{item.turnosAtendidos}}</span></td>
+                      <td><span class="badge bg-danger">{{item.turnosCancelados}}</span></td>
+                      <td><span class="badge bg-warning">{{item.turnosReagendados}}</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Reporte: Cancelaciones y Reprogramaciones -->
+              <div *ngIf="tipoVista === 'reporte-cancelaciones'" class="table-responsive">
+                <table class="table table-striped table-sm">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Paciente</th>
+                      <th>Médico</th>
+                      <th>Especialidad</th>
+                      <th>Estado Final</th>
+                      <th>Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let item of reportData.cancelacionesReprogramaciones">
+                      <td>{{formatDate(item.fecha)}}</td>
+                      <td>{{item.paciente}}</td>
+                      <td>{{item.medico}}</td>
+                      <td>{{item.especialidad}}</td>
+                      <td>
+                        <span [class]="getEstadoClass(item.estadoFinal)">
+                          {{getEstadoLabel(item.estadoFinal)}}
+                        </span>
+                      </td>
+                      <td>{{item.motivo || 'Sin especificar'}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mensaje si no hay datos de reporte -->
+          <div class="alert alert-info" *ngIf="tipoVista !== 'busqueda' && !hasReportData() && !loading">
+            <i class="fas fa-info-circle"></i> 
+            {{hasExecutedSearch() ? 'No se encontraron datos para el reporte seleccionado con los filtros aplicados.' : 'Haga clic en "Generar Reporte" para visualizar los datos.'}}
           </div>
 
           <!-- Tabla de resultados -->
