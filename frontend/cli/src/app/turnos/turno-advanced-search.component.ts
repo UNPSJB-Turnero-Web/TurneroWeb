@@ -5,10 +5,27 @@ import { Router } from '@angular/router';
 import { TurnoService } from './turno.service';
 import { Turno, TurnoFilter, AuditLog } from './turno';
 import { DataPackage } from '../data.package';
+import { AgendaService } from '../agenda/agenda.service';
 
 // Declaraciones para librerías externas
 declare var html2canvas: any;
 declare var jsPDF: any;
+
+// Interface para slots disponibles
+interface SlotDisponible {
+  id: number;
+  fecha: string;
+  horaInicio: string;
+  horaFin: string;
+  staffMedicoId: number;
+  staffMedicoNombre: string;
+  staffMedicoApellido: string;
+  especialidadStaffMedico: string;
+  consultorioId: number;
+  consultorioNombre: string;
+  centroId: number;
+  nombreCentro: string;
+}
 
 @Component({
   selector: 'app-turno-advanced-search',
@@ -68,6 +85,17 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   };
   validNextStates: string[] = [];
   
+  // Modal de reagendamiento
+  showReagendarModal: boolean = false;
+  isLoadingSlots: boolean = false;
+  slotsDisponibles: SlotDisponible[] = [];
+  slotsPorFecha: { [fecha: string]: SlotDisponible[] } = {};
+  fechasOrdenadas: string[] = [];
+  slotSeleccionado: SlotDisponible | null = null;
+  motivoReagendamiento: string = '';
+  isProcessingReagendar: boolean = false;
+  errorMessageReagendar: string = '';
+  
   // Auditoría
   auditHistory: AuditLog[] = [];
   auditStatistics: any = {};
@@ -98,7 +126,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   constructor(
     private turnoService: TurnoService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private agendaService: AgendaService
   ) {}
 
   // === MÉTODOS UTILITARIOS ===
@@ -353,11 +382,16 @@ export class TurnoAdvancedSearchComponent implements OnInit {
       return;
     }
 
-    // Validar motivo para cancelaciones y reagendamientos
-    if ((this.changeStateForm.nuevoEstado === 'CANCELADO' || 
-         this.changeStateForm.nuevoEstado === 'REAGENDADO') && 
+    // Si selecciona REAGENDADO, abrir modal de reagendamiento
+    if (this.changeStateForm.nuevoEstado === 'REAGENDADO') {
+      this.openReagendarModal();
+      return;
+    }
+
+    // Validar motivo para cancelaciones
+    if (this.changeStateForm.nuevoEstado === 'CANCELADO' && 
         !this.changeStateForm.motivo?.trim()) {
-      alert('El motivo es obligatorio para cancelaciones y reagendamientos');
+      alert('El motivo es obligatorio para cancelaciones');
       return;
     }
 
@@ -1715,4 +1749,172 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     }
   }
 
+  // === MÉTODOS DE REAGENDAMIENTO ===
+
+  /** Abre el modal de reagendamiento */
+  openReagendarModal(): void {
+    if (!this.selectedTurno) return;
+    
+    this.showReagendarModal = true;
+    this.showChangeStateModal = false; // Cerrar el modal anterior
+    this.motivoReagendamiento = '';
+    this.slotSeleccionado = null;
+    this.errorMessageReagendar = '';
+    
+    // Cargar slots disponibles del mismo médico
+    if (this.selectedTurno.staffMedicoId) {
+      this.cargarSlotsDisponibles(this.selectedTurno.staffMedicoId);
+    }
+  }
+
+  /** Cierra el modal de reagendamiento */
+  closeReagendarModal(): void {
+    this.showReagendarModal = false;
+    this.slotsDisponibles = [];
+    this.slotsPorFecha = {};
+    this.fechasOrdenadas = [];
+    this.slotSeleccionado = null;
+    this.motivoReagendamiento = '';
+    this.isLoadingSlots = false;
+    this.isProcessingReagendar = false;
+    this.errorMessageReagendar = '';
+  }
+
+  /** Carga slots disponibles del médico */
+  cargarSlotsDisponibles(staffMedicoId: number): void {
+    this.isLoadingSlots = true;
+    this.errorMessageReagendar = '';
+
+    this.agendaService.obtenerSlotsDisponiblesPorMedico(staffMedicoId, 4).subscribe({
+      next: (response: any) => {
+        // El backend devuelve un Response object con data
+        const slots = response.data || response;
+        
+        this.slotsDisponibles = slots.filter((slot: any) => {
+          // Filtrar slots que no sean el turno actual
+          if (!this.selectedTurno) return true;
+          
+          const currentDateTime = new Date(`${this.selectedTurno.fecha}T${this.selectedTurno.horaInicio}`);
+          const slotDateTime = new Date(`${slot.fecha}T${slot.horaInicio}`);
+          return slotDateTime.getTime() !== currentDateTime.getTime();
+        });
+        
+        console.log('Slots disponibles cargados:', this.slotsDisponibles);
+        this.agruparSlotsPorFecha();
+        this.isLoadingSlots = false;
+      },
+      error: (error: any) => {
+        console.error('Error cargando slots disponibles:', error);
+        this.errorMessageReagendar = 'No se pudieron cargar los horarios disponibles.';
+        this.isLoadingSlots = false;
+      }
+    });
+  }
+
+  /** Agrupa slots por fecha */
+  agruparSlotsPorFecha(): void {
+    this.slotsPorFecha = {};
+    
+    // Agrupar slots por fecha
+    this.slotsDisponibles.forEach(slot => {
+      if (!this.slotsPorFecha[slot.fecha]) {
+        this.slotsPorFecha[slot.fecha] = [];
+      }
+      this.slotsPorFecha[slot.fecha].push(slot);
+    });
+    
+    // Ordenar fechas y horarios dentro de cada fecha
+    this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
+    
+    // Ordenar por horarios dentro de cada fecha
+    Object.keys(this.slotsPorFecha).forEach(fecha => {
+      this.slotsPorFecha[fecha].sort((a, b) => {
+        return a.horaInicio.localeCompare(b.horaInicio);
+      });
+    });
+  }
+
+  /** Selecciona un slot para reagendar */
+  seleccionarSlot(slot: SlotDisponible): void {
+    this.slotSeleccionado = slot;
+    console.log('Slot seleccionado para reagendar:', slot);
+  }
+
+  /** Cancela la selección del slot */
+  cancelarSeleccionSlot(): void {
+    this.slotSeleccionado = null;
+    this.motivoReagendamiento = '';
+  }
+
+  /** Confirma el reagendamiento */
+  confirmarReagendamiento(): void {
+    if (!this.selectedTurno || !this.slotSeleccionado) return;
+
+    // Validar motivo
+    if (!this.motivoReagendamiento || this.motivoReagendamiento.trim().length < 5) {
+      this.errorMessageReagendar = 'Debe ingresar un motivo de al menos 5 caracteres para reagendar el turno';
+      return;
+    }
+
+    this.isProcessingReagendar = true;
+    this.errorMessageReagendar = '';
+
+    // Obtener el usuario actual
+    const userInfo = this.getCurrentUser();
+    const currentUser = userInfo.user;
+
+    // Usar el nuevo sistema de updateEstado para reagendamiento
+    this.turnoService.updateEstado(this.selectedTurno.id!, 'REAGENDADO', this.motivoReagendamiento.trim(), currentUser).subscribe({
+      next: (response) => {
+        console.log('Estado cambiado a REAGENDADO exitosamente:', response);
+        
+        // Ahora crear el nuevo turno con los datos seleccionados
+        const nuevoTurno = {
+          fecha: this.slotSeleccionado!.fecha,
+          horaInicio: this.slotSeleccionado!.horaInicio,
+          horaFin: this.slotSeleccionado!.horaFin,
+          pacienteId: this.selectedTurno!.pacienteId,
+          staffMedicoId: this.slotSeleccionado!.staffMedicoId,
+          consultorioId: this.slotSeleccionado!.consultorioId,
+          estado: 'PROGRAMADO'
+        };
+
+        // Crear el nuevo turno
+        this.turnoService.create(nuevoTurno).subscribe({
+          next: (createResponse) => {
+            console.log('Nuevo turno creado exitosamente:', createResponse);
+            this.isProcessingReagendar = false;
+            
+            alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
+            
+            this.closeReagendarModal();
+            this.closeChangeStateModal();
+            this.search(); // Recargar la tabla
+          },
+          error: (createError) => {
+            console.error('Error creando nuevo turno:', createError);
+            this.isProcessingReagendar = false;
+            this.errorMessageReagendar = 'Error al crear el nuevo turno. El turno original fue marcado como reagendado, pero no se pudo crear la nueva cita.';
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error marcando turno como reagendado:', error);
+        this.isProcessingReagendar = false;
+        this.errorMessageReagendar = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
+      }
+    });
+  }
+
+  /** Formatea una fecha para mostrar */
+  formatearFecha(fecha: string): string {
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
+    };
+    return fechaObj.toLocaleDateString('es-ES', options);
+  }
 }

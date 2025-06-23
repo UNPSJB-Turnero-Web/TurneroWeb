@@ -303,3 +303,198 @@
   width: 0.875rem;
   height: 0.875rem;
 }
+
+/* === ESTILOS PARA MODAL DE REAGENDAMIENTO === */
+
+.modal-xl {
+  max-width: 1200px;
+}
+
+/* Información del turno actual */
+.current-appointment .card {
+  border-left: 4px solid #007bff;
+}
+
+/* Loading y No slots */
+.loading-slots {
+  padding: 3rem;
+  color: #6c757d;
+}
+
+.no-slots {
+  padding: 3rem;
+}
+
+/* Grupos de fechas */
+.fecha-group {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #f8f9fa;
+}
+
+.fecha-header {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+}
+
+.fecha-title {
+  color: #495057;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Slots cards */
+.slot-card {
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  position: relative;
+  min-height: 120px;
+}
+
+.slot-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.slot-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.slot-time {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-location {
+  margin-bottom: 0.75rem;
+}
+
+.location-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.slot-status {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.slot-status.disponible {
+  background: #28a745;
+  color: white;
+}
+
+.slot-check {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.slot-card.selected .slot-location,
+.slot-card.selected .slot-status {
+  opacity: 0.9;
+}
+
+/* Motivo section */
+.motivo-section {
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.char-counter {
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+/* Confirmation section */
+.confirmation-section {
+  background: rgba(40, 167, 69, 0.05);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.change-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding-top: 2rem;
+}
+
+.appointment-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.appointment-summary.old {
+  background: #fff3cd;
+  border: 2px solid #ffeaa7;
+}
+
+.appointment-summary.new {
+  background: #d4edda;
+  border: 2px solid #28a745;
+}
+
+.appointment-summary i {
+  font-size: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-xl {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  .slot-card {
+    margin-bottom: 1rem;
+  }
+  
+  .change-arrow {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .appointment-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+}

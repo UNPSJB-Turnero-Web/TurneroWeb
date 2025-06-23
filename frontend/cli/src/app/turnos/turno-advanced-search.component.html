@@ -303,9 +303,7 @@
                               [disabled]="turno.estado === 'CANCELADO' || turno.estado === 'COMPLETADO' || turno.estado === 'COMPLETO'">
                         <i class="fas fa-exchange-alt"></i>
                       </button>
-                      <button type="button" class="btn btn-outline-warning" (click)="editTurno(turno)" title="Editar">
-                        <i class="fas fa-edit"></i>
-                      </button>
+                
                       <button type="button" class="btn btn-outline-success" 
                               (click)="verifyIntegrity(turno.id!)" 
                               title="Verificar integridad"
@@ -498,13 +496,20 @@
               </select>
             </div>
 
-            <div class="mb-3" *ngIf="changeStateForm.nuevoEstado === 'CANCELADO' || changeStateForm.nuevoEstado === 'REAGENDADO'">
+            <div class="mb-3" *ngIf="changeStateForm.nuevoEstado === 'CANCELADO'">
               <label for="motivo" class="form-label">
                 Motivo <span class="text-danger">*</span>
                 <small class="text-muted">(mínimo 5 caracteres)</small>
               </label>
               <textarea id="motivo" class="form-control" [(ngModel)]="changeStateForm.motivo" name="motivo" 
-                        rows="3" placeholder="Ingrese el motivo del cambio..." required></textarea>
+                        rows="3" placeholder="Ingrese el motivo de la cancelación..." required></textarea>
+            </div>
+
+            <div class="mb-3" *ngIf="changeStateForm.nuevoEstado === 'REAGENDADO'">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Reagendamiento:</strong> A continuación podrá seleccionar el nuevo horario y especificar el motivo del reagendamiento.
+              </div>
             </div>
 
             <div class="mb-3" *ngIf="changeStateForm.nuevoEstado && changeStateForm.nuevoEstado !== 'CANCELADO' && changeStateForm.nuevoEstado !== 'REAGENDADO'">
@@ -524,8 +529,9 @@
         <button type="button" class="btn btn-primary" (click)="changeState()" 
                 [disabled]="!changeStateForm.nuevoEstado || loading">
           <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-          <i *ngIf="!loading" class="fas fa-check"></i>
-          Cambiar Estado
+          <i *ngIf="!loading && changeStateForm.nuevoEstado === 'REAGENDADO'" class="fas fa-calendar-alt"></i>
+          <i *ngIf="!loading && changeStateForm.nuevoEstado !== 'REAGENDADO'" class="fas fa-check"></i>
+          {{changeStateForm.nuevoEstado === 'REAGENDADO' ? 'Continuar con Reagendamiento' : 'Cambiar Estado'}}
         </button>
       </div>
     </div>
@@ -534,3 +540,199 @@
 
 <!-- Backdrop del modal -->
 <div class="modal-backdrop fade" [class.show]="showChangeStateModal" *ngIf="showChangeStateModal"></div>
+
+<!-- Modal de Reagendamiento -->
+<div class="modal fade" [class.show]="showReagendarModal" [style.display]="showReagendarModal ? 'block' : 'none'" 
+     tabindex="-1" *ngIf="showReagendarModal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-calendar-check"></i> Reagendar Turno
+        </h5>
+        <button type="button" class="btn-close" (click)="closeReagendarModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Información del turno actual -->
+        <div class="current-appointment mb-4" *ngIf="selectedTurno">
+          <h6><i class="fas fa-info-circle"></i> Turno Actual</h6>
+          <div class="card">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p><strong>Fecha actual:</strong> {{formatDate(selectedTurno.fecha)}}</p>
+                  <p><strong>Hora:</strong> {{selectedTurno.horaInicio}} - {{selectedTurno.horaFin}}</p>
+                  <p><strong>Paciente:</strong> {{selectedTurno.nombrePaciente}} {{selectedTurno.apellidoPaciente}}</p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Médico:</strong> {{selectedTurno.staffMedicoNombre}} {{selectedTurno.staffMedicoApellido}}</p>
+                  <p><strong>Especialidad:</strong> {{selectedTurno.especialidadStaffMedico}}</p>
+                  <p><strong>Centro:</strong> {{selectedTurno.nombreCentro}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-slots text-center" *ngIf="isLoadingSlots">
+          <i class="fas fa-spinner fa-spin"></i>
+          Cargando horarios disponibles...
+        </div>
+
+        <!-- No Slots Available -->
+        <div class="no-slots text-center" *ngIf="!isLoadingSlots && slotsDisponibles.length === 0 && selectedTurno">
+          <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+          <h5>No hay horarios disponibles</h5>
+          <p class="text-muted">No se encontraron horarios disponibles para este médico en las próximas 4 semanas.</p>
+        </div>
+
+        <!-- Slots Agrupados por Fecha -->
+        <div class="slots-grouped" *ngIf="!isLoadingSlots && slotsDisponibles.length > 0">
+          <h6><i class="fas fa-calendar-alt"></i> Horarios Disponibles del Mismo Médico</h6>
+          <p class="text-muted mb-3">Selecciona un nuevo horario disponible:</p>
+          
+          <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group mb-4">
+            <!-- Header de fecha -->
+            <div class="fecha-header mb-2">
+              <h6 class="fecha-title">
+                <i class="fas fa-calendar-day"></i>
+                {{formatearFecha(fecha)}}
+              </h6>
+            </div>
+
+            <!-- Slots de la fecha -->
+            <div class="row">
+              <div class="col-md-4 mb-2" *ngFor="let slot of slotsPorFecha[fecha]">
+                <div class="slot-card" 
+                     [class.selected]="slotSeleccionado?.id === slot.id"
+                     (click)="seleccionarSlot(slot)">
+                  <div class="slot-time">
+                    <i class="fas fa-clock"></i>
+                    {{slot.horaInicio}} - {{slot.horaFin}}
+                  </div>
+                  
+                  <div class="slot-location">
+                    <div class="location-line">
+                      <i class="fas fa-door-open"></i>
+                      {{slot.consultorioNombre}}
+                    </div>
+                    <div class="location-line">
+                      <i class="fas fa-map-marker-alt"></i>
+                      {{slot.nombreCentro}}
+                    </div>
+                  </div>
+
+                  <div class="slot-status disponible">
+                    <i class="fas fa-check-circle"></i>
+                    Disponible
+                  </div>
+
+                  <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Motivo del Reagendamiento -->
+        <div class="motivo-section" *ngIf="slotSeleccionado">
+          <h6><i class="fas fa-comment-alt"></i> Motivo del Reagendamiento</h6>
+          <div class="mb-3">
+            <label for="motivoReagendamiento" class="form-label">
+              Indique el motivo por el cual reagenda el turno <span class="text-danger">*</span>
+              <small class="text-muted">(mínimo 5 caracteres)</small>
+            </label>
+            <textarea 
+              id="motivoReagendamiento" 
+              class="form-control"
+              [(ngModel)]="motivoReagendamiento" 
+              name="motivoReagendamiento"
+              rows="3" 
+              placeholder="Ej: Cambio en el horario médico, emergencia, conflicto con otra cita..."
+              maxlength="500">
+            </textarea>
+            <div class="char-counter text-muted small">
+              {{motivoReagendamiento.length || 0}}/500 caracteres
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmation Section -->
+        <div class="confirmation-section" *ngIf="slotSeleccionado && motivoReagendamiento && motivoReagendamiento.length >= 5">
+          <h6><i class="fas fa-check-circle"></i> Confirmar Reagendamiento</h6>
+          
+          <div class="row">
+            <div class="col-md-5">
+              <div class="change-from">
+                <small class="text-muted">Cambiar de:</small>
+                <div class="appointment-summary old">
+                  <i class="fas fa-calendar-minus"></i>
+                  <div>
+                    <strong>{{formatDate(selectedTurno?.fecha || '')}}</strong><br>
+                    <span>{{selectedTurno?.horaInicio}} - {{selectedTurno?.horaFin}}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-md-2 text-center">
+              <div class="change-arrow">
+                <i class="fas fa-arrow-right fa-2x text-primary"></i>
+              </div>
+            </div>
+            
+            <div class="col-md-5">
+              <div class="change-to">
+                <small class="text-muted">Cambiar a:</small>
+                <div class="appointment-summary new">
+                  <i class="fas fa-calendar-plus"></i>
+                  <div>
+                    <strong>{{formatDate(slotSeleccionado.fecha)}}</strong><br>
+                    <span>{{slotSeleccionado.horaInicio}} - {{slotSeleccionado.horaFin}}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Messages -->
+        <div class="alert alert-danger" *ngIf="errorMessageReagendar">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{errorMessageReagendar}}
+        </div>
+
+        <!-- Processing Message -->
+        <div class="alert alert-info" *ngIf="isProcessingReagendar">
+          <i class="fas fa-spinner fa-spin"></i>
+          Procesando reagendamiento...
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelarSeleccionSlot()" 
+                *ngIf="slotSeleccionado" [disabled]="isProcessingReagendar">
+          <i class="fas fa-times"></i>
+          Cancelar Selección
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="closeReagendarModal()" 
+                [disabled]="isProcessingReagendar">
+          Cerrar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="confirmarReagendamiento()" 
+                *ngIf="slotSeleccionado && motivoReagendamiento && motivoReagendamiento.length >= 5"
+                [disabled]="isProcessingReagendar">
+          <span *ngIf="isProcessingReagendar" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!isProcessingReagendar" class="fas fa-calendar-check"></i>
+          Confirmar Reagendamiento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del modal de reagendamiento -->
+<div class="modal-backdrop fade" [class.show]="showReagendarModal" *ngIf="showReagendarModal"></div>
