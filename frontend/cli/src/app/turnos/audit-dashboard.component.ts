@@ -26,7 +26,7 @@ export class AuditDashboardComponent implements OnInit {
   selectedUser: string = '';
   
   // Opciones para filtros
-  availableActions: string[] = ['CREATED', 'STATUS_CHANGED', 'CANCELED', 'CONFIRMED', 'RESCHEDULED', 'DELETED'];
+  availableActions: string[] = ['CREATE', 'UPDATE_STATUS', 'CANCEL', 'CONFIRM', 'RESCHEDULE', 'COMPLETE', 'DELETE'];
   
   constructor(
     private turnoService: TurnoService,
@@ -92,6 +92,9 @@ export class AuditDashboardComponent implements OnInit {
           if ((response.status && response.status === 1) || (response.status_code && response.status_code === 200)) {
             this.recentLogs = response.data || [];
             console.log('Logs recientes procesados:', this.recentLogs);
+            
+            // Extraer acciones únicas de los logs para el filtro
+            this.updateAvailableActions();
           } else {
             console.warn('Estado de respuesta no exitoso:', response.status || response.status_code);
           }
@@ -238,6 +241,13 @@ export class AuditDashboardComponent implements OnInit {
     this.loadDashboardData();
   }
 
+  /** Actualiza las acciones disponibles basándose en los logs recientes */
+  private updateAvailableActions(): void {
+    const uniqueActions = [...new Set(this.recentLogs.map(log => log.action))];
+    this.availableActions = uniqueActions.sort();
+    console.log('Acciones disponibles actualizadas:', this.availableActions);
+  }
+
   // === MÉTODOS AUXILIARES ===
 
   /** Formatea una fecha y hora para mostrar */
@@ -250,12 +260,13 @@ export class AuditDashboardComponent implements OnInit {
   /** Obtiene la clase CSS para el tipo de acción */
   getActionClass(action: string): string {
     const classes: any = {
-      'CREATED': 'badge bg-info',
-      'STATUS_CHANGED': 'badge bg-primary',
-      'CANCELED': 'badge bg-danger',
-      'CONFIRMED': 'badge bg-success',
-      'RESCHEDULED': 'badge bg-warning',
-      'DELETED': 'badge bg-dark'
+      'CREATE': 'badge bg-info',
+      'UPDATE_STATUS': 'badge bg-primary',
+      'CANCEL': 'badge bg-danger',
+      'CONFIRM': 'badge bg-success',
+      'RESCHEDULE': 'badge bg-warning',
+      'COMPLETE': 'badge bg-success',
+      'DELETE': 'badge bg-dark'
     };
     return classes[action] || 'badge bg-secondary';
   }
@@ -263,12 +274,13 @@ export class AuditDashboardComponent implements OnInit {
   /** Obtiene el icono para el tipo de acción */
   getActionIcon(action: string): string {
     const icons: any = {
-      'CREATED': 'fas fa-plus-circle',
-      'STATUS_CHANGED': 'fas fa-edit',
-      'CANCELED': 'fas fa-times-circle',
-      'CONFIRMED': 'fas fa-check-circle',
-      'RESCHEDULED': 'fas fa-calendar-alt',
-      'DELETED': 'fas fa-trash'
+      'CREATE': 'fas fa-plus-circle',
+      'UPDATE_STATUS': 'fas fa-edit',
+      'CANCEL': 'fas fa-times-circle',
+      'CONFIRM': 'fas fa-check-circle',
+      'RESCHEDULE': 'fas fa-calendar-alt',
+      'COMPLETE': 'fas fa-check-double',
+      'DELETE': 'fas fa-trash'
     };
     return icons[action] || 'fas fa-question-circle';
   }
@@ -293,12 +305,13 @@ export class AuditDashboardComponent implements OnInit {
   /** Obtiene la clase de color para las barras de progreso */
   getProgressBarClass(action: string): string {
     const classes: any = {
-      'CREATED': 'bg-info',
-      'STATUS_CHANGED': 'bg-primary',
-      'CANCELED': 'bg-danger',
-      'CONFIRMED': 'bg-success',
-      'RESCHEDULED': 'bg-warning',
-      'DELETED': 'bg-dark'
+      'CREATE': 'bg-info',
+      'UPDATE_STATUS': 'bg-primary',
+      'CANCEL': 'bg-danger',
+      'CONFIRM': 'bg-success',
+      'RESCHEDULE': 'bg-warning',
+      'COMPLETE': 'bg-success',
+      'DELETE': 'bg-dark'
     };
     return classes[action] || 'bg-secondary';
   }
