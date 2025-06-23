@@ -75,7 +75,7 @@ export interface TurnoFilter {
 // Interfaz para los logs de auditoría
 export interface AuditLog {
     id?: number;
-    turnoId: number;
+    turno: Turno;  // Cambiar de turnoId a turno completo
     action: string;
     previousStatus?: string;
     newStatus?: string;

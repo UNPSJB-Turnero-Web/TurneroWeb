@@ -294,9 +294,11 @@
                   </td>
                   <td>
                     <button type="button" class="btn btn-link btn-sm p-0" 
-                            (click)="goToTurnoDetail(log.turnoId)">
-                      #{{log.turnoId}}
+                            (click)="goToTurnoDetail(log.turno.id!)"
+                            *ngIf="log.turno.id">
+                      #{{log.turno.id}}
                     </button>
+                    <span *ngIf="!log.turno.id" class="text-muted">N/A</span>
                   </td>
                   <td>
                     <span [class]="getActionClass(log.action)">
@@ -321,9 +323,11 @@
                   </td>
                   <td>
                     <button type="button" class="btn btn-outline-primary btn-sm" 
-                            (click)="goToTurnoDetail(log.turnoId)" title="Ver turno">
+                            (click)="goToTurnoDetail(log.turno.id!)" title="Ver turno"
+                            *ngIf="log.turno.id">
                       <i class="fas fa-eye"></i>
                     </button>
+                    <span *ngIf="!log.turno.id" class="text-muted">-</span>
                   </td>
                 </tr>
                 <tr *ngIf="filteredLogs.length === 0 && !loading">
