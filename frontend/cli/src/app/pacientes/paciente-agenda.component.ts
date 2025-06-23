@@ -87,7 +87,7 @@ interface SlotDisponible {
               <div class="filtro-step" [class.active]="especialidadSeleccionada">
                 <div class="step-header">
                   <div class="step-number">1</div>
-                  <h4>Especialidad <span class="required">*</span></h4>
+                  <h4>Especialidad (Opcional)</h4>
                 </div>
                 <select 
                   class="form-control-paciente"
@@ -106,8 +106,7 @@ interface SlotDisponible {
 
               <!-- Filtro por Staff Médico (Opcional) -->
               <div class="filtro-step" 
-                   [class.active]="staffMedicoSeleccionado"
-                   [class.disabled]="!especialidadSeleccionada">
+                   [class.active]="staffMedicoSeleccionado">
                 <div class="step-header">
                   <div class="step-number">2</div>
                   <h4>Médico (Opcional)</h4>
@@ -116,7 +115,7 @@ interface SlotDisponible {
                   class="form-control-paciente"
                   [(ngModel)]="staffMedicoSeleccionado"
                   (change)="onStaffMedicoChange()"
-                  [disabled]="!especialidadSeleccionada || isLoadingStaffMedicos">
+                  [disabled]="isLoadingStaffMedicos">
                   <option value="">Todos los médicos</option>
                   <option *ngFor="let staff of staffMedicos" [value]="staff.id">
                     {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
@@ -129,8 +128,7 @@ interface SlotDisponible {
 
               <!-- Filtro por Centro de Atención (Opcional) -->
               <div class="filtro-step" 
-                   [class.active]="centroAtencionSeleccionado"
-                   [class.disabled]="!especialidadSeleccionada">
+                   [class.active]="centroAtencionSeleccionado">
                 <div class="step-header">
                   <div class="step-number">3</div>
                   <h4>Centro de Atención (Opcional)</h4>
@@ -139,7 +137,7 @@ interface SlotDisponible {
                   class="form-control-paciente"
                   [(ngModel)]="centroAtencionSeleccionado"
                   (change)="onCentroAtencionChange()"
-                  [disabled]="!especialidadSeleccionada || isLoadingCentros">
+                  [disabled]="isLoadingCentros">
                   <option value="">Todos los centros</option>
                   <option *ngFor="let centro of centrosAtencion" [value]="centro.id">
                     {{ centro.nombre }}
@@ -180,18 +178,12 @@ interface SlotDisponible {
                 <button 
                   type="button" 
                   class="btn btn-paciente-primary" 
-                  (click)="cargarTurnosConFiltros()"
-                  [disabled]="!especialidadSeleccionada || isLoadingTurnos">
+                  (click)="aplicarFiltros()"
+                  [disabled]="isLoadingTurnos">
                   <i class="fas fa-search"></i>
-                  {{ isLoadingTurnos ? 'Buscando...' : 'Buscar Turnos Disponibles' }}
+                  {{ isLoadingTurnos ? 'Buscando...' : 'Aplicar Filtros' }}
                 </button>
-                <button 
-                  type="button" 
-                  class="btn btn-paciente-secondary" 
-                  (click)="irASolicitarTurno()">
-                  <i class="fas fa-plus"></i>
-                  Solicitar Nuevo Turno
-                </button>
+
               </div>
 
               <!-- Ordenamiento por cercanía -->
@@ -257,6 +249,30 @@ interface SlotDisponible {
                 </div>
               </div>
             </div>
+            
+            <!-- ... resto del contenido del calendario ... -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MENSAJE INICIAL - INVITA A SELECCIONAR FILTROS -->
+      <div class="row" *ngIf="!showCalendar && !isLoadingTurnos">
+        <div class="col-12">
+          <div class="filtros-inicial-card">
+            <div class="filtros-inicial-content">
+              <i class="fas fa-filter"></i>
+              <h4>Selecciona tus preferencias</h4>
+              <p>Para ver los turnos disponibles, selecciona al menos uno de los filtros de arriba:</p>
+              <ul>
+                <li><strong>Especialidad:</strong> Busca turnos de una especialidad específica</li>
+                <li><strong>Médico:</strong> Busca turnos de un médico en particular</li>
+                <li><strong>Centro de Atención:</strong> Busca turnos en un centro específico</li>
+              </ul>
+              <p><small>Puedes combinar varios filtros para refinar tu búsqueda.</small></p>
+            </div>
+          </div>
+        </div>
+      </div>
             
             <div class="turnos-body">
               <!-- Loading State -->
@@ -351,8 +367,7 @@ interface SlotDisponible {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+
 
       <!-- MENSAJE CUANDO NO HAY TURNOS -->
       <div class="row" *ngIf="showCalendar && turnosDisponibles.length === 0">
@@ -521,7 +536,6 @@ interface SlotDisponible {
           </div>
         </div>
       </div>
-    </div>
   `,
   styles: [`
     /* HEADER */
@@ -1478,7 +1492,12 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   staffMedicoSeleccionado: number | null = null;
   centroAtencionSeleccionado: number | null = null;
 
-  // Listas para filtros
+  // Listas completas (sin filtrar)
+  especialidadesCompletas: Especialidad[] = [];
+  staffMedicosCompletos: StaffMedico[] = [];
+  centrosAtencionCompletos: CentroAtencion[] = [];
+  
+  // Listas filtradas que se muestran en los dropdowns
   especialidades: Especialidad[] = [];
   staffMedicos: StaffMedico[] = [];
   centrosAtencion: CentroAtencion[] = [];
@@ -1521,9 +1540,12 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Cargar días excepcionales primero
+    // Cargar todos los datos necesarios al inicio
     this.cargarDiasExcepcionales();
     this.cargarEspecialidades();
+    this.cargarTodosLosStaffMedicos(); // Cargar todos los staff médicos desde el inicio
+    this.cargarCentrosAtencion();
+    this.cargarTodosLosTurnos(); // Cargar TODOS los turnos disponibles al inicio (pero no mostrarlos)
     
     // Listener para reposicionar modal en resize
     this.resizeListener = () => {
@@ -1557,8 +1579,10 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.isLoadingEspecialidades = true;
     this.especialidadService.all().subscribe({
       next: (dataPackage: DataPackage<Especialidad[]>) => {
-        this.especialidades = dataPackage.data || [];
+        this.especialidadesCompletas = dataPackage.data || [];
+        this.especialidades = [...this.especialidadesCompletas]; // Inicialmente mostrar todas
         this.isLoadingEspecialidades = false;
+        console.log('✅ Especialidades cargadas:', this.especialidadesCompletas.length);
       },
       error: (error) => {
         console.error('Error cargando especialidades:', error);
@@ -1567,25 +1591,55 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Método llamado cuando cambia la especialidad
-  onEspecialidadChange() {
-    // Limpiar filtros dependientes
-    this.staffMedicoSeleccionado = null;
-    this.centroAtencionSeleccionado = null;
-    this.staffMedicos = [];
-    this.centrosAtencion = [];
-
-    if (this.especialidadSeleccionada) {
-      // Cargar staff médicos y centros para la especialidad seleccionada
-      this.cargarStaffMedicosPorEspecialidad();
-      this.cargarCentrosAtencion();
-      // Cargar turnos con la especialidad seleccionada
-      this.cargarTurnosConFiltros();
-    } else {
-      // Si no hay especialidad, ocultar calendario
-      this.showCalendar = false;
-      this.turnosDisponibles = [];
-    }
+  // Cargar TODOS los staff médicos al inicio (sin filtrar por especialidad)
+  cargarTodosLosStaffMedicos() {
+    this.isLoadingStaffMedicos = true;
+    this.staffMedicoService.all().subscribe({
+      next: (dataPackage: DataPackage<StaffMedico[]>) => {
+        this.staffMedicosCompletos = dataPackage.data || [];
+        this.staffMedicos = [...this.staffMedicosCompletos]; // Inicialmente mostrar todos
+        console.log('🏥 Todos los staff médicos cargados:', this.staffMedicosCompletos.length);
+        this.isLoadingStaffMedicos = false;
+      },
+      error: (error) => {
+        console.error('Error cargando staff médicos:', error);
+        this.isLoadingStaffMedicos = false;
+      }
+    });
+  }
+  // Cargar TODOS los turnos disponibles al inicio (sin filtros)
+  cargarTodosLosTurnos() {
+    console.log('🔄 Cargando TODOS los turnos disponibles...');
+    this.isLoadingTurnos = true;
+    
+    // Llamar al servicio sin filtros para obtener todos los eventos
+    this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
+      next: (eventosBackend) => {
+        console.log('✅ Turnos recibidos del backend:', eventosBackend.length);
+        
+        // Guardar TODOS los slots sin filtrar
+        this.slotsOriginales = this.mapEventosToSlots(eventosBackend);
+        console.log('✅ Slots originales mapeados:', this.slotsOriginales.length);
+        
+        // NO mostrar los turnos hasta que se aplique algún filtro
+        this.slotsDisponibles = [];
+        this.turnosDisponibles = [];
+        this.showCalendar = false; // NO mostrar calendario hasta que haya filtros
+        
+        this.isLoadingTurnos = false;
+        this.cdr.detectChanges();
+        
+        console.log('✅ Turnos cargados en memoria. Esperando filtros para mostrar.');
+      },
+      error: (err: unknown) => {
+        console.error('❌ Error al cargar todos los turnos:', err);
+        this.isLoadingTurnos = false;
+        this.showCalendar = false;
+        this.slotsOriginales = [];
+        this.slotsDisponibles = [];
+        this.turnosDisponibles = [];
+      }
+    });
   }
 
   // Cargar staff médicos filtrados por especialidad
@@ -1618,8 +1672,10 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.isLoadingCentros = true;
     this.centroAtencionService.all().subscribe({
       next: (dataPackage: any) => {
-        this.centrosAtencion = dataPackage.data || [];
+        this.centrosAtencionCompletos = dataPackage.data || [];
+        this.centrosAtencion = [...this.centrosAtencionCompletos]; // Inicialmente mostrar todos
         this.isLoadingCentros = false;
+        console.log('✅ Centros de atención cargados:', this.centrosAtencionCompletos.length);
       },
       error: (error) => {
         console.error('Error cargando centros de atención:', error);
@@ -1628,87 +1684,277 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Método llamado cuando cambia la especialidad
+  onEspecialidadChange() {
+    console.log('🔄 Especialidad cambiada a:', this.especialidadSeleccionada);
+    this.actualizarFiltrosDinamicos();
+    this.aplicarFiltros();
+  }
+
   // Método llamado cuando cambia el staff médico
   onStaffMedicoChange() {
     console.log('🔄 Staff médico cambiado a:', this.staffMedicoSeleccionado);
-    if (this.especialidadSeleccionada) {
-      // Recargar turnos con el nuevo filtro
-      this.cargarTurnosConFiltros();
-    }
+    this.actualizarFiltrosDinamicos();
+    this.aplicarFiltros();
   }
 
   // Método llamado cuando cambia el centro de atención
   onCentroAtencionChange() {
     console.log('🔄 Centro cambiado a:', this.centroAtencionSeleccionado);
-    if (this.especialidadSeleccionada) {
-      // Recargar turnos con el nuevo filtro
-      this.cargarTurnosConFiltros();
-    }
+    this.actualizarFiltrosDinamicos();
+    this.aplicarFiltros();
   }
 
-  // Cargar turnos con filtros aplicados
-  cargarTurnosConFiltros() {
-    if (!this.especialidadSeleccionada) {
-      console.log('❌ No se puede cargar turnos sin especialidad seleccionada');
-      this.showCalendar = false;
-      return;
+  // Actualizar filtros dinámicamente basado en las selecciones actuales
+  actualizarFiltrosDinamicos() {
+    console.log('🔄 Actualizando filtros dinámicos...');
+    console.log('  - Filtros actuales: Especialidad=', this.especialidadSeleccionada, 'Médico=', this.staffMedicoSeleccionado, 'Centro=', this.centroAtencionSeleccionado);
+    
+    // Obtener las opciones disponibles desde los slots originales
+    const especialidadesDisponibles = this.obtenerEspecialidadesDisponibles();
+    const medicosDisponibles = this.obtenerMedicosDisponibles();
+    const centrosDisponibles = this.obtenerCentrosDisponibles();
+
+    // Validar si las selecciones actuales siguen siendo válidas
+    if (this.especialidadSeleccionada && !especialidadesDisponibles.includes(this.especialidadSeleccionada)) {
+      console.log('⚠️ Especialidad seleccionada ya no es válida, reseteando...');
+      this.especialidadSeleccionada = '';
     }
 
-    console.log('🔄 Cargando turnos con filtros...');
+    if (this.staffMedicoSeleccionado && !medicosDisponibles.some(m => m.id === this.staffMedicoSeleccionado)) {
+      console.log('⚠️ Médico seleccionado ya no es válido, reseteando...');
+      this.staffMedicoSeleccionado = null;
+    }
+
+    if (this.centroAtencionSeleccionado && !centrosDisponibles.some(c => c.id === this.centroAtencionSeleccionado)) {
+      console.log('⚠️ Centro seleccionado ya no es válido, reseteando...');
+      this.centroAtencionSeleccionado = null;
+    }
+
+    // Actualizar especialidades basándose en médico y/o centro seleccionado
+    if (this.staffMedicoSeleccionado || this.centroAtencionSeleccionado) {
+      this.especialidades = this.especialidadesCompletas.filter(esp => 
+        especialidadesDisponibles.includes(esp.nombre)
+      );
+      console.log('  - Especialidades filtradas por médico/centro:', this.especialidades.length);
+    } else {
+      this.especialidades = [...this.especialidadesCompletas];
+      console.log('  - Especialidades sin filtrar:', this.especialidades.length);
+    }
+
+    // Actualizar médicos basándose en especialidad y/o centro seleccionado
+    if (this.especialidadSeleccionada || this.centroAtencionSeleccionado) {
+      this.staffMedicos = this.staffMedicosCompletos.filter(staff => 
+        medicosDisponibles.some(medico => medico.id === staff.id)
+      );
+      console.log('  - Médicos filtrados por especialidad/centro:', this.staffMedicos.length);
+    } else {
+      this.staffMedicos = [...this.staffMedicosCompletos];
+      console.log('  - Médicos sin filtrar:', this.staffMedicos.length);
+    }
+
+    // Actualizar centros basándose en especialidad y/o médico seleccionado
+    if (this.especialidadSeleccionada || this.staffMedicoSeleccionado) {
+      this.centrosAtencion = this.centrosAtencionCompletos.filter(centro => 
+        centrosDisponibles.some(c => c.id === centro.id)
+      );
+      console.log('  - Centros filtrados por especialidad/médico:', this.centrosAtencion.length);
+    } else {
+      this.centrosAtencion = [...this.centrosAtencionCompletos];
+      console.log('  - Centros sin filtrar:', this.centrosAtencion.length);
+    }
+
+    console.log('✅ Filtros dinámicos actualizados correctamente');
+  }
+
+  // Obtener especialidades disponibles basadas en los filtros actuales
+  obtenerEspecialidadesDisponibles(): string[] {
+    if (!this.slotsOriginales || this.slotsOriginales.length === 0) {
+      console.log('⚠️ No hay slots originales para obtener especialidades');
+      return [];
+    }
+
+    let slotsRelevantes = [...this.slotsOriginales];
+
+    // Filtrar por médico si está seleccionado
+    if (this.staffMedicoSeleccionado) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.staffMedicoId === this.staffMedicoSeleccionado
+      );
+      console.log(`🔍 Slots después de filtrar por médico (${this.staffMedicoSeleccionado}):`, slotsRelevantes.length);
+    }
+
+    // Filtrar por centro si está seleccionado
+    if (this.centroAtencionSeleccionado) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.centroId === this.centroAtencionSeleccionado
+      );
+      console.log(`🔍 Slots después de filtrar por centro (${this.centroAtencionSeleccionado}):`, slotsRelevantes.length);
+    }
+
+    // Extraer especialidades únicas
+    const especialidades = [...new Set(slotsRelevantes.map(slot => slot.especialidadStaffMedico))];
+    const especialidadesFiltradas = especialidades.filter(esp => esp && esp.trim());
+    
+    console.log('🎯 Especialidades disponibles:', especialidadesFiltradas);
+    return especialidadesFiltradas;
+  }
+
+  // Obtener médicos disponibles basados en los filtros actuales
+  obtenerMedicosDisponibles(): any[] {
+    if (!this.slotsOriginales || this.slotsOriginales.length === 0) {
+      console.log('⚠️ No hay slots originales para obtener médicos');
+      return [];
+    }
+
+    let slotsRelevantes = [...this.slotsOriginales];
+
+    // Filtrar por especialidad si está seleccionada
+    if (this.especialidadSeleccionada) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.especialidadStaffMedico === this.especialidadSeleccionada
+      );
+      console.log(`🔍 Slots después de filtrar por especialidad (${this.especialidadSeleccionada}):`, slotsRelevantes.length);
+    }
+
+    // Filtrar por centro si está seleccionado
+    if (this.centroAtencionSeleccionado) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.centroId === this.centroAtencionSeleccionado
+      );
+      console.log(`🔍 Slots después de filtrar por centro (${this.centroAtencionSeleccionado}):`, slotsRelevantes.length);
+    }
+
+    // Extraer médicos únicos
+    const medicosUnicos = new Map();
+    slotsRelevantes.forEach(slot => {
+      if (slot.staffMedicoId && !medicosUnicos.has(slot.staffMedicoId)) {
+        medicosUnicos.set(slot.staffMedicoId, {
+          id: slot.staffMedicoId,
+          nombre: slot.staffMedicoNombre,
+          apellido: slot.staffMedicoApellido
+        });
+      }
+    });
+
+    const medicosArray = Array.from(medicosUnicos.values());
+    console.log('🎯 Médicos disponibles:', medicosArray.map(m => `${m.nombre} ${m.apellido} (ID: ${m.id})`));
+    return medicosArray;
+  }
+
+  // Obtener centros disponibles basados en los filtros actuales
+  obtenerCentrosDisponibles(): any[] {
+    if (!this.slotsOriginales || this.slotsOriginales.length === 0) {
+      console.log('⚠️ No hay slots originales para obtener centros');
+      return [];
+    }
+
+    let slotsRelevantes = [...this.slotsOriginales];
+
+    // Filtrar por especialidad si está seleccionada
+    if (this.especialidadSeleccionada) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.especialidadStaffMedico === this.especialidadSeleccionada
+      );
+      console.log(`🔍 Slots después de filtrar por especialidad (${this.especialidadSeleccionada}):`, slotsRelevantes.length);
+    }
+
+    // Filtrar por médico si está seleccionado
+    if (this.staffMedicoSeleccionado) {
+      slotsRelevantes = slotsRelevantes.filter(slot => 
+        slot.staffMedicoId === this.staffMedicoSeleccionado
+      );
+      console.log(`🔍 Slots después de filtrar por médico (${this.staffMedicoSeleccionado}):`, slotsRelevantes.length);
+    }
+
+    // Extraer centros únicos
+    const centrosUnicos = new Map();
+    slotsRelevantes.forEach(slot => {
+      if (slot.centroId && !centrosUnicos.has(slot.centroId)) {
+        centrosUnicos.set(slot.centroId, {
+          id: slot.centroId,
+          nombre: slot.nombreCentro
+        });
+      }
+    });
+
+    const centrosArray = Array.from(centrosUnicos.values());
+    console.log('🎯 Centros disponibles:', centrosArray.map(c => `${c.nombre} (ID: ${c.id})`));
+    return centrosArray;
+  }
+
+  // Nueva función unificada para aplicar filtros (sin hacer llamadas al backend)
+  aplicarFiltros() {
+    console.log('🔍 Aplicando filtros localmente...');
+    console.log('- Slots originales disponibles:', this.slotsOriginales?.length || 0);
     console.log('- Especialidad:', this.especialidadSeleccionada);
     console.log('- Staff médico:', this.staffMedicoSeleccionado);
     console.log('- Centro:', this.centroAtencionSeleccionado);
+    
+    // Verificar si hay al menos un filtro aplicado
+    const hayFiltros = this.especialidadSeleccionada?.trim() || 
+                      this.staffMedicoSeleccionado || 
+                      this.centroAtencionSeleccionado;
+    
+    if (!hayFiltros) {
+      console.log('❌ No hay filtros aplicados. Ocultando calendario.');
+      this.slotsDisponibles = [];
+      this.turnosDisponibles = [];
+      this.showCalendar = false;
+      this.cdr.detectChanges();
+      return;
+    }
+    
+    if (!this.slotsOriginales || this.slotsOriginales.length === 0) {
+      console.log('❌ No hay slots originales para filtrar');
+      this.slotsDisponibles = [];
+      this.turnosDisponibles = [];
+      this.showCalendar = false;
+      this.cdr.detectChanges();
+      return;
+    }
 
-    this.isLoadingTurnos = true;
-    
-    // Preparar filtros para enviar al backend
-    const filtros: any = {
-      especialidad: this.especialidadSeleccionada
-    };
-    
+    let slotsFiltrados = [...this.slotsOriginales];
+
+    // Filtrar por especialidad si está seleccionada
+    if (this.especialidadSeleccionada && this.especialidadSeleccionada.trim()) {
+      const slotsPrevios = slotsFiltrados.length;
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.especialidadStaffMedico === this.especialidadSeleccionada
+      );
+      console.log(`- Después de filtrar por especialidad: ${slotsFiltrados.length} (era ${slotsPrevios})`);
+    }
+
+    // Filtrar por staff médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
-      filtros.staffMedicoId = this.staffMedicoSeleccionado;
+      const slotsPrevios = slotsFiltrados.length;
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.staffMedicoId === this.staffMedicoSeleccionado
+      );
+      console.log(`- Después de filtrar por staff médico: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
-    
+
+    // Filtrar por centro de atención si está seleccionado
     if (this.centroAtencionSeleccionado) {
-      filtros.centroId = this.centroAtencionSeleccionado;
+      const slotsPrevios = slotsFiltrados.length;
+      slotsFiltrados = slotsFiltrados.filter(slot =>
+        slot.centroId === this.centroAtencionSeleccionado
+      );
+      console.log(`- Después de filtrar por centro: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
+
+    // Actualizar las listas con los slots filtrados
+    this.slotsDisponibles = slotsFiltrados;
+    this.turnosDisponibles = slotsFiltrados;
     
-    console.log('📤 Enviando filtros al backend:', filtros);
+    // Mostrar calendario solo si hay filtros aplicados
+    this.showCalendar = true;
     
-    // Usar el AgendaService con filtros
-    this.agendaService.obtenerTodosLosEventos(this.semanas, filtros).subscribe({
-      next: (eventosBackend) => {
-        console.log('📅 Eventos recibidos del backend:', eventosBackend.length);
-        
-        // Transformar los eventos del backend en slots
-        const todosLosSlots = this.mapEventosToSlots(eventosBackend);
-        console.log('🎯 Slots mapeados:', todosLosSlots.length);
-        
-        // Guardar los slots (ya vienen filtrados del backend)
-        this.slotsOriginales = todosLosSlots;
-        this.slotsDisponibles = todosLosSlots;
-        this.turnosDisponibles = todosLosSlots;
-        
-        // Extraer días excepcionales de los eventos (evita request redundante)
-        this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
-        
-        this.agruparSlotsPorFecha();
-        this.showCalendar = true;
-        this.isLoadingTurnos = false;
-        this.cdr.detectChanges();
-        
-        console.log('✅ Turnos cargados y calendario mostrado');
-      },
-      error: (err: unknown) => {
-        console.error('❌ Error al cargar eventos:', err);
-        this.isLoadingTurnos = false;
-        this.showCalendar = true;
-        this.slotsDisponibles = [];
-        this.turnosDisponibles = [];
-        this.cdr.detectChanges();
-      }
-    });
+    // Reagrupar y mostrar
+    this.agruparSlotsPorFecha();
+    this.cdr.detectChanges();
+    
+    console.log('✅ Filtros aplicados. Slots finales:', this.slotsDisponibles.length);
   }
 
   // Transformar eventos del backend a slots
@@ -1762,81 +2008,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
     return slots;
   }
-
-  // Aplicar filtros a los slots
-  aplicarFiltrosSlots() {
-    console.log('🔍 Aplicando filtros a slots...');
-    console.log('- Slots originales:', this.slotsOriginales.length);
-    console.log('- Especialidad seleccionada:', this.especialidadSeleccionada);
-    console.log('- Staff médico seleccionado:', this.staffMedicoSeleccionado);
-    console.log('- Centro seleccionado:', this.centroAtencionSeleccionado);
-    
-    // Siempre empezar con todos los slots originales
-    let slotsFiltrados = [...this.slotsOriginales];
-
-    // Filtrar por especialidad (obligatorio)
-    if (this.especialidadSeleccionada) {
-      const slotsPrevios = slotsFiltrados.length;
-      slotsFiltrados = slotsFiltrados.filter(slot =>
-        slot.especialidadStaffMedico === this.especialidadSeleccionada
-      );
-      console.log(`- Después de filtrar por especialidad: ${slotsFiltrados.length} (era ${slotsPrevios})`);
-    }
-
-    // Filtrar por staff médico si está seleccionado (opcional)
-    if (this.staffMedicoSeleccionado) {
-      const slotsPrevios = slotsFiltrados.length;
-      
-      // Buscar el staff médico seleccionado para obtener el nombre del médico
-      const staffSeleccionado = this.staffMedicos.find(s => s.id === this.staffMedicoSeleccionado);
-      console.log('- Staff médico seleccionado objeto:', staffSeleccionado);
-      
-      if (staffSeleccionado && staffSeleccionado.medico) {
-        // Filtrar por nombre completo del médico (más confiable que ID)
-        const nombreCompleto = `${staffSeleccionado.medico.nombre} ${staffSeleccionado.medico.apellido}`.trim();
-        console.log('- Filtrando por nombre completo:', nombreCompleto);
-        
-        slotsFiltrados = slotsFiltrados.filter(slot => {
-          const nombreSlot = `${slot.staffMedicoNombre || ''} ${slot.staffMedicoApellido || ''}`.trim();
-          const match = nombreSlot === nombreCompleto;
-          console.log(`  Comparando: "${nombreSlot}" === "${nombreCompleto}" = ${match}`);
-          return match;
-        });
-      } else {
-        // Fallback: filtrar por ID si no encontramos el staff médico
-        console.log('- Fallback: filtrando por ID de staff médico');
-        console.log('- IDs de staff médico en slots:', [...new Set(slotsFiltrados.map(s => s.staffMedicoId))]);
-        
-        slotsFiltrados = slotsFiltrados.filter(slot => {
-          const match = slot.staffMedicoId === this.staffMedicoSeleccionado;
-          console.log(`  Slot ${slot.id}: ${slot.staffMedicoId} === ${this.staffMedicoSeleccionado} = ${match}`);
-          return match;
-        });
-      }
-      
-      console.log(`- Después de filtrar por staff médico: ${slotsFiltrados.length} (era ${slotsPrevios})`);
-    }
-
-    // Filtrar por centro de atención si está seleccionado (opcional)
-    if (this.centroAtencionSeleccionado) {
-      const slotsPrevios = slotsFiltrados.length;
-      slotsFiltrados = slotsFiltrados.filter(slot => {
-        const match = slot.centroId === this.centroAtencionSeleccionado;
-        console.log(`  Centro slot ${slot.id}: ${slot.centroId} === ${this.centroAtencionSeleccionado} = ${match}`);
-        return match;
-      });
-      console.log(`- Después de filtrar por centro: ${slotsFiltrados.length} (era ${slotsPrevios})`);
-    }
-
-    // Actualizar las listas con los slots filtrados
-    this.slotsDisponibles = slotsFiltrados;
-    this.turnosDisponibles = slotsFiltrados; // Para compatibilidad con el template
-    
-    console.log('✅ Filtros aplicados. Slots finales:', this.slotsDisponibles.length);
-  }
-
-  // Agrupar slots por fecha y ordenar (método mejorado con soporte para distancia)
-  // Este método ahora se maneja en la sección de geolocalización
 
   // Formatear fecha para mostrar
   formatearFecha(fecha: string): string {
@@ -1980,9 +2151,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.router.navigate(['/paciente-dashboard']);
   }
 
-  irASolicitarTurno() {
-    this.router.navigate(['/paciente-solicitar-turno']);
-  }
+
 
   // Actualizar slot reservado inmediatamente
   private actualizarSlotReservado(slotId: number) {
@@ -2042,7 +2211,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         
         // Recargar los turnos para obtener datos actualizados del servidor
         setTimeout(() => {
-          this.cargarTurnosConFiltros();
+          this.cargarTodosLosTurnos();
         }, 500);
       },
       error: (err: any) => {
@@ -2081,14 +2250,15 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.especialidadSeleccionada = '';
     this.staffMedicoSeleccionado = null;
     this.centroAtencionSeleccionado = null;
-    this.staffMedicos = [];
-    this.centrosAtencion = [];
-    this.showCalendar = false;
-    this.slotsOriginales = [];
+    
+    // Ocultar calendario cuando no hay filtros
     this.slotsDisponibles = [];
     this.turnosDisponibles = [];
+    this.showCalendar = false;
     this.slotsPorFecha = {};
     this.fechasOrdenadas = [];
+    
+    this.cdr.detectChanges();
   }
 
   // ==============================================
