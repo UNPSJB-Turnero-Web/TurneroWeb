@@ -61,29 +61,49 @@ public class ConsultorioDistribucionService {
 
     /**
      * Maneja el estado de asignaciones en lote (SRP)
+     * PROPÓSITO: Mantener consistencia durante procesamiento de múltiples médicos
+     * FUNCIONALIDAD: Evita conflictos al procesar asignaciones simultáneas
      */
     private class AsignacionLoteManager {
+        // ESTADO TEMPORAL: Mapa de asignaciones en memoria durante el lote
         private final Map<Integer, List<BloqueHorario>> asignacionesTemporales = new HashMap<>();
+        // BANDERA DE CONTROL: Indica si hay un proceso en lote activo
         private boolean procesoEnLoteActivo = false;
 
+        /**
+         * INICIO DE LOTE: Prepara el sistema para procesar múltiples asignaciones
+         */
         public void iniciarProcesoEnLote() {
             procesoEnLoteActivo = true;
-            asignacionesTemporales.clear();
+            asignacionesTemporales.clear(); // Limpia estado anterior
         }
 
+        /**
+         * FIN DE LOTE: Limpia el estado temporal y finaliza el proceso
+         */
         public void finalizarProcesoEnLote() {
             procesoEnLoteActivo = false;
-            asignacionesTemporales.clear();
+            asignacionesTemporales.clear(); // Libera memoria
         }
 
+        /**
+         * CONSULTA DE ESTADO: Verifica si hay un proceso en lote activo
+         */
         public boolean estaProcesoActivo() {
             return procesoEnLoteActivo;
         }
 
+        /**
+         * ACCESO A DATOS: Obtiene las asignaciones temporales del lote actual
+         */
         public Map<Integer, List<BloqueHorario>> getAsignacionesTemporales() {
             return asignacionesTemporales;
         }
 
+        /**
+         * ACTUALIZACIÓN TEMPORAL: Añade una asignación al estado temporal
+         * FUNCIÓN: Permite que futuras evaluaciones consideren estas asignaciones
+         */
         public void agregarAsignacionTemporal(Integer consultorioId, List<BloqueHorario> bloques) {
             asignacionesTemporales.computeIfAbsent(consultorioId, k -> new ArrayList<>()).addAll(bloques);
         }
@@ -91,9 +111,16 @@ public class ConsultorioDistribucionService {
 
     /**
      * Valida restricciones de asignación (SRP)
+     * PROPÓSITO: Verificar compatibilidad y detectar conflictos
+     * RESPONSABILIDAD: Aplicar todas las reglas de validación del negocio
      */
     private class ValidadorAsignacion {
         
+        /**
+         * VALIDACIÓN DE HORARIOS DE CONSULTORIO
+         * FUNCIÓN: Verifica que los bloques del médico encajen en los horarios del consultorio
+         * CARACTERÍSTICA: Aplica ajuste automático cuando es posible
+         */
         public List<BloqueHorario> validarHorariosConsultorio(
                 List<BloqueHorario> bloquesDelMedico, ConsultorioDTO consultorio) {
             List<BloqueHorario> bloquesValidos = new ArrayList<>();
@@ -104,14 +131,17 @@ public class ConsultorioDistribucionService {
             ));
             System.out.println(String.format("Bloques del médico a validar: %d", bloquesDelMedico.size()));
             
+            // PROCESAMIENTO INDIVIDUAL: Evalúa cada bloque del médico
             for (BloqueHorario bloque : bloquesDelMedico) {
                 System.out.println(String.format("Validando bloque: %s", bloque.toString()));
                 
+                // CLONACIÓN DEL BLOQUE: Evita modificar el original durante validación
                 BloqueHorario bloqueAjustado = new BloqueHorario(
                     bloque.getDia(), bloque.getInicio(), bloque.getFin(), 
                     bloque.getMedicoId(), bloque.getConsultorioId()
                 );
                 
+                // VALIDACIÓN CON AJUSTE AUTOMÁTICO
                 if (esBloqueCompatibleConConsultorio(bloqueAjustado, consultorio)) {
                     bloquesValidos.add(bloqueAjustado);
                     System.out.println("  ✓ Bloque ACEPTADO");
@@ -124,6 +154,11 @@ public class ConsultorioDistribucionService {
             return bloquesValidos;
         }
 
+        /**
+         * VALIDACIÓN DE CONFLICTOS ENTRE MÉDICOS
+         * FUNCIÓN: Elimina bloques que generarían solapamiento con otros médicos
+         * LÓGICA: Un bloque es válido si NO se solapa con ningún bloque de otro médico
+         */
         public List<BloqueHorario> validarConflictosMedicos(
                 List<BloqueHorario> bloquesCompatibles, List<BloqueHorario> asignacionesConsultorio) {
             return bloquesCompatibles.stream()
@@ -131,18 +166,30 @@ public class ConsultorioDistribucionService {
                 .collect(Collectors.toList());
         }
 
+        /**
+         * DETECCIÓN DE CONFLICTOS ESPECÍFICOS
+         * FUNCIÓN: Verifica si un bloque específico tiene conflicto con otros médicos
+         * EXCLUSIÓN: Ignora bloques del mismo médico (permitir múltiples bloques del mismo médico)
+         */
         private boolean tieneConflictoConOtrosMedicos(BloqueHorario bloque, List<BloqueHorario> asignaciones) {
             return asignaciones.stream()
-                .filter(asignacion -> !asignacion.getMedicoId().equals(bloque.getMedicoId()))
-                .anyMatch(asignacion -> verificarSolapamiento(bloque, asignacion));
+                .filter(asignacion -> !asignacion.getMedicoId().equals(bloque.getMedicoId())) // Excluir mismo médico
+                .anyMatch(asignacion -> verificarSolapamiento(bloque, asignacion)); // Verificar solapamiento
         }
     }
 
     /**
      * Calcula puntuaciones para asignaciones (SRP)
+     * PROPÓSITO: Aplicar algoritmo de puntuación multi-factor
+     * METODOLOGÍA: Combina 4 factores con pesos específicos para optimizar asignaciones
      */
     private class CalculadorPuntuacion {
         
+        /**
+         * ALGORITMO DE PUNTUACIÓN COMPLETA
+         * FÓRMULA: Puntuación = Factor1*0.35 + Factor2*0.30 + Factor3*0.25 + Factor4*0.10
+         * RANGO: 0.0 a 1.0 (donde 1.0 es la asignación perfecta)
+         */
         public double calcularPuntuacionCompleta(
                 StaffMedico medico, Consultorio consultorio, 
                 List<BloqueHorario> bloquesSinConflicto, List<BloqueHorario> bloquesTotales,
@@ -151,29 +198,39 @@ public class ConsultorioDistribucionService {
             
             double puntuacion = 0.0;
             
-            // Factor 1: Compatibilidad de horarios (35%)
+            // FACTOR 1: COMPATIBILIDAD DE HORARIOS (35% del peso total)
+            // Mide qué porcentaje de horarios del médico encajan en el consultorio
             double compatibilidad = (double) bloquesSinConflicto.size() / bloquesTotales.size();
             puntuacion += compatibilidad * 0.35;
             
-            // Factor 2: Distribución por porcentajes (30%)
+            // FACTOR 2: DISTRIBUCIÓN POR PORCENTAJES (30% del peso total)
+            // Prioriza médicos con mayor porcentaje de carga de trabajo configurado
             double factorPorcentaje = calcularFactorPorcentaje(medico, todosMedicos);
             puntuacion += factorPorcentaje * 0.30;
             
-            // Factor 3: Balance de carga entre consultorios (25%)
+            // FACTOR 3: BALANCE DE CARGA ENTRE CONSULTORIOS (25% del peso total)
+            // Evita sobrecargar consultorios específicos, promueve distribución equitativa
             double factorBalance = calcularFactorBalance(consultorio, asignacionesActuales);
             puntuacion += factorBalance * 0.25;
             
-            // Factor 4: Eficiencia de uso del consultorio (10%)
+            // FACTOR 4: EFICIENCIA DE USO DEL CONSULTORIO (10% del peso total)
+            // Favorece asignaciones que maximicen las horas de uso del consultorio
             double factorEficiencia = calcularFactorEficiencia(bloquesSinConflicto);
             puntuacion += factorEficiencia * 0.10;
             
             return puntuacion;
         }
 
+        /**
+         * FACTOR 2: CÁLCULO DE PUNTUACIÓN POR PORCENTAJES
+         * LÓGICA: Médicos con mayor porcentaje obtienen mayor puntuación
+         * NORMALIZACIÓN: Convierte porcentajes absolutos en puntuación relativa (0.0-1.0)
+         */
         private double calcularFactorPorcentaje(StaffMedico medico, List<StaffMedico> todosMedicos) {
             Double porcentajeMedico = medico.getPorcentaje();
-            if (porcentajeMedico == null) return 0.5;
+            if (porcentajeMedico == null) return 0.5; // Valor neutral si no hay datos
             
+            // SUMA TOTAL: Calcula la suma de todos los porcentajes para normalización
             double totalPorcentajes = todosMedicos.stream()
                 .mapToDouble(m -> {
                     Double porcentaje = m.getPorcentaje();
@@ -181,13 +238,22 @@ public class ConsultorioDistribucionService {
                 })
                 .sum();
             
-            if (totalPorcentajes == 0) return 0.5;
+            if (totalPorcentajes == 0) return 0.5; // Prevención de división por cero
             
+            // PROPORCIÓN RELATIVA: Calcula qué porcentaje representa este médico del total
             double proporcionRelativa = porcentajeMedico / totalPorcentajes;
+            
+            // TRANSFORMACIÓN A PUNTUACIÓN: Convierte proporción en puntuación (0.1 a 1.0)
             return Math.min(1.0, 0.1 + (proporcionRelativa * 0.9));
         }
 
+        /**
+         * FACTOR 3: CÁLCULO DEL BALANCE DE CARGA
+         * OBJETIVO: Distribuir equitativamente la carga entre consultorios
+         * ESTRATEGIA: Penalizar consultorios sobrecargados, premiar consultorios infrautilizados
+         */
         private double calcularFactorBalance(Consultorio consultorio, Map<Integer, List<BloqueHorario>> asignacionesActuales) {
+            // CONTEO DE MÉDICOS ÚNICOS: Cuántos médicos diferentes están asignados a este consultorio
             Set<Integer> medicosEnEsteConsultorio = asignacionesActuales
                 .getOrDefault(consultorio.getId(), new ArrayList<>())
                 .stream()
@@ -196,9 +262,10 @@ public class ConsultorioDistribucionService {
             
             int numMedicosActuales = medicosEnEsteConsultorio.size();
             
+            // CASO ESPECIAL: Consultorio vacío obtiene máxima puntuación
             if (numMedicosActuales == 0) return 1.0;
             
-            // Calcular ocupación promedio
+            // CÁLCULO DE OCUPACIÓN PROMEDIO: Referencia para equilibrio
             double ocupacionPromedio = asignacionesActuales.entrySet().stream()
                 .mapToDouble(entry -> entry.getValue().stream()
                     .map(BloqueHorario::getMedicoId)
@@ -206,62 +273,94 @@ public class ConsultorioDistribucionService {
                 .average()
                 .orElse(0.0);
             
+            // APLICACIÓN DE FÓRMULA DE BALANCE
             if (numMedicosActuales <= ocupacionPromedio) {
+                // CONSULTORIOS INFRAUTILIZADOS: Puntuación favorable
                 return 1.0 - (numMedicosActuales / (ocupacionPromedio + 1.0)) * 0.5;
             } else {
+                // CONSULTORIOS SOBRECARGADOS: Penalización proporcional
                 double sobrecarga = (numMedicosActuales - ocupacionPromedio) / ocupacionPromedio;
-                return Math.max(0.1, 0.5 - sobrecarga * 0.3);
+                return Math.max(0.1, 0.5 - sobrecarga * 0.3); // Mínimo 0.1 para evitar eliminación total
             }
         }
 
+        /**
+         * FACTOR 4: CÁLCULO DE EFICIENCIA DE USO
+         * FUNCIÓN: Mide cuántas horas totales se utilizarían del consultorio
+         * REFERENCIA: 40 horas semanales como uso óptimo de un consultorio
+         */
         private double calcularFactorEficiencia(List<BloqueHorario> bloquesSinConflicto) {
             if (bloquesSinConflicto.isEmpty()) return 0.0;
             
+            // SUMA DE HORAS: Calcula total de horas de todos los bloques
             double horasTotales = bloquesSinConflicto.stream()
                 .mapToDouble(bloque -> java.time.Duration.between(bloque.getInicio(), bloque.getFin()).toMinutes() / 60.0)
                 .sum();
             
+            // NORMALIZACIÓN: Convierte horas a puntuación (máximo 1.0 a las 40 horas)
             return Math.min(1.0, horasTotales / 40.0);
         }
     }
 
     /**
      * Estrategias de selección de consultorios (SRP)
+     * FUNCIÓN: Implementa diferentes estrategias para seleccionar el mejor consultorio según contexto
      */
     private class EstrategiaSeleccionConsultorio {
         
+        /**
+         * MÉTODO PRINCIPAL: Selecciona el mejor consultorio basándose en el contexto de disponibilidad
+         * LÓGICA: Si hay escasez (más médicos que consultorios) → prioriza médicos con mayor porcentaje
+         *        Si hay abundancia → selecciona por mayor puntuación
+         */
         public ResultadoAsignacion seleccionarMejorConsultorio(
                 List<ResultadoAsignacion> candidatos, StaffMedico medico, List<StaffMedico> todosMedicos) {
             
+            // VALIDACIÓN BÁSICA: Sin candidatos, no hay asignación posible
             if (candidatos.isEmpty()) return null;
             
-            // Determinar si hay escasez de consultorios
+            // ANÁLISIS DE CONTEXTO: Determinar si hay escasez de consultorios
             boolean hayEscasez = todosMedicos.size() > candidatos.size();
             
+            // ESTRATEGIA CONDICIONAL: Aplicar lógica según disponibilidad de recursos
             if (hayEscasez) {
+                // MODO ESCASEZ: Priorizar médicos según jerarquía (porcentajes)
                 return aplicarEstrategiaEscasez(candidatos, medico, todosMedicos);
             } else {
+                // MODO NORMAL: Seleccionar por mayor puntuación algoritmica
                 return candidatos.stream()
                     .max(Comparator.comparing(ResultadoAsignacion::getPuntuacion))
                     .orElse(null);
             }
         }
 
+        /**
+         * ESTRATEGIA DE ESCASEZ: Cuando hay más médicos que consultorios disponibles
+         * OBJETIVO: Optimizar asignaciones dando prioridad a médicos con mayor jerarquía
+         */
         private ResultadoAsignacion aplicarEstrategiaEscasez(
                 List<ResultadoAsignacion> candidatos, StaffMedico medico, List<StaffMedico> todosMedicos) {
             
+            // PASO 1: ORDENAMIENTO JERÁRQUICO
+            // Ordena candidatos por cantidad de bloques asignados (descendente) y puntuación (descendente)
             candidatos.sort((a, b) -> {
+                // CRITERIO PRIMARIO: Más bloques asignados = mejor opción
                 int bloquesComparacion = Integer.compare(
                     b.getBloquesAsignados().size(), 
                     a.getBloquesAsignados().size()
                 );
+                // CRITERIO SECUNDARIO: En caso de empate, usar puntuación
                 if (bloquesComparacion != 0) return bloquesComparacion;
                 return Double.compare(b.getPuntuacion(), a.getPuntuacion());
             });
             
+            // PASO 2: ANÁLISIS DEL PERFIL DEL MÉDICO
+            // Verificar si el médico tiene porcentaje configurado
             Double porcentajeMedico = medico.getPorcentaje();
-            if (porcentajeMedico == null) return candidatos.get(0);
+            if (porcentajeMedico == null) return candidatos.get(0); // Sin datos → asignar mejor opción
             
+            // PASO 3: CÁLCULO DE JERARQUÍA RELATIVA
+            // Determinar el porcentaje promedio de todos los médicos para establecer jerarquía
             double porcentajePromedio = todosMedicos.stream()
                 .mapToDouble(m -> {
                     Double porcentaje = m.getPorcentaje();
@@ -270,17 +369,23 @@ public class ConsultorioDistribucionService {
                 .average()
                 .orElse(0.0);
             
+            // PASO 4: CLASIFICACIÓN JERÁRQUICA
+            // Determinar si es médico de alto rango (20% superior al promedio)
             boolean esMedicoAltoRango = porcentajeMedico > porcentajePromedio * 1.2;
             
+            // PASO 5: APLICACIÓN DE ESTRATEGIA SEGÚN RANGO
             if (esMedicoAltoRango) {
+                // MÉDICOS ALTO RANGO: Obtienen la primera opción (mejor consultorio)
                 return candidatos.get(0);
             } else {
+                // MÉDICOS ESTÁNDAR: Optimización por balance entre puntuación y disponibilidad
                 return candidatos.stream()
-                    .filter(candidato -> !candidato.getBloquesAsignados().isEmpty())
+                    .filter(candidato -> !candidato.getBloquesAsignados().isEmpty()) // Solo candidatos válidos
                     .max(Comparator.comparing(candidato -> 
+                        // FÓRMULA PONDERADA: Puntuación * factor de disponibilidad
                         candidato.getPuntuacion() * (candidato.getBloquesAsignados().size() / 10.0)
                     ))
-                    .orElse(candidatos.get(0));
+                    .orElse(candidatos.get(0)); // Fallback: mejor opción disponible
             }
         }
     }
@@ -401,7 +506,7 @@ public class ConsultorioDistribucionService {
                 boolean esCompatible = esBloqueCompatibleConConsultorio(bloque, consultorio);
                 
                 if (esCompatible) {
-                    // El bloque fue ajustado automáticamente por esBloqueCompatibleConConsultorio
+                    // El bloque fue ajustado automáticamente por esBloqueCompatibleConConsultorioResultadoA
                     LocalTime nuevaHoraInicio = bloque.getInicio();
                     LocalTime nuevaHoraFin = bloque.getFin();
                     
@@ -557,55 +662,88 @@ public class ConsultorioDistribucionService {
     // MÉTODOS PRIVADOS DE LÓGICA DE NEGOCIO
     // ===============================================
 
+    // ===============================================
+    // MÉTODO PRINCIPAL DEL ALGORITMO DE ASIGNACIÓN
+    // ===============================================
+    
+    /**
+     * ALGORITMO COMPLETO: Ejecuta todo el proceso de asignación inteligente
+     * ENTRADA: Médico, lista de médicos, lista de consultorios
+     * SALIDA: Mejor asignación basada en múltiples criterios
+     */
     private ResultadoAsignacion ejecutarAlgoritmoCompleto(StaffMedico medico, List<StaffMedico> todosMedicos, List<Consultorio> consultorios) {
+        // FASE 1: OBTENCIÓN DEL ESTADO ACTUAL
+        // Recupera todas las asignaciones existentes (persistentes + temporales)
         Map<Integer, List<BloqueHorario>> asignacionesActuales = obtenerAsignacionesActuales();
+        
+        // FASE 2: EXTRACCIÓN DE DISPONIBILIDAD
+        // Convierte la disponibilidad del médico en bloques horarios procesables
         List<BloqueHorario> bloquesDelMedico = extraerBloquesHorarioDelMedico(medico);
         
+        // VALIDACIÓN CRÍTICA: Sin disponibilidad, no hay asignación posible
         if (bloquesDelMedico.isEmpty()) {
             return null;
         }
         
+        // FASE 3: EVALUACIÓN EXHAUSTIVA DE CANDIDATOS
+        // Recorre TODOS los consultorios y evalúa cada uno con el algoritmo completo
         List<ResultadoAsignacion> candidatosValidos = new ArrayList<>();
         
         for (Consultorio consultorio : consultorios) {
+            // EVALUACIÓN INDIVIDUAL: Aplica algoritmo completo a cada consultorio
             ResultadoAsignacion evaluacion = evaluarConsultorioParaMedico(
                 medico, consultorio, bloquesDelMedico, asignacionesActuales, todosMedicos, consultorios);
             
+            // FILTRO DE CALIDAD: Solo candidatos con puntuación positiva son válidos
             if (evaluacion != null && evaluacion.getPuntuacion() > 0) {
                 candidatosValidos.add(evaluacion);
             }
         }
         
+        // FASE 4: SELECCIÓN DEL MEJOR CANDIDATO
         if (!candidatosValidos.isEmpty()) {
+            // APLICACIÓN DE ESTRATEGIA: Selecciona según contexto (escasez vs abundancia)
             ResultadoAsignacion asignacionSeleccionada = estrategiaSeleccion.seleccionarMejorConsultorio(
                 candidatosValidos, medico, todosMedicos);
             
+            // FASE 5: ACTUALIZACIÓN DEL ESTADO DEL SISTEMA
             if (asignacionSeleccionada != null) {
+                // Actualiza el mapa dinámico para futuras evaluaciones en el mismo lote
                 actualizarAsignacionesDinamicas(asignacionesActuales, asignacionSeleccionada);
             }
             
             return asignacionSeleccionada;
         }
         
+        // RESULTADO NULO: No se encontró asignación válida
         return null;
     }
 
+    /**
+     * EVALUACIÓN INDIVIDUAL DE CONSULTORIO: Aplica algoritmo completo para un consultorio específico
+     * ENTRADA: Médico, consultorio, bloques del médico, estado actual, contexto completo
+     * SALIDA: Resultado de evaluación con puntuación y análisis completo
+     */
     private ResultadoAsignacion evaluarConsultorioParaMedico(
             StaffMedico medico, Consultorio consultorio, List<BloqueHorario> bloquesDelMedico,
             Map<Integer, List<BloqueHorario>> asignacionesActuales, 
             List<StaffMedico> todosMedicos, List<Consultorio> consultorios) {
         
         try {
+            // PASO 1: OBTENCIÓN DE DATOS DEL CONSULTORIO
+            // Convierte la entidad Consultorio a DTO con todos los horarios
             ConsultorioDTO consultorioDTO = consultorioService.findById(consultorio.getId()).orElse(null);
             if (consultorioDTO == null) {
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     new ArrayList<>(), 0.0, "DTO no encontrado");
             }
             
-            // Validar horarios de consultorio
+            // PASO 2: VALIDACIÓN DE COMPATIBILIDAD HORARIA
+            // Verifica que los horarios del médico encajen en los horarios del consultorio
             List<BloqueHorario> bloquesCompatibles = validadorAsignacion.validarHorariosConsultorio(
                 bloquesDelMedico, consultorioDTO);
             
+            // VERIFICACIÓN CRÍTICA: Sin horarios compatibles = asignación imposible
             if (bloquesCompatibles.isEmpty()) {
                 String mensaje = String.format(
                     "Los horarios del médico %s no están dentro de la disponibilidad del consultorio %s. " +
@@ -617,26 +755,32 @@ public class ConsultorioDistribucionService {
                     new ArrayList<>(), 0.0, mensaje);
             }
             
-            // Validar conflictos con otros médicos
+            // PASO 3: VALIDACIÓN DE CONFLICTOS CON OTROS MÉDICOS
+            // Verifica que no haya solapamiento de horarios con médicos ya asignados
             List<BloqueHorario> asignacionesConsultorio = asignacionesActuales.getOrDefault(consultorio.getId(), new ArrayList<>());
             List<BloqueHorario> bloquesSinConflicto = validadorAsignacion.validarConflictosMedicos(
                 bloquesCompatibles, asignacionesConsultorio);
             
+            // PASO 4: ANÁLISIS DE COBERTURA MÍNIMA
+            // Verifica que al menos 50% de los horarios del médico sean utilizables
             double cobertura = (double) bloquesSinConflicto.size() / bloquesDelMedico.size();
-            if (cobertura < 0.5) { // Umbral mínimo
+            if (cobertura < 0.5) { // Umbral mínimo del 50%
                 return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                     bloquesSinConflicto, 0.0, "Cobertura insuficiente");
             }
             
-            // Calcular puntuación
+            // PASO 5: CÁLCULO DE PUNTUACIÓN ALGORÍTMICA
+            // Aplica el algoritmo de puntuación con los 4 factores ponderados
             double puntuacion = calculadorPuntuacion.calcularPuntuacionCompleta(
                 medico, consultorio, bloquesSinConflicto, bloquesDelMedico, 
                 asignacionesActuales, todosMedicos, consultorios);
             
+            // RESULTADO EXITOSO: Retorna evaluación completa
             return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                 bloquesSinConflicto, puntuacion, "Válido");
             
         } catch (Exception e) {
+            // MANEJO DE ERRORES: Retorna resultado con error controlado
             return new ResultadoAsignacion(medico.getId(), consultorio.getId(), 
                 new ArrayList<>(), 0.0, "Error: " + e.getMessage());
         }
@@ -758,14 +902,21 @@ public class ConsultorioDistribucionService {
     }
 
     // ===============================================
-    // MÉTODOS ESTÁTICOS DE UTILIDAD
+    // MÉTODOS ESTÁTICOS DE UTILIDAD FUNDAMENTALES
     // ===============================================
 
+    /**
+     * NORMALIZACIÓN DE DÍAS DE LA SEMANA
+     * FUNCIÓN: Convierte diferentes formatos de días a un formato estándar
+     * SOPORTE: Español, inglés, abreviaciones comunes
+     * SALIDA: Días en formato estándar español (LUNES, MARTES, etc.)
+     */
     private static String normalizarDia(String dia) {
         if (dia == null) return "";
         
         String diaNormalizado = dia.toUpperCase().trim();
         
+        // MAPEO EXHAUSTIVO: Convierte todas las variaciones posibles
         return switch (diaNormalizado) {
             case "LUNES", "MONDAY", "LUN", "MON" -> "LUNES";
             case "MARTES", "TUESDAY", "MAR", "TUE" -> "MARTES";
@@ -774,45 +925,57 @@ public class ConsultorioDistribucionService {
             case "VIERNES", "FRIDAY", "VIE", "FRI" -> "VIERNES";
             case "SABADO", "SÁBADO", "SATURDAY", "SAB", "SAT" -> "SABADO";
             case "DOMINGO", "SUNDAY", "DOM", "SUN" -> "DOMINGO";
-            default -> diaNormalizado;
+            default -> diaNormalizado; // Mantener formato original si no se reconoce
         };
     }
 
+    /**
+     * COMPATIBILIDAD DE BLOQUES CON CONSULTORIO (MÉTODO CENTRAL)
+     * FUNCIÓN: Verifica y ajusta automáticamente horarios para que encajen
+     * CARACTERÍSTICA CLAVE: Ajuste automático con recorte inteligente
+     * RETORNO: true si es compatible (con o sin ajuste), false si incompatible
+     */
     private static boolean esBloqueCompatibleConConsultorio(BloqueHorario bloque, ConsultorioDTO consultorio) {
+        // VALIDACIÓN BÁSICA: Verificar que el consultorio tenga horarios configurados
         if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
-            // Si no hay horarios específicos configurados, no es compatible
+            // Sin horarios configurados = no compatible
             return false;
         }
         
         String diaBloque = normalizarDia(bloque.getDia());
         
+        // BÚSQUEDA DE HORARIO CORRESPONDIENTE: Buscar horario del consultorio para el día específico
         for (ConsultorioDTO.HorarioConsultorioDTO horarioConsultorio : consultorio.getHorariosSemanales()) {
             String diaConsultorio = normalizarDia(horarioConsultorio.getDiaSemana());
             
+            // VERIFICACIÓN DE COINCIDENCIA: Mismo día y horario activo
             if (diaConsultorio.equals(diaBloque) && horarioConsultorio.getActivo()) {
                 if (horarioConsultorio.getHoraApertura() != null && 
                     horarioConsultorio.getHoraCierre() != null) {
                     
-                    // AJUSTE AUTOMÁTICO: Recortar el bloque del médico para que encaje en el consultorio
+                    // APLICACIÓN DE AJUSTE AUTOMÁTICO: Intentar ajustar el bloque al consultorio
                     return ajustarBloqueAConsultorio(bloque, 
                         horarioConsultorio.getHoraApertura(), 
                         horarioConsultorio.getHoraCierre());
                 }
             }
         }
-        return false;
+        return false; // No se encontró horario compatible
     }
     
     /**
-     * Ajusta automáticamente un bloque horario para que encaje dentro del horario del consultorio
+     * AJUSTE AUTOMÁTICO DE BLOQUES HORARIOS (ALGORITMO CRÍTICO)
+     * FUNCIÓN: Modifica automáticamente los horarios del médico para que encajen en el consultorio
+     * ESTRATEGIA: Recortar horarios preservando al menos 30 minutos de duración mínima
+     * MODIFICACIÓN: Altera directamente el objeto BloqueHorario pasado por parámetro
      */
     private static boolean ajustarBloqueAConsultorio(BloqueHorario bloque, LocalTime aperturaConsultorio, LocalTime cierreConsultorio) {
         LocalTime inicioBloque = bloque.getInicio();
         LocalTime finBloque = bloque.getFin();
         
-        // Verificar si hay alguna intersección
+        // PASO 1: VERIFICACIÓN DE INTERSECCIÓN
+        // Si no hay solapamiento temporal, la asignación es imposible
         if (finBloque.isBefore(aperturaConsultorio) || inicioBloque.isAfter(cierreConsultorio)) {
-            // No hay intersección posible
             System.out.println(String.format(
                 "Bloque %s-%s del día %s NO tiene intersección con consultorio %s-%s - RECHAZADO", 
                 inicioBloque, finBloque, bloque.getDia(), aperturaConsultorio, cierreConsultorio
@@ -820,13 +983,15 @@ public class ConsultorioDistribucionService {
             return false;
         }
         
-        // Ajustar el inicio del bloque
+        // PASO 2: CÁLCULO DE AJUSTES NECESARIOS
+        // Ajustar inicio: Si empieza antes del consultorio, usar hora de apertura
         LocalTime nuevoInicio = inicioBloque.isBefore(aperturaConsultorio) ? aperturaConsultorio : inicioBloque;
         
-        // Ajustar el fin del bloque
+        // Ajustar fin: Si termina después del consultorio, usar hora de cierre
         LocalTime nuevoFin = finBloque.isAfter(cierreConsultorio) ? cierreConsultorio : finBloque;
         
-        // Verificar que el bloque ajustado tenga al menos 30 minutos
+        // PASO 3: VALIDACIÓN DE DURACIÓN MÍNIMA
+        // Verificar que el bloque ajustado sea útil (mínimo 30 minutos)
         if (java.time.Duration.between(nuevoInicio, nuevoFin).toMinutes() < 30) {
             System.out.println(String.format(
                 "Bloque ajustado %s-%s del día %s es muy corto (< 30 min) - RECHAZADO", 
@@ -835,11 +1000,13 @@ public class ConsultorioDistribucionService {
             return false;
         }
         
-        // Aplicar los ajustes al bloque
+        // PASO 4: APLICACIÓN DE CAMBIOS AL BLOQUE ORIGINAL
+        // Modificar directamente el objeto para reflejar los ajustes
         boolean seAjusto = !nuevoInicio.equals(inicioBloque) || !nuevoFin.equals(finBloque);
         bloque.setInicio(nuevoInicio);
         bloque.setFin(nuevoFin);
         
+        // LOGGING DETALLADO: Registrar el resultado del ajuste
         System.out.println(String.format(
             "Bloque %s del día %s: %s%s-%s contra consultorio %s-%s: AJUSTADO %s", 
             seAjusto ? "AJUSTADO" : "ORIGINAL",
@@ -852,35 +1019,49 @@ public class ConsultorioDistribucionService {
             seAjusto ? "(se recortó para encajar)" : "(ya estaba dentro)"
         ));
         
-        return true;
+        return true; // Ajuste exitoso
     }
     
     /**
-     * Obtiene el horario de un consultorio para un día específico de la semana
+     * OBTENCIÓN DE HORARIO ESPECÍFICO POR DÍA
+     * FUNCIÓN: Busca y retorna el horario de un consultorio para un día específico
+     * UTILIDAD: Método auxiliar para consultas específicas de horarios
+     * NOTA: Aunque no se usa actualmente, facilita futuras implementaciones
      */
-    private static ConsultorioDTO.HorarioConsultorioDTO obtenerHorarioPorDia(ConsultorioDTO consultorio, String dia) {
+
+     /*   
+      private static ConsultorioDTO.HorarioConsultorioDTO obtenerHorarioPorDia(ConsultorioDTO consultorio, String dia) {
+        // VALIDACIÓN BÁSICA: Verificar que el consultorio tenga horarios configurados
         if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
-            return null;
+            return null; // Sin horarios configurados
         }
         
         String diaBloque = normalizarDia(dia);
         
+        // BÚSQUEDA SECUENCIAL: Encontrar el horario correspondiente al día solicitado
         for (ConsultorioDTO.HorarioConsultorioDTO horario : consultorio.getHorariosSemanales()) {
             String diaConsultorio = normalizarDia(horario.getDiaSemana());
             if (diaConsultorio.equals(diaBloque)) {
-                return horario;
+                return horario; // Retornar horario encontrado
             }
         }
         
-        return null;
+        return null; // No se encontró horario para el día solicitado
     }
-    
-  
+    */
 
+    /**
+     * VERIFICACIÓN DE SOLAPAMIENTO: Detecta conflictos de horarios entre bloques
+     * FUNCIÓN: Verifica si dos bloques horarios se superponen en el mismo día
+     * LÓGICA: Dos bloques se solapan si inicio1 < fin2 Y fin1 > inicio2
+     */
     private static boolean verificarSolapamiento(BloqueHorario bloque1, BloqueHorario bloque2) {
+        // VERIFICACIÓN DE DÍA: Solo bloques del mismo día pueden solaparse
         if (!normalizarDia(bloque1.getDia()).equals(normalizarDia(bloque2.getDia()))) {
             return false;
         }
+        
+        // ALGORITMO DE SOLAPAMIENTO: Verificar intersección de intervalos temporales
         return bloque1.getInicio().isBefore(bloque2.getFin()) && 
                bloque1.getFin().isAfter(bloque2.getInicio());
     }
