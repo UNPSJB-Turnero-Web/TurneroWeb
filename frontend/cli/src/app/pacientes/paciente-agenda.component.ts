@@ -192,7 +192,7 @@ interface SlotDisponible {
                   (click)="mostrarMapaCentros()"
                   [disabled]="isLoadingCentros">
                   <i class="fas fa-map-marked-alt"></i>
-                  Ver Mapa de Centros
+                  Ver Mapa de Centros Medicos
                 </button>
               </div>
 
@@ -1765,20 +1765,33 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     const medicosDisponibles = this.obtenerMedicosDisponibles();
     const centrosDisponibles = this.obtenerCentrosDisponibles();
 
-    // Validar si las selecciones actuales siguen siendo válidas
+    // Validar si las selecciones actuales siguen siendo válidas y notificar al usuario
+    let mensajesReset: string[] = [];
+    
     if (this.especialidadSeleccionada && !especialidadesDisponibles.includes(this.especialidadSeleccionada)) {
       console.log('⚠️ Especialidad seleccionada ya no es válida, reseteando...');
+      mensajesReset.push(`• La especialidad "${this.especialidadSeleccionada}" no tiene turnos compatibles con los filtros actuales`);
       this.especialidadSeleccionada = '';
     }
 
     if (this.staffMedicoSeleccionado && !medicosDisponibles.some(m => m.id === this.staffMedicoSeleccionado)) {
       console.log('⚠️ Médico seleccionado ya no es válido, reseteando...');
+      const nombreMedico = this.getStaffMedicoNombre(this.staffMedicoSeleccionado);
+      mensajesReset.push(`• El médico "${nombreMedico}" no tiene turnos compatibles con los filtros actuales`);
       this.staffMedicoSeleccionado = null;
     }
 
     if (this.centroAtencionSeleccionado && !centrosDisponibles.some(c => c.id === this.centroAtencionSeleccionado)) {
       console.log('⚠️ Centro seleccionado ya no es válido, reseteando...');
+      const nombreCentro = this.getCentroAtencionNombre(this.centroAtencionSeleccionado);
+      mensajesReset.push(`• El centro "${nombreCentro}" no tiene turnos compatibles con los filtros actuales`);
       this.centroAtencionSeleccionado = null;
+    }
+
+    // Mostrar mensaje al usuario si hubo resets
+    if (mensajesReset.length > 0) {
+      const mensaje = `⚠️ Algunos filtros fueron automáticamente removidos porque no tienen turnos disponibles:\n\n${mensajesReset.join('\n')}\n\nPuedes seleccionar nuevos filtros para encontrar turnos disponibles.`;
+      setTimeout(() => alert(mensaje), 100); // Timeout para evitar conflictos con otros alerts
     }
 
     // Actualizar especialidades basándose en médico y/o centro seleccionado
@@ -2216,7 +2229,67 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   onCentroSeleccionadoDelMapa(centro: CentroAtencion) {
     console.log('🏥 Centro seleccionado del mapa:', centro);
     
-    // Establecer el centro seleccionado en el filtro
+    // Verificar que el centro tenga turnos disponibles
+    const turnosEnCentro = this.slotsOriginales.filter(slot => slot.centroId === centro.id);
+    
+    if (turnosEnCentro.length === 0) {
+      // No hay turnos en este centro
+      alert(`❌ El centro "${centro.nombre}" no tiene turnos disponibles en este momento.\n\nPor favor, selecciona otro centro o intenta más tarde.`);
+      return;
+    }
+    
+    // Verificar si hay turnos compatibles con los filtros actuales
+    let turnosCompatibles = [...turnosEnCentro];
+    
+    // Filtrar por especialidad si está seleccionada
+    if (this.especialidadSeleccionada && this.especialidadSeleccionada.trim()) {
+      turnosCompatibles = turnosCompatibles.filter(slot => 
+        slot.especialidadStaffMedico === this.especialidadSeleccionada
+      );
+    }
+    
+    // Filtrar por médico si está seleccionado
+    if (this.staffMedicoSeleccionado) {
+      turnosCompatibles = turnosCompatibles.filter(slot => 
+        slot.staffMedicoId === this.staffMedicoSeleccionado
+      );
+    }
+    
+    if (turnosCompatibles.length === 0) {
+      // Hay turnos en el centro pero no compatibles con los filtros actuales
+      let mensaje = `⚠️ El centro "${centro.nombre}" tiene turnos disponibles, pero no coinciden con tus filtros actuales:\n\n`;
+      
+      if (this.especialidadSeleccionada) {
+        mensaje += `• Especialidad seleccionada: ${this.especialidadSeleccionada}\n`;
+      }
+      
+      if (this.staffMedicoSeleccionado) {
+        const nombreMedico = this.getStaffMedicoNombre(this.staffMedicoSeleccionado);
+        mensaje += `• Médico seleccionado: ${nombreMedico}\n`;
+      }
+      
+      mensaje += `\n¿Deseas limpiar los filtros y buscar solo en este centro?`;
+      
+      if (confirm(mensaje)) {
+        // Limpiar otros filtros y solo aplicar el centro
+        this.especialidadSeleccionada = '';
+        this.staffMedicoSeleccionado = null;
+        this.centroAtencionSeleccionado = centro.id || null;
+        
+        // Actualizar filtros dinámicos y aplicar
+        this.actualizarFiltrosDinamicos();
+        this.aplicarFiltros();
+        
+        // Cerrar el modal
+        this.cerrarMapaModal();
+        
+        console.log(`✅ Filtros limpiados. Mostrando solo turnos en "${centro.nombre}".`);
+        alert(`✅ Mostrando ${turnosEnCentro.length} turnos disponibles en "${centro.nombre}"`);
+      }
+      return;
+    }
+    
+    // Todo OK - aplicar el filtro del centro
     this.centroAtencionSeleccionado = centro.id || null;
     
     // Actualizar filtros dinámicos y aplicar
@@ -2228,6 +2301,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     
     // Mostrar mensaje de confirmación
     console.log(`✅ Centro "${centro.nombre}" seleccionado. Filtros aplicados.`);
+    alert(`✅ Encontrados ${turnosCompatibles.length} turnos disponibles en "${centro.nombre}"`);
   }
 
 
