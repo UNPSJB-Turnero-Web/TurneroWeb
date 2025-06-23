@@ -74,4 +74,35 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     // Obtener estadísticas de actividad por usuario
     @Query("SELECT a.performedBy, COUNT(a) FROM AuditLog a GROUP BY a.performedBy ORDER BY COUNT(a) DESC")
     List<Object[]> findUserActivityStatistics();
+
+    // Consulta alternativa de auditoría (sin JOIN complejo)
+    @Query("SELECT a FROM AuditLog a WHERE a.turno.id = :turnoId ORDER BY a.performedAt DESC")
+    List<AuditLog> findAlternativeAuditHistory(@Param("turnoId") Integer turnoId);
+
+    // Consulta más simple sin referencias a turno
+    @Query(value = "SELECT * FROM audit_log WHERE turno_id = :turnoId ORDER BY performed_at DESC", nativeQuery = true)
+    List<AuditLog> findNativeAuditHistory(@Param("turnoId") Integer turnoId);
+
+    // Verificar la estructura de la tabla para debugging
+    @Query(value = "DESCRIBE audit_log", nativeQuery = true)
+    List<Object[]> describeAuditLogTable();
+
+    // Contar registros por turno ID para debugging
+    @Query(value = "SELECT COUNT(*) FROM audit_log WHERE turno_id = :turnoId", nativeQuery = true)
+    Integer countAuditRecordsByTurno(@Param("turnoId") Integer turnoId);
+
+    // Contar registros por turno ID usando JPA
+    Long countByTurnoId(Integer turnoId);
+
+    // Obtener solo los IDs de auditoría para un turno
+    @Query("SELECT a.id FROM AuditLog a WHERE a.turno.id = :turnoId ORDER BY a.performedAt DESC")
+    List<Integer> findAuditIdsByTurnoId(@Param("turnoId") Integer turnoId);
+
+    // Obtener datos básicos sin campos LOB problemáticos
+    @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at FROM audit_log WHERE id = :auditId", nativeQuery = true)
+    Object[] findBasicAuditData(@Param("auditId") Integer auditId);
+
+    // Consulta segura sin campos LOB problemáticos
+    @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at, reason FROM audit_log WHERE turno_id = :turnoId ORDER BY performed_at DESC", nativeQuery = true)
+    List<Object[]> findSafeAuditHistory(@Param("turnoId") Integer turnoId);
 }

@@ -28,7 +28,8 @@ public class AuditLogService {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper; // Usar el ObjectMapper configurado de Spring
 
     /**
      * Registra una acción de auditoría para un turno.
@@ -61,7 +62,6 @@ public class AuditLogService {
             throw new RuntimeException("Error al serializar datos de auditoría", e);
         } catch (Exception e) {
             System.err.println("❌ ERROR: Error al guardar AuditLog: " + e.getMessage());
-            e.printStackTrace();
             throw e;
         }
     }
@@ -72,9 +72,23 @@ public class AuditLogService {
     @Transactional
     public AuditLog logTurnoCreated(Turno turno, String performedBy) {
         System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoCreated para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+        
+        // Crear un mapa con datos serializables del turno
+        Map<String, Object> turnoData = new HashMap<>();
+        turnoData.put("id", turno.getId());
+        turnoData.put("fecha", turno.getFecha().toString()); // Convertir LocalDate a String
+        turnoData.put("horaInicio", turno.getHoraInicio().toString()); // Convertir LocalTime a String
+        turnoData.put("horaFin", turno.getHoraFin().toString()); // Convertir LocalTime a String
+        turnoData.put("estado", turno.getEstado().name());
+        turnoData.put("pacienteId", turno.getPaciente().getId());
+        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        if (turno.getConsultorio() != null) {
+            turnoData.put("consultorioId", turno.getConsultorio().getId());
+        }
+        
         AuditLog result = logTurnoAction(turno, AuditLog.Actions.CREATE, performedBy, 
                             null, turno.getEstado().name(), 
-                            null, turno, null);
+                            null, turnoData, null); // Pasar el mapa en lugar del objeto
         System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
         return result;
     }
@@ -155,7 +169,89 @@ public class AuditLogService {
      * Obtiene el historial de auditoría de un turno específico
      */
     public List<AuditLog> getTurnoAuditHistory(Integer turnoId) {
-        return auditLogRepository.findByTurnoIdOrderByPerformedAtDesc(turnoId);
+        System.out.println("🔍 DEBUG: Obteniendo historial de auditoría para turno ID: " + turnoId);
+        try {
+            // Primero contar cuántos registros hay
+            Long count = auditLogRepository.countByTurnoId(turnoId);
+            System.out.println("🔍 DEBUG: Contando registros de auditoría para turno " + turnoId + "...");
+            System.out.println("✅ DEBUG: Se encontraron " + count + " registros para el turno " + turnoId);
+
+            if (count == 0) {
+                return new java.util.ArrayList<>();
+            }
+
+            // Intentar obtener los registros uno por uno para identificar el problemático
+            return getAuditRecordsIndividually(turnoId);
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener historial de auditoría para turno " + turnoId + ": " + e.getMessage());
+            System.err.println("❌ ERROR: Detalles del error: " + e.getClass().getSimpleName());
+            
+            // Intentar obtener registros individualmente
+            try {
+                return getAuditRecordsIndividually(turnoId);
+            } catch (Exception e2) {
+                System.err.println("❌ ERROR: Todas las consultas fallaron. Retornando lista vacía");
+                System.err.println("❌ ERROR: Último error: " + e2.getMessage());
+                return new java.util.ArrayList<>();
+            }
+        }
+    }
+
+    /**
+     * Obtiene registros de auditoría uno por uno para identificar el problemático
+     */
+    private List<AuditLog> getAuditRecordsIndividually(Integer turnoId) {
+        System.out.println("🔍 DEBUG: Obteniendo registros individualmente para turno " + turnoId);
+        
+        List<AuditLog> validRecords = new java.util.ArrayList<>();
+        
+        try {
+            // Primero obtener solo los IDs de los registros
+            List<Integer> auditIds = auditLogRepository.findAuditIdsByTurnoId(turnoId);
+            System.out.println("🔍 DEBUG: Encontrados " + auditIds.size() + " IDs de auditoría: " + auditIds);
+            
+            // Ahora obtener cada registro individualmente
+            for (Integer auditId : auditIds) {
+                try {
+                    System.out.println("🔍 DEBUG: Obteniendo registro de auditoría ID: " + auditId);
+                    AuditLog record = auditLogRepository.findById(auditId).orElse(null);
+                    if (record != null) {
+                        validRecords.add(record);
+                        System.out.println("✅ DEBUG: Registro " + auditId + " obtenido exitosamente");
+                    } else {
+                        System.err.println("⚠️ WARN: Registro " + auditId + " no encontrado");
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ ERROR: Fallo al obtener registro " + auditId + ": " + e.getMessage());
+                    // Intentar obtener los datos básicos directamente
+                    try {
+                        Object[] basicData = auditLogRepository.findBasicAuditData(auditId);
+                        if (basicData != null && basicData.length >= 6) {
+                            System.out.println("🔍 DEBUG: Datos básicos del registro " + auditId + ":");
+                            System.out.println("  - ID: " + basicData[0]);
+                            System.out.println("  - Acción: " + basicData[1]);
+                            System.out.println("  - Usuario: " + basicData[2]);
+                            System.out.println("  - Estado anterior: " + basicData[3]);
+                            System.out.println("  - Estado nuevo: " + basicData[4]);
+                            System.out.println("  - Fecha: " + basicData[5]);
+                            System.err.println("⚠️ WARN: Registro " + auditId + " tiene datos corruptos en old_values o new_values");
+                        }
+                    } catch (Exception e2) {
+                        System.err.println("❌ ERROR: No se pudieron obtener ni los datos básicos del registro " + auditId + ": " + e2.getMessage());
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener IDs de auditoría: " + e.getMessage());
+        }
+        
+        // Ordenar por fecha descendente
+        validRecords.sort((a, b) -> b.getPerformedAt().compareTo(a.getPerformedAt()));
+        
+        System.out.println("✅ DEBUG: Se obtuvieron " + validRecords.size() + " registros válidos de auditoría");
+        return validRecords;
     }
 
     /**
@@ -354,5 +450,34 @@ public class AuditLogService {
         
         System.out.println("✅ DEBUG: Estadísticas del dashboard completadas");
         return dashboardStats;
+    }
+
+    /**
+     * Método de debugging para verificar la estructura de la tabla de auditoría
+     */
+    public void debugAuditTableStructure() {
+        try {
+            System.out.println("🔍 DEBUG: Verificando estructura de la tabla audit_log...");
+            List<Object[]> tableStructure = auditLogRepository.describeAuditLogTable();
+            System.out.println("✅ DEBUG: Estructura de la tabla audit_log:");
+            for (Object[] row : tableStructure) {
+                System.out.println("  - " + java.util.Arrays.toString(row));
+            }
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: No se pudo obtener la estructura de la tabla: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Método de debugging para contar registros de auditoría
+     */
+    public void debugAuditCount(Integer turnoId) {
+        try {
+            System.out.println("🔍 DEBUG: Contando registros de auditoría para turno " + turnoId + "...");
+            Integer count = auditLogRepository.countAuditRecordsByTurno(turnoId);
+            System.out.println("✅ DEBUG: Se encontraron " + count + " registros para el turno " + turnoId);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: No se pudo contar registros: " + e.getMessage());
+        }
     }
 }

@@ -182,7 +182,7 @@ interface SlotDisponible {
             required>
           </textarea>
           <div class="char-counter">
-            {{ motivoReagendamiento?.length || 0 }}/500 caracteres
+            {{ motivoReagendamiento.length || 0 }}/500 caracteres
           </div>
           <div class="validation-message" *ngIf="motivoReagendamiento && motivoReagendamiento.length < 5">
             <i class="fas fa-exclamation-circle"></i>
@@ -1346,43 +1346,36 @@ export class PacienteReagendarTurnoComponent implements OnInit {
     this.isProcessing = true;
     this.errorMessage = '';
 
-    // Usar el nuevo sistema de updateEstado para reagendamiento
-    this.turnoService.updateEstado(this.turnoId, 'REAGENDADO', this.motivoReagendamiento.trim()).subscribe({
-      next: (response) => {
-        console.log('Estado cambiado a REAGENDADO exitosamente:', response);
-        
-        // Ahora crear el nuevo turno con los datos seleccionados
-        const nuevoTurno = {
-          fecha: this.slotSeleccionado!.fecha,
-          horaInicio: this.slotSeleccionado!.horaInicio,
-          horaFin: this.slotSeleccionado!.horaFin,
-          pacienteId: this.currentTurno!.pacienteId,
-          staffMedicoId: this.slotSeleccionado!.staffMedicoId,
-          consultorioId: this.slotSeleccionado!.consultorioId,
-          estado: 'PROGRAMADO'
-        };
+    // Preparar los datos del reagendamiento
+    const reagendamientoData = {
+      fecha: this.slotSeleccionado.fecha,
+      horaInicio: this.slotSeleccionado.horaInicio,
+      horaFin: this.slotSeleccionado.horaFin,
+      staffMedicoId: this.slotSeleccionado.staffMedicoId,
+      consultorioId: this.slotSeleccionado.consultorioId,
+      motivo: this.motivoReagendamiento.trim(),
+      usuario: `PACIENTE_${this.currentTurno.pacienteId}`
+    };
 
-        // Crear el nuevo turno
-        this.turnoService.create(nuevoTurno).subscribe({
-          next: (createResponse) => {
-            console.log('Nuevo turno creado exitosamente:', createResponse);
-            this.isProcessing = false;
-            
-            alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
-            
-            this.router.navigate(['/paciente-turnos']);
-          },
-          error: (createError) => {
-            console.error('Error creando nuevo turno:', createError);
-            this.isProcessing = false;
-            this.errorMessage = 'Error al crear el nuevo turno. El turno original fue marcado como reagendado, pero no se pudo crear la nueva cita.';
-          }
-        });
+    // Usar el endpoint específico de reagendamiento que modifica el turno existente
+    this.turnoService.reagendar(this.turnoId, reagendamientoData).subscribe({
+      next: (response) => {
+        console.log('Turno reagendado exitosamente:', response);
+        this.isProcessing = false;
+        
+        alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
+        
+        this.router.navigate(['/paciente-dashboard']);
       },
       error: (error) => {
-        console.error('Error marcando turno como reagendado:', error);
+        console.error('Error al reagendar turno:', error);
         this.isProcessing = false;
-        this.errorMessage = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
+        
+        let errorMessage = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
+        if (error.error && error.error.status_text) {
+          errorMessage += ': ' + error.error.status_text;
+        }
+        this.errorMessage = errorMessage;
       }
     });
   }
@@ -1426,7 +1419,7 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/paciente-turnos']);
+    this.router.navigate(['/paciente-dashboard']);
   }
 
   // Métodos para manejo de días excepcionales

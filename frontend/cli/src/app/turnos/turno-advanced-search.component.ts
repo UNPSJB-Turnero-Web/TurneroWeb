@@ -340,6 +340,12 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
   /** Abre modal para cambio de estado */
   openChangeStateModal(turno: Turno): void {
+    // No permitir cambiar el estado de un turno que ya está reagendado
+    if (turno.estado === 'REAGENDADO') {
+      alert('No se puede cambiar el estado de un turno que ya está reagendado');
+      return;
+    }
+    
     this.selectedTurno = turno;
     this.showChangeStateModal = true;
     this.changeStateForm = {
@@ -1863,45 +1869,37 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     const userInfo = this.getCurrentUser();
     const currentUser = userInfo.user;
 
-    // Usar el nuevo sistema de updateEstado para reagendamiento
-    this.turnoService.updateEstado(this.selectedTurno.id!, 'REAGENDADO', this.motivoReagendamiento.trim(), currentUser).subscribe({
-      next: (response) => {
-        console.log('Estado cambiado a REAGENDADO exitosamente:', response);
-        
-        // Ahora crear el nuevo turno con los datos seleccionados
-        const nuevoTurno = {
-          fecha: this.slotSeleccionado!.fecha,
-          horaInicio: this.slotSeleccionado!.horaInicio,
-          horaFin: this.slotSeleccionado!.horaFin,
-          pacienteId: this.selectedTurno!.pacienteId,
-          staffMedicoId: this.slotSeleccionado!.staffMedicoId,
-          consultorioId: this.slotSeleccionado!.consultorioId,
-          estado: 'PROGRAMADO'
-        };
+    // Preparar los datos del reagendamiento
+    const reagendamientoData = {
+      fecha: this.slotSeleccionado.fecha,
+      horaInicio: this.slotSeleccionado.horaInicio,
+      horaFin: this.slotSeleccionado.horaFin,
+      motivo: this.motivoReagendamiento.trim(),
+      usuario: currentUser
+    };
 
-        // Crear el nuevo turno
-        this.turnoService.create(nuevoTurno).subscribe({
-          next: (createResponse) => {
-            console.log('Nuevo turno creado exitosamente:', createResponse);
-            this.isProcessingReagendar = false;
-            
-            alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
-            
-            this.closeReagendarModal();
-            this.closeChangeStateModal();
-            this.search(); // Recargar la tabla
-          },
-          error: (createError) => {
-            console.error('Error creando nuevo turno:', createError);
-            this.isProcessingReagendar = false;
-            this.errorMessageReagendar = 'Error al crear el nuevo turno. El turno original fue marcado como reagendado, pero no se pudo crear la nueva cita.';
-          }
-        });
+    // Usar el endpoint específico de reagendamiento que modifica el turno existente
+    this.turnoService.reagendar(this.selectedTurno.id!, reagendamientoData).subscribe({
+      next: (response) => {
+        console.log('Turno reagendado exitosamente:', response);
+        this.isProcessingReagendar = false;
+        
+        alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
+        
+        this.closeReagendarModal();
+        this.closeChangeStateModal();
+        this.search(); // Recargar la tabla
       },
       error: (error) => {
-        console.error('Error marcando turno como reagendado:', error);
+        console.error('Error al reagendar turno:', error);
         this.isProcessingReagendar = false;
-        this.errorMessageReagendar = 'No se pudo reagendar el turno. Por favor, intenta nuevamente.';
+        
+        let errorMessage = 'Error al reagendar el turno';
+        if (error.error && error.error.status_text) {
+          errorMessage += ': ' + error.error.status_text;
+        }
+        
+        this.errorMessageReagendar = errorMessage;
       }
     });
   }

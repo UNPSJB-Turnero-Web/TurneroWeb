@@ -764,17 +764,23 @@ public class TurnoService {
     private TurnoDTO toDTOWithAuditInfo(Turno turno) {
         TurnoDTO dto = toDTO(turno); // Usar el método existente
         
-        // Agregar información de auditoría
-        List<AuditLog> auditHistory = auditLogService.getTurnoAuditHistory(turno.getId());
-        if (!auditHistory.isEmpty()) {
-            // Obtener la última modificación
-            AuditLog lastAudit = auditHistory.get(0); // Ya están ordenados por fecha desc
-            dto.setUltimoUsuarioModificacion(lastAudit.getPerformedBy());
-            dto.setFechaUltimaModificacion(lastAudit.getPerformedAt());
-            dto.setMotivoUltimaModificacion(lastAudit.getReason());
-            dto.setTotalModificaciones(auditHistory.size());
-        } else {
-            // Si no hay auditoría, significa que es un turno sin modificaciones
+        try {
+            // Agregar información de auditoría
+            List<AuditLog> auditHistory = auditLogService.getTurnoAuditHistory(turno.getId());
+            if (!auditHistory.isEmpty()) {
+                // Obtener la última modificación
+                AuditLog lastAudit = auditHistory.get(0); // Ya están ordenados por fecha desc
+                dto.setUltimoUsuarioModificacion(lastAudit.getPerformedBy());
+                dto.setFechaUltimaModificacion(lastAudit.getPerformedAt());
+                dto.setMotivoUltimaModificacion(lastAudit.getReason());
+                dto.setTotalModificaciones(auditHistory.size());
+            } else {
+                // Si no hay auditoría, significa que es un turno sin modificaciones
+                dto.setTotalModificaciones(0);
+            }
+        } catch (Exception e) {
+            // Si hay error al obtener auditoría, no fallar la consulta principal
+            System.err.println("Error al obtener auditoría para turno " + turno.getId() + ": " + e.getMessage());
             dto.setTotalModificaciones(0);
         }
         

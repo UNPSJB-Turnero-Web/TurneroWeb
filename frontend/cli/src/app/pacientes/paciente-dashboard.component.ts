@@ -2542,9 +2542,7 @@ export class PacienteDashboardComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  viewAppointments() {
-    this.router.navigate(['/paciente-turnos']);
-  }
+
 
   scheduleAppointment() {
     this.router.navigate(['/paciente-agenda']);

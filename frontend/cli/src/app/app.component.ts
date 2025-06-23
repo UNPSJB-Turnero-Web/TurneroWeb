@@ -161,7 +161,7 @@ import { Subscription } from 'rxjs';
           <div ngbDropdown class="nav-dropdown" *ngIf="isPatient()">
             <button 
               class="nav-button"
-              [class.active]="isRouteActive('/paciente-dashboard') || isRouteActive('/paciente-turnos') || isRouteActive('/paciente-agenda') || isRouteActive('/paciente-notificaciones')"
+              [class.active]="isRouteActive('/paciente-dashboard') || isRouteActive('/paciente-dashboard') || isRouteActive('/paciente-agenda') || isRouteActive('/paciente-notificaciones')"
               ngbDropdownToggle
               id="pacienteDropdown"
               aria-label="Portal del paciente"

@@ -111,11 +111,18 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
                                             @Param("fechaHasta") LocalDate fechaHasta);
     
     // Búsquedas por texto (nombres parciales)
-    @Query("SELECT t FROM Turno t WHERE " +
-           "(:nombrePaciente IS NULL OR LOWER(CONCAT(t.paciente.nombre, ' ', t.paciente.apellido)) LIKE LOWER(CONCAT('%', :nombrePaciente, '%'))) AND " +
-           "(:nombreMedico IS NULL OR LOWER(CONCAT(t.staffMedico.medico.nombre, ' ', t.staffMedico.medico.apellido)) LIKE LOWER(CONCAT('%', :nombreMedico, '%'))) AND " +
-           "(:nombreEspecialidad IS NULL OR LOWER(t.staffMedico.medico.especialidad.nombre) LIKE LOWER(CONCAT('%', :nombreEspecialidad, '%'))) AND " +
-           "(:nombreCentro IS NULL OR LOWER(t.consultorio.centroAtencion.nombre) LIKE LOWER(CONCAT('%', :nombreCentro, '%')))")
+    @Query("SELECT t FROM Turno t " +
+           "LEFT JOIN t.paciente p " +
+           "LEFT JOIN t.staffMedico sm " +
+           "LEFT JOIN sm.medico m " +
+           "LEFT JOIN m.especialidad e " +
+           "LEFT JOIN t.consultorio c " +
+           "LEFT JOIN c.centroAtencion ca " +
+           "WHERE " +
+           "(:nombrePaciente IS NULL OR LOWER(CONCAT(p.nombre, ' ', p.apellido)) LIKE LOWER(CONCAT('%', :nombrePaciente, '%'))) AND " +
+           "(:nombreMedico IS NULL OR LOWER(CONCAT(m.nombre, ' ', m.apellido)) LIKE LOWER(CONCAT('%', :nombreMedico, '%'))) AND " +
+           "(:nombreEspecialidad IS NULL OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombreEspecialidad, '%'))) AND " +
+           "(:nombreCentro IS NULL OR LOWER(ca.nombre) LIKE LOWER(CONCAT('%', :nombreCentro, '%')))")
     Page<Turno> findByTextFilters(@Param("nombrePaciente") String nombrePaciente,
                                  @Param("nombreMedico") String nombreMedico,
                                  @Param("nombreEspecialidad") String nombreEspecialidad,
@@ -278,13 +285,13 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
                 criteriaBuilder.lower(
                     criteriaBuilder.concat(
                         criteriaBuilder.concat(
-                            root.join("staffMedico", JoinType.INNER)
-                                .join("medico", JoinType.INNER)
+                            root.join("staffMedico", JoinType.LEFT)
+                                .join("medico", JoinType.LEFT)
                                 .get("nombre"), 
                             " "
                         ),
-                        root.join("staffMedico", JoinType.INNER)
-                            .join("medico", JoinType.INNER)
+                        root.join("staffMedico", JoinType.LEFT)
+                            .join("medico", JoinType.LEFT)
                             .get("apellido")
                     )
                 ),
@@ -304,9 +311,9 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             String searchPattern = "%" + nombreEspecialidad.toLowerCase() + "%";
             return criteriaBuilder.like(
                 criteriaBuilder.lower(
-                    root.join("staffMedico", JoinType.INNER)
-                        .join("medico", JoinType.INNER)
-                        .join("especialidad", JoinType.INNER)
+                    root.join("staffMedico", JoinType.LEFT)
+                        .join("medico", JoinType.LEFT)
+                        .join("especialidad", JoinType.LEFT)
                         .get("nombre")
                 ),
                 searchPattern
@@ -325,8 +332,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             String searchPattern = "%" + nombreCentro.toLowerCase() + "%";
             return criteriaBuilder.like(
                 criteriaBuilder.lower(
-                    root.join("consultorio", JoinType.INNER)
-                        .join("centroAtencion", JoinType.INNER)
+                    root.join("consultorio", JoinType.LEFT)
+                        .join("centroAtencion", JoinType.LEFT)
                         .get("nombre")
                 ),
                 searchPattern
