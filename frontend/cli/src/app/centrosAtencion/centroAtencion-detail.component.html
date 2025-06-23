@@ -345,7 +345,7 @@
                 <div id="map" style="height: 400px; width: 100%;"></div>
               </div>
               <div class="mt-3">
-                <input [(ngModel)]="searchQuery" placeholder="Buscar ubicación..." 
+                <input [(ngModel)]="searchQuery" name="searchQuery" placeholder="Buscar ubicación..." 
                        class="form-control form-control-modern me-2" style="display: inline-block; width: auto;">
                 <button type="button" class="btn btn-modern btn-success" (click)="searchLocation()">
                   <i class="fa fa-search me-2"></i> Buscar
@@ -437,12 +437,12 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Número:</label>
-                <input type="number" [(ngModel)]="nuevoConsultorio.numero" 
+                <input type="number" [(ngModel)]="nuevoConsultorio.numero" name="numeroConsultorio"
                        class="form-control-modern" placeholder="Número del consultorio">
               </div>
               <div class="col-md-8">
                 <label class="form-label fw-semibold">Nombre:</label>
-                <input type="text" [(ngModel)]="nuevoConsultorio.nombre" 
+                <input type="text" [(ngModel)]="nuevoConsultorio.nombre" name="nombreConsultorio"
                        class="form-control-modern" placeholder="Nombre descriptivo del consultorio">
               </div>
             </div>

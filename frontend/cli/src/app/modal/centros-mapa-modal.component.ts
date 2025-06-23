@@ -42,6 +42,7 @@ interface CentroMapaInfo extends CentroAtencion {
             <div class="search-input-container">
               <input 
                 type="text" 
+                name="busquedaTexto"
                 class="form-control search-input" 
                 [(ngModel)]="busquedaTexto" 
                 (input)="buscarCentros()"
@@ -72,7 +73,7 @@ interface CentroMapaInfo extends CentroAtencion {
           <!-- FILTRO POR ESPECIALIDAD -->
           <div class="filter-group">
             <label><i class="fas fa-stethoscope"></i> Filtrar por Especialidad:</label>
-            <select class="form-control" [(ngModel)]="especialidadFiltro" (change)="aplicarFiltros()">
+            <select class="form-control" name="especialidadFiltro" [(ngModel)]="especialidadFiltro" (change)="aplicarFiltros()">
               <option value="">Todas las especialidades ({{ centrosFiltrados.length }})</option>
               <option *ngFor="let esp of especialidadesDisponibles" [value]="esp.nombre">
                 {{ esp.nombre }} ({{ contarCentrosPorEspecialidad(esp.nombre) }})
@@ -106,6 +107,7 @@ interface CentroMapaInfo extends CentroAtencion {
               <div class="input-group">
                 <input 
                   type="text" 
+                  name="direccionBusqueda"
                   class="form-control"
                   [(ngModel)]="direccionBusqueda"
                   placeholder="Ingresa tu dirección o ciudad"
@@ -118,12 +120,14 @@ interface CentroMapaInfo extends CentroAtencion {
               <div class="coord-inputs">
                 <input 
                   type="number" 
+                  name="latitudManual"
                   class="form-control"
                   [(ngModel)]="latitudManual"
                   placeholder="Latitud"
                   step="any">
                 <input 
                   type="number" 
+                  name="longitudManual"
                   class="form-control"
                   [(ngModel)]="longitudManual"
                   placeholder="Longitud"
@@ -159,7 +163,7 @@ interface CentroMapaInfo extends CentroAtencion {
           <!-- RADIO DE BÚSQUEDA -->
           <div class="filter-group" *ngIf="userLocation">
             <label><i class="fas fa-circle"></i> Radio de búsqueda:</label>
-            <select class="form-control" [(ngModel)]="radioMaximo" (change)="aplicarFiltros()">
+            <select class="form-control" name="radioMaximo" [(ngModel)]="radioMaximo" (change)="aplicarFiltros()">
               <option [value]="10">10 km</option>
               <option [value]="25">25 km</option>
               <option [value]="50">50 km</option>
@@ -1168,7 +1172,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     
     if (this.especialidadSeleccionadaInicial) {
       this.especialidadFiltro = this.especialidadSeleccionadaInicial;
-      console.log('- Filtro de especialidad establecido:', this.especialidadFiltro);
     }
   }
 
@@ -1263,7 +1266,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         })
         .filter(nombre => nombre !== 'Desconocida');
 
-      console.log(`🏥 Centro "${centro.nombre}" tiene ${especialidadesCentro.length} especialidades:`, especialidadesCentro);
 
       return {
         ...centro,
@@ -1462,11 +1464,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   aplicarFiltros() {
-    console.log('🔍 Aplicando filtros al mapa...');
-    console.log('- Especialidad filtro:', this.especialidadFiltro);
-    console.log('- Radio máximo:', this.radioMaximo);
-    console.log('- Búsqueda texto:', this.busquedaTexto);
-    
+   
     let centrosFiltrados = [...this.centrosFiltrados] as CentroMapaInfo[];
 
     // Filtrar por especialidad
@@ -1481,7 +1479,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
           especialidadNombre && especialidadNombre.toLowerCase() === this.especialidadFiltro.toLowerCase()
         );
       });
-      console.log(`- Después de filtrar por especialidad: ${centrosFiltrados.length} centros`);
     }
 
     // Filtrar por búsqueda de texto
@@ -1496,7 +1493,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
                direccionCentro.includes(textoBusqueda) || 
                localidadCentro.includes(textoBusqueda);
       });
-      console.log(`- Después de filtrar por texto: ${centrosFiltrados.length} centros`);
     }
 
     // Filtrar por radio de distancia
@@ -1514,7 +1510,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         centro.distanciaKm = distancia;
         return distancia <= this.radioMaximo;
       });
-      console.log(`- Después de filtrar por radio (${this.radioMaximo}km): ${centrosFiltrados.length} centros`);
     } else if (this.userLocation) {
       // Calcular distancias aunque no haya límite
       centrosFiltrados.forEach(centro => {
@@ -1536,14 +1531,12 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         const distanciaB = b.distanciaKm ?? Number.MAX_VALUE;
         return distanciaA - distanciaB;
       });
-      console.log('- Centros ordenados por distancia');
     }
 
     // Actualizar la lista de resultados para la lista Y para el mapa
     this.resultadosBusqueda = centrosFiltrados;
     this.centrosFiltrados = centrosFiltrados; // Para compatibilidad con el template
     
-    console.log('✅ Filtros aplicados. Centros finales:', this.resultadosBusqueda.length);
     
     // Actualizar marcadores en el mapa
     if (this.map) {
@@ -1604,7 +1597,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   // Método llamado desde el popup cuando se hace clic en "Buscar en este centro"
   buscarEnCentro(centroId: number) {
-    console.log('🔍 Buscar en centro ID:', centroId);
     const centro = this.centros.find(c => c.id === centroId);
     if (centro) {
       this.centroSeleccionado.emit(centro);
@@ -1614,7 +1606,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   // Método llamado desde el popup cuando se hace clic en "Más información"
   verDetallesCentro(centroId: number) {
-    console.log('ℹ️ Ver detalles del centro ID:', centroId);
     const centro = this.centros.find(c => c.id === centroId);
     if (centro) {
       this.seleccionarCentro(centro);
@@ -1652,7 +1643,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       centro.provincia?.toLowerCase().includes(texto)
     ).slice(0, 5);
 
-    console.log('🔍 Búsqueda autocompletado:', texto, '- Resultados:', this.resultadosBusqueda.length);
     
     // También aplicar filtros a la lista principal
     this.aplicarFiltros();
@@ -1689,7 +1679,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       }
     }
     
-    console.log('📍 Centro seleccionado desde búsqueda:', centro.nombre);
   }
 
   // Contar centros por especialidad
@@ -1736,7 +1725,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.calcularDistancias();
     this.aplicarFiltros();
 
-    console.log('📍 Ubicación establecida manualmente:', lat, lng);
   }
 
 }

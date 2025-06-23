@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; // Importar FormsModule
@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms'; // Importar FormsModule
         <div class="modal-body">
           <div class="form-group mb-3">
             <label for="search">Buscar ubicación:</label>
-            <input id="search" type="text" class="form-control" [(ngModel)]="searchQuery" placeholder="Ingrese una dirección">
+            <input id="search" name="search" type="text" class="form-control" [(ngModel)]="searchQuery" placeholder="Ingrese una dirección">
             <button class="btn btn-primary mt-2" (click)="searchLocation()">Buscar</button>
           </div>
           <div #mapContainer style="height: 500px; width: 100%;"></div>
@@ -58,41 +58,66 @@ import { FormsModule } from '@angular/forms'; // Importar FormsModule
     }
   `]
 })
-export class MapModalComponent {
+export class MapModalComponent implements AfterViewInit {
   @Output() locationSelected = new EventEmitter<{ latitud: number, longitud: number } | null>();
-  @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild('mapContainer', { static: false }) mapContainer!: ElementRef<HTMLDivElement>;
   private map!: L.Map;
   searchQuery: string = ''; // Campo para la búsqueda
 
   constructor(private http: HttpClient) {}
 
   ngAfterViewInit(): void {
-    this.initializeMap();
+    // Usar setTimeout para asegurar que el DOM esté completamente renderizado
+    setTimeout(() => {
+      this.initializeMap();
+    }, 0);
   }
 
   initializeMap(): void {
-    this.map = L.map(this.mapContainer.nativeElement).setView([-38.4161, -63.6167], 5); // Coordenadas iniciales (Centro de Argentina)
+    if (!this.mapContainer?.nativeElement) {
+      console.error('Map container not available');
+      return;
+    }
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(this.map);
+    try {
+      this.map = L.map(this.mapContainer.nativeElement).setView([-38.4161, -63.6167], 5); // Coordenadas iniciales (Centro de Argentina)
 
-    this.map.on('click', (e: any) => {
-      const { lat, lng } = e.latlng;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(this.map);
 
-      // Redondear las coordenadas a 4 decimales
-      const latRounded = lat.toFixed(3);
-      const lngRounded = lng.toFixed(3);
+      this.map.on('click', (e: any) => {
+        const { lat, lng } = e.latlng;
 
-      const coordenadas = { latitud: +latRounded, longitud: +lngRounded };
-      this.locationSelected.emit(coordenadas); // Emitir las coordenadas seleccionadas
-      this.close(); // Cerrar el modal automáticamente
-    });
+        // Redondear las coordenadas a 4 decimales
+        const latRounded = lat.toFixed(3);
+        const lngRounded = lng.toFixed(3);
+
+        const coordenadas = { latitud: +latRounded, longitud: +lngRounded };
+        this.locationSelected.emit(coordenadas); // Emitir las coordenadas seleccionadas
+        this.close(); // Cerrar el modal automáticamente
+      });
+
+      // Forzar un redimensionamiento del mapa después de la inicialización
+      setTimeout(() => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
   }
 
   searchLocation(): void {
     if (!this.searchQuery) {
       alert('Por favor, ingrese una dirección para buscar.');
+      return;
+    }
+
+    if (!this.map) {
+      console.error('Map not initialized');
+      alert('El mapa no está disponible. Inténtelo nuevamente.');
       return;
     }
 
@@ -116,7 +141,13 @@ export class MapModalComponent {
   }
 
   close(): void {
-    this.map.remove(); // Destruir el mapa para liberar recursos
+    if (this.map) {
+      try {
+        this.map.remove(); // Destruir el mapa para liberar recursos
+      } catch (error) {
+        console.warn('Error removing map:', error);
+      }
+    }
     this.locationSelected.emit(null); // Emitir null si se cierra sin seleccionar
   }
 }
