@@ -67,8 +67,29 @@ export class AgendaService {
   obtenerEventos(esquemaTurnoId: number, semanas: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/eventos?esquemaTurnoId=${esquemaTurnoId}&semanas=${semanas}`);
   }
-  obtenerTodosLosEventos(semanas: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.url}/eventos/todos?semanas=${semanas}`);
+  // Obtener todos los eventos (con filtros opcionales)
+  obtenerTodosLosEventos(semanas: number, filtros?: {
+    especialidad?: string;
+    staffMedicoId?: number;
+    centroId?: number;
+  }): Observable<any[]> {
+    let url = `${this.url}/eventos/todos?semanas=${semanas}`;
+    
+    // Agregar filtros como parámetros de consulta
+    if (filtros) {
+      if (filtros.especialidad) {
+        url += `&especialidad=${encodeURIComponent(filtros.especialidad)}`;
+      }
+      if (filtros.staffMedicoId) {
+        url += `&staffMedicoId=${filtros.staffMedicoId}`;
+      }
+      if (filtros.centroId) {
+        url += `&centroId=${filtros.centroId}`;
+      }
+    }
+    
+    console.log('🌐 Llamando a agenda service:', url);
+    return this.http.get<any[]>(url);
   }
 
   // Método para obtener slots disponibles por médico

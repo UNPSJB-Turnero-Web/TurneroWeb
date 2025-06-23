@@ -1485,7 +1485,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Slots y calendario
   showCalendar = false;
-  slotsDisponibles: SlotDisponible[] = [];
+  slotsOriginales: SlotDisponible[] = []; // Slots sin filtrar del backend
+  slotsDisponibles: SlotDisponible[] = []; // Slots filtrados que se muestran
   slotsPorFecha: { [fecha: string]: SlotDisponible[] } = {};
   fechasOrdenadas: string[] = [];
   turnosDisponibles: any[] = []; // Para compatibilidad con el template
@@ -1598,6 +1599,11 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         this.staffMedicos = (dataPackage.data || []).filter(staff => 
           staff.especialidad?.nombre === this.especialidadSeleccionada
         );
+        
+        console.log('🏥 Staff médicos cargados para especialidad:', this.especialidadSeleccionada);
+        console.log('- Total staff médicos filtrados:', this.staffMedicos.length);
+        console.log('- IDs de staff médicos:', this.staffMedicos.map(s => ({ id: s.id, nombre: s.medico?.nombre, apellido: s.medico?.apellido })));
+        
         this.isLoadingStaffMedicos = false;
       },
       error: (error) => {
@@ -1624,50 +1630,83 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Método llamado cuando cambia el staff médico
   onStaffMedicoChange() {
-    if (this.especialidadSeleccionada && this.slotsDisponibles.length > 0) {
-      this.aplicarFiltrosSlots();
-      this.agruparSlotsPorFecha();
+    console.log('🔄 Staff médico cambiado a:', this.staffMedicoSeleccionado);
+    if (this.especialidadSeleccionada) {
+      // Recargar turnos con el nuevo filtro
+      this.cargarTurnosConFiltros();
     }
   }
 
   // Método llamado cuando cambia el centro de atención
   onCentroAtencionChange() {
-    if (this.especialidadSeleccionada && this.slotsDisponibles.length > 0) {
-      this.aplicarFiltrosSlots();
-      this.agruparSlotsPorFecha();
+    console.log('🔄 Centro cambiado a:', this.centroAtencionSeleccionado);
+    if (this.especialidadSeleccionada) {
+      // Recargar turnos con el nuevo filtro
+      this.cargarTurnosConFiltros();
     }
   }
 
   // Cargar turnos con filtros aplicados
   cargarTurnosConFiltros() {
     if (!this.especialidadSeleccionada) {
+      console.log('❌ No se puede cargar turnos sin especialidad seleccionada');
       this.showCalendar = false;
       return;
     }
 
+    console.log('🔄 Cargando turnos con filtros...');
+    console.log('- Especialidad:', this.especialidadSeleccionada);
+    console.log('- Staff médico:', this.staffMedicoSeleccionado);
+    console.log('- Centro:', this.centroAtencionSeleccionado);
+
     this.isLoadingTurnos = true;
     
-    // Usar el mismo sistema que el admin para obtener turnos disponibles
-    this.agendaService.obtenerTodosLosEventos(this.semanas).subscribe({
+    // Preparar filtros para enviar al backend
+    const filtros: any = {
+      especialidad: this.especialidadSeleccionada
+    };
+    
+    if (this.staffMedicoSeleccionado) {
+      filtros.staffMedicoId = this.staffMedicoSeleccionado;
+    }
+    
+    if (this.centroAtencionSeleccionado) {
+      filtros.centroId = this.centroAtencionSeleccionado;
+    }
+    
+    console.log('📤 Enviando filtros al backend:', filtros);
+    
+    // Usar el AgendaService con filtros
+    this.agendaService.obtenerTodosLosEventos(this.semanas, filtros).subscribe({
       next: (eventosBackend) => {
+        console.log('📅 Eventos recibidos del backend:', eventosBackend.length);
+        
         // Transformar los eventos del backend en slots
-        this.slotsDisponibles = this.mapEventosToSlots(eventosBackend);
+        const todosLosSlots = this.mapEventosToSlots(eventosBackend);
+        console.log('🎯 Slots mapeados:', todosLosSlots.length);
+        
+        // Guardar los slots (ya vienen filtrados del backend)
+        this.slotsOriginales = todosLosSlots;
+        this.slotsDisponibles = todosLosSlots;
+        this.turnosDisponibles = todosLosSlots;
         
         // Extraer días excepcionales de los eventos (evita request redundante)
         this.diasExcepcionalesService.extraerDiasExcepcionalesDeEventos(eventosBackend);
         
-        this.aplicarFiltrosSlots();
         this.agruparSlotsPorFecha();
         this.showCalendar = true;
         this.isLoadingTurnos = false;
         this.cdr.detectChanges();
+        
+        console.log('✅ Turnos cargados y calendario mostrado');
       },
       error: (err: unknown) => {
-        console.error('Error al cargar eventos:', err);
+        console.error('❌ Error al cargar eventos:', err);
         this.isLoadingTurnos = false;
         this.showCalendar = true;
         this.slotsDisponibles = [];
         this.turnosDisponibles = [];
+        this.cdr.detectChanges();
       }
     });
   }
@@ -1726,31 +1765,74 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Aplicar filtros a los slots
   aplicarFiltrosSlots() {
-    let slotsFiltrados = this.slotsDisponibles;
+    console.log('🔍 Aplicando filtros a slots...');
+    console.log('- Slots originales:', this.slotsOriginales.length);
+    console.log('- Especialidad seleccionada:', this.especialidadSeleccionada);
+    console.log('- Staff médico seleccionado:', this.staffMedicoSeleccionado);
+    console.log('- Centro seleccionado:', this.centroAtencionSeleccionado);
+    
+    // Siempre empezar con todos los slots originales
+    let slotsFiltrados = [...this.slotsOriginales];
 
-    // Filtrar por especialidad
+    // Filtrar por especialidad (obligatorio)
     if (this.especialidadSeleccionada) {
+      const slotsPrevios = slotsFiltrados.length;
       slotsFiltrados = slotsFiltrados.filter(slot =>
         slot.especialidadStaffMedico === this.especialidadSeleccionada
       );
+      console.log(`- Después de filtrar por especialidad: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
 
-    // Filtrar por staff médico si está seleccionado
+    // Filtrar por staff médico si está seleccionado (opcional)
     if (this.staffMedicoSeleccionado) {
-      slotsFiltrados = slotsFiltrados.filter(slot =>
-        slot.staffMedicoId === this.staffMedicoSeleccionado
-      );
+      const slotsPrevios = slotsFiltrados.length;
+      
+      // Buscar el staff médico seleccionado para obtener el nombre del médico
+      const staffSeleccionado = this.staffMedicos.find(s => s.id === this.staffMedicoSeleccionado);
+      console.log('- Staff médico seleccionado objeto:', staffSeleccionado);
+      
+      if (staffSeleccionado && staffSeleccionado.medico) {
+        // Filtrar por nombre completo del médico (más confiable que ID)
+        const nombreCompleto = `${staffSeleccionado.medico.nombre} ${staffSeleccionado.medico.apellido}`.trim();
+        console.log('- Filtrando por nombre completo:', nombreCompleto);
+        
+        slotsFiltrados = slotsFiltrados.filter(slot => {
+          const nombreSlot = `${slot.staffMedicoNombre || ''} ${slot.staffMedicoApellido || ''}`.trim();
+          const match = nombreSlot === nombreCompleto;
+          console.log(`  Comparando: "${nombreSlot}" === "${nombreCompleto}" = ${match}`);
+          return match;
+        });
+      } else {
+        // Fallback: filtrar por ID si no encontramos el staff médico
+        console.log('- Fallback: filtrando por ID de staff médico');
+        console.log('- IDs de staff médico en slots:', [...new Set(slotsFiltrados.map(s => s.staffMedicoId))]);
+        
+        slotsFiltrados = slotsFiltrados.filter(slot => {
+          const match = slot.staffMedicoId === this.staffMedicoSeleccionado;
+          console.log(`  Slot ${slot.id}: ${slot.staffMedicoId} === ${this.staffMedicoSeleccionado} = ${match}`);
+          return match;
+        });
+      }
+      
+      console.log(`- Después de filtrar por staff médico: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
 
-    // Filtrar por centro de atención si está seleccionado
+    // Filtrar por centro de atención si está seleccionado (opcional)
     if (this.centroAtencionSeleccionado) {
-      slotsFiltrados = slotsFiltrados.filter(slot =>
-        slot.centroId === this.centroAtencionSeleccionado
-      );
+      const slotsPrevios = slotsFiltrados.length;
+      slotsFiltrados = slotsFiltrados.filter(slot => {
+        const match = slot.centroId === this.centroAtencionSeleccionado;
+        console.log(`  Centro slot ${slot.id}: ${slot.centroId} === ${this.centroAtencionSeleccionado} = ${match}`);
+        return match;
+      });
+      console.log(`- Después de filtrar por centro: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
 
+    // Actualizar las listas con los slots filtrados
     this.slotsDisponibles = slotsFiltrados;
     this.turnosDisponibles = slotsFiltrados; // Para compatibilidad con el template
+    
+    console.log('✅ Filtros aplicados. Slots finales:', this.slotsDisponibles.length);
   }
 
   // Agrupar slots por fecha y ordenar (método mejorado con soporte para distancia)
@@ -2002,6 +2084,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.staffMedicos = [];
     this.centrosAtencion = [];
     this.showCalendar = false;
+    this.slotsOriginales = [];
     this.slotsDisponibles = [];
     this.turnosDisponibles = [];
     this.slotsPorFecha = {};
@@ -2185,14 +2268,50 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Métodos auxiliares para obtener nombres
   getStaffMedicoNombre(id: number | null): string {
     if (!id) return 'Cualquier médico';
+    
+    console.log('🔍 Buscando staff médico con ID:', id);
+    console.log('Staff médicos disponibles:', this.staffMedicos.length);
+    
+    // Mostrar todos los IDs disponibles
+    console.log('IDs de staff médicos disponibles:', this.staffMedicos.map(s => s.id));
+    
     const staff = this.staffMedicos.find(s => s.id === id);
-    return staff ? `${staff.medico?.nombre} ${staff.medico?.apellido}` : 'Médico no encontrado';
+    if (staff && staff.medico) {
+      console.log('✅ Staff médico encontrado:', staff);
+      return `${staff.medico.nombre} ${staff.medico.apellido}`;
+    }
+    
+    // Si no encontramos el staff médico, buscar en los slots disponibles
+    console.log('⚠️ Staff médico no encontrado, buscando en slots...');
+    const slotConMedico = this.slotsOriginales.find(slot => slot.staffMedicoId === id);
+    if (slotConMedico && slotConMedico.staffMedicoNombre && slotConMedico.staffMedicoApellido) {
+      console.log('✅ Médico encontrado en slots:', slotConMedico);
+      return `${slotConMedico.staffMedicoNombre} ${slotConMedico.staffMedicoApellido}`;
+    }
+    
+    console.warn('❌ Staff médico no encontrado con ID:', id);
+    console.log('Estructuras de staff médicos:', this.staffMedicos.map(s => ({
+      id: s.id,
+      medicoId: s.medicoId,
+      medico: s.medico
+    })));
+    return 'Médico no encontrado';
   }
 
   getCentroAtencionNombre(id: number | null): string {
     if (!id) return 'Cualquier centro';
+    
+    console.log('🔍 Buscando centro con ID:', id);
+    console.log('Centros disponibles:', this.centrosAtencion.length);
+    
     const centro = this.centrosAtencion.find(c => c.id === id);
-    return centro ? centro.nombre : 'Centro no encontrado';
+    if (!centro) {
+      console.warn('❌ Centro no encontrado con ID:', id);
+      return 'Centro no encontrado';
+    }
+    
+    console.log('✅ Centro encontrado:', centro);
+    return centro.nombre || `Centro #${id}`;
   }
 
   // Métodos para manejo de días excepcionales
