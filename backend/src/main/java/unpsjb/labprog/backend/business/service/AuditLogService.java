@@ -86,7 +86,7 @@ public class AuditLogService {
             turnoData.put("consultorioId", turno.getConsultorio().getId());
         }
         
-        AuditLog result = logTurnoAction(turno, AuditLog.Actions.CREATE, performedBy, 
+        AuditLog result = logTurnoAction(turno, "CREATE", performedBy, 
                             null, turno.getEstado().name(), 
                             null, turnoData, null); // Pasar el mapa en lugar del objeto
         System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
@@ -98,7 +98,7 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logStatusChange(Turno turno, String previousStatus, String performedBy, String reason) {
-        return logTurnoAction(turno, AuditLog.Actions.UPDATE_STATUS, performedBy,
+        return logTurnoAction(turno, "UPDATE_STATUS", performedBy,
                             previousStatus, turno.getEstado().name(),
                             null, null, reason);
     }
@@ -112,7 +112,7 @@ public class AuditLogService {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio");
         }
         
-        return logTurnoAction(turno, AuditLog.Actions.CANCEL, performedBy,
+        return logTurnoAction(turno, "CANCEL", performedBy,
                             previousStatus, turno.getEstado().name(),
                             null, null, reason);
     }
@@ -122,7 +122,7 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoConfirmed(Turno turno, String previousStatus, String performedBy) {
-        return logTurnoAction(turno, AuditLog.Actions.CONFIRM, performedBy,
+        return logTurnoAction(turno, "CONFIRM", performedBy,
                             previousStatus, turno.getEstado().name(),
                             null, null, null);
     }
@@ -132,7 +132,7 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoCompleted(Turno turno, String previousStatus, String performedBy) {
-        return logTurnoAction(turno, AuditLog.Actions.COMPLETE, performedBy,
+        return logTurnoAction(turno, "COMPLETE", performedBy,
                             previousStatus, turno.getEstado().name(),
                             null, null, null);
     }
@@ -150,7 +150,7 @@ public class AuditLogService {
         newValues.put("horaFin", turno.getHoraFin().toString());
         newValues.put("estado", turno.getEstado().name());
         
-        return logTurnoAction(turno, AuditLog.Actions.RESCHEDULE, performedBy,
+        return logTurnoAction(turno, "RESCHEDULE", performedBy,
                             previousStatus, turno.getEstado().name(),
                             oldValues, newValues, reason);
     }
@@ -160,7 +160,7 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoDeleted(Turno turno, String performedBy, String reason) {
-        return logTurnoAction(turno, AuditLog.Actions.DELETE, performedBy,
+        return logTurnoAction(turno, "DELETE", performedBy,
                             turno.getEstado().name(), "DELETED",
                             turno, null, reason);
     }
@@ -265,28 +265,72 @@ public class AuditLogService {
      * Obtiene logs de auditoría por acción
      */
     public List<AuditLog> getLogsByAction(String action) {
-        return auditLogRepository.findByActionOrderByPerformedAtDesc(action);
+        System.out.println("🔍 DEBUG: Obteniendo logs por acción: " + action);
+        
+        try {
+            List<AuditLog> results = auditLogRepository.findByActionOrderByPerformedAtDesc(action);
+            System.out.println("✅ DEBUG: Encontrados " + results.size() + " logs para la acción: " + action);
+            return results;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener logs por acción " + action + ": " + e.getMessage());
+            System.err.println("⚠️ WARN: Puede haber registros con campos LOB problemáticos para esta acción");
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**
      * Obtiene logs de auditoría por usuario
      */
     public List<AuditLog> getLogsByUser(String performedBy) {
-        return auditLogRepository.findByPerformedByOrderByPerformedAtDesc(performedBy);
+        System.out.println("🔍 DEBUG: Obteniendo logs por usuario: " + performedBy);
+        
+        try {
+            List<AuditLog> results = auditLogRepository.findByPerformedByOrderByPerformedAtDesc(performedBy);
+            System.out.println("✅ DEBUG: Encontrados " + results.size() + " logs para el usuario: " + performedBy);
+            return results;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener logs por usuario " + performedBy + ": " + e.getMessage());
+            System.err.println("⚠️ WARN: Puede haber registros con campos LOB problemáticos para este usuario");
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**
      * Obtiene logs de auditoría en un rango de fechas
      */
     public List<AuditLog> getLogsByDateRange(LocalDateTime start, LocalDateTime end) {
-        return auditLogRepository.findByPerformedAtBetweenOrderByPerformedAtDesc(start, end);
+        System.out.println("🔍 DEBUG: Obteniendo logs por rango de fechas: " + start + " - " + end);
+        
+        try {
+            List<AuditLog> results = auditLogRepository.findByPerformedAtBetweenOrderByPerformedAtDesc(start, end);
+            System.out.println("✅ DEBUG: Encontrados " + results.size() + " logs en el rango de fechas");
+            return results;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener logs por rango de fechas: " + e.getMessage());
+            System.err.println("⚠️ WARN: Puede haber registros con campos LOB problemáticos en este rango");
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**
      * Obtiene logs de auditoría por turno y acción específica
      */
     public List<AuditLog> getLogsByTurnoAndAction(Integer turnoId, String action) {
-        return auditLogRepository.findByTurnoIdAndActionOrderByPerformedAtDesc(turnoId, action);
+        System.out.println("🔍 DEBUG: Obteniendo logs por turno " + turnoId + " y acción: " + action);
+        
+        try {
+            List<AuditLog> results = auditLogRepository.findByTurnoIdAndActionOrderByPerformedAtDesc(turnoId, action);
+            System.out.println("✅ DEBUG: Encontrados " + results.size() + " logs para turno " + turnoId + " y acción " + action);
+            return results;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener logs por turno y acción: " + e.getMessage());
+            System.err.println("⚠️ WARN: Puede haber registros con campos LOB problemáticos");
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**
@@ -319,14 +363,119 @@ public class AuditLogService {
      */
     public List<AuditLog> getRecentLogs() {
         LocalDateTime since = LocalDateTime.now().minusHours(24);
-        return auditLogRepository.findRecentLogs(since);
+        System.out.println("🔍 DEBUG: Obteniendo logs recientes desde: " + since);
+        
+        try {
+            // Intentar primero la consulta normal
+            List<AuditLog> recentLogs = auditLogRepository.findRecentLogs(since);
+            System.out.println("✅ DEBUG: Se obtuvieron " + recentLogs.size() + " logs recientes usando consulta normal");
+            return recentLogs;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo en consulta normal de logs recientes: " + e.getMessage());
+            System.err.println("🔍 DEBUG: Intentando consulta segura alternativa...");
+            
+            try {
+                // Usar consulta segura alternativa
+                return getRecentLogsIndividually(since);
+                
+            } catch (Exception e2) {
+                System.err.println("❌ ERROR: Todas las consultas de logs recientes fallaron. Retornando lista vacía");
+                System.err.println("❌ ERROR: Último error: " + e2.getMessage());
+                return new java.util.ArrayList<>();
+            }
+        }
+    }
+
+    /**
+     * Obtiene logs recientes individualmente para evitar problemas con campos LOB
+     */
+    private List<AuditLog> getRecentLogsIndividually(LocalDateTime since) {
+        System.out.println("🔍 DEBUG: Obteniendo logs recientes individualmente desde: " + since);
+        
+        List<AuditLog> validRecords = new java.util.ArrayList<>();
+        
+        try {
+            // Primero obtener solo los IDs de los logs recientes
+            List<Integer> recentIds = auditLogRepository.findRecentLogIds(since);
+            System.out.println("🔍 DEBUG: Encontrados " + recentIds.size() + " IDs de logs recientes: " + recentIds);
+            
+            // Ahora obtener cada registro individualmente
+            for (Integer logId : recentIds) {
+                try {
+                    System.out.println("🔍 DEBUG: Obteniendo log reciente ID: " + logId);
+                    AuditLog record = auditLogRepository.findById(logId).orElse(null);
+                    if (record != null) {
+                        validRecords.add(record);
+                        System.out.println("✅ DEBUG: Log reciente " + logId + " obtenido exitosamente");
+                    } else {
+                        System.err.println("⚠️ WARN: Log reciente " + logId + " no encontrado");
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ ERROR: Fallo al obtener log reciente " + logId + ": " + e.getMessage());
+                    // Intentar obtener los datos básicos directamente
+                    try {
+                        Object[] basicData = auditLogRepository.findBasicAuditData(logId);
+                        if (basicData != null && basicData.length >= 6) {
+                            System.out.println("🔍 DEBUG: Datos básicos del log reciente " + logId + ":");
+                            System.out.println("  - ID: " + basicData[0]);
+                            System.out.println("  - Acción: " + basicData[1]);
+                            System.out.println("  - Usuario: " + basicData[2]);
+                            System.out.println("  - Estado anterior: " + basicData[3]);
+                            System.out.println("  - Estado nuevo: " + basicData[4]);
+                            System.out.println("  - Fecha: " + basicData[5]);
+                            System.err.println("⚠️ WARN: Log reciente " + logId + " tiene datos corruptos en old_values o new_values");
+                        }
+                    } catch (Exception e2) {
+                        System.err.println("❌ ERROR: No se pudieron obtener ni los datos básicos del log reciente " + logId + ": " + e2.getMessage());
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo al obtener IDs de logs recientes: " + e.getMessage());
+            System.err.println("🔍 DEBUG: Intentando consulta de datos básicos directamente...");
+            
+            try {
+                // Como último recurso, usar la consulta de datos básicos
+                List<Object[]> basicLogs = auditLogRepository.findSafeRecentLogs(since);
+                System.out.println("🔍 DEBUG: Obtenidos " + basicLogs.size() + " registros básicos de logs recientes");
+                
+                // Por ahora retornar lista vacía, pero imprimir los datos para debug
+                basicLogs.forEach(log -> {
+                    System.out.println("📋 DEBUG: Log básico - ID: " + log[0] + ", Acción: " + log[1] + ", Usuario: " + log[2] + ", Fecha: " + log[5]);
+                });
+                
+            } catch (Exception e3) {
+                System.err.println("❌ ERROR: Ni siquiera la consulta básica funcionó: " + e3.getMessage());
+            }
+        }
+        
+        // Ordenar por fecha descendente
+        validRecords.sort((a, b) -> b.getPerformedAt().compareTo(a.getPerformedAt()));
+        
+        System.out.println("✅ DEBUG: Se obtuvieron " + validRecords.size() + " logs recientes válidos");
+        return validRecords;
     }
 
     /**
      * Busca logs que contengan un término específico
      */
     public List<AuditLog> searchLogs(String searchTerm) {
-        return auditLogRepository.findLogsContaining(searchTerm);
+        System.out.println("🔍 DEBUG: Buscando logs que contengan: " + searchTerm);
+        
+        try {
+            // Intentar la búsqueda normal
+            List<AuditLog> results = auditLogRepository.findLogsContaining(searchTerm);
+            System.out.println("✅ DEBUG: Búsqueda normal exitosa, encontrados " + results.size() + " logs");
+            return results;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Fallo en búsqueda de logs: " + e.getMessage());
+            System.err.println("⚠️ WARN: La búsqueda puede contener registros con campos LOB problemáticos");
+            // Por ahora retornar lista vacía, pero en el futuro se podría implementar búsqueda segura
+            return new java.util.ArrayList<>();
+        }
     }
 
     /**

@@ -1822,6 +1822,23 @@ export class AdminAgendaComponent implements OnInit {
 
   // Formatear fecha para mostrar
   formatearFecha(fecha: string): string {
+    // Si es fecha en formato YYYY-MM-DD, parsear sin zona horaria para evitar desfases
+    if (fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = fecha.split('-');
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1; // Los meses en JS van de 0-11
+      const day = parseInt(parts[2]);
+      const fechaObj = new Date(year, month, day);
+      const opciones: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      return fechaObj.toLocaleDateString('es-ES', opciones);
+    }
+    
+    // Para otros formatos, usar el método original
     const fechaObj = new Date(fecha + 'T00:00:00');
     const opciones: Intl.DateTimeFormatOptions = {
       weekday: 'long',

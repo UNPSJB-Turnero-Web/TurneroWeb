@@ -808,6 +808,18 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   /** Formatea una fecha para mostrar */
   formatDate(dateString: string): string {
     if (!dateString) return '';
+    
+    // Si es solo fecha (YYYY-MM-DD), evitar problemas de zona horaria
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const parts = dateString.split('-');
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]) - 1; // Los meses en JS van de 0-11
+      const day = parseInt(parts[2]);
+      const date = new Date(year, month, day);
+      return date.toLocaleDateString('es-ES');
+    }
+    
+    // Para otros formatos, usar el método original
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES');
   }
@@ -815,6 +827,21 @@ export class TurnoAdvancedSearchComponent implements OnInit {
   /** Formatea una fecha y hora para mostrar */
   formatDateTime(dateTimeString: string): string {
     if (!dateTimeString) return '';
+    
+    // Si viene en formato ISO con T, extraer solo la parte de fecha y hora
+    if (dateTimeString.includes('T')) {
+      const date = new Date(dateTimeString);
+      return date.toLocaleString('es-ES', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+    
+    // Para otros formatos
     const date = new Date(dateTimeString);
     return date.toLocaleString('es-ES');
   }
