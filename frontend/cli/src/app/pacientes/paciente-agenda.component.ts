@@ -1506,6 +1506,36 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         this.staffMedicosCompletos = dataPackage.data || [];
         this.staffMedicos = [...this.staffMedicosCompletos]; // Inicialmente mostrar todos
         console.log('🏥 Todos los staff médicos cargados:', this.staffMedicosCompletos.length);
+        
+        // Debug: Mostrar detalles de los staff médicos
+        console.log('📊 Detalles de staff médicos:');
+        this.staffMedicosCompletos.forEach((staff, i) => {
+          console.log(`Staff ${i + 1}:`, {
+            id: staff.id,
+            idType: typeof staff.id,
+            nombre: staff.medico?.nombre,
+            apellido: staff.medico?.apellido,
+            especialidad: staff.especialidad?.nombre
+          });
+        });
+        
+        // Buscar específicamente a Cecilia Morales
+        const cecilia = this.staffMedicosCompletos.find(staff => 
+          staff.medico?.nombre?.toLowerCase().includes('cecilia') && 
+          staff.medico?.apellido?.toLowerCase().includes('morales')
+        );
+        if (cecilia) {
+          console.log('🎯 CECILIA MORALES encontrada en staffMedicos:', {
+            id: cecilia.id,
+            tipo: typeof cecilia.id,
+            nombre: cecilia.medico?.nombre,
+            apellido: cecilia.medico?.apellido,
+            especialidad: cecilia.especialidad?.nombre
+          });
+        } else {
+          console.log('❌ CECILIA MORALES NO encontrada en staffMedicos');
+        }
+        
         this.isLoadingStaffMedicos = false;
       },
       error: (error) => {
@@ -1586,15 +1616,29 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         console.log('✅ Centros de atención cargados:', this.centrosAtencionCompletos.length);
         console.log('🏥 Detalles de centros:');
         this.centrosAtencionCompletos.forEach((centro, index) => {
-          console.log(`Centro ${index + 1}: "${centro.nombre}" (ID: ${centro.id})`);
-          console.log('- Especialidades:', centro.especialidades);
-          console.log('- Número de especialidades:', centro.especialidades?.length || 0);
-          if (centro.especialidades && centro.especialidades.length > 0) {
-            centro.especialidades.forEach((esp: any, espIndex: number) => {
-              console.log(`  Especialidad ${espIndex + 1}: "${esp.nombre}"`);
-            });
-          }
+          console.log(`Centro ${index + 1}:`, {
+            id: centro.id,
+            idType: typeof centro.id,
+            nombre: centro.nombre,
+            direccion: centro.direccion,
+            especialidades: centro.especialidades?.length || 0
+          });
         });
+        
+        // Buscar específicamente el Centro Médico Esperanza
+        const esperanza = this.centrosAtencionCompletos.find(centro => 
+          centro.nombre?.toLowerCase().includes('esperanza')
+        );
+        if (esperanza) {
+          console.log('🎯 CENTRO ESPERANZA encontrado en centros:', {
+            id: esperanza.id,
+            tipo: typeof esperanza.id,
+            nombre: esperanza.nombre,
+            direccion: esperanza.direccion
+          });
+        } else {
+          console.log('❌ CENTRO ESPERANZA NO encontrado en centros');
+        }
       },
       error: (error) => {
         console.error('Error cargando centros de atención:', error);
@@ -1643,14 +1687,14 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
       this.especialidadSeleccionada = '';
     }
 
-    if (this.staffMedicoSeleccionado && !medicosDisponibles.some(m => m.id === this.staffMedicoSeleccionado)) {
+    if (this.staffMedicoSeleccionado && !medicosDisponibles.some(m => Number(m.id) === Number(this.staffMedicoSeleccionado))) {
       console.log('⚠️ Médico seleccionado ya no es válido, reseteando...');
       const nombreMedico = this.getStaffMedicoNombre(this.staffMedicoSeleccionado);
       mensajesReset.push(`• El médico "${nombreMedico}" no tiene turnos compatibles con los filtros actuales`);
       this.staffMedicoSeleccionado = null;
     }
 
-    if (this.centroAtencionSeleccionado && !centrosDisponibles.some(c => c.id === this.centroAtencionSeleccionado)) {
+    if (this.centroAtencionSeleccionado && !centrosDisponibles.some(c => Number(c.id) === Number(this.centroAtencionSeleccionado))) {
       console.log('⚠️ Centro seleccionado ya no es válido, reseteando...');
       const nombreCentro = this.getCentroAtencionNombre(this.centroAtencionSeleccionado);
       mensajesReset.push(`• El centro "${nombreCentro}" no tiene turnos compatibles con los filtros actuales`);
@@ -1677,7 +1721,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Actualizar médicos basándose en especialidad y/o centro seleccionado
     if (this.especialidadSeleccionada || this.centroAtencionSeleccionado) {
       this.staffMedicos = this.staffMedicosCompletos.filter(staff => 
-        medicosDisponibles.some(medico => medico.id === staff.id)
+        medicosDisponibles.some(medico => Number(medico.id) === Number(staff.id))
       );
       console.log('  - Médicos filtrados por especialidad/centro:', this.staffMedicos.length);
     } else {
@@ -1688,7 +1732,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Actualizar centros basándose en especialidad y/o médico seleccionado
     if (this.especialidadSeleccionada || this.staffMedicoSeleccionado) {
       this.centrosAtencion = this.centrosAtencionCompletos.filter(centro => 
-        centrosDisponibles.some(c => c.id === centro.id)
+        centrosDisponibles.some(c => Number(c.id) === Number(centro.id))
       );
       console.log('  - Centros filtrados por especialidad/médico:', this.centrosAtencion.length);
     } else {
@@ -1711,7 +1755,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
       slotsRelevantes = slotsRelevantes.filter(slot => 
-        slot.staffMedicoId === this.staffMedicoSeleccionado
+        Number(slot.staffMedicoId) === Number(this.staffMedicoSeleccionado)
       );
       console.log(`🔍 Slots después de filtrar por médico (${this.staffMedicoSeleccionado}):`, slotsRelevantes.length);
     }
@@ -1719,7 +1763,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por centro si está seleccionado
     if (this.centroAtencionSeleccionado) {
       slotsRelevantes = slotsRelevantes.filter(slot => 
-        slot.centroId === this.centroAtencionSeleccionado
+        Number(slot.centroId) === Number(this.centroAtencionSeleccionado)
       );
       console.log(`🔍 Slots después de filtrar por centro (${this.centroAtencionSeleccionado}):`, slotsRelevantes.length);
     }
@@ -1752,7 +1796,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por centro si está seleccionado
     if (this.centroAtencionSeleccionado) {
       slotsRelevantes = slotsRelevantes.filter(slot => 
-        slot.centroId === this.centroAtencionSeleccionado
+        Number(slot.centroId) === Number(this.centroAtencionSeleccionado)
       );
       console.log(`🔍 Slots después de filtrar por centro (${this.centroAtencionSeleccionado}):`, slotsRelevantes.length);
     }
@@ -1794,7 +1838,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
       slotsRelevantes = slotsRelevantes.filter(slot => 
-        slot.staffMedicoId === this.staffMedicoSeleccionado
+        Number(slot.staffMedicoId) === Number(this.staffMedicoSeleccionado)
       );
       console.log(`🔍 Slots después de filtrar por médico (${this.staffMedicoSeleccionado}):`, slotsRelevantes.length);
     }
@@ -1822,6 +1866,22 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     console.log('- Especialidad:', this.especialidadSeleccionada);
     console.log('- Staff médico:', this.staffMedicoSeleccionado);
     console.log('- Centro:', this.centroAtencionSeleccionado);
+    
+    // Debug: Mostrar algunos slots originales para ver la estructura
+    if (this.slotsOriginales && this.slotsOriginales.length > 0) {
+      console.log('📊 Primeros 3 slots originales para debug:');
+      this.slotsOriginales.slice(0, 3).forEach((slot, i) => {
+        console.log(`Slot ${i + 1}:`, {
+          id: slot.id,
+          staffMedicoId: slot.staffMedicoId,
+          staffMedicoNombre: slot.staffMedicoNombre,
+          staffMedicoApellido: slot.staffMedicoApellido,
+          especialidadStaffMedico: slot.especialidadStaffMedico,
+          centroId: slot.centroId,
+          nombreCentro: slot.nombreCentro
+        });
+      });
+    }
     
     // Verificar si hay al menos un filtro aplicado
     const hayFiltros = this.especialidadSeleccionada?.trim() || 
@@ -1851,6 +1911,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por especialidad si está seleccionada
     if (this.especialidadSeleccionada && this.especialidadSeleccionada.trim()) {
       const slotsPrevios = slotsFiltrados.length;
+      console.log(`🔍 Filtrando por especialidad: "${this.especialidadSeleccionada}"`);
+      console.log('Especialidades en slots:', [...new Set(slotsFiltrados.map(s => s.especialidadStaffMedico))]);
       slotsFiltrados = slotsFiltrados.filter(slot =>
         slot.especialidadStaffMedico === this.especialidadSeleccionada
       );
@@ -1860,18 +1922,56 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por staff médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
       const slotsPrevios = slotsFiltrados.length;
-      slotsFiltrados = slotsFiltrados.filter(slot =>
-        slot.staffMedicoId === this.staffMedicoSeleccionado
-      );
+      // Convertir ambos valores a number para asegurar comparación correcta
+      const staffMedicoIdBuscado = Number(this.staffMedicoSeleccionado);
+      console.log(`🔍 Filtrando por staff médico ID: ${staffMedicoIdBuscado} (tipo: ${typeof staffMedicoIdBuscado})`);
+      console.log('IDs de staff médicos en slots:', [...new Set(slotsFiltrados.map(s => ({ id: s.staffMedicoId, tipo: typeof s.staffMedicoId })))]);
+      console.log('Nombres de staff médicos en slots:', [...new Set(slotsFiltrados.map(s => `${s.staffMedicoNombre} ${s.staffMedicoApellido} (ID: ${s.staffMedicoId})`))]);
+      
+      // Buscar específicamente el ID que buscamos
+      const slotsConIdBuscado = slotsFiltrados.filter(slot => Number(slot.staffMedicoId) === staffMedicoIdBuscado);
+      console.log(`🎯 Slots con ID ${staffMedicoIdBuscado}:`, slotsConIdBuscado.length);
+      if (slotsConIdBuscado.length > 0) {
+        console.log('Primer slot encontrado:', {
+          id: slotsConIdBuscado[0].id,
+          staffMedicoId: slotsConIdBuscado[0].staffMedicoId,
+          nombre: slotsConIdBuscado[0].staffMedicoNombre,
+          apellido: slotsConIdBuscado[0].staffMedicoApellido,
+          especialidad: slotsConIdBuscado[0].especialidadStaffMedico
+        });
+      }
+      
+      slotsFiltrados = slotsFiltrados.filter(slot => {
+        const match = Number(slot.staffMedicoId) === staffMedicoIdBuscado;
+        return match;
+      });
       console.log(`- Después de filtrar por staff médico: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
 
     // Filtrar por centro de atención si está seleccionado
     if (this.centroAtencionSeleccionado) {
       const slotsPrevios = slotsFiltrados.length;
-      slotsFiltrados = slotsFiltrados.filter(slot =>
-        slot.centroId === this.centroAtencionSeleccionado
-      );
+      // Convertir ambos valores a number para asegurar comparación correcta
+      const centroIdBuscado = Number(this.centroAtencionSeleccionado);
+      console.log(`🔍 Filtrando por centro ID: ${centroIdBuscado} (tipo: ${typeof centroIdBuscado})`);
+      console.log('IDs de centros en slots:', [...new Set(slotsFiltrados.map(s => ({ id: s.centroId, tipo: typeof s.centroId })))]);
+      console.log('Nombres de centros en slots:', [...new Set(slotsFiltrados.map(s => `${s.nombreCentro} (ID: ${s.centroId})`))]);
+      
+      // Buscar específicamente el ID que buscamos
+      const slotsConIdBuscado = slotsFiltrados.filter(slot => Number(slot.centroId) === centroIdBuscado);
+      console.log(`🎯 Slots con centro ID ${centroIdBuscado}:`, slotsConIdBuscado.length);
+      if (slotsConIdBuscado.length > 0) {
+        console.log('Primer slot encontrado:', {
+          id: slotsConIdBuscado[0].id,
+          centroId: slotsConIdBuscado[0].centroId,
+          nombreCentro: slotsConIdBuscado[0].nombreCentro
+        });
+      }
+      
+      slotsFiltrados = slotsFiltrados.filter(slot => {
+        const match = Number(slot.centroId) === centroIdBuscado;
+        return match;
+      });
       console.log(`- Después de filtrar por centro: ${slotsFiltrados.length} (era ${slotsPrevios})`);
     }
 
@@ -1893,9 +1993,34 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   private mapEventosToSlots(eventosBackend: any[]): SlotDisponible[] {
     const slots: SlotDisponible[] = [];
 
-    eventosBackend.forEach(evento => {
+    console.log('🔄 Mapeando', eventosBackend.length, 'eventos del backend a slots...');
+    
+    eventosBackend.forEach((evento, index) => {
+      // Debug: mostrar algunos eventos para ver la estructura
+      if (index < 3) {
+        console.log(`📊 Evento ${index + 1} del backend:`, {
+          id: evento.id,
+          fecha: evento.fecha,
+          staffMedicoId: evento.staffMedicoId,
+          staffMedicoNombre: evento.staffMedicoNombre,
+          staffMedicoApellido: evento.staffMedicoApellido,
+          especialidadStaffMedico: evento.especialidadStaffMedico,
+          centroId: evento.centroId,
+          nombreCentro: evento.nombreCentro,
+          esSlot: evento.esSlot
+        });
+      }
+      
       // Validar que el evento tenga los datos necesarios
       if (!evento.fecha || !evento.horaInicio || !evento.horaFin || !evento.esSlot) {
+        if (index < 5) {
+          console.log(`⚠️ Evento ${index + 1} descartado por falta datos:`, {
+            fecha: evento.fecha,
+            horaInicio: evento.horaInicio,
+            horaFin: evento.horaFin,
+            esSlot: evento.esSlot
+          });
+        }
         return;
       }
 
@@ -1916,8 +2041,33 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         esSlot: true
       };
 
+      // Debug: mostrar algunos slots mapeados
+      if (index < 3) {
+        console.log(`📊 Slot ${index + 1} mapeado:`, {
+          id: slot.id,
+          staffMedicoId: slot.staffMedicoId,
+          staffMedicoNombre: slot.staffMedicoNombre,
+          staffMedicoApellido: slot.staffMedicoApellido,
+          especialidadStaffMedico: slot.especialidadStaffMedico,
+          centroId: slot.centroId,
+          nombreCentro: slot.nombreCentro
+        });
+      }
+
       slots.push(slot);
     });
+
+    console.log('✅ Slots mapeados:', slots.length);
+    
+    // Debug: mostrar resumen de IDs únicos
+    const staffIds = [...new Set(slots.map(s => s.staffMedicoId))];
+    const centroIds = [...new Set(slots.map(s => s.centroId))];
+    const especialidades = [...new Set(slots.map(s => s.especialidadStaffMedico))];
+    
+    console.log('📊 Resumen de datos en slots:');
+    console.log('- Staff médicos únicos (IDs):', staffIds);
+    console.log('- Centros únicos (IDs):', centroIds);
+    console.log('- Especialidades únicas:', especialidades);
 
     return slots;
   }
@@ -2080,7 +2230,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     console.log('🏥 Centro seleccionado del mapa:', centro);
     
     // Verificar que el centro tenga turnos disponibles
-    const turnosEnCentro = this.slotsOriginales.filter(slot => slot.centroId === centro.id);
+    const turnosEnCentro = this.slotsOriginales.filter(slot => Number(slot.centroId) === Number(centro.id));
     
     if (turnosEnCentro.length === 0) {
       // No hay turnos en este centro
@@ -2101,7 +2251,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Filtrar por médico si está seleccionado
     if (this.staffMedicoSeleccionado) {
       turnosCompatibles = turnosCompatibles.filter(slot => 
-        slot.staffMedicoId === this.staffMedicoSeleccionado
+        Number(slot.staffMedicoId) === Number(this.staffMedicoSeleccionado)
       );
     }
     
@@ -2268,13 +2418,14 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   getStaffMedicoNombre(id: number | null): string {
     if (!id) return 'Cualquier médico';
     
-    console.log('🔍 Buscando staff médico con ID:', id);
+    console.log('🔍 Buscando staff médico con ID:', id, 'tipo:', typeof id);
     console.log('Staff médicos disponibles:', this.staffMedicos.length);
     
     // Mostrar todos los IDs disponibles
-    console.log('IDs de staff médicos disponibles:', this.staffMedicos.map(s => s.id));
+    console.log('IDs de staff médicos disponibles:', this.staffMedicos.map(s => ({ id: s.id, tipo: typeof s.id })));
     
-    const staff = this.staffMedicos.find(s => s.id === id);
+    // Convertir ambos valores a number para asegurar comparación correcta
+    const staff = this.staffMedicos.find(s => Number(s.id) === Number(id));
     if (staff && staff.medico) {
       console.log('✅ Staff médico encontrado:', staff);
       return `${staff.medico.nombre} ${staff.medico.apellido}`;
@@ -2282,7 +2433,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     
     // Si no encontramos el staff médico, buscar en los slots disponibles
     console.log('⚠️ Staff médico no encontrado, buscando en slots...');
-    const slotConMedico = this.slotsOriginales.find(slot => slot.staffMedicoId === id);
+    const slotConMedico = this.slotsOriginales.find(slot => Number(slot.staffMedicoId) === Number(id));
     if (slotConMedico && slotConMedico.staffMedicoNombre && slotConMedico.staffMedicoApellido) {
       console.log('✅ Médico encontrado en slots:', slotConMedico);
       return `${slotConMedico.staffMedicoNombre} ${slotConMedico.staffMedicoApellido}`;
@@ -2291,6 +2442,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     console.warn('❌ Staff médico no encontrado con ID:', id);
     console.log('Estructuras de staff médicos:', this.staffMedicos.map(s => ({
       id: s.id,
+      tipo: typeof s.id,
       medicoId: s.medicoId,
       medico: s.medico
     })));
@@ -2300,12 +2452,14 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   getCentroAtencionNombre(id: number | null): string {
     if (!id) return 'Cualquier centro';
     
-    console.log('🔍 Buscando centro con ID:', id);
+    console.log('🔍 Buscando centro con ID:', id, 'tipo:', typeof id);
     console.log('Centros disponibles:', this.centrosAtencion.length);
     
-    const centro = this.centrosAtencion.find(c => c.id === id);
+    // Convertir ambos valores a number para asegurar comparación correcta
+    const centro = this.centrosAtencion.find(c => Number(c.id) === Number(id));
     if (!centro) {
       console.warn('❌ Centro no encontrado con ID:', id);
+      console.log('IDs de centros disponibles:', this.centrosAtencion.map(c => ({ id: c.id, tipo: typeof c.id, nombre: c.nombre })));
       return 'Centro no encontrado';
     }
     
