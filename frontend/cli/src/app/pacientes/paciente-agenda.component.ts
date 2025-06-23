@@ -12,6 +12,7 @@ import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service
 import { AgendaService } from '../agenda/agenda.service';
 import { DiasExcepcionalesService } from '../agenda/dias-excepcionales.service';
 import { GeolocationService, UserLocation } from '../services/geolocation.service';
+import { CentrosMapaModalComponent } from '../modal/centros-mapa-modal.component';
 import { Turno } from '../turnos/turno';
 import { Especialidad } from '../especialidades/especialidad';
 import { StaffMedico } from '../staffMedicos/staffMedico';
@@ -46,7 +47,8 @@ interface SlotDisponible {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    CentrosMapaModalComponent
   ],
   template: `
     <div class="container-fluid mt-4">
@@ -184,6 +186,14 @@ interface SlotDisponible {
                   {{ isLoadingTurnos ? 'Buscando...' : 'Aplicar Filtros' }}
                 </button>
 
+                <button 
+                  type="button" 
+                  class="btn btn-paciente-mapa" 
+                  (click)="mostrarMapaCentros()"
+                  [disabled]="isLoadingCentros">
+                  <i class="fas fa-map-marked-alt"></i>
+                  Ver Mapa de Centros
+                </button>
               </div>
 
               <!-- Ordenamiento por cercanía -->
@@ -536,6 +546,16 @@ interface SlotDisponible {
           </div>
         </div>
       </div>
+
+      <!-- MODAL DE MAPA DE CENTROS -->
+      <app-centros-mapa-modal 
+        *ngIf="showMapaModal"
+        [centros]="centrosAtencionCompletos"
+        [especialidades]="especialidadesCompletas"
+        [especialidadSeleccionadaInicial]="especialidadSeleccionada"
+        (centroSeleccionado)="onCentroSeleccionadoDelMapa($event)"
+        (modalCerrado)="cerrarMapaModal()">
+      </app-centros-mapa-modal>
   `,
   styles: [`
     /* HEADER */
@@ -783,6 +803,33 @@ interface SlotDisponible {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
       background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+
+    .btn-paciente-mapa {
+      background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+    }
+
+    .btn-paciente-mapa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4);
+      background: linear-gradient(135deg, #1ab394 0%, #148a99 100%);
+    }
+
+    .filtros-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     .btn-paciente-secondary {
@@ -1526,6 +1573,9 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   selectedTurnoDisponible: any = null; // Para el modal
   isBooking = false;
 
+  // Modal de mapa de centros
+  showMapaModal = false;
+
   constructor(
     private turnoService: TurnoService,
     private especialidadService: EspecialidadService,
@@ -2149,6 +2199,35 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Navegación y otros métodos
   goBack() {
     this.router.navigate(['/paciente-dashboard']);
+  }
+
+  // ==================== MÉTODOS DEL MAPA DE CENTROS ====================
+  
+  mostrarMapaCentros() {
+    console.log('🗺️ Abriendo mapa de centros...');
+    this.showMapaModal = true;
+  }
+
+  cerrarMapaModal() {
+    console.log('🗺️ Cerrando mapa de centros...');
+    this.showMapaModal = false;
+  }
+
+  onCentroSeleccionadoDelMapa(centro: CentroAtencion) {
+    console.log('🏥 Centro seleccionado del mapa:', centro);
+    
+    // Establecer el centro seleccionado en el filtro
+    this.centroAtencionSeleccionado = centro.id || null;
+    
+    // Actualizar filtros dinámicos y aplicar
+    this.actualizarFiltrosDinamicos();
+    this.aplicarFiltros();
+    
+    // Cerrar el modal
+    this.cerrarMapaModal();
+    
+    // Mostrar mensaje de confirmación
+    console.log(`✅ Centro "${centro.nombre}" seleccionado. Filtros aplicados.`);
   }
 
 
