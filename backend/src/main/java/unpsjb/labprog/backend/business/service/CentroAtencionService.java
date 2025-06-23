@@ -138,6 +138,16 @@ public class CentroAtencionService {
         dto.setTelefono(c.getTelefono());
         dto.setLatitud(c.getLatitud());
         dto.setLongitud(c.getLongitud());
+        
+        // Convertir especialidades a DTO
+        if (c.getEspecialidades() != null) {
+            dto.setEspecialidades(
+                c.getEspecialidades().stream()
+                    .map(this::especialidadToDTO)
+                    .collect(java.util.stream.Collectors.toSet())
+            );
+        }
+        
         return dto;
     }
 
@@ -190,4 +200,34 @@ public class CentroAtencionService {
         }
     }
 
+    private unpsjb.labprog.backend.dto.EspecialidadDTO especialidadToDTO(unpsjb.labprog.backend.model.Especialidad especialidad) {
+        unpsjb.labprog.backend.dto.EspecialidadDTO dto = new unpsjb.labprog.backend.dto.EspecialidadDTO();
+        dto.setId(especialidad.getId());
+        dto.setNombre(especialidad.getNombre());
+        dto.setDescripcion(especialidad.getDescripcion());
+        return dto;
+    }
+
+    // Métodos para trabajar con relaciones centro-especialidad
+    public java.util.Map<String, Object> getAllCentroEspecialidades() {
+        List<CentroAtencion> centros = repository.findAll();
+        List<java.util.Map<String, Object>> relaciones = new java.util.ArrayList<>();
+        
+        for (CentroAtencion centro : centros) {
+            if (centro.getEspecialidades() != null) {
+                for (unpsjb.labprog.backend.model.Especialidad especialidad : centro.getEspecialidades()) {
+                    java.util.Map<String, Object> relacion = new java.util.HashMap<>();
+                    relacion.put("centroId", centro.getId());
+                    relacion.put("especialidadId", especialidad.getId());
+                    relacion.put("centroNombre", centro.getNombre());
+                    relacion.put("especialidadNombre", especialidad.getNombre());
+                    relaciones.add(relacion);
+                }
+            }
+        }
+        
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("data", relaciones);
+        return result;
+    }
 }

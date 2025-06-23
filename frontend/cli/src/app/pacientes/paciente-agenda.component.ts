@@ -11,7 +11,6 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
 import { AgendaService } from '../agenda/agenda.service';
 import { DiasExcepcionalesService } from '../agenda/dias-excepcionales.service';
-import { GeolocationService, UserLocation } from '../services/geolocation.service';
 import { CentrosMapaModalComponent } from '../modal/centros-mapa-modal.component';
 import { Turno } from '../turnos/turno';
 import { Especialidad } from '../especialidades/especialidad';
@@ -36,10 +35,6 @@ interface SlotDisponible {
   esSlot?: boolean;
   enMantenimiento?: boolean;
   titulo?: string;
-  // Nuevas propiedades para geolocalización
-  centroLatitud?: number;
-  centroLongitud?: number;
-  distanciaKm?: number;
 }
 
 @Component({
@@ -195,53 +190,6 @@ interface SlotDisponible {
                   Ver Mapa de Centros Medicos
                 </button>
               </div>
-
-              <!-- Ordenamiento por cercanía -->
-              <div class="filtros-ubicacion" *ngIf="showCalendar && slotsDisponibles.length > 0">
-                <div class="ubicacion-header">
-                  <span class="ubicacion-icon">📍</span>
-                  <h4>Ordenar por Cercanía</h4>
-                </div>
-                <div class="ubicacion-controls">
-                  <button 
-                    type="button" 
-                    class="btn btn-location"
-                    [class.active]="sortByDistance"
-                    (click)="toggleSortByDistance()"
-                    [disabled]="isLoadingLocation">
-                    <i class="fas fa-map-marker-alt"></i>
-                    {{ sortByDistance ? 'Ordenado por cercanía' : 'Ordenar por cercanía' }}
-                    <i class="fas fa-spinner fa-spin" *ngIf="isLoadingLocation"></i>
-                  </button>
-                  
-                  <button 
-                    type="button" 
-                    class="btn btn-location-manual"
-                    (click)="showLocationModal = true"
-                    title="Establecer ubicación manualmente">
-                    <i class="fas fa-edit"></i>
-                    Ubicación manual
-                  </button>
-                </div>
-                
-                <!-- Status de ubicación -->
-                <div class="ubicacion-status" *ngIf="userLocation">
-                  <small class="location-info">
-                    <i class="fas fa-check-circle"></i>
-                    Ubicación obtenida 
-                    <span *ngIf="userLocation.source === 'geolocation'">(GPS)</span>
-                    <span *ngIf="userLocation.source === 'ip'">(aproximada)</span>
-                    <span *ngIf="userLocation.source === 'manual'">(manual)</span>
-                  </small>
-                </div>
-                
-                <div class="ubicacion-error" *ngIf="locationError">
-                  <small class="error-text">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    {{ locationError }}
-                  </small>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -351,9 +299,6 @@ interface SlotDisponible {
                           <div class="location-line">
                             <i class="fas fa-map-marker-alt"></i>
                             {{ slot.nombreCentro }}
-                            <span class="distance-badge" *ngIf="slot.distanciaKm !== undefined">
-                              {{ formatDistance(slot.distanciaKm) }}
-                            </span>
                           </div>
                         </div>
 
@@ -478,73 +423,6 @@ interface SlotDisponible {
       <div *ngIf="showBookingModal" 
            class="modal-backdrop" 
            (click)="closeBookingModal()">
-      </div>
-
-      <!-- MODAL DE UBICACIÓN MANUAL -->
-      <div *ngIf="showLocationModal" class="modal-overlay" (click)="closeLocationModal()">
-        <div class="paciente-modal location-modal" (click)="$event.stopPropagation()">
-          <div class="modal-header">
-            <h3><i class="fas fa-map-marker-alt"></i> Establecer Ubicación Manual</h3>
-            <button type="button" class="close-button" (click)="closeLocationModal()">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div class="modal-body">
-            <div class="location-info">
-              <p>Ingresa tu ubicación para calcular las distancias a los centros médicos.</p>
-              <p><small>Puedes obtener las coordenadas desde Google Maps o cualquier aplicación de mapas.</small></p>
-            </div>
-            
-            <div class="form-group">
-              <label for="latitude">Latitud:</label>
-              <input 
-                type="number" 
-                id="latitude"
-                class="form-control-paciente"
-                [(ngModel)]="manualLatitude"
-                placeholder="-34.6037"
-                step="any">
-            </div>
-            
-            <div class="form-group">
-              <label for="longitude">Longitud:</label>
-              <input 
-                type="number" 
-                id="longitude"
-                class="form-control-paciente"
-                [(ngModel)]="manualLongitude"
-                placeholder="-58.3816"
-                step="any">
-            </div>
-            
-            <div class="location-examples">
-              <small>
-                <strong>Ejemplos:</strong><br>
-                • Buenos Aires: -34.6037, -58.3816<br>
-                • Córdoba: -31.4201, -64.1888<br>
-                • Rosario: -32.9442, -60.6505
-              </small>
-            </div>
-          </div>
-          
-          <div class="modal-footer">
-            <button 
-              type="button" 
-              class="btn btn-paciente-secondary" 
-              (click)="closeLocationModal()">
-              Cancelar
-            </button>
-            <button 
-              type="button" 
-              class="btn btn-paciente-primary" 
-              (click)="setManualLocation()"
-              [disabled]="!manualLatitude || !manualLongitude">
-              <i class="fas fa-map-pin"></i>
-              Establecer Ubicación
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- MODAL DE MAPA DE CENTROS -->
@@ -1420,17 +1298,6 @@ interface SlotDisponible {
       font-size: 0.9rem;
     }
 
-    .distance-badge {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-left: 0.5rem;
-      display: inline-block;
-    }
-
     /* MODAL DE UBICACIÓN */
     .location-modal {
       max-width: 500px;
@@ -1558,15 +1425,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   turnosDisponibles: any[] = []; // Para compatibilidad con el template
   semanas: number = 4;
 
-  // Geolocalización
-  userLocation: UserLocation | null = null;
-  isLoadingLocation = false;
-  locationError: string | null = null;
-  sortByDistance = false;
-  showLocationModal = false;
-  manualLatitude: number | null = null;
-  manualLongitude: number | null = null;
-
   // Modal de reserva
   showBookingModal = false;
   slotSeleccionado: SlotDisponible | null = null;
@@ -1583,7 +1441,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     private centroAtencionService: CentroAtencionService,
     private agendaService: AgendaService,
     private diasExcepcionalesService: DiasExcepcionalesService,
-    private geolocationService: GeolocationService,
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -1725,7 +1582,19 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         this.centrosAtencionCompletos = dataPackage.data || [];
         this.centrosAtencion = [...this.centrosAtencionCompletos]; // Inicialmente mostrar todos
         this.isLoadingCentros = false;
+        
         console.log('✅ Centros de atención cargados:', this.centrosAtencionCompletos.length);
+        console.log('🏥 Detalles de centros:');
+        this.centrosAtencionCompletos.forEach((centro, index) => {
+          console.log(`Centro ${index + 1}: "${centro.nombre}" (ID: ${centro.id})`);
+          console.log('- Especialidades:', centro.especialidades);
+          console.log('- Número de especialidades:', centro.especialidades?.length || 0);
+          if (centro.especialidades && centro.especialidades.length > 0) {
+            centro.especialidades.forEach((esp: any, espIndex: number) => {
+              console.log(`  Especialidad ${espIndex + 1}: "${esp.nombre}"`);
+            });
+          }
+        });
       },
       error: (error) => {
         console.error('Error cargando centros de atención:', error);
@@ -2030,9 +1899,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Buscar las coordenadas del centro
-      const centro = this.centrosAtencion.find(c => c.id === evento.centroId);
-
       const slot: SlotDisponible = {
         id: evento.id,
         fecha: evento.fecha,
@@ -2049,22 +1915,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         ocupado: evento.ocupado || false,
         esSlot: true
       };
-
-      // Añadir coordenadas si están disponibles
-      if (centro && centro.latitud && centro.longitud) {
-        slot.centroLatitud = centro.latitud;
-        slot.centroLongitud = centro.longitud;
-        
-        // Si ya tenemos la ubicación del usuario, calcular distancia
-        if (this.userLocation) {
-          slot.distanciaKm = this.geolocationService.calculateDistance(
-            this.userLocation.latitude,
-            this.userLocation.longitude,
-            centro.latitud,
-            centro.longitud
-          );
-        }
-      }
 
       slots.push(slot);
     });
@@ -2084,7 +1934,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     return fechaObj.toLocaleDateString('es-ES', opciones);
   }
 
-  // Variables para posicionamiento del modal
+  // Variables para posicionamiento del modal (solo para el modal de reserva)
   modalPosition = { top: 0, left: 0 };
   private resizeListener?: () => void;
 
@@ -2414,180 +2264,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  // ==============================================
-  // MÉTODOS DE GEOLOCALIZACIÓN
-  // ==============================================
-
-  /**
-   * Toggle del ordenamiento por cercanía
-   */
-  async toggleSortByDistance() {
-    if (this.sortByDistance) {
-      // Desactivar ordenamiento por cercanía
-      this.sortByDistance = false;
-      this.agruparSlotsPorFecha();
-      return;
-    }
-
-    // Activar ordenamiento por cercanía
-    try {
-      await this.obtenerUbicacionUsuario();
-      this.sortByDistance = true;
-      this.calcularDistanciasYOrdenar();
-    } catch (error) {
-      console.error('Error al obtener ubicación:', error);
-      this.locationError = 'No se pudo obtener la ubicación. Intenta con ubicación manual.';
-      this.sortByDistance = false;
-    }
-  }
-
-  /**
-   * Obtiene la ubicación del usuario
-   */
-  async obtenerUbicacionUsuario(): Promise<void> {
-    this.isLoadingLocation = true;
-    this.locationError = null;
-
-    try {
-      this.userLocation = await this.geolocationService.getCurrentLocation({
-        timeout: 10000,
-        enableHighAccuracy: true,
-        maximumAge: 300000, // 5 minutos
-        useIPFallback: true
-      });
-
-      this.locationError = null;
-    } catch (error: any) {
-      this.locationError = error.message || 'Error al obtener ubicación';
-      throw error;
-    } finally {
-      this.isLoadingLocation = false;
-      this.cdr.detectChanges();
-    }
-  }
-
-  /**
-   * Establece ubicación manual
-   */
-  setManualLocation() {
-    if (!this.manualLatitude || !this.manualLongitude) {
-      return;
-    }
-
-    this.userLocation = this.geolocationService.setManualLocation(
-      this.manualLatitude,
-      this.manualLongitude
-    );
-
-    this.locationError = null;
-    this.sortByDistance = true;
-    this.calcularDistanciasYOrdenar();
-    this.closeLocationModal();
-  }
-
-  /**
-   * Calcula distancias y reordena slots
-   */
-  calcularDistanciasYOrdenar() {
-    if (!this.userLocation) return;
-
-    // Calcular distancias para cada slot
-    this.slotsDisponibles.forEach(slot => {
-      const centro = this.centrosAtencion.find(c => c.id === slot.centroId);
-      if (centro && centro.latitud && centro.longitud) {
-        slot.centroLatitud = centro.latitud;
-        slot.centroLongitud = centro.longitud;
-        slot.distanciaKm = this.geolocationService.calculateDistance(
-          this.userLocation!.latitude,
-          this.userLocation!.longitude,
-          centro.latitud,
-          centro.longitud
-        );
-      }
-    });
-
-    // Reordenar slots por distancia
-    this.ordenarSlotsPorDistancia();
-    
-    // Reagrupar por fecha
-    this.agruparSlotsPorFecha();
-    
-    this.cdr.detectChanges();
-  }
-
-  /**
-   * Ordena slots por distancia dentro de cada fecha
-   */
-  ordenarSlotsPorDistancia() {
-    if (!this.sortByDistance) return;
-
-    // Ordenar slots disponibles por distancia
-    this.slotsDisponibles.sort((a, b) => {
-      // Primero por fecha
-      if (a.fecha !== b.fecha) {
-        return new Date(a.fecha).getTime() - new Date(b.fecha).getTime();
-      }
-      
-      // Luego por distancia (si está disponible)
-      if (a.distanciaKm !== undefined && b.distanciaKm !== undefined) {
-        return a.distanciaKm - b.distanciaKm;
-      }
-      
-      // Si no hay distancia, ordenar por hora
-      return a.horaInicio.localeCompare(b.horaInicio);
-    });
-  }
-
-  /**
-   * Modifica la agrupación por fecha para mantener orden por distancia
-   */
-  agruparSlotsPorFecha() {
-    this.slotsPorFecha = {};
-    
-    // Si está ordenado por distancia, primero ordenar
-    if (this.sortByDistance) {
-      this.ordenarSlotsPorDistancia();
-    }
-
-    // Agrupar por fecha
-    this.slotsDisponibles.forEach(slot => {
-      if (!this.slotsPorFecha[slot.fecha]) {
-        this.slotsPorFecha[slot.fecha] = [];
-      }
-      this.slotsPorFecha[slot.fecha].push(slot);
-    });
-
-    // Si no está ordenado por distancia, ordenar por médico y luego por hora dentro de cada fecha
-    if (!this.sortByDistance) {
-      Object.keys(this.slotsPorFecha).forEach(fecha => {
-        this.slotsPorFecha[fecha].sort((a, b) => {
-          // Primero agrupar por médico (nombre completo)
-          const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
-          const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
-          
-          if (medicoA !== medicoB) {
-            return medicoA.localeCompare(medicoB);
-          }
-          
-          // Si es el mismo médico, ordenar por hora
-          return a.horaInicio.localeCompare(b.horaInicio);
-        });
-      });
-    }
-
-    // Obtener fechas ordenadas
-    this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
-  }
-
-  /**
-   * Cierra el modal de ubicación manual
-   */
-  closeLocationModal() {
-    this.showLocationModal = false;
-    this.manualLatitude = null;
-    this.manualLongitude = null;
-  }
-
   // Métodos auxiliares para obtener nombres
   getStaffMedicoNombre(id: number | null): string {
     if (!id) return 'Cualquier médico';
@@ -2689,12 +2365,6 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Public method to format distance for template use
-  formatDistance(distanciaKm: number | undefined): string {
-    if (distanciaKm === undefined) return '';
-    return this.geolocationService.formatDistance(distanciaKm);
-  }
-
   /**
    * Verifica si el médico ha cambiado respecto al slot anterior
    */
@@ -2720,4 +2390,35 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     return `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`;
   }
 
+  // Agrupar slots por fecha para mostrar en el calendario
+  private agruparSlotsPorFecha() {
+    this.slotsPorFecha = {};
+    
+    // Agrupar slots por fecha
+    this.slotsDisponibles.forEach(slot => {
+      if (!this.slotsPorFecha[slot.fecha]) {
+        this.slotsPorFecha[slot.fecha] = [];
+      }
+      this.slotsPorFecha[slot.fecha].push(slot);
+    });
+
+    // Ordenar fechas y slots dentro de cada fecha
+    this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
+    
+    // Ordenar slots dentro de cada fecha por hora
+    this.fechasOrdenadas.forEach(fecha => {
+      this.slotsPorFecha[fecha].sort((a, b) => {
+        // Primero por médico
+        const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
+        const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
+        if (medicoA !== medicoB) {
+          return medicoA.localeCompare(medicoB);
+        }
+        // Luego por hora
+        return a.horaInicio.localeCompare(b.horaInicio);
+      });
+    });
+
+    console.log('📅 Slots agrupados por fecha:', Object.keys(this.slotsPorFecha).length, 'fechas');
+  }
 }

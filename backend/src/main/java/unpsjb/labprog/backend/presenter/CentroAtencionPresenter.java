@@ -119,4 +119,14 @@ public class CentroAtencionPresenter {
         }
     }
 
+    @RequestMapping(value = "/centro-especialidad", method = RequestMethod.GET)
+    public ResponseEntity<Object> getAllCentroEspecialidades() {
+        try {
+            var result = service.getAllCentroEspecialidades();
+            return Response.ok(result.get("data"), "Relaciones centro-especialidad recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, e.getMessage());
+        }
+    }
+
 }

@@ -5,6 +5,8 @@ import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
 import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 import { Especialidad } from '../especialidades/especialidad';
+import { CentroEspecialidad } from '../centrosAtencion/centro-especialidad';
+import { CentroEspecialidadService } from '../centrosAtencion/centro-especialidad.service';
 import { GeolocationService, UserLocation } from '../services/geolocation.service';
 
 interface CentroMapaInfo extends CentroAtencion {
@@ -1142,24 +1144,26 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   centroActualSeleccionado: CentroMapaInfo | null = null;
   especialidadesDisponibles: Especialidad[] = [];
   ordenadoPorDistancia = false;
+  
+  // Relaciones centro-especialidad
+  centroEspecialidades: CentroEspecialidad[] = [];
 
   constructor(
     private http: HttpClient,
-    private geolocationService: GeolocationService
+    private geolocationService: GeolocationService,
+    private centroEspecialidadService: CentroEspecialidadService
   ) {}
 
   ngOnInit() {
-    console.log('🗺️ Inicializando modal de centros...');
-    console.log('- Centros recibidos:', this.centros?.length || 0);
-    console.log('- Especialidades recibidas:', this.especialidades?.length || 0);
-    console.log('- Especialidad inicial:', this.especialidadSeleccionadaInicial);
+    // console.log('🗺️ Inicializando modal de centros...');
+    // console.log('- Centros recibidos:', this.centros?.length || 0);
+    // console.log('- Especialidades recibidas:', this.especialidades?.length || 0);
+    // console.log('- Especialidad inicial:', this.especialidadSeleccionadaInicial);
     
     // Establecer referencia global para los botones del popup
     (window as any).centrosModalComponent = this;
     
-    // Extraer especialidades disponibles de los centros
-    this.extraerEspecialidadesDisponibles();
-    
+    // Inicializar datos del modal (esto cargará las especialidades del padre)
     this.inicializarDatos();
     
     if (this.especialidadSeleccionadaInicial) {
@@ -1187,26 +1191,87 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   inicializarDatos() {
-    console.log('🔧 Inicializando datos del modal...');
+    // console.log('🔧 Inicializando datos del modal...');
+    // console.log('🏥 Centros recibidos:', this.centros?.length || 0);
     
-    // Procesar centros y obtener especialidades disponibles
-    this.procesarCentros();
+    // Cargar las relaciones centro-especialidad
+    this.cargarCentroEspecialidades();
+  }
+
+  cargarCentroEspecialidades() {
+    // console.log('📋 Cargando relaciones centro-especialidad...');
     
-    // Establecer las especialidades disponibles desde el input
-    this.especialidadesDisponibles = this.especialidades || [];
-    console.log('- Especialidades disponibles establecidas:', this.especialidadesDisponibles.length);
-    console.log('- Lista de especialidades:', this.especialidadesDisponibles.map(e => e.nombre));
+    this.centroEspecialidadService.all().subscribe({
+      next: (dataPackage) => {
+        this.centroEspecialidades = dataPackage.data || [];
+        // console.log('✅ Relaciones centro-especialidad cargadas:', this.centroEspecialidades.length);
+        
+        // Extraer especialidades únicas disponibles en los centros
+        this.extraerEspecialidadesDisponibles();
+        
+        // Procesar centros con sus especialidades
+        this.procesarCentros();
+        
+        // Aplicar filtros
+        this.aplicarFiltros();
+        
+        // Inicializar mapa
+        setTimeout(() => this.inicializarMapa(), 100);
+      },
+      error: (error) => {
+        console.error('❌ Error cargando relaciones centro-especialidad:', error);
+        // Si falla, usar las especialidades del padre como fallback
+        this.especialidadesDisponibles = this.especialidades || [];
+        this.procesarCentros();
+        this.aplicarFiltros();
+        setTimeout(() => this.inicializarMapa(), 100);
+      }
+    });
+  }
+
+  extraerEspecialidadesDisponibles() {
+    const especialidadesIds = new Set<number>();
     
-    this.aplicarFiltros();
+    // Solo considerar especialidades de centros que tenemos en la lista
+    const centrosIds = new Set(this.centros.map(c => c.id).filter(id => id !== undefined));
+    
+    this.centroEspecialidades.forEach(relacion => {
+      if (centrosIds.has(relacion.centroId)) {
+        especialidadesIds.add(relacion.especialidadId);
+      }
+    });
+
+    // Filtrar especialidades del padre que están realmente disponibles en los centros
+    this.especialidadesDisponibles = this.especialidades.filter(esp => 
+      esp.id && especialidadesIds.has(esp.id)
+    );
+    
+    // console.log('✅ Especialidades disponibles en centros:', this.especialidadesDisponibles.length);
+    // console.log('📋 Lista:', this.especialidadesDisponibles.map(e => e.nombre));
   }
 
   procesarCentros() {
-    // Aquí podrías hacer una llamada al backend para obtener las especialidades de cada centro
-    // Por ahora, simulamos que todos los centros tienen todas las especialidades
-    this.centrosFiltrados = this.centros.map(centro => ({
-      ...centro,
-      especialidadesDisponibles: this.especialidades.map(e => e.nombre)
-    }));
+    // console.log('🏥 Procesando centros con especialidades...');
+    
+    this.centrosFiltrados = this.centros.map(centro => {
+      // Buscar las especialidades de este centro
+      const especialidadesCentro = this.centroEspecialidades
+        .filter(relacion => relacion.centroId === centro.id)
+        .map(relacion => {
+          const especialidad = this.especialidades.find(esp => esp.id === relacion.especialidadId);
+          return especialidad?.nombre || 'Desconocida';
+        })
+        .filter(nombre => nombre !== 'Desconocida');
+
+      console.log(`🏥 Centro "${centro.nombre}" tiene ${especialidadesCentro.length} especialidades:`, especialidadesCentro);
+
+      return {
+        ...centro,
+        especialidadesDisponibles: especialidadesCentro
+      };
+    });
+
+    // console.log('✅ Centros procesados:', this.centrosFiltrados.length);
   }
 
   inicializarMapa() {
@@ -1214,6 +1279,15 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Evitar inicializar el mapa múltiples veces
+    if (this.map) {
+      console.log('🗺️ Mapa ya inicializado, solo actualizando marcadores...');
+      this.agregarMarcadoresCentros();
+      return;
+    }
+
+    console.log('🗺️ Inicializando mapa...');
+    
     // Centrar en Argentina por defecto
     this.map = L.map(this.mapContainer.nativeElement).setView([-34.6037, -58.3816], 6);
 
@@ -1230,7 +1304,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.markers.forEach(marker => marker.remove());
     this.markers = [];
 
-    this.centrosFiltrados.forEach((centro, index) => {
+    this.resultadosBusqueda.forEach((centro, index) => {
       if (centro.latitud && centro.longitud) {
         const marker = L.marker([centro.latitud, centro.longitud])
           .bindPopup(this.crearPopupCentro(centro, index + 1))
@@ -1245,7 +1319,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     });
 
     // Ajustar vista si hay centros
-    if (this.centrosFiltrados.length > 0) {
+    if (this.resultadosBusqueda.length > 0) {
       const group = new L.FeatureGroup(this.markers);
       if (this.userMarker) {
         group.addLayer(this.userMarker);
@@ -1260,7 +1334,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       : '';
 
     // Obtener las especialidades reales del centro
-    const especialidadesCentro = centro.especialidades?.map(esp => esp.nombre).filter(Boolean) || [];
+    const especialidadesCentro = centro.especialidadesDisponibles || [];
     const especialidades = especialidadesCentro.length > 0
       ? `<div class="popup-especialidades">
            <i class="fas fa-stethoscope"></i> 
@@ -1393,18 +1467,18 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     console.log('- Radio máximo:', this.radioMaximo);
     console.log('- Búsqueda texto:', this.busquedaTexto);
     
-    let centrosFiltrados = [...this.centros] as CentroMapaInfo[];
+    let centrosFiltrados = [...this.centrosFiltrados] as CentroMapaInfo[];
 
     // Filtrar por especialidad
     if (this.especialidadFiltro && this.especialidadFiltro.trim()) {
       centrosFiltrados = centrosFiltrados.filter(centro => {
-        if (!centro.especialidades || centro.especialidades.length === 0) {
+        if (!centro.especialidadesDisponibles || centro.especialidadesDisponibles.length === 0) {
           return false;
         }
         
         // Verificar si el centro tiene la especialidad seleccionada
-        return centro.especialidades.some(esp => 
-          esp.nombre && esp.nombre.toLowerCase() === this.especialidadFiltro.toLowerCase()
+        return centro.especialidadesDisponibles.some(especialidadNombre => 
+          especialidadNombre && especialidadNombre.toLowerCase() === this.especialidadFiltro.toLowerCase()
         );
       });
       console.log(`- Después de filtrar por especialidad: ${centrosFiltrados.length} centros`);
@@ -1440,7 +1514,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         centro.distanciaKm = distancia;
         return distancia <= this.radioMaximo;
       });
-      console.log(`- Después de filtrar por radio: ${centrosFiltrados.length} centros`);
+      console.log(`- Después de filtrar por radio (${this.radioMaximo}km): ${centrosFiltrados.length} centros`);
     } else if (this.userLocation) {
       // Calcular distancias aunque no haya límite
       centrosFiltrados.forEach(centro => {
@@ -1458,13 +1532,18 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Ordenar por distancia si está habilitado
     if (this.ordenadoPorDistancia && this.userLocation) {
       centrosFiltrados.sort((a, b) => {
-        const distA = a.distanciaKm || 999999;
-        const distB = b.distanciaKm || 999999;
-        return distA - distB;
+        const distanciaA = a.distanciaKm ?? Number.MAX_VALUE;
+        const distanciaB = b.distanciaKm ?? Number.MAX_VALUE;
+        return distanciaA - distanciaB;
       });
+      console.log('- Centros ordenados por distancia');
     }
 
-    this.centrosFiltrados = centrosFiltrados;
+    // Actualizar la lista de resultados para la lista Y para el mapa
+    this.resultadosBusqueda = centrosFiltrados;
+    this.centrosFiltrados = centrosFiltrados; // Para compatibilidad con el template
+    
+    console.log('✅ Filtros aplicados. Centros finales:', this.resultadosBusqueda.length);
     
     // Actualizar marcadores en el mapa
     if (this.map) {
@@ -1550,12 +1629,14 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // FUNCIONALIDADES DE BÚSQUEDA
   // ================================
 
-  // Buscar centros por texto
+  // Buscar centros por texto (para autocompletado)
   buscarCentros() {
     const texto = this.busquedaTexto.toLowerCase().trim();
     
     if (texto.length === 0) {
       this.resultadosBusqueda = [];
+      // Aplicar filtros normales cuando no hay búsqueda
+      this.aplicarFiltros();
       return;
     }
 
@@ -1563,25 +1644,34 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       return; // Esperar al menos 2 caracteres
     }
 
+    // Crear resultados de autocompletado (máximo 5)
     this.resultadosBusqueda = this.centrosFiltrados.filter(centro => 
       centro.nombre.toLowerCase().includes(texto) ||
       centro.direccion?.toLowerCase().includes(texto) ||
       centro.localidad?.toLowerCase().includes(texto) ||
       centro.provincia?.toLowerCase().includes(texto)
-    ).slice(0, 5); // Limitar a 5 resultados
+    ).slice(0, 5);
 
-    console.log('🔍 Búsqueda:', texto, '- Resultados:', this.resultadosBusqueda.length);
+    console.log('🔍 Búsqueda autocompletado:', texto, '- Resultados:', this.resultadosBusqueda.length);
+    
+    // También aplicar filtros a la lista principal
+    this.aplicarFiltros();
   }
 
   // Limpiar búsqueda
   limpiarBusqueda() {
     this.busquedaTexto = '';
     this.resultadosBusqueda = [];
+    // Volver a aplicar filtros sin búsqueda de texto
+    this.aplicarFiltros();
   }
 
   // Seleccionar centro desde los resultados de búsqueda
   seleccionarCentroEnMapa(centro: CentroMapaInfo) {
     this.limpiarBusqueda();
+    
+    // Marcar el centro como seleccionado
+    this.centroActualSeleccionado = centro;
     
     if (centro.latitud && centro.longitud) {
       // Centrar el mapa en el centro
@@ -1649,36 +1739,4 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     console.log('📍 Ubicación establecida manualmente:', lat, lng);
   }
 
-  // Extraer especialidades que están disponibles en los centros
-  extraerEspecialidadesDisponibles() {
-    console.log('🔍 Extrayendo especialidades disponibles de los centros...');
-    
-    if (!this.centros || this.centros.length === 0) {
-      console.log('❌ No hay centros disponibles');
-      this.especialidadesDisponibles = [];
-      return;
-    }
-    
-    // Crear un Set para evitar especialidades duplicadas
-    const especialidadesUnicas = new Set<string>();
-    
-    // Recorrer todos los centros y extraer sus especialidades
-    this.centros.forEach(centro => {
-      if (centro.especialidades && centro.especialidades.length > 0) {
-        centro.especialidades.forEach(esp => {
-          if (esp.nombre) {
-            especialidadesUnicas.add(esp.nombre);
-          }
-        });
-      }
-    });
-    
-    // Convertir el Set a array de objetos Especialidad
-    this.especialidadesDisponibles = Array.from(especialidadesUnicas).map(nombre => ({
-      nombre: nombre
-    } as Especialidad));
-    
-    console.log('✅ Especialidades extraídas:', this.especialidadesDisponibles.length);
-    console.log('- Lista:', this.especialidadesDisponibles.map(e => e.nombre));
-  }
 }
