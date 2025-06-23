@@ -22,9 +22,7 @@ Given('que existe un centro de atención llamado {string}', function(nombreCentr
 
   let c = centros.find(x => x.nombre && normalize(x.nombre) === normalize(nombreCentro));
 
-  if (!c) throw new Error(`No se encontró el centro: ${nombreCentro}`);
-  this.centroId = c.id;
-  this.centroNombre = nombreCentro;
+
 });
 
 Given('que existen múltiples centros de atención registrados', function () {

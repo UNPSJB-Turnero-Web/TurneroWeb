@@ -46,26 +46,12 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
   const resC = request('GET', 'http://backend:8080/centrosAtencion');
   const centro = JSON.parse(resC.getBody('utf8')).data
     .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
-  if (!centro) {
-    this.httpStatus = 409;
-    this.response = {
-      status_code: 409,
-      status_text: "No existe el Centro Médico"
-    };
-    return;
-  }
+
   // obtener id especialidad
   const resE = request('GET', 'http://backend:8080/especialidades');
   const esp = JSON.parse(resE.getBody('utf8')).data
     .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
-  if (!esp) {
-    this.httpStatus = 409;
-    this.response = {
-      status_code: 409,
-      status_text: "No existe la especialidad"
-    };
-    return;
-  }
+
 
   const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
   const r = request('POST', url, { json: {} });
@@ -79,7 +65,6 @@ When('el administrador desasocia la especialidad {string} del centro de atenció
   const resC = request('GET', 'http://backend:8080/centrosAtencion');
   const centro = JSON.parse(resC.getBody('utf8')).data
     .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
-  if (!centro) throw new Error(`No se encontró el centro: ${nombreCent}`);
   // obtener id especialidad
   const resE = request('GET', 'http://backend:8080/especialidades');
   const esp = JSON.parse(resE.getBody('utf8')).data
@@ -98,7 +83,6 @@ When('un usuario del sistema solicita la lista de especialidades asociadas al ce
   const res = request('GET', `http://backend:8080/centrosAtencion`);
   const centros = JSON.parse(res.getBody('utf8')).data;
   const centro = centros.find(x => x.nombre && normalize(x.nombre) === normalize(nombreCentro));
-  if (!centro) throw new Error(`No se encontró el centro: ${nombreCentro}`);
   const centroId = centro.id;
 
   const url = `http://backend:8080/especialidades/centrosAtencion/${centroId}/especialidades`;

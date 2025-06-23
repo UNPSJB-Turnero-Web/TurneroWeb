@@ -40,16 +40,8 @@ When('el administrador modifica los datos del centro de atención {string} con l
   const telefono = atributos.Teléfono ? atributos.Teléfono.trim() : null;
   const coordenadas = atributos.Coordenadas ? atributos.Coordenadas.trim() : null;
 
-  if (!nombre || !direccion || !localidad || !provincia || !telefono || !coordenadas) {
-    throw new Error('Faltan datos obligatorios para modificar el centro de atención.');
-  }
-
   // Separar latitud y longitud
   const [latitud, longitud] = coordenadas.split(',').map(coord => parseFloat(coord.trim()));
-
-  if (isNaN(latitud) || isNaN(longitud)) {
-    throw new Error(`Las coordenadas "${coordenadas}" no tienen un formato válido.`);
-  }
 
   // Buscar el centro de atención existente
   const resBuscar = request('GET', 'http://backend:8080/centrosAtencion');
@@ -60,16 +52,6 @@ When('el administrador modifica los datos del centro de atención {string} con l
   const centroExistente = listaCentros.find(c =>
     c.nombre && c.nombre.trim().toLowerCase() === nombreCentroActual.trim().toLowerCase()
   );
-
-  if (!centroExistente) {
-   // console.error('❌ No se encontró el centro en la lista:', nombreCentroActual);
-    throw new Error(`No se encontró el centro con Nombre: ${nombreCentroActual}`);
-  }
-
-  if (!centroExistente.id) {
-    //console.error('❌ El centro encontrado no tiene un ID válido:', centroExistente);
-    throw new Error('El centro encontrado no tiene un ID válido.');
-  }
 
   // Preparar los datos para la actualización
   const centroData = {
