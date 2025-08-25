@@ -430,6 +430,7 @@ interface SlotDisponible {
         *ngIf="showMapaModal"
         [centros]="centrosAtencionCompletos"
         [especialidades]="especialidadesCompletas"
+        [slotsDisponibles]="slotsOriginales"
         [especialidadSeleccionadaInicial]="especialidadSeleccionada"
         (centroSeleccionado)="onCentroSeleccionadoDelMapa($event)"
         (modalCerrado)="cerrarMapaModal()">
@@ -1774,6 +1775,18 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     });
 
     const centrosArray = Array.from(centrosUnicos.values());
+    
+    // Debug para especialidades específicas (comentado - problema resuelto)
+    // if (this.especialidadSeleccionada && 
+    //     (this.especialidadSeleccionada.toLowerCase().includes('ginecol') || 
+    //      this.especialidadSeleccionada === 'Medicina General')) {
+    //   console.log(`🏥 [COMPONENTE PADRE] Centros disponibles para "${this.especialidadSeleccionada}":`);
+    //   console.log('  - Slots originales totales:', this.slotsOriginales.length);
+    //   console.log('  - Slots relevantes después de filtros:', slotsRelevantes.length);
+    //   console.log('  - Centros únicos encontrados:', centrosArray.length);
+    //   console.log('  - Lista de centros:', centrosArray.map(c => c.nombre));
+    // }
+    
     return centrosArray;
   }
 

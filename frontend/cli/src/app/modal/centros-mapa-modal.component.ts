@@ -1116,6 +1116,7 @@ interface CentroMapaInfo extends CentroAtencion {
 export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   @Input() centros: CentroAtencion[] = [];
   @Input() especialidades: Especialidad[] = [];
+  @Input() slotsDisponibles: any[] = []; // Slots/turnos disponibles del componente padre
   @Input() especialidadSeleccionadaInicial: string = '';
   @Output() centroSeleccionado = new EventEmitter<CentroAtencion>();
   @Output() modalCerrado = new EventEmitter<void>();
@@ -1151,6 +1152,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   
   // Relaciones centro-especialidad
   centroEspecialidades: CentroEspecialidad[] = [];
+  
+  // Cache para conteo de especialidades
+  private conteoEspecialidadesCache = new Map<string, number>();
+  private lastCentrosFiltradosLength = 0;
 
   constructor(
     private http: HttpClient,
@@ -1167,12 +1172,13 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Establecer referencia global para los botones del popup
     (window as any).centrosModalComponent = this;
     
-    // Inicializar datos del modal (esto cargará las especialidades del padre)
-    this.inicializarDatos();
-    
+    // Establecer el filtro inicial ANTES de inicializar datos
     if (this.especialidadSeleccionadaInicial) {
       this.especialidadFiltro = this.especialidadSeleccionadaInicial;
     }
+    
+    // Inicializar datos del modal (esto cargará las especialidades del padre)
+    this.inicializarDatos();
   }
 
   ngOnDestroy() {
@@ -1188,9 +1194,8 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    setTimeout(() => {
-      this.inicializarMapa();
-    }, 100);
+    // No inicializar el mapa aquí, se inicializa en cargarCentroEspecialidades
+    // después de cargar todos los datos
   }
 
   inicializarDatos() {
@@ -1202,18 +1207,37 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   cargarCentroEspecialidades() {
-    // console.log('📋 Cargando relaciones centro-especialidad...');
+    // console.log('📋 Procesando datos basados en slots disponibles...');
+    // console.log('- Slots recibidos:', this.slotsDisponibles?.length || 0);
     
+    if (!this.slotsDisponibles || this.slotsDisponibles.length === 0) {
+      // console.log('⚠️ No hay slots disponibles, cargando desde relaciones centro-especialidad como fallback');
+      this.cargarCentroEspecialidadesFromService();
+      return;
+    }
+    
+    // Extraer especialidades únicas disponibles desde los slots
+    this.extraerEspecialidadesDisponibles();
+    
+    // Procesar centros con sus especialidades reales
+    this.procesarCentros();
+    
+    // Aplicar filtros después de procesar los datos
+    this.aplicarFiltros();
+    
+    // Inicializar mapa
+    setTimeout(() => this.inicializarMapa(), 100);
+  }
+  
+  cargarCentroEspecialidadesFromService() {
     this.centroEspecialidadService.all().subscribe({
       next: (dataPackage) => {
         this.centroEspecialidades = dataPackage.data || [];
-        // console.log('✅ Relaciones centro-especialidad cargadas:', this.centroEspecialidades.length);
+        // console.log('✅ Relaciones centro-especialidad cargadas (fallback):', this.centroEspecialidades.length);
         
-        // Extraer especialidades únicas disponibles en los centros
-        this.extraerEspecialidadesDisponibles();
-        
-        // Procesar centros con sus especialidades
-        this.procesarCentros();
+        // Usar el método anterior como fallback
+        this.extraerEspecialidadesDisponiblesFromService();
+        this.procesarCentrosFromService();
         
         // Aplicar filtros
         this.aplicarFiltros();
@@ -1223,7 +1247,6 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('❌ Error cargando relaciones centro-especialidad:', error);
-        // Si falla, usar las especialidades del padre como fallback
         this.especialidadesDisponibles = this.especialidades || [];
         this.procesarCentros();
         this.aplicarFiltros();
@@ -1231,11 +1254,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  extraerEspecialidadesDisponibles() {
+  
+  // Métodos fallback para cuando no hay slots
+  extraerEspecialidadesDisponiblesFromService() {
     const especialidadesIds = new Set<number>();
-    
-    // Solo considerar especialidades de centros que tenemos en la lista
     const centrosIds = new Set(this.centros.map(c => c.id).filter(id => id !== undefined));
     
     this.centroEspecialidades.forEach(relacion => {
@@ -1244,20 +1266,13 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Filtrar especialidades del padre que están realmente disponibles en los centros
     this.especialidadesDisponibles = this.especialidades.filter(esp => 
       esp.id && especialidadesIds.has(esp.id)
     );
-    
-    // console.log('✅ Especialidades disponibles en centros:', this.especialidadesDisponibles.length);
-    // console.log('📋 Lista:', this.especialidadesDisponibles.map(e => e.nombre));
   }
-
-  procesarCentros() {
-    // console.log('🏥 Procesando centros con especialidades...');
-    
+  
+  procesarCentrosFromService() {
     this.centrosFiltrados = this.centros.map(centro => {
-      // Buscar las especialidades de este centro
       const especialidadesCentro = this.centroEspecialidades
         .filter(relacion => relacion.centroId === centro.id)
         .map(relacion => {
@@ -1266,6 +1281,62 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         })
         .filter(nombre => nombre !== 'Desconocida');
 
+      return {
+        ...centro,
+        especialidadesDisponibles: especialidadesCentro
+      };
+    });
+  }
+
+  extraerEspecialidadesDisponibles() {
+    // Extraer especialidades únicas de los slots disponibles
+    const especialidadesConTurnos = new Set<string>();
+    
+    // Solo considerar slots de centros que tenemos en la lista
+    const centrosIds = new Set(this.centros.map(c => c.id).filter(id => id !== undefined));
+    
+    this.slotsDisponibles.forEach(slot => {
+      if (centrosIds.has(Number(slot.centroId)) && slot.especialidadStaffMedico && slot.especialidadStaffMedico.trim()) {
+        especialidadesConTurnos.add(slot.especialidadStaffMedico.trim());
+      }
+    });
+
+    // Filtrar especialidades del padre que realmente tienen turnos disponibles
+    this.especialidadesDisponibles = this.especialidades.filter(esp => 
+      esp.nombre && especialidadesConTurnos.has(esp.nombre)
+    );
+    
+    // console.log('✅ Especialidades con turnos disponibles en centros:', this.especialidadesDisponibles.length);
+    // console.log('📋 Lista:', this.especialidadesDisponibles.map(e => e.nombre));
+    // console.log('📋 Especialidades encontradas en slots:', Array.from(especialidadesConTurnos));
+  }
+
+  procesarCentros() {
+    // console.log('🏥 Procesando centros con especialidades reales (basado en turnos disponibles)...');
+    // console.log('- Centros recibidos:', this.centros.length);
+    // console.log('- Slots disponibles recibidos:', this.slotsDisponibles.length);
+    
+    this.centrosFiltrados = this.centros.map(centro => {
+      // Buscar las especialidades que realmente tienen turnos disponibles en este centro
+      const slotsDelCentro = this.slotsDisponibles.filter(slot => 
+        Number(slot.centroId) === Number(centro.id)
+      );
+      
+      // Extraer especialidades únicas de los slots disponibles
+      const especialidadesConTurnos = new Set<string>();
+      slotsDelCentro.forEach(slot => {
+        if (slot.especialidadStaffMedico && slot.especialidadStaffMedico.trim()) {
+          especialidadesConTurnos.add(slot.especialidadStaffMedico.trim());
+        }
+      });
+      
+      const especialidadesCentro = Array.from(especialidadesConTurnos);
+
+      // if (centro.id === 1) { // Debug solo para el primer centro
+      //   console.log(`🏥 Centro ${centro.nombre} (ID: ${centro.id}):`);
+      //   console.log('  - Slots encontrados:', slotsDelCentro.length);
+      //   console.log('  - Especialidades con turnos disponibles:', especialidadesCentro);
+      // }
 
       return {
         ...centro,
@@ -1274,6 +1345,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     });
 
     // console.log('✅ Centros procesados:', this.centrosFiltrados.length);
+    // console.log('📊 Resumen de especialidades por centro (con turnos reales):');
+    // this.centrosFiltrados.slice(0, 3).forEach(centro => {
+    //   console.log(`  - ${centro.nombre}: ${centro.especialidadesDisponibles?.length || 0} especialidades con turnos`);
+    // });
   }
 
   inicializarMapa() {
@@ -1537,6 +1612,8 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.resultadosBusqueda = centrosFiltrados;
     this.centrosFiltrados = centrosFiltrados; // Para compatibilidad con el template
     
+    // Limpiar cache de conteo al cambiar los centros filtrados
+    this.conteoEspecialidadesCache.clear();
     
     // Actualizar marcadores en el mapa
     if (this.map) {
@@ -1681,13 +1758,46 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     
   }
 
-  // Contar centros por especialidad
+  // Contar centros por especialidad (con cache)
   contarCentrosPorEspecialidad(especialidad: string): number {
-    return this.centros.filter(centro => {
-      // Asumimos que el centro tiene la especialidad disponible
-      // En la implementación real, esto dependería de cómo se almacenan las especialidades
-      return true; // Por ahora retornamos todos
-    }).length;
+    // Verificar si necesitamos recalcular el cache
+    if (this.centrosFiltrados.length !== this.lastCentrosFiltradosLength) {
+      this.conteoEspecialidadesCache.clear();
+      this.lastCentrosFiltradosLength = this.centrosFiltrados.length;
+    }
+    
+    // Verificar si ya tenemos el resultado en cache
+    if (this.conteoEspecialidadesCache.has(especialidad)) {
+      return this.conteoEspecialidadesCache.get(especialidad)!;
+    }
+    
+    // Calcular el conteo
+    const centrosConEspecialidad = this.centrosFiltrados.filter(centro => {
+      // Verificar si el centro tiene la especialidad disponible
+      const tieneEspecialidad = centro.especialidadesDisponibles && 
+             centro.especialidadesDisponibles.some(esp => 
+               esp && esp.toLowerCase() === especialidad.toLowerCase()
+             );
+      return tieneEspecialidad;
+    });
+    
+    const conteo = centrosConEspecialidad.length;
+    
+    // Guardar en cache
+    this.conteoEspecialidadesCache.set(especialidad, conteo);
+    
+    // Debug solo una vez por especialidad (comentado - problema resuelto)
+    // if (especialidad === 'Medicina General' || especialidad.toLowerCase().includes('ginecol')) { 
+    //   console.log(`🔍 Contando centros para "${especialidad}" (calculado):`);
+    //   console.log('  - Centros filtrados totales:', this.centrosFiltrados.length);
+    //   console.log('  - Centros con la especialidad:', conteo);
+    //   console.log('  - Centros encontrados:', centrosConEspecialidad.map(c => ({
+    //     nombre: c.nombre,
+    //     especialidades: c.especialidadesDisponibles
+    //   })));
+    // }
+    
+    return conteo;
   }
 
   // ================================
