@@ -566,6 +566,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
         this.staffMedicoCentro = dp.data as StaffMedico[];
         // Cargar porcentajes después de cargar staff médico
         this.cargarPorcentajesMedicos();
+        // Recalcular totales inmediatamente después de cargar los datos
+        this.calcularTotalesPorcentajeMedicos();
       },
       error: (err) => {
         this.staffMedicoCentro = [];
@@ -1014,6 +1016,9 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       // Procesar staff médico
       this.staffMedicoCentro = staffMedicoResponse?.data as StaffMedico[] || [];
       
+      // Recalcular porcentajes después de cargar staff médico
+      this.calcularTotalesPorcentajeMedicos();
+      
       // Procesar médicos
       this.medicosDisponibles = medicosResponse?.data as Medico[] || [];
       
@@ -1069,8 +1074,17 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   cargarPorcentajesMedicos(): void {
-    // Implementar carga de porcentajes si es necesario
-    this.percentageCalculator.calcularTotales();
+    // Asegurar que los porcentajes estén inicializados correctamente
+    if (this.staffMedicoCentro && this.staffMedicoCentro.length > 0) {
+      // Si algún staff médico no tiene porcentaje, inicializar a 0
+      this.staffMedicoCentro.forEach(staff => {
+        if (staff.porcentaje === null || staff.porcentaje === undefined) {
+          staff.porcentaje = 0;
+        }
+      });
+      // Recalcular totales
+      this.percentageCalculator.calcularTotales();
+    }
   }
 
   // ==================== MÉTODOS PARA GESTIÓN DE PORCENTAJES POR MÉDICO ====================
@@ -1086,6 +1100,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
    * Calcula el total de porcentajes asignados a médicos y disponible
    */
   private calcularTotalesPorcentajeMedicos(): void {
+    // Verificar que hay datos para procesar
+    if (!this.staffMedicoCentro || this.staffMedicoCentro.length === 0) {
+      this.totalPorcentajeMedicos = 0;
+      this.porcentajeDisponibleMedicos = 100;
+      return;
+    }
+
     // Usar reduce con precisión mejorada
     const total = this.staffMedicoCentro
       .filter(staff => staff.porcentaje != null && staff.porcentaje >= 0)
@@ -1094,6 +1115,15 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     // Redondear a 2 decimales para evitar problemas de precisión flotante
     this.totalPorcentajeMedicos = Math.round(total * 100) / 100;
     this.porcentajeDisponibleMedicos = Math.round((100 - this.totalPorcentajeMedicos) * 100) / 100;
+    
+    console.log('Porcentajes calculados:', {
+      staffMedico: this.staffMedicoCentro.map(s => ({ 
+        nombre: s.medico?.nombre || 'N/A', 
+        porcentaje: s.porcentaje 
+      })),
+      totalPorcentajeMedicos: this.totalPorcentajeMedicos,
+      porcentajeDisponible: this.porcentajeDisponibleMedicos
+    });
   }
 
   /**
