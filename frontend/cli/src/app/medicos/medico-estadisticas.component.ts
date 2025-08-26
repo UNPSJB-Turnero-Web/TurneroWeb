@@ -623,7 +623,6 @@ export class MedicoEstadisticasComponent implements OnInit {
       }
     ];
     this.cargarEstadisticasSimuladas();
-  }
 
     this.rendimientoMensual = [
       { periodo: 'Enero', turnosRealizados: 75, turnosCancelados: 8, pacientesAtendidos: 58, horasTrabajadas: 140 },
