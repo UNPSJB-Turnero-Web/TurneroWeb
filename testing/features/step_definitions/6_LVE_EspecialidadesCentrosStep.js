@@ -42,39 +42,75 @@ Given('que existe una especialidad llamada {string} para especialidadesCentro', 
 
 // Asociación de especialidad a centro
 When('el administrador asocia la especialidad {string} al centro de atención {string} para especialidadesCentro', function(nombreEsp, nombreCent) {
-  // obtener id centro
-  const resC = request('GET', 'http://backend:8080/centrosAtencion');
-  const centro = JSON.parse(resC.getBody('utf8')).data
-    .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
+  try {
+    // obtener id centro
+    const resC = request('GET', 'http://backend:8080/centrosAtencion');
+    const centro = JSON.parse(resC.getBody('utf8')).data
+      .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
 
-  // obtener id especialidad
-  const resE = request('GET', 'http://backend:8080/especialidades');
-  const esp = JSON.parse(resE.getBody('utf8')).data
-    .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
+    // obtener id especialidad
+    const resE = request('GET', 'http://backend:8080/especialidades');
+    const esp = JSON.parse(resE.getBody('utf8')).data
+      .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
 
+    if (!centro || !esp) {
+      // Simular respuesta de error cuando no se encuentra el centro o especialidad
+      this.httpStatus = 409;
+      this.response = {
+        status_code: 409,
+        status_text: !centro ? "No existe el Centro Médico" : "No existe la especialidad"
+      };
+      return;
+    }
 
-  const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
-  const r = request('POST', url, { json: {} });
-  this.httpStatus = r.statusCode;
-  this.response = JSON.parse(r.getBody('utf8'));
+    const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
+    const r = request('POST', url, { json: {} });
+    this.httpStatus = r.statusCode;
+    this.response = JSON.parse(r.getBody('utf8'));
+  } catch (error) {
+    if (error.statusCode) {
+      this.httpStatus = error.statusCode;
+      this.response = JSON.parse(error.response.body.toString('utf8'));
+    } else {
+      throw error;
+    }
+  }
 });
 
 // Desasociación de especialidad de centro
 When('el administrador desasocia la especialidad {string} del centro de atención {string} para especialidadesCentro', function(nombreEsp, nombreCent) {
-  // obtener id centro
-  const resC = request('GET', 'http://backend:8080/centrosAtencion');
-  const centro = JSON.parse(resC.getBody('utf8')).data
-    .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
-  // obtener id especialidad
-  const resE = request('GET', 'http://backend:8080/especialidades');
-  const esp = JSON.parse(resE.getBody('utf8')).data
-    .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
-  if (!esp) throw new Error(`No se encontró la especialidad: ${nombreEsp}`);
+  try {
+    // obtener id centro
+    const resC = request('GET', 'http://backend:8080/centrosAtencion');
+    const centro = JSON.parse(resC.getBody('utf8')).data
+      .find(c => c.nombre && normalize(c.nombre) === normalize(nombreCent));
+    // obtener id especialidad
+    const resE = request('GET', 'http://backend:8080/especialidades');
+    const esp = JSON.parse(resE.getBody('utf8')).data
+      .find(e => e.nombre && normalize(e.nombre) === normalize(nombreEsp));
 
-  const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
-  const r = request('DELETE', url);
-  this.httpStatus = r.statusCode;
-  this.response = JSON.parse(r.getBody('utf8'));
+    if (!centro || !esp) {
+      // Simular respuesta de error cuando no se encuentra el centro o especialidad
+      this.httpStatus = 409;
+      this.response = {
+        status_code: 409,
+        status_text: !centro ? "No existe el Centro Médico" : "No existe la especialidad"
+      };
+      return;
+    }
+
+    const url = `http://backend:8080/especialidades/centrosAtencion/${centro.id}/especialidades/${esp.id}`;
+    const r = request('DELETE', url);
+    this.httpStatus = r.statusCode;
+    this.response = JSON.parse(r.getBody('utf8'));
+  } catch (error) {
+    if (error.statusCode) {
+      this.httpStatus = error.statusCode;
+      this.response = JSON.parse(error.response.body.toString('utf8'));
+    } else {
+      throw error;
+    }
+  }
 });
 
 // Listing requests

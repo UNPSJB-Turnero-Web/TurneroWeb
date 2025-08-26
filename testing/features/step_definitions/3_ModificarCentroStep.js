@@ -10,23 +10,27 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
   const centros = dataTable.hashes();
 
   centros.forEach(centro => {
+    // Separar latitud y longitud
+    const coordenadas = centro.Coordenadas ? centro.Coordenadas.trim() : null;
+    const [latitud, longitud] = coordenadas ? coordenadas.split(',').map(coord => parseFloat(coord.trim())) : [null, null];
+
     const centroData = {
       nombre: centro.Nombre ? centro.Nombre.trim() : null,
       direccion: centro.Dirección ? centro.Dirección.trim() : null,
       localidad: centro.Localidad ? centro.Localidad.trim() : null,
       provincia: centro.Provincia ? centro.Provincia.trim() : null,
       telefono: centro.Teléfono ? centro.Teléfono.trim() : null,
-      coordenadas: centro.Coordenadas ? centro.Coordenadas.trim() : null
+      latitud,
+      longitud
     };
 
-    if (!centroData.nombre || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || !centroData.coordenadas) {
+    if (!centroData.nombre || !centroData.direccion || !centroData.localidad || !centroData.provincia || !centroData.telefono || !latitud || !longitud) {
       throw new Error('Faltan datos obligatorios para registrar el centro de atención.');
     }
 
    // console.log('📥 Centro registrado:', centroData);
 
-    const res = request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
-    const body = JSON.parse(res.getBody('utf8'));
+    request('POST', 'http://backend:8080/centrosAtencion', { json: centroData });
   });
 });
 

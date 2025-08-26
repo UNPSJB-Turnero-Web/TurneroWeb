@@ -2,6 +2,16 @@ const { BeforeAll, When, Then, Given } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
+BeforeAll(function () {
+  try {
+    // Clean database before running tests
+    const res = request('DELETE', 'http://backend:8080/deleteAll');
+    console.log('🧹 Database cleaned for centro atencion tests');
+  } catch (error) {
+    console.log('⚠️ Could not clean database, continuing with tests');
+  }
+});
+
 Given('que existe un sistema de gestión de centros de atención', function () {
   // console.log('ℹ️ Sistema de gestión inicializado (base ya limpia)');
 });
