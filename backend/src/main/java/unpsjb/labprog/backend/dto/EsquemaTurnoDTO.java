@@ -17,6 +17,7 @@ public class EsquemaTurnoDTO {
     private Integer consultorioId;
 
     private List<DiaHorarioDTO> horarios;
+    private List<DiaHorarioDTO> horariosDisponibilidad;
 
     private String nombreStaffMedico; 
     private String nombreCentro; 
