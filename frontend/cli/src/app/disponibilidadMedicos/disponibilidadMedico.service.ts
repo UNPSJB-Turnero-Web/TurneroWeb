@@ -41,6 +41,11 @@ export class DisponibilidadMedicoService {
   byStaffMedico(staffMedicoId: number): Observable<DataPackage<DisponibilidadMedico[]>> {
     return this.http.get<DataPackage<DisponibilidadMedico[]>>(`${this.url}/staffMedico/${staffMedicoId}`);
   }
+
+  /** Disponibilidades por médico ID */
+  byMedico(medicoId: number): Observable<DataPackage<DisponibilidadMedico[]>> {
+    return this.http.get<DataPackage<DisponibilidadMedico[]>>(`${this.url}/medico/${medicoId}`);
+  }
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page-1}&size=${size}`);
   }

@@ -130,4 +130,10 @@ public class DisponibilidadMedicoService {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+
+    public List<DisponibilidadMedicoDTO> findByMedicoId(Integer medicoId) {
+        return repository.findByStaffMedicoMedicoId(medicoId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PacienteService } from '../pacientes/paciente.service';
 import { Paciente } from '../pacientes/paciente';
+import { MedicoService } from '../medicos/medico.service';
 
 @Component({
   selector: 'app-home',
@@ -41,6 +42,14 @@ import { Paciente } from '../pacientes/paciente';
                 <small>Gestión completa del sistema</small>
               </button>
               <button 
+                class="role-btn medico-btn" 
+                (click)="selectRole('medico')"
+              >
+                <i class="fas fa-user-md"></i>
+                <span>Médico</span>
+                <small>Gestión de turnos y horarios</small>
+              </button>
+              <button 
                 class="role-btn patient-btn" 
                 (click)="selectRole('patient')"
               >
@@ -68,6 +77,38 @@ import { Paciente } from '../pacientes/paciente';
                 Volver
               </button>
             </div>
+          </div>
+
+          <!-- Medico Login Form -->
+          <div class="login-form" *ngIf="selectedRole === 'medico'">
+            <h3>Acceso Médico</h3>
+            <form (ngSubmit)="loginMedico()" #medicoForm="ngForm">
+              <div class="form-group">
+                <label for="matricula">Matrícula:</label>
+                <input 
+                  type="text" 
+                  id="matricula" 
+                  name="matricula"
+                  [(ngModel)]="medicoCredentials.matricula"
+                  class="form-control"
+                  required
+                  placeholder="Ingresa tu número de matrícula"
+                  pattern="[0-9]{5}-[0-9]{1}"
+                  maxlength="7"
+                >
+                <small class="form-text">Formato: 12345-6</small>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-login" [disabled]="!medicoForm.valid">
+                  <i class="fas fa-sign-in-alt"></i>
+                  Ingresar
+                </button>
+                <button type="button" class="btn btn-back" (click)="goBack()">
+                  <i class="fas fa-arrow-left"></i>
+                  Volver
+                </button>
+              </div>
+            </form>
           </div>
 
           <!-- Patient Login Form -->
@@ -382,6 +423,15 @@ import { Paciente } from '../pacientes/paciente';
       box-shadow: 0 8px 25px var(--centro-atencion-shadow);
     }
 
+    .medico-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+    }
+
+    .medico-btn:hover {
+      box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+    }
+
     .patient-btn {
       background: var(--pacientes-gradient);
       color: white;
@@ -659,7 +709,7 @@ import { Paciente } from '../pacientes/paciente';
   `
 })
 export class HomeComponent {
-  selectedRole: 'admin' | 'patient' | null = null;
+  selectedRole: 'admin' | 'medico' | 'patient' | null = null;
   isLoading = false;
   isRegistering = false;
   errorMessage = '';
@@ -670,6 +720,10 @@ export class HomeComponent {
   adminCredentials = {
     username: '',
     password: ''
+  };
+
+  medicoCredentials = {
+    matricula: ''
   };
 
   patientCredentials = {
@@ -686,11 +740,11 @@ export class HomeComponent {
     obraSocialId: ''
   };
 
-  constructor(private router: Router, private pacienteService: PacienteService) {
+  constructor(private router: Router, private pacienteService: PacienteService, private medicoService: MedicoService) {
     this.loadObrasSociales();
   }
 
-  selectRole(role: 'admin' | 'patient') {
+  selectRole(role: 'admin' | 'medico' | 'patient') {
     this.selectedRole = role;
     this.errorMessage = '';
     this.showRegistrationPrompt = false;
@@ -702,6 +756,7 @@ export class HomeComponent {
     this.showRegistrationPrompt = false;
     this.showRegistrationForm = false;
     this.adminCredentials = { username: '', password: '' };
+    this.medicoCredentials = { matricula: '' };
     this.patientCredentials = { dni: '' };
     this.resetRegistrationData();
   }
@@ -721,6 +776,53 @@ export class HomeComponent {
     } catch (error) {
       this.errorMessage = 'Error al acceder al sistema';
     } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async loginMedico() {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    try {
+      const matricula = this.medicoCredentials.matricula;
+      
+      // Validar formato de matrícula
+      const matriculaRegex = /^[0-9]{5}-[0-9]$/;
+      if (!matriculaRegex.test(matricula)) {
+        this.errorMessage = 'Por favor ingresa una matrícula válida (formato: 12345-6)';
+        this.isLoading = false;
+        return;
+      }
+
+      // Buscar médico por matrícula usando API
+      this.medicoService.findByMatricula(matricula).subscribe({
+        next: (response) => {
+          if (response && response.data) {
+            const medicoData = response.data;
+            
+            // Guardar datos del médico en localStorage
+            localStorage.setItem('userRole', 'medico');
+            localStorage.setItem('medicoMatricula', matricula);
+            localStorage.setItem('medicoData', JSON.stringify(medicoData));
+            localStorage.setItem('medicoId', medicoData.id.toString());
+            localStorage.setItem('userName', `${medicoData.nombre} ${medicoData.apellido}`);
+            
+            this.isLoading = false;
+            this.router.navigate(['/medico-dashboard']);
+          } else {
+            this.errorMessage = 'Matrícula no encontrada en el sistema';
+            this.isLoading = false;
+          }
+        },
+        error: (error) => {
+          console.error('Error al validar matrícula:', error);
+          this.errorMessage = 'Matrícula no encontrada o error del servidor';
+          this.isLoading = false;
+        }
+      });
+    } catch (error) {
+      this.errorMessage = 'Error al acceder al sistema médico';
       this.isLoading = false;
     }
   }

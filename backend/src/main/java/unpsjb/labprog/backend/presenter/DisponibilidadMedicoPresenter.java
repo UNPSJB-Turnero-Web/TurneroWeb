@@ -93,6 +93,16 @@ public class DisponibilidadMedicoPresenter {
         }
     }
 
+    @GetMapping("/medico/{medicoId}")
+    public ResponseEntity<Object> findByMedico(@PathVariable Integer medicoId) {
+        try {
+            List<DisponibilidadMedicoDTO> disponibilidades = service.findByMedicoId(medicoId);
+            return Response.ok(disponibilidades, "Disponibilidades del médico recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener disponibilidades del médico: " + e.getMessage());
+        }
+    }
+
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,

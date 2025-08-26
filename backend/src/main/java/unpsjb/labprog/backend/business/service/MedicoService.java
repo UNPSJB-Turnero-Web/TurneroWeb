@@ -36,6 +36,10 @@ public class MedicoService {
         return repository.findById(id).map(this::toDTO);
     }
 
+    public Optional<MedicoDTO> findByMatricula(String matricula) {
+        return repository.findByMatricula(matricula).map(this::toDTO);
+    }
+
     @Transactional
     public MedicoDTO saveOrUpdate(MedicoDTO dto) {
         // Validar DNI en el DTO antes de convertir a entidad

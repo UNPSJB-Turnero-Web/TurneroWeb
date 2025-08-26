@@ -895,6 +895,8 @@ export class AppComponent implements OnInit, OnDestroy {
         return 'Administrador';
       case 'patient':
         return 'Paciente';
+      case 'medico':
+        return 'Médico';
       default:
         return 'Usuario';
     }

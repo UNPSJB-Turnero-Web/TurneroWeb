@@ -108,5 +108,11 @@ public class MedicoPresenter {
         return Response.ok("Médico " + id + " eliminado correctamente");
     }
 
+    @GetMapping("/matricula/{matricula}")
+    public ResponseEntity<Object> findByMatricula(@PathVariable String matricula) {
+        return service.findByMatricula(matricula)
+                .map(medico -> Response.ok(medico, "Médico encontrado por matrícula"))
+                .orElse(ResponseEntity.notFound().build());
+    }
    
 }

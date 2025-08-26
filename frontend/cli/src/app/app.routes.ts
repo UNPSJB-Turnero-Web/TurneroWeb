@@ -27,12 +27,20 @@ import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
 import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
 import { PacienteNotificacionesComponent } from './pacientes/paciente-notificaciones.component';
 
+// Medico components
+import { MedicoDashboardComponent } from './medicos/medico-dashboard.component';
+import { MedicoTurnosComponent } from './medicos/medico-turnos.component';
+import { MedicoHorariosComponent } from './medicos/medico-horarios.component';
+import { MedicoVacacionesComponent } from './medicos/medico-vacaciones.component';
+import { MedicoEstadisticasComponent } from './medicos/medico-estadisticas.component';
+
 // Audit components
 import { TurnoAdvancedSearchComponent } from './turnos/turno-advanced-search.component';
 import { AuditDashboardComponent } from './turnos/audit-dashboard.component';
 
 import { AdminGuard } from './guards/admin.guard';
 import { PatientGuard } from './guards/patient.guard';
+import { MedicoGuard } from './guards/medico.guard';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
@@ -43,6 +51,15 @@ export const routes: Routes = [
     { path: 'paciente-notificaciones', component: PacienteNotificacionesComponent, canActivate: [PatientGuard] },
     { path: 'paciente-perfil', component: PacienteDetailComponent, canActivate: [PatientGuard] },
     { path: 'paciente-reagendar-turno/:id', component: PacienteReagendarTurnoComponent, canActivate: [PatientGuard] },
+
+    // Medico Routes
+    { path: 'medico-dashboard', component: MedicoDashboardComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-turnos', component: MedicoTurnosComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-horarios', component: MedicoHorariosComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-vacaciones', component: MedicoVacacionesComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-estadisticas', component: MedicoEstadisticasComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-historial', component: MedicoTurnosComponent, canActivate: [MedicoGuard] },
+    { path: 'medico-perfil', component: MedicoDetailComponent, canActivate: [MedicoGuard] },
     
 
     // Admin Routes (protected)

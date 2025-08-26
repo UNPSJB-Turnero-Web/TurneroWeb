@@ -22,6 +22,23 @@ export class MedicoService {
     return this.http.get<DataPackage<Medico>>(`${this.medicosUrl}/${id}`);
   }
 
+  /** Alias para getById - usado por el dashboard */
+  findById(id: number): Observable<Medico> {
+    return new Observable(observer => {
+      this.getById(id).subscribe({
+        next: (response) => {
+          if (response && response.data) {
+            observer.next(response.data);
+          } else {
+            observer.error('Médico no encontrado');
+          }
+          observer.complete();
+        },
+        error: (error) => observer.error(error)
+      });
+    });
+  }
+
   /** Crea un nuevo médico */
   create(medico: Medico): Observable<DataPackage<Medico>> {
     return this.http.post<DataPackage<Medico>>(this.medicosUrl, medico);
@@ -40,6 +57,11 @@ export class MedicoService {
   /** Busca médicos por término */
   search(term: string): Observable<DataPackage<Medico[]>> {
     return this.http.get<DataPackage<Medico[]>>(`${this.medicosUrl}/search/${term}`);
+  }
+
+  /** Busca un médico por matrícula */
+  findByMatricula(matricula: string): Observable<DataPackage<Medico>> {
+    return this.http.get<DataPackage<Medico>>(`${this.medicosUrl}/matricula/${matricula}`);
   }
 
   /** Paginación */

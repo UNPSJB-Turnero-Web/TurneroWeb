@@ -41,6 +41,9 @@ boolean existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin
 
     List<DisponibilidadMedico> findByStaffMedicoId(Integer staffMedicoId);
 
+    // Método para encontrar disponibilidades por médico ID
+    List<DisponibilidadMedico> findByStaffMedicoMedicoId(Integer medicoId);
+
     // Método para encontrar disponibilidades por centro de atención
     List<DisponibilidadMedico> findByStaffMedico_CentroAtencionId(Integer centroAtencionId);
 

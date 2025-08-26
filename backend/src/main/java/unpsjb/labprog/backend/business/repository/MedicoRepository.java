@@ -15,4 +15,6 @@ public interface MedicoRepository extends JpaRepository<Medico, Integer> {
 
     Optional<Medico> findByDni(Long dni);
 
+    Optional<Medico> findByMatricula(String matricula);
+
 }
