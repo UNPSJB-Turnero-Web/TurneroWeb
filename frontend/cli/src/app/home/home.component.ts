@@ -165,7 +165,6 @@ import { MedicoService } from '../medicos/medico.service';
                   [(ngModel)]="registrationData.dni"
                   class="form-control"
                   required
-                  readonly
                   [value]="patientCredentials.dni"
                 >
               </div>
