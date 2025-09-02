@@ -101,8 +101,11 @@ public class EsquemaTurnoService {
             throw new IllegalArgumentException("El campo staffMedicoId es obligatorio.");
         }
 
-        // Validación: Consultorio (opcional para permitir distribución automática)
-        if (dto.getConsultorioId() != null && !consultorioRepository.existsById(dto.getConsultorioId())) {
+        // Validación: Consultorio (ahora es obligatorio)
+        if (dto.getConsultorioId() == null) {
+            throw new IllegalArgumentException("El consultorio es obligatorio. Debe seleccionar un consultorio específico.");
+        }
+        if (!consultorioRepository.existsById(dto.getConsultorioId())) {
             throw new IllegalArgumentException("El consultorio especificado no existe.");
         }
 
@@ -162,27 +165,8 @@ public class EsquemaTurnoService {
             }
         }
 
-        // Si no tiene consultorio asignado, intentar asignar automáticamente según porcentajes
-        if (esquemaTurno.getConsultorio() == null && esquemaTurno.getStaffMedico() != null) {
-            try {
-                Integer consultorioId = consultorioDistribucionService
-                    .asignarConsultorioSegunPorcentajes(
-                        esquemaTurno.getStaffMedico().getId(), 
-                        esquemaTurno.getCentroAtencion().getId()
-                    );
-                
-                if (consultorioId != null) {
-                    esquemaTurno.setConsultorio(consultorioRepository.findById(consultorioId)
-                        .orElse(null));
-                    dto.setConsultorioId(consultorioId); // Actualizar el DTO también
-                }
-            } catch (Exception e) {
-                System.err.println("Error al asignar consultorio automáticamente: " + e.getMessage());
-                // Continuar sin consultorio asignado
-            }
-        }
-
         // NUEVO: Ajustar automáticamente los horarios del esquema para que encajen en el consultorio
+        // El consultorio ahora es obligatorio, por lo que siempre debería estar presente
         if (esquemaTurno.getConsultorio() != null) {
             try {
                 System.out.println("🔧 APLICANDO AJUSTE AUTOMÁTICO DE HORARIOS");

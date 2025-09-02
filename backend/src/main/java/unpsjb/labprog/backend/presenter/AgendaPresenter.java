@@ -48,8 +48,21 @@ public class AgendaPresenter {
         List<TurnoDTO> todosLosEventos = new ArrayList<>();
 
         for (EsquemaTurno esquema : esquemas) {
-            List<TurnoDTO> eventos = agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas);
-            todosLosEventos.addAll(eventos);
+            // Skip schemes with null consultorio to prevent errors
+            if (esquema.getConsultorio() == null) {
+                System.err.println("⚠️ Skipping EsquemaTurno ID " + esquema.getId() + 
+                                 " - consultorio is null. Please check database integrity.");
+                continue;
+            }
+            
+            try {
+                List<TurnoDTO> eventos = agendaService.generarEventosDesdeEsquemaTurno(esquema, semanas);
+                todosLosEventos.addAll(eventos);
+            } catch (Exception e) {
+                System.err.println("❌ Error processing EsquemaTurno ID " + esquema.getId() + ": " + e.getMessage());
+                // Continue processing other schemas instead of failing completely
+                continue;
+            }
         }
 
         return todosLosEventos;

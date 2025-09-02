@@ -67,13 +67,13 @@ import { ModalService } from '../modal/modal.service';
                     {{ getConsultorioNombre() }}
                   </span>
                   <ng-template #sinConsultorio>
-                    <span class="text-muted">
-                      <i class="fas fa-clock me-1"></i>
-                      Pendiente de asignación automática
+                    <span class="text-danger">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      Sin consultorio asignado
                     </span>
-                    <small class="d-block text-info mt-1">
-                      <i class="fas fa-info-circle me-1"></i>
-                      Se asignará según porcentajes configurados
+                    <small class="d-block text-warning mt-1">
+                      <i class="fas fa-edit me-1"></i>
+                      Este esquema requiere un consultorio específico para funcionar correctamente
                     </small>
                   </ng-template>
                 </div>
@@ -86,6 +86,19 @@ import { ModalService } from '../modal/modal.service';
                 </div>
                 <div class="info-value">
                   {{ esquema.intervalo }} minutos
+                </div>
+              </div>
+
+              <div class="info-item full-width" *ngIf="consultorioHorarios && consultorioHorarios.length > 0">
+                <div class="info-label">
+                  <span class="info-icon" style="background: var(--consultorios-gradient);">🏢</span>
+                  Horarios del Consultorio
+                </div>
+                <div class="horarios-disponibles">
+                  <div *ngFor="let horario of consultorioHorarios" class="horario-card consultorio">
+                    <span class="dia-label">{{ horario.dia }}</span>
+                    <span class="hora-label">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
+                  </div>
                 </div>
               </div>
 
@@ -112,21 +125,11 @@ import { ModalService } from '../modal/modal.service';
                   <span class="info-icon" style="background: var(--consultorios-gradient);">🏢</span>
                   Horarios de Atención del Consultorio
                 </div>
-                <div class="consultorio-horarios">
-                  <!-- Horario por defecto -->
-                  <div *ngIf="getConsultorioSeleccionado()?.horaAperturaDefault && getConsultorioSeleccionado()?.horaCierreDefault" 
-                       class="horario-default">
-                    <h6>Horario General</h6>
-                    <div class="horario-card consultorio">
-                      <span class="dia-label">TODOS LOS DÍAS</span>
-                      <span class="hora-label">{{ getConsultorioSeleccionado()?.horaAperturaDefault }} - {{ getConsultorioSeleccionado()?.horaCierreDefault }}</span>
-                    </div>
-                  </div>
-                  
+                <div class="consultorio-horarios">                 
                   <!-- Horarios específicos por día -->
                   <div *ngIf="getConsultorioSeleccionado()?.horariosSemanales && getConsultorioSeleccionado()?.horariosSemanales!.length > 0"
                        class="horarios-especificos">
-                    <h6>Horarios Específicos</h6>
+                    <h6>Horarios por Día</h6>
                     <div class="horarios-disponibles">
                       <div *ngFor="let horario of getConsultorioSeleccionado()?.horariosSemanales" 
                            class="horario-card consultorio"
@@ -141,13 +144,13 @@ import { ModalService } from '../modal/modal.service';
                   </div>
                   
                   <!-- Sin horarios configurados -->
-                  <div *ngIf="!getConsultorioSeleccionado()?.horaAperturaDefault && 
-                              (!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0)"
+                  <div *ngIf="!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0"
                        class="no-horarios">
                     El consultorio no tiene horarios de atención configurados
                   </div>
                   
                   <div class="form-help">
+                    <i class="fas fa-info-circle text-info me-1"></i>
                     Horarios de atención del consultorio seleccionado (solo informativo).
                   </div>
                 </div>
@@ -220,22 +223,23 @@ import { ModalService } from '../modal/modal.service';
                 <div class="form-group-modern">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: var(--consultorios-gradient);">🚪</span>
-                    Consultorio <span class="text-muted">(Opcional)</span>
+                    Consultorio <span class="text-danger">*</span>
                   </label>
                   <select
                     [(ngModel)]="esquema.consultorioId"
                     name="consultorioId"
                     class="form-control form-control-modern"
+                    required
+                    (change)="onConsultorioChange()"
                   >
-                    <option [ngValue]="null">Sin asignar - Se asignará automáticamente</option>
+                    <option [ngValue]="null">Seleccione un consultorio...</option>
                     <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
                       {{ consultorio.nombre }}
                     </option>
                   </select>
                   <div class="form-help">
-                    <i class="fas fa-info-circle text-info me-1"></i>
-                    <strong>Nuevo flujo:</strong> Los consultorios se asignarán automáticamente según los porcentajes configurados por médico. 
-                    También puede asignar manualmente si lo prefiere.
+                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                    <strong>Campo obligatorio:</strong> Debe seleccionar un consultorio específico para este esquema de turnos.
                   </div>
                 </div>
               </div>
@@ -258,6 +262,32 @@ import { ModalService } from '../modal/modal.service';
                   />
                   <div class="form-help">
                     Duración de cada turno en minutos.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios del Consultorio Seleccionado (readonly) -->
+              <div class="col-12" *ngIf="consultorioHorarios && consultorioHorarios.length > 0">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: var(--consultorios-gradient);">🏢</span>
+                    Horarios de Atención del Consultorio
+                  </label>
+                  <div class="horarios-table">
+                    <div class="table-header">
+                      <span>Día</span>
+                      <span>Hora Inicio</span>
+                      <span>Hora Fin</span>
+                    </div>
+                    <div *ngFor="let horario of consultorioHorarios" class="table-row consultorio-row">
+                      <span>{{ horario.dia }}</span>
+                      <span>{{ horario.horaInicio }}</span>
+                      <span>{{ horario.horaFin }}</span>
+                    </div>
+                  </div>
+                  <div class="form-help">
+                    <i class="fas fa-info-circle text-info me-1"></i>
+                    Horarios de atención del consultorio seleccionado. Configure los horarios del esquema dentro de estos horarios.
                   </div>
                 </div>
               </div>
@@ -295,18 +325,9 @@ import { ModalService } from '../modal/modal.service';
                     Horarios de Atención del Consultorio
                   </label>
                   
-                  <div *ngIf="getConsultorioSeleccionado()?.horaAperturaDefault && getConsultorioSeleccionado()?.horaCierreDefault" 
-                       class="horario-default">
-                    <h6>Horario General</h6>
-                    <div class="horario-card consultorio">
-                      <span class="dia-label">TODOS LOS DÍAS</span>
-                      <span class="hora-label">{{ getConsultorioSeleccionado()?.horaAperturaDefault }} - {{ getConsultorioSeleccionado()?.horaCierreDefault }}</span>
-                    </div>
-                  </div>
-                  
                   <div *ngIf="getConsultorioSeleccionado()?.horariosSemanales && getConsultorioSeleccionado()?.horariosSemanales!.length > 0"
                        class="horarios-especificos">
-                    <h6>Horarios Específicos</h6>
+                    <h6>Horarios por Día</h6>
                     <div class="horarios-disponibles">
                       <div *ngFor="let horario of getConsultorioSeleccionado()?.horariosSemanales" 
                            class="horario-card consultorio"
@@ -320,13 +341,13 @@ import { ModalService } from '../modal/modal.service';
                     </div>
                   </div>
                   
-                  <div *ngIf="!getConsultorioSeleccionado()?.horaAperturaDefault && 
-                              (!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0)"
+                  <div *ngIf="!getConsultorioSeleccionado()?.horariosSemanales || getConsultorioSeleccionado()?.horariosSemanales!.length === 0"
                        class="no-horarios">
                     El consultorio no tiene horarios de atención configurados
                   </div>
                   
                   <div class="form-help">
+                    <i class="fas fa-info-circle text-info me-1"></i>
                     Horarios de atención del consultorio seleccionado (solo informativo).
                   </div>
                 </div>
@@ -754,6 +775,15 @@ import { ModalService } from '../modal/modal.service';
     .table-row:last-child {
       border-bottom: none;
     }
+
+    .table-row.consultorio-row {
+      background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+      border-left: 4px solid var(--consultorios-primary, #3b82f6);
+    }
+    
+    .table-row.consultorio-row:hover {
+      background: linear-gradient(135deg, #e6f3ff 0%, #dbeafe 100%);
+    }
     
     .horario-form-row {
       background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
@@ -935,6 +965,7 @@ export class EsquemaTurnoDetailComponent {
   consultorios: Consultorio[] = [];
   disponibilidadesMedico: DisponibilidadMedico[] = [];
   selectedDisponibilidadId: number | null = null;
+  consultorioHorarios: any[] = []; // Horarios del consultorio seleccionado
   modoEdicion = false;
   esNuevo = false;
 
@@ -1039,13 +1070,31 @@ export class EsquemaTurnoDetailComponent {
 
       this.esquemaTurnoService.get(id).subscribe({
         next: (dataPackage) => {
+          if (!dataPackage || !dataPackage.data) {
+            console.error('No se recibieron datos del esquema de turno');
+            this.modalService.alert('Error', 'No se pudieron cargar los datos del esquema de turno.');
+            return;
+          }
+
           this.esquema = <EsquemaTurno>dataPackage.data;
 
+          // Validar que el esquema se haya asignado correctamente
+          if (!this.esquema) {
+            console.error('El esquema de turno está vacío');
+            this.modalService.alert('Error', 'Los datos del esquema de turno están vacíos.');
+            return;
+          }
+
           // Convertir los días al formato esperado
-          this.esquema.horarios = this.esquema.horarios.map(horario => ({
-            ...horario,
-            dia: this.diasSemanaMap[horario.dia] || horario.dia, // Convertir el día si es necesario
-          }));
+          if (this.esquema.horarios && Array.isArray(this.esquema.horarios)) {
+            this.esquema.horarios = this.esquema.horarios.map(horario => ({
+              ...horario,
+              dia: this.diasSemanaMap[horario.dia] || horario.dia, // Convertir el día si es necesario
+            }));
+          } else {
+            // Si no hay horarios, inicializar como array vacío
+            this.esquema.horarios = [];
+          }
 
           // Asignar la disponibilidad seleccionada
           this.selectedDisponibilidadId = this.esquema.disponibilidadMedicoId ?? null;
@@ -1053,18 +1102,27 @@ export class EsquemaTurnoDetailComponent {
           // Si hay una disponibilidad asociada, cargar sus horarios
           if (this.esquema.disponibilidadMedicoId) {
             const disp = this.disponibilidadesMedico.find(d => d.id === this.esquema.disponibilidadMedicoId);
-            if (disp) {
+            if (disp && disp.horarios) {
               this.esquema.horariosDisponibilidad = disp.horarios.map(horario => ({
                 dia: horario.dia,
                 horaInicio: horario.horaInicio,
                 horaFin: horario.horaFin
               }));
+            } else {
+              this.esquema.horariosDisponibilidad = [];
             }
+          } else {
+            this.esquema.horariosDisponibilidad = [];
           }
 
           // Cargar consultorios si hay un centro asociado
           if (this.esquema.centroId) {
-            this.loadConsultorios(this.esquema.centroId);
+            this.loadConsultorios(this.esquema.centroId, () => {
+              // Una vez cargados los consultorios, cargar horarios del consultorio si está seleccionado
+              if (this.esquema.consultorioId) {
+                this.onConsultorioChange();
+              }
+            });
           }
         },
         error: (err) => {
@@ -1093,11 +1151,17 @@ export class EsquemaTurnoDetailComponent {
     const disp = this.disponibilidadesMedico.find(d => d.id === this.selectedDisponibilidadId);
     if (disp) {
       this.esquema.staffMedicoId = disp.staffMedicoId;
-      this.esquema.horariosDisponibilidad = disp.horarios.map(horario => ({
-        dia: horario.dia,
-        horaInicio: horario.horaInicio,
-        horaFin: horario.horaFin
-      }));
+      
+      if (disp.horarios && Array.isArray(disp.horarios)) {
+        this.esquema.horariosDisponibilidad = disp.horarios.map(horario => ({
+          dia: horario.dia,
+          horaInicio: horario.horaInicio,
+          horaFin: horario.horaFin
+        }));
+      } else {
+        this.esquema.horariosDisponibilidad = [];
+      }
+      
       this.esquema.disponibilidadMedicoId = disp.id;
 
       // Obtener el staff médico asociado
@@ -1116,7 +1180,39 @@ export class EsquemaTurnoDetailComponent {
       this.consultorios = []; // Limpiar consultorios si no hay centro asociado
     }
   }
-  loadConsultorios(centroId: number): void {
+
+  onConsultorioChange(): void {
+    if (this.esquema.consultorioId) {
+      // Buscar el consultorio seleccionado en la lista de consultorios cargados
+      const consultorioSeleccionado = this.consultorios.find(c => c.id === Number(this.esquema.consultorioId));
+      
+      if (consultorioSeleccionado) {
+        console.log('Consultorio seleccionado:', consultorioSeleccionado);
+        
+        // Extraer y formatear los horarios del consultorio para mostrarlos
+        if (consultorioSeleccionado.horariosSemanales && consultorioSeleccionado.horariosSemanales.length > 0) {
+          this.consultorioHorarios = consultorioSeleccionado.horariosSemanales
+            .filter(horario => horario.activo && horario.horaApertura && horario.horaCierre)
+            .map(horario => ({
+              dia: horario.diaSemana,
+              horaInicio: horario.horaApertura,
+              horaFin: horario.horaCierre
+            }));
+          
+          console.log('✅ Horarios del consultorio procesados:', this.consultorioHorarios);
+        } else {
+          this.consultorioHorarios = [];
+          console.warn('⚠️ El consultorio seleccionado no tiene horarios configurados');
+        }
+      } else {
+        this.consultorioHorarios = [];
+      }
+    } else {
+      // Si no hay consultorio seleccionado, limpiar los horarios
+      this.consultorioHorarios = [];
+    }
+  }
+  loadConsultorios(centroId: number, callback?: () => void): void {
     this.consultorioService.getByCentroAtencion(centroId).subscribe({
       next: (dp) => {
         this.consultorios = dp.data as Consultorio[];
@@ -1130,6 +1226,11 @@ export class EsquemaTurnoDetailComponent {
           } else {
             console.warn('El consultorio asociado no se encuentra en la lista de consultorios cargados.');
           }
+        }
+        
+        // Ejecutar callback si se proporciona
+        if (callback) {
+          callback();
         }
       },
       error: () => {
@@ -1171,9 +1272,9 @@ export class EsquemaTurnoDetailComponent {
     // Agregar un log para verificar el contenido del payload
     console.log('Payload enviado al backend:', payload);
 
-    // Validar que los campos requeridos no sean null (consultorio es opcional y se asigna automáticamente)
-    if (!payload.disponibilidadMedicoId || !payload.staffMedicoId || !payload.centroId) {
-      this.modalService.alert('Error', 'Debe completar todos los campos obligatorios (médico, disponibilidad, centro).');
+    // Validar que los campos requeridos no sean null (incluyendo consultorio que ahora es obligatorio)
+    if (!payload.disponibilidadMedicoId || !payload.staffMedicoId || !payload.centroId || !payload.consultorioId) {
+      this.modalService.alert('Error', 'Debe completar todos los campos obligatorios (médico, disponibilidad, centro y consultorio).');
       return;
     }
     
@@ -1245,14 +1346,21 @@ export class EsquemaTurnoDetailComponent {
   allFieldsEmpty(): boolean {
     return !this.esquema.disponibilidadMedicoId || 
            !this.esquema.intervalo ||
+           !this.esquema.consultorioId ||
+           !this.esquema.horarios ||
            this.esquema.horarios.length === 0;
   }
 
   addHorario(): void {
+    if (!this.esquema.horarios) {
+      this.esquema.horarios = [];
+    }
     this.esquema.horarios.push({ dia: '', horaInicio: '', horaFin: '' });
   }
 
   removeHorario(index: number): void {
-    this.esquema.horarios.splice(index, 1);
+    if (this.esquema.horarios && this.esquema.horarios.length > index) {
+      this.esquema.horarios.splice(index, 1);
+    }
   }
 }
