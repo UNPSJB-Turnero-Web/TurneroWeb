@@ -341,6 +341,98 @@ import { ModalService } from '../modal/modal.service';
                 </div>
               </div>
 
+              <!-- Horarios Disponibles (Traspolación) -->
+              <div class="col-12" *ngIf="horariosDisponibles && horariosDisponibles.length > 0">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">✅</span>
+                    Horarios Disponibles (Intersección)
+                  </label>
+                  <div class="horarios-disponibles-agrupados">
+                    <div *ngFor="let dia of getDiasDisponibles()" class="dia-grupo">
+                      <h6 class="dia-grupo-titulo">{{ dia }}</h6>
+                      <div class="segmentos-dia">
+                        <div *ngFor="let horario of getSegmentosDisponiblesDelDia(dia)" 
+                             class="horario-card disponible clickeable"
+                             [class.seleccionado]="esHorarioSeleccionado(horario)"
+                             (click)="seleccionarHorarioDisponible(horario)"
+                             [title]="esHorarioSeleccionado(horario) ? 'Horario ya seleccionado - Click para deseleccionar' : 'Click para agregar este horario al esquema'">
+                          <span class="hora-label">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
+                          <div class="selection-indicator">
+                            <i *ngIf="esHorarioSeleccionado(horario)" class="fas fa-check-circle"></i>
+                            <i *ngIf="!esHorarioSeleccionado(horario)" class="fas fa-plus-circle"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="action-buttons">
+                    <button 
+                      type="button" 
+                      class="btn btn-select-all" 
+                      (click)="seleccionarTodosLosHorarios()"
+                      [disabled]="!horariosDisponibles || horariosDisponibles.length === 0"
+                      title="Seleccionar todos los horarios disponibles"
+                    >
+                      <i class="fas fa-check-double me-2"></i>
+                      Seleccionar Todos
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-clear-all" 
+                      (click)="limpiarTodosLosHorarios()"
+                      [disabled]="!esquema.horarios || esquema.horarios.length === 0"
+                      title="Limpiar todos los horarios del esquema"
+                    >
+                      <i class="fas fa-eraser me-2"></i>
+                      Limpiar Todo
+                    </button>
+                  </div>
+                  <div class="form-help">
+                    <i class="fas fa-mouse-pointer text-success me-1"></i>
+                    <strong>Horarios clickeables:</strong> Haga click en cualquier segmento disponible para agregarlo al esquema. Los horarios ya seleccionados aparecen marcados con ✓ y pueden clickearse nuevamente para deseleccionarlos. Puede tener múltiples horarios por día.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horarios Ocupados por Otros Esquemas -->
+              <div class="col-12" *ngIf="horariosOcupados && horariosOcupados.length > 0">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🚫</span>
+                    Horarios Ya Ocupados
+                  </label>
+                  <div class="horarios-disponibles">
+                    <div *ngFor="let horario of horariosOcupados" class="horario-card ocupado">
+                      <span class="dia-label">{{ horario.dia }}</span>
+                      <span class="hora-label">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
+                      <small class="medico-label">{{ horario.medicoNombre }}</small>
+                    </div>
+                  </div>
+                  <div class="form-help">
+                    <i class="fas fa-ban text-danger me-1"></i>
+                    <strong>Horarios no disponibles:</strong> Estos horarios ya están ocupados por otros esquemas en el mismo consultorio.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alerta si no hay horarios disponibles -->
+              <div class="col-12" *ngIf="esquema.horariosDisponibilidad && esquema.horariosDisponibilidad.length > 0 && 
+                                        consultorioHorarios && consultorioHorarios.length > 0 && 
+                                        (!horariosDisponibles || horariosDisponibles.length === 0)">
+                <div class="alert alert-danger">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <strong>Sin horarios compatibles:</strong> 
+                  <span *ngIf="horariosOcupados && horariosOcupados.length > 0">
+                    Todos los horarios están ocupados por otros esquemas, o no hay coincidencias entre la disponibilidad médica y los horarios del consultorio.
+                  </span>
+                  <span *ngIf="!horariosOcupados || horariosOcupados.length === 0">
+                    No hay coincidencias entre los horarios de disponibilidad del médico y los horarios de atención del consultorio.
+                  </span>
+                  Por favor, seleccione otra combinación.
+                </div>
+              </div>
+
               <!-- Horarios del Esquema -->
               <div class="col-12">
                 <div class="form-group-modern">
@@ -359,7 +451,7 @@ import { ModalService } from '../modal/modal.service';
                           required
                         >
                           <option value="">Seleccionar día...</option>
-                          <option *ngFor="let dia of diasSemana" [value]="dia">{{ dia }}</option>
+                          <option *ngFor="let dia of getDiasDisponibles()" [value]="dia">{{ dia }}</option>
                         </select>
                       </div>
                       <div class="col-3">
@@ -368,6 +460,9 @@ import { ModalService } from '../modal/modal.service';
                           class="form-control form-control-sm"
                           [(ngModel)]="horario.horaInicio"
                           [name]="'horaInicio-' + i"
+                          [min]="getRangoHorarioDisponible(horario.dia)?.horaInicio || ''"
+                          [max]="getRangoHorarioDisponible(horario.dia)?.horaFin || ''"
+                          [title]="horario.dia ? 'Disponible de ' + getRangoHorarioDisponible(horario.dia)?.horaInicio + ' a ' + getRangoHorarioDisponible(horario.dia)?.horaFin : 'Seleccione primero un día'"
                           required
                         />
                       </div>
@@ -377,6 +472,9 @@ import { ModalService } from '../modal/modal.service';
                           class="form-control form-control-sm"
                           [(ngModel)]="horario.horaFin"
                           [name]="'horaFin-' + i"
+                          [min]="getRangoHorarioDisponible(horario.dia)?.horaInicio || ''"
+                          [max]="getRangoHorarioDisponible(horario.dia)?.horaFin || ''"
+                          [title]="horario.dia ? 'Disponible de ' + getRangoHorarioDisponible(horario.dia)?.horaInicio + ' a ' + getRangoHorarioDisponible(horario.dia)?.horaFin : 'Seleccione primero un día'"
                           required
                         />
                       </div>
@@ -397,13 +495,20 @@ import { ModalService } from '../modal/modal.service';
                     type="button" 
                     class="btn btn-add-horario" 
                     (click)="addHorario()"
+                    [disabled]="!horariosDisponibles || horariosDisponibles.length === 0"
+                    [title]="(!horariosDisponibles || horariosDisponibles.length === 0) ? 'Debe seleccionar una disponibilidad médica y un consultorio primero' : 'Agregar nuevo horario'"
                   >
                     <i class="fas fa-plus me-2"></i>
                     Agregar Horario
                   </button>
                   
                   <div class="form-help">
-                    Configure los horarios específicos para este esquema de turnos.
+                    <i class="fas fa-info-circle text-info me-1"></i>
+                    Configure los horarios específicos para este esquema. Los horarios deben estar dentro de los rangos disponibles mostrados arriba.
+                    <div *ngIf="!horariosDisponibles || horariosDisponibles.length === 0" class="text-warning mt-1">
+                      <i class="fas fa-exclamation-triangle me-1"></i>
+                      Seleccione primero una disponibilidad médica y un consultorio para habilitar la configuración de horarios.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -668,6 +773,143 @@ import { ModalService } from '../modal/modal.service';
       font-weight: 500;
       font-style: italic;
     }
+
+    .horario-card.disponible {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: 2px solid #20c997;
+      animation: pulse-glow 2s infinite;
+      position: relative;
+    }
+
+    .horario-card.clickeable {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .horario-card.clickeable:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 25px rgba(32, 201, 151, 0.6);
+      animation: none;
+    }
+
+    .horario-card.seleccionado {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      border-color: #17a2b8;
+      animation: none;
+      box-shadow: 0 4px 15px rgba(23, 162, 184, 0.5);
+    }
+
+    .horario-card.seleccionado:hover {
+      background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+      box-shadow: 0 8px 25px rgba(23, 162, 184, 0.7);
+    }
+
+    .selection-indicator {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .selection-indicator .fa-check-circle {
+      color: #28a745;
+    }
+
+    .selection-indicator .fa-plus-circle {
+      color: #6c757d;
+    }
+
+    .horario-card.clickeable:hover .selection-indicator .fa-plus-circle {
+      color: #28a745;
+      animation: bounce 0.6s ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-4px);
+      }
+      60% {
+        transform: translateY(-2px);
+      }
+    }
+    
+    @keyframes pulse-glow {
+      0% { 
+        box-shadow: 0 0 5px rgba(32, 201, 151, 0.7);
+      }
+      50% { 
+        box-shadow: 0 0 20px rgba(32, 201, 151, 0.9), 0 0 30px rgba(32, 201, 151, 0.5);
+      }
+      100% { 
+        box-shadow: 0 0 5px rgba(32, 201, 151, 0.7);
+      }
+    }
+
+    .alert {
+      border-radius: 15px;
+      padding: 1rem 1.5rem;
+      margin: 1rem 0;
+      border: none;
+      font-weight: 500;
+    }
+
+    .alert-warning {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      color: #856404;
+      border-left: 4px solid #ffc107;
+    }
+
+    .alert-danger {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    .horario-card.ocupado {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      border: 2px solid #dc3545;
+      position: relative;
+      opacity: 0.9;
+    }
+
+    .horario-card.ocupado::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.1),
+        rgba(255,255,255,0.1) 10px,
+        transparent 10px,
+        transparent 20px
+      );
+      pointer-events: none;
+    }
+
+    .medico-label {
+      font-size: 0.7rem;
+      opacity: 0.8;
+      font-style: italic;
+      margin-top: 0.25rem;
+      display: block;
+    }
     
     /* Estilos del formulario */
     .form-group-modern {
@@ -833,6 +1075,105 @@ import { ModalService } from '../modal/modal.service';
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(40,167,69,0.4);
     }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.75rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn-select-all {
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-select-all:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+      background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    }
+
+    .btn-clear-all {
+      background: linear-gradient(135deg, #fd7e14 0%, #e55100 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-clear-all:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(253,126,20,0.4);
+      background: linear-gradient(135deg, #e55100 0%, #bf360c 100%);
+    }
+
+    .btn-select-all:disabled,
+    .btn-clear-all:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .horarios-disponibles-agrupados {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .dia-grupo {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: 15px;
+      padding: 1rem;
+      border: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .dia-grupo-titulo {
+      color: #495057;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 10px;
+      margin: -0.5rem -0.5rem 0.75rem -0.5rem;
+    }
+
+    .segmentos-dia {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .horarios-disponibles-agrupados .horario-card {
+      min-width: auto;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .horarios-disponibles-agrupados .dia-label {
+      display: none; /* No necesario en la vista agrupada */
+    }
     
     /* Footer y botones */
     .card-footer {
@@ -954,6 +1295,9 @@ export class EsquemaTurnoDetailComponent {
   disponibilidadesMedico: DisponibilidadMedico[] = [];
   selectedDisponibilidadId: number | null = null;
   consultorioHorarios: any[] = []; // Horarios del consultorio seleccionado
+  horariosDisponibles: any[] = []; // Horarios resultantes de la traspolación
+  esquemasPreviosConsultorio: EsquemaTurno[] = []; // Esquemas ya existentes en el consultorio
+  horariosOcupados: any[] = []; // Horarios ya ocupados por otros esquemas
   modoEdicion = false;
   esNuevo = false;
 
@@ -961,21 +1305,23 @@ export class EsquemaTurnoDetailComponent {
   fromCentro: string | null = null;
   returnTab: string | null = null;
 
-  diasSemana: string[] = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+  diasSemana: string[] = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
   diasSemanaMap: { [key: string]: string } = {
     'Monday': 'LUNES',
     'Tuesday': 'MARTES', 
-    'Wednesday': 'MIERCOLES',
+    'Wednesday': 'MIÉRCOLES',
     'Thursday': 'JUEVES',
     'Friday': 'VIERNES',
-    'Saturday': 'SABADO',
+    'Saturday': 'SÁBADO',
     'Sunday': 'DOMINGO',
     'LUNES': 'LUNES',
     'MARTES': 'MARTES',
-    'MIERCOLES': 'MIERCOLES', 
+    'MIÉRCOLES': 'MIÉRCOLES',
+    'MIERCOLES': 'MIÉRCOLES', // Sin tilde -> con tilde
     'JUEVES': 'JUEVES',
     'VIERNES': 'VIERNES',
-    'SABADO': 'SABADO',
+    'SÁBADO': 'SÁBADO',
+    'SABADO': 'SÁBADO', // Sin tilde -> con tilde
     'DOMINGO': 'DOMINGO'
   };
 
@@ -1112,6 +1458,13 @@ export class EsquemaTurnoDetailComponent {
               }
             });
           }
+          
+          // Si hay consultorio seleccionado, cargar esquemas previos
+          if (this.esquema.consultorioId) {
+            this.loadEsquemasPreviosConsultorio(() => {
+              this.calcularHorariosDisponibles();
+            });
+          }
         },
         error: (err) => {
           console.error('Error al cargar el esquema de turno:', err);
@@ -1163,9 +1516,15 @@ export class EsquemaTurnoDetailComponent {
 
     // Cargar los consultorios asociados al centro de atención
     if (this.esquema.centroId) {
-      this.loadConsultorios(this.esquema.centroId);
+      this.loadConsultorios(this.esquema.centroId, () => {
+        // Después de cargar consultorios, calcular horarios si ya hay consultorio seleccionado
+        if (this.esquema.consultorioId) {
+          this.onConsultorioChange();
+        }
+      });
     } else {
       this.consultorios = []; // Limpiar consultorios si no hay centro asociado
+      this.horariosDisponibles = []; // Limpiar horarios disponibles
     }
   }
 
@@ -1198,7 +1557,13 @@ export class EsquemaTurnoDetailComponent {
     } else {
       // Si no hay consultorio seleccionado, limpiar los horarios
       this.consultorioHorarios = [];
+      this.horariosDisponibles = [];
     }
+
+    // Calcular horarios disponibles después de cambiar el consultorio
+    this.loadEsquemasPreviosConsultorio(() => {
+      this.calcularHorariosDisponibles();
+    });
   }
   loadConsultorios(centroId: number, callback?: () => void): void {
     this.consultorioService.getByCentroAtencion(centroId).subscribe({
@@ -1270,6 +1635,27 @@ export class EsquemaTurnoDetailComponent {
     if (!payload.horarios || payload.horarios.length === 0) {
       this.modalService.alert('Error', 'Debe configurar al menos un horario para el esquema.');
       return;
+    }
+
+    // Validar que todos los horarios estén dentro de los rangos disponibles y no tengan conflictos
+    for (const horario of payload.horarios) {
+      const rangoDisponible = this.getRangoHorarioDisponible(horario.dia);
+      const detalleConflicto = this.obtenerDetalleConflicto(horario.dia, horario.horaInicio, horario.horaFin);
+      
+      if (!rangoDisponible) {
+        this.modalService.alert('Error', `El día ${horario.dia} no está disponible. Seleccione un día de los horarios disponibles.`);
+        return;
+      }
+      
+      if (detalleConflicto) {
+        this.modalService.alert('Error de Conflicto', `El horario para ${horario.dia} (${horario.horaInicio} - ${horario.horaFin}) tiene conflicto: ${detalleConflicto}. Por favor, seleccione otro horario.`);
+        return;
+      }
+      
+      if (!this.validarHorarioEsquema(horario.dia, horario.horaInicio, horario.horaFin)) {
+        this.modalService.alert('Error', `El horario para ${horario.dia} (${horario.horaInicio} - ${horario.horaFin}) está fuera del rango disponible (${rangoDisponible.horaInicio} - ${rangoDisponible.horaFin}). Por favor, ajuste los horarios dentro de los rangos permitidos.`);
+        return;
+      }
     }
 
     this.esquemaTurnoService.create(payload).subscribe({
@@ -1346,9 +1732,469 @@ export class EsquemaTurnoDetailComponent {
     this.esquema.horarios.push({ dia: '', horaInicio: '', horaFin: '' });
   }
 
+  /**
+   * Selecciona un horario disponible y lo agrega al esquema
+   */
+  seleccionarHorarioDisponible(horarioDisponible: any): void {
+    if (!this.esquema.horarios) {
+      this.esquema.horarios = [];
+    }
+
+    // Verificar si este horario específico ya está seleccionado
+    const horarioYaSeleccionado = this.esHorarioSeleccionado(horarioDisponible);
+    
+    if (horarioYaSeleccionado) {
+      // Si ya está seleccionado, lo deseleccionamos
+      this.esquema.horarios = this.esquema.horarios.filter(horario => 
+        !(this.normalizarDia(horario.dia) === this.normalizarDia(horarioDisponible.dia) &&
+          horario.horaInicio === horarioDisponible.horaInicio &&
+          horario.horaFin === horarioDisponible.horaFin)
+      );
+      return;
+    }
+
+    // Verificar si hay horarios existentes para ese día
+    const horariosDelMismoDia = this.esquema.horarios.filter(h => 
+      this.normalizarDia(h.dia) === this.normalizarDia(horarioDisponible.dia)
+    );
+
+    if (horariosDelMismoDia.length > 0) {
+      // Preguntar si desea agregar otro horario para el mismo día
+      const horariosExistentes = horariosDelMismoDia
+        .map(h => `${h.horaInicio} - ${h.horaFin}`)
+        .join(', ');
+      
+      const mensaje = `Ya hay ${horariosDelMismoDia.length} horario(s) para ${horarioDisponible.dia} (${horariosExistentes}). ¿Desea agregar este horario adicional (${horarioDisponible.horaInicio} - ${horarioDisponible.horaFin})?`;
+      
+      this.modalService.confirm(
+        'Agregar Horario Adicional',
+        mensaje,
+        'Se permitirán múltiples horarios para el mismo día'
+      ).then(() => {
+        // Agregar horario adicional
+        this.esquema.horarios.push({
+          dia: horarioDisponible.dia,
+          horaInicio: horarioDisponible.horaInicio,
+          horaFin: horarioDisponible.horaFin
+        });
+      });
+    } else {
+      // Agregar primer horario para este día
+      this.esquema.horarios.push({
+        dia: horarioDisponible.dia,
+        horaInicio: horarioDisponible.horaInicio,
+        horaFin: horarioDisponible.horaFin
+      });
+    }
+  }
+
+  /**
+   * Verifica si un horario disponible ya está seleccionado en el esquema
+   */
+  esHorarioSeleccionado(horarioDisponible: any): boolean {
+    if (!this.esquema.horarios || this.esquema.horarios.length === 0) {
+      return false;
+    }
+
+    return this.esquema.horarios.some(horario => 
+      this.normalizarDia(horario.dia) === this.normalizarDia(horarioDisponible.dia) &&
+      horario.horaInicio === horarioDisponible.horaInicio &&
+      horario.horaFin === horarioDisponible.horaFin
+    );
+  }
+
+  /**
+   * Selecciona todos los horarios disponibles
+   */
+  seleccionarTodosLosHorarios(): void {
+    if (!this.horariosDisponibles || this.horariosDisponibles.length === 0) {
+      return;
+    }
+
+    this.modalService.confirm(
+      'Seleccionar Todos los Horarios',
+      '¿Desea agregar todos los horarios disponibles al esquema?',
+      'Esto reemplazará cualquier horario existente'
+    ).then(() => {
+      this.esquema.horarios = this.horariosDisponibles.map(horario => ({
+        dia: horario.dia,
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin
+      }));
+    });
+  }
+
+  /**
+   * Limpia todos los horarios del esquema
+   */
+  limpiarTodosLosHorarios(): void {
+    if (!this.esquema.horarios || this.esquema.horarios.length === 0) {
+      return;
+    }
+
+    this.modalService.confirm(
+      'Limpiar Horarios',
+      '¿Desea eliminar todos los horarios del esquema?',
+      'Esta acción no se puede deshacer'
+    ).then(() => {
+      this.esquema.horarios = [];
+    });
+  }
+
   removeHorario(index: number): void {
     if (this.esquema.horarios && this.esquema.horarios.length > index) {
       this.esquema.horarios.splice(index, 1);
     }
+  }
+
+  loadEsquemasPreviosConsultorio(callback?: () => void): void {
+    if (!this.esquema.consultorioId || !this.esquema.centroId) {
+      this.esquemasPreviosConsultorio = [];
+      this.horariosOcupados = [];
+      if (callback) callback();
+      return;
+    }
+
+    // Usar el endpoint del centro que sabemos que existe y filtrar por consultorio
+    this.esquemaTurnoService.getByCentroAtencion(this.esquema.centroId).subscribe({
+      next: (dp) => {
+        // Filtrar esquemas del mismo consultorio (excluyendo el actual si estamos editando)
+        this.esquemasPreviosConsultorio = (dp.data as EsquemaTurno[] || [])
+          .filter(esquema => 
+            esquema.consultorioId === this.esquema.consultorioId && 
+            esquema.id !== this.esquema.id
+          );
+        
+        // Extraer horarios ocupados
+        this.horariosOcupados = [];
+        for (const esquema of this.esquemasPreviosConsultorio) {
+          if (esquema.horarios && Array.isArray(esquema.horarios)) {
+            for (const horario of esquema.horarios) {
+              this.horariosOcupados.push({
+                ...horario,
+                esquemaId: esquema.id,
+                medicoNombre: this.getMedicoNombre(esquema.staffMedicoId)
+              });
+            }
+          }
+        }
+        
+        console.log('Esquemas previos del consultorio:', this.esquemasPreviosConsultorio);
+        console.log('Horarios ocupados:', this.horariosOcupados);
+        
+        if (callback) callback();
+      },
+      error: (err) => {
+        console.error('Error al cargar esquemas previos del consultorio:', err);
+        this.esquemasPreviosConsultorio = [];
+        this.horariosOcupados = [];
+        if (callback) callback();
+      }
+    });
+  }
+
+  private getMedicoNombre(staffMedicoId: number): string {
+    const staff = this.staffMedicos.find(s => s.id === staffMedicoId);
+    return staff?.medico ? `${staff.medico.nombre} ${staff.medico.apellido}` : 'Desconocido';
+  }
+
+  // ==================== MÉTODOS DE TRASPOLACIÓN ====================
+
+  /**
+   * Calcula la intersección entre horarios de disponibilidad médica y horarios del consultorio
+   */
+  private calcularHorariosDisponibles(): void {
+    this.horariosDisponibles = [];
+
+    if (!this.esquema.horariosDisponibilidad || this.esquema.horariosDisponibilidad.length === 0) {
+      console.warn('No hay horarios de disponibilidad médica');
+      return;
+    }
+
+    if (!this.consultorioHorarios || this.consultorioHorarios.length === 0) {
+      console.warn('No hay horarios de consultorio');
+      return;
+    }
+
+    // Para cada día de la semana, calcular la intersección de horarios
+    for (const horarioMedico of this.esquema.horariosDisponibilidad) {
+      const diaMedicoNormalizado = this.normalizarDia(horarioMedico.dia);
+      
+      const horarioConsultorio = this.consultorioHorarios.find(hc => {
+        const diaConsultorioNormalizado = this.normalizarDia(hc.dia);
+        const coincide = diaMedicoNormalizado === diaConsultorioNormalizado;
+        
+        console.log(`Comparando días:
+          - Médico: "${horarioMedico.dia}" -> normalizado: "${diaMedicoNormalizado}"
+          - Consultorio: "${hc.dia}" -> normalizado: "${diaConsultorioNormalizado}"
+          - Coincide: ${coincide}`);
+        
+        return coincide;
+      });
+
+      if (horarioConsultorio) {
+        console.log(`✅ Encontrada coincidencia para ${diaMedicoNormalizado}:`, {
+          medico: horarioMedico,
+          consultorio: horarioConsultorio
+        });
+        
+        const interseccion = this.calcularInterseccionHorario(horarioMedico, horarioConsultorio);
+        if (interseccion) {
+          // Descontar horarios ya ocupados por otros esquemas
+          const horariosLibres = this.descontarHorariosOcupados(interseccion);
+          this.horariosDisponibles.push(...horariosLibres);
+        }
+      } else {
+        console.log(`❌ No se encontró horario de consultorio para ${diaMedicoNormalizado}`);
+      }
+    }
+
+    console.log('Horarios disponibles calculados:', this.horariosDisponibles);
+  }
+
+  /**
+   * Descuenta horarios ya ocupados de un horario disponible, devolviendo segmentos libres
+   */
+  private descontarHorariosOcupados(horarioDisponible: any): any[] {
+    const dia = horarioDisponible.dia;
+    const inicioDisponible = this.timeToMinutes(horarioDisponible.horaInicio);
+    const finDisponible = this.timeToMinutes(horarioDisponible.horaFin);
+
+    // Obtener horarios ocupados para este día
+    const ocupadosDelDia = this.horariosOcupados
+      .filter(ocupado => this.normalizarDia(ocupado.dia) === this.normalizarDia(dia))
+      .map(ocupado => ({
+        inicio: this.timeToMinutes(ocupado.horaInicio),
+        fin: this.timeToMinutes(ocupado.horaFin),
+        medicoNombre: ocupado.medicoNombre
+      }))
+      .sort((a, b) => a.inicio - b.inicio);
+
+    if (ocupadosDelDia.length === 0) {
+      // No hay conflictos, devolver el horario completo
+      return [horarioDisponible];
+    }
+
+    const segmentosLibres = [];
+    let puntoInicio = inicioDisponible;
+
+    for (const ocupado of ocupadosDelDia) {
+      // Si hay espacio antes del horario ocupado
+      if (puntoInicio < ocupado.inicio) {
+        const inicioSegmento = Math.max(puntoInicio, inicioDisponible);
+        const finSegmento = Math.min(ocupado.inicio, finDisponible);
+        
+        if (inicioSegmento < finSegmento) {
+          segmentosLibres.push({
+            dia: dia,
+            horaInicio: this.minutesToTime(inicioSegmento),
+            horaFin: this.minutesToTime(finSegmento)
+          });
+        }
+      }
+      
+      // Mover el punto de inicio después del horario ocupado
+      puntoInicio = Math.max(puntoInicio, ocupado.fin);
+    }
+
+    // Agregar segmento final si queda espacio
+    if (puntoInicio < finDisponible) {
+      segmentosLibres.push({
+        dia: dia,
+        horaInicio: this.minutesToTime(puntoInicio),
+        horaFin: this.minutesToTime(finDisponible)
+      });
+    }
+
+    return segmentosLibres;
+  }
+
+  /**
+   * Calcula la intersección de horarios entre disponibilidad médica y consultorio para un día específico
+   */
+  private calcularInterseccionHorario(horarioMedico: any, horarioConsultorio: any): any | null {
+    const inicioMedico = this.timeToMinutes(horarioMedico.horaInicio);
+    const finMedico = this.timeToMinutes(horarioMedico.horaFin);
+    const inicioConsultorio = this.timeToMinutes(horarioConsultorio.horaInicio);
+    const finConsultorio = this.timeToMinutes(horarioConsultorio.horaFin);
+
+    // Calcular el inicio más tardío y el fin más temprano
+    const inicioInterseccion = Math.max(inicioMedico, inicioConsultorio);
+    const finInterseccion = Math.min(finMedico, finConsultorio);
+
+    // Si hay intersección válida (el inicio es antes que el fin)
+    if (inicioInterseccion < finInterseccion) {
+      return {
+        dia: this.normalizarDia(horarioMedico.dia),
+        horaInicio: this.minutesToTime(inicioInterseccion),
+        horaFin: this.minutesToTime(finInterseccion)
+      };
+    }
+
+    return null; // No hay intersección
+  }
+
+  /**
+   * Convierte un tiempo en formato HH:mm a minutos desde medianoche
+   */
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
+  /**
+   * Convierte minutos desde medianoche a formato HH:mm
+   */
+  private minutesToTime(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Normaliza el nombre del día a formato estándar
+   */
+  private normalizarDia(dia: string): string {
+    if (!dia) return '';
+    
+    const diaUpperCase = dia.toUpperCase();
+    
+    // Primero intentar con el mapeo directo
+    if (this.diasSemanaMap[diaUpperCase]) {
+      return this.diasSemanaMap[diaUpperCase];
+    }
+    
+    // Si no encuentra, normalizar quitando tildes y espacios
+    const diaNormalizado = diaUpperCase
+      .replace(/Á/g, 'A')
+      .replace(/É/g, 'E') 
+      .replace(/Í/g, 'I')
+      .replace(/Ó/g, 'O')
+      .replace(/Ú/g, 'U')
+      .replace(/\s+/g, '')
+      .trim();
+    
+    // Mapeo manual para casos específicos
+    switch (diaNormalizado) {
+      case 'SABADO': return 'SÁBADO';
+      case 'MIERCOLES': return 'MIÉRCOLES';
+      case 'LUNES': return 'LUNES';
+      case 'MARTES': return 'MARTES';
+      case 'JUEVES': return 'JUEVES';
+      case 'VIERNES': return 'VIERNES';
+      case 'DOMINGO': return 'DOMINGO';
+      default: return this.diasSemanaMap[diaNormalizado] || diaUpperCase;
+    }
+  }
+
+  /**
+   * Obtiene los días disponibles para agregar horarios al esquema (sin duplicados)
+   */
+  getDiasDisponibles(): string[] {
+    const dias = this.horariosDisponibles.map(h => h.dia);
+    return [...new Set(dias)]; // Eliminar duplicados
+  }
+
+  /**
+   * Obtiene el rango de horarios disponibles para un día específico
+   * Si hay múltiples segmentos, devuelve el rango completo (desde el inicio más temprano al fin más tardío)
+   */
+  getRangoHorarioDisponible(dia: string): { horaInicio: string; horaFin: string } | null {
+    const horariosDelDia = this.horariosDisponibles.filter(h => h.dia === dia);
+    if (horariosDelDia.length === 0) return null;
+
+    // Si solo hay un horario, devolverlo directamente
+    if (horariosDelDia.length === 1) {
+      return { 
+        horaInicio: horariosDelDia[0].horaInicio, 
+        horaFin: horariosDelDia[0].horaFin 
+      };
+    }
+
+    // Si hay múltiples horarios, calcular el rango completo
+    const inicios = horariosDelDia.map(h => this.timeToMinutes(h.horaInicio));
+    const fines = horariosDelDia.map(h => this.timeToMinutes(h.horaFin));
+    
+    return {
+      horaInicio: this.minutesToTime(Math.min(...inicios)),
+      horaFin: this.minutesToTime(Math.max(...fines))
+    };
+  }
+
+  /**
+   * Obtiene todos los segmentos de horarios disponibles para un día específico
+   */
+  getSegmentosDisponiblesDelDia(dia: string): any[] {
+    return this.horariosDisponibles.filter(h => h.dia === dia);
+  }
+
+  /**
+   * Valida si un horario del esquema está dentro de los horarios disponibles
+   */
+  validarHorarioEsquema(dia: string, horaInicio: string, horaFin: string): boolean {
+    // Obtener todos los segmentos disponibles para este día
+    const segmentosDisponibles = this.getSegmentosDisponiblesDelDia(dia);
+    if (segmentosDisponibles.length === 0) return false;
+
+    const inicioMinutos = this.timeToMinutes(horaInicio);
+    const finMinutos = this.timeToMinutes(horaFin);
+
+    // Verificar si el horario completo cabe en alguno de los segmentos disponibles
+    for (const segmento of segmentosDisponibles) {
+      const inicioSegmento = this.timeToMinutes(segmento.horaInicio);
+      const finSegmento = this.timeToMinutes(segmento.horaFin);
+
+      if (inicioMinutos >= inicioSegmento && finMinutos <= finSegmento) {
+        return true; // El horario cabe completamente en este segmento
+      }
+    }
+
+    return false; // No cabe en ningún segmento disponible
+  }
+
+  /**
+   * Verifica si un horario tiene conflicto con horarios ya ocupados
+   */
+  verificarConfictoConHorariosOcupados(dia: string, horaInicio: string, horaFin: string): boolean {
+    const inicioNuevo = this.timeToMinutes(horaInicio);
+    const finNuevo = this.timeToMinutes(horaFin);
+
+    const ocupadosDelDia = this.horariosOcupados
+      .filter(ocupado => this.normalizarDia(ocupado.dia) === this.normalizarDia(dia));
+
+    for (const ocupado of ocupadosDelDia) {
+      const inicioOcupado = this.timeToMinutes(ocupado.horaInicio);
+      const finOcupado = this.timeToMinutes(ocupado.horaFin);
+
+      // Verificar si hay solapamiento
+      if (!(finNuevo <= inicioOcupado || inicioNuevo >= finOcupado)) {
+        return true; // Hay conflicto
+      }
+    }
+
+    return false; // No hay conflicto
+  }
+
+  /**
+   * Obtiene información detallada del conflicto si existe
+   */
+  obtenerDetalleConflicto(dia: string, horaInicio: string, horaFin: string): string | null {
+    const inicioNuevo = this.timeToMinutes(horaInicio);
+    const finNuevo = this.timeToMinutes(horaFin);
+
+    const ocupadosDelDia = this.horariosOcupados
+      .filter(ocupado => this.normalizarDia(ocupado.dia) === this.normalizarDia(dia));
+
+    for (const ocupado of ocupadosDelDia) {
+      const inicioOcupado = this.timeToMinutes(ocupado.horaInicio);
+      const finOcupado = this.timeToMinutes(ocupado.horaFin);
+
+      // Verificar si hay solapamiento
+      if (!(finNuevo <= inicioOcupado || inicioNuevo >= finOcupado)) {
+        return `Conflicto con esquema de ${ocupado.medicoNombre} (${ocupado.horaInicio} - ${ocupado.horaFin})`;
+      }
+    }
+
+    return null;
   }
 }

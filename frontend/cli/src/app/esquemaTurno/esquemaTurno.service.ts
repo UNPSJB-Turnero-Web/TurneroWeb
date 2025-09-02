@@ -75,4 +75,15 @@ export class EsquemaTurnoService {
   getEstadisticasDistribucion(centroId: number): Observable<DataPackage<any>> {
     return this.http.get<DataPackage<any>>(`${this.url}/centrosAtencion/${centroId}/estadisticas-distribucion`);
   }
+
+  /** Obtiene esquemas de turno asociados a un consultorio específico */
+  getByConsultorio(consultorioId: number): Observable<DataPackage<EsquemaTurno[]>> {
+    // Como el endpoint específico no existe, usamos el endpoint general y filtramos
+    return this.all().pipe(
+      map(response => ({
+        ...response,
+        data: (response.data || []).filter(esquema => esquema.consultorioId === consultorioId)
+      }))
+    );
+  }
 }
