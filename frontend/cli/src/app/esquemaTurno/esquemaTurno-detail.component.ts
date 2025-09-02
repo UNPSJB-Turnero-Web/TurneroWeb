@@ -89,18 +89,6 @@ import { ModalService } from '../modal/modal.service';
                 </div>
               </div>
 
-              <div class="info-item full-width" *ngIf="consultorioHorarios && consultorioHorarios.length > 0">
-                <div class="info-label">
-                  <span class="info-icon" style="background: var(--consultorios-gradient);">🏢</span>
-                  Horarios del Consultorio
-                </div>
-                <div class="horarios-disponibles">
-                  <div *ngFor="let horario of consultorioHorarios" class="horario-card consultorio">
-                    <span class="dia-label">{{ horario.dia }}</span>
-                    <span class="hora-label">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
-                  </div>
-                </div>
-              </div>
 
               <div class="info-item full-width">
                 <div class="info-label">
@@ -266,31 +254,6 @@ import { ModalService } from '../modal/modal.service';
                 </div>
               </div>
 
-              <!-- Horarios del Consultorio Seleccionado (readonly) -->
-              <div class="col-12" *ngIf="consultorioHorarios && consultorioHorarios.length > 0">
-                <div class="form-group-modern">
-                  <label class="form-label-modern">
-                    <span class="form-icon" style="background: var(--consultorios-gradient);">🏢</span>
-                    Horarios de Atención del Consultorio
-                  </label>
-                  <div class="horarios-table">
-                    <div class="table-header">
-                      <span>Día</span>
-                      <span>Hora Inicio</span>
-                      <span>Hora Fin</span>
-                    </div>
-                    <div *ngFor="let horario of consultorioHorarios" class="table-row consultorio-row">
-                      <span>{{ horario.dia }}</span>
-                      <span>{{ horario.horaInicio }}</span>
-                      <span>{{ horario.horaFin }}</span>
-                    </div>
-                  </div>
-                  <div class="form-help">
-                    <i class="fas fa-info-circle text-info me-1"></i>
-                    Horarios de atención del consultorio seleccionado. Configure los horarios del esquema dentro de estos horarios.
-                  </div>
-                </div>
-              </div>
 
               <!-- Horarios de Disponibilidad (readonly) -->
               <div class="col-12" *ngIf="esquema.horariosDisponibilidad && esquema.horariosDisponibilidad.length > 0">
