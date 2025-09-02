@@ -73,6 +73,10 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   porcentajesOriginalesMedicos: { [staffMedicoId: number]: number } = {};
   semanaSeleccionada: string = '';
 
+  // ==================== FILTROS DE ESQUEMAS (SRP) ====================
+  filtroConsultorioSeleccionado: number | null = null;
+  mostrarTodosLosConsultorios: boolean = true;
+
   // ==================== MENSAJES DE UI (SRP) ====================
   mensaje: string = '';
   tipoMensaje: string = '';
@@ -897,7 +901,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
 
   getEsquemasPorDia(dia: string): EsquemaTurno[] {
     // Filtrar esquemas que tienen horarios para el día específico
-    const esquemasFiltrados = this.esquemasSemana.filter(esquema => {
+    let esquemasFiltrados = this.esquemasSemana.filter(esquema => {
       // Verificar si el esquema tiene horarios para el día solicitado
       if (esquema.horarios && Array.isArray(esquema.horarios)) {
         const tieneHorario = esquema.horarios.some(horario => 
@@ -931,6 +935,13 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       
       return false;
     });
+
+    // Aplicar filtro por consultorio si está seleccionado
+    if (!this.mostrarTodosLosConsultorios && this.filtroConsultorioSeleccionado) {
+      esquemasFiltrados = esquemasFiltrados.filter(esquema => 
+        esquema.consultorioId === this.filtroConsultorioSeleccionado
+      );
+    }
     
     return esquemasFiltrados;
   }
@@ -1331,6 +1342,179 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       this.esquemasConsultorio[consultorio.id] = [];
     }
     this.esquemasConsultorio[consultorio.id] = esquemas;
+  }
+
+  // ==================== MÉTODOS PARA ESQUEMAS POR CONSULTORIO ====================
+
+  /**
+   * Obtiene los esquemas de un consultorio específico
+   */
+  getEsquemasDelConsultorio(consultorioId: number): EsquemaTurno[] {
+    return this.esquemasSemana.filter(esquema => esquema.consultorioId === consultorioId);
+  }
+
+  /**
+   * Obtiene los esquemas de un consultorio para un día específico
+   */
+  getEsquemasDelConsultorioPorDia(consultorioId: number, dia: string): EsquemaTurno[] {
+    const esquemasConsultorio = this.getEsquemasDelConsultorio(consultorioId);
+    
+    return esquemasConsultorio.filter(esquema => {
+      // Verificar si el esquema tiene horarios para el día solicitado
+      if (esquema.horarios && Array.isArray(esquema.horarios)) {
+        const tieneHorario = esquema.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
+        }
+      }
+      
+      // Si no tiene horarios directos, verificar en la disponibilidad médica
+      if (esquema.disponibilidadMedico?.horarios && Array.isArray(esquema.disponibilidadMedico.horarios)) {
+        const tieneHorario = esquema.disponibilidadMedico.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
+        }
+      }
+      
+      // Si no encuentra horarios específicos, buscar en las disponibilidades cargadas
+      const disponibilidad = this.disponibilidadesMedico.find(d => d.id === esquema.disponibilidadMedicoId);
+      if (disponibilidad?.horarios && Array.isArray(disponibilidad.horarios)) {
+        const tieneHorario = disponibilidad.horarios.some(horario => 
+          horario.dia && horario.dia.toUpperCase() === dia.toUpperCase()
+        );
+        if (tieneHorario) {
+          return true;
+        }
+      }
+      
+      return false;
+    });
+  }
+
+  /**
+   * Obtiene un color específico para cada día de la semana
+   */
+  getColorPorDia(dia: string): string {
+    const colores: { [key: string]: string } = {
+      'LUNES': 'rgba(54, 185, 204, 0.1)',
+      'MARTES': 'rgba(40, 167, 69, 0.1)',
+      'MIERCOLES': 'rgba(255, 193, 7, 0.1)',
+      'JUEVES': 'rgba(220, 53, 69, 0.1)',
+      'VIERNES': 'rgba(111, 66, 193, 0.1)',
+      'SABADO': 'rgba(253, 126, 20, 0.1)',
+      'DOMINGO': 'rgba(108, 117, 125, 0.1)'
+    };
+    return colores[dia.toUpperCase()] || 'rgba(108, 117, 125, 0.1)';
+  }
+
+  /**
+   * Obtiene el nombre corto del médico para mostrar en las tarjetas mini
+   */
+  getMedicoNombreCorto(esquema: EsquemaTurno): string {
+    if (esquema.staffMedico?.medico) {
+      const nombre = esquema.staffMedico.medico.nombre || '';
+      const apellido = esquema.staffMedico.medico.apellido || '';
+      return `${nombre.substring(0,1)}. ${apellido.split(' ')[0]}`;
+    }
+    return 'Dr. N/A';
+  }
+
+  /**
+   * Crea un nuevo esquema de turno para un consultorio específico
+   */
+  crearNuevoEsquema(consultorio: Consultorio): void {
+    // Navegar al formulario de creación con el consultorio preseleccionado
+    this.router.navigate(['/esquema-turno/new'], {
+      queryParams: {
+        consultorioId: consultorio.id,
+        centroId: this.centroAtencion.id,
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'consultorios'
+      }
+    });
+  }
+
+  /**
+   * Edita un esquema existente
+   */
+  editarEsquema(esquema: EsquemaTurno): void {
+    this.router.navigate(['/esquema-turno', esquema.id], {
+      queryParams: {
+        fromCentro: this.centroAtencion.id,
+        returnTab: 'consultorios'
+      }
+    });
+  }
+
+  /**
+   * Resetea el filtro para mostrar todos los consultorios
+   */
+  mostrarTodosLosEsquemas(): void {
+    this.mostrarTodosLosConsultorios = true;
+    this.filtroConsultorioSeleccionado = null;
+  }
+
+  /**
+   * Aplica un filtro específico por consultorio
+   */
+  filtrarPorConsultorio(consultorioId: number): void {
+    this.mostrarTodosLosConsultorios = false;
+    this.filtroConsultorioSeleccionado = consultorioId;
+  }
+
+  /**
+   * Obtiene el nombre del consultorio para mostrar en el filtro
+   */
+  getNombreConsultorioParaFiltro(consultorioId: number): string {
+    const consultorio = this.consultorios.find(c => c.id === consultorioId);
+    return consultorio ? `${consultorio.numero} - ${consultorio.nombre}` : `Consultorio ${consultorioId}`;
+  }
+
+  /**
+   * Obtiene la lista de consultorios que tienen esquemas para el filtro
+   */
+  getConsultoriosConEsquemas(): Consultorio[] {
+    const consultoriosConEsquemas = new Set<number>();
+    
+    // Obtener todos los consultorios que tienen esquemas
+    this.esquemasSemana.forEach(esquema => {
+      if (esquema.consultorioId) {
+        consultoriosConEsquemas.add(esquema.consultorioId);
+      }
+    });
+
+    // Filtrar solo los consultorios que tienen esquemas
+    return this.consultorios.filter(consultorio => 
+      consultorio.id && consultoriosConEsquemas.has(consultorio.id)
+    );
+  }
+
+  /**
+   * Cuenta el total de esquemas visibles con el filtro actual
+   */
+  contarEsquemasVisibles(): number {
+    if (this.mostrarTodosLosConsultorios) {
+      return this.esquemasSemana.length;
+    }
+    
+    if (this.filtroConsultorioSeleccionado) {
+      return this.esquemasSemana.filter(esquema => 
+        esquema.consultorioId === this.filtroConsultorioSeleccionado
+      ).length;
+    }
+    
+    return 0;
+  }
+
+  /**
+   * Verifica si hay esquemas visibles para mostrar la tabla
+   */
+  hayEsquemasVisibles(): boolean {
+    return this.contarEsquemasVisibles() > 0;
   }
 
   // ==================== MÉTODOS AUXILIARES (SRP) ====================

@@ -1414,4 +1414,284 @@
   padding: 0.35rem 0.65rem;
   border-radius: 8px;
 }
+
+/* ==================== ESTILOS PARA FILTROS DE ESQUEMAS ==================== */
+
+.form-label-small {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-select-sm {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.form-select-sm:focus {
+  border-color: #36b9cc;
+  box-shadow: 0 0 0 0.2rem rgba(54, 185, 204, 0.25);
+}
+
+.btn-sm {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.alert {
+  border-radius: 12px;
+  border: none;
+  font-weight: 500;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+/* Animación para el indicador de filtro */
+.alert {
+  animation: slideInDown 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects para los botones del filtro */
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-outline-primary {
+  border: 1px solid #007bff;
+  color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  background: #007bff;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* ==================== ESTILOS PARA ESQUEMAS EN CONSULTORIOS ==================== */
+
+.esquemas-consultorio-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dias-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.dia-header {
+  background: linear-gradient(135deg, #36b9cc 0%, #20c997 100%);
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.esquemas-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  min-height: 120px;
+}
+
+.dia-esquemas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 120px;
+  padding: 0.25rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.esquema-mini-card {
+  border-radius: 6px;
+  padding: 0.5rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  font-size: 0.7rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.esquema-mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-color: rgba(0,0,0,0.2);
+}
+
+.medico-nombre {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #495057;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.horarios-mini {
+  margin-bottom: 0.25rem;
+}
+
+.horario-mini {
+  font-size: 0.65rem;
+  color: #6c757d;
+  margin-bottom: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.esquema-actions-mini {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  margin-top: auto;
+}
+
+.btn-xs {
+  padding: 0.1rem 0.3rem;
+  font-size: 0.65rem;
+  border-radius: 4px;
+  border-width: 1px;
+  transition: all 0.2s ease;
+}
+
+.btn-xs:hover {
+  transform: scale(1.1);
+}
+
+.no-esquema-dia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 40px;
+  color: #6c757d;
+  font-style: italic;
+  border: 2px dashed #dee2e6;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.5);
+  transition: all 0.3s ease;
+}
+
+.no-esquema-dia:hover {
+  border-color: #36b9cc;
+  color: #36b9cc;
+  background: rgba(54, 185, 204, 0.05);
+}
+
+/* Diferentes colores para cada día */
+.dia-esquemas:nth-child(1) { /* Lunes */
+  border-left: 3px solid #36b9cc;
+}
+
+.dia-esquemas:nth-child(2) { /* Martes */
+  border-left: 3px solid #28a745;
+}
+
+.dia-esquemas:nth-child(3) { /* Miércoles */
+  border-left: 3px solid #ffc107;
+}
+
+.dia-esquemas:nth-child(4) { /* Jueves */
+  border-left: 3px solid #dc3545;
+}
+
+.dia-esquemas:nth-child(5) { /* Viernes */
+  border-left: 3px solid #6f42c1;
+}
+
+.dia-esquemas:nth-child(6) { /* Sábado */
+  border-left: 3px solid #fd7e14;
+}
+
+.dia-esquemas:nth-child(7) { /* Domingo */
+  border-left: 3px solid #6c757d;
+}
+
+/* Responsivo para pantallas pequeñas */
+@media (max-width: 768px) {
+  .esquemas-consultorio-grid {
+    overflow-x: auto;
+  }
+  
+  .dias-semana,
+  .esquemas-grid {
+    min-width: 700px;
+  }
+  
+  .dia-header,
+  .dia-esquemas {
+    min-width: 100px;
+  }
+}
+
+/* Animación para las tarjetas de esquemas */
+.esquema-mini-card {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 }

@@ -36,12 +36,6 @@
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'esquemas'" (click)="activeTab = 'esquemas'"
-        type="button">
-        <i class="fa fa-calendar me-2"></i> Esquemas de Turno
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'especialidades'" (click)="activeTab = 'especialidades'"
         type="button">
         <i class="icon-especialidades me-2"></i> Especialidades
@@ -616,6 +610,90 @@
                                 </div>
                               </div>
                             </div>
+
+                            <!-- Panel de Esquemas de Turno del Consultorio -->
+                            <div class="col-12">
+                              <div class="card">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                  <h6 class="mb-0">
+                                    <i class="fa fa-calendar-check me-2"></i>
+                                    Esquemas de Turno
+                                  </h6>
+                                  <button class="btn btn-sm btn-light" 
+                                          (click)="crearNuevoEsquema(consultorio)"
+                                          title="Crear nuevo esquema de turno para este consultorio">
+                                    <i class="fa fa-plus me-1"></i>Nuevo Esquema
+                                  </button>
+                                </div>
+                                <div class="card-body">
+                                  <!-- Tabla semanal compacta para el consultorio -->
+                                  <div *ngIf="getEsquemasDelConsultorio(consultorio.id!).length > 0; else noEsquemasConsultorio">
+                                    <div class="esquemas-consultorio-grid">
+                                      <!-- Días de la semana -->
+                                      <div class="dias-semana">
+                                        <div class="dia-header" *ngFor="let dia of ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB', 'DOM']">
+                                          {{ dia }}
+                                        </div>
+                                      </div>
+                                      
+                                      <!-- Esquemas por día -->
+                                      <div class="esquemas-grid">
+                                        <div class="dia-esquemas" *ngFor="let dia of ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO']">
+                                          <div *ngFor="let esquema of getEsquemasDelConsultorioPorDia(consultorio.id!, dia)" 
+                                               class="esquema-mini-card"
+                                               [style.background]="getColorPorDia(dia)">
+                                            <div class="medico-nombre">
+                                              <i class="fa fa-user-md me-1"></i>
+                                              {{ getMedicoNombreCorto(esquema) }}
+                                            </div>
+                                            <div class="horarios-mini">
+                                              <div *ngFor="let horario of getHorariosPorDia(esquema, dia)" 
+                                                   class="horario-mini">
+                                                <i class="fa fa-clock me-1"></i>
+                                                {{ horario.horaInicio.substring(0,5) }}-{{ horario.horaFin.substring(0,5) }}
+                                              </div>
+                                            </div>
+                                            <div class="esquema-actions-mini">
+                                              <button class="btn btn-xs btn-outline-primary" 
+                                                      (click)="verDetalleEsquema(esquema)"
+                                                      title="Ver detalle del esquema">
+                                                <i class="fa fa-eye"></i>
+                                              </button>
+                                              <button class="btn btn-xs btn-outline-success" 
+                                                      (click)="editarEsquema(esquema)"
+                                                      title="Editar esquema">
+                                                <i class="fa fa-edit"></i>
+                                              </button>
+                                            </div>
+                                          </div>
+                                          
+                                          <!-- Placeholder cuando no hay esquemas para este día -->
+                                          <div *ngIf="getEsquemasDelConsultorioPorDia(consultorio.id!, dia).length === 0" 
+                                               class="no-esquema-dia">
+                                            <small class="text-muted">Libre</small>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  
+                                  <!-- Estado cuando no hay esquemas -->
+                                  <ng-template #noEsquemasConsultorio>
+                                    <div class="text-center py-4">
+                                      <i class="fa fa-calendar-plus fa-3x text-muted mb-3"></i>
+                                      <h6 class="text-muted mb-2">Sin esquemas configurados</h6>
+                                      <p class="text-muted mb-3">
+                                        Este consultorio no tiene esquemas de turno asignados.
+                                      </p>
+                                      <button class="btn btn-primary" 
+                                              (click)="crearNuevoEsquema(consultorio)">
+                                        <i class="fa fa-plus me-2"></i>Crear Primer Esquema
+                                      </button>
+                                    </div>
+                                  </ng-template>
+                                </div>
+                              </div>
+                            </div>
                             
                           </div>
                         </div>
@@ -638,570 +716,6 @@
       </div>
     </div>
 
-    <!-- TAB ESQUEMAS DE TURNO -->
-    <div class="tab-pane fade" [class.show]="activeTab === 'esquemas'" [class.active]="activeTab === 'esquemas'">
-      <div class="modern-card">
-        <div class="modern-card-header">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center">
-              <div class="me-3">
-                <i class="fa fa-calendar text-primary"></i>
-              </div>
-              <div>
-                <h5 class="mb-0">Esquemas de Turno</h5>
-                <small class="text-muted">Visualización de esquemas asignados por semana</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="modern-card-body">
-          <!-- Tabla de Esquemas por Días de la Semana -->
-          <div *ngIf="esquemasSemana && esquemasSemana.length > 0; else noEsquemasSemana">
-            <div class="modern-table">
-              <table class="table table-bordered mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Lunes</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Martes</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Miércoles</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Jueves</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Viernes</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Sábado</strong>
-                      </div>
-                    </th>
-                    <th class="text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <i class="fa fa-calendar me-2 text-primary"></i>
-                        <strong>Domingo</strong>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <!-- Lunes -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('LUNES')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(54, 185, 204, 0.1); border-color: rgba(54, 185, 204, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold text-primary">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'LUNES')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-outline-primary btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('LUNES').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Martes -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('MARTES')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold text-success">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'MARTES')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-outline-success btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('MARTES').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Miércoles -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('MIERCOLES')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold text-warning">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'MIERCOLES')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-outline-warning btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('MIERCOLES').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Jueves -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('JUEVES')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold text-danger">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'JUEVES')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-outline-danger btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('JUEVES').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Viernes -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('VIERNES')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(111, 66, 193, 0.1); border-color: rgba(111, 66, 193, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold" style="color: #6f42c1;">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'VIERNES')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px; border-color: #6f42c1; color: #6f42c1;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('VIERNES').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Sábado -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('SABADO')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(253, 126, 20, 0.1); border-color: rgba(253, 126, 20, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold" style="color: #fd7e14;">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'SABADO')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px; border-color: #fd7e14; color: #fd7e14;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('SABADO').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <!-- Domingo -->
-                    <td class="align-top" style="width: 14.28%; min-height: 300px;">
-                      <div class="esquemas-dia">
-                        <div *ngFor="let esquema of getEsquemasPorDia('DOMINGO')" 
-                             class="esquema-card mb-2 p-2 border rounded"
-                             style="background: rgba(108, 117, 125, 0.1); border-color: rgba(108, 117, 125, 0.3);">
-                          <div class="esquema-header">
-                            <small class="fw-bold text-muted">
-                              <i class="fa fa-user-md me-1"></i>
-                              {{ getMedicoNombre(esquema) }}
-                            </small>
-                          </div>
-                          <div class="esquema-info mt-1">
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-door-open text-info me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getConsultorioNombre(esquema) }}</small>
-                            </div>
-                            <div class="d-flex align-items-center mb-1">
-                              <i class="fa fa-stethoscope text-success me-1" style="font-size: 0.8em;"></i>
-                              <small>{{ getEspecialidadNombre(esquema) }}</small>
-                            </div>
-                            <div class="horarios-esquema">
-                              <div *ngFor="let horario of getHorariosPorDia(esquema, 'DOMINGO')" 
-                                   class="horario-item">
-                                <small class="text-muted">
-                                  <i class="fa fa-clock me-1" style="font-size: 0.7em;"></i>
-                                  {{ horario.horaInicio }} - {{ horario.horaFin }}
-                                </small>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="esquema-actions mt-2">
-                            <button class="btn btn-outline-secondary btn-xs w-100" 
-                                    (click)="verDetalleEsquema(esquema)"
-                                    style="font-size: 0.75em; padding: 2px 6px;">
-                              <i class="fa fa-eye me-1"></i>Ver Detalle
-                            </button>
-                          </div>
-                        </div>
-                        <div *ngIf="getEsquemasPorDia('DOMINGO').length === 0" class="text-muted text-center py-3">
-                          <small>Sin esquemas</small>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          <!-- Estado cuando no hay esquemas -->
-          <ng-template #noEsquemasSemana>
-            <div class="text-center py-5" style="opacity: 0.7;">
-              <i class="fa fa-calendar-times" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
-              <h5>No hay esquemas de turno configurados</h5>
-              <p class="text-muted">
-                Configure esquemas de turno para visualizar la planificación semanal
-              </p>
-              <small class="text-info">
-                <i class="fa fa-lightbulb me-1"></i>
-                Los esquemas se configuran desde el tab "Consultorios" o mediante la gestión de disponibilidades en "Staff Médico"
-              </small>
-            </div>
-          </ng-template>
-
-          <div *ngIf="staffMedicoCentro.length > 0" class="mt-4">
-            <div class="row">
-              <!-- Panel de Control de Porcentajes -->
-              <div class="col-12">
-                <div class="card border-info">
-                  <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">
-                      <i class="fa fa-chart-pie me-2"></i>
-                      Distribución de Porcentajes por Médico
-                    </h6>
-                    <div class="d-flex gap-2">
-                      <button class="btn btn-sm btn-outline-light" 
-                              (click)="redistribuirPorcentajesMedicos()"
-                              title="Distribuir 100% equitativamente entre todos los médicos">
-                        <i class="fa fa-balance-scale me-1"></i>Redistribuir
-                      </button>
-                      <button class="btn btn-sm btn-warning" 
-                              (click)="redistribuirEsquemasExistentes()"
-                              title="Aplicar porcentajes a esquemas de turno">
-                        <i class="fa fa-cogs me-1"></i>Redistribuir Esquemas
-                      </button>
-                      <button class="btn btn-sm btn-light" 
-                              (click)="guardarTodosPorcentajesMedicos()"
-                              [disabled]="totalPorcentajeMedicos > 100">
-                        <i class="fa fa-save me-1"></i>Guardar Porcentajes
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <!-- Indicador de Total de Porcentajes -->
-                    <div class="row mb-3">
-                      <div class="col-md-6">
-                        <div class="progress-info-card p-3" 
-                             [style.background]="totalPorcentajeMedicos > 100 ? 'rgba(220, 53, 69, 0.1)' : 
-                                                 totalPorcentajeMedicos === 100 ? 'rgba(40, 167, 69, 0.1)' : 
-                                                 'rgba(255, 193, 7, 0.1)'"
-                             [style.border]="totalPorcentajeMedicos > 100 ? '2px solid rgba(220, 53, 69, 0.3)' : 
-                                            totalPorcentajeMedicos === 100 ? '2px solid rgba(40, 167, 69, 0.3)' : 
-                                            '2px solid rgba(255, 193, 7, 0.3)'"
-                             style="border-radius: 12px;">
-                          <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="mb-0" 
-                                [class.text-danger]="totalPorcentajeMedicos > 100"
-                                [class.text-success]="totalPorcentajeMedicos === 100"
-                                [class.text-warning]="totalPorcentajeMedicos < 100">
-                              <i class="fa fa-percentage me-2"></i>Total Asignado
-                            </h6>
-                            <span class="h4 mb-0 fw-bold"
-                                  [class.text-danger]="totalPorcentajeMedicos > 100"
-                                  [class.text-success]="totalPorcentajeMedicos === 100"
-                                  [class.text-warning]="totalPorcentajeMedicos < 100">
-                              {{ totalPorcentajeMedicos }}%
-                            </span>
-                          </div>
-                          <div class="progress" style="height: 8px;">
-                            <div class="progress-bar" 
-                                 [class.bg-danger]="totalPorcentajeMedicos > 100"
-                                 [class.bg-success]="totalPorcentajeMedicos === 100"
-                                 [class.bg-warning]="totalPorcentajeMedicos < 100"
-                                 [style.width.%]="totalPorcentajeMedicos > 100 ? 100 : totalPorcentajeMedicos"></div>
-                          </div>
-                          <small class="text-muted mt-1 d-block">
-                            <span *ngIf="totalPorcentajeMedicos > 100" class="text-danger">
-                              <i class="fa fa-exclamation-triangle me-1"></i>
-                              Excede el 100%. Ajuste los porcentajes.
-                            </span>
-                            <span *ngIf="totalPorcentajeMedicos === 100" class="text-success">
-                              <i class="fa fa-check-circle me-1"></i>
-                              Distribución completa y balanceada.
-                            </span>
-                            <span *ngIf="totalPorcentajeMedicos < 100" class="text-warning">
-                              <i class="fa fa-info-circle me-1"></i>
-                              Disponible: {{ porcentajeDisponibleMedicos }}%
-                            </span>
-                          </small>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="info-card p-3" style="background: rgba(54, 185, 204, 0.1); border: 2px solid rgba(54, 185, 204, 0.3); border-radius: 12px;">
-                          <h6 class="mb-2 text-info">
-                            <i class="fa fa-info-circle me-2"></i>Información de Porcentajes
-                          </h6>
-                          <small class="text-muted">
-                            <p class="mb-1">• Los porcentajes determinan la distribución de consultorios entre médicos</p>
-                            <p class="mb-1">• El total debe ser exactamente 100% para una distribución válida</p>
-                            <p class="mb-0">• Use "Redistribuir" para asignar porcentajes equitativos automáticamente</p>
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Tabla de Porcentajes por Médico -->
-                    <div class="table-responsive">
-                      <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                          <tr>
-                            <th width="45%">
-                              <i class="fa fa-user-md me-1 text-primary"></i>Médico
-                            </th>
-                            <th width="25%">
-                              <i class="fa fa-stethoscope me-1 text-success"></i>Especialidad
-                            </th>
-                            <th width="20%">
-                              <i class="fa fa-percentage me-1 text-info"></i>Porcentaje
-                            </th>
-                            <th width="10%">Acciones</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr *ngFor="let staff of staffMedicoCentro">
-                            <td>
-                              <div class="d-flex align-items-center">
-                                <div class="avatar-medicos me-3">
-                                  Dr
-                                </div>
-                                <div>
-                                  <div class="fw-semibold">Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</div>
-                                  <small class="text-muted">Matrícula: {{ staff.medico?.matricula }}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span class="badge-especialidades">
-                                <i class="fa fa-stethoscope me-1"></i>{{ staff.especialidad?.nombre }}
-                              </span>
-                            </td>
-                            <td>
-                              <div class="input-group">
-                                <input type="number" 
-                                       class="form-control" 
-                                       [(ngModel)]="staff.porcentaje"
-                                       (ngModelChange)="onPorcentajeMedicoChange()"
-                                       min="0" 
-                                       max="100" 
-                                       step="0.1"
-                                       placeholder="0">
-                                <span class="input-group-text">%</span>
-                              </div>
-                            </td>
-                            <td>
-                              <button class="btn btn-sm btn-outline-primary" 
-                                      (click)="guardarPorcentajeMedico(staff)"
-                                      [disabled]="!staff.porcentaje || staff.porcentaje < 0 || staff.porcentaje > 100"
-                                      title="Guardar porcentaje individual">
-                                <i class="fa fa-save"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- TAB ESPECIALIDADES -->
     <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'" [class.active]="activeTab === 'especialidades'">
