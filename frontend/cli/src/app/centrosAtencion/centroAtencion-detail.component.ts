@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { CentroAtencion } from './centroAtencion';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CentroAtencionService } from './centroAtencion.service';
@@ -51,6 +52,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   especialidadSeleccionada: Especialidad | null = null;
   especialidadesMedico: Especialidad[] = [];
   medicoSeleccionado: Medico | null = null;
+  searchMedicoTerm: string = '';
   consultorioExpandido: { [consultorioId: number]: boolean } = {};
   esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
   staffMedicoExpandido: { [staffMedicoId: number]: boolean } = {};
@@ -502,6 +504,57 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       staff.medicoId === this.medicoSeleccionado?.id
     );
   }
+
+  get medicosDisponiblesParaAsociar(): Medico[] {
+    if (!this.medicosDisponibles || !this.staffMedicoCentro) {
+      console.log('No hay médicos disponibles o staff médico:', {
+        medicosDisponibles: this.medicosDisponibles?.length,
+        staffMedicoCentro: this.staffMedicoCentro?.length
+      });
+      return [];
+    }
+    
+    // Filtrar médicos que no estén ya asociados al centro
+    const medicosAsociadosIds = this.staffMedicoCentro.map(staff => staff.medicoId);
+    const medicosFiltered = this.medicosDisponibles.filter(medico => 
+      !medicosAsociadosIds.includes(medico.id)
+    );
+    
+    console.log('Filtrado de médicos:', {
+      totalMedicos: this.medicosDisponibles.length,
+      medicosAsociados: medicosAsociadosIds,
+      medicosDisponibles: medicosFiltered.length,
+      staffMedicoCentro: this.staffMedicoCentro.map(s => ({ 
+        id: s.id, 
+        medicoId: s.medicoId, 
+        medico: s.medico?.nombre + ' ' + s.medico?.apellido 
+      }))
+    });
+    
+    return medicosFiltered;
+  }
+
+  // Función para filtrar médicos en el typeahead
+  searchMedicos = (text$: any) => {
+    return text$.pipe(
+      debounceTime(200),
+      distinctUntilChanged(),
+      map((term: string) => term.length < 2 ? []
+        : this.medicosDisponiblesParaAsociar.filter(medico => {
+          const nombreCompleto = `${medico.nombre} ${medico.apellido}`.toLowerCase();
+          const especialidad = medico.especialidad?.nombre?.toLowerCase() || '';
+          const searchTerm = term.toLowerCase();
+          return nombreCompleto.includes(searchTerm) || especialidad.includes(searchTerm);
+        }).slice(0, 10)
+      )
+    );
+  };
+
+  // Función para mostrar el médico en el typeahead
+  formatMedico = (medico: Medico) => {
+    if (!medico) return '';
+    return `Dr. ${medico.nombre} ${medico.apellido} - ${medico.especialidad?.nombre || 'Sin especialidad'}`;
+  };
 
   // ==================== DATA LOADING METHODS (SRP) ====================
   
@@ -1579,22 +1632,42 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     });
   }
 
-  onMedicoSeleccionado(medico?: Medico, event?: any): void {
-    if (event && event.target.checked) {
-      this.medicoSeleccionado = medico || null;
+  onMedicoSeleccionado(): void {
+    if (this.medicoSeleccionado) {
+      // Cargar las especialidades del médico seleccionado
+      this.cargarEspecialidadesMedico();
+      // Reset especialidad seleccionada
+      this.especialidadSeleccionada = null;
     } else {
-      this.medicoSeleccionado = null;
+      this.especialidadesMedico = [];
+      this.especialidadSeleccionada = null;
+    }
+  }
+
+  cargarEspecialidadesMedico(): void {
+    if (!this.medicoSeleccionado?.id) {
+      this.especialidadesMedico = [];
+      return;
+    }
+    
+    // Si el médico tiene especialidad principal, mostrarla
+    if (this.medicoSeleccionado.especialidad) {
+      this.especialidadesMedico = [this.medicoSeleccionado.especialidad];
+    } else {
+      this.especialidadesMedico = [];
     }
   }
 
   asociarMedico(): void {
-    if (!this.medicoSeleccionado || !this.centroAtencion?.id) return;
+    if (!this.medicoSeleccionado || !this.especialidadSeleccionada || !this.centroAtencion?.id) return;
 
     // Create a new StaffMedico object
     const nuevoStaff: Partial<StaffMedico> = {
       medico: this.medicoSeleccionado,
+      especialidad: this.especialidadSeleccionada,
       centroAtencionId: this.centroAtencion.id,
       medicoId: this.medicoSeleccionado.id,
+      especialidadId: this.especialidadSeleccionada.id,
       porcentaje: 0
     };
 
@@ -1602,6 +1675,8 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
       next: (response: any) => {
         this.loadStaffMedico();
         this.medicoSeleccionado = null;
+        this.especialidadSeleccionada = null;
+        this.especialidadesMedico = [];
         this.mostrarMensajeStaff('Médico asociado correctamente', 'success');
       },
       error: (error: any) => {

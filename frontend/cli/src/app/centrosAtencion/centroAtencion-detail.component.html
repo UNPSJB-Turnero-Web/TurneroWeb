@@ -947,8 +947,8 @@
                         (ngModelChange)="onMedicoSeleccionado()"
                         class="modern-select form-control">
                   <option [ngValue]="null">Seleccione un médico...</option>
-                  <option *ngFor="let medico of medicosDisponibles" [ngValue]="medico">
-                    Dr. {{ medico.nombre }} {{ medico.apellido }} - {{ medico.especialidad.nombre }}
+                  <option *ngFor="let medico of medicosDisponiblesParaAsociar" [ngValue]="medico">
+                    Dr. {{ medico.nombre }} {{ medico.apellido }} - {{ medico.especialidad?.nombre || 'Sin especialidad' }}
                   </option>
                 </select>
               </div>
