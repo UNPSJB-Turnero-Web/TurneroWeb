@@ -17,6 +17,11 @@ export interface EsquemaTurno {
   // Horarios de disponibilidad del médico (definidos por el médico)
   horariosDisponibilidad?: { dia: string; horaInicio: string; horaFin: string }[];
 
+  // Campos adicionales que vienen del backend
+  nombreStaffMedico?: string; // Nombre completo del médico
+  nombreCentro?: string; // Nombre del centro de atención
+  nombreConsultorio?: string; // Nombre del consultorio
+
   // Relaciones opcionales
   disponibilidadMedico?: DisponibilidadMedico;
   staffMedico?: StaffMedico;

@@ -278,7 +278,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     // Manejar activación de tab desde query params (para navegación de retorno)
     this.route.queryParams.subscribe(params => {
       const activeTabParam = params['activeTab'];
-      if (activeTabParam && ['detalle', 'consultorios', 'esquemas', 'especialidades', 'staff'].includes(activeTabParam)) {
+      if (activeTabParam && ['detalle', 'consultorios', 'especialidades', 'staff'].includes(activeTabParam)) {
         this.activeTab = activeTabParam;
       }
     });
@@ -1412,6 +1412,32 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
   }
 
   /**
+   * Obtiene el color del borde para cada día de la semana
+   */
+  getColorBorde(dia: string): string {
+    const colores: { [key: string]: string } = {
+      'LUNES': '#36b9cc',
+      'MARTES': '#28a745',
+      'MIERCOLES': '#ffc107',
+      'JUEVES': '#dc3545',
+      'VIERNES': '#6f42c1',
+      'SABADO': '#fd7e14',
+      'DOMINGO': '#6c757d'
+    };
+    return colores[dia.toUpperCase()] || '#6c757d';
+  }
+
+  /**
+   * Verifica si un consultorio tiene un horario específico para un día
+   */
+  getHorarioEspecifico(consultorio: Consultorio, dia: string): any {
+    if (!consultorio.horariosSemanales || consultorio.horariosSemanales.length === 0) {
+      return null;
+    }
+    return consultorio.horariosSemanales.find(h => h.diaSemana.toUpperCase() === dia.toUpperCase());
+  }
+
+  /**
    * Obtiene el nombre corto del médico para mostrar en las tarjetas mini
    */
   getMedicoNombreCorto(esquema: EsquemaTurno): string {
@@ -1548,7 +1574,7 @@ export class CentroAtencionDetailComponent implements AfterViewInit, OnInit {
     this.router.navigate(['/esquema-turno', esquema.id], {
       queryParams: {
         fromCentro: this.centroAtencion.id,
-        returnTab: 'esquemas-turno'
+        returnTab: 'consultorios'
       }
     });
   }
