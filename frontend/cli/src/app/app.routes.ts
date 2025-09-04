@@ -1,104 +1,281 @@
-import { Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component';
-import { TurnosComponent } from './turnos/turnos.component';
-import { TurnoDetailComponent } from './turnos/turno-detail.component';
-import { AdminAgendaComponent } from './agenda/admin-agenda.component';
-import { DiasExcepcionalesComponent } from './agenda/dias-excepcionales.component';
-import { PacientesComponent } from './pacientes/pacientes.component';
-import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
-import { EspecialidadesComponent } from './especialidades/especialidades.component';
-import { EspecialidadDetailComponent } from './especialidades/especialidad-detail.component';
-import { CentrosAtencionComponent } from './centrosAtencion/centrosAtencion.component';
-import { CentroAtencionDetailComponent } from './centrosAtencion/centroAtencion-detail.component';
-import { ConsultoriosComponent } from './consultorios/consultorios.component';
-import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
-import { MedicosComponent } from './medicos/medicos.component';
-import { StaffMedicosComponent } from './staffMedicos/staffMedicos.component';
-import { StaffMedicoDetailComponent } from './staffMedicos/staffMedico-detail.component';
-import { MedicoDetailComponent } from './medicos/medico-detail.component';
-import { DisponibilidadMedicoComponent } from './disponibilidadMedicos/disponibilidadMedico.component';
-import { DisponibilidadMedicoDetailComponent } from './disponibilidadMedicos/disponibilidadMedico-detail.component';
-import { EsquemaTurnoComponent } from './esquemaTurno/esquemaTurno.component';
-import { EsquemaTurnoDetailComponent } from './esquemaTurno/esquemaTurno-detail.component';
-import { ObraSocialComponent } from './obraSocial/obraSocial.component';
-import { ObraSocialDetailComponent } from './obraSocial/obraSocial-detail.component';
-import { PacienteDashboardComponent } from './pacientes/paciente-dashboard.component';
-import { PacienteAgendaComponent } from './pacientes/paciente-agenda.component';
-import { PacienteReagendarTurnoComponent } from './pacientes/paciente-reagendar-turno.component';
-import { PacienteNotificacionesComponent } from './pacientes/paciente-notificaciones.component';
-
+import { Routes } from "@angular/router";
+import { HomeComponent } from "./home/home.component";
+import { TurnosComponent } from "./turnos/turnos.component";
+import { TurnoDetailComponent } from "./turnos/turno-detail.component";
+import { AdminAgendaComponent } from "./agenda/admin-agenda.component";
+import { DiasExcepcionalesComponent } from "./agenda/dias-excepcionales.component";
+import { PacientesComponent } from "./pacientes/pacientes.component";
+import { PacienteDetailComponent } from "./pacientes/paciente-detail.component";
+import { EspecialidadesComponent } from "./especialidades/especialidades.component";
+import { EspecialidadDetailComponent } from "./especialidades/especialidad-detail.component";
+import { CentrosAtencionComponent } from "./centrosAtencion/centrosAtencion.component";
+import { CentroAtencionDetailComponent } from "./centrosAtencion/centroAtencion-detail.component";
+import { ConsultoriosComponent } from "./consultorios/consultorios.component";
+import { ConsultorioDetailComponent } from "./consultorios/consultorio-detail.component";
+import { MedicosComponent } from "./medicos/medicos.component";
+import { StaffMedicosComponent } from "./staffMedicos/staffMedicos.component";
+import { StaffMedicoDetailComponent } from "./staffMedicos/staffMedico-detail.component";
+import { MedicoDetailComponent } from "./medicos/medico-detail.component";
+import { DisponibilidadMedicoComponent } from "./disponibilidadMedicos/disponibilidadMedico.component";
+import { DisponibilidadMedicoDetailComponent } from "./disponibilidadMedicos/disponibilidadMedico-detail.component";
+import { EsquemaTurnoComponent } from "./esquemaTurno/esquemaTurno.component";
+import { EsquemaTurnoDetailComponent } from "./esquemaTurno/esquemaTurno-detail.component";
+import { ObraSocialComponent } from "./obraSocial/obraSocial.component";
+import { ObraSocialDetailComponent } from "./obraSocial/obraSocial-detail.component";
+import { PacienteDashboardComponent } from "./pacientes/paciente-dashboard.component";
+import { PacienteAgendaComponent } from "./pacientes/paciente-agenda.component";
+import { PacienteReagendarTurnoComponent } from "./pacientes/paciente-reagendar-turno.component";
+import { PacienteNotificacionesComponent } from "./pacientes/paciente-notificaciones.component";
+import { RecuperarContrasenaComponent } from "./recuperacionContrasena/recuperacionContrasena.component";
 // Medico components
-import { MedicoDashboardComponent } from './medicos/medico-dashboard.component';
-import { MedicoTurnosComponent } from './medicos/medico-turnos.component';
-import { MedicoHorariosComponent } from './medicos/medico-horarios.component';
-import { MedicoVacacionesComponent } from './medicos/medico-vacaciones.component';
-import { MedicoEstadisticasComponent } from './medicos/medico-estadisticas.component';
+import { MedicoDashboardComponent } from "./medicos/medico-dashboard.component";
+import { MedicoTurnosComponent } from "./medicos/medico-turnos.component";
+import { MedicoHorariosComponent } from "./medicos/medico-horarios.component";
+import { MedicoVacacionesComponent } from "./medicos/medico-vacaciones.component";
+import { MedicoEstadisticasComponent } from "./medicos/medico-estadisticas.component";
 
 // Audit components
-import { TurnoAdvancedSearchComponent } from './turnos/turno-advanced-search.component';
-import { AuditDashboardComponent } from './turnos/audit-dashboard.component';
+import { TurnoAdvancedSearchComponent } from "./turnos/turno-advanced-search.component";
+import { AuditDashboardComponent } from "./turnos/audit-dashboard.component";
 
-import { AdminGuard } from './guards/admin.guard';
-import { PatientGuard } from './guards/patient.guard';
-import { MedicoGuard } from './guards/medico.guard';
+import { AdminGuard } from "./guards/admin.guard";
+import { PatientGuard } from "./guards/patient.guard";
+import { MedicoGuard } from "./guards/medico.guard";
 
 export const routes: Routes = [
-    { path: '', component: HomeComponent },
-    
-    // Patient Routes
-    { path: 'paciente-dashboard', component: PacienteDashboardComponent, canActivate: [PatientGuard] },
-    { path: 'paciente-agenda', component: PacienteAgendaComponent, canActivate: [PatientGuard] },
-    { path: 'paciente-notificaciones', component: PacienteNotificacionesComponent, canActivate: [PatientGuard] },
-    { path: 'paciente-perfil', component: PacienteDetailComponent, canActivate: [PatientGuard] },
-    { path: 'paciente-reagendar-turno/:id', component: PacienteReagendarTurnoComponent, canActivate: [PatientGuard] },
+  { path: "", component: HomeComponent },
 
-    // Medico Routes
-    { path: 'medico-dashboard', component: MedicoDashboardComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-turnos', component: MedicoTurnosComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-horarios', component: MedicoHorariosComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-vacaciones', component: MedicoVacacionesComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-estadisticas', component: MedicoEstadisticasComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-historial', component: MedicoTurnosComponent, canActivate: [MedicoGuard] },
-    { path: 'medico-perfil', component: MedicoDetailComponent, canActivate: [MedicoGuard] },
-    
+  // Patient Routes
+  {
+    path: "paciente-dashboard",
+    component: PacienteDashboardComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-agenda",
+    component: PacienteAgendaComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-notificaciones",
+    component: PacienteNotificacionesComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-perfil",
+    component: PacienteDetailComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-reagendar-turno/:id",
+    component: PacienteReagendarTurnoComponent,
+    canActivate: [PatientGuard],
+  },
 
-    // Admin Routes (protected)
-    { path: 'turnos', component: TurnosComponent, canActivate: [AdminGuard] },
-    { path: 'turnos/new', component: TurnoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'turnos/advanced-search', component: TurnoAdvancedSearchComponent, canActivate: [AdminGuard] },
-    { path: 'turnos/audit-dashboard', component: AuditDashboardComponent, canActivate: [AdminGuard] },
-    { path: 'turnos/:id', component: TurnoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'turnos/:id/edit', component: TurnoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'agenda', component: AdminAgendaComponent, canActivate: [AdminGuard] },
-    { path: 'agenda/dias-excepcionales', component: DiasExcepcionalesComponent, canActivate: [AdminGuard] },
-    { path: 'pacientes', component: PacientesComponent, canActivate: [AdminGuard] },
-    { path: 'pacientes/new', component: PacienteDetailComponent, canActivate: [AdminGuard] },
-    { path: 'pacientes/:id', component: PacienteDetailComponent, canActivate: [AdminGuard] },
-    { path: 'obraSocial', component: ObraSocialComponent, canActivate: [AdminGuard] },
-    { path: 'obraSocial/new', component: ObraSocialDetailComponent, canActivate: [AdminGuard] },
-    { path: 'obraSocial/:id', component: ObraSocialDetailComponent, canActivate: [AdminGuard] },
-    { path: 'especialidades', component: EspecialidadesComponent, canActivate: [AdminGuard] },
-    { path: 'especialidades/new', component: EspecialidadDetailComponent, canActivate: [AdminGuard] },
-    { path: 'especialidades/:id', component: EspecialidadDetailComponent, canActivate: [AdminGuard] },
-    { path: 'centrosAtencion', component: CentrosAtencionComponent, canActivate: [AdminGuard] },
-    { path: 'centrosAtencion/new', component: CentroAtencionDetailComponent, canActivate: [AdminGuard] },
-    { path: 'centrosAtencion/:id', component: CentroAtencionDetailComponent, canActivate: [AdminGuard] },
-    { path: 'consultorios', component: ConsultoriosComponent, canActivate: [AdminGuard] },
-    { path: 'consultorios/new', component: ConsultorioDetailComponent, canActivate: [AdminGuard] },
-    { path: 'consultorios/:id', component: ConsultorioDetailComponent, canActivate: [AdminGuard] },
-    { path: 'medicos', component: MedicosComponent, canActivate: [AdminGuard] },
-    { path: 'medicos/new', component: MedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'medicos/:id', component: MedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'staffMedico', component: StaffMedicosComponent, canActivate: [AdminGuard] },
-    { path: 'staffMedico/new', component: StaffMedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'staffMedico/:id', component: StaffMedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'disponibilidades-medico', component: DisponibilidadMedicoComponent, canActivate: [AdminGuard] },
-    { path: 'disponibilidades-medico/new', component: DisponibilidadMedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'disponibilidades-medico/:id', component: DisponibilidadMedicoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'esquema-turno', component: EsquemaTurnoComponent, canActivate: [AdminGuard] },
-    { path: 'esquema-turno/new', component: EsquemaTurnoDetailComponent, canActivate: [AdminGuard] },
-    { path: 'esquema-turno/:id', component: EsquemaTurnoDetailComponent, canActivate: [AdminGuard] },
+  // Medico Routes
+  {
+    path: "medico-dashboard",
+    component: MedicoDashboardComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-turnos",
+    component: MedicoTurnosComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-horarios",
+    component: MedicoHorariosComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-vacaciones",
+    component: MedicoVacacionesComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-estadisticas",
+    component: MedicoEstadisticasComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-historial",
+    component: MedicoTurnosComponent,
+    canActivate: [MedicoGuard],
+  },
+  {
+    path: "medico-perfil",
+    component: MedicoDetailComponent,
+    canActivate: [MedicoGuard],
+  },
 
-
-
+  // Admin Routes (protected)
+  { path: "turnos", component: TurnosComponent, canActivate: [AdminGuard] },
+  {
+    path: "turnos/new",
+    component: TurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "turnos/advanced-search",
+    component: TurnoAdvancedSearchComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "turnos/audit-dashboard",
+    component: AuditDashboardComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "turnos/:id",
+    component: TurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "turnos/:id/edit",
+    component: TurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "agenda",
+    component: AdminAgendaComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "agenda/dias-excepcionales",
+    component: DiasExcepcionalesComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "pacientes",
+    component: PacientesComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "pacientes/new",
+    component: PacienteDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "pacientes/:id",
+    component: PacienteDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "obraSocial",
+    component: ObraSocialComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "obraSocial/new",
+    component: ObraSocialDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "obraSocial/:id",
+    component: ObraSocialDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "especialidades",
+    component: EspecialidadesComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "especialidades/new",
+    component: EspecialidadDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "especialidades/:id",
+    component: EspecialidadDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "centrosAtencion",
+    component: CentrosAtencionComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "centrosAtencion/new",
+    component: CentroAtencionDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "centrosAtencion/:id",
+    component: CentroAtencionDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "consultorios",
+    component: ConsultoriosComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "consultorios/new",
+    component: ConsultorioDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "consultorios/:id",
+    component: ConsultorioDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  { path: "medicos", component: MedicosComponent, canActivate: [AdminGuard] },
+  {
+    path: "medicos/new",
+    component: MedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "medicos/:id",
+    component: MedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "staffMedico",
+    component: StaffMedicosComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "staffMedico/new",
+    component: StaffMedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "staffMedico/:id",
+    component: StaffMedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "disponibilidades-medico",
+    component: DisponibilidadMedicoComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "disponibilidades-medico/new",
+    component: DisponibilidadMedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "disponibilidades-medico/:id",
+    component: DisponibilidadMedicoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "esquema-turno",
+    component: EsquemaTurnoComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "esquema-turno/new",
+    component: EsquemaTurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "esquema-turno/:id",
+    component: EsquemaTurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  { path: "recuperar-contrasena", component: RecuperarContrasenaComponent },
 ];
