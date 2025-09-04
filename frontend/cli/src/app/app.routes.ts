@@ -9,7 +9,7 @@ import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
 import { EspecialidadesComponent } from './especialidades/especialidades.component';
 import { EspecialidadDetailComponent } from './especialidades/especialidad-detail.component';
 import { CentrosAtencionComponent } from './centrosAtencion/centrosAtencion.component';
-import { CentroAtencionDetailComponent } from './centrosAtencion/centroAtencion-detail.component';
+import { CentroAtencionDetailRefactoredComponent } from './centrosAtencion/centroAtencion-detail-refactored.component';
 import { ConsultoriosComponent } from './consultorios/consultorios.component';
 import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
 import { MedicosComponent } from './medicos/medicos.component';
@@ -81,8 +81,8 @@ export const routes: Routes = [
     { path: 'especialidades/new', component: EspecialidadDetailComponent, canActivate: [AdminGuard] },
     { path: 'especialidades/:id', component: EspecialidadDetailComponent, canActivate: [AdminGuard] },
     { path: 'centrosAtencion', component: CentrosAtencionComponent, canActivate: [AdminGuard] },
-    { path: 'centrosAtencion/new', component: CentroAtencionDetailComponent, canActivate: [AdminGuard] },
-    { path: 'centrosAtencion/:id', component: CentroAtencionDetailComponent, canActivate: [AdminGuard] },
+    { path: 'centrosAtencion/new', component: CentroAtencionDetailRefactoredComponent, canActivate: [AdminGuard] },
+    { path: 'centrosAtencion/:id', component: CentroAtencionDetailRefactoredComponent, canActivate: [AdminGuard] },
     { path: 'consultorios', component: ConsultoriosComponent, canActivate: [AdminGuard] },
     { path: 'consultorios/new', component: ConsultorioDetailComponent, canActivate: [AdminGuard] },
     { path: 'consultorios/:id', component: ConsultorioDetailComponent, canActivate: [AdminGuard] },
