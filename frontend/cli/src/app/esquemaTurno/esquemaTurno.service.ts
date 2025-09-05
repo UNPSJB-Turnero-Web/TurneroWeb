@@ -86,4 +86,9 @@ export class EsquemaTurnoService {
       }))
     );
   }
+
+  /** Valida conflictos de un esquema sin guardarlo - útil para validación en tiempo real */
+  validarConflictos(esquema: EsquemaTurno): Observable<DataPackage<any>> {
+    return this.http.post<DataPackage<any>>(`${this.url}/validar-conflictos`, esquema);
+  }
 }
