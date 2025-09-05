@@ -1,0 +1,43 @@
+package unpsjb.labprog.backend.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * DTO para el registro de un nuevo médico en el sistema
+ */
+@Getter
+@Setter
+public class MedicoRegistroDTO {
+    // Datos básicos de persona
+    private String nombre;
+    private String apellido;
+    private Long dni;
+    private String email;
+    private String password;
+    private String telefono;
+    
+    // Datos específicos de médico
+    private String matricula;
+    private Integer especialidadId; // ID de la especialidad
+    
+    /**
+     * Constructor vacío para serialización
+     */
+    public MedicoRegistroDTO() {}
+    
+    /**
+     * Constructor completo
+     */
+    public MedicoRegistroDTO(String nombre, String apellido, Long dni, String email, 
+                           String password, String telefono, String matricula, Integer especialidadId) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.dni = dni;
+        this.email = email;
+        this.password = password;
+        this.telefono = telefono;
+        this.matricula = matricula;
+        this.especialidadId = especialidadId;
+    }
+}
