@@ -1,8 +1,11 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Consultorio } from '../../../consultorios/consultorio';
 import { EsquemaTurno } from '../../../esquemaTurno/esquemaTurno';
+import { StaffMedico } from '../../../staffMedicos/staffMedico';
+import { EsquemaTurnoModalComponent } from './esquema-turno-modal.component';
 
 @Component({
   selector: 'app-centro-atencion-consultorios-tab',
@@ -21,6 +24,8 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
   @Input() consultorioExpandido: { [consultorioId: number]: boolean } = {};
   @Input() esquemasSemana: EsquemaTurno[] = [];
   @Input() esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
+  @Input() centroId!: number;
+  @Input() staffMedicoCentro: StaffMedico[] = [];
 
   @Output() modoCrearConsultorioChange = new EventEmitter<boolean>();
   @Output() crearNuevoConsultorio = new EventEmitter<void>();
@@ -35,6 +40,9 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
   @Output() crearNuevoEsquema = new EventEmitter<Consultorio>();
   @Output() verDetalleEsquema = new EventEmitter<EsquemaTurno>();
   @Output() editarEsquema = new EventEmitter<EsquemaTurno>();
+  @Output() esquemaCreado = new EventEmitter<EsquemaTurno>();
+
+  constructor(private modalService: NgbModal) {}
 
   ngOnInit(): void {
     // Inicialización si es necesaria
@@ -87,7 +95,48 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
   }
 
   onCrearNuevoEsquema(consultorio: Consultorio): void {
-    this.crearNuevoEsquema.emit(consultorio);
+    this.abrirModalEsquema(consultorio);
+  }
+
+  /**
+   * Abre el modal para crear un nuevo esquema de turno
+   */
+  abrirModalEsquema(consultorio: Consultorio): void {
+    console.log('🚀 Abriendo modal de esquema para consultorio:', consultorio);
+    console.log('📍 Centro ID:', this.centroId);
+    console.log('👥 Staff médicos del centro:', this.staffMedicoCentro);
+
+    const modalRef = this.modalService.open(EsquemaTurnoModalComponent, {
+      size: 'xl',
+      backdrop: 'static',
+      keyboard: false
+    });
+
+    // Pasar datos al modal
+    modalRef.componentInstance.consultorio = consultorio;
+    modalRef.componentInstance.centroId = this.centroId;
+    modalRef.componentInstance.staffMedicos = this.staffMedicoCentro;
+
+    console.log('✅ Datos enviados al modal:', {
+      consultorio: consultorio,
+      centroId: this.centroId,
+      staffMedicos: this.staffMedicoCentro
+    });
+
+    // Manejar el resultado del modal
+    modalRef.result.then(
+      (nuevoEsquema: EsquemaTurno) => {
+        if (nuevoEsquema) {
+          console.log('✅ Esquema creado exitosamente:', nuevoEsquema);
+          // Emitir evento para que el componente padre actualice los esquemas
+          this.esquemaCreado.emit(nuevoEsquema);
+        }
+      },
+      (dismissed) => {
+        // Modal fue cancelado o cerrado sin guardar
+        console.log('❌ Modal de esquema cerrado sin guardar');
+      }
+    );
   }
 
   getEsquemasDelConsultorio(consultorioId: number): EsquemaTurno[] {

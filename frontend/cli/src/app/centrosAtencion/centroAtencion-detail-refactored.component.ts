@@ -482,6 +482,21 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     }
   }
 
+  onEsquemaCreado(esquema: EsquemaTurno): void {
+    // Recargar esquemas del centro
+    this.cargarEsquemasParaSemana();
+    
+    // Mostrar mensaje de éxito
+    this.mensajeConsultorio = 'Esquema de turno creado exitosamente';
+    this.tipoMensajeConsultorio = 'success';
+    
+    // Limpiar mensaje después de 3 segundos
+    setTimeout(() => {
+      this.mensajeConsultorio = '';
+      this.tipoMensajeConsultorio = '';
+    }, 3000);
+  }
+
   // ==================== MÉTODOS AUXILIARES ====================
 
   private newCentroAtencion(): CentroAtencion {

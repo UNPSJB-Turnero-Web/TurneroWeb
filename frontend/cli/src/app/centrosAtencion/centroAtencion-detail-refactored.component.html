@@ -82,6 +82,8 @@
         [consultorioExpandido]="consultorioExpandido"
         [esquemasSemana]="esquemasSemana"
         [esquemasConsultorio]="esquemasConsultorio"
+        [centroId]="centroAtencion.id || 0"
+        [staffMedicoCentro]="staffMedicoCentro"
         (modoCrearConsultorioChange)="modoCrearConsultorio = $event"
         (crearNuevoConsultorio)="crearNuevoConsultorio()"
         (crearConsultorio)="crearConsultorio()"
@@ -94,7 +96,8 @@
         (eliminarConsultorio)="eliminarConsultorio($event)"
         (crearNuevoEsquema)="crearNuevoEsquema($event)"
         (verDetalleEsquema)="verDetalleEsquema($event)"
-        (editarEsquema)="editarEsquema($event)">
+        (editarEsquema)="editarEsquema($event)"
+        (esquemaCreado)="onEsquemaCreado($event)">
       </app-centro-atencion-consultorios-tab>
     </div>
 
