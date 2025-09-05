@@ -203,7 +203,7 @@ validateNumberPaste(event: ClipboardEvent) {
     // Trigger pulse animation
     this.pulseState = 'clicked';
     
-      this.router.navigate(['/']);
+      this.router.navigate(['/ingresar']);
       this.pulseState = 'idle';
   }
 

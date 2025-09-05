@@ -45,7 +45,10 @@ import { PatientGuard } from "./guards/patient.guard";
 import { MedicoGuard } from "./guards/medico.guard";
 
 export const routes: Routes = [
-    { path: '', component: InicioSesionComponent },
+      { path: '', component: HomeComponent },
+
+  
+    { path: 'ingresar', component: InicioSesionComponent },
     { path: 'registro-usuario', component: RegistroUsuarioComponent },
     
     // Patient Routes
