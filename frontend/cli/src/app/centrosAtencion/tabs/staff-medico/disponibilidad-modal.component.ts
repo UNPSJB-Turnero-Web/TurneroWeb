@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -14,7 +14,7 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
     <div class="modal-header">
       <h4 class="modal-title">
         <i class="fa fa-calendar-plus me-2"></i>
-        Nueva Disponibilidad - Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}
+        Gestionar Disponibilidad - Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}
       </h4>
       <button type="button" class="btn-close" (click)="activeModal.dismiss()">
         <span aria-hidden="true">&times;</span>
@@ -119,6 +119,11 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
             <small class="text-muted">
               <i class="fa fa-info-circle me-1"></i>
               Configure los días y horarios en los que el médico estará disponible para atender pacientes.
+              <br>
+              <i class="fa fa-lightbulb me-1 text-warning"></i>
+              <strong>Tip:</strong> Puede agregar múltiples franjas horarias para el mismo día (ej: mañana y tarde).
+              
+            
             </small>
           </div>
         </div>
@@ -273,7 +278,7 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
     }
   `]
 })
-export class DisponibilidadModalComponent {
+export class DisponibilidadModalComponent implements OnInit {
   staffMedico: StaffMedico;
   disponibilidad: DisponibilidadMedico;
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
@@ -302,8 +307,49 @@ export class DisponibilidadModalComponent {
   }
 
   ngOnInit(): void {
-    // Agregar un horario por defecto
-    this.addHorario();
+    console.log('🔄 Inicializando modal de disponibilidad para:', this.staffMedico);
+    
+    if (this.staffMedico && this.staffMedico.id) {
+      this.cargarDisponibilidadesExistentes();
+    } else {
+      console.warn('⚠️ No se proporcionó staffMedico válido');
+      // Agregar un horario por defecto si no hay médico
+      this.addHorario();
+    }
+  }
+
+  private cargarDisponibilidadesExistentes(): void {
+    console.log('📥 Cargando disponibilidades existentes para staffMedico:', this.staffMedico.id);
+    
+    this.disponibilidadService.byStaffMedico(this.staffMedico.id!).subscribe({
+      next: (response) => {
+        console.log('✅ Disponibilidades encontradas:', response);
+        
+        if (response.data && response.data.length > 0) {
+          // Cargar la disponibilidad existente
+          const disponibilidadExistente = response.data[0];
+          console.log('📋 Cargando disponibilidad existente:', disponibilidadExistente);
+          
+          this.disponibilidad = {
+            id: disponibilidadExistente.id,
+            staffMedicoId: disponibilidadExistente.staffMedicoId,
+            horarios: [...disponibilidadExistente.horarios] // Clonar el array
+          };
+          
+          console.log('📅 Horarios cargados:', this.disponibilidad.horarios);
+          
+        } else {
+          console.log('📝 No hay disponibilidades existentes, creando horario vacío');
+          // No hay disponibilidades existentes, agregar un horario vacío
+          this.addHorario();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar disponibilidades existentes:', error);
+        // En caso de error, agregar un horario por defecto
+        this.addHorario();
+      }
+    });
   }
 
   addHorario(): void {
@@ -352,16 +398,44 @@ export class DisponibilidadModalComponent {
       }
     }
 
-    // Validar que no haya duplicados del mismo día
-    const diasUsados = new Set();
+    // Validar que no haya solapamientos de horarios en el mismo día
+    const horariosPorDia = new Map<string, any[]>();
+    
+    // Agrupar horarios por día
     for (let horario of this.disponibilidad.horarios) {
-      if (diasUsados.has(horario.dia)) {
-        return `El día ${this.getDiaNombre(horario.dia)} está duplicado. Cada día puede tener solo un horario.`;
+      if (!horariosPorDia.has(horario.dia)) {
+        horariosPorDia.set(horario.dia, []);
       }
-      diasUsados.add(horario.dia);
+      horariosPorDia.get(horario.dia)!.push(horario);
+    }
+    
+    // Verificar solapamientos dentro de cada día
+    for (let [dia, horarios] of horariosPorDia) {
+      for (let i = 0; i < horarios.length; i++) {
+        for (let j = i + 1; j < horarios.length; j++) {
+          const horario1 = horarios[i];
+          const horario2 = horarios[j];
+          
+          // Convertir a minutos para comparar
+          const inicio1 = this.timeToMinutes(horario1.horaInicio);
+          const fin1 = this.timeToMinutes(horario1.horaFin);
+          const inicio2 = this.timeToMinutes(horario2.horaInicio);
+          const fin2 = this.timeToMinutes(horario2.horaFin);
+          
+          // Verificar solapamiento
+          if (inicio1 < fin2 && fin1 > inicio2) {
+            return `Hay un solapamiento de horarios en ${this.getDiaNombre(dia)}: ${horario1.horaInicio}-${horario1.horaFin} y ${horario2.horaInicio}-${horario2.horaFin}`;
+          }
+        }
+      }
     }
 
     return null;
+  }
+
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 
   guardarDisponibilidad(): void {
@@ -384,13 +458,109 @@ export class DisponibilidadModalComponent {
     const diasOrden = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
     this.disponibilidad.horarios.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
 
-    // Crear la disponibilidad
+    // Verificar si es una actualización (tiene ID) o una creación nueva
+    if (this.disponibilidad.id && this.disponibilidad.id > 0) {
+      console.log('✏️ Actualizando disponibilidad existente:', this.disponibilidad.id);
+      this.actualizarDisponibilidad();
+    } else {
+      console.log('📝 Creando nueva disponibilidad o verificando existentes');
+      this.verificarYCrearDisponibilidad();
+    }
+  }
+
+  private actualizarDisponibilidad(): void {
+    this.disponibilidadService.update(this.disponibilidad.id, this.disponibilidad).subscribe({
+      next: (response) => {
+        this.guardando = false;
+        this.mensajeExito = 'Disponibilidad actualizada exitosamente';
+        
+        setTimeout(() => {
+          this.activeModal.close(response.data);
+        }, 1000);
+      },
+      error: (error) => {
+        this.guardando = false;
+        console.error('Error al actualizar la disponibilidad:', error);
+        this.mensajeError = error?.error?.message || 'Error al actualizar la disponibilidad. Intente nuevamente.';
+      }
+    });
+  }
+
+  private verificarYCrearDisponibilidad(): void {
+    console.log('🔍 Verificando si ya existe disponibilidad para el médico:', this.staffMedico.id);
+
+    // Verificar si ya existe una disponibilidad para este médico
+    this.disponibilidadService.byStaffMedico(this.staffMedico.id!).subscribe({
+      next: (response) => {
+        console.log('📋 Disponibilidades existentes:', response);
+        
+        if (response.data && response.data.length > 0) {
+          // Ya existe una disponibilidad, vamos a actualizarla
+          const disponibilidadExistente = response.data[0];
+          console.log('✏️ Actualizando disponibilidad existente:', disponibilidadExistente.id);
+          
+          // Combinar horarios existentes con los nuevos (evitando duplicados exactos)
+          const horariosExistentes = disponibilidadExistente.horarios || [];
+          const horariosNuevos = this.disponibilidad.horarios;
+          
+          // Filtrar horarios nuevos que no sean duplicados exactos
+          const horariosUnicos = horariosNuevos.filter(nuevo => {
+            return !horariosExistentes.some(existente => 
+              existente.dia === nuevo.dia && 
+              existente.horaInicio === nuevo.horaInicio && 
+              existente.horaFin === nuevo.horaFin
+            );
+          });
+          
+          const horariosCombinados = [...horariosExistentes, ...horariosUnicos];
+          const diasOrden = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+          horariosCombinados.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
+          
+          console.log('📅 Horarios combinados:', horariosCombinados);
+          
+          // Actualizar la disponibilidad existente
+          const disponibilidadActualizada = {
+            ...disponibilidadExistente,
+            horarios: horariosCombinados
+          };
+          
+          this.disponibilidadService.update(disponibilidadExistente.id, disponibilidadActualizada).subscribe({
+            next: (updateResponse) => {
+              this.guardando = false;
+              this.mensajeExito = `Disponibilidad actualizada exitosamente. Se agregaron ${horariosUnicos.length} horario(s) nuevo(s).`;
+              
+              setTimeout(() => {
+                this.activeModal.close(updateResponse.data);
+              }, 1500);
+            },
+            error: (error) => {
+              this.guardando = false;
+              console.error('Error al actualizar la disponibilidad:', error);
+              this.mensajeError = error?.error?.message || 'Error al actualizar la disponibilidad. Intente nuevamente.';
+            }
+          });
+          
+        } else {
+          // No existe disponibilidad, crear una nueva
+          console.log('📝 Creando nueva disponibilidad');
+          this.crearNuevaDisponibilidad();
+        }
+      },
+      error: (error) => {
+        console.error('Error al verificar disponibilidades existentes:', error);
+        // En caso de error, intentar crear una nueva
+        console.log('⚠️ Error al verificar, intentando crear nueva disponibilidad');
+        this.crearNuevaDisponibilidad();
+      }
+    });
+  }
+
+  private crearNuevaDisponibilidad(): void {
     this.disponibilidadService.create(this.disponibilidad).subscribe({
       next: (response) => {
         this.guardando = false;
         this.mensajeExito = 'Disponibilidad creada exitosamente';
         
-        // Cerrar modal después de un breve delay
         setTimeout(() => {
           this.activeModal.close(response.data);
         }, 1000);

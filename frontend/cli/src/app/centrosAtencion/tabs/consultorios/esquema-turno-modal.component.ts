@@ -114,7 +114,7 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
     <div class="modal-header">
       <h4 class="modal-title">
         <i class="fa fa-calendar-plus me-2"></i>
-        Nuevo Esquema de Turno - {{ consultorio?.nombre }}
+        Gestionar Esquema de Turno - {{ consultorio?.nombre }}
       </h4>
       <button type="button" class="btn-close" aria-label="Close" (click)="onCancel()">
         <span aria-hidden="true">&times;</span>
@@ -169,6 +169,9 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
         <div class="form-help mt-2">
           <i class="fa fa-info-circle me-1 text-primary"></i>
           Solo se muestran disponibilidades de médicos asignados a este centro.
+          <br>
+          <i class="fa fa-magic me-1 text-success"></i>
+          <strong>Smart Update:</strong> Si ya existe esquema para este médico, se agregará a los horarios existentes.
         </div>
       </div>
 
@@ -233,7 +236,7 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             <h6 class="interseccion-title">
               <span class="step-number">3</span>
               <i class="fa fa-calendar-times me-2"></i>
-              Esquemas ya Ocupados en este Consultorio
+              Horarios ocupados
             </h6>
             <div class="horarios-referencia esquemas-existentes">
               <div *ngFor="let esquema of esquemasExistentes" class="horario-ref ocupado">
@@ -903,14 +906,115 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
     this.guardando = true;
 
-    // Crear el esquema
+    // Verificar si ya existe un esquema para esta combinación médico-consultorio
+    this.verificarEsquemaExistente();
+  }
+
+  private verificarEsquemaExistente(): void {
+    console.log('🔍 Verificando esquemas existentes para consultorio:', this.consultorio.id);
+    
+    if (!this.consultorio?.id) {
+      console.error('❌ No se puede verificar esquemas sin consultorio válido');
+      this.crearNuevoEsquema();
+      return;
+    }
+    
+    this.esquemaTurnoService.getByConsultorio(this.consultorio.id).subscribe({
+      next: (response) => {
+        console.log('📋 Esquemas en consultorio:', response.data);
+        
+        // Buscar si hay un esquema existente para el mismo médico (staffMedicoId)
+        const esquemaExistente = response.data?.find(esquema => 
+          esquema.staffMedicoId === this.esquema.staffMedicoId
+        );
+        
+        if (esquemaExistente) {
+          console.log('✏️ Encontrado esquema existente para el mismo médico:', esquemaExistente);
+          this.actualizarEsquemaExistente(esquemaExistente);
+        } else {
+          console.log('📝 No hay esquema existente para este médico, creando nuevo');
+          this.crearNuevoEsquema();
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar esquemas existentes:', error);
+        // En caso de error, intentar crear directamente
+        this.crearNuevoEsquema();
+      }
+    });
+  }
+
+  private actualizarEsquemaExistente(esquemaExistente: EsquemaTurno): void {
+    console.log('🔄 Actualizando esquema existente:', esquemaExistente.id);
+    
+    // Combinar horarios existentes con los nuevos (evitando duplicados exactos)
+    const horariosExistentes = esquemaExistente.horarios || [];
+    const horariosNuevos = this.esquema.horarios;
+    
+    console.log('📅 Horarios existentes:', horariosExistentes);
+    console.log('📅 Horarios nuevos:', horariosNuevos);
+    
+    // Filtrar horarios nuevos que no sean duplicados exactos
+    const horariosUnicos = horariosNuevos.filter(nuevo => {
+      return !horariosExistentes.some(existente => 
+        existente.dia === nuevo.dia && 
+        existente.horaInicio === nuevo.horaInicio && 
+        existente.horaFin === nuevo.horaFin
+      );
+    });
+    
+    console.log('🆕 Horarios únicos a agregar:', horariosUnicos);
+    
+    const horariosCombinados = [...horariosExistentes, ...horariosUnicos];
+    
+    // Ordenar horarios por día
+    const diasOrden = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    horariosCombinados.sort((a, b) => {
+      const diaA = this.normalizarDia(a.dia);
+      const diaB = this.normalizarDia(b.dia);
+      return diasOrden.indexOf(diaA) - diasOrden.indexOf(diaB);
+    });
+    
+    console.log('📋 Horarios combinados y ordenados:', horariosCombinados);
+    
+    // Actualizar el esquema existente
+    const esquemaActualizado = {
+      ...esquemaExistente,
+      horarios: horariosCombinados,
+      intervalo: this.esquema.intervalo // Actualizar también el intervalo
+    };
+    
+    this.esquemaTurnoService.update(esquemaExistente.id, esquemaActualizado).subscribe({
+      next: (response) => {
+        this.guardando = false;
+        const mensajeResultado = horariosUnicos.length > 0 
+          ? `Esquema actualizado exitosamente. Se agregaron ${horariosUnicos.length} horario(s) nuevo(s).`
+          : 'Esquema actualizado exitosamente. No se agregaron horarios nuevos (ya existían).';
+        
+        this.mensajeExito = mensajeResultado;
+        console.log('✅ Esquema actualizado exitosamente:', response);
+        
+        setTimeout(() => {
+          this.activeModal.close(response.data);
+        }, 1500);
+      },
+      error: (error) => {
+        this.guardando = false;
+        console.error('❌ Error al actualizar el esquema:', error);
+        this.mensajeError = error?.error?.status_text || error?.error?.message || 'Error al actualizar el esquema de turno. Intente nuevamente.';
+      }
+    });
+  }
+
+  private crearNuevoEsquema(): void {
+    console.log('📝 Creando nuevo esquema');
+    
     this.esquemaTurnoService.create(this.esquema).subscribe({
       next: (response) => {
         this.guardando = false;
         this.mensajeExito = 'Esquema de turno creado exitosamente';
         console.log('✅ Esquema creado exitosamente:', response);
         
-        // Cerrar modal después de un breve delay
         setTimeout(() => {
           this.activeModal.close(response.data);
         }, 1000);
