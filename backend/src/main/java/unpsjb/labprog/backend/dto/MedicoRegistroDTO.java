@@ -3,12 +3,14 @@ package unpsjb.labprog.backend.dto;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * DTO para el registro de un nuevo médico en el sistema
  */
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MedicoRegistroDTO {
     // Datos básicos de persona
     private String nombre;

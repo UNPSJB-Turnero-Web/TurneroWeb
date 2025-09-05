@@ -125,6 +125,7 @@
                     [(ngModel)]="staffMedico.medicoId"
                     name="medicoId"
                     class="form-control form-control-modern"
+                    (change)="onMedicoSeleccionado()"
                     required
                   >
                     <option value="">Seleccione un médico...</option>
@@ -151,7 +152,7 @@
                     required
                   >
                     <option value="">Seleccione una especialidad...</option>
-                    <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
+                    <option *ngFor="let especialidad of getEspecialidadesDisponibles()" [value]="especialidad.id">
                       {{ especialidad.nombre }}
                     </option>
                   </select>

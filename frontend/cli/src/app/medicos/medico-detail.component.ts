@@ -823,13 +823,20 @@ export class MedicoDetailComponent implements OnInit {
       return;
     }
     
-    // Mantener especialidad principal para compatibilidad con backend
-    this.medico.especialidad = this.medico.especialidades[0];
+    // Crear una copia del médico sin el campo especialidad para enviar al backend
+    const medicoParaEnviar = {
+      id: this.medico.id,
+      nombre: this.medico.nombre,
+      apellido: this.medico.apellido,
+      dni: this.medico.dni,
+      matricula: this.medico.matricula,
+      especialidades: this.medico.especialidades
+    };
     
     const operacion = this.esNuevo ? 'crear' : 'actualizar';
     const op = this.medico.id
-      ? this.medicoService.update(this.medico.id, this.medico)
-      : this.medicoService.create(this.medico);
+      ? this.medicoService.update(this.medico.id, medicoParaEnviar)
+      : this.medicoService.create(medicoParaEnviar);
       
     op.subscribe({
       next: () => {
