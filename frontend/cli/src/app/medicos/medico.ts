@@ -6,5 +6,8 @@ export interface Medico {
   apellido: string;
   dni: string;
   matricula: string;
-  especialidad: Especialidad; 
+  especialidades: Especialidad[]; // Cambiado de especialidad singular a especialidades plural
+  
+  // Mantenemos especialidad para compatibilidad hacia atrás (deprecated)
+  especialidad?: Especialidad; 
 }

@@ -19,6 +19,11 @@ export interface StaffMedico {
     apellido: string;
     dni: string;
     matricula: string;
+    especialidades?: {
+      id: number;
+      nombre: string;
+      descripcion?: string;
+    }[];
     especialidad?: {
       id: number;
       nombre: string;
