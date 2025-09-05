@@ -26,10 +26,6 @@ public class Paciente extends Persona {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-
-    private String email;
-    private String telefono;
-
     @Temporal(TemporalType.DATE)
     private Date fechaNacimiento;
 

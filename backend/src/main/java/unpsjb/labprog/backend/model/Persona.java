@@ -15,12 +15,26 @@ import lombok.Setter;
 @NoArgsConstructor
 public abstract class Persona {
 
-    private String nombre;
-    private String apellido;
+    /*
+     * @Column(nullable = false)
+     */ private String nombre;
+    /*
+     * @Column(nullable = false)
+     */ private String apellido;
 
     @Column(unique = true, nullable = false)
     private Long dni;
 
-    @OneToMany(mappedBy = "dni")
-    private List<Role> roles;
+    /*
+     * @Column(nullable = false, unique = true)
+     */ private String email;
+
+    /*
+     * @Column(nullable = false)
+     */ private String hashedPassword; // Hash de la contraseña
+
+    /*
+     * @Column(nullable = false)
+     */ private String telefono;
+
 }
