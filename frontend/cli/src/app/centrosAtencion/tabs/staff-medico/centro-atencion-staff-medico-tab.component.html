@@ -1,0 +1,293 @@
+<div class="modern-card">
+  <div class="modern-card-header">
+    <div class="d-flex align-items-center">
+      <div class="me-3">
+        <i class="icon-medicos"></i>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modern-card-body">
+    <!-- Alert Messages -->
+    <div *ngIf="mensajeStaff" class="modern-alert" 
+         [class.alert-success]="tipoMensajeStaff === 'success'"
+         [class.alert-danger]="tipoMensajeStaff === 'danger'"
+         [class.alert-info]="tipoMensajeStaff === 'info'">
+      <i class="fa" [class.fa-check-circle]="tipoMensajeStaff === 'success'"
+         [class.fa-exclamation-triangle]="tipoMensajeStaff === 'danger'"
+         [class.fa-info-circle]="tipoMensajeStaff === 'info'"></i>
+      {{ mensajeStaff }}
+    </div>
+    
+    <!-- Add Médico Form -->
+    <div class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
+      <h5 class="mb-3 text-primary">
+        <i class="fa fa-user-plus me-2"></i>Asociar Médico
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Seleccionar Médico:</label>
+          <select [(ngModel)]="medicoSeleccionado" 
+                  (ngModelChange)="onMedicoSeleccionado()"
+                  class="modern-select form-control">
+            <option [ngValue]="null">Seleccione un médico...</option>
+            <option *ngFor="let medico of medicosDisponiblesParaAsociar" [ngValue]="medico">
+              Dr. {{ medico.nombre }} {{ medico.apellido }} - {{ medico.especialidad?.nombre || 'Sin especialidad' }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Especialidad:</label>
+          <select [(ngModel)]="especialidadSeleccionada" class="modern-select form-control">
+            <option [ngValue]="null">Seleccione especialidad...</option>
+            <option *ngFor="let esp of especialidadesMedico" [ngValue]="esp">
+              {{ esp.nombre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn-modern btn-success-modern w-100" (click)="onAsociarMedico()"
+                  [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
+            <i class="fa fa-plus me-2"></i> Asociar
+          </button>
+        </div>
+      </div>
+      <div *ngIf="medicoYaAsociado()" class="modern-alert alert-danger mt-3">
+        <i class="fa fa-exclamation-triangle me-2"></i>
+        Este médico ya está asociado al centro
+      </div>
+    </div>
+    
+    <!-- Staff Médico Table -->
+    <div *ngIf="staffMedicoCentro.length > 0; else noStaff">
+      <div class="modern-table">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>
+                <div class="d-flex align-items-center">
+                  <div class="icon-centro-atencion me-2"></div>
+                  Expandir
+                </div>
+              </th>
+              <th>
+                <div class="d-flex align-items-center">
+                  <div class="icon-medicos me-2"></div>
+                  Médico
+                </div>
+              </th>
+              <th>
+                <div class="d-flex align-items-center">
+                  <div class="icon-especialidades me-2"></div>
+                  Especialidad
+                </div>
+              </th>
+              <th>
+                <div class="d-flex align-items-center">
+                  <div class="icon-obra-social me-2"></div>
+                  Acciones
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let staff of staffMedicoCentro; let i = index">
+              <!-- Fila Principal del Staff Médico -->
+              <tr class="consultorio-row" 
+                  [class.expanded]="staffMedicoExpandido[staff.id || 0]"
+                  (click)="onToggleStaffMedicoExpansion(staff)">
+                <td>
+                  <button class="btn btn-link p-0 text-primary" 
+                          title="Ver disponibilidades">
+                    <i class="fa" 
+                       [class.fa-chevron-right]="!staffMedicoExpandido[staff.id || 0]"
+                       [class.fa-chevron-down]="staffMedicoExpandido[staff.id || 0]"></i>
+                  </button>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="avatar-medicos me-3">
+                      Dr
+                    </div>
+                    <div>
+                      <div class="fw-semibold">Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}</div>
+                      <small class="text-muted">Matrícula: {{ staff.medico?.matricula }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-especialidades">
+                    <i class="fa fa-stethoscope me-1"></i>{{ staff.especialidad?.nombre }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <button class="action-btn btn-add" 
+                            (click)="abrirModalDisponibilidad(staff); $event.stopPropagation()"
+                            title="Nueva disponibilidad (Modal)">
+                      <i class="fa fa-calendar-plus"></i>
+                    </button>
+                    <button class="action-btn btn-add" 
+                            (click)="onAgregarDisponibilidad(staff); $event.stopPropagation()"
+                            title="Gestionar disponibilidad básica">
+                      <i class="fa fa-calendar-check"></i>
+                    </button>
+                    <button class="action-btn btn-edit" 
+                            (click)="onGestionarDisponibilidadAvanzada(staff); $event.stopPropagation()"
+                            title="Gestión avanzada de disponibilidad">
+                      <i class="fa fa-cogs"></i>
+                    </button>
+                    <button class="action-btn btn-delete" 
+                            (click)="onDesasociarMedico(staff); $event.stopPropagation()"
+                            title="Desasociar médico">
+                      <i class="fa fa-unlink"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              
+              <!-- Fila Expandible - Gestión de Disponibilidades -->
+              <tr *ngIf="staffMedicoExpandido[staff.id || 0]" class="expansion-row">
+                <td colspan="4" class="p-0">
+                  <div class="expansion-content">
+                    <div class="row g-4">
+                      
+                      <!-- Panel Principal: Tabla de Disponibilidades -->
+                      <div class="col-12">
+                        <div class="card">
+                          <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                              <i class="fa fa-calendar-check me-2"></i>
+                              Disponibilidades - Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
+                            </h6>
+                            <button class="btn btn-sm btn-light" 
+                                    (click)="abrirModalDisponibilidad(staff)">
+                              <i class="fa fa-plus me-1"></i>Nueva Disponibilidad
+                            </button>
+                          </div>
+                          <div class="card-body p-0">
+                            <!-- Vista Semanal de Disponibilidades -->
+                            <div *ngIf="tieneDisponibilidades(staff); else noDisponibilidadesTable" 
+                                 class="calendario-semanal-disponibilidades">
+                              <div class="table-responsive">
+                                <table class="table-calendario-semanal">
+                                  <thead>
+                                    <tr>
+                                      <th *ngFor="let dia of ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']" 
+                                          class="dia-header-table">
+                                        {{ dia }}
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr>
+                                      <td *ngFor="let dia of ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO']" 
+                                          class="dia-celda">
+                                        <div class="disponibilidades-dia">
+                                          <!-- Disponibilidades para este día -->
+                                          <div *ngFor="let disponibilidad of getDisponibilidadesPorDia(staff, dia)" 
+                                               class="disponibilidad-card-semanal">
+                                            
+                                            <!-- Información del horario -->
+                                            <div class="horarios-disponibilidad">
+                                              <div *ngFor="let horario of getHorariosPorDia(disponibilidad, dia)" 
+                                                   class="horario-item-disponibilidad">
+                                                <i class="fa fa-clock me-1"></i>
+                                                <span class="horario-texto">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
+                                                <div class="duracion-info">
+                                                  <i class="fa fa-hourglass-half me-1"></i>
+                                                  {{ calcularDuracionHorario(horario) }}
+                                                </div>
+                                              </div>
+                                            </div>
+                                            
+                                            <!-- Acciones de disponibilidad -->
+                                            <div class="actions-disponibilidad">
+                                              <button class="btn btn-sm btn-outline-primary" 
+                                                      title="Editar disponibilidad">
+                                                <i class="fa fa-pencil"></i>
+                                              </button>
+                                              <button class="btn btn-sm btn-outline-danger" 
+                                                      title="Eliminar disponibilidad">
+                                                <i class="fa fa-trash"></i>
+                                              </button>
+                                            </div>
+                                          </div>
+                                          
+                                          <!-- Estado cuando no hay disponibilidades para este día -->
+                                          <div *ngIf="getDisponibilidadesPorDia(staff, dia).length === 0" 
+                                               class="dia-libre-disponibilidad">
+                                            <div class="dia-libre-content">
+                                              <i class="fa fa-moon-o"></i>
+                                              <small>Sin disponibilidad</small>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                            
+                            <!-- Estado cuando no hay disponibilidades -->
+                            <ng-template #noDisponibilidadesTable>
+                              <div class="no-disponibilidades-panel text-center py-5">
+                                <i class="fa fa-calendar-times fa-4x text-muted mb-3"></i>
+                                <h5 class="text-muted mb-2">No hay disponibilidades configuradas</h5>
+                                <p class="text-muted mb-4">
+                                  Configure al menos una disponibilidad para que este médico pueda atender pacientes.
+                                </p>
+                                <button class="btn btn-success btn-lg" 
+                                        (click)="abrirModalDisponibilidad(staff)">
+                                  <i class="fa fa-plus me-2"></i>Crear Primera Disponibilidad
+                                </button>
+                              </div>
+                            </ng-template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Información sobre Gestión de Disponibilidades -->
+    <div *ngIf="staffMedicoCentro.length > 0" class="mt-4 p-3" style="background: rgba(40, 167, 69, 0.05); border-radius: 15px; border: 2px solid rgba(40, 167, 69, 0.2);">
+      <h6 class="mb-2 text-success">
+        <i class="fa fa-info-circle me-2"></i>Gestión de Disponibilidades Médicas
+      </h6>
+      <div class="small text-muted mb-2">
+        <p class="mb-1"><strong>Opciones disponibles:</strong></p>
+        <p class="mb-1">
+          <i class="fa fa-chevron-right text-primary me-2"></i><strong>Expandir médico:</strong> Ver disponibilidades configuradas
+        </p>
+        <p class="mb-1">
+          <i class="fa fa-calendar-plus text-success me-2"></i><strong>Nueva disponibilidad:</strong> Configurar horarios de atención
+        </p>
+        <p class="mb-1">
+          <i class="fa fa-cogs text-warning me-2"></i><strong>Gestión avanzada:</strong> Editor completo con opciones detalladas
+        </p>
+        <p class="mb-0">
+          <small class="text-info">
+            <i class="fa fa-lightbulb me-1"></i>
+            Las disponibilidades médicas son necesarias para crear esquemas de turno en los consultorios.
+          </small>
+        </p>
+      </div>
+    </div>
+    
+    <ng-template #noStaff>
+      <div class="text-center py-5" style="opacity: 0.7;">
+        <i class="fa fa-users" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
+        <h5>No hay médicos asociados</h5>
+        <p class="text-muted">Asocie médicos para que puedan atender en este centro</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

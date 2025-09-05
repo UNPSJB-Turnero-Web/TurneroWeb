@@ -1,0 +1,305 @@
+/* ==================== ESTILOS PARA TAB DE STAFF MÉDICO ==================== */
+
+/* Variables CSS para disponibilidades */
+:host {
+  --disponibilidad-primary: #007bff;
+  --disponibilidad-secondary: #6c757d;
+  --disponibilidad-success: #28a745;
+  --disponibilidad-danger: #dc3545;
+  --disponibilidad-warning: #ffc107;
+  --disponibilidad-info: #17a2b8;
+  --disponibilidad-light: #f8f9fa;
+  --disponibilidad-dark: #343a40;
+  --border-color: #dee2e6;
+}
+
+/* Calendario semanal de disponibilidades */
+.calendario-semanal-disponibilidades {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-calendario-semanal {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+  border: 1px solid var(--border-color);
+  background-color: #fff;
+  font-size: 0.875rem;
+}
+
+.table-calendario-semanal th {
+  border: 1px solid var(--border-color);
+  background-color: var(--disponibilidad-primary);
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.dia-header-table {
+  background-color: var(--disponibilidad-primary);
+  color: white;
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.table-calendario-semanal tbody td {
+  border: 1px solid var(--border-color);
+  vertical-align: top;
+  padding: 0.5rem;
+  width: 14.28%;
+  min-height: 120px;
+  background-color: #fff;
+}
+
+.table-calendario-semanal tbody td:hover {
+  background-color: var(--disponibilidad-light);
+}
+
+.dia-celda {
+  min-height: 100px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+.disponibilidades-dia {
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Cards de disponibilidades */
+.disponibilidad-card-semanal {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--disponibilidad-info);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.disponibilidad-card-semanal:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  border-left-color: var(--disponibilidad-primary);
+}
+
+.disponibilidad-card-semanal:last-child {
+  margin-bottom: 0;
+}
+
+/* Horarios en disponibilidades */
+.horarios-disponibilidad {
+  margin-bottom: 0.25rem;
+}
+
+.horario-item-disponibilidad {
+  margin-bottom: 0.25rem;
+  padding: 0.25rem;
+  background-color: var(--disponibilidad-light);
+  border-radius: 0.25rem;
+  border: 1px solid #e9ecef;
+}
+
+.horario-item-disponibilidad:hover {
+  background-color: #e9ecef;
+}
+
+.horario-item-disponibilidad:last-child {
+  margin-bottom: 0;
+}
+
+.horario-texto {
+  font-weight: 600;
+  color: var(--disponibilidad-dark);
+  font-size: 0.75rem;
+}
+
+.duracion-info {
+  color: var(--disponibilidad-secondary);
+  font-size: 0.7rem;
+  margin-top: 0.125rem;
+}
+
+/* Acciones de disponibilidad */
+.actions-disponibilidad {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.actions-disponibilidad .btn {
+  padding: 0.125rem 0.25rem;
+  font-size: 0.7rem;
+  border-radius: 0.25rem;
+}
+
+/* Día libre */
+.dia-libre-disponibilidad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: var(--disponibilidad-secondary);
+  font-style: italic;
+  border: 2px dashed #ddd;
+  border-radius: 0.25rem;
+  background-color: var(--disponibilidad-light);
+}
+
+.dia-libre-content {
+  text-align: center;
+}
+
+.dia-libre-content i {
+  display: block;
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+}
+
+.dia-libre-content small {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* Panel sin disponibilidades */
+.no-disponibilidades-panel {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--disponibilidad-light);
+  border-radius: 0.5rem;
+  margin: 1rem;
+}
+
+.no-disponibilidades-panel i {
+  opacity: 0.5;
+}
+
+.no-disponibilidades-panel h5 {
+  color: var(--disponibilidad-secondary);
+  margin-bottom: 1rem;
+}
+
+.no-disponibilidades-panel p {
+  color: var(--disponibilidad-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* Badges para staff médico */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.badge-primary {
+  background-color: var(--disponibilidad-primary);
+  color: white;
+}
+
+.badge-success {
+  background-color: var(--disponibilidad-success);
+  color: white;
+}
+
+.badge-info {
+  background-color: var(--disponibilidad-info);
+  color: white;
+}
+
+.badge-warning {
+  background-color: var(--disponibilidad-warning);
+  color: var(--disponibilidad-dark);
+}
+
+.badge-danger {
+  background-color: var(--disponibilidad-danger);
+  color: white;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .table-calendario-semanal {
+    font-size: 0.75rem;
+    min-width: 600px;
+  }
+  
+  .table-calendario-semanal th {
+    padding: 0.375rem 0.25rem;
+    font-size: 0.7rem;
+  }
+  
+  .disponibilidad-card-semanal {
+    font-size: 0.75rem;
+    padding: 0.375rem;
+  }
+  
+  .horario-item-disponibilidad {
+    font-size: 0.7rem;
+    padding: 0.2rem;
+  }
+  
+  .actions-disponibilidad .btn {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .disponibilidad-card-semanal {
+    font-size: 0.7rem;
+    padding: 0.3rem;
+  }
+  
+  .horario-texto {
+    font-size: 0.7rem;
+  }
+  
+  .duracion-info {
+    font-size: 0.65rem;
+  }
+}
+
+/* Estados y utilidades */
+.estado-activo {
+  color: var(--disponibilidad-success);
+  font-weight: 600;
+}
+
+.estado-inactivo {
+  color: var(--disponibilidad-danger);
+  font-weight: 600;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Alertas */
+.alert-info-custom {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}

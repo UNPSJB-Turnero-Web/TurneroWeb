@@ -1,0 +1,398 @@
+/* ==================== ESTILOS SIMPLIFICADOS PARA TAB DE CONSULTORIOS ==================== */
+
+/* Variables CSS simplificadas */
+:host {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --border-color: #dee2e6;
+}
+
+/* Contenedor principal */
+.tab-content-container {
+  padding: 1rem;
+  background-color: #fff;
+}
+
+/* Tabla principal de consultorios - estilo simple */
+.modern-table {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  margin-bottom: 1rem;
+}
+
+.modern-table .table {
+  margin-bottom: 0;
+  border-collapse: collapse;
+}
+
+.modern-table .table thead th {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.modern-table .table tbody td {
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  vertical-align: middle;
+  background-color: #fff;
+}
+
+.modern-table .table tbody tr:hover {
+  background-color: var(--light-color);
+}
+
+/* Fila expandible */
+.consultorio-row {
+  cursor: pointer;
+}
+
+.consultorio-row:hover {
+  background-color: var(--light-color);
+}
+
+.consultorio-row.expanded {
+  background-color: #e3f2fd;
+}
+
+.consultorio-expanded-content {
+  background-color: var(--light-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin: 0.5rem 0;
+}
+
+/* Filas de expansión */
+.expansion-row {
+  background-color: var(--light-color);
+}
+
+.expansion-content {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  margin: 0.5rem;
+}
+
+/* Tabla calendario semanal - estilo simple */
+.calendario-semanal-consultorio {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.table-calendario-semanal {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+  border: 1px solid var(--border-color);
+  background-color: #fff;
+  font-size: 0.875rem;
+}
+
+.table-calendario-semanal th {
+  border: 1px solid var(--border-color);
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  padding: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.table-calendario-semanal tbody td {
+  border: 1px solid var(--border-color);
+  vertical-align: top;
+  padding: 0.5rem;
+  width: 14.28%;
+  min-height: 120px;
+  background-color: #fff;
+}
+
+.table-calendario-semanal tbody td:hover {
+  background-color: var(--light-color);
+}
+
+.dia-celda {
+  min-height: 100px;
+  overflow-y: auto;
+  padding: 0.25rem;
+}
+
+/* Esquemas de turno - estilo simple */
+.esquema-card-semanal {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.esquema-card-semanal:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.esquema-card-semanal:last-child {
+  margin-bottom: 0;
+}
+
+/* Información del médico */
+.medico-info-card {
+  background-color: var(--info-color);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  text-align: center;
+}
+
+.medico-nombre-card {
+  font-weight: 600;
+  color: var(--dark-color);
+  font-size: 0.75rem;
+}
+
+/* Horarios */
+.horarios-card {
+  margin-top: 0.25rem;
+}
+
+.horario-item-card {
+  background-color: var(--light-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.7rem;
+  color: var(--dark-color);
+}
+
+.horario-item-card:hover {
+  background-color: #e9ecef;
+}
+
+.horario-item-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Acciones */
+.actions-card {
+  margin-top: 0.25rem;
+  text-align: center;
+}
+
+.actions-card .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  margin: 0 0.125rem;
+  border-radius: 0.25rem;
+}
+
+/* Botones simples */
+.btn-consultorio-info {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+}
+
+.btn-consultorio-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+  color: white;
+}
+
+.btn-consultorio-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.25rem;
+}
+
+.btn-consultorio-danger:hover {
+  background-color: #c82333;
+  border-color: #bd2130;
+  color: white;
+}
+
+/* Información de tiempo */
+.tiempo-info {
+  color: var(--secondary-color);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.duracion-info {
+  color: var(--success-color);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* Grid de consultorios */
+.consultorios-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .consultorios-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+}
+
+/* Cards de consultorios */
+.consultorios-lista .card {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.consultorios-lista .card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.consultorios-lista .card-header {
+  background-color: var(--light-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.consultorios-lista .card-body {
+  padding: 1rem;
+  background-color: #fff;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+}
+
+.badge-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.badge-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.badge-info {
+  background-color: var(--info-color);
+  color: white;
+}
+
+.badge-warning {
+  background-color: var(--warning-color);
+  color: var(--dark-color);
+}
+
+.badge-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Estados */
+.estado-activo {
+  color: var(--success-color);
+  font-weight: 600;
+}
+
+.estado-inactivo {
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+/* Alertas */
+.alert-info-custom {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+/* Día libre */
+.dia-libre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  color: var(--secondary-color);
+  font-style: italic;
+  border: 2px dashed #ddd;
+  border-radius: 0.25rem;
+  background-color: var(--light-color);
+}
+
+.dia-libre-content {
+  text-align: center;
+}
+
+.dia-libre-content i {
+  display: block;
+  font-size: 1.2rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .table-calendario-semanal {
+    font-size: 0.75rem;
+  }
+  
+  .esquema-card-semanal {
+    font-size: 0.75rem;
+    padding: 0.375rem;
+  }
+  
+  .horario-item-card {
+    font-size: 0.65rem;
+    padding: 0.2rem;
+  }
+  
+  .actions-card .btn {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.375rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .esquema-card-semanal {
+    font-size: 0.7rem;
+    padding: 0.3rem;
+  }
+}

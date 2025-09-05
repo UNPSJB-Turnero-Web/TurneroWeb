@@ -1,0 +1,143 @@
+<div *ngIf="centroAtencion" class="container-fluid">
+  
+  <!-- Header Normalizado con Sistema de Colores -->
+  <div class="banner-centro-atencion">
+    <div class="header-content">
+      <div class="title-section">
+        <i class="icon-centro-atencion"></i>
+        <div class="header-text">
+          <h1>{{ centroAtencion.nombre || 'Centro de Atención' }}</h1>
+          <p class="mb-1">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            {{ centroAtencion.direccion || 'Dirección no especificada' }}, 
+            {{ centroAtencion.localidad || 'Localidad' }}, 
+            {{ centroAtencion.provincia || 'Provincia' }}
+          </p>
+          <p class="mb-0 opacity-75">
+            <i class="fas fa-phone me-2"></i>
+            {{ centroAtencion.telefono || 'Teléfono no registrado' }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <ul class="nav nav-tabs modern-tabs mb-4" id="centroTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'detalle'" (click)="activeTab = 'detalle'" type="button">
+        <i class="icon-centro-atencion me-2"></i> Detalle / Editar
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'consultorios'" (click)="activeTab = 'consultorios'"
+        type="button">
+        <i class="icon-consultorios me-2"></i> Consultorios
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'especialidades'" (click)="activeTab = 'especialidades'"
+        type="button">
+        <i class="icon-especialidades me-2"></i> Especialidades
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'staff'" (click)="activeTab = 'staff'" type="button">
+        <i class="icon-medicos me-2"></i> Staff Médico
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    
+    <!-- TAB DETALLE/EDITAR -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'detalle'" [class.active]="activeTab === 'detalle'">
+      <app-centro-atencion-detalle-tab
+        [centroAtencion]="centroAtencion"
+        [modoEdicion]="modoEdicion"
+        [showMap]="showMap"
+        [coordenadas]="coordenadas"
+        [searchQuery]="searchQuery"
+        (save)="save()"
+        (activarEdicion)="activarEdicion()"
+        (cancelar)="cancelar()"
+        (confirmDelete)="confirmDelete($event)"
+        (goBack)="goBack()"
+        (toggleMap)="toggleMap()"
+        (searchLocation)="searchLocation()"
+        (locationSelected)="onLocationSelected($event)"
+        (coordenadasChange)="coordenadas = $event">
+      </app-centro-atencion-detalle-tab>
+    </div>
+
+    <!-- TAB CONSULTORIOS -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'consultorios'" [class.active]="activeTab === 'consultorios'">
+      <app-centro-atencion-consultorios-tab
+        [consultorios]="consultorios"
+        [modoCrearConsultorio]="modoCrearConsultorio"
+        [editConsultorioIndex]="editConsultorioIndex"
+        [nuevoConsultorio]="nuevoConsultorio"
+        [mensajeConsultorio]="mensajeConsultorio"
+        [tipoMensajeConsultorio]="tipoMensajeConsultorio"
+        [consultorioExpandido]="consultorioExpandido"
+        [esquemasSemana]="esquemasSemana"
+        [esquemasConsultorio]="esquemasConsultorio"
+        [centroId]="centroAtencion.id || 0"
+        [staffMedicoCentro]="staffMedicoCentro"
+        (modoCrearConsultorioChange)="modoCrearConsultorio = $event"
+        (crearNuevoConsultorio)="crearNuevoConsultorio()"
+        (crearConsultorio)="crearConsultorio()"
+        (cancelarCrearConsultorio)="cancelarCrearConsultorio()"
+        (toggleConsultorioExpansion)="toggleConsultorioExpansion($event)"
+        (editarConsultorio)="editarConsultorio($event)"
+        (editarHorariosConsultorio)="editarHorariosConsultorio($event)"
+        (guardarEdicionConsultorio)="guardarEdicionConsultorio($event)"
+        (cancelarEdicionConsultorio)="cancelarEdicionConsultorio()"
+        (eliminarConsultorio)="eliminarConsultorio($event)"
+        (crearNuevoEsquema)="crearNuevoEsquema($event)"
+        (verDetalleEsquema)="verDetalleEsquema($event)"
+        (editarEsquema)="editarEsquema($event)"
+        (esquemaCreado)="onEsquemaCreado($event)">
+      </app-centro-atencion-consultorios-tab>
+    </div>
+
+    <!-- TAB ESPECIALIDADES -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'" [class.active]="activeTab === 'especialidades'">
+      <app-centro-atencion-especialidades-tab
+        [especialidadesAsociadas]="especialidadesAsociadas"
+        [especialidadesDisponibles]="especialidadesDisponibles"
+        [especialidadSeleccionada]="especialidadSeleccionada"
+        [mensaje]="mensaje"
+        [tipoMensaje]="tipoMensaje"
+        (especialidadSeleccionadaChange)="especialidadSeleccionada = $event"
+        (asociarEspecialidad)="asociarEspecialidad()"
+        (desasociarEspecialidad)="desasociarEspecialidad($event)">
+      </app-centro-atencion-especialidades-tab>
+    </div>
+
+    <!-- TAB STAFF MÉDICO -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'staff'" [class.active]="activeTab === 'staff'">
+      <app-centro-atencion-staff-medico-tab
+        [staffMedicoCentro]="staffMedicoCentro"
+        [medicosDisponiblesParaAsociar]="medicosDisponiblesParaAsociar"
+        [medicoSeleccionado]="medicoSeleccionado"
+        [especialidadSeleccionada]="especialidadSeleccionada"
+        [especialidadesMedico]="especialidadesMedico"
+        [mensajeStaff]="mensajeStaff"
+        [tipoMensajeStaff]="tipoMensajeStaff"
+        [staffMedicoExpandido]="staffMedicoExpandido"
+        [disponibilidadesStaff]="disponibilidadesStaff"
+        (medicoSeleccionadoChange)="medicoSeleccionado = $event"
+        (especialidadSeleccionadaChange)="especialidadSeleccionada = $event"
+        (medicoSeleccionado$)="onMedicoSeleccionado()"
+        (asociarMedico)="asociarMedico()"
+        (desasociarMedico)="desasociarMedico($event)"
+        (toggleStaffMedicoExpansion)="toggleStaffMedicoExpansion($event)"
+        (agregarDisponibilidad)="agregarDisponibilidad($event)"
+        (gestionarDisponibilidadAvanzada)="gestionarDisponibilidadAvanzada($event)"
+        (crearNuevaDisponibilidad)="crearNuevaDisponibilidad($event)"
+        (disponibilidadCreada)="onDisponibilidadCreada($event)">
+      </app-centro-atencion-staff-medico-tab>
+    </div>
+  </div>
+</div>

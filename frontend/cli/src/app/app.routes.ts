@@ -11,7 +11,7 @@ import { PacienteDetailComponent } from './pacientes/paciente-detail.component';
 import { EspecialidadesComponent } from './especialidades/especialidades.component';
 import { EspecialidadDetailComponent } from './especialidades/especialidad-detail.component';
 import { CentrosAtencionComponent } from './centrosAtencion/centrosAtencion.component';
-import { CentroAtencionDetailComponent } from './centrosAtencion/centroAtencion-detail.component';
+import { CentroAtencionDetailRefactoredComponent } from './centrosAtencion/centroAtencion-detail-refactored.component';
 import { ConsultoriosComponent } from './consultorios/consultorios.component';
 import { ConsultorioDetailComponent } from './consultorios/consultorio-detail.component';
 import { MedicosComponent } from './medicos/medicos.component';

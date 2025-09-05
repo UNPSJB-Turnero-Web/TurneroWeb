@@ -184,4 +184,19 @@ public class EsquemaTurnoPresenter {
             return Response.error(null, "Error al redistribuir esquemas del médico: " + e.getMessage());
         }
     }
+
+    @PostMapping("/validar-conflictos")
+    public ResponseEntity<Object> validarConflictos(@RequestBody EsquemaTurnoDTO dto) {
+        try {
+            Map<String, Object> resultado = service.validarConflictos(dto);
+            
+            if ((Boolean) resultado.get("valido")) {
+                return Response.ok(resultado, "Validación completada sin conflictos");
+            } else {
+                return Response.ok(resultado, "Se encontraron conflictos en la validación");
+            }
+        } catch (Exception e) {
+            return Response.error(null, "Error al validar conflictos: " + e.getMessage());
+        }
+    }
 }
