@@ -67,14 +67,14 @@ public class StaffMedicoService {
         validarStaffMedico(staffMedico);
 
         // Validar unicidad de la asociación médico-centro-especialidad
-        Especialidad especialidad = staffMedico.getMedico().getEspecialidad();
+        Especialidad especialidad = staffMedico.getEspecialidad();
         if (staffMedico.getId() == null || staffMedico.getId() == 0) { // Creación
-            if (repository.existsByMedicoAndCentroAtencionAndMedico_Especialidad(
+            if (repository.existsByMedicoAndCentroAtencionAndEspecialidad(
                     staffMedico.getMedico(), staffMedico.getCentroAtencion(), especialidad)) {
                 throw new IllegalStateException("El médico ya está asociado a este centro con esa especialidad");
             }
         } else { // Actualización
-            StaffMedico existente = repository.findByMedicoAndCentroAtencionAndMedico_Especialidad(
+            StaffMedico existente = repository.findByMedicoAndCentroAtencionAndEspecialidad(
                     staffMedico.getMedico(), staffMedico.getCentroAtencion(), especialidad);
             if (existente != null && !existente.getId().equals(staffMedico.getId())) {
                 throw new IllegalStateException("El médico ya está asociado a este centro con esa especialidad");
@@ -100,9 +100,9 @@ public class StaffMedicoService {
         dto.setId(staff.getId());
         dto.setCentro(toCentroAtencionDTO(staff.getCentroAtencion()));
         dto.setMedico(toMedicoDTO(staff.getMedico()));
-        // Accede a la especialidad a través del médico
-        if (staff.getMedico() != null && staff.getMedico().getEspecialidad() != null) {
-            dto.setEspecialidad(toEspecialidadDTO(staff.getMedico().getEspecialidad()));
+        // Usar la especialidad directa del staff
+        if (staff.getEspecialidad() != null) {
+            dto.setEspecialidad(toEspecialidadDTO(staff.getEspecialidad()));
         }
         dto.setDisponibilidad(toDisponibilidadDTOList(staff.getDisponibilidad()));
         dto.setConsultorio(toConsultorioDTO(staff.getConsultorio()));
@@ -152,8 +152,8 @@ public class StaffMedicoService {
         if (staff.getCentroAtencion() == null || staff.getCentroAtencion().getId() == null || staff.getCentroAtencion().getId() <= 0) {
             throw new IllegalStateException("Debe seleccionar un centro de atención válido.");
         }
-        // Validar especialidad a través del médico
-        if (staff.getMedico().getEspecialidad() == null || staff.getMedico().getEspecialidad().getId() == null || staff.getMedico().getEspecialidad().getId() <= 0) {
+        // Validar especialidad directa
+        if (staff.getEspecialidad() == null || staff.getEspecialidad().getId() == null || staff.getEspecialidad().getId() <= 0) {
             throw new IllegalStateException("Debe seleccionar una especialidad válida.");
         }
         // Podés agregar más validaciones según tu modelo

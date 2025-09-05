@@ -1,7 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,17 +60,35 @@ public class MedicoService {
         // Validar datos personales
         validarMedico(medico);
 
-        // Validar Especialidad
-        if (medico.getEspecialidad() == null || medico.getEspecialidad().getNombre() == null || medico.getEspecialidad().getNombre().isBlank()) {
-            throw new IllegalArgumentException("Debe proporcionar una especialidad válida");
+        // Validar Especialidades
+        if (medico.getEspecialidades() == null || medico.getEspecialidades().isEmpty()) {
+            throw new IllegalArgumentException("Debe proporcionar al menos una especialidad válida");
         }
 
-        // Validar existencia de la especialidad
-        Especialidad especialidad = especialidadRepo.findByNombreIgnoreCase(medico.getEspecialidad().getNombre());
-        if (especialidad == null) {
-            throw new IllegalArgumentException("La especialidad " + medico.getEspecialidad().getNombre() + " NO existe");
+        // Validar existencia de las especialidades y cargar las entidades completas
+        Set<Especialidad> especialidadesValidadas = new HashSet<>();
+        for (Especialidad esp : medico.getEspecialidades()) {
+            if (esp.getId() != null) {
+                // Buscar por ID
+                Optional<Especialidad> especialidadOpt = especialidadRepo.findById(esp.getId());
+                if (especialidadOpt.isPresent()) {
+                    especialidadesValidadas.add(especialidadOpt.get());
+                } else {
+                    throw new IllegalArgumentException("La especialidad con ID " + esp.getId() + " NO existe");
+                }
+            } else if (esp.getNombre() != null && !esp.getNombre().isBlank()) {
+                // Buscar por nombre
+                Especialidad especialidad = especialidadRepo.findByNombreIgnoreCase(esp.getNombre());
+                if (especialidad != null) {
+                    especialidadesValidadas.add(especialidad);
+                } else {
+                    throw new IllegalArgumentException("La especialidad " + esp.getNombre() + " NO existe");
+                }
+            } else {
+                throw new IllegalArgumentException("Debe proporcionar especialidades válidas con ID o nombre");
+            }
         }
-        medico.setEspecialidad(especialidad);
+        medico.setEspecialidades(especialidadesValidadas);
 
         if (medico.getId() == null || medico.getId() == 0) {
             // CREACIÓN
@@ -94,7 +114,7 @@ public class MedicoService {
             existente.setApellido(medico.getApellido());
             existente.setDni(medico.getDni());
             existente.setMatricula(medico.getMatricula());
-            existente.setEspecialidad(especialidad);
+            existente.setEspecialidades(especialidadesValidadas);
             medico = existente;
         }
 
@@ -119,14 +139,18 @@ public class MedicoService {
         dto.setDni(medico.getDni() != null ? String.valueOf(medico.getDni()) : null);
         dto.setMatricula(medico.getMatricula());
 
-        // Mapear Especialidad (solo una)
-        if (medico.getEspecialidad() != null) {
-            Especialidad esp = medico.getEspecialidad();
-            EspecialidadDTO espDTO = new EspecialidadDTO();
-            espDTO.setId(esp.getId());
-            espDTO.setNombre(esp.getNombre());
-            espDTO.setDescripcion(esp.getDescripcion());
-            dto.setEspecialidad(espDTO);
+        // Mapear Especialidades (múltiples)
+        if (medico.getEspecialidades() != null && !medico.getEspecialidades().isEmpty()) {
+            Set<EspecialidadDTO> especialidadesDTO = medico.getEspecialidades().stream()
+                    .map(esp -> {
+                        EspecialidadDTO espDTO = new EspecialidadDTO();
+                        espDTO.setId(esp.getId());
+                        espDTO.setNombre(esp.getNombre());
+                        espDTO.setDescripcion(esp.getDescripcion());
+                        return espDTO;
+                    })
+                    .collect(Collectors.toSet());
+            dto.setEspecialidades(especialidadesDTO);
         }
 
         return dto;
@@ -144,14 +168,18 @@ public class MedicoService {
         }
         medico.setMatricula(dto.getMatricula());
 
-        // Asignar Especialidad (solo una)
-        if (dto.getEspecialidad() != null) {
-            EspecialidadDTO espDto = dto.getEspecialidad();
-            Especialidad esp = new Especialidad();
-            esp.setId(espDto.getId());
-            esp.setNombre(espDto.getNombre());
-            esp.setDescripcion(espDto.getDescripcion());
-            medico.setEspecialidad(esp);
+        // Asignar Especialidades (múltiples)
+        if (dto.getEspecialidades() != null && !dto.getEspecialidades().isEmpty()) {
+            Set<Especialidad> especialidades = dto.getEspecialidades().stream()
+                    .map(espDto -> {
+                        Especialidad esp = new Especialidad();
+                        esp.setId(espDto.getId());
+                        esp.setNombre(espDto.getNombre());
+                        esp.setDescripcion(espDto.getDescripcion());
+                        return esp;
+                    })
+                    .collect(Collectors.toSet());
+            medico.setEspecialidades(especialidades);
         }
 
         return medico;

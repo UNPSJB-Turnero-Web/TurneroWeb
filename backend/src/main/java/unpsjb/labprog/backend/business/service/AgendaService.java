@@ -149,7 +149,7 @@ public class AgendaService {
             evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
             evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
             evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
-            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico().getMedico()
+            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico()
                     .getEspecialidad().getNombre());
             evento.setConsultorioId(esquemaTurno.getConsultorio().getId());
             evento.setConsultorioNombre(esquemaTurno.getConsultorio().getNombre());
@@ -237,7 +237,7 @@ public class AgendaService {
         public void resolverConflictosConsultorios(Integer centroAtencionId, Integer especialidadId, LocalDate fecha) {
             String diaSemana = fecha.getDayOfWeek().name();
             
-            List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedico_Medico_Especialidad_IdAndCentroAtencion_Id(
+            List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByStaffMedico_Especialidad_IdAndCentroAtencion_Id(
                 especialidadId, centroAtencionId);
             
             Map<Integer, List<EsquemaTurno>> esquemasPorConsultorio = esquemas.stream()
@@ -445,7 +445,7 @@ public class AgendaService {
             evento.setStaffMedicoId(esquemaTurno.getStaffMedico().getId());
             evento.setStaffMedicoNombre(esquemaTurno.getStaffMedico().getMedico().getNombre());
             evento.setStaffMedicoApellido(esquemaTurno.getStaffMedico().getMedico().getApellido());
-            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico().getMedico()
+            evento.setEspecialidadStaffMedico(esquemaTurno.getStaffMedico()
                     .getEspecialidad().getNombre());
             evento.setConsultorioId(esquemaTurno.getConsultorio().getId());
             evento.setConsultorioNombre(esquemaTurno.getConsultorio().getNombre());

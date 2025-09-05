@@ -1,8 +1,10 @@
 package unpsjb.labprog.backend.presenter;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -156,19 +158,30 @@ public class MedicoPresenter {
                                        null);
             }
 
-            // Validar que la especialidad existe
-            EspecialidadDTO especialidadDTO = especialidadService.findById(registroDTO.getEspecialidadId());
-            if (especialidadDTO == null) {
+            // Validar que las especialidades existen y crear el conjunto
+            Set<Especialidad> especialidades = new HashSet<>();
+            if (registroDTO.getEspecialidadIds() == null || registroDTO.getEspecialidadIds().isEmpty()) {
                 return Response.response(HttpStatus.BAD_REQUEST, 
-                                       "No existe la especialidad con ID: " + registroDTO.getEspecialidadId(), 
+                                       "Debe especificar al menos una especialidad", 
                                        null);
             }
 
-            // Crear objeto Especialidad desde el DTO (necesario para el RegistrationService)
-            Especialidad especialidad = new Especialidad();
-            especialidad.setId(especialidadDTO.getId());
-            especialidad.setNombre(especialidadDTO.getNombre());
-            especialidad.setDescripcion(especialidadDTO.getDescripcion());
+            for (Integer especialidadId : registroDTO.getEspecialidadIds()) {
+                EspecialidadDTO especialidadDTO = especialidadService.findById(especialidadId);
+                if (especialidadDTO == null) {
+                    return Response.response(HttpStatus.BAD_REQUEST, 
+                                           "No existe la especialidad con ID: " + especialidadId, 
+                                           null);
+                }
+
+                // Crear objeto Especialidad desde el DTO
+                Especialidad especialidad = new Especialidad();
+                especialidad.setId(especialidadDTO.getId());
+                especialidad.setNombre(especialidadDTO.getNombre());
+                especialidad.setDescripcion(especialidadDTO.getDescripcion());
+                
+                especialidades.add(especialidad);
+            }
 
             // Registrar el médico usando el RegistrationService
             Medico medicoRegistrado = registrationService.registrarMedico(
@@ -179,7 +192,7 @@ public class MedicoPresenter {
                 registroDTO.getApellido(),
                 registroDTO.getTelefono(),
                 registroDTO.getMatricula(),
-                especialidad
+                especialidades
             );
             
             // Convertir a DTO para la respuesta

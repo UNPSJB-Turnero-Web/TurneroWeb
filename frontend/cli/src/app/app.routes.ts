@@ -184,12 +184,12 @@ export const routes: Routes = [
   },
   {
     path: "centrosAtencion/new",
-    component: CentroAtencionDetailRefactoredComponent,
+    component: CentroAtencionDetailComponent,
     canActivate: [AdminGuard],
   },
   {
     path: "centrosAtencion/:id",
-    component: CentroAtencionDetailRefactoredComponent,
+    component: CentroAtencionDetailComponent,
     canActivate: [AdminGuard],
   },
   {

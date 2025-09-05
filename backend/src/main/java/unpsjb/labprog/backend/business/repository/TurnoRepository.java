@@ -49,8 +49,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
     List<Turno> findByStaffMedico_Id(Integer staffMedicoId);
     Page<Turno> findByStaffMedico_Id(Integer staffMedicoId, Pageable pageable);
     
-    List<Turno> findByStaffMedico_Medico_Especialidad_Id(Integer especialidadId);
-    Page<Turno> findByStaffMedico_Medico_Especialidad_Id(Integer especialidadId, Pageable pageable);
+    List<Turno> findByStaffMedico_Especialidad_Id(Integer especialidadId);
+    Page<Turno> findByStaffMedico_Especialidad_Id(Integer especialidadId, Pageable pageable);
     
     List<Turno> findByConsultorio_CentroAtencion_Id(Integer centroId);
     Page<Turno> findByConsultorio_CentroAtencion_Id(Integer centroId, Pageable pageable);
@@ -77,7 +77,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
            "(:estado IS NULL OR t.estado = :estado) AND " +
            "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
            "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
-           "(:especialidadId IS NULL OR t.staffMedico.medico.especialidad.id = :especialidadId) AND " +
+           "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
            "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
            "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
            "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
@@ -96,7 +96,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
            "(:estado IS NULL OR t.estado = :estado) AND " +
            "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
            "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
-           "(:especialidadId IS NULL OR t.staffMedico.medico.especialidad.id = :especialidadId) AND " +
+           "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
            "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
            "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
            "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
@@ -115,7 +115,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
            "LEFT JOIN t.paciente p " +
            "LEFT JOIN t.staffMedico sm " +
            "LEFT JOIN sm.medico m " +
-           "LEFT JOIN m.especialidad e " +
+           "LEFT JOIN sm.especialidad e " +
            "LEFT JOIN t.consultorio c " +
            "LEFT JOIN c.centroAtencion ca " +
            "WHERE " +

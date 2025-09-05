@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.dto;
 
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,7 +20,7 @@ public class MedicoRegistroDTO {
     
     // Datos específicos de médico
     private String matricula;
-    private Integer especialidadId; // ID de la especialidad
+    private Set<Integer> especialidadIds; // IDs de las especialidades
     
     /**
      * Constructor vacío para serialización
@@ -30,7 +31,7 @@ public class MedicoRegistroDTO {
      * Constructor completo
      */
     public MedicoRegistroDTO(String nombre, String apellido, Long dni, String email, 
-                           String password, String telefono, String matricula, Integer especialidadId) {
+                           String password, String telefono, String matricula, Set<Integer> especialidadIds) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -38,6 +39,6 @@ public class MedicoRegistroDTO {
         this.password = password;
         this.telefono = telefono;
         this.matricula = matricula;
-        this.especialidadId = especialidadId;
+        this.especialidadIds = especialidadIds;
     }
 }
