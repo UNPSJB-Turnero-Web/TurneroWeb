@@ -13,7 +13,7 @@ import { MedicoService } from "../medicos/medico.service";
   styleUrl: "./home.css",
 })
 export class HomeComponent {
-  selectedRole: "admin" | "medico" | "patient" | null = null;
+  selectedRole: "admin" | "medico" | "patient" | "operador" | null = null;
   isLoading = false;
   isRegistering = false;
   errorMessage = "";
@@ -43,6 +43,11 @@ export class HomeComponent {
     fechaNacimiento: "",
     obraSocialId: "",
   };
+  operadorCredentials = {
+    username: "",
+    email: "",
+    password: "",
+  };
 
   constructor(
     private router: Router,
@@ -52,7 +57,7 @@ export class HomeComponent {
     this.loadObrasSociales();
   }
 
-  selectRole(role: "admin" | "medico" | "patient") {
+  selectRole(role: "admin" | "medico" | "patient" | "operador") {
     this.selectedRole = role;
     this.errorMessage = "";
     this.showRegistrationPrompt = false;
@@ -194,6 +199,25 @@ export class HomeComponent {
       });
     } catch (error) {
       this.errorMessage = "Error inesperado. Por favor intenta nuevamente.";
+      this.isLoading = false;
+    }
+  }
+  async loginOperador() {
+    this.isLoading = true;
+    this.errorMessage = "";
+
+    try {
+      // Aquí iría tu llamada al backend para validar el operador
+      await new Promise((resolve) => setTimeout(resolve, 800)); // Simula delay
+
+      // Guardar en localStorage
+      localStorage.setItem("userRole", "operador");
+      localStorage.setItem("userName", this.operadorCredentials.username);
+
+      this.isLoading = false;
+      this.router.navigate(["/operador-dashboard"]); // Ajustar ruta
+    } catch (error) {
+      this.errorMessage = "Usuario o contraseña inválidos";
       this.isLoading = false;
     }
   }

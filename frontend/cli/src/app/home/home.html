@@ -1,293 +1,274 @@
 <div class="home-container">
-      <!-- Hero Section -->
-      <div class="hero-section">
-        <div class="hero-content">
-          <div class="brand-logo">
-            <i class="fas fa-calendar-check"></i>
-            <h1 class="brand-title">CheTurno</h1>
-          </div>
-          <p class="hero-subtitle">
-            Gestión inteligente de turnos médicos para centros de atención
-          </p>
-        </div>
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <div class="brand-logo">
+        <i class="fas fa-calendar-check"></i>
+        <h1 class="brand-title">CheTurno</h1>
       </div>
+      <p class="hero-subtitle">
+        Gestión inteligente de turnos médicos para centros de atención
+      </p>
+    </div>
+  </div>
 
-      <!-- Login Section -->
-      <div class="login-section">
-        <div class="login-card">
-          <h2 class="login-title">Acceso al Sistema</h2>
-          
-          <!-- Role Selection -->
-          <div class="role-selection" *ngIf="!selectedRole">
-            <h3>Selecciona tu tipo de acceso:</h3>
-            <div class="role-buttons">
-              <button 
-                class="role-btn admin-btn" 
-                (click)="selectRole('admin')"
-              >
-                <i class="fas fa-user-shield"></i>
-                <span>Administrador</span>
-                <small>Gestión completa del sistema</small>
-              </button>
-              <button 
-                class="role-btn medico-btn" 
-                (click)="selectRole('medico')"
-              >
-                <i class="fas fa-user-md"></i>
-                <span>Médico</span>
-                <small>Gestión de turnos y horarios</small>
-              </button>
-              <button 
-                class="role-btn patient-btn" 
-                (click)="selectRole('patient')"
-              >
-                <i class="fas fa-user"></i>
-                <span>Paciente</span>
-                <small>Consulta y gestión de turnos</small>
-              </button>
-            </div>
-          </div>
+  <!-- Login Section -->
+  <div class="login-section">
+    <div class="login-card">
+      <h2 class="login-title">Acceso al Sistema</h2>
 
-          <!-- Admin Login Form -->
-          <div class="login-form" *ngIf="selectedRole === 'admin'">
-            <h3>Acceso Administrador</h3>
-            <div class="dev-notice">
-              <i class="fas fa-code"></i>
-              <p>Modo desarrollo - Acceso directo habilitado</p>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn btn-login" (click)="loginAdmin()">
-                <i class="fas fa-sign-in-alt"></i>
-                Ingresar como Admin
-              </button>
-              <button type="button" class="btn btn-back" (click)="goBack()">
-                <i class="fas fa-arrow-left"></i>
-                Volver
-              </button>
-            </div>
-          </div>
-
-          <!-- Medico Login Form -->
-          <div class="login-form" *ngIf="selectedRole === 'medico'">
-            <h3>Acceso Médico</h3>
-            <form (ngSubmit)="loginMedico()" #medicoForm="ngForm">
-              <div class="form-group">
-                <label for="matricula">Matrícula:</label>
-                <input 
-                  type="text" 
-                  id="matricula" 
-                  name="matricula"
-                  [(ngModel)]="medicoCredentials.matricula"
-                  class="form-control"
-                  required
-                  placeholder="Ingresa tu número de matrícula"
-                  pattern="[0-9]{5}-[0-9]{1}"
-                  maxlength="7"
-                >
-                <small class="form-text">Formato: 12345-6</small>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-login" [disabled]="!medicoForm.valid">
-                  <i class="fas fa-sign-in-alt"></i>
-                  Ingresar
-                </button>
-                <button type="button" class="btn btn-back" (click)="goBack()">
-                  <i class="fas fa-arrow-left"></i>
-                  Volver
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Patient Login Form -->
-          <div class="login-form" *ngIf="selectedRole === 'patient'">
-            <h3>Acceso Paciente</h3>
-            <form (ngSubmit)="loginPatient()" #patientForm="ngForm">
-              <div class="form-group">
-                <label for="dni">DNI:</label>
-                <input 
-                  type="text" 
-                  id="dni" 
-                  name="dni"
-                  [(ngModel)]="patientCredentials.dni"
-                  class="form-control"
-                  required
-                  placeholder="Ingresa tu DNI (sin puntos)"
-                  pattern="[0-9]{7,8}"
-                  maxlength="8"
-                >
-                <small class="form-text">Ingresa tu DNI sin puntos ni espacios</small>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn btn-login" [disabled]="!patientForm.valid">
-                  <i class="fas fa-sign-in-alt"></i>
-                  Ingresar
-                </button>
-                <button type="button" class="btn btn-back" (click)="goBack()">
-                  <i class="fas fa-arrow-left"></i>
-                  Volver
-                </button>
-              </div>
-            </form>
-            
-            <!-- Registration prompt -->
-            <div class="registration-prompt" *ngIf="showRegistrationPrompt">
-              <p>No encontramos tu DNI en el sistema.</p>
-              <button class="btn btn-register" (click)="showRegistrationForm = true">
-                <i class="fas fa-user-plus"></i>
-                Registrarse como Paciente
-              </button>
-            </div>
-          </div>
-
-          <!-- Patient Registration Form -->
-          <div class="login-form" *ngIf="showRegistrationForm">
-            <h3>Registro de Paciente</h3>
-            <form (ngSubmit)="submitRegistration()" #registrationForm="ngForm">
-              <div class="form-group">
-                <label for="regDni">DNI:</label>
-                <input 
-                  type="text" 
-                  id="regDni" 
-                  name="regDni"
-                  [(ngModel)]="registrationData.dni"
-                  class="form-control"
-                  required
-                  [value]="patientCredentials.dni"
-                >
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="nombre">Nombre:</label>
-                  <input 
-                    type="text" 
-                    id="nombre" 
-                    name="nombre"
-                    [(ngModel)]="registrationData.nombre"
-                    class="form-control"
-                    required
-                    placeholder="Tu nombre"
-                  >
-                </div>
-                <div class="form-group">
-                  <label for="apellido">Apellido:</label>
-                  <input 
-                    type="text" 
-                    id="apellido" 
-                    name="apellido"
-                    [(ngModel)]="registrationData.apellido"
-                    class="form-control"
-                    required
-                    placeholder="Tu apellido"
-                  >
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="email">Email:</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email"
-                  [(ngModel)]="registrationData.email"
-                  class="form-control"
-                  required
-                  placeholder="tu@email.com"
-                >
-              </div>
-
-              <div class="form-group">
-                <label for="telefono">Teléfono:</label>
-                <input 
-                  type="tel" 
-                  id="telefono" 
-                  name="telefono"
-                  [(ngModel)]="registrationData.telefono"
-                  class="form-control"
-                  required
-                  placeholder="Tu número de teléfono"
-                >
-              </div>
-
-              <div class="form-group">
-                <label for="fechaNacimiento">Fecha de Nacimiento:</label>
-                <input 
-                  type="date" 
-                  id="fechaNacimiento" 
-                  name="fechaNacimiento"
-                  [(ngModel)]="registrationData.fechaNacimiento"
-                  class="form-control"
-                  required
-                >
-              </div>
-
-              <div class="form-group">
-                <label for="obraSocial">Obra Social (opcional):</label>
-                <select 
-                  id="obraSocial" 
-                  name="obraSocial"
-                  [(ngModel)]="registrationData.obraSocialId"
-                  class="form-control"
-                >
-                  <option value="">Sin obra social</option>
-                  <option *ngFor="let obra of obrasSociales" [value]="obra.id">
-                    {{ obra.nombre }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn btn-register" [disabled]="!registrationForm.valid || isRegistering">
-                  <i class="fas fa-user-plus" *ngIf="!isRegistering"></i>
-                  <i class="fas fa-spinner fa-spin" *ngIf="isRegistering"></i>
-                  {{ isRegistering ? 'Registrando...' : 'Registrar' }}
-                </button>
-                <button type="button" class="btn btn-back" (click)="cancelRegistration()">
-                  <i class="fas fa-arrow-left"></i>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Error Messages -->
-          <div class="error-message" *ngIf="errorMessage">
-            <i class="fas fa-exclamation-triangle"></i>
-            {{ errorMessage }}
-          </div>
-
-          <!-- Loading State -->
-          <div class="loading" *ngIf="isLoading">
-            <i class="fas fa-spinner fa-spin"></i>
-            Verificando credenciales...
-          </div>
-        </div>
-      </div>
-
-      <!-- Features Section -->
-      <div class="features-section" *ngIf="!selectedRole">
-        <div class="features-grid">
-          <div class="feature-card">
-            <i class="fas fa-calendar-alt"></i>
-            <h3>Gestión de Turnos</h3>
-            <p>Programa y administra turnos de manera eficiente</p>
-          </div>
-          <div class="feature-card">
+      <!-- Role Selection -->
+      <div class="role-selection" *ngIf="!selectedRole">
+        <h3>Selecciona tu tipo de acceso:</h3>
+        <div class="role-buttons">
+          <button class="role-btn admin-btn" (click)="selectRole('admin')">
+            <i class="fas fa-user-shield"></i>
+            <span>Administrador</span>
+            <small>Gestión completa del sistema</small>
+          </button>
+          <button class="role-btn operador-btn" (click)="selectRole('operador')">
+            <i class="fas fa-user-cog"></i>
+            <span>Operador</span>
+            <small>Gestión de turnos y operaciones</small>
+          </button>
+          <button class="role-btn medico-btn" (click)="selectRole('medico')">
             <i class="fas fa-user-md"></i>
-            <h3>Control de Médicos</h3>
-            <p>Administra horarios y disponibilidad del personal médico</p>
-          </div>
-          <div class="feature-card">
-            <i class="fas fa-chart-line"></i>
-            <h3>Reportes</h3>
-            <p>Visualiza estadísticas y métricas del centro</p>
-          </div>
-          <div class="feature-card">
-            <i class="fas fa-mobile-alt"></i>
-            <h3>Acceso Fácil</h3>
-            <p>Interfaz intuitiva y accesible desde cualquier dispositivo</p>
-          </div>
+            <span>Médico</span>
+            <small>Gestión de turnos y horarios</small>
+          </button>
+          <button class="role-btn patient-btn" (click)="selectRole('patient')">
+            <i class="fas fa-user"></i>
+            <span>Paciente</span>
+            <small>Consulta y gestión de turnos</small>
+          </button>
         </div>
+      </div>
+
+      <!-- Admin Login Form -->
+      <div class="login-form" *ngIf="selectedRole === 'admin'">
+        <h3>Acceso Administrador</h3>
+        <div class="dev-notice">
+          <i class="fas fa-code"></i>
+          <p>Modo desarrollo - Acceso directo habilitado</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-login" (click)="loginAdmin()">
+            <i class="fas fa-sign-in-alt"></i>
+            Ingresar como Admin
+          </button>
+          <button type="button" class="btn btn-back" (click)="goBack()">
+            <i class="fas fa-arrow-left"></i>
+            Volver
+          </button>
+        </div>
+      </div>
+
+      <!-- Operador Login Form -->
+      <div class="login-form" *ngIf="selectedRole === 'operador'">
+        <h3>Acceso Operador</h3>
+        <form (ngSubmit)="loginOperador()" #operadorForm="ngForm">
+          <div class="form-group">
+            <label for="username">Usuario:</label>
+            <input type="text" id="username" name="username" [(ngModel)]="operadorCredentials.username"
+              class="form-control" required placeholder="Ingresa tu usuario">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Correo:</label>
+            <input type="email" id="email" name="email" [(ngModel)]="operadorCredentials.email" class="form-control"
+              required placeholder="tu@email.com">
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" [(ngModel)]="operadorCredentials.password"
+              class="form-control" required placeholder="Ingresa tu contraseña">
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-login" [disabled]="!operadorForm.valid">
+              <i class="fas fa-sign-in-alt"></i>
+              Ingresar
+            </button>
+            <button type="button" class="btn btn-back" (click)="goBack()">
+              <i class="fas fa-arrow-left"></i>
+              Volver
+            </button>
+          </div>
+        </form>
+
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="errorMessage">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{ errorMessage }}
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i>
+          Verificando credenciales...
+        </div>
+      </div>
+      <!-- TERMINO LA SECCION  Operador Login Form -->
+
+      <!-- Medico Login Form -->
+      <div class="login-form" *ngIf="selectedRole === 'medico'">
+        <h3>Acceso Médico</h3>
+        <form (ngSubmit)="loginMedico()" #medicoForm="ngForm">
+          <div class="form-group">
+            <label for="matricula">Matrícula:</label>
+            <input type="text" id="matricula" name="matricula" [(ngModel)]="medicoCredentials.matricula"
+              class="form-control" required placeholder="Ingresa tu número de matrícula" pattern="[0-9]{5}-[0-9]{1}"
+              maxlength="7">
+            <small class="form-text">Formato: 12345-6</small>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-login" [disabled]="!medicoForm.valid">
+              <i class="fas fa-sign-in-alt"></i>
+              Ingresar
+            </button>
+            <button type="button" class="btn btn-back" (click)="goBack()">
+              <i class="fas fa-arrow-left"></i>
+              Volver
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Patient Login Form -->
+      <div class="login-form" *ngIf="selectedRole === 'patient'">
+        <h3>Acceso Paciente</h3>
+        <form (ngSubmit)="loginPatient()" #patientForm="ngForm">
+          <div class="form-group">
+            <label for="dni">DNI:</label>
+            <input type="text" id="dni" name="dni" [(ngModel)]="patientCredentials.dni" class="form-control" required
+              placeholder="Ingresa tu DNI (sin puntos)" pattern="[0-9]{7,8}" maxlength="8">
+            <small class="form-text">Ingresa tu DNI sin puntos ni espacios</small>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-login" [disabled]="!patientForm.valid">
+              <i class="fas fa-sign-in-alt"></i>
+              Ingresar
+            </button>
+            <button type="button" class="btn btn-back" (click)="goBack()">
+              <i class="fas fa-arrow-left"></i>
+              Volver
+            </button>
+          </div>
+        </form>
+
+        <!-- Registration prompt -->
+        <div class="registration-prompt" *ngIf="showRegistrationPrompt">
+          <p>No encontramos tu DNI en el sistema.</p>
+          <button class="btn btn-register" (click)="showRegistrationForm = true">
+            <i class="fas fa-user-plus"></i>
+            Registrarse como Paciente
+          </button>
+        </div>
+      </div>
+
+      <!-- Patient Registration Form -->
+      <div class="login-form" *ngIf="showRegistrationForm">
+        <h3>Registro de Paciente</h3>
+        <form (ngSubmit)="submitRegistration()" #registrationForm="ngForm">
+          <div class="form-group">
+            <label for="regDni">DNI:</label>
+            <input type="text" id="regDni" name="regDni" [(ngModel)]="registrationData.dni" class="form-control"
+              required [value]="patientCredentials.dni">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nombre">Nombre:</label>
+              <input type="text" id="nombre" name="nombre" [(ngModel)]="registrationData.nombre" class="form-control"
+                required placeholder="Tu nombre">
+            </div>
+            <div class="form-group">
+              <label for="apellido">Apellido:</label>
+              <input type="text" id="apellido" name="apellido" [(ngModel)]="registrationData.apellido"
+                class="form-control" required placeholder="Tu apellido">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" [(ngModel)]="registrationData.email" class="form-control"
+              required placeholder="tu@email.com">
+          </div>
+
+          <div class="form-group">
+            <label for="telefono">Teléfono:</label>
+            <input type="tel" id="telefono" name="telefono" [(ngModel)]="registrationData.telefono" class="form-control"
+              required placeholder="Tu número de teléfono">
+          </div>
+
+          <div class="form-group">
+            <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+            <input type="date" id="fechaNacimiento" name="fechaNacimiento"
+              [(ngModel)]="registrationData.fechaNacimiento" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="obraSocial">Obra Social (opcional):</label>
+            <select id="obraSocial" name="obraSocial" [(ngModel)]="registrationData.obraSocialId" class="form-control">
+              <option value="">Sin obra social</option>
+              <option *ngFor="let obra of obrasSociales" [value]="obra.id">
+                {{ obra.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-register" [disabled]="!registrationForm.valid || isRegistering">
+              <i class="fas fa-user-plus" *ngIf="!isRegistering"></i>
+              <i class="fas fa-spinner fa-spin" *ngIf="isRegistering"></i>
+              {{ isRegistering ? 'Registrando...' : 'Registrar' }}
+            </button>
+            <button type="button" class="btn btn-back" (click)="cancelRegistration()">
+              <i class="fas fa-arrow-left"></i>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Error Messages -->
+      <div class="error-message" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading" *ngIf="isLoading">
+        <i class="fas fa-spinner fa-spin"></i>
+        Verificando credenciales...
       </div>
     </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="features-section" *ngIf="!selectedRole">
+    <div class="features-grid">
+      <div class="feature-card">
+        <i class="fas fa-calendar-alt"></i>
+        <h3>Gestión de Turnos</h3>
+        <p>Programa y administra turnos de manera eficiente</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-user-md"></i>
+        <h3>Control de Médicos</h3>
+        <p>Administra horarios y disponibilidad del personal médico</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>Reportes</h3>
+        <p>Visualiza estadísticas y métricas del centro</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-mobile-alt"></i>
+        <h3>Acceso Fácil</h3>
+        <p>Interfaz intuitiva y accesible desde cualquier dispositivo</p>
+      </div>
+    </div>
+  </div>
+</div>
