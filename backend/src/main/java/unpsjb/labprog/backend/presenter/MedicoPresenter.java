@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,15 +19,27 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
+import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.business.service.MedicoService;
+import unpsjb.labprog.backend.business.service.RegistrationService;
+import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
+import unpsjb.labprog.backend.dto.MedicoRegistroDTO;
+import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.Medico;
 
 @RestController
 @RequestMapping("medicos")
 public class MedicoPresenter {
 
     @Autowired
-    MedicoService service;
+    private MedicoService service;
+
+    @Autowired
+    private RegistrationService registrationService;
+
+    @Autowired
+    private EspecialidadService especialidadService;
 
     @GetMapping
     public ResponseEntity<Object> findAll() {
@@ -113,6 +126,76 @@ public class MedicoPresenter {
         return service.findByMatricula(matricula)
                 .map(medico -> Response.ok(medico, "Médico encontrado por matrícula"))
                 .orElse(ResponseEntity.notFound().build());
+    }
+    
+    // ===============================
+    // REGISTRO DE NUEVO MÉDICO
+    // ===============================
+    
+    /**
+     * Registra un nuevo médico en el sistema
+     * POST /medicos/register
+     * 
+     * Este endpoint se encarga específicamente del registro de médicos,
+     * usando el RegistrationService para coordinar la creación del usuario
+     * y la entidad médico.
+     */
+    @PostMapping("/register")
+    public ResponseEntity<Object> registrarMedico(@RequestBody MedicoRegistroDTO registroDTO) {
+        try {
+            // Verificar si el usuario ya existe
+            if (registrationService.existsByEmail(registroDTO.getEmail())) {
+                return Response.response(HttpStatus.CONFLICT, 
+                                       "Ya existe un usuario con el email: " + registroDTO.getEmail(), 
+                                       null);
+            }
+
+            if (registrationService.existsByDni(registroDTO.getDni())) {
+                return Response.response(HttpStatus.CONFLICT, 
+                                       "Ya existe un usuario con el DNI: " + registroDTO.getDni(), 
+                                       null);
+            }
+
+            // Validar que la especialidad existe
+            EspecialidadDTO especialidadDTO = especialidadService.findById(registroDTO.getEspecialidadId());
+            if (especialidadDTO == null) {
+                return Response.response(HttpStatus.BAD_REQUEST, 
+                                       "No existe la especialidad con ID: " + registroDTO.getEspecialidadId(), 
+                                       null);
+            }
+
+            // Crear objeto Especialidad desde el DTO (necesario para el RegistrationService)
+            Especialidad especialidad = new Especialidad();
+            especialidad.setId(especialidadDTO.getId());
+            especialidad.setNombre(especialidadDTO.getNombre());
+            especialidad.setDescripcion(especialidadDTO.getDescripcion());
+
+            // Registrar el médico usando el RegistrationService
+            Medico medicoRegistrado = registrationService.registrarMedico(
+                registroDTO.getEmail(),
+                registroDTO.getPassword(),
+                registroDTO.getDni(),
+                registroDTO.getNombre(),
+                registroDTO.getApellido(),
+                registroDTO.getTelefono(),
+                registroDTO.getMatricula(),
+                especialidad
+            );
+            
+            // Convertir a DTO para la respuesta
+            MedicoDTO medicoDTO = service.findById(medicoRegistrado.getId()).orElse(null);
+            
+            return Response.response(HttpStatus.CREATED, 
+                                   "Médico registrado exitosamente", 
+                                   medicoDTO);
+
+        } catch (IllegalArgumentException e) {
+            return Response.response(HttpStatus.BAD_REQUEST, e.getMessage(), null);
+        } catch (Exception e) {
+            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, 
+                                   "Error interno del servidor: " + e.getMessage(), 
+                                   null);
+        }
     }
    
 }
