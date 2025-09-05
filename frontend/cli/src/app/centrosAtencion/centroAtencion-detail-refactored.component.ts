@@ -465,6 +465,23 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     this.agregarDisponibilidad(staff);
   }
 
+  onDisponibilidadCreada(disponibilidad: DisponibilidadMedico): void {
+    // Actualizar las disponibilidades del staff médico específico
+    if (disponibilidad.staffMedicoId) {
+      this.cargarDisponibilidadesStaff(this.staffMedicoCentro.find(s => s.id === disponibilidad.staffMedicoId)!);
+      
+      // Mostrar mensaje de éxito
+      this.mensajeStaff = 'Disponibilidad creada exitosamente';
+      this.tipoMensajeStaff = 'success';
+      
+      // Limpiar mensaje después de 3 segundos
+      setTimeout(() => {
+        this.mensajeStaff = '';
+        this.tipoMensajeStaff = '';
+      }, 3000);
+    }
+  }
+
   // ==================== MÉTODOS AUXILIARES ====================
 
   private newCentroAtencion(): CentroAtencion {

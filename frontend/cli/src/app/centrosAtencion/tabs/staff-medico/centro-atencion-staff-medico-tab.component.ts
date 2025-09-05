@@ -1,10 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StaffMedico } from '../../../staffMedicos/staffMedico';
 import { Medico } from '../../../medicos/medico';
 import { Especialidad } from '../../../especialidades/especialidad';
 import { DisponibilidadMedico } from '../../../disponibilidadMedicos/disponibilidadMedico';
+import { DisponibilidadModalComponent } from './disponibilidad-modal.component';
 
 @Component({
   selector: 'app-centro-atencion-staff-medico-tab',
@@ -33,6 +35,9 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   @Output() agregarDisponibilidad = new EventEmitter<StaffMedico>();
   @Output() gestionarDisponibilidadAvanzada = new EventEmitter<StaffMedico>();
   @Output() crearNuevaDisponibilidad = new EventEmitter<StaffMedico>();
+  @Output() disponibilidadCreada = new EventEmitter<DisponibilidadMedico>();
+
+  constructor(private modalService: NgbModal) {}
 
   ngOnInit(): void {
     // Inicialización si es necesaria
@@ -64,7 +69,35 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   }
 
   onCrearNuevaDisponibilidad(staff: StaffMedico): void {
-    this.crearNuevaDisponibilidad.emit(staff);
+    this.abrirModalDisponibilidad(staff);
+  }
+
+  /**
+   * Abre el modal para crear una nueva disponibilidad
+   */
+  abrirModalDisponibilidad(staff: StaffMedico): void {
+    const modalRef = this.modalService.open(DisponibilidadModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      keyboard: false
+    });
+
+    // Pasar el staff médico al modal
+    modalRef.componentInstance.staffMedico = staff;
+
+    // Manejar el resultado del modal
+    modalRef.result.then(
+      (nuevaDisponibilidad: DisponibilidadMedico) => {
+        if (nuevaDisponibilidad) {
+          // Emitir evento para que el componente padre actualice las disponibilidades
+          this.disponibilidadCreada.emit(nuevaDisponibilidad);
+        }
+      },
+      (dismissed) => {
+        // Modal fue cancelado o cerrado sin guardar
+        console.log('Modal de disponibilidad cerrado sin guardar');
+      }
+    );
   }
 
   medicoYaAsociado(): boolean {

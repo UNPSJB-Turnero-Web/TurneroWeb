@@ -123,9 +123,14 @@
                 <td>
                   <div class="d-flex gap-1">
                     <button class="action-btn btn-add" 
+                            (click)="abrirModalDisponibilidad(staff); $event.stopPropagation()"
+                            title="Nueva disponibilidad (Modal)">
+                      <i class="fa fa-calendar-plus"></i>
+                    </button>
+                    <button class="action-btn btn-add" 
                             (click)="onAgregarDisponibilidad(staff); $event.stopPropagation()"
                             title="Gestionar disponibilidad básica">
-                      <i class="fa fa-calendar-plus"></i>
+                      <i class="fa fa-calendar-check"></i>
                     </button>
                     <button class="action-btn btn-edit" 
                             (click)="onGestionarDisponibilidadAvanzada(staff); $event.stopPropagation()"
@@ -156,7 +161,7 @@
                               Disponibilidades - Dr. {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
                             </h6>
                             <button class="btn btn-sm btn-light" 
-                                    (click)="onCrearNuevaDisponibilidad(staff)">
+                                    (click)="abrirModalDisponibilidad(staff)">
                               <i class="fa fa-plus me-1"></i>Nueva Disponibilidad
                             </button>
                           </div>
@@ -234,7 +239,7 @@
                                   Configure al menos una disponibilidad para que este médico pueda atender pacientes.
                                 </p>
                                 <button class="btn btn-success btn-lg" 
-                                        (click)="onCrearNuevaDisponibilidad(staff)">
+                                        (click)="abrirModalDisponibilidad(staff)">
                                   <i class="fa fa-plus me-2"></i>Crear Primera Disponibilidad
                                 </button>
                               </div>
