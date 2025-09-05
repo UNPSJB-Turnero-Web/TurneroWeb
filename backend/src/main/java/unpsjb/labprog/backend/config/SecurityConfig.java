@@ -61,7 +61,7 @@ public class SecurityConfig {
      * Configuración de la cadena de filtros de seguridad
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  /*   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -82,5 +82,19 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
+    } */
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .anyRequest().permitAll() // <--- TODOS los endpoints son accesibles sin autenticación
+        )
+        .authenticationProvider(authenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+
+
 }
