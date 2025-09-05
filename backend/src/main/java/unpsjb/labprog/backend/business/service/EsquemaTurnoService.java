@@ -1,6 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -92,6 +95,93 @@ public class EsquemaTurnoService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<EsquemaTurno> esquemaPage = esquemaTurnoRepository.findAll(pageRequest);
         return esquemaPage.map(this::toDTO);
+    }
+
+    /**
+     * Valida conflictos de un esquema sin guardarlo
+     * Útil para validación en tiempo real en el frontend
+     */
+    public Map<String, Object> validarConflictos(EsquemaTurnoDTO dto) {
+        Map<String, Object> resultado = new HashMap<>();
+        List<String> conflictos = new ArrayList<>();
+        List<String> advertencias = new ArrayList<>();
+        
+        try {
+            // Validación básica
+            if (dto.getStaffMedicoId() == null) {
+                conflictos.add("El campo staffMedicoId es obligatorio.");
+            }
+            
+            if (dto.getConsultorioId() == null) {
+                conflictos.add("El consultorio es obligatorio.");
+            }
+            
+            if (dto.getHorarios() == null || dto.getHorarios().isEmpty()) {
+                conflictos.add("Los horarios son obligatorios.");
+            }
+            
+            // Si hay errores básicos, no continuar
+            if (!conflictos.isEmpty()) {
+                resultado.put("valido", false);
+                resultado.put("conflictos", conflictos);
+                resultado.put("advertencias", advertencias);
+                return resultado;
+            }
+            
+            // Crear esquema temporal para validaciones
+            EsquemaTurno esquemaTemporal = toEntity(dto);
+            
+            // Validar conflictos de horarios para el mismo médico en diferentes consultorios
+            List<EsquemaTurno> esquemasDelMedico = esquemaTurnoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
+            List<String> conflictosDetallados = validarConflictosMedicoEnConsultorios(esquemasDelMedico, esquemaTemporal, dto.getHorarios());
+            conflictos.addAll(conflictosDetallados);
+            
+            // Validar disponibilidad del médico
+            List<DisponibilidadMedico> disponibilidades = disponibilidadMedicoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
+            for (EsquemaTurnoDTO.DiaHorarioDTO horario : dto.getHorarios()) {
+                boolean disponible = disponibilidades.stream().anyMatch(disponibilidad -> 
+                    disponibilidad.getHorarios().stream().anyMatch(diaHorario -> 
+                        diaHorario.getDia().equalsIgnoreCase(horario.getDia()) &&
+                        (horario.getHoraInicio().equals(diaHorario.getHoraInicio()) || !horario.getHoraInicio().isBefore(diaHorario.getHoraInicio())) &&
+                        (horario.getHoraFin().equals(diaHorario.getHoraFin()) || !horario.getHoraFin().isAfter(diaHorario.getHoraFin()))
+                    )
+                );
+
+                if (!disponible) {
+                    conflictos.add("El médico no tiene disponibilidad para el día " + horario.getDia() +
+                            " entre " + horario.getHoraInicio() + " y " + horario.getHoraFin() + ".");
+                }
+            }
+            
+            // Validar conflictos en el mismo consultorio
+            if (dto.getConsultorioId() != null) {
+                List<EsquemaTurno> esquemasEnConsultorio = esquemaTurnoRepository.findByConsultorioId(dto.getConsultorioId());
+                boolean hayConflictoConsultorio = esquemasEnConsultorio.stream().anyMatch(existente ->
+                        !existente.getId().equals(dto.getId()) &&
+                        hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()));
+                
+                if (hayConflictoConsultorio) {
+                    // Intentar encontrar consultorio alternativo
+                    Integer consultorioAlternativo = resolverConflictoConsultorioAutomaticamente(esquemaTemporal);
+                    if (consultorioAlternativo != null) {
+                        advertencias.add("Conflicto en consultorio " + dto.getConsultorioId() + 
+                                       ". Se sugiere consultorio alternativo: " + consultorioAlternativo);
+                    } else {
+                        conflictos.add("Conflicto de horarios en el consultorio " + dto.getConsultorioId() + 
+                                     ". No hay consultorios alternativos disponibles.");
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            conflictos.add("Error en validación: " + e.getMessage());
+        }
+        
+        resultado.put("valido", conflictos.isEmpty());
+        resultado.put("conflictos", conflictos);
+        resultado.put("advertencias", advertencias);
+        
+        return resultado;
     }
 
     @Transactional
@@ -212,10 +302,11 @@ public class EsquemaTurnoService {
 
         // Validación: Conflictos de horarios para el mismo médico en diferentes consultorios
         List<EsquemaTurno> esquemasDelMedico = esquemaTurnoRepository.findByStaffMedicoId(dto.getStaffMedicoId());
-        if (esquemasDelMedico.stream().anyMatch(existente ->
-                !existente.getId().equals(esquemaTurno.getId()) &&
-                hayConflictoDeHorarios(existente.getHorarios(), dto.getHorarios()))) {
-            throw new IllegalStateException("Conflicto: El médico ya está asignado a otro consultorio en este horario.");
+        List<String> conflictosDetallados = validarConflictosMedicoEnConsultorios(esquemasDelMedico, esquemaTurno, dto.getHorarios());
+        
+        if (!conflictosDetallados.isEmpty()) {
+            String mensajeDetallado = "Conflictos encontrados: " + String.join("; ", conflictosDetallados);
+            throw new IllegalStateException(mensajeDetallado);
         }
 
         // NUEVA VALIDACIÓN: Verificar disponibilidad del consultorio y conflictos
@@ -488,6 +579,65 @@ public class EsquemaTurnoService {
         }).collect(Collectors.toList()));
 
         return esquema;
+    }
+
+    /**
+     * Valida conflictos específicos para un médico en diferentes consultorios
+     * y devuelve una lista detallada de los conflictos encontrados
+     */
+    private List<String> validarConflictosMedicoEnConsultorios(List<EsquemaTurno> esquemasDelMedico, 
+                                                               EsquemaTurno esquemaNuevo, 
+                                                               List<EsquemaTurnoDTO.DiaHorarioDTO> nuevosHorarios) {
+        List<String> conflictos = new ArrayList<>();
+        
+        for (EsquemaTurno existente : esquemasDelMedico) {
+            // Omitir si es el mismo esquema (caso de actualización)
+            if (existente.getId() != null && existente.getId().equals(esquemaNuevo.getId())) {
+                continue;
+            }
+            
+            // Verificar conflictos horario por horario
+            for (EsquemaTurnoDTO.DiaHorarioDTO nuevoHorario : nuevosHorarios) {
+                for (EsquemaTurno.Horario horarioExistente : existente.getHorarios()) {
+                    if (hayConflictoHorarioDetallado(nuevoHorario, horarioExistente)) {
+                        String consultorioExistente = existente.getConsultorio() != null ? 
+                            existente.getConsultorio().getNombre() : "Sin consultorio asignado";
+                        String consultorioNuevo = esquemaNuevo.getConsultorio() != null ? 
+                            esquemaNuevo.getConsultorio().getNombre() : "Sin consultorio asignado";
+                            
+                        conflictos.add(String.format(
+                            "El médico ya está asignado en '%s' el %s de %s a %s. " +
+                            "Conflicto con el horario propuesto para '%s' el %s de %s a %s.",
+                            consultorioExistente,
+                            horarioExistente.getDia(),
+                            horarioExistente.getHoraInicio(),
+                            horarioExistente.getHoraFin(),
+                            consultorioNuevo,
+                            nuevoHorario.getDia(),
+                            nuevoHorario.getHoraInicio(),
+                            nuevoHorario.getHoraFin()
+                        ));
+                    }
+                }
+            }
+        }
+        
+        return conflictos;
+    }
+    
+    /**
+     * Verifica si hay conflicto entre un horario nuevo y uno existente
+     */
+    private boolean hayConflictoHorarioDetallado(EsquemaTurnoDTO.DiaHorarioDTO nuevoHorario, 
+                                                EsquemaTurno.Horario horarioExistente) {
+        // Deben ser el mismo día
+        if (!nuevoHorario.getDia().equalsIgnoreCase(horarioExistente.getDia())) {
+            return false;
+        }
+        
+        // Verificar superposición de horarios
+        return nuevoHorario.getHoraInicio().isBefore(horarioExistente.getHoraFin()) && 
+               nuevoHorario.getHoraFin().isAfter(horarioExistente.getHoraInicio());
     }
 
     private boolean hayConflictoDeHorarios(List<EsquemaTurno.Horario> horariosExistentes,
