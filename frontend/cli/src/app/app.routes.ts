@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
+import { InicioSesionComponent } from './inicio-sesion/inicio-sesion.component';
+import { RegistroUsuarioComponent } from './registro-usuario/registro-usuario.component';
 import { TurnosComponent } from './turnos/turnos.component';
 import { TurnoDetailComponent } from './turnos/turno-detail.component';
 import { AdminAgendaComponent } from './agenda/admin-agenda.component';
@@ -43,7 +45,8 @@ import { PatientGuard } from './guards/patient.guard';
 import { MedicoGuard } from './guards/medico.guard';
 
 export const routes: Routes = [
-    { path: '', component: HomeComponent },
+    { path: '', component: InicioSesionComponent },
+    { path: 'registro-usuario', component: RegistroUsuarioComponent },
     
     // Patient Routes
     { path: 'paciente-dashboard', component: PacienteDashboardComponent, canActivate: [PatientGuard] },
