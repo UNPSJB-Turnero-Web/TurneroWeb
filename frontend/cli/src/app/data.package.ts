@@ -2,4 +2,7 @@ export interface DataPackage<T = any> { // Add generic type parameter T with a d
   data: T;
   message: string;
   status: number;
+  // Campos adicionales del backend
+  status_text: string;
+  status_code: number;
 }
