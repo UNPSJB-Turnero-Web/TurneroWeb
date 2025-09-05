@@ -1,13 +1,26 @@
-import { Component, EventEmitter, Output, ViewChild, ElementRef, Input, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import * as L from 'leaflet';
-import { HttpClient } from '@angular/common/http';
-import { CentroAtencion } from '../centrosAtencion/centroAtencion';
-import { Especialidad } from '../especialidades/especialidad';
-import { CentroEspecialidad } from '../centrosAtencion/centro-especialidad';
-import { CentroEspecialidadService } from '../centrosAtencion/centro-especialidad.service';
-import { GeolocationService, UserLocation } from '../services/geolocation.service';
+import {
+  Component,
+  EventEmitter,
+  Output,
+  ViewChild,
+  ElementRef,
+  Input,
+  OnInit,
+  OnDestroy,
+} from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import * as L from "leaflet";
+import { HttpClient } from "@angular/common/http";
+import { CentroAtencion } from "../centrosAtencion/centroAtencion";
+import { Especialidad } from "../especialidades/especialidad";
+import { CentroEspecialidad } from "../centrosAtencion/centro-especialidad";
+import { CentroEspecialidadService } from "../centrosAtencion/centro-especialidad.service";
+import {
+  GeolocationService,
+  UserLocation,
+} from "../services/geolocation.service";
+import { UsuarioAuthService } from "../services/UsuarioAuth.service";
 
 interface CentroMapaInfo extends CentroAtencion {
   distanciaKm?: number;
@@ -15,13 +28,12 @@ interface CentroMapaInfo extends CentroAtencion {
 }
 
 @Component({
-  selector: 'app-centros-mapa-modal',
+  selector: "app-centros-mapa-modal",
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="centros-modal-backdrop" (click)="close()">
       <div class="centros-modal-content" (click)="$event.stopPropagation()">
-        
         <!-- HEADER -->
         <div class="centros-modal-header">
           <div class="header-info">
@@ -35,48 +47,73 @@ interface CentroMapaInfo extends CentroAtencion {
 
         <!-- FILTROS Y CONTROLES -->
         <div class="centros-modal-filters">
-          
           <!-- BÚSQUEDA POR NOMBRE -->
           <div class="filter-group search-group">
             <label><i class="fas fa-search"></i> Buscar Centro:</label>
             <div class="search-input-container">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="busquedaTexto"
-                class="form-control search-input" 
-                [(ngModel)]="busquedaTexto" 
+                class="form-control search-input"
+                [(ngModel)]="busquedaTexto"
                 (input)="buscarCentros()"
                 placeholder="Nombre del centro o dirección..."
-                autocomplete="off">
-              <button 
-                type="button" 
-                class="btn-clear-search" 
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="btn-clear-search"
                 *ngIf="busquedaTexto"
-                (click)="limpiarBusqueda()">
+                (click)="limpiarBusqueda()"
+              >
                 <i class="fas fa-times"></i>
               </button>
             </div>
-            <div class="search-results" *ngIf="resultadosBusqueda.length > 0 && busquedaTexto">
-              <div 
-                *ngFor="let centro of resultadosBusqueda" 
+            <div
+              class="search-results"
+              *ngIf="resultadosBusqueda.length > 0 && busquedaTexto"
+            >
+              <div
+                *ngFor="let centro of resultadosBusqueda"
                 class="search-result-item"
-                (click)="seleccionarCentroEnMapa(centro)">
+                (click)="seleccionarCentroEnMapa(centro)"
+              >
                 <div class="result-name">{{ centro.nombre }}</div>
-                <div class="result-address">{{ centro.direccion }}, {{ centro.localidad }}</div>
-                <div class="result-distance" *ngIf="centro.distanciaKm !== undefined">
+                <div class="result-address">
+                  {{ centro.direccion }}, {{ centro.localidad }}
+                </div>
+                <div
+                  class="result-distance"
+                  *ngIf="centro.distanciaKm !== undefined"
+                >
                   {{ formatDistance(centro.distanciaKm) }}
                 </div>
               </div>
             </div>
           </div>
-          
+
           <!-- FILTRO POR ESPECIALIDAD -->
-          <div class="filter-group">
-            <label><i class="fas fa-stethoscope"></i> Filtrar por Especialidad:</label>
-            <select class="form-control" name="especialidadFiltro" [(ngModel)]="especialidadFiltro" (change)="aplicarFiltros()">
-              <option value="">Todas las especialidades ({{ centrosFiltrados.length }})</option>
-              <option *ngFor="let esp of especialidadesDisponibles" [value]="esp.nombre">
-                {{ esp.nombre }} ({{ contarCentrosPorEspecialidad(esp.nombre) }})
+          <div class="filter-group" *ngIf="esOperador">
+            <label
+              ><i class="fas fa-stethoscope"></i> Filtrar por
+              Especialidad:</label
+            >
+            <select
+              class="form-control"
+              name="especialidadFiltro"
+              [(ngModel)]="especialidadFiltro"
+              (change)="aplicarFiltros()"
+            >
+              <option value="">
+                Todas las especialidades ({{ centrosFiltrados.length }})
+              </option>
+              <option
+                *ngFor="let esp of especialidadesDisponibles"
+                [value]="esp.nombre"
+              >
+                {{ esp.nombre }} ({{
+                  contarCentrosPorEspecialidad(esp.nombre)
+                }})
               </option>
             </select>
           </div>
@@ -84,19 +121,27 @@ interface CentroMapaInfo extends CentroAtencion {
           <!-- CONTROLES DE UBICACIÓN -->
           <div class="location-controls">
             <div class="location-group">
-              <button 
+              <button
                 class="btn btn-location"
                 [class.active]="userLocation"
                 (click)="obtenerUbicacionUsuario()"
-                [disabled]="isLoadingLocation">
+                [disabled]="isLoadingLocation"
+              >
                 <i class="fas fa-map-marker-alt"></i>
-                {{ isLoadingLocation ? 'Ubicando...' : (userLocation ? 'Ubicado' : 'Mi Ubicación') }}
+                {{
+                  isLoadingLocation
+                    ? "Ubicando..."
+                    : userLocation
+                    ? "Ubicado"
+                    : "Mi Ubicación"
+                }}
                 <i class="fas fa-spinner fa-spin" *ngIf="isLoadingLocation"></i>
               </button>
-              
-              <button 
+
+              <button
                 class="btn btn-location-manual"
-                (click)="showManualLocationForm = !showManualLocationForm">
+                (click)="showManualLocationForm = !showManualLocationForm"
+              >
                 <i class="fas fa-edit"></i>
                 Ubicación Manual
               </button>
@@ -105,37 +150,45 @@ interface CentroMapaInfo extends CentroAtencion {
             <!-- FORMULARIO DE UBICACIÓN MANUAL -->
             <div class="manual-location-form" *ngIf="showManualLocationForm">
               <div class="input-group">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="direccionBusqueda"
                   class="form-control"
                   [(ngModel)]="direccionBusqueda"
                   placeholder="Ingresa tu dirección o ciudad"
-                  (keyup.enter)="buscarDireccion()">
-                <button class="btn btn-search" (click)="buscarDireccion()" [disabled]="!direccionBusqueda">
+                  (keyup.enter)="buscarDireccion()"
+                />
+                <button
+                  class="btn btn-search"
+                  (click)="buscarDireccion()"
+                  [disabled]="!direccionBusqueda"
+                >
                   <i class="fas fa-search"></i>
                 </button>
               </div>
-              
+
               <div class="coord-inputs">
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   name="latitudManual"
                   class="form-control"
                   [(ngModel)]="latitudManual"
                   placeholder="Latitud"
-                  step="any">
-                <input 
-                  type="number" 
+                  step="any"
+                />
+                <input
+                  type="number"
                   name="longitudManual"
                   class="form-control"
                   [(ngModel)]="longitudManual"
                   placeholder="Longitud"
-                  step="any">
-                <button 
+                  step="any"
+                />
+                <button
                   class="btn btn-set-coords"
                   (click)="establecerCoordenadas()"
-                  [disabled]="!latitudManual || !longitudManual">
+                  [disabled]="!latitudManual || !longitudManual"
+                >
                   <i class="fas fa-map-pin"></i>
                 </button>
               </div>
@@ -151,7 +204,7 @@ interface CentroMapaInfo extends CentroAtencion {
                 <span *ngIf="userLocation.source === 'manual'">(manual)</span>
               </small>
             </div>
-            
+
             <div class="location-error" *ngIf="locationError">
               <small class="error-text">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -163,7 +216,12 @@ interface CentroMapaInfo extends CentroAtencion {
           <!-- RADIO DE BÚSQUEDA -->
           <div class="filter-group" *ngIf="userLocation">
             <label><i class="fas fa-circle"></i> Radio de búsqueda:</label>
-            <select class="form-control" name="radioMaximo" [(ngModel)]="radioMaximo" (change)="aplicarFiltros()">
+            <select
+              class="form-control"
+              name="radioMaximo"
+              [(ngModel)]="radioMaximo"
+              (change)="aplicarFiltros()"
+            >
               <option [value]="10">10 km</option>
               <option [value]="25">25 km</option>
               <option [value]="50">50 km</option>
@@ -171,7 +229,6 @@ interface CentroMapaInfo extends CentroAtencion {
               <option [value]="0">Sin límite</option>
             </select>
           </div>
-
         </div>
 
         <!-- MAPA -->
@@ -183,16 +240,21 @@ interface CentroMapaInfo extends CentroAtencion {
         <div class="centros-modal-footer">
           <div class="centros-list-header">
             <h4>
-              <i class="fas fa-hospital"></i> 
+              <i class="fas fa-hospital"></i>
               Centros Encontrados ({{ centrosFiltrados.length }})
             </h4>
             <div class="sort-controls" *ngIf="userLocation">
-              <button 
+              <button
                 class="btn btn-sort"
                 [class.active]="ordenadoPorDistancia"
-                (click)="toggleOrdenarPorDistancia()">
+                (click)="toggleOrdenarPorDistancia()"
+              >
                 <i class="fas fa-sort-amount-down"></i>
-                {{ ordenadoPorDistancia ? 'Por distancia' : 'Ordenar por distancia' }}
+                {{
+                  ordenadoPorDistancia
+                    ? "Por distancia"
+                    : "Ordenar por distancia"
+                }}
               </button>
             </div>
           </div>
@@ -206,20 +268,23 @@ interface CentroMapaInfo extends CentroAtencion {
                 No hay centros dentro de {{ radioMaximo }}km de tu ubicación.
               </p>
               <p *ngIf="especialidadFiltro">
-                No hay centros con la especialidad "{{ especialidadFiltro }}" disponible.
+                No hay centros con la especialidad "{{ especialidadFiltro }}"
+                disponible.
               </p>
               <div class="suggestions">
-                <button 
-                  class="btn btn-suggestion" 
+                <button
+                  class="btn btn-suggestion"
                   *ngIf="radioMaximo < 100"
-                  (click)="ampliarRadio()">
+                  (click)="ampliarRadio()"
+                >
                   <i class="fas fa-expand-arrows-alt"></i>
                   Ampliar radio de búsqueda
                 </button>
-                <button 
-                  class="btn btn-suggestion" 
+                <button
+                  class="btn btn-suggestion"
                   *ngIf="especialidadFiltro"
-                  (click)="limpiarFiltros()">
+                  (click)="limpiarFiltros()"
+                >
                   <i class="fas fa-filter"></i>
                   Quitar filtros
                 </button>
@@ -229,24 +294,27 @@ interface CentroMapaInfo extends CentroAtencion {
 
           <!-- LISTA DE CENTROS -->
           <div class="centros-list" *ngIf="centrosFiltrados.length > 0">
-            <div 
+            <div
               class="centro-item"
               *ngFor="let centro of centrosFiltrados; let i = index"
               [class.highlighted]="centroActualSeleccionado?.id === centro.id"
-              (click)="seleccionarCentro(centro)">
-              
+              (click)="seleccionarCentro(centro)"
+            >
               <div class="centro-info">
                 <div class="centro-header">
                   <h5>{{ centro.nombre }}</h5>
                   <div class="centro-badges">
-                    <span class="distance-badge" *ngIf="centro.distanciaKm !== undefined">
+                    <span
+                      class="distance-badge"
+                      *ngIf="centro.distanciaKm !== undefined"
+                    >
                       <i class="fas fa-route"></i>
                       {{ formatDistance(centro.distanciaKm) }}
                     </span>
                     <span class="index-badge">{{ i + 1 }}</span>
                   </div>
                 </div>
-                
+
                 <div class="centro-details">
                   <div class="detail-row">
                     <i class="fas fa-map-marker-alt"></i>
@@ -263,864 +331,886 @@ interface CentroMapaInfo extends CentroAtencion {
                 </div>
 
                 <!-- ESPECIALIDADES DISPONIBLES -->
-                <div class="especialidades-centro" *ngIf="centro.especialidadesDisponibles && centro.especialidadesDisponibles.length > 0">
+                <!-- El operador/etc... puede ver las especialidades disponibles para eso es el  *ngIf="
+                    esOperador  -->
+                <div
+                  class="especialidades-centro"
+                  *ngIf="
+                    esOperador &&
+                    centro.especialidadesDisponibles &&
+                    centro.especialidadesDisponibles.length > 0
+                  "
+                >
                   <div class="especialidades-header">
                     <i class="fas fa-stethoscope"></i>
                     <span>Especialidades disponibles:</span>
                   </div>
                   <div class="especialidades-tags">
-                    <span 
+                    <span
                       class="especialidad-tag"
                       *ngFor="let esp of centro.especialidadesDisponibles"
-                      [class.highlighted]="esp === especialidadFiltro">
+                      [class.highlighted]="esp === especialidadFiltro"
+                    >
                       {{ esp }}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div class="centro-actions">
-                <button 
+              <div class="centro-actions" *ngIf="esOperador">
+                <button
                   class="btn btn-search-center"
                   (click)="buscarEnCentro(centro.id!); $event.stopPropagation()"
-                  title="Buscar turnos en este centro">
+                  title="Buscar turnos en este centro"
+                >
                   <i class="fas fa-search"></i>
                   Buscar aquí
                 </button>
-                <button 
+                <button
                   class="btn btn-center-on-map"
                   (click)="centrarEnMapa(centro, $event)"
-                  title="Ver en mapa">
+                  title="Ver en mapa"
+                >
                   <i class="fas fa-crosshairs"></i>
                 </button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   `,
-  styles: [`
-    /* MODAL BACKDROP */
-    .centros-modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1050;
-      padding: 1rem;
-    }
-
-    .centros-modal-content {
-      background: white;
-      border-radius: 15px;
-      width: 95%;
-      max-width: 1200px;
-      height: 90vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
-
-    /* HEADER */
-    .centros-modal-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1.5rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .header-info h3 {
-      margin: 0 0 0.5rem 0;
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-
-    .header-info p {
-      margin: 0;
-      opacity: 0.9;
-      font-size: 0.95rem;
-    }
-
-    .btn-close {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    .btn-close:hover {
-      background: rgba(255,255,255,0.3);
-    }
-
-    /* FILTROS */
-    .centros-modal-filters {
-      background: #f8f9fa;
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid #dee2e6;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: flex-start;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      min-width: 200px;
-    }
-
-    .search-group {
-      flex: 1;
-      min-width: 300px;
-      position: relative;
-    }
-
-    .search-input-container {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-
-    .search-input {
-      flex: 1;
-      padding-right: 35px;
-    }
-
-    .btn-clear-search {
-      position: absolute;
-      right: 8px;
-      background: none;
-      border: none;
-      color: #6c757d;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-    }
-
-    .btn-clear-search:hover {
-      background: #f1f3f4;
-      color: #495057;
-    }
-
-    .search-results {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border: 1px solid #dee2e6;
-      border-top: none;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 1000;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .search-result-item {
-      padding: 0.75rem 1rem;
-      cursor: pointer;
-      border-bottom: 1px solid #f1f3f4;
-      transition: background 0.2s ease;
-    }
-
-    .search-result-item:hover {
-      background: #f8f9fa;
-    }
-
-    .search-result-item:last-child {
-      border-bottom: none;
-    }
-
-    .result-name {
-      font-weight: 600;
-      color: #495057;
-      margin-bottom: 0.25rem;
-    }
-
-    .result-address {
-      font-size: 0.85rem;
-      color: #6c757d;
-      margin-bottom: 0.25rem;
-    }
-
-    .result-distance {
-      font-size: 0.8rem;
-      color: #28a745;
-      font-weight: 500;
-    }
-
-    .filter-group label {
-      font-weight: 600;
-      color: #495057;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .form-control {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ced4da;
-      border-radius: 6px;
-      font-size: 0.9rem;
-    }
-
-    .form-control:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-
-    /* CONTROLES DE UBICACIÓN */
-    .location-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      min-width: 300px;
-    }
-
-    .location-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .btn {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
-    }
-
-    .btn-location {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-    }
-
-    .btn-location:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-    }
-
-    .btn-location.active {
-      background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-    }
-
-    .btn-location-manual {
-      background: #6c757d;
-      color: white;
-    }
-
-    .btn-location-manual:hover {
-      background: #5a6268;
-    }
-
-    .manual-location-form {
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      border: 1px solid #dee2e6;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .input-group .form-control {
-      flex: 1;
-    }
-
-    .btn-search, .btn-set-coords {
-      background: #667eea;
-      color: white;
-      padding: 0.5rem;
-      width: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-search:hover, .btn-set-coords:hover {
-      background: #5a6fd8;
-    }
-
-    .coord-inputs {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .coord-inputs .form-control {
-      flex: 1;
-    }
-
-    .location-status, .location-error {
-      font-size: 0.85rem;
-    }
-
-    .location-info {
-      color: #28a745;
-    }
-
-    .error-text {
-      color: #dc3545;
-    }
-
-    /* MAPA */
-    .centros-modal-body {
-      flex: 1;
-      min-height: 300px;
-      overflow: hidden;
-    }
-
-    .map-container {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* LISTA DE CENTROS */
-    .centros-modal-footer {
-      background: #f8f9fa;
-      border-top: 1px solid #dee2e6;
-      max-height: 400px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .centros-list-header {
-      padding: 1rem 2rem;
-      background: white;
-      border-bottom: 1px solid #dee2e6;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .centros-list-header h4 {
-      margin: 0;
-      color: #495057;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .btn-sort {
-      background: transparent;
-      border: 1px solid #dee2e6;
-      color: #6c757d;
-      font-size: 0.85rem;
-    }
-
-    .btn-sort.active {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
-
-    /* NO CENTROS */
-    .no-centros-message {
-      padding: 3rem 2rem;
-      text-align: center;
-    }
-
-    .no-centros-content {
-      color: #6c757d;
-    }
-
-    .no-centros-content i {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      color: #adb5bd;
-    }
-
-    .no-centros-content h5 {
-      margin-bottom: 1rem;
-      color: #495057;
-    }
-
-    .suggestions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-    }
-
-    .btn-suggestion {
-      background: #667eea;
-      color: white;
-      font-size: 0.9rem;
-    }
-
-    .btn-suggestion:hover {
-      background: #5a6fd8;
-    }
-
-    /* CENTRO ITEMS */
-    .centros-list {
-      padding: 1rem 0;
-    }
-
-    .centro-item {
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid #e9ecef;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      background: white;
-    }
-
-    .centro-item:hover {
-      background: rgba(102, 126, 234, 0.05);
-      border-left: 4px solid #667eea;
-    }
-
-    .centro-item.highlighted {
-      background: rgba(102, 126, 234, 0.1);
-      border-left: 4px solid #667eea;
-    }
-
-    .centro-info {
-      flex: 1;
-    }
-
-    .centro-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 0.75rem;
-    }
-
-    .centro-header h5 {
-      margin: 0;
-      color: #2c3e50;
-      font-weight: 600;
-    }
-
-    .centro-badges {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .distance-badge {
-      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    .index-badge {
-      background: #6c757d;
-      color: white;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .centro-details {
-      margin-bottom: 1rem;
-    }
-
-    .detail-row {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.4rem;
-      color: #6c757d;
-      font-size: 0.9rem;
-    }
-
-    .detail-row i {
-      width: 16px;
-      color: #667eea;
-    }
-
-    .especialidades-centro {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e9ecef;
-    }
-
-    .especialidades-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #495057;
-    }
-
-    .especialidades-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-    }
-
-    .especialidad-tag {
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-      padding: 0.25rem 0.5rem;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      border: 1px solid rgba(102, 126, 234, 0.2);
-    }
-
-    .especialidad-tag.highlighted {
-      background: #667eea;
-      color: white;
-    }
-
-    .centro-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-left: 1rem;
-    }
-
-    .btn-search-center {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      white-space: nowrap;
-    }
-
-    .btn-search-center:hover {
-      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-center-on-map {
-      background: rgba(102, 126, 234, 0.1);
-      color: #667eea;
-      border: 1px solid rgba(102, 126, 234, 0.3);
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn-center-on-map:hover {
-      background: #667eea;
-      color: white;
-      transform: translateY(-1px);
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .centros-modal-content {
+  styles: [
+    `
+      /* MODAL BACKDROP */
+      .centros-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
-        height: 100vh;
-        border-radius: 0;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+        padding: 1rem;
       }
 
+      .centros-modal-content {
+        background: white;
+        border-radius: 15px;
+        width: 95%;
+        max-width: 1200px;
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      /* HEADER */
+      .centros-modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header-info h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .header-info p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+      }
+
+      .btn-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.3s ease;
+      }
+
+      .btn-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      /* FILTROS */
       .centros-modal-filters {
+        background: #f8f9fa;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: 200px;
+      }
+
+      .search-group {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+      }
+
+      .search-input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .search-input {
+        flex: 1;
+        padding-right: 35px;
+      }
+
+      .btn-clear-search {
+        position: absolute;
+        right: 8px;
+        background: none;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+      }
+
+      .btn-clear-search:hover {
+        background: #f1f3f4;
+        color: #495057;
+      }
+
+      .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .search-result-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background 0.2s ease;
+      }
+
+      .search-result-item:hover {
+        background: #f8f9fa;
+      }
+
+      .search-result-item:last-child {
+        border-bottom: none;
+      }
+
+      .result-name {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+      }
+
+      .result-address {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+      }
+
+      .result-distance {
+        font-size: 0.8rem;
+        color: #28a745;
+        font-weight: 500;
+      }
+
+      .filter-group label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .form-control {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 0.9rem;
+      }
+
+      .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      }
+
+      /* CONTROLES DE UBICACIÓN */
+      .location-controls {
+        display: flex;
         flex-direction: column;
         gap: 1rem;
+        min-width: 300px;
       }
 
-      .filter-group, .location-controls {
-        min-width: auto;
-        width: 100%;
+      .location-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .btn-location {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .btn-location:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+      }
+
+      .btn-location.active {
+        background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+      }
+
+      .btn-location-manual {
+        background: #6c757d;
+        color: white;
+      }
+
+      .btn-location-manual:hover {
+        background: #5a6268;
+      }
+
+      .manual-location-form {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .input-group .form-control {
+        flex: 1;
+      }
+
+      .btn-search,
+      .btn-set-coords {
+        background: #667eea;
+        color: white;
+        padding: 0.5rem;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-search:hover,
+      .btn-set-coords:hover {
+        background: #5a6fd8;
       }
 
       .coord-inputs {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .coord-inputs .form-control {
+        flex: 1;
+      }
+
+      .location-status,
+      .location-error {
+        font-size: 0.85rem;
+      }
+
+      .location-info {
+        color: #28a745;
+      }
+
+      .error-text {
+        color: #dc3545;
+      }
+
+      /* MAPA */
+      .centros-modal-body {
+        flex: 1;
+        min-height: 300px;
+        overflow: hidden;
+      }
+
+      .map-container {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* LISTA DE CENTROS */
+      .centros-modal-footer {
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        max-height: 400px;
+        overflow-y: auto;
+        display: flex;
         flex-direction: column;
       }
 
-      .centro-item {
-        flex-direction: column;
-        gap: 1rem;
+      .centros-list-header {
+        padding: 1rem 2rem;
+        background: white;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
       }
 
-      .centro-actions {
-        align-self: flex-end;
-        flex-direction: row;
-        margin-left: 0;
+      .centros-list-header h4 {
+        margin: 0;
+        color: #495057;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .btn-sort {
+        background: transparent;
+        border: 1px solid #dee2e6;
+        color: #6c757d;
+        font-size: 0.85rem;
+      }
+
+      .btn-sort.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      /* NO CENTROS */
+      .no-centros-message {
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+
+      .no-centros-content {
+        color: #6c757d;
+      }
+
+      .no-centros-content i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #adb5bd;
+      }
+
+      .no-centros-content h5 {
+        margin-bottom: 1rem;
+        color: #495057;
       }
 
       .suggestions {
-        flex-direction: column;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+
+      .btn-suggestion {
+        background: #667eea;
+        color: white;
+        font-size: 0.9rem;
+      }
+
+      .btn-suggestion:hover {
+        background: #5a6fd8;
+      }
+
+      /* CENTRO ITEMS */
+      .centros-list {
+        padding: 1rem 0;
+      }
+
+      .centro-item {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: white;
+      }
+
+      .centro-item:hover {
+        background: rgba(102, 126, 234, 0.05);
+        border-left: 4px solid #667eea;
+      }
+
+      .centro-item.highlighted {
+        background: rgba(102, 126, 234, 0.1);
+        border-left: 4px solid #667eea;
+      }
+
+      .centro-info {
+        flex: 1;
+      }
+
+      .centro-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+      }
+
+      .centro-header h5 {
+        margin: 0;
+        color: #2c3e50;
+        font-weight: 600;
+      }
+
+      .centro-badges {
+        display: flex;
+        gap: 0.5rem;
         align-items: center;
       }
-    }
 
-    /* ESTILOS GLOBALES PARA LEAFLET */
-    :host ::ng-deep .leaflet-popup-content-wrapper {
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-
-    :host ::ng-deep .centro-popup {
-      font-family: inherit;
-      min-width: 280px;
-      max-width: 320px;
-    }
-
-    :host ::ng-deep .popup-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid #e9ecef;
-    }
-
-    :host ::ng-deep .popup-number {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      font-weight: 700;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-      flex-shrink: 0;
-    }
-
-    :host ::ng-deep .popup-title {
-      flex: 1;
-    }
-
-    :host ::ng-deep .popup-title strong {
-      font-size: 1.1rem;
-      color: #2c3e50;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
-    :host ::ng-deep .popup-body {
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    :host ::ng-deep .popup-info {
-      margin-bottom: 1rem;
-    }
-
-    :host ::ng-deep .popup-row {
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-
-    :host ::ng-deep .popup-row i {
-      width: 16px;
-      color: #667eea;
-      margin-top: 0.1rem;
-      flex-shrink: 0;
-    }
-
-    :host ::ng-deep .popup-distance {
-      background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(32, 201, 151, 0.1) 100%);
-      color: #28a745;
-      padding: 0.4rem 0.8rem;
-      border-radius: 15px;
-      font-weight: 600;
-      margin-top: 0.5rem;
-      border: 1px solid rgba(40, 167, 69, 0.2);
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.85rem;
-    }
-
-    :host ::ng-deep .popup-especialidades {
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      background: rgba(102, 126, 234, 0.05);
-      border-radius: 8px;
-      border-left: 3px solid #667eea;
-    }
-
-    :host ::ng-deep .popup-especialidades strong {
-      color: #667eea;
-      font-weight: 600;
-      margin-left: 0.5rem;
-    }
-
-    :host ::ng-deep .popup-especialidades-list {
-      margin-top: 0.5rem;
-      font-size: 0.85rem;
-      color: #495057;
-      line-height: 1.4;
-    }
-
-    :host ::ng-deep .popup-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid #e9ecef;
-    }
-
-    :host ::ng-deep .btn-popup-search {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    :host ::ng-deep .btn-popup-search:hover {
-      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-    :host ::ng-deep .btn-popup-info {
-      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-      box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
-    }
-
-    :host ::ng-deep .btn-popup-info:hover {
-      background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(23, 162, 184, 0.4);
-    }
-
-    :host ::ng-deep .btn-popup-info:hover {
-      background: rgba(108, 117, 125, 0.15);
-      border-color: rgba(108, 117, 125, 0.3);
-      color: #495057;
-    }
-
-    :host ::ng-deep .user-location-marker {
-      background: #28a745;
-      color: white;
-      border-radius: 50%;
-      width: 30px !important;
-      height: 30px !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
-      border: 3px solid white;
-      font-size: 14px;
-    }
-
-    :host ::ng-deep .user-location-marker:before {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: rgba(40, 167, 69, 0.3);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 1;
+      .distance-badge {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
       }
-      100% {
-        transform: scale(2);
-        opacity: 0;
+
+      .index-badge {
+        background: #6c757d;
+        color: white;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
       }
-    }
-  `]
+
+      .centro-details {
+        margin-bottom: 1rem;
+      }
+
+      .detail-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.4rem;
+        color: #6c757d;
+        font-size: 0.9rem;
+      }
+
+      .detail-row i {
+        width: 16px;
+        color: #667eea;
+      }
+
+      .especialidades-centro {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+      }
+
+      .especialidades-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .especialidades-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      .especialidad-tag {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+
+      .especialidad-tag.highlighted {
+        background: #667eea;
+        color: white;
+      }
+
+      .centro-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-left: 1rem;
+      }
+
+      .btn-search-center {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        white-space: nowrap;
+      }
+
+      .btn-search-center:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-center-on-map {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-center-on-map:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 768px) {
+        .centros-modal-content {
+          width: 100%;
+          height: 100vh;
+          border-radius: 0;
+        }
+
+        .centros-modal-filters {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .filter-group,
+        .location-controls {
+          min-width: auto;
+          width: 100%;
+        }
+
+        .coord-inputs {
+          flex-direction: column;
+        }
+
+        .centro-item {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .centro-actions {
+          align-self: flex-end;
+          flex-direction: row;
+          margin-left: 0;
+        }
+
+        .suggestions {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+
+      /* ESTILOS GLOBALES PARA LEAFLET */
+      :host ::ng-deep .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      :host ::ng-deep .centro-popup {
+        font-family: inherit;
+        min-width: 280px;
+        max-width: 320px;
+      }
+
+      :host ::ng-deep .popup-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      :host ::ng-deep .popup-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        flex-shrink: 0;
+      }
+
+      :host ::ng-deep .popup-title {
+        flex: 1;
+      }
+
+      :host ::ng-deep .popup-title strong {
+        font-size: 1.1rem;
+        color: #2c3e50;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      :host ::ng-deep .popup-body {
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      :host ::ng-deep .popup-info {
+        margin-bottom: 1rem;
+      }
+
+      :host ::ng-deep .popup-row {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      :host ::ng-deep .popup-row i {
+        width: 16px;
+        color: #667eea;
+        margin-top: 0.1rem;
+        flex-shrink: 0;
+      }
+
+      :host ::ng-deep .popup-distance {
+        background: linear-gradient(
+          135deg,
+          rgba(40, 167, 69, 0.1) 0%,
+          rgba(32, 201, 151, 0.1) 100%
+        );
+        color: #28a745;
+        padding: 0.4rem 0.8rem;
+        border-radius: 15px;
+        font-weight: 600;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+      }
+
+      :host ::ng-deep .popup-especialidades {
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: rgba(102, 126, 234, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+      }
+
+      :host ::ng-deep .popup-especialidades strong {
+        color: #667eea;
+        font-weight: 600;
+        margin-left: 0.5rem;
+      }
+
+      :host ::ng-deep .popup-especialidades-list {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: #495057;
+        line-height: 1.4;
+      }
+
+      :host ::ng-deep .popup-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+      }
+
+      :host ::ng-deep .btn-popup-search {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+
+      :host ::ng-deep .btn-popup-search:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      :host ::ng-deep .btn-popup-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
+      }
+
+      :host ::ng-deep .btn-popup-info:hover {
+        background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(23, 162, 184, 0.4);
+      }
+
+      :host ::ng-deep .btn-popup-info:hover {
+        background: rgba(108, 117, 125, 0.15);
+        border-color: rgba(108, 117, 125, 0.3);
+        color: #495057;
+      }
+
+      :host ::ng-deep .user-location-marker {
+        background: #28a745;
+        color: white;
+        border-radius: 50%;
+        width: 30px !important;
+        height: 30px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+        border: 3px solid white;
+        font-size: 14px;
+      }
+
+      :host ::ng-deep .user-location-marker:before {
+        content: "";
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: rgba(40, 167, 69, 0.3);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+    `,
+  ],
 })
 export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   @Input() centros: CentroAtencion[] = [];
   @Input() especialidades: Especialidad[] = [];
   @Input() slotsDisponibles: any[] = []; // Slots/turnos disponibles del componente padre
-  @Input() especialidadSeleccionadaInicial: string = '';
+  @Input() especialidadSeleccionadaInicial: string = "";
   @Output() centroSeleccionado = new EventEmitter<CentroAtencion>();
   @Output() modalCerrado = new EventEmitter<void>();
-  @ViewChild('mapContainer', { static: true }) mapContainer!: ElementRef<HTMLDivElement>;
+  @ViewChild("mapContainer", { static: true })
+  mapContainer!: ElementRef<HTMLDivElement>;
 
   // Mapa
   private map!: L.Map;
@@ -1128,19 +1218,19 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   private userMarker: L.Marker | null = null;
 
   // Filtros
-  especialidadFiltro: string = '';
+  especialidadFiltro: string = "";
   radioMaximo: number = 50; // km
-  
+
   // Búsqueda
-  busquedaTexto: string = '';
+  busquedaTexto: string = "";
   resultadosBusqueda: CentroMapaInfo[] = [];
-  
+
   // Ubicación
   userLocation: UserLocation | null = null;
   isLoadingLocation = false;
   locationError: string | null = null;
   showManualLocationForm = false;
-  direccionBusqueda = '';
+  direccionBusqueda = "";
   latitudManual: number | null = null;
   longitudManual: number | null = null;
 
@@ -1149,10 +1239,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   centroActualSeleccionado: CentroMapaInfo | null = null;
   especialidadesDisponibles: Especialidad[] = [];
   ordenadoPorDistancia = false;
-  
+
   // Relaciones centro-especialidad
   centroEspecialidades: CentroEspecialidad[] = [];
-  
+
   // Cache para conteo de especialidades
   private conteoEspecialidadesCache = new Map<string, number>();
   private lastCentrosFiltradosLength = 0;
@@ -1160,7 +1250,8 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private geolocationService: GeolocationService,
-    private centroEspecialidadService: CentroEspecialidadService
+    private centroEspecialidadService: CentroEspecialidadService,
+    private authService: UsuarioAuthService
   ) {}
 
   ngOnInit() {
@@ -1168,15 +1259,15 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // console.log('- Centros recibidos:', this.centros?.length || 0);
     // console.log('- Especialidades recibidas:', this.especialidades?.length || 0);
     // console.log('- Especialidad inicial:', this.especialidadSeleccionadaInicial);
-    
+
     // Establecer referencia global para los botones del popup
     (window as any).centrosModalComponent = this;
-    
+
     // Establecer el filtro inicial ANTES de inicializar datos
     if (this.especialidadSeleccionadaInicial) {
       this.especialidadFiltro = this.especialidadSeleccionadaInicial;
     }
-    
+
     // Inicializar datos del modal (esto cargará las especialidades del padre)
     this.inicializarDatos();
   }
@@ -1186,7 +1277,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     if ((window as any).centrosModalComponent === this) {
       delete (window as any).centrosModalComponent;
     }
-    
+
     // Limpiar mapa
     if (this.map) {
       this.map.remove();
@@ -1201,7 +1292,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   inicializarDatos() {
     // console.log('🔧 Inicializando datos del modal...');
     // console.log('🏥 Centros recibidos:', this.centros?.length || 0);
-    
+
     // Cargar las relaciones centro-especialidad
     this.cargarCentroEspecialidades();
   }
@@ -1209,81 +1300,92 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   cargarCentroEspecialidades() {
     // console.log('📋 Procesando datos basados en slots disponibles...');
     // console.log('- Slots recibidos:', this.slotsDisponibles?.length || 0);
-    
+
     if (!this.slotsDisponibles || this.slotsDisponibles.length === 0) {
       // console.log('⚠️ No hay slots disponibles, cargando desde relaciones centro-especialidad como fallback');
       this.cargarCentroEspecialidadesFromService();
       return;
     }
-    
+
     // Extraer especialidades únicas disponibles desde los slots
     this.extraerEspecialidadesDisponibles();
-    
+
     // Procesar centros con sus especialidades reales
     this.procesarCentros();
-    
+
     // Aplicar filtros después de procesar los datos
     this.aplicarFiltros();
-    
+
     // Inicializar mapa
     setTimeout(() => this.inicializarMapa(), 100);
   }
-  
+  // Método para verificar si el usuario es operador
+  get esOperador(): boolean {
+    return this.authService.esOperador();
+  }
+
   cargarCentroEspecialidadesFromService() {
     this.centroEspecialidadService.all().subscribe({
       next: (dataPackage) => {
         this.centroEspecialidades = dataPackage.data || [];
         // console.log('✅ Relaciones centro-especialidad cargadas (fallback):', this.centroEspecialidades.length);
-        
+
         // Usar el método anterior como fallback
         this.extraerEspecialidadesDisponiblesFromService();
         this.procesarCentrosFromService();
-        
+
         // Aplicar filtros
         this.aplicarFiltros();
-        
+
         // Inicializar mapa
         setTimeout(() => this.inicializarMapa(), 100);
       },
       error: (error) => {
-        console.error('❌ Error cargando relaciones centro-especialidad:', error);
+        console.error(
+          "❌ Error cargando relaciones centro-especialidad:",
+          error
+        );
         this.especialidadesDisponibles = this.especialidades || [];
         this.procesarCentros();
         this.aplicarFiltros();
         setTimeout(() => this.inicializarMapa(), 100);
-      }
+      },
     });
   }
-  
+
   // Métodos fallback para cuando no hay slots
   extraerEspecialidadesDisponiblesFromService() {
     const especialidadesIds = new Set<number>();
-    const centrosIds = new Set(this.centros.map(c => c.id).filter(id => id !== undefined));
-    
-    this.centroEspecialidades.forEach(relacion => {
+    const centrosIds = new Set(
+      this.centros.map((c) => c.id).filter((id) => id !== undefined)
+    );
+
+    this.centroEspecialidades.forEach((relacion) => {
       if (centrosIds.has(relacion.centroId)) {
         especialidadesIds.add(relacion.especialidadId);
       }
     });
 
-    this.especialidadesDisponibles = this.especialidades.filter(esp => 
-      esp.id && especialidadesIds.has(esp.id)
+    this.especialidadesDisponibles = this.especialidades.filter(
+      (esp) => esp.id && especialidadesIds.has(esp.id)
     );
   }
-  
+
   procesarCentrosFromService() {
-    this.centrosFiltrados = this.centros.map(centro => {
+    this.centrosFiltrados = this.centros.map((centro) => {
       const especialidadesCentro = this.centroEspecialidades
-        .filter(relacion => relacion.centroId === centro.id)
-        .map(relacion => {
-          const especialidad = this.especialidades.find(esp => esp.id === relacion.especialidadId);
-          return especialidad?.nombre || 'Desconocida';
+        .filter((relacion) => relacion.centroId === centro.id)
+        .map((relacion) => {
+          const especialidad = this.especialidades.find(
+            (esp) => esp.id === relacion.especialidadId
+          );
+          return especialidad?.nombre || "Desconocida";
         })
-        .filter(nombre => nombre !== 'Desconocida');
+        .filter((nombre) => nombre !== "Desconocida");
 
       return {
         ...centro,
-        especialidadesDisponibles: especialidadesCentro
+        especialidadesDisponibles: especialidadesCentro,
       };
     });
   }
@@ -1291,21 +1393,27 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   extraerEspecialidadesDisponibles() {
     // Extraer especialidades únicas de los slots disponibles
     const especialidadesConTurnos = new Set<string>();
-    
+
     // Solo considerar slots de centros que tenemos en la lista
-    const centrosIds = new Set(this.centros.map(c => c.id).filter(id => id !== undefined));
-    
-    this.slotsDisponibles.forEach(slot => {
-      if (centrosIds.has(Number(slot.centroId)) && slot.especialidadStaffMedico && slot.especialidadStaffMedico.trim()) {
+    const centrosIds = new Set(
+      this.centros.map((c) => c.id).filter((id) => id !== undefined)
+    );
+
+    this.slotsDisponibles.forEach((slot) => {
+      if (
+        centrosIds.has(Number(slot.centroId)) &&
+        slot.especialidadStaffMedico &&
+        slot.especialidadStaffMedico.trim()
+      ) {
         especialidadesConTurnos.add(slot.especialidadStaffMedico.trim());
       }
     });
 
     // Filtrar especialidades del padre que realmente tienen turnos disponibles
-    this.especialidadesDisponibles = this.especialidades.filter(esp => 
-      esp.nombre && especialidadesConTurnos.has(esp.nombre)
+    this.especialidadesDisponibles = this.especialidades.filter(
+      (esp) => esp.nombre && especialidadesConTurnos.has(esp.nombre)
     );
-    
+
     // console.log('✅ Especialidades con turnos disponibles en centros:', this.especialidadesDisponibles.length);
     // console.log('📋 Lista:', this.especialidadesDisponibles.map(e => e.nombre));
     // console.log('📋 Especialidades encontradas en slots:', Array.from(especialidadesConTurnos));
@@ -1315,21 +1423,24 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // console.log('🏥 Procesando centros con especialidades reales (basado en turnos disponibles)...');
     // console.log('- Centros recibidos:', this.centros.length);
     // console.log('- Slots disponibles recibidos:', this.slotsDisponibles.length);
-    
-    this.centrosFiltrados = this.centros.map(centro => {
+
+    this.centrosFiltrados = this.centros.map((centro) => {
       // Buscar las especialidades que realmente tienen turnos disponibles en este centro
-      const slotsDelCentro = this.slotsDisponibles.filter(slot => 
-        Number(slot.centroId) === Number(centro.id)
+      const slotsDelCentro = this.slotsDisponibles.filter(
+        (slot) => Number(slot.centroId) === Number(centro.id)
       );
-      
+
       // Extraer especialidades únicas de los slots disponibles
       const especialidadesConTurnos = new Set<string>();
-      slotsDelCentro.forEach(slot => {
-        if (slot.especialidadStaffMedico && slot.especialidadStaffMedico.trim()) {
+      slotsDelCentro.forEach((slot) => {
+        if (
+          slot.especialidadStaffMedico &&
+          slot.especialidadStaffMedico.trim()
+        ) {
           especialidadesConTurnos.add(slot.especialidadStaffMedico.trim());
         }
       });
-      
+
       const especialidadesCentro = Array.from(especialidadesConTurnos);
 
       // if (centro.id === 1) { // Debug solo para el primer centro
@@ -1340,7 +1451,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
       return {
         ...centro,
-        especialidadesDisponibles: especialidadesCentro
+        especialidadesDisponibles: especialidadesCentro,
       };
     });
 
@@ -1358,18 +1469,21 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
     // Evitar inicializar el mapa múltiples veces
     if (this.map) {
-      console.log('🗺️ Mapa ya inicializado, solo actualizando marcadores...');
+      console.log("🗺️ Mapa ya inicializado, solo actualizando marcadores...");
       this.agregarMarcadoresCentros();
       return;
     }
 
-    console.log('🗺️ Inicializando mapa...');
-    
-    // Centrar en Argentina por defecto
-    this.map = L.map(this.mapContainer.nativeElement).setView([-34.6037, -58.3816], 6);
+    console.log("🗺️ Inicializando mapa...");
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+    // Centrar en Argentina por defecto
+    this.map = L.map(this.mapContainer.nativeElement).setView(
+      [-34.6037, -58.3816],
+      6
+    );
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors",
     }).addTo(this.map);
 
     // Agregar marcadores de centros
@@ -1378,7 +1492,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   agregarMarcadoresCentros() {
     // Limpiar marcadores existentes
-    this.markers.forEach(marker => marker.remove());
+    this.markers.forEach((marker) => marker.remove());
     this.markers = [];
 
     this.resultadosBusqueda.forEach((centro, index) => {
@@ -1387,7 +1501,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
           .bindPopup(this.crearPopupCentro(centro, index + 1))
           .addTo(this.map);
 
-        marker.on('click', () => {
+        marker.on("click", () => {
           this.seleccionarCentro(centro);
         });
 
@@ -1406,22 +1520,30 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   crearPopupCentro(centro: CentroMapaInfo, numero: number): string {
-    const distancia = centro.distanciaKm !== undefined 
-      ? `<div class="popup-distance"><i class="fas fa-route"></i> ${this.formatDistance(centro.distanciaKm)}</div>`
-      : '';
+    const distancia =
+      centro.distanciaKm !== undefined
+        ? `<div class="popup-distance"><i class="fas fa-route"></i> ${this.formatDistance(
+            centro.distanciaKm
+          )}</div>`
+        : "";
 
     // Obtener las especialidades reales del centro
     const especialidadesCentro = centro.especialidadesDisponibles || [];
-    const especialidades = especialidadesCentro.length > 0
-      ? `<div class="popup-especialidades">
+    const especialidades =
+      especialidadesCentro.length > 0
+        ? `<div class="popup-especialidades">
            <i class="fas fa-stethoscope"></i> 
            <strong>Especialidades disponibles:</strong>
            <div class="popup-especialidades-list">
-             ${especialidadesCentro.slice(0, 3).join(', ')}
-             ${especialidadesCentro.length > 3 ? ` (+${especialidadesCentro.length - 3} más)` : ''}
+             ${especialidadesCentro.slice(0, 3).join(", ")}
+             ${
+               especialidadesCentro.length > 3
+                 ? ` (+${especialidadesCentro.length - 3} más)`
+                 : ""
+             }
            </div>
          </div>`
-      : '<div class="popup-especialidades"><i class="fas fa-exclamation-triangle"></i> <em>Sin especialidades registradas</em></div>';
+        : '<div class="popup-especialidades"><i class="fas fa-exclamation-triangle"></i> <em>Sin especialidades registradas</em></div>';
 
     return `
       <div class="centro-popup">
@@ -1433,21 +1555,35 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         </div>
         <div class="popup-body">
           <div class="popup-info">
-            <div class="popup-row"><i class="fas fa-map-marker-alt"></i> ${centro.direccion}</div>
-            ${centro.localidad ? `<div class="popup-row"><i class="fas fa-city"></i> ${centro.localidad}, ${centro.provincia}</div>` : ''}
-            ${centro.telefono ? `<div class="popup-row"><i class="fas fa-phone"></i> ${centro.telefono}</div>` : ''}
+            <div class="popup-row"><i class="fas fa-map-marker-alt"></i> ${
+              centro.direccion
+            }</div>
+            ${
+              centro.localidad
+                ? `<div class="popup-row"><i class="fas fa-city"></i> ${centro.localidad}, ${centro.provincia}</div>`
+                : ""
+            }
+            ${
+              centro.telefono
+                ? `<div class="popup-row"><i class="fas fa-phone"></i> ${centro.telefono}</div>`
+                : ""
+            }
             ${distancia}
           </div>
           ${especialidades}
           <div class="popup-actions">
             <button 
               class="btn btn-popup-search" 
-              onclick="window.centrosModalComponent.buscarEnCentro(${centro.id})">
+              onclick="window.centrosModalComponent.buscarEnCentro(${
+                centro.id
+              })">
               <i class="fas fa-search"></i> Buscar aquí
             </button>
             <button 
               class="btn btn-popup-info" 
-              onclick="window.centrosModalComponent.verDetallesCentro(${centro.id})">
+              onclick="window.centrosModalComponent.verDetallesCentro(${
+                centro.id
+              })">
               <i class="fas fa-info-circle"></i> Ver detalles
             </button>
           </div>
@@ -1460,20 +1596,23 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.isLoadingLocation = true;
     this.locationError = null;
 
-    this.geolocationService.getCurrentLocation({
-      timeout: 15000,
-      enableHighAccuracy: true,
-      useIPFallback: true
-    }).then(location => {
-      this.userLocation = location;
-      this.isLoadingLocation = false;
-      this.mostrarUbicacionUsuarioEnMapa();
-      this.calcularDistancias();
-      this.aplicarFiltros();
-    }).catch(error => {
-      this.isLoadingLocation = false;
-      this.locationError = error.message || 'No se pudo obtener la ubicación';
-    });
+    this.geolocationService
+      .getCurrentLocation({
+        timeout: 15000,
+        enableHighAccuracy: true,
+        useIPFallback: true,
+      })
+      .then((location) => {
+        this.userLocation = location;
+        this.isLoadingLocation = false;
+        this.mostrarUbicacionUsuarioEnMapa();
+        this.calcularDistancias();
+        this.aplicarFiltros();
+      })
+      .catch((error) => {
+        this.isLoadingLocation = false;
+        this.locationError = error.message || "No se pudo obtener la ubicación";
+      });
   }
 
   mostrarUbicacionUsuarioEnMapa() {
@@ -1488,23 +1627,33 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     const userIcon = L.divIcon({
       html: '<i class="fas fa-user"></i>',
       iconSize: [30, 30],
-      className: 'user-location-marker'
+      className: "user-location-marker",
     });
 
-    this.userMarker = L.marker([this.userLocation.latitude, this.userLocation.longitude], {
-      icon: userIcon
-    }).bindPopup('Tu ubicación').addTo(this.map);
+    this.userMarker = L.marker(
+      [this.userLocation.latitude, this.userLocation.longitude],
+      {
+        icon: userIcon,
+      }
+    )
+      .bindPopup("Tu ubicación")
+      .addTo(this.map);
 
     // Centrar el mapa en la ubicación del usuario si es la primera vez
-    if (this.userLocation.source === 'geolocation') {
-      this.map.setView([this.userLocation.latitude, this.userLocation.longitude], 12);
+    if (this.userLocation.source === "geolocation") {
+      this.map.setView(
+        [this.userLocation.latitude, this.userLocation.longitude],
+        12
+      );
     }
   }
 
   buscarDireccion() {
     if (!this.direccionBusqueda.trim()) return;
 
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(this.direccionBusqueda)}&format=json&limit=1&countrycodes=ar`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+      this.direccionBusqueda
+    )}&format=json&limit=1&countrycodes=ar`;
 
     this.http.get<any[]>(url).subscribe({
       next: (results) => {
@@ -1514,19 +1663,19 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
           this.longitudManual = parseFloat(lon);
           this.establecerCoordenadas();
         } else {
-          this.locationError = 'No se encontró la dirección especificada';
+          this.locationError = "No se encontró la dirección especificada";
         }
       },
       error: () => {
-        this.locationError = 'Error al buscar la dirección';
-      }
+        this.locationError = "Error al buscar la dirección";
+      },
     });
   }
 
   calcularDistancias() {
     if (!this.userLocation) return;
 
-    this.centrosFiltrados.forEach(centro => {
+    this.centrosFiltrados.forEach((centro) => {
       if (centro.latitud && centro.longitud) {
         centro.distanciaKm = this.geolocationService.calculateDistance(
           this.userLocation!.latitude,
@@ -1539,19 +1688,24 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   aplicarFiltros() {
-   
     let centrosFiltrados = [...this.centrosFiltrados] as CentroMapaInfo[];
 
     // Filtrar por especialidad
     if (this.especialidadFiltro && this.especialidadFiltro.trim()) {
-      centrosFiltrados = centrosFiltrados.filter(centro => {
-        if (!centro.especialidadesDisponibles || centro.especialidadesDisponibles.length === 0) {
+      centrosFiltrados = centrosFiltrados.filter((centro) => {
+        if (
+          !centro.especialidadesDisponibles ||
+          centro.especialidadesDisponibles.length === 0
+        ) {
           return false;
         }
-        
+
         // Verificar si el centro tiene la especialidad seleccionada
-        return centro.especialidadesDisponibles.some(especialidadNombre => 
-          especialidadNombre && especialidadNombre.toLowerCase() === this.especialidadFiltro.toLowerCase()
+        return centro.especialidadesDisponibles.some(
+          (especialidadNombre) =>
+            especialidadNombre &&
+            especialidadNombre.toLowerCase() ===
+              this.especialidadFiltro.toLowerCase()
         );
       });
     }
@@ -1559,35 +1713,37 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Filtrar por búsqueda de texto
     if (this.busquedaTexto && this.busquedaTexto.trim()) {
       const textoBusqueda = this.busquedaTexto.toLowerCase().trim();
-      centrosFiltrados = centrosFiltrados.filter(centro => {
-        const nombreCentro = centro.nombre?.toLowerCase() || '';
-        const direccionCentro = centro.direccion?.toLowerCase() || '';
-        const localidadCentro = centro.localidad?.toLowerCase() || '';
-        
-        return nombreCentro.includes(textoBusqueda) || 
-               direccionCentro.includes(textoBusqueda) || 
-               localidadCentro.includes(textoBusqueda);
+      centrosFiltrados = centrosFiltrados.filter((centro) => {
+        const nombreCentro = centro.nombre?.toLowerCase() || "";
+        const direccionCentro = centro.direccion?.toLowerCase() || "";
+        const localidadCentro = centro.localidad?.toLowerCase() || "";
+
+        return (
+          nombreCentro.includes(textoBusqueda) ||
+          direccionCentro.includes(textoBusqueda) ||
+          localidadCentro.includes(textoBusqueda)
+        );
       });
     }
 
     // Filtrar por radio de distancia
     if (this.userLocation && this.radioMaximo > 0) {
-      centrosFiltrados = centrosFiltrados.filter(centro => {
+      centrosFiltrados = centrosFiltrados.filter((centro) => {
         if (!centro.latitud || !centro.longitud) return false;
-        
+
         const distancia = this.geolocationService.calculateDistance(
           this.userLocation!.latitude,
           this.userLocation!.longitude,
           centro.latitud,
           centro.longitud
         );
-        
+
         centro.distanciaKm = distancia;
         return distancia <= this.radioMaximo;
       });
     } else if (this.userLocation) {
       // Calcular distancias aunque no haya límite
-      centrosFiltrados.forEach(centro => {
+      centrosFiltrados.forEach((centro) => {
         if (centro.latitud && centro.longitud) {
           centro.distanciaKm = this.geolocationService.calculateDistance(
             this.userLocation!.latitude,
@@ -1611,10 +1767,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Actualizar la lista de resultados para la lista Y para el mapa
     this.resultadosBusqueda = centrosFiltrados;
     this.centrosFiltrados = centrosFiltrados; // Para compatibilidad con el template
-    
+
     // Limpiar cache de conteo al cambiar los centros filtrados
     this.conteoEspecialidadesCache.clear();
-    
+
     // Actualizar marcadores en el mapa
     if (this.map) {
       this.agregarMarcadoresCentros();
@@ -1633,16 +1789,16 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   centrarEnMapa(centro: CentroMapaInfo, event: Event) {
     event.stopPropagation();
-    
+
     if (centro.latitud && centro.longitud) {
       this.map.setView([centro.latitud, centro.longitud], 15);
-      
+
       // Encontrar y abrir el popup del marcador
-      const marker = this.markers.find(m => {
+      const marker = this.markers.find((m) => {
         const pos = m.getLatLng();
         return pos.lat === centro.latitud && pos.lng === centro.longitud;
       });
-      
+
       if (marker) {
         marker.openPopup();
       }
@@ -1654,12 +1810,12 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     else if (this.radioMaximo === 25) this.radioMaximo = 50;
     else if (this.radioMaximo === 50) this.radioMaximo = 100;
     else if (this.radioMaximo === 100) this.radioMaximo = 0;
-    
+
     this.aplicarFiltros();
   }
 
   limpiarFiltros() {
-    this.especialidadFiltro = '';
+    this.especialidadFiltro = "";
     this.radioMaximo = 50;
     this.aplicarFiltros();
   }
@@ -1674,7 +1830,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   // Método llamado desde el popup cuando se hace clic en "Buscar en este centro"
   buscarEnCentro(centroId: number) {
-    const centro = this.centros.find(c => c.id === centroId);
+    const centro = this.centros.find((c) => c.id === centroId);
     if (centro) {
       this.centroSeleccionado.emit(centro);
       this.close();
@@ -1683,7 +1839,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   // Método llamado desde el popup cuando se hace clic en "Más información"
   verDetallesCentro(centroId: number) {
-    const centro = this.centros.find(c => c.id === centroId);
+    const centro = this.centros.find((c) => c.id === centroId);
     if (centro) {
       this.seleccionarCentro(centro);
       // Centrar el mapa en el centro seleccionado
@@ -1700,7 +1856,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // Buscar centros por texto (para autocompletado)
   buscarCentros() {
     const texto = this.busquedaTexto.toLowerCase().trim();
-    
+
     if (texto.length === 0) {
       this.resultadosBusqueda = [];
       // Aplicar filtros normales cuando no hay búsqueda
@@ -1713,21 +1869,23 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     }
 
     // Crear resultados de autocompletado (máximo 5)
-    this.resultadosBusqueda = this.centrosFiltrados.filter(centro => 
-      centro.nombre.toLowerCase().includes(texto) ||
-      centro.direccion?.toLowerCase().includes(texto) ||
-      centro.localidad?.toLowerCase().includes(texto) ||
-      centro.provincia?.toLowerCase().includes(texto)
-    ).slice(0, 5);
+    this.resultadosBusqueda = this.centrosFiltrados
+      .filter(
+        (centro) =>
+          centro.nombre.toLowerCase().includes(texto) ||
+          centro.direccion?.toLowerCase().includes(texto) ||
+          centro.localidad?.toLowerCase().includes(texto) ||
+          centro.provincia?.toLowerCase().includes(texto)
+      )
+      .slice(0, 5);
 
-    
     // También aplicar filtros a la lista principal
     this.aplicarFiltros();
   }
 
   // Limpiar búsqueda
   limpiarBusqueda() {
-    this.busquedaTexto = '';
+    this.busquedaTexto = "";
     this.resultadosBusqueda = [];
     // Volver a aplicar filtros sin búsqueda de texto
     this.aplicarFiltros();
@@ -1736,26 +1894,27 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // Seleccionar centro desde los resultados de búsqueda
   seleccionarCentroEnMapa(centro: CentroMapaInfo) {
     this.limpiarBusqueda();
-    
+
     // Marcar el centro como seleccionado
     this.centroActualSeleccionado = centro;
-    
+
     if (centro.latitud && centro.longitud) {
       // Centrar el mapa en el centro
       this.map.setView([centro.latitud, centro.longitud], 16);
-      
+
       // Encontrar el marcador correspondiente y abrir su popup
-      const marker = this.markers.find(m => {
+      const marker = this.markers.find((m) => {
         const markerLatLng = m.getLatLng();
-        return Math.abs(markerLatLng.lat - centro.latitud!) < 0.0001 && 
-               Math.abs(markerLatLng.lng - centro.longitud!) < 0.0001;
+        return (
+          Math.abs(markerLatLng.lat - centro.latitud!) < 0.0001 &&
+          Math.abs(markerLatLng.lng - centro.longitud!) < 0.0001
+        );
       });
-      
+
       if (marker) {
         marker.openPopup();
       }
     }
-    
   }
 
   // Contar centros por especialidad (con cache)
@@ -1765,29 +1924,30 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       this.conteoEspecialidadesCache.clear();
       this.lastCentrosFiltradosLength = this.centrosFiltrados.length;
     }
-    
+
     // Verificar si ya tenemos el resultado en cache
     if (this.conteoEspecialidadesCache.has(especialidad)) {
       return this.conteoEspecialidadesCache.get(especialidad)!;
     }
-    
+
     // Calcular el conteo
-    const centrosConEspecialidad = this.centrosFiltrados.filter(centro => {
+    const centrosConEspecialidad = this.centrosFiltrados.filter((centro) => {
       // Verificar si el centro tiene la especialidad disponible
-      const tieneEspecialidad = centro.especialidadesDisponibles && 
-             centro.especialidadesDisponibles.some(esp => 
-               esp && esp.toLowerCase() === especialidad.toLowerCase()
-             );
+      const tieneEspecialidad =
+        centro.especialidadesDisponibles &&
+        centro.especialidadesDisponibles.some(
+          (esp) => esp && esp.toLowerCase() === especialidad.toLowerCase()
+        );
       return tieneEspecialidad;
     });
-    
+
     const conteo = centrosConEspecialidad.length;
-    
+
     // Guardar en cache
     this.conteoEspecialidadesCache.set(especialidad, conteo);
-    
+
     // Debug solo una vez por especialidad (comentado - problema resuelto)
-    // if (especialidad === 'Medicina General' || especialidad.toLowerCase().includes('ginecol')) { 
+    // if (especialidad === 'Medicina General' || especialidad.toLowerCase().includes('ginecol')) {
     //   console.log(`🔍 Contando centros para "${especialidad}" (calculado):`);
     //   console.log('  - Centros filtrados totales:', this.centrosFiltrados.length);
     //   console.log('  - Centros con la especialidad:', conteo);
@@ -1796,7 +1956,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     //     especialidades: c.especialidadesDisponibles
     //   })));
     // }
-    
+
     return conteo;
   }
 
@@ -1804,10 +1964,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // FUNCIONALIDADES DE UBICACIÓN MANUAL
   // ================================
 
-  // Establecer coordenadas manualmente  
+  // Establecer coordenadas manualmente
   establecerCoordenadas() {
     if (!this.latitudManual || !this.longitudManual) {
-      this.locationError = 'Por favor ingresa latitud y longitud válidas.';
+      this.locationError = "Por favor ingresa latitud y longitud válidas.";
       return;
     }
 
@@ -1816,15 +1976,16 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
     // Validar rango de coordenadas para Argentina aproximadamente
     if (lat < -55 || lat > -21 || lng < -74 || lng > -53) {
-      this.locationError = 'Las coordenadas parecen estar fuera de Argentina. ¿Están correctas?';
+      this.locationError =
+        "Las coordenadas parecen estar fuera de Argentina. ¿Están correctas?";
     }
 
     this.userLocation = {
       latitude: lat,
       longitude: lng,
       accuracy: 0,
-      source: 'manual',
-      timestamp: Date.now()
+      source: "manual",
+      timestamp: Date.now(),
     };
 
     this.locationError = null;
@@ -1834,7 +1995,5 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.mostrarUbicacionUsuarioEnMapa();
     this.calcularDistancias();
     this.aplicarFiltros();
-
   }
-
 }
