@@ -43,4 +43,8 @@ System.out.println("DEBUG: dbError llamado con mensaje: " + msj);
 return response(HttpStatus.CONFLICT, msj, null);
 }
 
+public static ResponseEntity<Object> serverError(String msj) {
+return response(HttpStatus.INTERNAL_SERVER_ERROR, msj, null); 
+}
+
 }
