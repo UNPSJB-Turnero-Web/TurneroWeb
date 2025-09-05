@@ -1,7 +1,7 @@
-<div class="home-container">
+<div class="home-container" [@fadeIn]>
   <!-- Hero Section -->
-  <div class="hero-section">
-    <div class="brand-logo">
+  <div class="hero-section" [@slideUp]>
+    <div class="brand-logo" [@logoWave]>
       <i class="fas fa-calendar-check"></i>
       <h1 class="brand-title">CheTurno</h1>
     </div>
@@ -9,17 +9,31 @@
 
   <!-- Registration Section -->
   <div class="login-section">
-    <div class="login-card">
+    <div class="login-card" [@slideUp]>
       <!-- Login Link -->
       <div class="login-link">
         <p>
           ¿Ya estás registrado?
-          <a href="#" class="login-redirect" (click)="navigateToLogin()">Inicia sesión aquí</a>
+          <a class="login-redirect" 
+             [@pulse]="pulseState" 
+             (click)="navigateToLogin()">Inicia sesión aquí</a>
         </p>
       </div>
       
       <form class="login-form" #registroForm="ngForm" (ngSubmit)="onSubmit(registroForm)" autocomplete="off" novalidate>
         <div class="form-title">Crea tu cuenta de paciente</div>
+        
+        <!-- Mensajes de estado -->
+        <div class="alert alert-success" *ngIf="successMessage" [@fadeIn]>
+          <i class="fas fa-check-circle me-2"></i>
+          {{ successMessage }}
+        </div>
+        
+        <div class="alert alert-danger" *ngIf="errorMessage" [@fadeIn]>
+          <i class="fas fa-exclamation-circle me-2"></i>
+          {{ errorMessage }}
+          <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+        </div>
         
         <div class="form-row">
           <div class="form-group">
@@ -35,9 +49,11 @@
               maxlength="50"
               placeholder="Tu nombre"
               #nombre="ngModel"
+              (keypress)="onlyText($event)"
+              (paste)="validateTextPaste($event)"
             />
             <small class="form-text text-danger" *ngIf="nombre.invalid && nombre.touched">
-              El nombre es requerido (mínimo 2 caracteres)
+              El nombre es requerido
             </small>
           </div>
           
@@ -54,9 +70,11 @@
               maxlength="50"
               placeholder="Tu apellido"
               #apellido="ngModel"
+              (keypress)="onlyText($event)"
+              (paste)="validateTextPaste($event)"
             />
             <small class="form-text text-danger" *ngIf="apellido.invalid && apellido.touched">
-              El apellido es requerido (mínimo 2 caracteres)
+              El apellido es requerido
             </small>
           </div>
         </div>
@@ -75,9 +93,11 @@
             pattern="[0-9]{7,10}"
             placeholder="Ingresa tu DNI (sin puntos)"
             #dni="ngModel"
+            (keypress)="onlyNumbers($event)"
+            (paste)="validateNumberPaste($event)"
           />
           <small class="form-text text-danger" *ngIf="dni.invalid && dni.touched">
-            DNI debe contener entre 7 y 10 dígitos
+            Campo obligatorio
           </small>
         </div>
 
@@ -121,12 +141,14 @@
                 maxlength="10"
                 placeholder="11 2345 6789"
                 #telefono="ngModel"
+                (keypress)="onlyNumbers($event)"
+                (paste)="validateNumberPaste($event)"
               />
             </div>
           </div>
           <small class="form-text">Selecciona el país e ingresa tu número de teléfono</small>
           <small class="form-text text-danger" *ngIf="telefono.invalid && telefono.touched">
-            Teléfono debe contener entre 6 y 10 dígitos
+            Campo obligatorio
           </small>
         </div>
 
@@ -197,10 +219,11 @@
           <button 
             type="submit" 
             class="btn btn-register"
-            [disabled]="registroForm.invalid || !passwordsMatch()"
+            [disabled]="registroForm.invalid || !passwordsMatch() || isLoading"
           >
-            <i class="fas fa-user-check"></i>
-            Crear Cuenta
+            <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+            <i class="fas fa-user-check" *ngIf="!isLoading"></i>
+            {{ isLoading ? 'Registrando...' : 'Crear Cuenta' }}
           </button>
         </div>
       </form>
