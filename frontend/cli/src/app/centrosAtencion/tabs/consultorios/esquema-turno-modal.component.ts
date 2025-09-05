@@ -147,6 +147,75 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
         {{ mensajeExito }}
       </div>
 
+      <!-- Panel de Validación de Conflictos -->
+      <div *ngIf="validandoConflictos" class="alert alert-info alert-esquema">
+        <i class="fa fa-spinner fa-spin me-2"></i>
+        Validando conflictos de horarios...
+      </div>
+
+      <div *ngIf="conflictosDetectados && tieneConflictos" class="alert alert-warning alert-esquema">
+        <div class="d-flex align-items-start">
+          <i class="fa fa-exclamation-triangle me-2 mt-1"></i>
+          <div>
+            <strong>⚠️ Conflictos detectados:</strong>
+            
+            <!-- Nueva estructura: conflictos array principal -->
+            <div *ngIf="conflictosDetectados.conflictos?.length > 0" class="mt-2">
+              <small class="fw-bold">🚫 Conflictos:</small>
+              <ul class="mb-2 mt-1">
+                <li *ngFor="let conflicto of conflictosDetectados.conflictos" class="small">
+                  {{ conflicto }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Advertencias -->
+            <div *ngIf="conflictosDetectados.advertencias?.length > 0" class="mt-2">
+              <small class="fw-bold">⚠️ Advertencias:</small>
+              <ul class="mb-2 mt-1">
+                <li *ngFor="let advertencia of conflictosDetectados.advertencias" class="small">
+                  {{ advertencia }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Estructura anterior por compatibilidad -->
+            <div *ngIf="conflictosDetectados.conflictosMedico?.length > 0" class="mt-2">
+              <small class="fw-bold">👨‍⚕️ Conflictos del médico:</small>
+              <ul class="mb-2 mt-1">
+                <li *ngFor="let conflicto of conflictosDetectados.conflictosMedico" class="small">
+                  {{ conflicto }}
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="conflictosDetectados.conflictosConsultorio?.length > 0" class="mt-2">
+              <small class="fw-bold">🏥 Conflictos del consultorio:</small>
+              <ul class="mb-2 mt-1">
+                <li *ngFor="let conflicto of conflictosDetectados.conflictosConsultorio" class="small">
+                  {{ conflicto }}
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="conflictosDetectados.erroresValidacion?.length > 0" class="mt-2">
+              <small class="fw-bold">❌ Errores de validación:</small>
+              <ul class="mb-0 mt-1">
+                <li *ngFor="let error of conflictosDetectados.erroresValidacion" class="small">
+                  {{ error }}
+                </li>
+              </ul>
+            </div>
+
+            <div class="mt-2">
+              <small class="text-muted">
+                El sistema detectó estos conflictos. Se mostrará un diálogo de confirmación al guardar.
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Seleccionar Disponibilidad Médica -->
       <div class="form-group-modern mb-4">
         <label class="form-label-modern">
@@ -413,10 +482,13 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
         type="button" 
         class="btn btn-success btn-crear-esquema"
         (click)="guardarEsquema()"
-        [disabled]="!puedeGuardar() || guardando"
+        [disabled]="!puedeGuardar() || guardando || validandoConflictos"
       >
-        <i class="fa" [class.fa-save]="!guardando" [class.fa-spinner]="guardando" [class.fa-spin]="guardando"></i>
-        {{ guardando ? 'Guardando...' : 'Crear Esquema' }}
+        <i class="fa" 
+           [class.fa-save]="!guardando && !validandoConflictos" 
+           [class.fa-spinner]="guardando || validandoConflictos" 
+           [class.fa-spin]="guardando || validandoConflictos"></i>
+        {{ validandoConflictos ? 'Validando...' : (guardando ? 'Guardando...' : 'Crear Esquema') }}
       </button>
     </div>
   `
@@ -445,6 +517,11 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   mensajeError = '';
   mensajeExito = '';
   guardando = false;
+  
+  // Validación de conflictos
+  validandoConflictos = false;
+  conflictosDetectados: any = null;
+  tieneConflictos = false;
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -603,10 +680,14 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       if (this.disponibilidadSeleccionada) {
         this.esquema.staffMedicoId = this.disponibilidadSeleccionada.staffMedicoId;
         this.calcularHorariosDisponibles();
+        
+        // Validar conflictos en tiempo real cuando cambia la disponibilidad
+        this.validarConflictosEnTiempoReal();
       }
     } else {
       this.disponibilidadSeleccionada = null;
       this.horariosDisponibles = [];
+      this.limpiarConflictos();
     }
   }
 
@@ -787,7 +868,9 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       event.preventDefault();
     }
     
-    if (this.isHorarioSeleccionado(horario)) {
+    const estaSeleccionado = this.isHorarioSeleccionado(horario);
+    
+    if (estaSeleccionado) {
       // Quitar el horario
       const index = this.esquema.horarios.findIndex(h => 
         h.dia === horario.dia && 
@@ -796,31 +879,53 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       );
       if (index > -1) {
         this.esquema.horarios.splice(index, 1);
+        console.log('✅ Horario removido:', horario);
       }
+      
+      // Validar conflictos después de remover
+      this.validarConflictosEnTiempoReal();
     } else {
-      // Agregar el horario
-      this.esquema.horarios.push({
+      // Agregar el horario y validar conflictos específicos
+      const nuevoHorario = {
         dia: horario.dia,
         horaInicio: horario.horaInicio,
         horaFin: horario.horaFin
-      });
+      };
+      
+      this.esquema.horarios.push(nuevoHorario);
+      console.log('➕ Horario agregado:', nuevoHorario);
+      
+      // Validar este horario específico para conflictos inmediatos
+      this.validarConflictoHorario(nuevoHorario);
     }
   }
 
   seleccionarTodos() {
+    const horariosIniciales = [...this.esquema.horarios];
+    
     for (const horario of this.horariosDisponibles) {
       if (!this.isHorarioSeleccionado(horario)) {
-        this.esquema.horarios.push({
+        const nuevoHorario = {
           dia: horario.dia,
           horaInicio: horario.horaInicio,
           horaFin: horario.horaFin
-        });
+        };
+        
+        this.esquema.horarios.push(nuevoHorario);
+        
+        // Validar inmediatamente este horario para conflictos
+        // Nota: esto podría mostrar múltiples alertas si hay varios conflictos
+        this.validarConflictoHorario(nuevoHorario);
       }
     }
+    
+    console.log('📋 Selección masiva completada. Horarios agregados:', this.esquema.horarios.length - horariosIniciales.length);
   }
 
   limpiarTodos() {
     this.esquema.horarios = [];
+    // Limpiar conflictos cuando se limpian todos los horarios
+    this.limpiarConflictos();
   }
 
   todosSeleccionados(): boolean {
@@ -904,8 +1009,117 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       horariosCount: this.esquema.horarios.length
     });
 
-    this.guardando = true;
+    // Primero validar conflictos
+    this.validarConflictosAntesDeGuardar();
+  }
 
+  /**
+   * Valida conflictos antes de guardar el esquema
+   */
+  private validarConflictosAntesDeGuardar(): void {
+    this.validandoConflictos = true;
+    this.conflictosDetectados = null;
+    this.tieneConflictos = false;
+
+    console.log('🔍 Validando conflictos antes de guardar...');
+
+    this.esquemaTurnoService.validarConflictos(this.esquema).subscribe({
+      next: (response) => {
+        this.validandoConflictos = false;
+        console.log('✅ Respuesta de validación:', response);
+
+        // El backend siempre devuelve status 200, verificamos el contenido de data
+        if (response.data) {
+          const validacion = response.data;
+          
+          if (validacion.valido) {
+            // No hay conflictos, proceder con el guardado
+            console.log('✅ Sin conflictos detectados, procediendo a guardar');
+            this.procederConGuardado();
+          } else {
+            // Hay conflictos, mostrar advertencias
+            this.conflictosDetectados = validacion;
+            this.tieneConflictos = true;
+            this.mostrarConflictos(validacion);
+          }
+        } else {
+          console.error('❌ Error en validación:', response);
+          this.mensajeError = 'Error al validar conflictos - respuesta inválida';
+        }
+      },
+      error: (error) => {
+        this.validandoConflictos = false;
+        console.error('❌ Error al validar conflictos:', error);
+        this.mensajeError = 'Error al validar conflictos. Inténtelo nuevamente.';
+      }
+    });
+  }
+
+  /**
+   * Muestra los conflictos detectados al usuario
+   */
+  private mostrarConflictos(validacion: any): void {
+    let mensajeConflictos = '⚠️ Se detectaron conflictos:\n\n';
+
+    // La nueva estructura del backend devuelve un array simple de conflictos
+    if (validacion.conflictos && validacion.conflictos.length > 0) {
+      mensajeConflictos += '🚫 Conflictos detectados:\n';
+      validacion.conflictos.forEach((conflicto: any) => {
+        mensajeConflictos += `• ${conflicto}\n`;
+      });
+      mensajeConflictos += '\n';
+    }
+
+    // También verificar si hay advertencias
+    if (validacion.advertencias && validacion.advertencias.length > 0) {
+      mensajeConflictos += '⚠️ Advertencias:\n';
+      validacion.advertencias.forEach((advertencia: any) => {
+        mensajeConflictos += `• ${advertencia}\n`;
+      });
+      mensajeConflictos += '\n';
+    }
+
+    // Mantener compatibilidad con estructura anterior por si acaso
+    if (validacion.conflictosMedico && validacion.conflictosMedico.length > 0) {
+      mensajeConflictos += '👨‍⚕️ Conflictos del médico:\n';
+      validacion.conflictosMedico.forEach((conflicto: any) => {
+        mensajeConflictos += `• ${conflicto}\n`;
+      });
+      mensajeConflictos += '\n';
+    }
+
+    if (validacion.conflictosConsultorio && validacion.conflictosConsultorio.length > 0) {
+      mensajeConflictos += '🏥 Conflictos del consultorio:\n';
+      validacion.conflictosConsultorio.forEach((conflicto: any) => {
+        mensajeConflictos += `• ${conflicto}\n`;
+      });
+      mensajeConflictos += '\n';
+    }
+
+    if (validacion.erroresValidacion && validacion.erroresValidacion.length > 0) {
+      mensajeConflictos += '❌ Errores de validación:\n';
+      validacion.erroresValidacion.forEach((error: any) => {
+        mensajeConflictos += `• ${error}\n`;
+      });
+      mensajeConflictos += '\n';
+    }
+
+    mensajeConflictos += '\n¿Desea continuar de todas formas?';
+
+    if (confirm(mensajeConflictos)) {
+      console.log('👤 Usuario decidió continuar a pesar de los conflictos');
+      this.procederConGuardado();
+    } else {
+      console.log('👤 Usuario canceló debido a conflictos');
+      this.guardando = false;
+    }
+  }
+
+  /**
+   * Procede con el guardado después de validar conflictos
+   */
+  private procederConGuardado(): void {
+    this.guardando = true;
     // Verificar si ya existe un esquema para esta combinación médico-consultorio
     this.verificarEsquemaExistente();
   }
@@ -1026,6 +1240,97 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
         this.mensajeError = error?.error?.status_text || error?.error?.message || 'Error al crear el esquema de turno. Intente nuevamente.';
       }
     });
+  }
+
+  /**
+   * Valida conflictos en tiempo real cuando cambian los datos del formulario
+   */
+  private validarConflictosEnTiempoReal(): void {
+    // Solo validar si tenemos datos suficientes
+    if (!this.esquema.disponibilidadMedicoId || !this.esquema.consultorioId || this.esquema.horarios.length === 0) {
+      this.limpiarConflictos();
+      return;
+    }
+
+    console.log('🔍 Validando conflictos en tiempo real...');
+
+    this.esquemaTurnoService.validarConflictos(this.esquema).subscribe({
+      next: (response) => {
+        if (response.status === 200 && response.data) {
+          const validacion = response.data;
+          
+          if (!validacion.valido) {
+            // Hay conflictos, mostrarlos visualmente pero sin bloquear
+            this.conflictosDetectados = validacion;
+            this.tieneConflictos = true;
+            console.log('⚠️ Conflictos detectados en tiempo real:', validacion);
+          } else {
+            // Sin conflictos
+            this.limpiarConflictos();
+            console.log('✅ Sin conflictos en tiempo real');
+          }
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error en validación en tiempo real:', error);
+        // No mostrar error al usuario para validación en tiempo real
+      }
+    });
+  }
+
+  /**
+   * Valida conflictos para un horario específico que se está agregando
+   */
+  private validarConflictoHorario(horario: any): void {
+    // Solo validar si tenemos los datos necesarios
+    if (!this.esquema.disponibilidadMedicoId || !this.esquema.consultorioId) {
+      return;
+    }
+
+    // Crear un esquema temporal con solo este horario para validar
+    const esquemaTemporal = {
+      ...this.esquema,
+      horarios: [horario]
+    };
+
+    console.log('🔍 Validando conflicto para horario específico:', horario);
+    
+    this.esquemaTurnoService.validarConflictos(esquemaTemporal).subscribe({
+      next: (response) => {
+        if (response.status === 200 && response.data) {
+          const validacion = response.data;
+          
+          if (!validacion.valido && validacion.conflictos && validacion.conflictos.length > 0) {
+            // Mostrar mensaje de conflicto inmediatamente
+            const conflictoMsg = validacion.conflictos.join('\n\n');
+            
+            // Mostrar alerta y desmarcar el horario
+            alert(`⚠️ No se puede agregar este horario:\n\n${conflictoMsg}`);
+            
+            // Remover el horario de la selección
+            this.esquema.horarios = this.esquema.horarios.filter(h => 
+              !(h.dia === horario.dia && h.horaInicio === horario.horaInicio && h.horaFin === horario.horaFin)
+            );
+            
+            console.log('❌ Horario removido por conflicto:', horario);
+            
+            // Actualizar validación en tiempo real después de remover
+            this.validarConflictosEnTiempoReal();
+          }
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al validar horario específico:', error);
+      }
+    });
+  }
+
+  /**
+   * Limpia los conflictos detectados
+   */
+  private limpiarConflictos(): void {
+    this.conflictosDetectados = null;
+    this.tieneConflictos = false;
   }
 
   onCancel() {
