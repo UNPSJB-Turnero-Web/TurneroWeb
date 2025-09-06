@@ -6,6 +6,7 @@ import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
 import { NotificacionService } from '../services/notificacion.service';
+import { AuthService } from '../inicio-sesion/auth.service';
 
 @Component({
   selector: 'app-paciente-dashboard',
@@ -28,6 +29,14 @@ import { NotificacionService } from '../services/notificacion.service';
             <div class="welcome-text">
               <h1>¡Bienvenido/a a tu Portal de Salud!</h1>
               <p class="patient-info">
+                <i class="fas fa-user me-2"></i>
+                {{ patientName }}
+              </p>
+              <p class="patient-info">
+                <i class="fas fa-envelope me-2"></i>
+                {{ patientEmail }}
+              </p>
+              <p class="patient-info" *ngIf="patientDNI">
                 <i class="fas fa-id-card me-2"></i>
                 DNI: {{ patientDNI }}
               </p>
@@ -2208,6 +2217,8 @@ import { NotificacionService } from '../services/notificacion.service';
 })
 export class PacienteDashboardComponent implements OnInit {
   patientDNI: string = '';
+  patientName: string = '';
+  patientEmail: string = '';
   proximosTurnos: any[] = [];
   allTurnos: any[] = [];
   filteredTurnos: any[] = [];
@@ -2229,8 +2240,13 @@ export class PacienteDashboardComponent implements OnInit {
   constructor(
     private router: Router,
     private turnoService: TurnoService,
-    private notificacionService: NotificacionService
+    private notificacionService: NotificacionService,
+    private authService: AuthService
   ) {
+    // Obtener datos del usuario autenticado
+    this.patientEmail = this.authService.getUserEmail() || '';
+    this.patientName = this.authService.getUserName() || '';
+    // Para el DNI, lo obtenemos del localStorage por ahora
     this.patientDNI = localStorage.getItem('patientDNI') || '';
     this.generateParticles();
   }
@@ -2537,8 +2553,7 @@ export class PacienteDashboardComponent implements OnInit {
   }
 
   logout() {
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('patientDNI');
+    this.authService.logout();
     this.router.navigate(['/']);
   }
 
