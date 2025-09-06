@@ -32,18 +32,23 @@
                   class="modern-select form-control">
             <option [ngValue]="null">Seleccione un médico...</option>
             <option *ngFor="let medico of medicosDisponiblesParaAsociar" [ngValue]="medico">
-              Dr. {{ medico.nombre }} {{ medico.apellido }} - {{ medico.especialidad?.nombre || 'Sin especialidad' }}
+              Dr. {{ medico.nombre }} {{ medico.apellido }}
             </option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label fw-semibold">Especialidad:</label>
-          <select [(ngModel)]="especialidadSeleccionada" class="modern-select form-control">
+          <select [(ngModel)]="especialidadSeleccionada" 
+                  class="modern-select form-control"
+                  [disabled]="!medicoSeleccionado || especialidadesMedico.length === 0">
             <option [ngValue]="null">Seleccione especialidad...</option>
             <option *ngFor="let esp of especialidadesMedico" [ngValue]="esp">
               {{ esp.nombre }}
             </option>
           </select>
+          <small *ngIf="medicoSeleccionado && especialidadesMedico.length === 0" class="text-muted">
+            Este médico no tiene especialidades asignadas
+          </small>
         </div>
         <div class="col-md-2 d-flex align-items-end">
           <button class="btn-modern btn-success-modern w-100" (click)="onAsociarMedico()"

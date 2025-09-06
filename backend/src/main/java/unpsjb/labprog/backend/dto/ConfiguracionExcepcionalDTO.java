@@ -88,8 +88,10 @@ public class ConfiguracionExcepcionalDTO {
                     dto.setMedicoNombre(staffMedico.getMedico().getNombre());
                     dto.setMedicoApellido(staffMedico.getMedico().getApellido());
                     
-                    if (staffMedico.getMedico().getEspecialidad() != null) {
-                        dto.setEspecialidadNombre(staffMedico.getMedico().getEspecialidad().getNombre());
+                    if (staffMedico.getMedico().getEspecialidades() != null && !staffMedico.getMedico().getEspecialidades().isEmpty()) {
+                        // Mostrar la primera especialidad
+                        String especialidadNombre = staffMedico.getMedico().getEspecialidades().iterator().next().getNombre();
+                        dto.setEspecialidadNombre(especialidadNombre);
                     }
                 }
             }

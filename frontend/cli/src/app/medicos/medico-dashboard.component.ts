@@ -29,7 +29,18 @@ interface DashboardStats {
             <i class="fas fa-user-md me-2"></i>
             Bienvenido/a, <strong>Dr/a. {{ medicoActual.nombre }} {{ medicoActual.apellido }}</strong>
             <br>
-            <small>Especialidad: {{ medicoActual.especialidad?.nombre }} | Matrícula: {{ medicoActual.matricula }}</small>
+            <small>
+              <span *ngIf="medicoActual.especialidades && medicoActual.especialidades.length > 0; else especialidadUnica">
+                Especialidades: 
+                <span *ngFor="let esp of medicoActual.especialidades; let last = last">
+                  {{ esp.nombre }}<span *ngIf="!last">, </span>
+                </span>
+              </span>
+              <ng-template #especialidadUnica>
+                <span *ngIf="medicoActual.especialidad">Especialidad: {{ medicoActual.especialidad.nombre }}</span>
+              </ng-template>
+              | Matrícula: {{ medicoActual.matricula }}
+            </small>
           </div>
         </div>
       </div>

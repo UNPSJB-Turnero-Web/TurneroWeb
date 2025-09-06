@@ -377,10 +377,13 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
 
   onMedicoSeleccionado(): void {
     if (this.medicoSeleccionado) {
-      // Cargar especialidades del médico seleccionado
-      this.especialidadesMedico = this.medicoSeleccionado.especialidad 
-        ? [this.medicoSeleccionado.especialidad]
-        : [];
+      // Cargar especialidades del médico seleccionado - ahora soporta múltiples especialidades
+      this.especialidadesMedico = this.medicoSeleccionado.especialidades || [];
+      
+      // Si no tiene especialidades múltiples pero tiene la especialidad única (compatibilidad hacia atrás)
+      if (this.especialidadesMedico.length === 0 && this.medicoSeleccionado.especialidad) {
+        this.especialidadesMedico = [this.medicoSeleccionado.especialidad];
+      }
     } else {
       this.especialidadesMedico = [];
     }

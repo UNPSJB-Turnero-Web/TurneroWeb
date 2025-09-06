@@ -77,10 +77,17 @@ import { ModalService } from '../modal/modal.service';
               <div class="info-item">
                 <div class="info-label">
                   <span class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">🏥</span>
-                  Especialidad
+                  Especialidades
                 </div>
                 <div class="info-value">
-                  {{ medico.especialidad.nombre || 'Sin especialidad' }}
+                  <div *ngIf="medico.especialidades && medico.especialidades.length > 0; else noEspecialidades" class="especialidades-container">
+                    <span *ngFor="let esp of medico.especialidades; let last = last" class="especialidad-badge">
+                      {{ esp.nombre }}<span *ngIf="!last">, </span>
+                    </span>
+                  </div>
+                  <ng-template #noEspecialidades>
+                    <span class="text-muted">Sin especialidades asignadas</span>
+                  </ng-template>
                 </div>
               </div>
             </div>
@@ -179,30 +186,45 @@ import { ModalService } from '../modal/modal.service';
                 </div>
               </div>
               
-              <!-- Especialidad -->
+              <!-- Especialidades -->
               <div class="col-md-12">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">🏥</span>
-                    Especialidad
+                    Especialidades
                   </label>
+                  
+                  <!-- Lista de especialidades seleccionadas -->
+                  <div *ngIf="medico.especialidades && medico.especialidades.length > 0" class="selected-especialidades mb-3">
+                    <div class="selected-especialidades-header">
+                      <small class="text-muted">Especialidades seleccionadas:</small>
+                    </div>
+                    <div class="especialidades-badges">
+                      <span *ngFor="let esp of medico.especialidades" class="badge-especialidad">
+                        {{ esp.nombre }}
+                        <button type="button" class="btn-remove-especialidad" (click)="removeEspecialidad(esp)">×</button>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Selector para agregar especialidades -->
                   <select
-                    [(ngModel)]="medico.especialidad"
-                    name="especialidad"
+                    [(ngModel)]="selectedEspecialidad"
+                    name="selectedEspecialidad"
                     class="form-control form-control-modern"
-                    required
-                    #especialidad="ngModel"
+                    (change)="addEspecialidad()"
                   >
-                    <option [ngValue]="null">Seleccione una especialidad...</option>
-                    <option *ngFor="let especialidad of especialidades" [ngValue]="especialidad">
+                    <option [ngValue]="null">Seleccione una especialidad para agregar...</option>
+                    <option *ngFor="let especialidad of getAvailableEspecialidades()" [ngValue]="especialidad">
                       {{ especialidad.nombre }}
                     </option>
                   </select>
-                  <div *ngIf="especialidad.invalid && (especialidad.dirty || especialidad.touched)" class="form-help text-danger">
-                    La especialidad es requerida
+                  
+                  <div *ngIf="medico.especialidades && medico.especialidades.length === 0" class="form-help text-warning">
+                    Debe seleccionar al menos una especialidad
                   </div>
                   <div class="form-help">
-                    Seleccione la especialidad médica del profesional.
+                    Seleccione todas las especialidades del médico. Puede agregar múltiples especialidades.
                   </div>
                 </div>
               </div>
@@ -468,6 +490,72 @@ import { ModalService } from '../modal/modal.service';
       margin-top: 0.5rem;
       font-style: italic;
     }
+
+    /* Estilos para especialidades múltiples */
+    .especialidades-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .especialidad-badge {
+      background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-block;
+    }
+    
+    .selected-especialidades {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+    }
+    
+    .selected-especialidades-header {
+      margin-bottom: 0.5rem;
+    }
+    
+    .especialidades-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .badge-especialidad {
+      background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-remove-especialidad {
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-remove-especialidad:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
     
     /* Footer y botones */
     .card-footer {
@@ -586,9 +674,17 @@ import { ModalService } from '../modal/modal.service';
 })
 export class MedicoDetailComponent implements OnInit {
   @ViewChild('form') form!: NgForm;
-  medico: Medico = { id: 0, nombre: '', apellido: '', dni: '', matricula: '', especialidad: { id: 0, nombre: '', descripcion: '' } };
+  medico: Medico = { 
+    id: 0, 
+    nombre: '', 
+    apellido: '', 
+    dni: '', 
+    matricula: '', 
+    especialidades: [],
+    especialidad: { id: 0, nombre: '', descripcion: '' } // Mantener para compatibilidad
+  };
   especialidades: Especialidad[] = [];
-  selectedEspecialidad!: Especialidad;
+  selectedEspecialidad: Especialidad | null = null;
   modoEdicion = false;
   esNuevo = false;
 
@@ -626,7 +722,8 @@ export class MedicoDetailComponent implements OnInit {
             apellido: "",
             dni: '',
             matricula: "",
-            especialidad: this.selectedEspecialidad
+            especialidades: [], // Inicializar como array vacío
+            especialidad: this.selectedEspecialidad || this.especialidades[0] // Mantener para compatibilidad
           };
         },
         error: (err) => {
@@ -657,18 +754,30 @@ export class MedicoDetailComponent implements OnInit {
             next: (resp: DataPackage<Medico>) => {
               this.medico = resp.data;
               
-              // Verificación robusta de la especialidad
-              if (!this.medico.especialidad) {
-                this.selectedEspecialidad = this.especialidades[0];
-                this.medico.especialidad = this.selectedEspecialidad;
-              } else {
-                // Solo buscar si especialidad existe y tiene id
-                const especialidadId = this.medico.especialidad?.id;
-                const especialidadEncontrada = especialidadId
-                  ? this.especialidades.find(e => e.id === especialidadId)
-                  : undefined;
-                this.selectedEspecialidad = especialidadEncontrada || this.especialidades[0];
-                this.medico.especialidad = this.selectedEspecialidad;
+              // Migración de especialidad única a especialidades múltiples
+              if (!this.medico.especialidades) {
+                this.medico.especialidades = [];
+              }
+              
+              // Si viene del backend con especialidad única, convertir a array
+              if (this.medico.especialidad && this.medico.especialidades.length === 0) {
+                this.medico.especialidades = [this.medico.especialidad];
+              }
+              
+              // Si no tiene especialidades pero debería tener al menos una
+              if (this.medico.especialidades.length === 0 && this.especialidades.length > 0) {
+                this.medico.especialidades = [this.especialidades[0]];
+                this.medico.especialidad = this.especialidades[0];
+              }
+              
+              // Verificar que todas las especialidades del médico existen en la lista
+              this.medico.especialidades = this.medico.especialidades.filter(espMedico => 
+                this.especialidades.some(esp => esp.id === espMedico.id)
+              );
+              
+              // Mantener especialidad principal para compatibilidad
+              if (this.medico.especialidades.length > 0) {
+                this.medico.especialidad = this.medico.especialidades[0];
               }
             },
             error: (err) => {
@@ -706,20 +815,28 @@ export class MedicoDetailComponent implements OnInit {
       return;
     }
     
-    if (!this.selectedEspecialidad?.id) {
+    if (!this.medico.especialidades || this.medico.especialidades.length === 0) {
       this.modalService.alert(
         "Error", 
-        "Debe seleccionar una especialidad válida."
+        "Debe seleccionar al menos una especialidad."
       );
       return;
     }
     
-    this.medico.especialidad = this.selectedEspecialidad;
+    // Crear una copia del médico sin el campo especialidad para enviar al backend
+    const medicoParaEnviar = {
+      id: this.medico.id,
+      nombre: this.medico.nombre,
+      apellido: this.medico.apellido,
+      dni: this.medico.dni,
+      matricula: this.medico.matricula,
+      especialidades: this.medico.especialidades
+    };
     
     const operacion = this.esNuevo ? 'crear' : 'actualizar';
     const op = this.medico.id
-      ? this.medicoService.update(this.medico.id, this.medico)
-      : this.medicoService.create(this.medico);
+      ? this.medicoService.update(this.medico.id, medicoParaEnviar)
+      : this.medicoService.create(medicoParaEnviar);
       
     op.subscribe({
       next: () => {
@@ -783,5 +900,40 @@ export class MedicoDetailComponent implements OnInit {
         });
       })
       .catch(() => { /* Usuario canceló la operación */ });
+  }
+
+  // Métodos para manejar múltiples especialidades
+  addEspecialidad(): void {
+    if (this.selectedEspecialidad) {
+      // Verificar que no esté ya agregada
+      const yaExiste = this.medico.especialidades.some(esp => esp.id === this.selectedEspecialidad!.id);
+      if (!yaExiste) {
+        this.medico.especialidades.push(this.selectedEspecialidad);
+        // Actualizar especialidad principal para compatibilidad
+        if (this.medico.especialidades.length === 1) {
+          this.medico.especialidad = this.selectedEspecialidad;
+        }
+      }
+      this.selectedEspecialidad = null;
+    }
+  }
+
+  removeEspecialidad(especialidad: Especialidad): void {
+    const index = this.medico.especialidades.findIndex(esp => esp.id === especialidad.id);
+    if (index > -1) {
+      this.medico.especialidades.splice(index, 1);
+      // Actualizar especialidad principal para compatibilidad
+      if (this.medico.especialidades.length > 0) {
+        this.medico.especialidad = this.medico.especialidades[0];
+      } else {
+        this.medico.especialidad = { id: 0, nombre: '', descripcion: '' };
+      }
+    }
+  }
+
+  getAvailableEspecialidades(): Especialidad[] {
+    return this.especialidades.filter(esp => 
+      !this.medico.especialidades.some(medicoEsp => medicoEsp.id === esp.id)
+    );
   }
 }

@@ -426,7 +426,7 @@ public class TurnoService {
         dto.setStaffMedicoId(turno.getStaffMedico().getId());
         dto.setStaffMedicoNombre(turno.getStaffMedico().getMedico().getNombre());
         dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
-        dto.setEspecialidadStaffMedico(turno.getStaffMedico().getMedico().getEspecialidad().getNombre());
+        dto.setEspecialidadStaffMedico(turno.getStaffMedico().getEspecialidad().getNombre());
 
         // Validar si consultorio no es null antes de acceder a sus propiedades
         if (turno.getConsultorio() != null) {
@@ -1054,9 +1054,8 @@ public class TurnoService {
     }
 
     private String obtenerEspecialidadTurno(Turno turno) {
-        if (turno.getStaffMedico() != null && turno.getStaffMedico().getMedico() != null 
-            && turno.getStaffMedico().getMedico().getEspecialidad() != null) {
-            return turno.getStaffMedico().getMedico().getEspecialidad().getNombre();
+        if (turno.getStaffMedico() != null && turno.getStaffMedico().getEspecialidad() != null) {
+            return turno.getStaffMedico().getEspecialidad().getNombre();
         }
         return "Especialidad no disponible";
     }

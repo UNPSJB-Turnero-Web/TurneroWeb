@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,11 +54,11 @@ public class RegistrationService {
      */
     public Medico registrarMedico(String email, String plainPassword, Long dni, 
                                  String nombre, String apellido, String telefono,
-                                 String matricula, Especialidad especialidad) {
+                                 String matricula, Set<Especialidad> especialidades) {
         
         // 1. Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
-        validateMedicoData(matricula, especialidad);
+        validateMedicoData(matricula, especialidades);
         
         // 2. Hashear la contraseña con BCrypt
         String hashedPassword = hashPassword(plainPassword);
@@ -73,8 +74,8 @@ public class RegistrationService {
         medico.setEmail(email);
         medico.setHashedPassword(hashedPassword); // Misma contraseña hasheada
         medico.setTelefono(telefono);
-        //medico.setMatricula(matricula);
-        //medico.setEspecialidad(especialidad);
+        medico.setMatricula(matricula);
+        medico.setEspecialidades(especialidades);
         
         // Validar que no exista médico con esa matrícula
         if (medicoRepository.existsByMatricula(matricula)) {
@@ -224,13 +225,13 @@ public class RegistrationService {
     /**
      * Valida datos específicos de médico
      */
-    private void validateMedicoData(String matricula, Especialidad especialidad) {
+    private void validateMedicoData(String matricula, Set<Especialidad> especialidades) {
         if (matricula == null || matricula.trim().isEmpty()) {
             throw new IllegalArgumentException("Matrícula es requerida");
         }
         
-        if (especialidad == null) {
-            throw new IllegalArgumentException("Especialidad es requerida");
+        if (especialidades == null || especialidades.isEmpty()) {
+            throw new IllegalArgumentException("Debe especificar al menos una especialidad");
         }
     }
     

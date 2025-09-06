@@ -480,11 +480,31 @@ getMedicoNombre(): string {
   return medico ? `${medico.nombre} ${medico.apellido}` : 'Sin médico';
 }
 
-getEspecialidadNombre(): string {
-  return this.staffMedico.especialidad?.nombre || 'Sin especialidad';
-}
+  getEspecialidadNombre(): string {
+    return this.staffMedico.especialidad?.nombre || 'Sin especialidad';
+  }
 
-allFieldsEmpty(): boolean {
+  onMedicoSeleccionado(): void {
+    // Limpiar especialidad seleccionada cuando cambia el médico
+    this.staffMedico.especialidadId = 0;
+  }
+
+  getEspecialidadesDisponibles(): Especialidad[] {
+    if (!this.staffMedico.medicoId) {
+      return this.especialidades;
+    }
+
+    const medicoSeleccionado = this.medicos.find(m => m.id === this.staffMedico.medicoId);
+    if (medicoSeleccionado && medicoSeleccionado.especialidades && medicoSeleccionado.especialidades.length > 0) {
+      // Filtrar solo las especialidades que tiene el médico
+      return this.especialidades.filter(esp => 
+        medicoSeleccionado.especialidades!.some(medicoEsp => medicoEsp.id === esp.id)
+      );
+    }
+
+    // Fallback: si el médico no tiene especialidades múltiples definidas, mostrar todas
+    return this.especialidades;
+  }allFieldsEmpty(): boolean {
   return !this.staffMedico?.centroAtencionId && !this.staffMedico?.medicoId && !this.staffMedico?.especialidadId;
 }
 }

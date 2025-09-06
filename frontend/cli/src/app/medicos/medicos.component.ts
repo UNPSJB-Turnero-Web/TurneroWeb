@@ -78,7 +78,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
                     <div class="icon-circle especialidad-header">
                       <i class="fas fa-stethoscope"></i>
                     </div>
-                    Especialidad
+                    Especialidades
                   </div>
                 </th>
                 <th>
@@ -120,11 +120,17 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   <span class="badge-badge">{{ medico.matricula }}</span>
                 </td>
                 <td>
-                  <span class="badge-especialidades" *ngIf="medico.especialidad; else sinEsp">
-                    {{ medico.especialidad.nombre }}
-                  </span>
+                  <div class="especialidades-container" *ngIf="medico.especialidades && medico.especialidades.length > 0; else sinEsp">
+                    <span *ngFor="let esp of medico.especialidades; let isLast = last" class="badge-especialidades">
+                      {{ esp.nombre }}<span *ngIf="!isLast">, </span>
+                    </span>
+                  </div>
+                  <!-- Fallback para compatibilidad con especialidad única -->
+                  <div *ngIf="(!medico.especialidades || medico.especialidades.length === 0) && medico.especialidad" class="especialidades-container">
+                    <span class="badge-especialidades">{{ medico.especialidad.nombre }}</span>
+                  </div>
                   <ng-template #sinEsp>
-                    <span class="badge-none">Sin especialidad</span>
+                    <span class="badge-none">Sin especialidades</span>
                   </ng-template>
                 </td>
                 <td>
@@ -389,6 +395,14 @@ import { PaginationComponent } from '../pagination/pagination.component';
       font-size: 0.85rem;
       border: 1px solid var(--especialidades-primary);
       display: inline-block;
+      margin: 2px;
+    }
+
+    .especialidades-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
     }
     
     .badge-none {
