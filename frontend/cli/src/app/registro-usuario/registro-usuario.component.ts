@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation } from '../animations';
 import { RegistroService, PacienteRegistroDTO } from './registro.service';
 import { DataPackage } from '../data.package';
+import { AuthService, LoginResponse } from '../inicio-sesion/auth.service';
 
 // objeto usado en el formulario frontend
 interface UsuarioFormulario {
@@ -46,7 +47,8 @@ export class RegistroUsuarioComponent {
 
   constructor(
     private router: Router,
-    private registroService: RegistroService
+    private registroService: RegistroService,
+    private authService: AuthService
   ) {}
 
   /**
@@ -77,8 +79,6 @@ export class RegistroUsuarioComponent {
         email: this.usuario.email,
         password: this.usuario.password
       };
-
-      console.log('Enviando datos al backend:', datosRegistro);
       
       // Llamada al servicio de registro
       this.registrarUsuario(datosRegistro);
@@ -93,15 +93,21 @@ export class RegistroUsuarioComponent {
    */
   private registrarUsuario(datos: PacienteRegistroDTO): void {
     this.registroService.registrarPaciente(datos).subscribe({
-      next: (response: DataPackage) => {
-        this.isLoading = false;
-        console.log('Respuesta del servidor:', response);
-        
-        
-        if (response.status_code === 200) {
-          console.log('Usuario registrado exitosamente:', response.data);
+      next: (response: DataPackage<LoginResponse>) => {
+        this.isLoading = false;        
+        if (response.status_code === 200 && response.data) {
+          // Manejar auto-login después del registro
+          this.authService.handlePostRegistrationLogin(response.data, false);
+          
+          // Mostrar mensaje de éxito
+          this.successMessage = '¡Registro exitoso! Redirigiendo a tu dashboard...';
+          
+          // Redirigir al dashboard del paciente después de un breve delay
+          setTimeout(() => {
+            this.router.navigate(['/paciente-dashboard']);
+          }, 1500);
         } else {
-          this.errorMessage = response.status_text;
+          this.errorMessage = response.status_text || 'Error en el registro';
         }
       },
       error: (error) => {
