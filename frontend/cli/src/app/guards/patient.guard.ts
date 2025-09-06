@@ -1,19 +1,31 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
+import { AuthService } from '../inicio-sesion/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PatientGuard implements CanActivate {
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private authService: AuthService
+  ) {}
 
   canActivate(): boolean {
-    const userRole = localStorage.getItem('userRole');
+    // Verificar si está autenticado
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(['/ingresar']);
+      return false;
+    }
+
+    // Verificar si tiene rol de paciente
+    const userRole = this.authService.getUserRole();
     
-    if (userRole === 'patient') {
+    if (userRole === 'PACIENTE') {
       return true;
     } else {
-      this.router.navigate(['/']);
+      // Redirigir según su rol
+      this.authService.redirectByRole();
       return false;
     }
   }
