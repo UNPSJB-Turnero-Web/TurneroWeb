@@ -142,7 +142,7 @@
           <div class="form-group">
             <label for="dni">DNI:</label>
             <input type="text" id="dni" name="dni" [(ngModel)]="patientCredentials.dni" class="form-control" required
-              placeholder="Ingresa tu DNI (sin puntos)" pattern="[0-9]{7,8}" maxlength="8">
+              placeholder="Ingresa tu DNI (sin puntos)" pattern="[0-9]+" maxlength="12">
             <small class="form-text">Ingresa tu DNI sin puntos ni espacios</small>
           </div>
           <div class="form-actions">
