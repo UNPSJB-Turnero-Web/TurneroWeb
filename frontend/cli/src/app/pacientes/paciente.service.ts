@@ -58,6 +58,11 @@ export class PacienteService {
     return this.http.get<DataPackage<Paciente>>(`${this.url}/dni/${dni}`);
   }
 
+  /** Busca un paciente por email y obtiene su ID */
+  findByEmail(email: string): Observable<DataPackage<{pacienteId: number}>> {
+    return this.http.get<DataPackage<{pacienteId: number}>>(`${this.url}/by-email/${email}`);
+  }
+
   getObrasSociales(): Observable<DataPackage<{ id: number; nombre: string; codigo: string }[]>> {
     return this.http.get<DataPackage<{ id: number; nombre: string; codigo: string }[]>>(`rest/obra-social`);
   }
