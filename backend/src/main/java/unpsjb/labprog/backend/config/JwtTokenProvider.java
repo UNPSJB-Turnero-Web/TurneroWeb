@@ -15,6 +15,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import unpsjb.labprog.backend.model.User;
 
 /**
  * Proveedor de tokens JWT para autenticación
@@ -81,6 +82,10 @@ public class JwtTokenProvider {
      */
     public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof User) {
+            User user = (User) userDetails;
+            claims.put("role", user.getRole() != null ? user.getRole().getName() : "USER");
+        }
         return createToken(claims, userDetails.getUsername(), accessTokenExpiration);
     }
 
