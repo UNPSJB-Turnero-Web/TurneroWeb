@@ -4,14 +4,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.UserRepository;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.Role;
 
 /**
  * Servicio para la gestión de usuarios.
@@ -24,9 +27,12 @@ public class UserService implements UserDetailsService {
     @Autowired
     private UserRepository userRepository;
     
-    // TODO: Cuando esté disponible EncryptationService, descomentar:
-    // @Autowired
-    // private EncryptationService encryptationService;
+    @Autowired
+    @Lazy
+    private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private RoleService roleService;
     
     // ===============================
     // IMPLEMENTACIÓN DE UserDetailsService
@@ -66,19 +72,11 @@ public class UserService implements UserDetailsService {
         return userRepository.findByDni(dni);
     }
     
-    /**
-     * Crea un nuevo usuario (versión simplificada)
-     * @param email email del usuario
-     * @param hashedPassword contraseña ya hasheada
-     * @param dni DNI del usuario
-     * @param nombre nombre del usuario
-     * @param apellido apellido del usuario
-     * @param telefono teléfono del usuario
-     * @return User usuario creado
-     * @throws IllegalArgumentException si el usuario ya existe
-     */
-    public User createUser(String email, String hashedPassword, Long dni, String nombre, String apellido, String telefono) {
-        // Verificar que no exista un usuario con el mismo email o DNI
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+    
+    public User createUser(String nombre, String apellido, Long dni, String email, String hashedPassword, String telefono, String roleName) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Ya existe un usuario con el email: " + email);
         }
@@ -87,17 +85,21 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Ya existe un usuario con el DNI: " + dni);
         }
         
-        // Crear el nuevo usuario
+        // Obtener o crear el rol
+        Role role = roleService.getOrCreateRole(roleName);
+        
         User user = new User();
-        user.setEmail(email);
-        user.setDni(dni);
         user.setNombre(nombre);
         user.setApellido(apellido);
-        user.setTelefono(telefono);
+        user.setDni(dni);
+        user.setEmail(email);
         user.setHashedPassword(hashedPassword);
+        user.setTelefono(telefono);
+        user.setRole(role);
         
         return userRepository.save(user);
     }
+    
     
     /**
      * Actualiza la información básica de un usuario

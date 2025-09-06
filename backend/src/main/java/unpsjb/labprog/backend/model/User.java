@@ -27,27 +27,19 @@ public class User extends Persona implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    /**
-     * Indica si la cuenta está habilitada
-     */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = false)
+    private Role role;
+    
     @Column(nullable = false)
     private Boolean enabled = true;
     
-    /**
-     * Indica si la cuenta no ha expirado
-     */
     @Column(nullable = false)
     private Boolean accountNonExpired = true;
     
-    /**
-     * Indica si la cuenta no está bloqueada
-     */
     @Column(nullable = false)
     private Boolean accountNonLocked = true;
     
-    /**
-     * Indica si las credenciales no han expirado
-     */
     @Column(nullable = false)
     private Boolean credentialsNonExpired = true;
     
@@ -56,7 +48,7 @@ public class User extends Persona implements UserDetails {
     // ===============================
     
     /**
-     * Constructor de conveniencia para crear un usuario
+     * Constructor de conveniencia para crear un usuario con rol por defecto (Paciente)
      */
     public User(String nombre, String apellido, Long dni, String email, String hashedPassword, String telefono) {
         this.setNombre(nombre);
@@ -65,6 +57,24 @@ public class User extends Persona implements UserDetails {
         this.setEmail(email);
         this.setHashedPassword(hashedPassword);
         this.setTelefono(telefono);
+        // El rol se debe asignar después de crear el usuario usando el RoleService
+        this.enabled = true;
+        this.accountNonExpired = true;
+        this.accountNonLocked = true;
+        this.credentialsNonExpired = true;
+    }
+    
+    /**
+     * Constructor de conveniencia para crear un usuario con rol específico
+     */
+    public User(String nombre, String apellido, Long dni, String email, String hashedPassword, String telefono, Role role) {
+        this.setNombre(nombre);
+        this.setApellido(apellido);
+        this.setDni(dni);
+        this.setEmail(email);
+        this.setHashedPassword(hashedPassword);
+        this.setTelefono(telefono);
+        this.role = role;
         this.enabled = true;
         this.accountNonExpired = true;
         this.accountNonLocked = true;
@@ -140,9 +150,7 @@ public class User extends Persona implements UserDetails {
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // TODO: Integrar con RoleService cuando esté disponible
-        // Por ahora retorna rol básico USER
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + (role != null ? role.getName() : "USER")));
     }
     
     @Override
