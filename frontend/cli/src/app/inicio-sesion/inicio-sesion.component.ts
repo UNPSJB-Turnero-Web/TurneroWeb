@@ -1,8 +1,14 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
-import { fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation } from '../animations';
+import { Component } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule, NgForm } from "@angular/forms";
+import { Router } from "@angular/router";
+import {
+  fadeInAnimation,
+  slideUpAnimation,
+  pulseAnimation,
+  logoAnimation,
+} from "../animations";
+import { AuthService, LoginData } from "./auth.service";
 
 interface User {
   email: string;
@@ -12,79 +18,49 @@ interface User {
   roleClass: string;
 }
 
-interface LoginData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
 @Component({
-  selector: 'app-inicio-sesion',
+  selector: "app-inicio-sesion",
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './inicio-sesion.component.html',
-  styleUrl: './inicio-sesion.component.css',
-  animations: [fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation]
+  templateUrl: "./inicio-sesion.component.html",
+  styleUrl: "./inicio-sesion.component.css",
+  animations: [
+    fadeInAnimation,
+    slideUpAnimation,
+    pulseAnimation,
+    logoAnimation,
+  ],
 })
 export class InicioSesionComponent {
-  currentStep: 'email' | 'password' = 'email';
+  currentStep: "email" | "password" = "email";
   isLoading = false;
   showPassword = false;
   showEmailError = false;
   showPasswordError = false;
+  errorMessage = ""; // Mensaje específico de error
   userAccount: User | null = null;
-  pulseState = 'idle';
+  pulseState = "idle";
 
   loginData: LoginData = {
-    email: '',
-    password: '',
-    rememberMe: false
+    email: "",
+    password: "",
+    rememberMe: false,
   };
 
-  // Base de datos simulada de usuarios
-  private users: User[] = [
-    {
-      email: 'juan.perez@email.com',
-      password: 'test1234',
-      name: 'Juan Pérez',
-      role: 'Paciente',
-      roleClass: 'paciente'
-    },
-    {
-      email: 'dra.martinez@hospital.com',
-      password: 'medico123',
-      name: 'Dra. María Martínez',
-      role: 'Médico',
-      roleClass: 'medico'
-    },
-    {
-      email: 'operador@cheturno.com',
-      password: 'op123456',
-      name: 'Carlos Operador',
-      role: 'Operador',
-      roleClass: 'operador'
-    },
-    {
-      email: 'admin@cheturno.com',
-      password: 'admin123',
-      name: 'Administrador Sistema',
-      role: 'Administrador',
-      roleClass: 'admin'
-    }
-  ];
 
-  constructor(private router: Router) {
-    // Para testing - mostrar credenciales de prueba
-    console.log('Credenciales de prueba:');
-    this.users.forEach(user => {
-      console.log(`${user.role}: ${user.email} / ${user.password}`);
-    });
+  constructor(private router: Router, private authService: AuthService) {
+    // Verificar si el usuario ya está autenticado
+    if (this.authService.isAuthenticated()) {
+      this.authService.redirectByRole();
+      return;
+    }
+
   }
 
   handleSubmit(form: NgForm): void {
-    if (this.currentStep === 'email') {
+    if (this.currentStep === "email") {
       this.handleEmailSubmit();
-    } else if (this.currentStep === 'password') {
+    } else if (this.currentStep === "password") {
       this.handlePasswordSubmit();
     }
   }
@@ -95,29 +71,42 @@ export class InicioSesionComponent {
     }
 
     this.isLoading = true;
-    
-    // Simular búsqueda en el servidor
-    setTimeout(() => {
-      const user = this.findUserByEmail(this.loginData.email);
-      
-      if (user) {
-        this.userAccount = user;
-        this.currentStep = 'password';
-        this.isLoading = false;
-        
-        // Enfocar el campo de contraseña después de un breve delay
-        setTimeout(() => {
-          const passwordField = document.getElementById('password');
-          if (passwordField) {
-            passwordField.focus();
-          }
-        }, 100);
-      } else {
-        // Email no encontrado
+
+    // Verificar email en la base de datos
+    this.authService.checkEmail(this.loginData.email).subscribe({
+      next: (response) => {
+        if (response.status_code === 200 && response.data) {
+          // Email encontrado, crear objeto de usuario con la información
+          this.userAccount = {
+            email: response.data.email,
+            password: '', // No necesitamos la contraseña aquí
+            name: response.data.nombre,
+            role: response.data.role,
+            roleClass: this.getRoleClass(response.data.role)
+          };
+          
+          this.currentStep = 'password';
+          this.isLoading = false;
+          
+          setTimeout(() => {
+            const passwordField = document.getElementById('password');
+            if (passwordField) {
+              passwordField.focus();
+            }
+          }, 100);
+        } else {
+          // Email no encontrado
+          this.showEmailError = true;
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        console.error('Error verificando email:', error);
+        // Si hay error o email no encontrado, mostrar mensaje de error
         this.showEmailError = true;
         this.isLoading = false;
       }
-    }, 1000);
+    });
   }
 
   private handlePasswordSubmit(): void {
@@ -126,34 +115,50 @@ export class InicioSesionComponent {
     }
 
     this.isLoading = true;
-    
-    setTimeout(() => {
-      if (this.userAccount && this.userAccount.password === this.loginData.password) {
-        // Login exitoso
-        console.log(`Login exitoso como ${this.userAccount.role}`);
-        alert(`¡Login exitoso como ${this.userAccount.role}! Redirigiendo al panel principal...`);
-        
-        // Aquí puedes redirigir según el rol del usuario
-        this.redirectByRole(this.userAccount.roleClass);
-        
-        this.isLoading = false;
-      } else {
-        // Contraseña incorrecta
+
+    // Usar el AuthService para hacer login real
+    this.authService.login(this.loginData).subscribe({
+      next: (response) => {
+        if (response.status_code === 200) {
+          console.log(`Login exitoso:`);
+
+          // Guardar userRole en localStorage para compatibilidad con guards existentes
+          const role = this.authService.getUserRole();
+          if (role) {
+            const roleRoute = this.authService.mapRoleToRoute(role);
+            localStorage.setItem("userRole", roleRoute);
+          }
+
+          // Redirigir según el rol del usuario
+          this.authService.redirectByRole();
+
+          this.isLoading = false;
+        } else {
+          // Manejar errores cuando status_code !== 200
+          console.error("Error en login:", response.status_text || response.message);
+          this.errorMessage = response.status_text || response.message || "Error al iniciar sesión";
+          this.showPasswordError = true;
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        console.error("Error en login:", error);
+        this.errorMessage = error.message || "Error al iniciar sesión";
         this.showPasswordError = true;
         this.isLoading = false;
-      }
-    }, 1000);
+      },
+    });
   }
 
   private validateEmailStep(): boolean {
     this.clearEmailErrors();
-    
+
     const email = this.loginData.email.trim();
-    
+
     if (!email) {
       return false;
     }
-    
+
     const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
     if (!emailPattern.test(email.toLowerCase())) {
       return false;
@@ -164,7 +169,7 @@ export class InicioSesionComponent {
 
   private validatePasswordStep(): boolean {
     this.clearPasswordErrors();
-    
+
     const password = this.loginData.password;
 
     if (!password || password.length < 8) {
@@ -174,40 +179,31 @@ export class InicioSesionComponent {
     return true;
   }
 
-  private findUserByEmail(email: string): User | undefined {
-    return this.users.find(user => user.email.toLowerCase() === email.toLowerCase());
+  /**
+   * Mapea el rol del backend a la clase CSS correspondiente
+   * @param role Rol del backend
+   * @returns Clase CSS para el rol
+   */
+  private getRoleClass(role: string): string {
+    const roleMapping: { [key: string]: string } = {
+      'PACIENTE': 'paciente',
+      'MEDICO': 'medico',
+      'OPERARIO': 'operador',
+      'ADMINISTRADOR': 'admin'
+    };
+    return roleMapping[role] || 'paciente';
   }
 
-  private redirectByRole(roleClass: string): void {
-    // Aquí implementarás la lógica de redirección según el rol
-    switch (roleClass) {
-      case 'paciente':
-        // this.router.navigate(['/paciente/dashboard']);
-        break;
-      case 'medico':
-        // this.router.navigate(['/medico/dashboard']);
-        break;
-      case 'operador':
-        // this.router.navigate(['/operador/dashboard']);
-        break;
-      case 'admin':
-        // this.router.navigate(['/admin/dashboard']);
-        break;
-      default:
-        // this.router.navigate(['/home']);
-        break;
-    }
-  }
 
   changeAccount(): void {
-    this.currentStep = 'email';
+    this.currentStep = "email";
     this.userAccount = null;
-    this.loginData.password = '';
+    this.loginData.password = "";
     this.clearAllErrors();
-    
+
     // Enfocar el campo de email
     setTimeout(() => {
-      const emailField = document.getElementById('email');
+      const emailField = document.getElementById("email");
       if (emailField) {
         emailField.focus();
       }
@@ -224,6 +220,7 @@ export class InicioSesionComponent {
 
   clearPasswordErrors(): void {
     this.showPasswordError = false;
+    this.errorMessage = "";
   }
 
   private clearAllErrors(): void {
@@ -233,21 +230,27 @@ export class InicioSesionComponent {
 
   navigateToRegister(): void {
     // Trigger pulse animation
-    this.pulseState = 'clicked';
-    
+    this.pulseState = "clicked";
+
     // Navigate after a short delay for the animation
-      this.router.navigate(['/registro-usuario']);
-      this.pulseState = 'idle';
-    ;
+    this.router.navigate(["/registro-usuario"]);
+    this.pulseState = "idle";
   }
 
   forgotEmail(): void {
     // Implementar lógica para recuperar email
-    alert('Funcionalidad de recuperar email - Por implementar');
+    alert("Funcionalidad de recuperar email - Por implementar");
   }
 
   forgotPassword(): void {
     // Implementar lógica para recuperar contraseña
-    alert('Funcionalidad de recuperar contraseña - Por implementar');
+    alert("Funcionalidad de recuperar contraseña - Por implementar");
+  }
+
+  /**
+   * Método de logout para uso futuro
+   */
+  logout(): void {
+    this.authService.logout();
   }
 }

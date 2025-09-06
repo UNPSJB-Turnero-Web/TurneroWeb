@@ -106,7 +106,7 @@
 
           <!-- Mensaje de error de contraseña -->
           <div class="error-message" [class.show]="showPasswordError">
-            Contraseña incorrecta. Por favor, verifica tu contraseña.
+            {{ errorMessage || "Error al iniciar sesión. Por favor, intenta nuevamente." }}
           </div>
 
           <div class="form-group">
