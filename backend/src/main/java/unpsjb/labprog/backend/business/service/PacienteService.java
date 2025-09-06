@@ -36,6 +36,10 @@ public class PacienteService {
         return repository.findByDni(Long.valueOf(dni)).map(this::toDTO);
     }
 
+    public Optional<PacienteDTO> findByEmail(String email) {
+        return repository.findByEmail(email).map(this::toDTO);
+    }
+
     @Transactional
     public PacienteDTO saveOrUpdate(PacienteDTO dto) {
         Paciente paciente = toEntity(dto);
