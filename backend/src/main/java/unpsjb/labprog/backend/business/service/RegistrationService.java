@@ -35,9 +35,6 @@ public class RegistrationService {
     @Autowired
     private PacienteRepository pacienteRepository;
     
-    // TODO: Cuando esté disponible RoleService, descomentar:
-    // @Autowired
-    // private RoleService roleService;
     
     /**
      * Registra un nuevo médico en el sistema
@@ -66,7 +63,7 @@ public class RegistrationService {
         String hashedPassword = hashPassword(plainPassword);
         
         // 3. Crear User para autenticación
-        userService.createUser(email, hashedPassword, dni, nombre, apellido, telefono);
+        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Medico");
         
         // 4. Crear Medico para lógica de negocio
         Medico medico = new Medico();
@@ -122,7 +119,7 @@ public class RegistrationService {
         String hashedPassword = hashPassword(plainPassword);
         
         // 3. Crear User para autenticación
-        userService.createUser(email, hashedPassword, dni, nombre, apellido, telefono);
+        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Paciente");
         
         // 4. Crear Paciente para lógica de negocio
         Paciente paciente = new Paciente();
@@ -166,14 +163,14 @@ public class RegistrationService {
                                     ) {
         
         // 1. Validar datos básicos
-        //validateBasicData(email, dni, nombre, apellido);
+        validateBasicData(email, dni, nombre, apellido);
         //validatePacienteData(fechaNacimiento);
         
         // 2. Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
         
         // 3. Crear User para autenticación
-        userService.createUser(email, hashedPassword, dni, nombre, apellido, telefono);
+        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Paciente");
         
         // 4. Crear Paciente para lógica de negocio
         Paciente paciente = new Paciente();
@@ -191,9 +188,6 @@ public class RegistrationService {
         
         // Guardar paciente usando el repository
         Paciente savedPaciente = pacienteRepository.save(paciente);
-        
-        // 5. Asignar rol (cuando esté disponible RoleService)
-        // roleService.assignPacienteRole(dni, "REGISTRATION_SYSTEM");
         
         return savedPaciente;
     }
