@@ -377,33 +377,69 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
 
   onMedicoSeleccionado(): void {
     if (this.medicoSeleccionado) {
-      // Cargar especialidades del médico seleccionado - ahora soporta múltiples especialidades
-      this.especialidadesMedico = this.medicoSeleccionado.especialidades || [];
+      // Obtener todas las especialidades del médico
+      let todasLasEspecialidades: Especialidad[] = this.medicoSeleccionado.especialidades || [];
       
       // Si no tiene especialidades múltiples pero tiene la especialidad única (compatibilidad hacia atrás)
-      if (this.especialidadesMedico.length === 0 && this.medicoSeleccionado.especialidad) {
-        this.especialidadesMedico = [this.medicoSeleccionado.especialidad];
+      if (todasLasEspecialidades.length === 0 && this.medicoSeleccionado.especialidad) {
+        todasLasEspecialidades = [this.medicoSeleccionado.especialidad];
       }
+      
+      // Filtrar especialidades que ya están asignadas al centro para este médico
+      const especialidadesAsignadas = this.staffMedicoCentro
+        .filter(staff => staff.medico?.id === this.medicoSeleccionado!.id) // Comparar con staff.medico.id
+        .map(staff => staff.especialidad?.id); // Obtener especialidad.id del staff
+      
+      // Solo mostrar especialidades que NO están asignadas
+      this.especialidadesMedico = todasLasEspecialidades.filter(esp => 
+        !especialidadesAsignadas.includes(esp.id)
+      );
     } else {
       this.especialidadesMedico = [];
     }
     this.especialidadSeleccionada = null;
   }
 
+  onEspecialidadSeleccionadaChange(especialidad: Especialidad | null): void {
+    console.log('Especialidad changed in parent:', especialidad);
+    this.especialidadSeleccionada = especialidad;
+  }
+
   asociarMedico(): void {
-    if (!this.medicoSeleccionado || !this.especialidadSeleccionada || !this.centroAtencion.id) return;
+    console.log('asociarMedico method called in parent component');
+    console.log('medicoSeleccionado:', this.medicoSeleccionado);
+    console.log('especialidadSeleccionada:', this.especialidadSeleccionada);
+    console.log('centroAtencion.id:', this.centroAtencion.id);
+    
+    if (!this.medicoSeleccionado || !this.especialidadSeleccionada || !this.centroAtencion.id) {
+      console.log('Missing required data, returning early');
+      return;
+    }
 
     const staffMedico: StaffMedico = {
       id: 0,
-      medicoId: this.medicoSeleccionado.id!,
-      centroAtencionId: this.centroAtencion.id,
-      especialidadId: this.especialidadSeleccionada.id!,
-      medico: this.medicoSeleccionado,
-      especialidad: this.especialidadSeleccionada
+      medico: {
+        id: this.medicoSeleccionado.id!,
+        nombre: this.medicoSeleccionado.nombre,
+        apellido: this.medicoSeleccionado.apellido,
+        dni: this.medicoSeleccionado.dni,
+        matricula: this.medicoSeleccionado.matricula
+      },
+      centro: {
+        id: this.centroAtencion.id,
+        nombre: this.centroAtencion.nombre
+      },
+      especialidad: {
+        id: this.especialidadSeleccionada.id!,
+        nombre: this.especialidadSeleccionada.nombre
+      }
     };
+
+    console.log('Sending staffMedico to service:', staffMedico);
 
     this.staffMedicoService.create(staffMedico).subscribe({
       next: (dataPackage: DataPackage<StaffMedico>) => {
+        console.log('Staff medico created successfully:', dataPackage);
         this.staffMedicoCentro.push(dataPackage.data);
         this.medicoSeleccionado = null;
         this.especialidadSeleccionada = null;
@@ -625,9 +661,26 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     this.medicoService.getAll().subscribe({
       next: (dataPackage: DataPackage<Medico[]>) => {
         this.medicosDisponibles = dataPackage.data;
-        this.medicosDisponiblesParaAsociar = dataPackage.data.filter((medico: Medico) => 
-          !this.staffMedicoCentro.some(staff => staff.medicoId === medico.id)
-        );
+        
+        // Filtrar médicos que tienen especialidades no asignadas al centro
+        this.medicosDisponiblesParaAsociar = dataPackage.data.filter((medico: Medico) => {
+          // Si el médico no tiene especialidades, no puede ser asignado
+          if (!medico.especialidades || medico.especialidades.length === 0) {
+            return false;
+          }
+          
+          // Obtener especialidades ya asignadas de este médico en este centro
+          const especialidadesAsignadas = this.staffMedicoCentro
+            .filter(staff => staff.medico?.id === medico.id) // Comparar con staff.medico.id
+            .map(staff => staff.especialidad?.id); // Obtener especialidad.id del staff
+          
+          // Verificar si el médico tiene especialidades que aún no están asignadas
+          const tieneEspecialidadesDisponibles = medico.especialidades.some(esp => 
+            !especialidadesAsignadas.includes(esp.id)
+          );
+          
+          return tieneEspecialidadesDisponibles;
+        });
       },
       error: (error: any) => {
         console.error('Error al cargar médicos disponibles:', error);

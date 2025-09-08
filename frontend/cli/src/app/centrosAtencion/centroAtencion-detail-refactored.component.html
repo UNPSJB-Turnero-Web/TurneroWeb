@@ -128,7 +128,7 @@
         [staffMedicoExpandido]="staffMedicoExpandido"
         [disponibilidadesStaff]="disponibilidadesStaff"
         (medicoSeleccionadoChange)="medicoSeleccionado = $event"
-        (especialidadSeleccionadaChange)="especialidadSeleccionada = $event"
+        (especialidadSeleccionadaChange)="onEspecialidadSeleccionadaChange($event)"
         (medicoSeleccionado$)="onMedicoSeleccionado()"
         (asociarMedico)="asociarMedico()"
         (desasociarMedico)="desasociarMedico($event)"

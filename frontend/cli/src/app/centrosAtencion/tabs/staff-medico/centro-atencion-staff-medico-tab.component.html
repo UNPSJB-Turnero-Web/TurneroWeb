@@ -39,6 +39,7 @@
         <div class="col-md-4">
           <label class="form-label fw-semibold">Especialidad:</label>
           <select [(ngModel)]="especialidadSeleccionada" 
+                  (ngModelChange)="onEspecialidadSeleccionada()"
                   class="modern-select form-control"
                   [disabled]="!medicoSeleccionado || especialidadesMedico.length === 0">
             <option [ngValue]="null">Seleccione especialidad...</option>
@@ -46,20 +47,31 @@
               {{ esp.nombre }}
             </option>
           </select>
-          <small *ngIf="medicoSeleccionado && especialidadesMedico.length === 0" class="text-muted">
-            Este médico no tiene especialidades asignadas
+          <small *ngIf="medicoSeleccionado && especialidadesMedico.length === 0 && !medicoParcialmenteAsociado()" class="text-muted">
+            Este médico no tiene especialidades disponibles para asignar
+          </small>
+          <small *ngIf="medicoSeleccionado && medicoParcialmenteAsociado()" class="text-info">
+            <i class="fa fa-info-circle me-1"></i>
+            Este médico ya tiene algunas especialidades asignadas al centro
           </small>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button class="btn-modern btn-success-modern w-100" (click)="onAsociarMedico()"
-                  [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
-            <i class="fa fa-plus me-2"></i> Asociar
+          <button class="btn btn-asociar-medico" (click)="onAsociarMedico()"
+                  [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()"
+                  [class.btn-disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
+            <div class="btn-content">
+              <i class="fa fa-user-plus btn-icon"></i>
+              <span class="btn-text">Asociar</span>
+            </div>
+            <div class="btn-loading" *ngIf="false">
+              <i class="fa fa-spinner fa-spin"></i>
+            </div>
           </button>
         </div>
       </div>
-      <div *ngIf="medicoYaAsociado()" class="modern-alert alert-danger mt-3">
-        <i class="fa fa-exclamation-triangle me-2"></i>
-        Este médico ya está asociado al centro
+      <div *ngIf="medicoYaAsociado()" class="modern-alert alert-warning mt-3">
+        <i class="fa fa-info-circle me-2"></i>
+        Este médico ya tiene todas sus especialidades asignadas al centro
       </div>
     </div>
     

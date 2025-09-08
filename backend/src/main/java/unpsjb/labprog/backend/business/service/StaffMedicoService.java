@@ -140,7 +140,14 @@ public class StaffMedicoService {
             staff.setConsultorio(consultorio);
         }
 
-        // No se setea especialidad en StaffMedico, se accede por staff.getMedico().getEspecialidad()
+        // Buscar especialidad por nombre
+        if (dto.getEspecialidad() != null && dto.getEspecialidad().getNombre() != null) {
+            Especialidad especialidad = especialidadRepository.findByNombreIgnoreCase(dto.getEspecialidad().getNombre());
+            if (especialidad == null) {
+                throw new IllegalStateException("Especialidad no existe con el nombre indicado");
+            }
+            staff.setEspecialidad(especialidad);
+        }
 
         return staff;
     }

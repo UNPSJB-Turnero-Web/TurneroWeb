@@ -48,7 +48,15 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     this.medicoSeleccionado$.emit();
   }
 
+  onEspecialidadSeleccionada(): void {
+    console.log('Especialidad seleccionada en hijo:', this.especialidadSeleccionada);
+    this.especialidadSeleccionadaChange.emit(this.especialidadSeleccionada);
+  }
+
   onAsociarMedico(): void {
+    console.log('onAsociarMedico clicked - medicoSeleccionado:', this.medicoSeleccionado);
+    console.log('onAsociarMedico clicked - especialidadSeleccionada:', this.especialidadSeleccionada);
+    console.log('Emitiendo evento asociarMedico...');
     this.asociarMedico.emit();
   }
 
@@ -102,9 +110,30 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
 
   medicoYaAsociado(): boolean {
     if (!this.medicoSeleccionado) return false;
-    return this.staffMedicoCentro.some(staff => 
-      staff.medico?.id === this.medicoSeleccionado!.id
-    );
+    
+    // Verificar si el médico tiene especialidades disponibles para asociar
+    const result = this.especialidadesMedico.length === 0;
+    console.log('medicoYaAsociado check:', {
+      medicoSeleccionado: this.medicoSeleccionado?.nombre,
+      especialidadesMedico: this.especialidadesMedico,
+      especialidadSeleccionada: this.especialidadSeleccionada,
+      result: result
+    });
+    return result;
+  }
+
+  /**
+   * Verifica si un médico está parcialmente asociado (tiene algunas especialidades asignadas pero no todas)
+   */
+  medicoParcialmenteAsociado(): boolean {
+    if (!this.medicoSeleccionado) return false;
+    
+    const todasLasEspecialidades = this.medicoSeleccionado.especialidades?.length || 0;
+    const especialidadesAsignadas = this.staffMedicoCentro
+      .filter(staff => staff.medico?.id === this.medicoSeleccionado!.id)
+      .length;
+    
+    return especialidadesAsignadas > 0 && especialidadesAsignadas < todasLasEspecialidades;
   }
 
   verDisponibilidadesStaff(staff: StaffMedico): DisponibilidadMedico[] {
