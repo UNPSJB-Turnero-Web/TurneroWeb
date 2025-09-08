@@ -1,9 +1,11 @@
 package unpsjb.labprog.backend.dto;
 
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Getter;
 import lombok.Setter;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * DTO para el registro de un nuevo médico en el sistema

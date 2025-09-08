@@ -1,21 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 
-interface DiaHorario {
-  dia: string;
-  horaInicio: string;
-  horaFin: string;
-  activo: boolean;
-}
-
 @Component({
   selector: 'app-medico-horarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="container-fluid">
       <!-- Header -->
@@ -126,89 +119,47 @@ interface DiaHorario {
               </h6>
             </div>
             <div class="card-body">
-              <form [formGroup]="horarioForm" (ngSubmit)="guardarDisponibilidad()">
-                <!-- Selector de días múltiples -->
-                <div class="mb-4">
-                  <label class="form-label fw-bold">Días de la semana</label>
-                  <div class="row">
-                    <div class="col-md-3 col-sm-6 mb-2" *ngFor="let dia of diasSemana">
-                      <div class="form-check">
-                        <input 
-                          class="form-check-input" 
-                          type="checkbox" 
-                          [value]="dia.valor"
-                          [id]="'dia-' + dia.valor"
-                          (change)="onDiaChange($event, dia.valor)">
-                        <label class="form-check-label" [for]="'dia-' + dia.valor">
-                          {{ dia.nombre }}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <small class="form-text text-muted">Selecciona uno o más días para aplicar el mismo horario.</small>
-                </div>
-
+              <form (ngSubmit)="guardarDisponibilidad()">
                 <!-- Horarios por día -->
-                <div formArrayName="horarios" class="mb-4">
+                <div class="mb-4">
                   <label class="form-label fw-bold">Configuración de Horarios</label>
                   
-                  <div *ngIf="horariosFormArray.length === 0" class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Selecciona al menos un día para configurar los horarios.
-                  </div>
-
-                  <div *ngFor="let horarioGroup of horariosFormArray.controls; let i = index" 
-                       [formGroupName]="i" 
-                       class="card mb-3">
-                    <div class="card-body">
-                      <div class="row align-items-center">
-                        <div class="col-md-3">
-                          <label class="form-label">Día</label>
-                          <input 
-                            type="text" 
-                            class="form-control" 
-                            formControlName="dia" 
-                            readonly>
-                        </div>
-                        <div class="col-md-3">
-                          <label class="form-label">Hora Inicio</label>
-                          <input 
-                            type="time" 
-                            class="form-control" 
-                            formControlName="horaInicio"
-                            [class.is-invalid]="horarioGroup.get('horaInicio')?.invalid && horarioGroup.get('horaInicio')?.touched">
-                        </div>
-                        <div class="col-md-3">
-                          <label class="form-label">Hora Fin</label>
-                          <input 
-                            type="time" 
-                            class="form-control" 
-                            formControlName="horaFin"
-                            [class.is-invalid]="horarioGroup.get('horaFin')?.invalid && horarioGroup.get('horaFin')?.touched">
-                        </div>
-                        <div class="col-md-2">
-                          <label class="form-label">&nbsp;</label>
-                          <button 
-                            type="button" 
-                            class="btn btn-outline-danger d-block w-100" 
-                            (click)="removerHorario(i)">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                        <div class="col-md-1">
-                          <div class="form-check form-switch">
-                            <input 
-                              class="form-check-input" 
-                              type="checkbox" 
-                              formControlName="activo"
-                              [id]="'activo-' + i">
-                            <label class="form-check-label" [for]="'activo-' + i">
-                              Activo
-                            </label>
-                          </div>
-                        </div>
+                  <div *ngFor="let horario of horariosForm; let i = index" class="mb-3">
+                    <div class="row align-items-center">
+                      <div class="col-3">
+                        <label class="form-label small">Día</label>
+                        <select class="form-select" [(ngModel)]="horariosForm[i].dia" name="dia{{i}}">
+                          <option value="">Seleccionar día...</option>
+                          <option *ngFor="let dia of diasSemana" [value]="dia.valor">{{ dia.nombre }}</option>
+                        </select>
+                      </div>
+                      <div class="col-3">
+                        <label class="form-label small">Hora Inicio</label>
+                        <input type="time" class="form-control" [(ngModel)]="horariosForm[i].horaInicio" name="horaInicio{{i}}" placeholder="--:--">
+                      </div>
+                      <div class="col-3">
+                        <label class="form-label small">Hora Fin</label>
+                        <input type="time" class="form-control" [(ngModel)]="horariosForm[i].horaFin" name="horaFin{{i}}" placeholder="--:--">
+                      </div>
+                      <div class="col-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-outline-danger btn-sm" (click)="eliminarHorario(i)" title="Eliminar horario">
+                          <i class="fas fa-trash"></i>
+                        </button>
                       </div>
                     </div>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <button type="button" class="btn btn-success btn-sm" (click)="agregarHorario()">
+                      <i class="fas fa-plus me-1"></i> Agregar Horario
+                    </button>
+                  </div>
+                  
+                  <div class="alert alert-info py-2" *ngIf="horariosForm.length === 0">
+                    <small>
+                      <i class="fas fa-info-circle me-1"></i>
+                      Haga clic en "Agregar Horario" para configurar días y horarios de disponibilidad.
+                    </small>
                   </div>
                 </div>
 
@@ -271,7 +222,7 @@ interface DiaHorario {
                   <button 
                     type="submit" 
                     class="btn btn-primary"
-                    [disabled]="horarioForm.invalid || guardando">
+                    [disabled]="guardando || horariosForm.length === 0">
                     <i class="fas fa-spinner fa-spin me-2" *ngIf="guardando"></i>
                     <i class="fas fa-save me-2" *ngIf="!guardando"></i>
                     {{ guardando ? 'Guardando...' : (modoEdicion ? 'Actualizar' : 'Guardar') }}
@@ -374,39 +325,25 @@ export class MedicoHorariosComponent implements OnInit {
   cargando = false;
   guardando = false;
 
-  horarioForm!: FormGroup;
-  diasSeleccionados: Set<string> = new Set();
+  horariosForm: { dia: string, horaInicio: string, horaFin: string }[] = [];
 
   diasSemana = [
-    { nombre: 'Lunes', valor: 'LUNES' },
-    { nombre: 'Martes', valor: 'MARTES' },
-    { nombre: 'Miércoles', valor: 'MIÉRCOLES' },
-    { nombre: 'Jueves', valor: 'JUEVES' },
-    { nombre: 'Viernes', valor: 'VIERNES' },
-    { nombre: 'Sábado', valor: 'SÁBADO' },
-    { nombre: 'Domingo', valor: 'DOMINGO' }
+    { nombre: 'Lunes', valor: 'Lunes' },
+    { nombre: 'Martes', valor: 'Martes' },
+    { nombre: 'Miércoles', valor: 'Miércoles' },
+    { nombre: 'Jueves', valor: 'Jueves' },
+    { nombre: 'Viernes', valor: 'Viernes' },
+    { nombre: 'Sábado', valor: 'Sábado' },
+    { nombre: 'Domingo', valor: 'Domingo' }
   ];
 
   constructor(
     private router: Router,
-    private disponibilidadService: DisponibilidadMedicoService,
-    private fb: FormBuilder
-  ) {
-    this.inicializarFormulario();
-  }
+    private disponibilidadService: DisponibilidadMedicoService
+  ) {}
 
   ngOnInit() {
     this.cargarDisponibilidades();
-  }
-
-  private inicializarFormulario() {
-    this.horarioForm = this.fb.group({
-      horarios: this.fb.array([])
-    });
-  }
-
-  get horariosFormArray(): FormArray {
-    return this.horarioForm.get('horarios') as FormArray;
   }
 
   cargarDisponibilidades() {
@@ -425,97 +362,80 @@ export class MedicoHorariosComponent implements OnInit {
     });
   }
 
-  onDiaChange(event: any, dia: string) {
-    if (event.target.checked) {
-      this.diasSeleccionados.add(dia);
-      this.agregarHorarioDia(dia);
-    } else {
-      this.diasSeleccionados.delete(dia);
-      this.removerHorarioDia(dia);
-    }
+  agregarHorario() {
+    this.horariosForm.push({ dia: '', horaInicio: '08:00', horaFin: '17:00' });
   }
 
-  private agregarHorarioDia(dia: string) {
-    const horarioGroup = this.fb.group({
-      dia: [dia, Validators.required],
-      horaInicio: ['08:00', Validators.required],
-      horaFin: ['17:00', Validators.required],
-      activo: [true]
-    });
-
-    this.horariosFormArray.push(horarioGroup);
-  }
-
-  private removerHorarioDia(dia: string) {
-    const index = this.horariosFormArray.controls.findIndex(
-      control => control.get('dia')?.value === dia
-    );
-    if (index >= 0) {
-      this.horariosFormArray.removeAt(index);
-    }
-  }
-
-  removerHorario(index: number) {
-    const horarioControl = this.horariosFormArray.at(index);
-    const dia = horarioControl.get('dia')?.value;
-    this.diasSeleccionados.delete(dia);
-    this.horariosFormArray.removeAt(index);
+  eliminarHorario(index: number) {
+    this.horariosForm.splice(index, 1);
   }
 
   aplicarPlantilla(tipo: string) {
-    const horariosActuales = this.horariosFormArray.controls;
-    
-    horariosActuales.forEach(control => {
+    this.horariosForm.forEach(horario => {
       switch (tipo) {
         case 'manana':
-          control.patchValue({
-            horaInicio: '08:00',
-            horaFin: '13:00'
-          });
+          horario.horaInicio = '08:00';
+          horario.horaFin = '13:00';
           break;
         case 'tarde':
-          control.patchValue({
-            horaInicio: '14:00',
-            horaFin: '19:00'
-          });
+          horario.horaInicio = '14:00';
+          horario.horaFin = '19:00';
           break;
         case 'completo':
-          control.patchValue({
-            horaInicio: '08:00',
-            horaFin: '18:00'
-          });
-          break;
-        case 'personalizado':
-          // Permitir al usuario personalizar
+          horario.horaInicio = '08:00';
+          horario.horaFin = '18:00';
           break;
       }
     });
   }
 
   guardarDisponibilidad() {
-    if (this.horarioForm.valid) {
-      this.guardando = true;
-      
-      const staffMedicoId = this.getMedicoIdFromSession();
-      const horariosActivos = this.horariosFormArray.value.filter((horario: any) => horario.activo);
+    const horarios = this.horariosForm.filter(h => h.dia && h.horaInicio && h.horaFin);
+    
+    if (horarios.length === 0) {
+      alert('Debe configurar al menos un horario');
+      return;
+    }
 
-      const operacion = this.modoEdicion 
-        ? this.disponibilidadService.update(this.disponibilidadEditando!.id!, {
-            id: this.disponibilidadEditando!.id!,
-            staffMedicoId,
-            horarios: horariosActivos
-          } as DisponibilidadMedico)
-        : this.disponibilidadService.create({
-            staffMedicoId,
-            horarios: horariosActivos
-          } as DisponibilidadMedico);
+    this.guardando = true;
+    const staffMedicoId = this.getMedicoIdFromSession();
+
+    if (this.disponibilidades.length > 0) {
+      // Actualizar disponibilidad existente
+      const disponibilidadExistente = this.disponibilidades[0];
+      const operacion = this.disponibilidadService.update(disponibilidadExistente.id!, {
+        id: disponibilidadExistente.id!,
+        staffMedicoId,
+        horarios
+      } as DisponibilidadMedico);
 
       operacion.subscribe({
         next: () => {
           this.guardando = false;
           this.cancelarFormulario();
           this.cargarDisponibilidades();
-          alert(this.modoEdicion ? 'Horarios actualizados correctamente' : 'Horarios guardados correctamente');
+          alert('Horarios actualizados correctamente');
+        },
+        error: (error) => {
+          console.error('Error al actualizar:', error);
+          this.guardando = false;
+          alert('Error al actualizar los horarios');
+        }
+      });
+    } else {
+      // Crear nueva disponibilidad
+      const operacion = this.disponibilidadService.create({
+        id: 0,
+        staffMedicoId,
+        horarios
+      } as DisponibilidadMedico);
+
+      operacion.subscribe({
+        next: () => {
+          this.guardando = false;
+          this.cancelarFormulario();
+          this.cargarDisponibilidades();
+          alert('Horarios guardados correctamente');
         },
         error: (error) => {
           console.error('Error al guardar:', error);
@@ -531,21 +451,12 @@ export class MedicoHorariosComponent implements OnInit {
     this.disponibilidadEditando = disponibilidad;
     this.mostrarFormulario = true;
 
-    // Limpiar formulario actual
-    this.horariosFormArray.clear();
-    this.diasSeleccionados.clear();
-
     // Cargar datos para edición
-    disponibilidad.horarios?.forEach(horario => {
-      this.diasSeleccionados.add(horario.dia);
-      const horarioGroup = this.fb.group({
-        dia: [horario.dia, Validators.required],
-        horaInicio: [horario.horaInicio.slice(0, 5), Validators.required],
-        horaFin: [horario.horaFin.slice(0, 5), Validators.required],
-        activo: [true]
-      });
-      this.horariosFormArray.push(horarioGroup);
-    });
+    this.horariosForm = disponibilidad.horarios?.map(horario => ({
+      dia: horario.dia,
+      horaInicio: horario.horaInicio.slice(0, 5),
+      horaFin: horario.horaFin.slice(0, 5)
+    })) || [];
   }
 
   eliminarDisponibilidad(disponibilidad: DisponibilidadMedico) {
@@ -569,8 +480,7 @@ export class MedicoHorariosComponent implements OnInit {
     this.mostrarFormulario = false;
     this.modoEdicion = false;
     this.disponibilidadEditando = null;
-    this.horariosFormArray.clear();
-    this.diasSeleccionados.clear();
+    this.horariosForm = [];
   }
 
   volverAlDashboard() {

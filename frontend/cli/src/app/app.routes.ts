@@ -33,7 +33,6 @@ import { PacienteNotificacionesComponent } from './pacientes/paciente-notificaci
 import { MedicoDashboardComponent } from "./medicos/medico-dashboard.component";
 import { MedicoTurnosComponent } from "./medicos/medico-turnos.component";
 import { MedicoHorariosComponent } from "./medicos/medico-horarios.component";
-import { MedicoVacacionesComponent } from "./medicos/medico-vacaciones.component";
 import { MedicoEstadisticasComponent } from "./medicos/medico-estadisticas.component";
 
 // Audit components
@@ -72,11 +71,6 @@ export const routes: Routes = [
   {
     path: "medico-horarios",
     component: MedicoHorariosComponent,
-    canActivate: [MedicoGuard],
-  },
-  {
-    path: "medico-vacaciones",
-    component: MedicoVacacionesComponent,
     canActivate: [MedicoGuard],
   },
   {

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
@@ -18,7 +19,7 @@ interface DashboardStats {
 @Component({
   selector: 'app-medico-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="container-fluid">
       <!-- Header -->
@@ -119,25 +120,19 @@ interface DashboardStats {
                     Turnos Hoy
                   </button>
                 </div>
-                <div class="col-md-2 mb-2">
+                <div class="col-md-3 mb-2">
                   <button class="btn btn-outline-success w-100" (click)="gestionarHorarios()">
                     <i class="fas fa-clock mb-1 d-block"></i>
                     Horarios
                   </button>
                 </div>
-                <div class="col-md-2 mb-2">
-                  <button class="btn btn-outline-warning w-100" (click)="gestionarVacaciones()">
-                    <i class="fas fa-calendar-times mb-1 d-block"></i>
-                    Vacaciones
-                  </button>
-                </div>
-                <div class="col-md-2 mb-2">
+                <div class="col-md-3 mb-2">
                   <button class="btn btn-outline-info w-100" (click)="verHistorial()">
                     <i class="fas fa-history mb-1 d-block"></i>
                     Historial
                   </button>
                 </div>
-                <div class="col-md-2 mb-2">
+                <div class="col-md-3 mb-2">
                   <button class="btn btn-outline-secondary w-100" (click)="verEstadisticas()">
                     <i class="fas fa-chart-bar mb-1 d-block"></i>
                     Estadísticas
@@ -225,33 +220,6 @@ interface DashboardStats {
             </div>
           </div>
 
-          <!-- Estado de Disponibilidad -->
-          <div class="card mb-3">
-            <div class="card-header">
-              <h6 class="mb-0">
-                <i class="fas fa-calendar-alt me-2"></i>
-                Mi Disponibilidad
-              </h6>
-            </div>
-            <div class="card-body">
-              <div *ngIf="disponibilidadActual.length === 0" class="text-center text-muted py-2">
-                <small>Sin horarios configurados</small>
-                <br>
-                <button class="btn btn-sm btn-outline-primary mt-2" (click)="gestionarHorarios()">
-                  Configurar
-                </button>
-              </div>
-              <div *ngFor="let disp of disponibilidadActual.slice(0, 3)">
-                <div *ngFor="let horario of disp.horarios" class="mb-1">
-                  <small>
-                    <span class="fw-bold">{{ horario.dia }}:</span>
-                    {{ horario.horaInicio | slice:0:5 }} - {{ horario.horaFin | slice:0:5 }}
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- Notificaciones/Alertas -->
           <div class="card">
             <div class="card-header">
@@ -267,13 +235,7 @@ interface DashboardStats {
                   Tienes {{ stats.turnosPendientes }} turnos pendientes de confirmación
                 </small>
               </div>
-              <div class="alert alert-warning py-2 mb-2" *ngIf="disponibilidadActual.length === 0">
-                <small>
-                  <i class="fas fa-calendar-times me-1"></i>
-                  No tienes horarios de disponibilidad configurados
-                </small>
-              </div>
-              <div class="text-center text-muted py-2" *ngIf="stats.turnosPendientes === 0 && disponibilidadActual.length > 0">
+              <div class="text-center text-muted py-2" *ngIf="stats.turnosPendientes === 0">
                 <small>
                   <i class="fas fa-check-circle text-success me-1"></i>
                   Todo está al día
@@ -448,10 +410,6 @@ export class MedicoDashboardComponent implements OnInit {
 
   gestionarHorarios() {
     this.router.navigate(['/medico-horarios']);
-  }
-
-  gestionarVacaciones() {
-    this.router.navigate(['/medico-vacaciones']);
   }
 
   verHistorial() {
