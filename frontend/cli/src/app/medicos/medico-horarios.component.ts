@@ -80,9 +80,10 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
               <p class="section-subtitle">Gestiona tu disponibilidad semanal</p>
             </div>
           </div>
-          <button class="btn-add-schedule" (click)="mostrarFormulario = true">
-            <i class="fas fa-plus"></i>
-            <span>Nuevo Horario</span>
+          <button class="btn-add-schedule" (click)="toggleFormulario()">
+            <i class="fas fa-plus" *ngIf="disponibilidades.length === 0"></i>
+            <i class="fas fa-edit" *ngIf="disponibilidades.length > 0"></i>
+            <span>{{ disponibilidades.length === 0 ? 'Nuevo Horario' : 'Editar Horarios' }}</span>
           </button>
         </div>
 
@@ -103,7 +104,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
             <div class="empty-content">
               <h3>No tienes horarios configurados</h3>
               <p>Configura tus horarios de disponibilidad para que los pacientes puedan agendar turnos contigo</p>
-              <button class="btn-primary-action" (click)="mostrarFormulario = true">
+              <button class="btn-primary-action" (click)="toggleFormulario()">
                 <i class="fas fa-plus me-2"></i>
                 Configurar Primer Horario
               </button>
@@ -1370,13 +1371,13 @@ export class MedicoHorariosComponent implements OnInit {
   particles: Array<{x: number, y: number}> = [];
 
   diasSemana = [
-    { nombre: 'Lunes', valor: 'Lunes' },
-    { nombre: 'Martes', valor: 'Martes' },
-    { nombre: 'Miércoles', valor: 'Miércoles' },
-    { nombre: 'Jueves', valor: 'Jueves' },
-    { nombre: 'Viernes', valor: 'Viernes' },
-    { nombre: 'Sábado', valor: 'Sábado' },
-    { nombre: 'Domingo', valor: 'Domingo' }
+    { nombre: 'Lunes', valor: 'LUNES' },
+    { nombre: 'Martes', valor: 'MARTES' },
+    { nombre: 'Miércoles', valor: 'MIERCOLES' },
+    { nombre: 'Jueves', valor: 'JUEVES' },
+    { nombre: 'Viernes', valor: 'VIERNES' },
+    { nombre: 'Sábado', valor: 'SABADO' },
+    { nombre: 'Domingo', valor: 'DOMINGO' }
   ];
 
   constructor(
@@ -1444,11 +1445,10 @@ export class MedicoHorariosComponent implements OnInit {
     this.guardando = true;
     const staffMedicoId = this.getMedicoIdFromSession();
 
-    if (this.disponibilidades.length > 0) {
+    if (this.modoEdicion && this.disponibilidadEditando) {
       // Actualizar disponibilidad existente
-      const disponibilidadExistente = this.disponibilidades[0];
-      const operacion = this.disponibilidadService.update(disponibilidadExistente.id!, {
-        id: disponibilidadExistente.id!,
+      const operacion = this.disponibilidadService.update(this.disponibilidadEditando.id!, {
+        id: this.disponibilidadEditando.id!,
         staffMedicoId,
         horarios
       } as DisponibilidadMedico);
@@ -1495,12 +1495,28 @@ export class MedicoHorariosComponent implements OnInit {
     this.disponibilidadEditando = disponibilidad;
     this.mostrarFormulario = true;
 
-    // Cargar datos para edición
-    this.horariosForm = disponibilidad.horarios?.map(horario => ({
-      dia: horario.dia,
-      horaInicio: horario.horaInicio.slice(0, 5),
-      horaFin: horario.horaFin.slice(0, 5)
-    })) || [];
+    // Debug: verificar qué días están llegando de la BD
+    console.log('Disponibilidad a editar:', disponibilidad);
+    console.log('Horarios:', disponibilidad.horarios);
+
+    // Cargar datos para edición - asegurarnos de que el día se cargue correctamente
+    this.horariosForm = disponibilidad.horarios?.map(horario => {
+      console.log('Día del horario original:', horario.dia);
+      const diaNormalizado = this.normalizarDia(horario.dia);
+      console.log('Día normalizado:', diaNormalizado);
+      return {
+        dia: diaNormalizado, // Normalizar el día para que coincida con nuestros valores
+        horaInicio: horario.horaInicio.slice(0, 5), // Formato HH:MM
+        horaFin: horario.horaFin.slice(0, 5) // Formato HH:MM
+      };
+    }) || [];
+
+    console.log('Formulario cargado:', this.horariosForm);
+
+    // Si no hay horarios, agregar uno vacío por defecto
+    if (this.horariosForm.length === 0) {
+      this.agregarHorario();
+    }
   }
 
   eliminarDisponibilidad(disponibilidad: DisponibilidadMedico) {
@@ -1560,5 +1576,42 @@ export class MedicoHorariosComponent implements OnInit {
       });
     });
     return diasUnicos.size;
+  }
+
+  toggleFormulario() {
+    if (this.disponibilidades.length > 0) {
+      // Si hay disponibilidades, editar la primera (normalmente solo hay una)
+      this.editarDisponibilidad(this.disponibilidades[0]);
+    } else {
+      // Si no hay disponibilidades, crear nueva
+      this.mostrarFormulario = true;
+      this.modoEdicion = false;
+      this.horariosForm = [];
+    }
+  }
+
+  private normalizarDia(dia: string): string {
+    // Normalizar el día a mayúsculas y sin acentos para que coincida con nuestros valores
+    const diaLimpio = dia.toUpperCase()
+      .replace('É', 'E')
+      .replace('Á', 'A')
+      .replace('Í', 'I')
+      .replace('Ó', 'O')
+      .replace('Ú', 'U');
+    
+    // Mapear días conocidos
+    const mapaDias: { [key: string]: string } = {
+      'LUNES': 'LUNES',
+      'MARTES': 'MARTES',
+      'MIERCOLES': 'MIERCOLES',
+      'MIÉRCOLES': 'MIERCOLES',
+      'JUEVES': 'JUEVES',
+      'VIERNES': 'VIERNES',
+      'SABADO': 'SABADO',
+      'SÁBADO': 'SABADO',
+      'DOMINGO': 'DOMINGO'
+    };
+
+    return mapaDias[diaLimpio] || dia; // Si no encuentra el mapeo, devuelve el original
   }
 }
