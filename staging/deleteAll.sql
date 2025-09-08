@@ -1,4 +1,8 @@
 -- Borrar las tablas en el orden correcto respetando las dependencias de claves foráneas
+SET session_replication_role = replica;
+
+DELETE FROM medico_especialidad;
+
 DELETE FROM turno;
 
 DELETE FROM esquema_turno_horarios;
@@ -20,3 +24,5 @@ DELETE FROM centro_atencion;
 
 DELETE FROM paciente;
 DELETE FROM obra_social;
+
+SET session_replication_role = DEFAULT;
