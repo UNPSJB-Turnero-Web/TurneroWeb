@@ -1,5 +1,29 @@
 package unpsjb.labprog.backend.model;
 
-public class Operador extends Persona{
-    
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+public class Operador extends Persona {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // Nombre de usuario (login)
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    // Estado del operador (activo/inactivo)
+    @Column(nullable = false)
+    private boolean activo = true;
+
 }
