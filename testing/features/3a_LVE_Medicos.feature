@@ -810,3 +810,15 @@ Cuando el administrador crea un médico con "<nombre>", "<apellido>", "<dni>", "
   ]
 }
   """"
+
+  Esquema del escenario: Crear un médico con múltiples especialidades
+    Cuando el administrador crea un médico con "<nombre>", "<apellido>", "<dni>", "<matricula>" y las especialidades "<especialidades>"
+    Entonces el sistema responde con <status_code> y "<status_text>" para medicos
+
+  Ejemplos:
+    | nombre    | apellido   | dni       | matricula | especialidades                        | status_code | status_text                        |
+    | Juan      | García     | 45123456  | 12345-6   | Cardiología, Medicina General         | 200         | Médico creado correctamente     |
+    | María     | López      | 46789012  | 23456-7   | Pediatría, Neonatología               | 200         | Médico creado correctamente     |
+    | Carlos    | Martínez   | 47890123  | 34567-8   | Cirugía General, Traumatología        | 200         | Médico creado correctamente     |
+    | Ana       | Rodríguez  | 48901234  | 45678-9   | Ginecología, Obstetricia              | 200         | Médico creado correctamente     |
+    | Pedro     | Sánchez    | 49012345  | 56789-0   | Neurología, Neurocirugía, Medicina General | 200    | Médico creado correctamente     |

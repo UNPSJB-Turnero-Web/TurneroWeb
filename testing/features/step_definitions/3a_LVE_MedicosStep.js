@@ -13,13 +13,18 @@ Given('que existen {int} medicos registrados en el sistema', function (cantidad)
 
 When(
   'el administrador crea un médico con {string}, {string}, {string}, {string}, {string}',
-  function (nombre, apellido, dni, matricula, especialidad) {
+  function (nombre, apellido, dni, matricula, especialidades) {
+    // Procesar especialidades: puede ser una sola o múltiples separadas por coma
+    const especialidadesArray = especialidades.split(',').map(esp => ({
+      nombre: esp.trim()
+    }));
+    
     const medico = {
       nombre,
       apellido,
       dni: dni && !isNaN(Number(dni)) ? Number(dni) : dni,
       matricula,
-      especialidad: { nombre: especialidad }//
+      especialidades: especialidadesArray
     };
     try {
       const res = request('POST', 'http://backend:8080/medicos', { json: medico });
@@ -35,6 +40,37 @@ When(
     }
   }
 );
+
+When(
+  'el administrador crea un médico con {string}, {string}, {string}, {string} y las especialidades {string}',
+  function (nombre, apellido, dni, matricula, especialidades) {
+    // Procesar múltiples especialidades separadas por coma
+    const especialidadesArray = especialidades.split(',').map(esp => ({
+      nombre: esp.trim()
+    }));
+    
+    const medico = {
+      nombre,
+      apellido,
+      dni: dni && !isNaN(Number(dni)) ? Number(dni) : dni,
+      matricula,
+      especialidades: especialidadesArray
+    };
+    try {
+      const res = request('POST', 'http://backend:8080/medicos', { json: medico });
+      this.response = JSON.parse(res.getBody('utf8'));
+    } catch (error) {
+      try {
+        this.response = error.response
+          ? JSON.parse(error.response.body.toString('utf8'))
+          : { status_code: 500, status_text: 'Error interno' };
+      } catch (parseErr) {
+        this.response = { status_code: 500, status_text: 'Error interno' };
+      }
+    }
+  }
+);
+
 When('un usuario del sistema solicita la lista de medicos', function () {
   try {
     const res = request('GET', 'http://backend:8080/medicos');
