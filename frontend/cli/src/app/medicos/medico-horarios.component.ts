@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
+import { MedicoService } from './medico.service';
+import { Medico } from './medico';
+import { Especialidad } from '../especialidades/especialidad';
 
 @Component({
   selector: 'app-medico-horarios',
@@ -112,34 +115,95 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
           </div>
         </div>
 
-        <!-- Horarios Grid -->
-        <div class="horarios-grid" *ngIf="!cargando && disponibilidades.length > 0">
-          <div class="horario-card" *ngFor="let disponibilidad of disponibilidades">
-            <div class="card-header">
-              <div class="card-title">
-                <i class="fas fa-calendar-check me-2"></i>
-                Configuración #{{ disponibilidad.id }}
-              </div>
-              <div class="card-actions">
-                <button class="action-btn edit-btn" (click)="editarDisponibilidad(disponibilidad)" title="Editar">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn delete-btn" (click)="eliminarDisponibilidad(disponibilidad)" title="Eliminar">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            </div>
-            
-            <div class="card-body">
-              <div class="horarios-list">
-                <div class="horario-item" *ngFor="let horario of disponibilidad.horarios">
-                  <div class="day-badge">
-                    <span class="day-name">{{ horario.dia }}</span>
+        <!-- Horarios Grid - Agrupados por Especialidad -->
+        <div class="especialidades-container" *ngIf="!cargando && especialidades.length > 0">
+          <div class="especialidad-section" *ngFor="let especialidad of especialidades; let i = index">
+            <div class="especialidad-card">
+              <div class="card-background"></div>
+              <div class="card-glow"></div>
+              
+              <div class="especialidad-header">
+                <div class="especialidad-info">
+                  <div class="especialidad-icon" [class]="'icon-variant-' + (i % 4 + 1)">
+                    <i class="fas fa-stethoscope"></i>
+                    <div class="icon-pulse"></div>
                   </div>
-                  <div class="time-range">
-                    <span class="time-start">{{ horario.horaInicio | slice:0:5 }}</span>
-                    <span class="time-separator">-</span>
-                    <span class="time-end">{{ horario.horaFin | slice:0:5 }}</span>
+                  <div class="especialidad-details">
+                    <h3>{{ especialidad.nombre }}</h3>
+                    <div class="status-badge" [class.status-configured]="especialidadTieneDisponibilidades(especialidad.id)" [class.status-pending]="!especialidadTieneDisponibilidades(especialidad.id)">
+                      <i class="fas fa-check-circle" *ngIf="especialidadTieneDisponibilidades(especialidad.id)"></i>
+                      <i class="fas fa-clock" *ngIf="!especialidadTieneDisponibilidades(especialidad.id)"></i>
+                      <span>{{ especialidadTieneDisponibilidades(especialidad.id) ? 'Configurado' : 'Pendiente' }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="especialidad-actions">
+                  <button 
+                    class="btn-configure" 
+                    *ngIf="!especialidadTieneDisponibilidades(especialidad.id)"
+                    (click)="nuevaDisponibilidadParaEspecialidad(especialidad.id)">
+                    <i class="fas fa-plus me-2"></i>
+                    <span>Configurar Horarios</span>
+                    <div class="btn-shine"></div>
+                  </button>
+                  <div class="summary-stats" *ngIf="especialidadTieneDisponibilidades(especialidad.id)">
+                    <div class="stat-item">
+                      <i class="fas fa-calendar-week"></i>
+                      <span>{{ getHorariosPorEspecialidad(especialidad.id).length }} configuraciones</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Disponibilidades para esta especialidad -->
+              <div class="horarios-content" *ngIf="especialidadTieneDisponibilidades(especialidad.id)">
+                <div class="horarios-grid">
+                  <div class="horario-card" *ngFor="let disponibilidad of disponibilidadesPorEspecialidad[especialidad.id]">
+                    <div class="card-header">
+                      <div class="card-title">
+                        <div class="title-icon">
+                          <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="title-content">
+                          <span class="title-main">Horarios de {{ especialidad.nombre }}</span>
+                          <span class="title-sub">{{ disponibilidad.horarios.length }} días configurados</span>
+                        </div>
+                      </div>
+                      <div class="card-actions">
+                        <button class="action-btn edit-btn" (click)="editarDisponibilidad(disponibilidad)" title="Editar horarios">
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" (click)="eliminarDisponibilidad(disponibilidad)" title="Eliminar configuración">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div class="card-body">
+                      <div class="horarios-list">
+                        <div class="horario-item" *ngFor="let horario of disponibilidad.horarios; let j = index">
+                          <div class="day-badge" [class]="'day-' + (j % 7)">
+                            <div class="day-icon">
+                              <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <span class="day-name">{{ horario.dia }}</span>
+                          </div>
+                          <div class="time-range">
+                            <div class="time-block">
+                              <i class="fas fa-clock time-icon"></i>
+                              <span class="time-start">{{ horario.horaInicio | slice:0:5 }}</span>
+                            </div>
+                            <div class="time-separator">
+                              <i class="fas fa-arrow-right"></i>
+                            </div>
+                            <div class="time-block">
+                              <i class="fas fa-clock time-icon"></i>
+                              <span class="time-end">{{ horario.horaFin | slice:0:5 }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -214,6 +278,38 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
                     <div class="template-time">Configurar</div>
                   </div>
                 </button>
+              </div>
+            </div>
+
+            <!-- Selección de Especialidad -->
+            <div class="specialty-section">
+              <h3>
+                <i class="fas fa-stethoscope me-2"></i>
+                Especialidad
+              </h3>
+              <div class="specialty-selection">
+                <div class="form-group">
+                  <label class="form-label">Seleccionar Especialidad *</label>
+                  <select class="form-select specialty-select" [(ngModel)]="especialidadSeleccionada" name="especialidad">
+                    <option value="">Seleccionar especialidad...</option>
+                    <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
+                      {{ especialidad.nombre }}
+                      <span *ngIf="especialidadTieneDisponibilidades(especialidad.id)" class="specialty-status">(Ya configurada)</span>
+                    </option>
+                  </select>
+                  <div class="specialty-info" *ngIf="especialidadSeleccionada">
+                    <div class="info-card">
+                      <i class="fas fa-info-circle me-2"></i>
+                      Configurando horarios para: <strong>{{ getNombreEspecialidad(especialidadSeleccionada) }}</strong>
+                    </div>
+                  </div>
+                  <div class="specialty-warning" *ngIf="!especialidadSeleccionada">
+                    <div class="warning-card">
+                      <i class="fas fa-exclamation-triangle me-2"></i>
+                      Debe seleccionar una especialidad antes de configurar horarios
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -696,45 +792,460 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
       box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
     }
 
-    /* Horarios Grid */
-    .horarios-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    /* Especialidades Container - Layout principal */
+    .especialidades-container {
+      display: flex;
+      flex-direction: column;
       gap: 2rem;
-      position: relative;
-      z-index: 2;
+      padding: 1rem 0;
+      animation: fadeInUp 0.8s ease-out;
     }
 
-    .horario-card {
-      background: rgba(255, 255, 255, 0.9);
+    .especialidad-section {
+      position: relative;
+      width: 100%;
+    }
+
+    /* Especialidad Card - Contenedor principal con glassmorphismo */
+    .especialidad-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 0.5);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+   
+      overflow: hidden;
+    }
+
+    .especialidad-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+   
+    .especialidad-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Card Background Effects */
+    .card-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+
+  
+
+    .card-glow {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      right: -50%;
+      bottom: -50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      z-index: -1;
+    }
+
+    /* Especialidad Header */
+    .especialidad-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+      background: white!important;
+    }
+
+    .especialidad-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* Especialidad Icon */
+    .especialidad-icon {
+      position: relative;
+      width: 64px;
+      height: 64px;
       border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
       transition: all 0.3s ease;
       overflow: hidden;
     }
 
-    .horario-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+    .icon-variant-1 {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
+    .icon-variant-2 {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .icon-variant-3 {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .icon-variant-4 {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .especialidad-icon:hover {
+      transform: rotate(5deg) scale(1.1);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .icon-pulse {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%) scale(0);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+
+    .especialidad-details h3 {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: #3f3f3f;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .status-configured {
+      background: linear-gradient(135deg, rgba(67, 233, 123, 0.2) 0%, rgba(56, 249, 215, 0.2) 100%);
+      color: #22c55e;
+      border: 1px solid rgba(67, 233, 123, 0.3);
+    }
+
+    .status-pending {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+      color: #f59e0b;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    /* Especialidad Actions */
+    .especialidad-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn-configure {
+      position: relative;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 0.875rem 1.5rem;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+      overflow: hidden;
+    }
+
+    .btn-configure::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-configure:hover::before {
+      left: 100%;
+    }
+
+    .btn-configure:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-shine {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    /* Summary Stats */
+    .summary-stats {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(248, 250, 252, 0.8);
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #64748b;
+      border: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .stat-item i {
+      color: #3b82f6;
+    }
+
+    /* Horarios Content */
+    .horarios-content {
+      margin-top: 1.5rem;
+      animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px);
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .especialidad-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+
+      .especialidad-info {
+        width: 100%;
+      }
+
+      .especialidad-actions {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .horarios-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .horario-item {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .time-range {
+        justify-content: center;
+      }
+
+      .especialidad-card {
+        padding: 1.5rem;
+      }
+
+      .card-header {
+        padding: 1rem;
+      }
+
+      .card-body {
+        padding: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .especialidad-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+      }
+
+      .especialidad-details h3 {
+        font-size: 1.4rem;
+      }
+
+      .btn-configure {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.8rem;
+      }
+
+      .horario-card {
+        border-radius: 16px;
+      }
+
+      .day-badge {
+        min-width: 100px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* Horarios Grid - Layout mejorado */
+    .horarios-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    /* Horario Card - Diseño glassmorphismo */
+    .horario-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.85) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.4);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+      box-shadow: 
+        0 16px 32px rgba(0, 0, 0, 0.06),
+        0 8px 16px rgba(0, 0, 0, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .horario-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #f59e0b 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .horario-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 
+        0 24px 48px rgba(0, 0, 0, 0.1),
+        0 12px 24px rgba(0, 0, 0, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .horario-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Card Header mejorado */
     .card-header {
-      padding: 1.5rem 2rem;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-      background: rgba(102, 126, 234, 0.02);
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(139, 92, 246, 0.04) 100%);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.6);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .card-title {
-      color: #2c3e50;
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin: 0;
       display: flex;
       align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .title-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .title-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .title-main {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .title-sub {
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 500;
     }
 
     .card-actions {
@@ -743,40 +1254,63 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
     }
 
     .action-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
+      font-size: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .action-btn:hover::before {
+      width: 100%;
+      height: 100%;
     }
 
     .edit-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     .edit-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
 
     .delete-btn {
-      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
     .delete-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
     }
 
+    /* Card Body */
     .card-body {
-      padding: 1.5rem 2rem;
+      padding: 1.5rem;
     }
 
     .horarios-list {
@@ -785,36 +1319,108 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
       gap: 1rem;
     }
 
+    /* Horario Item - Elemento individual mejorado */
     .horario-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 1rem;
-      background: rgba(102, 126, 234, 0.05);
-      border-radius: 12px;
-      border-left: 4px solid #667eea;
+      background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%);
+      border: 1px solid rgba(226, 232, 240, 0.4);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
+    .horario-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 0 2px 2px 0;
+    }
+
+    .horario-item:hover {
+      transform: translateX(4px);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    /* Day Badge mejorado */
     .day-badge {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .time-range {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 12px;
       font-weight: 600;
-      color: #2c3e50;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+      min-width: 120px;
+    }
+
+    .day-0 { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); color: white; }
+    .day-1 { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
+    .day-2 { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; }
+    .day-3 { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+    .day-4 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+    .day-5 { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; }
+    .day-6 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+
+    .day-icon {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .day-name {
+      font-weight: 600;
+    }
+
+    /* Time Range mejorado */
+    .time-range {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .time-block {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(248, 250, 252, 0.8);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .time-icon {
+      font-size: 12px;
+      color: #3b82f6;
+      opacity: 0.7;
+    }
+
+    .time-start, .time-end {
+      font-family: 'Segoe UI', monospace;
+      font-weight: 700;
     }
 
     .time-separator {
-      color: #6c757d;
-      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 50%;
+      color: white;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
 
     /* Form Section */
@@ -977,6 +1583,78 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
     }
 
     .template-time {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    /* Specialty Section */
+    .specialty-section {
+      margin-bottom: 2.5rem;
+      padding: 2rem;
+      background: rgba(102, 126, 234, 0.03);
+      border-radius: 16px;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .specialty-section h3 {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0 0 1.5rem 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .specialty-selection {
+      max-width: 500px;
+    }
+
+    .specialty-select {
+      font-size: 1rem;
+      padding: 1rem;
+      border: 2px solid rgba(102, 126, 234, 0.2);
+      border-radius: 12px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+
+    .specialty-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .specialty-info {
+      margin-top: 1rem;
+    }
+
+    .info-card {
+      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(67, 233, 123, 0.2);
+    }
+
+    .specialty-warning {
+      margin-top: 1rem;
+    }
+
+    .warning-card {
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+    }
+
+    .specialty-status {
+      font-style: italic;
       color: #6c757d;
       font-size: 0.9rem;
     }
@@ -1365,6 +2043,12 @@ export class MedicoHorariosComponent implements OnInit {
   cargando = false;
   guardando = false;
 
+  // Nuevas propiedades para especialidades
+  medicoActual: Medico | null = null;
+  especialidades: Especialidad[] = [];
+  especialidadSeleccionada: number | null = null;
+  disponibilidadesPorEspecialidad: { [especialidadId: number]: DisponibilidadMedico[] } = {};
+
   horariosForm: { dia: string, horaInicio: string, horaFin: string }[] = [];
 
   // Particles for background animation
@@ -1382,14 +2066,14 @@ export class MedicoHorariosComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private disponibilidadService: DisponibilidadMedicoService
+    private disponibilidadService: DisponibilidadMedicoService,
+    private medicoService: MedicoService
   ) {
     this.initializeParticles();
   }
 
   ngOnInit() {
-    this.cargarDisponibilidades();
-    // Debug: verificar configuración del localStorage
+    this.cargarMedicoYEspecialidades();
     this.verificarConfiguracionSesion();
   }
 
@@ -1401,6 +2085,37 @@ export class MedicoHorariosComponent implements OnInit {
     console.log('userId:', localStorage.getItem('userId'));
     console.log('medicoId:', localStorage.getItem('medicoId'));
     console.log('=== FIN VERIFICACIÓN ===');
+  }
+
+  cargarMedicoYEspecialidades() {
+    const medicoId = this.getMedicoIdFromSession();
+
+    if (!medicoId || medicoId === 0) {
+      console.error('Error: No se pudo obtener el ID del médico');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Cargar información del médico y sus especialidades
+    this.medicoService.findById(medicoId).subscribe({
+      next: (medico) => {
+        this.medicoActual = medico;
+        this.especialidades = medico.especialidades || [];
+        console.log('Médico cargado:', medico);
+        console.log('Especialidades:', this.especialidades);
+        
+        // Una vez que tenemos las especialidades, cargar las disponibilidades
+        this.cargarDisponibilidades();
+      },
+      error: (error) => {
+        console.error('Error al cargar médico:', error);
+        this.router.navigate(['/login']);
+      }
+    });
+  }
+
+  getHorariosPorEspecialidad(especialidadId: number): DisponibilidadMedico[] {
+    return this.disponibilidadesPorEspecialidad[especialidadId] || [];
   }
 
   cargarDisponibilidades() {
@@ -1421,6 +2136,7 @@ export class MedicoHorariosComponent implements OnInit {
       next: (response) => {
         console.log('Respuesta del servidor (cargar):', response);
         this.disponibilidades = response.data || [];
+        this.organizarDisponibilidadesPorEspecialidad();
         this.cargando = false;
       },
       error: (error) => {
@@ -1429,16 +2145,85 @@ export class MedicoHorariosComponent implements OnInit {
         if (error.status === 404) {
           console.log('No se encontraron disponibilidades para el médico (normal para primera vez)');
           this.disponibilidades = [];
+          this.organizarDisponibilidadesPorEspecialidad();
         } else if (error.status === 403) {
           alert('Error de permisos. Verifique que su sesión sea válida.');
           this.router.navigate(['/login']);
         } else {
           console.warn('Error al cargar disponibilidades:', error.message || error);
-          // No mostrar alert para errores de carga, puede ser normal no tener disponibilidades
           this.disponibilidades = [];
+          this.organizarDisponibilidadesPorEspecialidad();
         }
       }
     });
+  }
+
+  organizarDisponibilidadesPorEspecialidad() {
+    this.disponibilidadesPorEspecialidad = {};
+    
+    // Organizar disponibilidades existentes por especialidad
+    this.disponibilidades.forEach(disponibilidad => {
+      const especialidadId = disponibilidad.especialidadId;
+      if (especialidadId) {
+        if (!this.disponibilidadesPorEspecialidad[especialidadId]) {
+          this.disponibilidadesPorEspecialidad[especialidadId] = [];
+        }
+        this.disponibilidadesPorEspecialidad[especialidadId].push(disponibilidad);
+      }
+    });
+    
+    console.log('Disponibilidades organizadas por especialidad:', this.disponibilidadesPorEspecialidad);
+  }
+
+  // Método para validar conflictos de horarios entre especialidades
+  validarConflictosHorarios(nuevosHorarios: { dia: string, horaInicio: string, horaFin: string }[], especialidadIdExcluir?: number): string[] {
+    const conflictos: string[] = [];
+    
+    // Revisar cada nuevo horario contra las disponibilidades existentes
+    nuevosHorarios.forEach(nuevoHorario => {
+      // Revisar contra todas las especialidades excepto la que estamos editando
+      Object.keys(this.disponibilidadesPorEspecialidad).forEach(especialidadIdStr => {
+        const especialidadId = parseInt(especialidadIdStr);
+        
+        // Skip la especialidad que estamos editando
+        if (especialidadIdExcluir && especialidadId === especialidadIdExcluir) {
+          return;
+        }
+        
+        const disponibilidades = this.disponibilidadesPorEspecialidad[especialidadId];
+        disponibilidades.forEach(disponibilidad => {
+          disponibilidad.horarios.forEach(horarioExistente => {
+            if (horarioExistente.dia === nuevoHorario.dia) {
+              // Verificar si hay solapamiento de horarios
+              if (this.horariosSeSolapan(nuevoHorario, horarioExistente)) {
+                const especialidad = this.especialidades.find(e => e.id === especialidadId);
+                const nombreEspecialidad = especialidad?.nombre || `Especialidad ID ${especialidadId}`;
+                conflictos.push(`${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se solapa con ${nombreEspecialidad} (${horarioExistente.horaInicio}-${horarioExistente.horaFin})`);
+              }
+            }
+          });
+        });
+      });
+    });
+    
+    return conflictos;
+  }
+
+  // Método auxiliar para verificar si dos horarios se solapan
+  private horariosSeSolapan(horario1: { horaInicio: string, horaFin: string }, horario2: { horaInicio: string, horaFin: string }): boolean {
+    const inicio1 = this.convertirHoraAMinutos(horario1.horaInicio);
+    const fin1 = this.convertirHoraAMinutos(horario1.horaFin);
+    const inicio2 = this.convertirHoraAMinutos(horario2.horaInicio);
+    const fin2 = this.convertirHoraAMinutos(horario2.horaFin);
+    
+    // Los horarios se solapan si uno empieza antes de que termine el otro
+    return (inicio1 < fin2) && (inicio2 < fin1);
+  }
+
+  // Convertir hora en formato HH:MM a minutos desde medianoche
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 
   agregarHorario() {
@@ -1476,6 +2261,23 @@ export class MedicoHorariosComponent implements OnInit {
       return;
     }
 
+    // Validar que se haya seleccionado una especialidad
+    if (!this.especialidadSeleccionada) {
+      alert('Debe seleccionar una especialidad');
+      return;
+    }
+
+    // Validar conflictos de horarios con otras especialidades
+    const especialidadExcluir = this.modoEdicion ? this.disponibilidadEditando?.especialidadId : undefined;
+    const conflictos = this.validarConflictosHorarios(horarios, especialidadExcluir);
+    
+    if (conflictos.length > 0) {
+      const mensaje = 'Se encontraron conflictos de horarios:\n\n' + conflictos.join('\n') + '\n\n¿Desea continuar de todas formas?';
+      if (!confirm(mensaje)) {
+        return;
+      }
+    }
+
     this.guardando = true;
 
     if (this.modoEdicion && this.disponibilidadEditando) {
@@ -1487,7 +2289,8 @@ export class MedicoHorariosComponent implements OnInit {
 
       const disponibilidadActualizada = {
         id: this.disponibilidadEditando.id!,
-        staffMedicoId: staffMedicoIdExistente, // Usar el ID existente
+        staffMedicoId: staffMedicoIdExistente,
+        especialidadId: this.especialidadSeleccionada,
         horarios
       } as DisponibilidadMedico;
 
@@ -1528,6 +2331,7 @@ export class MedicoHorariosComponent implements OnInit {
       const nuevaDisponibilidad = {
         id: 0,
         staffMedicoId,
+        especialidadId: this.especialidadSeleccionada,
         horarios
       } as DisponibilidadMedico;
 
@@ -1558,10 +2362,12 @@ export class MedicoHorariosComponent implements OnInit {
     this.modoEdicion = true;
     this.disponibilidadEditando = disponibilidad;
     this.mostrarFormulario = true;
+    this.especialidadSeleccionada = disponibilidad.especialidadId || null;
 
     // Debug: verificar qué días están llegando de la BD
     console.log('Disponibilidad a editar:', disponibilidad);
     console.log('Horarios:', disponibilidad.horarios);
+    console.log('Especialidad ID:', disponibilidad.especialidadId);
 
     // Cargar datos para edición - asegurarnos de que el día se cargue correctamente
     this.horariosForm = disponibilidad.horarios?.map(horario => {
@@ -1605,6 +2411,7 @@ export class MedicoHorariosComponent implements OnInit {
     this.modoEdicion = false;
     this.disponibilidadEditando = null;
     this.horariosForm = [];
+    this.especialidadSeleccionada = null;
   }
 
   volverAlDashboard() {
@@ -1675,6 +2482,33 @@ export class MedicoHorariosComponent implements OnInit {
       });
     });
     return diasUnicos.size;
+  }
+
+  // Obtener el nombre de una especialidad por ID
+  getNombreEspecialidad(especialidadId: number): string {
+    const especialidad = this.especialidades.find(e => e.id === especialidadId);
+    return especialidad?.nombre || `Especialidad ID ${especialidadId}`;
+  }
+
+  // Verificar si una especialidad ya tiene disponibilidades configuradas
+  especialidadTieneDisponibilidades(especialidadId: number): boolean {
+    return !!this.disponibilidadesPorEspecialidad[especialidadId] && 
+           this.disponibilidadesPorEspecialidad[especialidadId].length > 0;
+  }
+
+  // Obtener especialidades disponibles para configurar (que no tengan disponibilidades)
+  getEspecialidadesDisponibles(): Especialidad[] {
+    return this.especialidades.filter(especialidad => 
+      !this.especialidadTieneDisponibilidades(especialidad.id)
+    );
+  }
+
+  // Iniciar nuevo formulario para una especialidad específica
+  nuevaDisponibilidadParaEspecialidad(especialidadId?: number) {
+    this.mostrarFormulario = true;
+    this.modoEdicion = false;
+    this.horariosForm = [];
+    this.especialidadSeleccionada = especialidadId || null;
   }
 
   toggleFormulario() {

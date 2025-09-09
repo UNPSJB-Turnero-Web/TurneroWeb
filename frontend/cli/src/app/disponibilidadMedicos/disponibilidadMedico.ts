@@ -7,6 +7,8 @@ import { StaffMedico } from '../staffMedicos/staffMedico';
 export interface DisponibilidadMedico {
   id: number;
   staffMedicoId: number;
+  especialidadId?: number; // Nueva propiedad para asociar la disponibilidad a una especialidad específica
   horarios: { dia: string; horaInicio: string; horaFin: string }[]; // Horarios específicos por día
   staffMedico?: StaffMedico; // Información del staff médico
+  especialidad?: Especialidad; // Información de la especialidad asociada
 }
