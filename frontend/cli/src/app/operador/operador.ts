@@ -4,7 +4,7 @@ export interface Operador {
   apellido: string;
   dni: number;
   email: string;
-  username: string;
+  password?: string;
   activo: boolean;
-  telefono: string;
+  telefono?: string;
 }

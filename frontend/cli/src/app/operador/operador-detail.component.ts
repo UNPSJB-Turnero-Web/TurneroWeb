@@ -83,9 +83,7 @@ import { ModalService } from "../modal/modal.service";
           <div *ngIf="!modoEdicion && !esNuevo()" class="row g-4">
             <div class="col-md-6">
               <div class="info-card">
-                <div class="info-icon">
-                  <i class="fas fa-user"></i>
-                </div>
+                <div class="info-icon"><i class="fas fa-user"></i></div>
                 <div>
                   <label class="info-label">Nombre Completo</label>
                   <div class="info-value">
@@ -97,26 +95,20 @@ import { ModalService } from "../modal/modal.service";
 
             <div class="col-md-6">
               <div class="info-card">
-                <div class="info-icon">
-                  <i class="fas fa-user-tag"></i>
-                </div>
+                <div class="info-icon"><i class="fas fa-envelope"></i></div>
                 <div>
-                  <label class="info-label">Usuario</label>
-                  <div class="info-value">{{ operador.username }}</div>
+                  <label class="info-label">Email</label>
+                  <div class="info-value">{{ operador.email }}</div>
                 </div>
               </div>
             </div>
 
             <div class="col-md-6">
               <div class="info-card">
-                <div class="info-icon">
-                  <i class="fas fa-user-check"></i>
-                </div>
+                <div class="info-icon"><i class="fas fa-phone"></i></div>
                 <div>
-                  <label class="info-label">Activo</label>
-                  <div class="info-value">
-                    {{ operador.activo ? "Sí" : "No" }}
-                  </div>
+                  <label class="info-label">Teléfono</label>
+                  <div class="info-value">{{ operador.telefono || "-" }}</div>
                 </div>
               </div>
             </div>
@@ -181,32 +173,81 @@ import { ModalService } from "../modal/modal.service";
                 </div>
               </div>
 
-              <!-- Username -->
+              <!-- Email -->
               <div class="col-md-6">
                 <div class="form-floating">
                   <input
-                    [(ngModel)]="operador.username"
-                    name="username"
-                    id="username"
+                    [(ngModel)]="operador.email"
+                    name="email"
+                    id="email"
+                    type="email"
                     class="form-control form-control-modern"
-                    placeholder="Usuario"
+                    placeholder="Email"
                     required
-                    #username="ngModel"
+                    #email="ngModel"
                   />
-                  <label for="username"
-                    ><i class="fas fa-user-cog me-2"></i>Usuario</label
+                  <label for="email"
+                    ><i class="fas fa-envelope me-2"></i>Email</label
                   >
                 </div>
                 <div
-                  *ngIf="isInvalidField(username)"
+                  *ngIf="isInvalidField(email)"
                   class="invalid-feedback d-block"
                 >
-                  <i class="fas fa-exclamation-circle me-1"></i>El usuario es
+                  <i class="fas fa-exclamation-circle me-1"></i>
+                  <div *ngIf="email.errors?.['required']">
+                    El email es requerido
+                  </div>
+                  <div *ngIf="email.errors?.['email']">
+                    Debe ser un email válido
+                  </div>
+                </div>
+              </div>
+
+              <!-- DNI -->
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input
+                    [(ngModel)]="operador.dni"
+                    name="dni"
+                    id="dni"
+                    type="number"
+                    class="form-control form-control-modern"
+                    placeholder="DNI"
+                    required
+                    #dni="ngModel"
+                  />
+                  <label for="dni"
+                    ><i class="fas fa-id-card me-2"></i>DNI</label
+                  >
+                </div>
+                <div
+                  *ngIf="isInvalidField(dni)"
+                  class="invalid-feedback d-block"
+                >
+                  <i class="fas fa-exclamation-circle me-1"></i>El DNI es
                   requerido
                 </div>
               </div>
 
-              <!-- Activo -->
+              <!-- Teléfono -->
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input
+                    [(ngModel)]="operador.telefono"
+                    name="telefono"
+                    id="telefono"
+                    class="form-control form-control-modern"
+                    placeholder="Teléfono"
+                    #telefono="ngModel"
+                  />
+                  <label for="telefono"
+                    ><i class="fas fa-phone me-2"></i>Teléfono</label
+                  >
+                </div>
+              </div>
+
+              <!-- Activo switch -->
               <div class="col-md-6 d-flex align-items-center">
                 <div class="form-check form-switch">
                   <input
@@ -219,6 +260,90 @@ import { ModalService } from "../modal/modal.service";
                   <label class="form-check-label" for="activo">Activo</label>
                 </div>
               </div>
+
+              <!-- Contraseña: obligatorio en creación, opcional en edición -->
+              <div class="col-md-12" *ngIf="esNuevo() || cambiarPassword">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="form-floating">
+                      <input
+                        [(ngModel)]="password"
+                        name="password"
+                        id="password"
+                        type="password"
+                        class="form-control form-control-modern"
+                        placeholder="Contraseña"
+                        [required]="esNuevo()"
+                        minlength="6"
+                        #pwd="ngModel"
+                      />
+                      <label for="password"
+                        ><i class="fas fa-lock me-2"></i>Contraseña</label
+                      >
+                    </div>
+                    <div
+                      *ngIf="pwd?.invalid && (pwd.dirty || pwd.touched)"
+                      class="invalid-feedback d-block"
+                    >
+                      <div *ngIf="pwd.errors?.['required']">
+                        La contraseña es requerida
+                      </div>
+                      <div *ngIf="pwd.errors?.['minlength']">
+                        La contraseña debe tener al menos 6 caracteres
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="form-floating">
+                      <input
+                        [(ngModel)]="confirmPassword"
+                        name="confirmPassword"
+                        id="confirmPassword"
+                        type="password"
+                        class="form-control form-control-modern"
+                        placeholder="Confirmar contraseña"
+                        [required]="esNuevo()"
+                        #cpwd="ngModel"
+                      />
+                      <label for="confirmPassword"
+                        ><i class="fas fa-lock me-2"></i>Confirmar
+                        contraseña</label
+                      >
+                    </div>
+                    <div
+                      *ngIf="
+                        confirmPassword &&
+                        password !== confirmPassword &&
+                        (cpwd.dirty || cpwd.touched)
+                      "
+                      class="invalid-feedback d-block"
+                    >
+                      ⚠️ Las contraseñas no coinciden
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggle cambiar password (solo en edición) -->
+              <div class="col-12" *ngIf="!esNuevo()">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="toggleCambiarPassword()"
+                >
+                  <i
+                    class="fas"
+                    [class.fa-key]="!cambiarPassword"
+                    [class.fa-times]="cambiarPassword"
+                  ></i>
+                  {{
+                    cambiarPassword
+                      ? "Cancelar cambio de contraseña"
+                      : "Cambiar contraseña"
+                  }}
+                </button>
+              </div>
             </div>
 
             <!-- Botones de acción -->
@@ -226,7 +351,7 @@ import { ModalService } from "../modal/modal.service";
               <button
                 type="submit"
                 class="btn btn-success-gradient btn-lg rounded-pill px-4"
-                [disabled]="form.invalid"
+                [disabled]="form.invalid || passwordMismatch()"
               >
                 <i class="fas fa-save me-2"></i>Guardar Operador
               </button>
@@ -345,13 +470,18 @@ export class OperadorDetailComponent implements OnInit {
     id: 0,
     nombre: "",
     apellido: "",
-    username: "",
-    telefono: "",
-    activo: true,
     dni: 0,
     email: "",
+    activo: true,
+    telefono: "",
   };
+
   modoEdicion = false;
+
+  // Campos para manejar contraseñas en el front
+  password: string = "";
+  confirmPassword: string = "";
+  cambiarPassword: boolean = false;
 
   constructor(
     private operadorService: OperadorService,
@@ -365,36 +495,87 @@ export class OperadorDetailComponent implements OnInit {
     if (path === "operadores/new") {
       this.modoEdicion = true;
     } else {
-      const id = +this.route.snapshot.paramMap.get("id")!;
-      this.operadorService.get(id).subscribe((dp: DataPackage<Operador>) => {
-        this.operador = dp.data;
-        this.route.queryParams.subscribe((params) => {
-          this.modoEdicion = params["edit"] === "true";
-        });
-      });
+      const idParam = this.route.snapshot.paramMap.get("id");
+      const id = idParam ? +idParam : 0;
+      if (id <= 0) {
+        // si no existe id válido, volver a la lista o mostrar error
+        console.error("ID inválido para operador:", idParam);
+        this.router.navigate(["/operadores"]);
+        return;
+      }
+
+      this.operadorService.get(id).subscribe(
+        (dp: DataPackage<Operador>) => {
+          this.operador = dp.data;
+          this.route.queryParams.subscribe((params) => {
+            this.modoEdicion = params["edit"] === "true";
+          });
+        },
+        (err) => {
+          console.error("Error cargando operador:", err);
+        }
+      );
     }
   }
 
   esNuevo(): boolean {
     return !this.operador.id || this.operador.id === 0;
   }
+
   isInvalidField(field: any): boolean {
     return field.invalid && (field.dirty || field.touched);
   }
 
+  passwordMismatch(): boolean {
+    // Si estamos en creación o en cambiarPassword en edición, verificar match
+    if (this.esNuevo() || this.cambiarPassword) {
+      return (
+        !!(this.password || this.confirmPassword) &&
+        this.password !== this.confirmPassword
+      );
+    }
+    return false;
+  }
+
+  toggleCambiarPassword() {
+    this.cambiarPassword = !this.cambiarPassword;
+    if (!this.cambiarPassword) {
+      this.password = "";
+      this.confirmPassword = "";
+    }
+  }
+
   save(): void {
-    if (this.form.invalid) {
+    // marcar controles tocados para mostrar errores
+    if (this.form.invalid || this.passwordMismatch()) {
       Object.keys(this.form.controls).forEach((key) =>
         this.form.controls[key].markAsTouched()
       );
       return;
     }
 
-    const op = this.operador.id
-      ? this.operadorService.update(this.operador.id, this.operador)
-      : this.operadorService.create(this.operador);
+    // Preparar payload: si no estamos cambiando contraseña en edición, no mandarla
+    const payload: any = { ...this.operador };
+    if (this.esNuevo() || this.cambiarPassword) {
+      // agregar password solo si fue completada
+      if (!this.password || this.password.length < 6) {
+        this.modalService.alert(
+          "Error",
+          "La contraseña debe tener al menos 6 caracteres."
+        );
+        return;
+      }
+      payload.password = this.password;
+    } else {
+      // asegurarse de eliminar cualquier password accidental
+      delete payload.password;
+    }
 
-    op.subscribe({
+    const op$ = this.operador.id
+      ? this.operadorService.update(this.operador.id, payload)
+      : this.operadorService.create(payload);
+
+    op$.subscribe({
       next: () => {
         this.modalService.alert(
           "Éxito",
@@ -415,9 +596,17 @@ export class OperadorDetailComponent implements OnInit {
   goBack(): void {
     this.router.navigate(["/operadores"]);
   }
+
   cancelar(): void {
     this.modoEdicion = false;
+    this.password = "";
+    this.confirmPassword = "";
+    this.cambiarPassword = false;
+    if (this.esNuevo()) {
+      this.router.navigate(["/operadores"]);
+    }
   }
+
   activarEdicion(): void {
     this.modoEdicion = true;
   }

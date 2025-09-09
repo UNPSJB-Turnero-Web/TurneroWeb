@@ -38,7 +38,6 @@ import { PaginationComponent } from "../pagination/pagination.component";
               <th class="border-0 py-3 ps-4">ID</th>
               <th class="border-0 py-3">Nombre</th>
               <th class="border-0 py-3">Apellido</th>
-              <th class="border-0 py-3">Usuario</th>
               <th class="border-0 py-3 text-center">Activo</th>
               <th class="border-0 py-3 text-center">Acciones</th>
             </tr>
@@ -52,7 +51,6 @@ import { PaginationComponent } from "../pagination/pagination.component";
               <td class="ps-4 py-3">{{ operador.id }}</td>
               <td class="py-3">{{ operador.nombre }}</td>
               <td class="py-3">{{ operador.apellido }}</td>
-              <td class="py-3">{{ operador.username }}</td>
               <td class="py-3 text-center">
                 <span
                   [class.active-badge]="operador.activo"

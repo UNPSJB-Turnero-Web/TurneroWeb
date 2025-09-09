@@ -5,6 +5,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,7 +51,7 @@ public class OperadorService {
         validarOperador(operador);
 
         // Validaciones de duplicados
-        if (operador.getId() == null) {
+        if (operador.getId() == null || operador.getId() <= 0L) {
             if (repository.existsByDni(operador.getDni())) {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
@@ -64,14 +66,13 @@ public class OperadorService {
 
                 // Crear usuario con auditoría (retorna User, no Operador)
                 registrationService.registrarOperadorWithAudit(
-                    operador.getEmail(),
-                    password,
-                    operador.getDni(),
-                    operador.getNombre(),
-                    operador.getApellido(),
-                    operador.getTelefono(),
-                    dto.getPerformedBy()
-                );
+                        operador.getEmail(),
+                        password,
+                        operador.getDni(),
+                        operador.getNombre(),
+                        operador.getApellido(),
+                        operador.getTelefono(),
+                        dto.getPerformedBy());
 
                 // Crear operador en tabla operador
                 String hashedPassword = passwordEncoder.encode(password);
@@ -80,7 +81,6 @@ public class OperadorService {
 
                 // Enviar contraseña por mail
                 enviarPasswordPorMail(operador.getEmail(), password);
-                
                 return toDTO(operadorCreado);
             } else {
                 // Creación normal sin auditoría
@@ -90,13 +90,12 @@ public class OperadorService {
 
                 // Crear usuario en la tabla User
                 registrationService.registrarOperador(
-                    operador.getEmail(),
-                    password,
-                    operador.getDni(),
-                    operador.getNombre(),
-                    operador.getApellido(),
-                    operador.getTelefono()
-                );
+                        operador.getEmail(),
+                        password,
+                        operador.getDni(),
+                        operador.getNombre(),
+                        operador.getApellido(),
+                        operador.getTelefono());
 
                 // Pseudofunción para enviar la contraseña por mail
                 enviarPasswordPorMail(operador.getEmail(), password);
@@ -118,7 +117,12 @@ public class OperadorService {
 
         return toDTO(repository.save(operador));
     }
-    
+
+    public Page<OperadorDTO> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
     /**
      * Genera una contraseña automática segura para el operador
      */
@@ -148,8 +152,6 @@ public class OperadorService {
         repository.save(operador);
     }
 
-
-
     private OperadorDTO toDTO(Operador operador) {
         OperadorDTO dto = new OperadorDTO();
         dto.setId(operador.getId());
@@ -170,7 +172,7 @@ public class OperadorService {
         operador.setDni(dto.getDni());
         operador.setEmail(dto.getEmail());
         operador.setActivo(dto.isActivo());
-        operador.setTelefono(dto.getTelefono()); 
+        operador.setTelefono(dto.getTelefono());
         return operador;
     }
 
@@ -192,7 +194,7 @@ public class OperadorService {
         if (operador.getEmail() == null || operador.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
         }
-        
+
         if (repository.existsByTelefono(operador.getTelefono())) {
             throw new IllegalArgumentException("El teléfono ya está en uso por otro operador");
         }
