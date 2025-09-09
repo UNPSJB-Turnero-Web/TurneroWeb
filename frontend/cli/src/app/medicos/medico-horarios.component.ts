@@ -1389,20 +1389,54 @@ export class MedicoHorariosComponent implements OnInit {
 
   ngOnInit() {
     this.cargarDisponibilidades();
+    // Debug: verificar configuración del localStorage
+    this.verificarConfiguracionSesion();
+  }
+
+  verificarConfiguracionSesion() {
+    console.log('=== VERIFICACIÓN DE SESIÓN ===');
+    console.log('Todas las claves en localStorage:', Object.keys(localStorage));
+    console.log('currentUser:', localStorage.getItem('currentUser'));
+    console.log('staffMedicoId:', localStorage.getItem('staffMedicoId'));
+    console.log('userId:', localStorage.getItem('userId'));
+    console.log('medicoId:', localStorage.getItem('medicoId'));
+    console.log('=== FIN VERIFICACIÓN ===');
   }
 
   cargarDisponibilidades() {
     this.cargando = true;
     const medicoId = this.getMedicoIdFromSession();
 
+    // Validar que tenemos un ID válido
+    if (!medicoId || medicoId === 0) {
+      console.error('Error: No se pudo obtener el ID del médico para cargar disponibilidades');
+      this.cargando = false;
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    console.log('Cargando disponibilidades para médico ID:', medicoId);
+
     this.disponibilidadService.byMedico(medicoId).subscribe({
       next: (response) => {
-        this.disponibilidades = response.data;
+        console.log('Respuesta del servidor (cargar):', response);
+        this.disponibilidades = response.data || [];
         this.cargando = false;
       },
       error: (error) => {
         console.error('Error al cargar disponibilidades:', error);
         this.cargando = false;
+        if (error.status === 404) {
+          console.log('No se encontraron disponibilidades para el médico (normal para primera vez)');
+          this.disponibilidades = [];
+        } else if (error.status === 403) {
+          alert('Error de permisos. Verifique que su sesión sea válida.');
+          this.router.navigate(['/login']);
+        } else {
+          console.warn('Error al cargar disponibilidades:', error.message || error);
+          // No mostrar alert para errores de carga, puede ser normal no tener disponibilidades
+          this.disponibilidades = [];
+        }
       }
     });
   }
@@ -1443,18 +1477,25 @@ export class MedicoHorariosComponent implements OnInit {
     }
 
     this.guardando = true;
-    const staffMedicoId = this.getMedicoIdFromSession();
 
     if (this.modoEdicion && this.disponibilidadEditando) {
-      // Actualizar disponibilidad existente
-      const operacion = this.disponibilidadService.update(this.disponibilidadEditando.id!, {
-        id: this.disponibilidadEditando.id!,
-        staffMedicoId,
-        horarios
-      } as DisponibilidadMedico);
+      // Al actualizar, usar el staffMedicoId de la disponibilidad existente
+      const staffMedicoIdExistente = this.disponibilidadEditando.staffMedicoId;
+      
+      console.log('Modo edición - usando staffMedicoId existente:', staffMedicoIdExistente);
+      console.log('Horarios a guardar:', horarios);
 
-      operacion.subscribe({
-        next: () => {
+      const disponibilidadActualizada = {
+        id: this.disponibilidadEditando.id!,
+        staffMedicoId: staffMedicoIdExistente, // Usar el ID existente
+        horarios
+      } as DisponibilidadMedico;
+
+      console.log('Actualizando disponibilidad:', disponibilidadActualizada);
+
+      this.disponibilidadService.update(this.disponibilidadEditando.id!, disponibilidadActualizada).subscribe({
+        next: (response) => {
+          console.log('Respuesta del servidor (actualizar):', response);
           this.guardando = false;
           this.cancelarFormulario();
           this.cargarDisponibilidades();
@@ -1463,19 +1504,38 @@ export class MedicoHorariosComponent implements OnInit {
         error: (error) => {
           console.error('Error al actualizar:', error);
           this.guardando = false;
-          alert('Error al actualizar los horarios');
+          if (error.status === 404) {
+            alert('Error: No se encontró el médico. Verifique que su sesión sea válida.');
+          } else {
+            alert(`Error al actualizar los horarios: ${error.error?.status_text || error.message}`);
+          }
         }
       });
     } else {
-      // Crear nueva disponibilidad
-      const operacion = this.disponibilidadService.create({
+      // Al crear nueva disponibilidad, usar el medicoId del localStorage
+      const staffMedicoId = this.getMedicoIdFromSession();
+
+      if (!staffMedicoId || staffMedicoId === 0) {
+        alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
+        this.guardando = false;
+        this.router.navigate(['/login']);
+        return;
+      }
+
+      console.log('Modo creación - usando medicoId del localStorage:', staffMedicoId);
+      console.log('Horarios a guardar:', horarios);
+
+      const nuevaDisponibilidad = {
         id: 0,
         staffMedicoId,
         horarios
-      } as DisponibilidadMedico);
+      } as DisponibilidadMedico;
 
-      operacion.subscribe({
-        next: () => {
+      console.log('Creando nueva disponibilidad:', nuevaDisponibilidad);
+
+      this.disponibilidadService.create(nuevaDisponibilidad).subscribe({
+        next: (response) => {
+          console.log('Respuesta del servidor (crear):', response);
           this.guardando = false;
           this.cancelarFormulario();
           this.cargarDisponibilidades();
@@ -1484,7 +1544,11 @@ export class MedicoHorariosComponent implements OnInit {
         error: (error) => {
           console.error('Error al guardar:', error);
           this.guardando = false;
-          alert('Error al guardar los horarios');
+          if (error.status === 404) {
+            alert('Error: No se encontró el médico. Verifique que su sesión sea válida.');
+          } else {
+            alert(`Error al guardar los horarios: ${error.error?.status_text || error.message}`);
+          }
         }
       });
     }
@@ -1548,8 +1612,43 @@ export class MedicoHorariosComponent implements OnInit {
   }
 
   private getMedicoIdFromSession(): number {
-    const medicoId = localStorage.getItem('medicoId');
-    return medicoId ? parseInt(medicoId, 10) : 1;
+    // Verificar diferentes posibles keys en localStorage
+    let medicoId = localStorage.getItem('staffMedicoId') || 
+                   localStorage.getItem('medicoId') || 
+                   localStorage.getItem('userId') ||
+                   localStorage.getItem('id');
+    
+    console.log('Datos en localStorage:', {
+      staffMedicoId: localStorage.getItem('staffMedicoId'),
+      medicoId: localStorage.getItem('medicoId'),
+      userId: localStorage.getItem('userId'),
+      id: localStorage.getItem('id'),
+      currentUser: localStorage.getItem('currentUser')
+    });
+
+    // Si no encuentra ningún ID, intentar obtenerlo del currentUser
+    if (!medicoId) {
+      const currentUser = localStorage.getItem('currentUser');
+      if (currentUser) {
+        try {
+          const user = JSON.parse(currentUser);
+          medicoId = user.id || user.staffMedicoId || user.medicoId;
+          console.log('ID obtenido de currentUser:', medicoId);
+        } catch (e) {
+          console.error('Error al parsear currentUser:', e);
+        }
+      }
+    }
+
+    console.log('ID final obtenido:', medicoId);
+    
+    if (!medicoId) {
+      console.error('No se pudo obtener el ID del médico. Redirigiendo al login...');
+      this.router.navigate(['/login']);
+      return 0;
+    }
+
+    return medicoId ? parseInt(medicoId, 10) : 0;
   }
 
   private initializeParticles() {
