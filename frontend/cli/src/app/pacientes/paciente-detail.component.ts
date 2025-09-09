@@ -342,12 +342,9 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     name="obraSocial"
                     id="obraSocial"
                     class="form-select form-control-modern"
-                    required
                     #obraSocial="ngModel"
                   >
-                    <option value="" disabled selected>
-                      Seleccionar obra social
-                    </option>
+                    <option value="" selected>Sin obra social</option>
                     <option
                       *ngFor="let obraSocial of obrasSociales"
                       [ngValue]="obraSocial"
@@ -356,15 +353,8 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     </option>
                   </select>
                   <label for="obraSocial">
-                    <i class="fas fa-hospital me-2"></i>Obra Social
+                    <i class="fas fa-hospital me-2"></i>Obra Social (Opcional)
                   </label>
-                </div>
-                <div
-                  *ngIf="isInvalidField(obraSocial)"
-                  class="invalid-feedback d-block"
-                >
-                  <i class="fas fa-exclamation-circle me-1"></i>
-                  La obra social es requerida
                 </div>
               </div>
             </div>
