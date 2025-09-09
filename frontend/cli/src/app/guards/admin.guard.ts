@@ -12,6 +12,13 @@ export class AdminGuard implements CanActivate {
   ) {}
 
   canActivate(): boolean {
+
+    //DESARROLLO: acceso libre a todas las rutas
+    return true; // quitar esta línea para activar la protección de rutas
+
+
+    //PRODUCCION: rutas protegidas
+
     // Verificar si está autenticado
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(['/ingresar']);
