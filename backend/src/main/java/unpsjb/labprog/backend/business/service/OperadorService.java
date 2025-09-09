@@ -118,6 +118,8 @@ public class OperadorService {
         repository.save(operador);
     }
 
+
+
     private OperadorDTO toDTO(Operador operador) {
         OperadorDTO dto = new OperadorDTO();
         dto.setId(operador.getId());
@@ -159,6 +161,10 @@ public class OperadorService {
 
         if (operador.getEmail() == null || operador.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
+        }
+        
+        if (repository.existsByTelefono(operador.getTelefono())) {
+            throw new IllegalArgumentException("El teléfono ya está en uso por otro operador");
         }
     }
 }

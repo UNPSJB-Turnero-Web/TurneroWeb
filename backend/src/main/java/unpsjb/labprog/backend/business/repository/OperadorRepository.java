@@ -16,4 +16,5 @@ public interface OperadorRepository extends JpaRepository<Operador, Long> {
 
     Optional<Operador> findByEmail(String email);
 
+    boolean existsByTelefono(String telefono);
 }
