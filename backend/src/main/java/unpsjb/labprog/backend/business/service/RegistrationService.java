@@ -1,16 +1,20 @@
+
+
 package unpsjb.labprog.backend.business.service;
 
 import java.util.Date;
 import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.repository.PacienteRepository;
 import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.ObraSocial;
+import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.model.User;
 import unpsjb.labprog.backend.model.Medico;
 import unpsjb.labprog.backend.model.ObraSocial;
 import unpsjb.labprog.backend.model.Paciente;
@@ -191,6 +195,34 @@ public class RegistrationService {
         Paciente savedPaciente = pacienteRepository.save(paciente);
         
         return savedPaciente;
+    }
+
+        /**
+     * Registra un nuevo operador en el sistema
+     * Crea el usuario para autenticación con rol OPERADOR
+     * @param email email del operador
+     * @param plainPassword contraseña en texto plano (generada automáticamente)
+     * @param dni DNI del operador
+     * @param nombre nombre del operador
+     * @param apellido apellido del operador
+     * @param telefono teléfono del operador
+     * @return User entidad del usuario creado
+     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
+     */
+    public User registrarOperador(String email, String plainPassword, Long dni,
+                                  String nombre, String apellido, String telefono) {
+        // Validar datos básicos
+        validateBasicData(email, dni, nombre, apellido);
+        
+        // Hashear la contraseña
+        String hashedPassword = hashPassword(plainPassword);
+        
+        // Crear User para autenticación con rol OPERADOR
+        // El rol debe existir previamente en la base de datos
+        User user = userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Operador");
+        
+        // Retornar el usuario creado
+        return user;
     }
 
     // ===============================

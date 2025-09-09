@@ -11,12 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.business.repository.OperadorRepository;
 import unpsjb.labprog.backend.dto.OperadorDTO;
 import unpsjb.labprog.backend.model.Operador;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class OperadorService {
 
     @Autowired
     private OperadorRepository repository;
+
+    @Autowired
+    private RegistrationService registrationService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<OperadorDTO> findAll() {
         return repository.findAll().stream()
@@ -42,10 +49,29 @@ public class OperadorService {
         validarOperador(operador);
 
         // Validaciones de duplicados
-        if (operador.getId() == 0) {
+        if (operador.getId() == null) {
             if (repository.existsByDni(operador.getDni())) {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
+
+            // Generar contraseña automática
+            String password = generarPasswordAutomatica();
+            String hashedPassword = passwordEncoder.encode(password);
+            operador.setHashedPassword(hashedPassword);
+
+            // Crear usuario en la tabla User
+            registrationService.registrarOperador(
+                operador.getEmail(),
+                password,
+                operador.getDni(),
+                operador.getNombre(),
+                operador.getApellido(),
+                operador.getTelefono()
+            );
+
+            // Pseudofunción para enviar la contraseña por mail
+            enviarPasswordPorMail(operador.getEmail(), password);
+
         } else {
             Operador existente = repository.findById(operador.getId()).orElse(null);
             if (existente == null) {
@@ -56,9 +82,27 @@ public class OperadorService {
                     repository.existsByDni(operador.getDni())) {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
+            // Mantener la contraseña anterior
+            operador.setHashedPassword(existente.getHashedPassword());
         }
 
         return toDTO(repository.save(operador));
+    }
+    
+    /**
+     * Genera una contraseña automática segura para el operador
+     */
+    private String generarPasswordAutomatica() {
+        // Puedes mejorar este generador según tus necesidades
+        return java.util.UUID.randomUUID().toString().substring(0, 10);
+    }
+
+    /**
+     * Pseudofunción para enviar la contraseña por mail al operador
+     */
+    private void enviarPasswordPorMail(String email, String password) {
+        // TODO: Implementar el envío real de email
+        System.out.println("[PSEUDO-ENVÍO] Se enviaría la contraseña '" + password + "' al correo: " + email);
     }
 
     @Transactional
@@ -82,6 +126,7 @@ public class OperadorService {
         dto.setDni(operador.getDni());
         dto.setEmail(operador.getEmail());
         dto.setActivo(operador.isActivo());
+        dto.setTelefono(operador.getTelefono());
         return dto;
     }
 
@@ -93,6 +138,7 @@ public class OperadorService {
         operador.setDni(dto.getDni());
         operador.setEmail(dto.getEmail());
         operador.setActivo(dto.isActivo());
+        operador.setTelefono(dto.getTelefono()); 
         return operador;
     }
 
@@ -110,9 +156,7 @@ public class OperadorService {
         if (!dniStr.matches("^\\d{7,10}$")) {
             throw new IllegalArgumentException("El DNI debe tener entre 7 y 10 dígitos");
         }
-        if (operador.getUsername() == null || operador.getUsername().isBlank()) {
-            throw new IllegalArgumentException("El usuario es obligatorio");
-        }
+
         if (operador.getEmail() == null || operador.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
         }

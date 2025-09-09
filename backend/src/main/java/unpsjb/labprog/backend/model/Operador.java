@@ -18,10 +18,6 @@ public class Operador extends Persona {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Nombre de usuario (login)
-    @Column(nullable = false, unique = true)
-    private String username;
-
     // Estado del operador (activo/inactivo)
     @Column(nullable = false)
     private boolean activo = true;

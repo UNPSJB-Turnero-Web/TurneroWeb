@@ -111,6 +111,10 @@ public class AuthController {
         }
     }
 
+    /**
+     * Endpoint de registro de nuevo PACIENTE
+     * POST /api/auth/register
+     */
     @PostMapping("/register")
     public ResponseEntity<Object> register(@RequestBody RegisterRequest request) {
         try {

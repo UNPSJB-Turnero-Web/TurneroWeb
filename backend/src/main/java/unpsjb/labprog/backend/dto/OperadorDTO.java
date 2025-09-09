@@ -14,4 +14,6 @@ public class OperadorDTO {
     private Long dni;
     private String email;
     private boolean activo; // estado del operador
+    private String password; // contraseña en texto plano solo para el registro
+    private String telefono;
 }
