@@ -1451,8 +1451,62 @@ export class MedicoDashboardComponent implements OnInit {
 
   // Utility methods
   private getMedicoIdFromSession(): number {
-    const medicoId = localStorage.getItem('medicoId');
-    return medicoId ? parseInt(medicoId, 10) : 1;
+    console.log('=== DEBUG getMedicoIdFromSession (Dashboard) ===');
+    
+    // Recopilar datos del localStorage
+    const datos = {
+      staffMedicoId: localStorage.getItem('staffMedicoId'),
+      medicoId: localStorage.getItem('medicoId'),
+      userId: localStorage.getItem('userId'),
+      id: localStorage.getItem('id'),
+      currentUser: localStorage.getItem('currentUser')
+    };
+    
+    console.log('Datos en localStorage:', datos);
+    
+    // Intentar obtener ID desde diferentes fuentes
+    let id = 0;
+    
+    // 1. Intentar desde medicoId directo
+    if (datos.medicoId && datos.medicoId !== 'null') {
+      id = parseInt(datos.medicoId, 10);
+      console.log('ID obtenido desde medicoId:', id);
+    }
+    
+    // 2. Intentar desde staffMedicoId
+    else if (datos.staffMedicoId && datos.staffMedicoId !== 'null') {
+      id = parseInt(datos.staffMedicoId, 10);
+      console.log('ID obtenido desde staffMedicoId:', id);
+    }
+    
+    // 3. Intentar parsear currentUser JSON
+    else if (datos.currentUser && datos.currentUser !== 'null') {
+      try {
+        const currentUser = JSON.parse(datos.currentUser);
+        if (currentUser && currentUser.id) {
+          id = parseInt(currentUser.id, 10);
+          console.log('ID obtenido desde currentUser.id:', id);
+        } else if (currentUser && currentUser.medicoId) {
+          id = parseInt(currentUser.medicoId, 10);
+          console.log('ID obtenido desde currentUser.medicoId:', id);
+        }
+      } catch (e) {
+        console.error('Error al parsear currentUser:', e);
+      }
+    }
+    
+    // Validar que el ID sea válido
+    if (!id || isNaN(id) || id <= 0) {
+      console.error('No se pudo obtener un ID válido del médico');
+      // Redirigir al login si no hay ID válido
+      this.router.navigate(['/login']);
+      return 0;
+    }
+    
+    console.log('ID final obtenido:', id);
+    console.log('=== FIN DEBUG ===');
+    
+    return id;
   }
 
   private getStartOfWeek(date: Date): Date {

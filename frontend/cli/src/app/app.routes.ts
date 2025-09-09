@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { InicioSesionComponent } from './inicio-sesion/inicio-sesion.component';
 import { RegistroUsuarioComponent } from './registro-usuario/registro-usuario.component';
+import { RecuperarContrasenaComponent } from './recuperacionContrasena/recuperacionContrasena.component';
 import { TurnosComponent } from './turnos/turnos.component';
 import { TurnoDetailComponent } from './turnos/turno-detail.component';
 import { AdminAgendaComponent } from './agenda/admin-agenda.component';
@@ -34,6 +35,7 @@ import { MedicoDashboardComponent } from "./medicos/medico-dashboard.component";
 import { MedicoTurnosComponent } from "./medicos/medico-turnos.component";
 import { MedicoHorariosComponent } from "./medicos/medico-horarios.component";
 import { MedicoEstadisticasComponent } from "./medicos/medico-estadisticas.component";
+import { MedicoPerfilComponent } from "./medicos/medico-perfil.component";
 
 // Audit components
 import { TurnoAdvancedSearchComponent } from "./turnos/turno-advanced-search.component";
@@ -62,6 +64,7 @@ export const routes: Routes = [
   
     { path: 'ingresar', component: InicioSesionComponent },
     { path: 'registro-usuario', component: RegistroUsuarioComponent },
+    { path: 'recuperar-contrasena', component: RecuperarContrasenaComponent },
     
     // Patient Routes
     { path: 'paciente-dashboard', component: PacienteDashboardComponent, canActivate: [PatientGuard] },
@@ -98,7 +101,7 @@ export const routes: Routes = [
   },
   {
     path: "medico-perfil",
-    component: MedicoDetailComponent,
+    component: MedicoPerfilComponent,
     canActivate: [MedicoGuard],
   },
 

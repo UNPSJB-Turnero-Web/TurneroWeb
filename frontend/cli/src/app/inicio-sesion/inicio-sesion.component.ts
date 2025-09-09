@@ -243,8 +243,8 @@ export class InicioSesionComponent {
   }
 
   forgotPassword(): void {
-    // Implementar lógica para recuperar contraseña
-    alert("Funcionalidad de recuperar contraseña - Por implementar");
+    // Redirigir a la pantalla de recuperación de contraseña
+    this.router.navigate(['/recuperar-contrasena']);
   }
 
   /**

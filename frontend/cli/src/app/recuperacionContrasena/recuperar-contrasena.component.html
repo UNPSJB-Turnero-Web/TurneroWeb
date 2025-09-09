@@ -1,22 +1,436 @@
-<div class="card mx-auto" style="max-width:480px;">
-    <div class="card-body">
-        <h5 class="card-title">Recuperar contraseña</h5>
-        <form [formGroup]="correoForm" (ngSubmit)="enviarSolicitud()">
-            <div class="mb-3">
-                <label for="email" class="form-label">Correo electrónico asociado</label>
-                <input id="email" class="form-control" formControlName="email" type="email"
-                    [class.is-invalid]="emailControl?.invalid && emailControl?.touched" />
-                <div *ngIf="emailControl?.invalid && emailControl?.touched" class="invalid-feedback">
-                    <div *ngIf="emailControl?.errors?.['required']">El correo es obligatorio.</div>
-                    <div *ngIf="emailControl?.errors?.['email']">Ingrese un correo válido.</div>
-                </div>
-            </div>
-            <button class="btn btn-primary" type="submit" [disabled]="enviando">Enviar instrucciones</button>
-        </form>
+<div class="recovery-container">
+  <!-- Floating Particles Background -->
+  <div class="particles-bg">
+    <div class="particle" *ngFor="let p of particles; let i = index" 
+         [style.left.px]="p.x" 
+         [style.top.px]="p.y"
+         [style.animation-delay.s]="i * 0.2"></div>
+  </div>
 
-        <div *ngIf="enviadoOk !== null" class="mt-3">
-            <div *ngIf="enviadoOk" class="alert alert-success">{{ mensaje }}</div>
-            <div *ngIf="!enviadoOk" class="alert alert-info">{{ mensaje }}</div>
-        </div>
+  <div class="recovery-card">
+    <div class="card-header">
+      <div class="header-icon">
+        <i class="fas fa-key"></i>
+      </div>
+      <div class="header-content">
+        <h1>Recuperar Contraseña</h1>
+        <p>Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña</p>
+      </div>
     </div>
+
+    <div class="card-body">
+      <form [formGroup]="correoForm" (ngSubmit)="enviarSolicitud()">
+        <div class="form-group">
+          <label for="email">Correo Electrónico</label>
+          <div class="input-container">
+            <i class="fas fa-envelope"></i>
+            <input 
+              id="email" 
+              type="email"
+              formControlName="email" 
+              placeholder="ejemplo@correo.com"
+              [class.error]="emailControl?.invalid && emailControl?.touched" />
+          </div>
+          <div *ngIf="emailControl?.invalid && emailControl?.touched" class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            <span *ngIf="emailControl?.errors?.['required']">El correo es obligatorio</span>
+            <span *ngIf="emailControl?.errors?.['email']">Ingrese un correo válido</span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="enviando || correoForm.invalid">
+            <i *ngIf="!enviando" class="fas fa-paper-plane"></i>
+            <i *ngIf="enviando" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="!enviando">Enviar Instrucciones</span>
+            <span *ngIf="enviando">Enviando...</span>
+          </button>
+          
+          <a href="/ingresar" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Volver al Login
+          </a>
+        </div>
+      </form>
+
+      <!-- Mensaje de resultado -->
+      <div *ngIf="enviadoOk !== null" class="result-message" [class.success]="enviadoOk" [class.info]="!enviadoOk">
+        <div class="message-icon">
+          <i *ngIf="enviadoOk" class="fas fa-check-circle"></i>
+          <i *ngIf="!enviadoOk" class="fas fa-info-circle"></i>
+        </div>
+        <div class="message-content">
+          <h4 *ngIf="enviadoOk">¡Correo Enviado!</h4>
+          <h4 *ngIf="!enviadoOk">Información</h4>
+          <p>{{ mensaje }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer info -->
+    <div class="card-footer">
+      <div class="info-section">
+        <div class="info-item">
+          <i class="fas fa-shield-alt"></i>
+          <span>Proceso seguro y encriptado</span>
+        </div>
+        <div class="info-item">
+          <i class="fas fa-clock"></i>
+          <span>El enlace expira en 24 horas</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+  .recovery-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Particles Background */
+  .particles-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+    50% { transform: translateY(-30px) rotate(180deg); opacity: 0.3; }
+  }
+
+  .recovery-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.15);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    max-width: 480px;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    z-index: 10;
+  }
+
+  .card-header {
+    background: rgba(102, 126, 234, 0.02);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .header-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    margin: 0 auto 1.5rem auto;
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .header-icon:hover::before {
+    left: 100%;
+  }
+
+  .header-content h1 {
+    color: #2c3e50;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    background: linear-gradient(135deg, #2c3e50 0%, #667eea 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-content p {
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  .card-body {
+    padding: 2rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-container i {
+    position: absolute;
+    left: 1rem;
+    color: #667eea;
+    z-index: 2;
+    font-size: 1.1rem;
+  }
+
+  .input-container input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    color: #2c3e50;
+  }
+
+  .input-container input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 1);
+  }
+
+  .input-container input.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  }
+
+  .input-container input::placeholder {
+    color: #adb5bd;
+  }
+
+  .error-message {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 500;
+  }
+
+  .form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-size: 1rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    border: 2px solid rgba(108, 117, 125, 0.2);
+  }
+
+  .btn-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .result-message {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: slideIn 0.5s ease;
+  }
+
+  .result-message.success {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(32, 201, 151, 0.1) 100%);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+  }
+
+  .result-message.info {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1) 0%, rgba(111, 66, 193, 0.1) 100%);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+  }
+
+  .message-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .result-message.success .message-icon {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  }
+
+  .result-message.info .message-icon {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+  }
+
+  .message-content h4 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.3rem 0;
+  }
+
+  .message-content p {
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+
+  .card-footer {
+    background: rgba(248, 249, 250, 0.8);
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .info-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.85rem;
+    flex: 1;
+  }
+
+  .info-item i {
+    color: #667eea;
+    font-size: 1rem;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .recovery-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .recovery-card {
+      margin: 0;
+    }
+
+    .card-header {
+      padding: 2rem 1.5rem;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    .card-footer {
+      padding: 1rem 1.5rem;
+    }
+
+    .info-section {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .header-content h1 {
+      font-size: 1.8rem;
+    }
+
+    .form-actions {
+      gap: 0.75rem;
+    }
+  }
+</style>

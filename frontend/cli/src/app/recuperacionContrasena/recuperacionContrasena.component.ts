@@ -9,7 +9,7 @@ import { RecuperarContrasenaService } from "../services/recuperarContrasena.serv
 import { CommonModule } from "@angular/common";
 
 @Component({
-  selector: "app-password-recovery",
+  selector: "app-recuperar-contrasena",
   standalone: true,
   templateUrl: "./recuperar-contrasena.component.html",
   imports: [CommonModule, ReactiveFormsModule],
@@ -19,11 +19,16 @@ export class RecuperarContrasenaComponent implements OnInit {
   enviando = false;
   enviadoOk: boolean | null = null;
   mensaje = "";
+  
+  // Particles for background animation
+  particles: Array<{x: number, y: number}> = [];
 
   constructor(
     private fb: FormBuilder,
     private svc: RecuperarContrasenaService
-  ) {}
+  ) {
+    this.initializeParticles();
+  }
 
   ngOnInit(): void {
     this.correoForm = this.fb.group({
@@ -57,5 +62,15 @@ export class RecuperarContrasenaComponent implements OnInit {
 
   get emailControl() {
     return this.correoForm.get("email");
+  }
+
+  private initializeParticles() {
+    this.particles = [];
+    for (let i = 0; i < 20; i++) {
+      this.particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight
+      });
+    }
   }
 }
