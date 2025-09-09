@@ -177,18 +177,7 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
 
   verDisponibilidadesStaff(staff: StaffMedico): DisponibilidadMedico[] {
     if (!staff.id) return [];
-    const resultado = this.disponibilidadesStaff[staff.id] || [];
-    
-    // Log para debug
-    if (staff.medico?.nombre === 'Cecilia') {
-      console.log('🔍 Debug disponibilidades Cecilia:', {
-        staffId: staff.id,
-        disponibilidadesStaff: this.disponibilidadesStaff,
-        resultado: resultado
-      });
-    }
-    
-    return resultado;
+    return this.disponibilidadesStaff[staff.id] || [];
   }
 
   /**
@@ -216,22 +205,9 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
    */
   getDisponibilidadesPorDia(staff: StaffMedico, dia: string): DisponibilidadMedico[] {
     const disponibilidades = this.verDisponibilidadesStaff(staff);
-    const resultado = disponibilidades.filter(disponibilidad => 
+    return disponibilidades.filter(disponibilidad => 
       disponibilidad.horarios?.some(horario => horario.dia === dia)
     );
-    
-    // Log para debug
-    if (staff.medico?.nombre === 'Cecilia' && dia === 'JUEVES') {
-      console.log('🔍 Debug Cecilia JUEVES:', {
-        staff: staff,
-        dia: dia,
-        disponibilidades: disponibilidades,
-        disponibilidadesConJueves: resultado,
-        horariosTotales: disponibilidades.flatMap(d => d.horarios || [])
-      });
-    }
-    
-    return resultado;
   }
 
   /**

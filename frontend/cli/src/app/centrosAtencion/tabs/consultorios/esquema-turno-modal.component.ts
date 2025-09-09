@@ -671,18 +671,23 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    console.log('Calculando horarios disponibles...');
-    console.log('Disponibilidad médica:', this.disponibilidadSeleccionada.horarios);
-    console.log('Horarios consultorio:', this.consultorioHorarios);
-    console.log('Esquemas existentes:', this.esquemasExistentes);
+    console.log('🔍 === CALCULANDO HORARIOS DISPONIBLES ===');
+    console.log('📅 Disponibilidad médica:', this.disponibilidadSeleccionada.horarios);
+    console.log('🏥 Horarios consultorio:', this.consultorioHorarios);
 
     // Intersección: horarios del médico que coinciden con horarios del consultorio
     const horariosInterseccion: any[] = [];
     
     for (const horarioMedico of this.disponibilidadSeleccionada.horarios) {
+      console.log(`\n🔍 Procesando día: ${horarioMedico.dia}`);
+      console.log(`👨‍⚕️ Horario médico: ${horarioMedico.horaInicio} - ${horarioMedico.horaFin}`);
+      
+      // CORRECCIÓN: Normalizar comparación de días (ignorar case)
       const horarioConsultorio = this.consultorioHorarios.find(hc => 
-        hc.diaSemana === horarioMedico.dia && hc.activo
+        hc.diaSemana.toUpperCase() === horarioMedico.dia.toUpperCase() && hc.activo
       );
+      
+      console.log(`🏥 Horario consultorio encontrado:`, horarioConsultorio);
       
       if (horarioConsultorio) {
         // Calcular intersección de horarios
@@ -691,25 +696,43 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
         const inicioConsultorio = this.timeToMinutes(horarioConsultorio.horaInicio);
         const finConsultorio = this.timeToMinutes(horarioConsultorio.horaFin);
         
+        console.log(`🔢 Conversión a minutos:`);
+        console.log(`   Médico: ${inicioMedico} - ${finMedico}`);
+        console.log(`   Consultorio: ${inicioConsultorio} - ${finConsultorio}`);
+        
         const inicioInterseccion = Math.max(inicioMedico, inicioConsultorio);
         const finInterseccion = Math.min(finMedico, finConsultorio);
         
+        console.log(`⚡ Intersección: ${inicioInterseccion} - ${finInterseccion}`);
+        
         if (inicioInterseccion < finInterseccion) {
-          horariosInterseccion.push({
+          const horarioInterseccionado = {
             dia: horarioMedico.dia,
             horaInicio: this.minutesToTime(inicioInterseccion),
             horaFin: this.minutesToTime(finInterseccion)
-          });
+          };
+          horariosInterseccion.push(horarioInterseccionado);
+          console.log(`✅ Horario agregado:`, horarioInterseccionado);
+        } else {
+          console.log(`❌ No hay intersección válida`);
         }
+      } else {
+        console.log(`❌ No se encontró horario de consultorio para el día ${horarioMedico.dia}`);
+        console.log(`🔍 Días disponibles en consultorio:`, this.consultorioHorarios.map(h => h.diaSemana));
       }
     }
 
+    console.log(`\n📋 Total horarios con intersección: ${horariosInterseccion.length}`);
+
     // Filtrar horarios que no están ocupados por esquemas existentes
     this.horariosDisponibles = horariosInterseccion.filter(horario => {
-      return !this.esQuemasOcupanHorario(horario);
+      const ocupado = this.esQuemasOcupanHorario(horario);
+      console.log(`🔍 Horario ${horario.dia} ${horario.horaInicio}-${horario.horaFin} ocupado: ${ocupado}`);
+      return !ocupado;
     });
 
-    console.log('Horarios disponibles calculados:', this.horariosDisponibles);
+    console.log(`\n🎯 RESULTADO FINAL: ${this.horariosDisponibles.length} horarios disponibles:`, this.horariosDisponibles);
+    console.log('🔍 === FIN CÁLCULO ===\n');
   }
 
   private esQuemasOcupanHorario(horario: any): boolean {
@@ -723,6 +746,7 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
           
           // Verificar si hay solapamiento
           if (inicioNuevo < finExistente && finNuevo > inicioExistente) {
+            console.log(`❌ Horario ${horario.dia} ${horario.horaInicio}-${horario.horaFin} ocupado por esquema existente`);
             return true;
           }
         }
