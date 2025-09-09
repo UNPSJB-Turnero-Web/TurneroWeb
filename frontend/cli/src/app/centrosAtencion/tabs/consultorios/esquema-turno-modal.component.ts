@@ -531,6 +531,12 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     } else {
       console.error('❌ No se recibió consultorio en el modal');
     }
+    
+    // Asignar el centroId al esquema para evitar error en backend
+    if (this.centroId) {
+      this.esquema.centroId = this.centroId;
+      console.log('🏥 CentroId asignado al esquema:', this.esquema.centroId);
+    }
   }
 
   ngAfterViewInit() {
@@ -895,6 +901,15 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       this.mensajeError = 'Complete todos los campos requeridos y seleccione al menos un horario.';
       return;
     }
+
+    // Verificar y asignar centroId si no está presente
+    if (!this.esquema.centroId || this.esquema.centroId === 0) {
+      this.esquema.centroId = this.centroId;
+      console.log('🏥 Asignando centroId al esquema:', this.centroId);
+    }
+
+    console.log('🚀 Guardando esquema:', this.esquema);
+    console.log('📍 Centro ID en esquema:', this.esquema.centroId);
 
     this.guardando = true;
 
