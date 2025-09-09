@@ -822,8 +822,11 @@ export class PacienteDetailComponent implements OnInit {
       } else if (userRole === "OPERADOR") {
         op = this.pacienteService.createByOperator(this.paciente);
       } else {
-        // Si es un paciente creando su propio perfil, usar el endpoint regular
-        op = this.pacienteService.create(this.paciente);
+        this.modalService.alert(
+          "Error",
+          "No tienes permisos para crear pacientes"
+        );
+        return;
       }
     }
 
