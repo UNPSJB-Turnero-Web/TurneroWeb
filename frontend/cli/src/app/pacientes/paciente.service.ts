@@ -1,17 +1,17 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
-import { Paciente } from './paciente';
-import { DataPackage } from '../data.package';
-import { ResultsPage } from '../results-page';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { map, Observable } from "rxjs";
+import { Paciente } from "./paciente";
+import { DataPackage } from "../data.package";
+import { ResultsPage } from "../results-page";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class PacienteService {
-  private url = 'rest/pacientes';
+  private url = "rest/pacientes";
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   /** Obtiene todos los pacientes */
   all(): Observable<DataPackage<Paciente[]>> {
@@ -28,6 +28,22 @@ export class PacienteService {
     return this.http.post<DataPackage<Paciente>>(this.url, paciente);
   }
 
+  /** Crea un nuevo paciente por administrador */
+  createByAdmin(paciente: Paciente): Observable<DataPackage<Paciente>> {
+    return this.http.post<DataPackage<Paciente>>(
+      `${this.url}/create-by-admin`,
+      paciente
+    );
+  }
+
+  /** Crea un nuevo paciente por operador */
+  createByOperator(paciente: Paciente): Observable<DataPackage<Paciente>> {
+    return this.http.post<DataPackage<Paciente>>(
+      `${this.url}/create-by-operator`,
+      paciente
+    );
+  }
+
   /** Actualiza un paciente existente */
   update(id: number, paciente: Paciente): Observable<DataPackage<Paciente>> {
     return this.http.put<DataPackage<Paciente>>(`${this.url}/${id}`, paciente);
@@ -39,7 +55,9 @@ export class PacienteService {
   }
 
   byPage(page: number, size: number): Observable<DataPackage<ResultsPage>> {
-    return this.http.get<DataPackage<ResultsPage>>(`${this.url}/page?page=${page - 1}&size=${size}`);
+    return this.http.get<DataPackage<ResultsPage>>(
+      `${this.url}/page?page=${page - 1}&size=${size}`
+    );
   }
   /** Búsqueda de pacientes */
   search(term: string): Observable<DataPackage<Paciente[]>> {
@@ -48,9 +66,9 @@ export class PacienteService {
 
   /** Verifica si un paciente existe por DNI */
   existsByDni(dni: number): Observable<boolean> {
-    return this.http.get<DataPackage<boolean>>(`${this.url}/existsByDni/${dni}`).pipe(
-      map(res => res.data || false)
-    );
+    return this.http
+      .get<DataPackage<boolean>>(`${this.url}/existsByDni/${dni}`)
+      .pipe(map((res) => res.data || false));
   }
 
   /** Busca un paciente por DNI */
@@ -59,11 +77,17 @@ export class PacienteService {
   }
 
   /** Busca un paciente por email y obtiene su ID */
-  findByEmail(email: string): Observable<DataPackage<{pacienteId: number}>> {
-    return this.http.get<DataPackage<{pacienteId: number}>>(`${this.url}/by-email/${email}`);
+  findByEmail(email: string): Observable<DataPackage<{ pacienteId: number }>> {
+    return this.http.get<DataPackage<{ pacienteId: number }>>(
+      `${this.url}/by-email/${email}`
+    );
   }
 
-  getObrasSociales(): Observable<DataPackage<{ id: number; nombre: string; codigo: string }[]>> {
-    return this.http.get<DataPackage<{ id: number; nombre: string; codigo: string }[]>>(`rest/obra-social`);
+  getObrasSociales(): Observable<
+    DataPackage<{ id: number; nombre: string; codigo: string }[]>
+  > {
+    return this.http.get<
+      DataPackage<{ id: number; nombre: string; codigo: string }[]>
+    >(`rest/obra-social`);
   }
 }
