@@ -13,6 +13,10 @@ public class OperadorDTO {
     private String apellido;
     private Long dni;
     private String email;
+    private String password; // Para registro
     private boolean activo; // estado del operador
     private String telefono;
+    
+    // Campo para auditoría
+    private String performedBy; // Usuario que realiza la acción
 }

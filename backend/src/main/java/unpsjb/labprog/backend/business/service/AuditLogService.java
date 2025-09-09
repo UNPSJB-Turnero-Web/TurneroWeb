@@ -629,4 +629,276 @@ public class AuditLogService {
             System.err.println("❌ ERROR: No se pudo contar registros: " + e.getMessage());
         }
     }
+
+    // ===============================
+    // MÉTODOS DE AUDITORÍA DE ROLES Y USUARIOS
+    // ===============================
+
+    /**
+     * Registra un cambio de rol de usuario
+     */
+    @Transactional
+    public AuditLog logRoleChange(Long userId, String performedBy, String previousRole, 
+                                  String newRole, String reason) {
+        System.out.println("🔍 DEBUG logRoleChange: Usuario ID: " + userId + ", Rol anterior: " + 
+                          previousRole + ", Nuevo rol: " + newRole + ", Ejecutado por: " + performedBy);
+        
+        try {
+            // Crear datos del cambio
+            Map<String, Object> oldValues = new HashMap<>();
+            oldValues.put("userId", userId);
+            oldValues.put("role", previousRole);
+            
+            Map<String, Object> newValues = new HashMap<>();
+            newValues.put("userId", userId);
+            newValues.put("role", newRole);
+            
+            String oldValuesJson = objectMapper.writeValueAsString(oldValues);
+            String newValuesJson = objectMapper.writeValueAsString(newValues);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.ROLE_CHANGE,
+                performedBy, previousRole, newRole, oldValuesJson, newValuesJson, reason
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Cambio de rol auditado con ID: " + saved.getId());
+            return saved;
+            
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ ERROR: Error al serializar datos de cambio de rol: " + e.getMessage());
+            throw new RuntimeException("Error al serializar datos de cambio de rol", e);
+        }
+    }
+
+    /**
+     * Registra la creación de un nuevo usuario
+     */
+    @Transactional
+    public AuditLog logUserCreated(Long userId, String userEmail, String userRole, String performedBy) {
+        System.out.println("🔍 DEBUG logUserCreated: Usuario ID: " + userId + ", Email: " + 
+                          userEmail + ", Rol: " + userRole + ", Creado por: " + performedBy);
+        
+        try {
+            Map<String, Object> userData = new HashMap<>();
+            userData.put("userId", userId);
+            userData.put("email", userEmail);
+            userData.put("role", userRole);
+            userData.put("enabled", true);
+            
+            String userDataJson = objectMapper.writeValueAsString(userData);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_CREATE,
+                performedBy, null, userRole, null, userDataJson, "Usuario creado"
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Creación de usuario auditada con ID: " + saved.getId());
+            return saved;
+            
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ ERROR: Error al serializar datos de creación de usuario: " + e.getMessage());
+            throw new RuntimeException("Error al serializar datos de creación de usuario", e);
+        }
+    }
+
+    /**
+     * Registra cambios en datos de usuario
+     */
+    @Transactional
+    public AuditLog logUserUpdated(Long userId, String performedBy, Object oldData, Object newData, String reason) {
+        System.out.println("🔍 DEBUG logUserUpdated: Usuario ID: " + userId + ", Ejecutado por: " + performedBy);
+        
+        try {
+            String oldDataJson = oldData != null ? objectMapper.writeValueAsString(oldData) : null;
+            String newDataJson = newData != null ? objectMapper.writeValueAsString(newData) : null;
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                performedBy, null, null, oldDataJson, newDataJson, reason
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Actualización de usuario auditada con ID: " + saved.getId());
+            return saved;
+            
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ ERROR: Error al serializar datos de actualización de usuario: " + e.getMessage());
+            throw new RuntimeException("Error al serializar datos de actualización de usuario", e);
+        }
+    }
+
+    /**
+     * Registra la habilitación/deshabilitación de un usuario
+     */
+    @Transactional
+    public AuditLog logUserStatusChange(Long userId, String performedBy, boolean wasEnabled, boolean isEnabled, String reason) {
+        String action = isEnabled ? AuditLog.Actions.USER_ENABLE : AuditLog.Actions.USER_DISABLE;
+        String previousStatus = wasEnabled ? "ENABLED" : "DISABLED";
+        String newStatus = isEnabled ? "ENABLED" : "DISABLED";
+        
+        System.out.println("🔍 DEBUG logUserStatusChange: Usuario ID: " + userId + ", Estado: " + 
+                          previousStatus + " -> " + newStatus + ", Ejecutado por: " + performedBy);
+        
+        try {
+            Map<String, Object> statusChange = new HashMap<>();
+            statusChange.put("userId", userId);
+            statusChange.put("enabled", isEnabled);
+            
+            String statusJson = objectMapper.writeValueAsString(statusChange);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, action,
+                performedBy, previousStatus, newStatus, null, statusJson, reason
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Cambio de estado de usuario auditado con ID: " + saved.getId());
+            return saved;
+            
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ ERROR: Error al serializar datos de cambio de estado: " + e.getMessage());
+            throw new RuntimeException("Error al serializar datos de cambio de estado", e);
+        }
+    }
+
+    /**
+     * Obtiene el historial de auditoría de un usuario específico
+     */
+    public List<AuditLog> getUserAuditHistory(Long userId) {
+        System.out.println("🔍 DEBUG: Obteniendo historial de auditoría para usuario ID: " + userId);
+        try {
+            return auditLogRepository.findByEntityTypeAndEntityIdOrderByPerformedAtDesc(
+                AuditLog.EntityTypes.USER, userId);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener historial de usuario: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene todos los cambios de rol del sistema
+     */
+    public List<AuditLog> getAllRoleChanges() {
+        System.out.println("🔍 DEBUG: Obteniendo todos los cambios de rol del sistema");
+        try {
+            return auditLogRepository.findByEntityTypeAndActionOrderByPerformedAtDesc(
+                AuditLog.EntityTypes.USER, AuditLog.Actions.ROLE_CHANGE);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener historial de cambios de rol: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene cambios de rol por usuario específico
+     */
+    public List<AuditLog> getRoleChangesByUser(Long userId) {
+        System.out.println("🔍 DEBUG: Obteniendo cambios de rol para usuario ID: " + userId);
+        try {
+            return auditLogRepository.findByEntityTypeAndEntityIdAndActionOrderByPerformedAtDesc(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.ROLE_CHANGE);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener cambios de rol del usuario: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de cambios de rol
+     */
+    public Map<String, Object> getRoleChangeStatistics() {
+        System.out.println("🔍 DEBUG: Obteniendo estadísticas de cambios de rol");
+        try {
+            List<Object[]> roleStats = auditLogRepository.findRoleChangeStatistics();
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("roleChanges", roleStats);
+            statistics.put("totalChanges", getAllRoleChanges().size());
+            
+            // Contar cambios por rol destino
+            Map<String, Long> changesByNewRole = new HashMap<>();
+            Map<String, Long> changesByPreviousRole = new HashMap<>();
+            
+            for (Object[] stat : roleStats) {
+                String previousRole = (String) stat[0];
+                String newRole = (String) stat[1];
+                Long count = (Long) stat[2];
+                
+                changesByPreviousRole.put(previousRole != null ? previousRole : "NINGUNO", 
+                    changesByPreviousRole.getOrDefault(previousRole, 0L) + count);
+                changesByNewRole.put(newRole, 
+                    changesByNewRole.getOrDefault(newRole, 0L) + count);
+            }
+            
+            statistics.put("changesByNewRole", changesByNewRole);
+            statistics.put("changesByPreviousRole", changesByPreviousRole);
+            
+            return statistics;
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener estadísticas de cambios de rol: " + e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * Obtiene cambios de rol recientes
+     */
+    public List<AuditLog> getRecentRoleChanges(LocalDateTime since) {
+        System.out.println("🔍 DEBUG: Obteniendo cambios de rol desde: " + since);
+        try {
+            return auditLogRepository.findRecentRoleChanges(since);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener cambios de rol recientes: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene logs de creación de usuarios
+     */
+    public List<AuditLog> getUserCreationLogs() {
+        System.out.println("🔍 DEBUG: Obteniendo logs de creación de usuarios");
+        try {
+            return auditLogRepository.findUserCreationLogs();
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener logs de creación de usuarios: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
+
+    /**
+     * Obtiene resumen de actividad de usuarios
+     */
+    public Map<String, Object> getUserActivitySummary() {
+        System.out.println("🔍 DEBUG: Obteniendo resumen de actividad de usuarios");
+        try {
+            List<Object[]> activitySummary = auditLogRepository.findUserActivitySummary();
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("activityByAction", activitySummary);
+            
+            // Estadísticas adicionales
+            summary.put("totalUserActions", activitySummary.stream()
+                .mapToLong(row -> (Long) row[1]).sum());
+            summary.put("uniqueActions", activitySummary.size());
+            
+            return summary;
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener resumen de actividad de usuarios: " + e.getMessage());
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * Busca logs por tipo de entidad y acción
+     */
+    public List<AuditLog> getLogsByEntityTypeAndAction(String entityType, String action) {
+        System.out.println("🔍 DEBUG: Obteniendo logs para entidad: " + entityType + ", acción: " + action);
+        try {
+            return auditLogRepository.findByEntityTypeAndActionOrderByPerformedAtDesc(entityType, action);
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al obtener logs por entidad y acción: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
 }

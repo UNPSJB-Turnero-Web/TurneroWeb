@@ -59,6 +59,30 @@ public class RegistrationService {
     public Medico registrarMedico(String email, String plainPassword, Long dni, 
                                  String nombre, String apellido, String telefono,
                                  String matricula, Set<Especialidad> especialidades) {
+        return registrarMedicoWithAudit(email, plainPassword, dni, nombre, apellido, 
+                                       telefono, matricula, especialidades, "AUTO_REGISTRO");
+    }
+
+    /**
+     * Registra un nuevo médico con auditoría (creado por ADMIN)
+     * Crea tanto el usuario para autenticación como la entidad médico para lógica de negocio
+     * 
+     * @param email email del médico
+     * @param plainPassword contraseña en texto plano
+     * @param dni DNI del médico
+     * @param nombre nombre del médico
+     * @param apellido apellido del médico
+     * @param telefono teléfono del médico
+     * @param matricula matrícula profesional del médico
+     * @param especialidades especialidades médicas
+     * @param performedBy usuario que registra al médico (ADMIN)
+     * @return Medico entidad del médico creado
+     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
+     */
+    public Medico registrarMedicoWithAudit(String email, String plainPassword, Long dni, 
+                                          String nombre, String apellido, String telefono,
+                                          String matricula, Set<Especialidad> especialidades, 
+                                          String performedBy) {
         
         // 1. Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
@@ -67,8 +91,9 @@ public class RegistrationService {
         // 2. Hashear la contraseña con BCrypt
         String hashedPassword = hashPassword(plainPassword);
         
-        // 3. Crear User para autenticación
-        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Medico");
+        // 3. Crear User para autenticación con auditoría
+        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
+                                                   telefono, "Medico", performedBy);
         
         // 4. Crear Medico para lógica de negocio
         Medico medico = new Medico();
@@ -88,7 +113,6 @@ public class RegistrationService {
         
         // Guardar médico usando el repository
         Medico savedMedico = medicoRepository.save(medico);
-        
         
         return savedMedico;
     }
@@ -113,16 +137,41 @@ public class RegistrationService {
     public Paciente registrarPaciente(String email, String plainPassword, Long dni,
                                     String nombre, String apellido, String telefono,
                                     Date fechaNacimiento, ObraSocial obraSocial) {
+        return registrarPacienteWithAudit(email, plainPassword, dni, nombre, apellido, 
+                                        telefono, fechaNacimiento, obraSocial, "AUTO_REGISTRO");
+    }
+
+    /**
+     * Registra un nuevo paciente con auditoría (creado por ADMIN/OPERADOR)
+     * Crea tanto el usuario para autenticación como la entidad paciente para lógica de negocio
+     * 
+     * @param email email del paciente
+     * @param plainPassword contraseña en texto plano
+     * @param dni DNI del paciente
+     * @param nombre nombre del paciente
+     * @param apellido apellido del paciente
+     * @param telefono teléfono del paciente
+     * @param fechaNacimiento fecha de nacimiento del paciente
+     * @param obraSocial obra social del paciente (puede ser null)
+     * @param performedBy usuario que registra al paciente (ADMIN/OPERADOR)
+     * @return Paciente entidad del paciente creado
+     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
+     */
+    public Paciente registrarPacienteWithAudit(String email, String plainPassword, Long dni,
+                                             String nombre, String apellido, String telefono,
+                                             Date fechaNacimiento, ObraSocial obraSocial, 
+                                             String performedBy) {
         
         // 1. Validar datos básicos
-        //validateBasicData(email, dni, nombre, apellido);
+        validateBasicData(email, dni, nombre, apellido);
         //validatePacienteData(fechaNacimiento);
         
         // 2. Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
         
-        // 3. Crear User para autenticación
-        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Paciente");
+        // 3. Crear User para autenticación con auditoría
+        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
+                                                   telefono, "Paciente", performedBy);
         
         // 4. Crear Paciente para lógica de negocio
         Paciente paciente = new Paciente();
@@ -159,8 +208,27 @@ public class RegistrationService {
      * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
      */
     public Paciente registrarPaciente(String email, String plainPassword, Long dni,
-                                    String nombre, String apellido, String telefono
-                                    ) {
+                                    String nombre, String apellido, String telefono) {
+        return registrarPacienteWithAudit(email, plainPassword, dni, nombre, apellido, 
+                                        telefono, "AUTO_REGISTRO");
+    }
+
+    /**
+     * Sobrecarga con auditoría del método registrarPaciente sin obra social ni fecha de nacimiento
+     * 
+     * @param email email del paciente
+     * @param plainPassword contraseña en texto plano
+     * @param dni DNI del paciente
+     * @param nombre nombre del paciente
+     * @param apellido apellido del paciente
+     * @param telefono teléfono del paciente
+     * @param performedBy usuario que registra al paciente
+     * @return Paciente entidad del paciente creado
+     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
+     */
+    public Paciente registrarPacienteWithAudit(String email, String plainPassword, Long dni,
+                                             String nombre, String apellido, String telefono,
+                                             String performedBy) {
         
         // 1. Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
@@ -169,8 +237,9 @@ public class RegistrationService {
         // 2. Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
         
-        // 3. Crear User para autenticación
-        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Paciente");
+        // 3. Crear User para autenticación con auditoría
+        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
+                                                   telefono, "Paciente", performedBy);
         
         // 4. Crear Paciente para lógica de negocio
         Paciente paciente = new Paciente();
@@ -206,18 +275,32 @@ public class RegistrationService {
      */
     public User registrarOperador(String email, String plainPassword, Long dni,
                                   String nombre, String apellido, String telefono) {
+        return registrarOperadorWithAudit(email, plainPassword, dni, nombre, apellido, telefono, "ADMIN");
+    }
+
+    /**
+     * Registra un nuevo operador con auditoría
+     * @param email email del operador
+     * @param plainPassword contraseña en texto plano
+     * @param dni DNI del operador
+     * @param nombre nombre del operador
+     * @param apellido apellido del operador
+     * @param telefono teléfono del operador
+     * @param performedBy usuario que registra al operador
+     * @return User entidad del usuario creado
+     */
+    public User registrarOperadorWithAudit(String email, String plainPassword, Long dni,
+                                          String nombre, String apellido, String telefono, String performedBy) {
         // Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
 
         // Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
 
-        // Crear User para autenticación con rol OPERADOR
-        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Operador");
+        // Crear User para autenticación con rol OPERADOR usando auditoría
+        User user = userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, telefono, "Operador", performedBy);
 
-        // Retornar el usuario creado
-        return userService.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Error al obtener usuario después del registro de operador"));
+        return user;
     }
 
     // ===============================

@@ -54,23 +54,53 @@ public class OperadorService {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
 
-            // Generar contraseña automática
-            String password = generarPasswordAutomatica();
-            String hashedPassword = passwordEncoder.encode(password);
-            operador.setHashedPassword(hashedPassword);
+            // Si es creado con auditoría (tiene performedBy), usar auditoría
+            if (dto.getPerformedBy() != null && !dto.getPerformedBy().trim().isEmpty()) {
+                // Generar contraseña automática
+                String password = dto.getPassword();
+                if (password == null || password.trim().isEmpty()) {
+                    password = generarPasswordAutomatica();
+                }
 
-            // Crear usuario en la tabla User
-            registrationService.registrarOperador(
-                operador.getEmail(),
-                password,
-                operador.getDni(),
-                operador.getNombre(),
-                operador.getApellido(),
-                operador.getTelefono()
-            );
+                // Crear usuario con auditoría (retorna User, no Operador)
+                registrationService.registrarOperadorWithAudit(
+                    operador.getEmail(),
+                    password,
+                    operador.getDni(),
+                    operador.getNombre(),
+                    operador.getApellido(),
+                    operador.getTelefono(),
+                    dto.getPerformedBy()
+                );
 
-            // Pseudofunción para enviar la contraseña por mail
-            enviarPasswordPorMail(operador.getEmail(), password);
+                // Crear operador en tabla operador
+                String hashedPassword = passwordEncoder.encode(password);
+                operador.setHashedPassword(hashedPassword);
+                Operador operadorCreado = repository.save(operador);
+
+                // Enviar contraseña por mail
+                enviarPasswordPorMail(operador.getEmail(), password);
+                
+                return toDTO(operadorCreado);
+            } else {
+                // Creación normal sin auditoría
+                String password = generarPasswordAutomatica();
+                String hashedPassword = passwordEncoder.encode(password);
+                operador.setHashedPassword(hashedPassword);
+
+                // Crear usuario en la tabla User
+                registrationService.registrarOperador(
+                    operador.getEmail(),
+                    password,
+                    operador.getDni(),
+                    operador.getNombre(),
+                    operador.getApellido(),
+                    operador.getTelefono()
+                );
+
+                // Pseudofunción para enviar la contraseña por mail
+                enviarPasswordPorMail(operador.getEmail(), password);
+            }
 
         } else {
             Operador existente = repository.findById(operador.getId()).orElse(null);

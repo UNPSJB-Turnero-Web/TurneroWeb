@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.PacienteService;
+import unpsjb.labprog.backend.config.AuditContext;
 import unpsjb.labprog.backend.dto.PacienteDTO;
 
 @RestController
@@ -27,6 +28,8 @@ public class PacientePresenter {
 
     @Autowired
     private PacienteService service;
+
+
 
     @GetMapping
     public ResponseEntity<Object> findAll() {
@@ -130,6 +133,60 @@ public class PacientePresenter {
                     return Response.ok(response, "Paciente encontrado por email");
                 })
                 .orElse(Response.notFound("Paciente con email " + email + " no encontrado"));
+    }
+
+    /**
+     * Crear paciente por ADMIN/OPERADOR con auditoría
+     * POST /pacientes/create-by-admin
+     */
+    @PostMapping("/create-by-admin")
+    public ResponseEntity<Object> createPatientByAdmin(@RequestBody PacienteDTO request) {
+        try {
+            // Priorizar el performedBy del request, luego AuditContext, luego default
+            String performedBy = request.getPerformedBy();
+            if (performedBy == null || performedBy.trim().isEmpty()) {
+                performedBy = AuditContext.getCurrentUser();
+                if (performedBy == null || performedBy.trim().isEmpty()) {
+                    performedBy = "ADMIN";
+                }
+            }
+            request.setPerformedBy(performedBy);
+
+            // Usar el service que ahora maneja la lógica de auditoría
+            PacienteDTO saved = service.saveOrUpdate(request);
+            return Response.ok(saved, "Paciente creado correctamente por administrador");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al crear el paciente: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Crear paciente por OPERADOR con auditoría
+     * POST /pacientes/create-by-operator
+     */
+    @PostMapping("/create-by-operator")
+    public ResponseEntity<Object> createPatientByOperator(@RequestBody PacienteDTO request) {
+        try {
+            // Priorizar el performedBy del request, luego AuditContext, luego default
+            String performedBy = request.getPerformedBy();
+            if (performedBy == null || performedBy.trim().isEmpty()) {
+                performedBy = AuditContext.getCurrentUser();
+                if (performedBy == null || performedBy.trim().isEmpty()) {
+                    performedBy = "OPERADOR";
+                }
+            }
+            request.setPerformedBy(performedBy);
+
+            // Usar el service que ahora maneja la lógica de auditoría
+           PacienteDTO saved = service.saveOrUpdate(request);
+            return Response.ok(saved, "Paciente creado correctamente por operador");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al crear el paciente: " + e.getMessage());
+        }
     }
 
 }

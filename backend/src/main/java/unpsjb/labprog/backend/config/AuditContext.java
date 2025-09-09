@@ -8,12 +8,11 @@ public class AuditContext {
     private static final ThreadLocal<String> currentUser = new ThreadLocal<>();
     
     public static void setCurrentUser(String user) {
-        currentUser.set(user != null ? user : "SYSTEM");
+        currentUser.set(user);
     }
     
     public static String getCurrentUser() {
-        String user = currentUser.get();
-        return user != null ? user : "SYSTEM";
+        return currentUser.get(); // Retorna null si no hay usuario configurado
     }
     
     public static void clear() {

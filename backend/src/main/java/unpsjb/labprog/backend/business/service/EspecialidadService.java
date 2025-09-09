@@ -40,6 +40,10 @@ public class EspecialidadService {
         return especialidad != null ? toDTO(especialidad) : null;
     }
 
+    public java.util.Optional<Especialidad> findEntityById(Integer id) {
+        return repository.findById(id);
+    }
+
     public List<EspecialidadDTO> findByCentroAtencionId(Integer centroId) {
         List<Especialidad> especialidades = centroAtencionRepository.findEspecialidadesByCentroId(centroId);
         return especialidades.stream()

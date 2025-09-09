@@ -24,9 +24,10 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.business.service.MedicoService;
 import unpsjb.labprog.backend.business.service.RegistrationService;
+import unpsjb.labprog.backend.config.AuditContext;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
-import unpsjb.labprog.backend.dto.MedicoRegistroDTO;
+
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
 
@@ -143,7 +144,7 @@ public class MedicoPresenter {
      * y la entidad médico.
      */
     @PostMapping("/register")
-    public ResponseEntity<Object> registrarMedico(@RequestBody MedicoRegistroDTO registroDTO) {
+    public ResponseEntity<Object> registrarMedico(@RequestBody MedicoDTO registroDTO) {
         try {
             // Verificar si el usuario ya existe
             if (registrationService.existsByEmail(registroDTO.getEmail())) {
@@ -152,7 +153,7 @@ public class MedicoPresenter {
                                        null);
             }
 
-            if (registrationService.existsByDni(registroDTO.getDni())) {
+            if (registrationService.existsByDni(Long.parseLong(registroDTO.getDni()))) {
                 return Response.response(HttpStatus.CONFLICT, 
                                        "Ya existe un usuario con el DNI: " + registroDTO.getDni(), 
                                        null);
@@ -187,7 +188,7 @@ public class MedicoPresenter {
             Medico medicoRegistrado = registrationService.registrarMedico(
                 registroDTO.getEmail(),
                 registroDTO.getPassword(),
-                registroDTO.getDni(),
+                Long.parseLong(registroDTO.getDni()),
                 registroDTO.getNombre(),
                 registroDTO.getApellido(),
                 registroDTO.getTelefono(),
@@ -208,6 +209,30 @@ public class MedicoPresenter {
             return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, 
                                    "Error interno del servidor: " + e.getMessage(), 
                                    null);
+        }
+    }
+
+    /**
+     * Crear médico por ADMIN con auditoría
+     * POST /medicos/create-by-admin
+     */
+    @PostMapping("/create-by-admin")
+    public ResponseEntity<Object> createDoctorByAdmin(@RequestBody MedicoDTO request) {
+        try {
+            // Establecer performedBy para indicar que es creado por admin
+            String performedBy = AuditContext.getCurrentUser();
+            if (performedBy == null) {
+                performedBy = request.getPerformedBy() != null ? request.getPerformedBy() : "ADMIN";
+            }
+            request.setPerformedBy(performedBy);
+
+            // Usar el service que ahora maneja la lógica de auditoría
+            MedicoDTO saved = service.saveOrUpdate(request);
+            return Response.ok(saved, "Médico creado correctamente por administrador");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al crear el médico: " + e.getMessage());
         }
     }
    

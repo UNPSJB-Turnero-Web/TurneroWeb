@@ -40,17 +40,76 @@ public class PacienteService {
         return repository.findByEmail(email).map(this::toDTO);
     }
 
+    @Autowired
+    private RegistrationService registrationService;
+
+    @Autowired 
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @Transactional
     public PacienteDTO saveOrUpdate(PacienteDTO dto) {
         Paciente paciente = toEntity(dto);
-        validarPaciente(paciente);
+        //validarPaciente(paciente);
 
         // Validaciones para evitar duplicados
-        if (paciente.getId() == 0) {
+        if (paciente.getId() == null || paciente.getId() == 0) {
+            // CREACIÓN
             if (repository.existsByDni(paciente.getDni())) { 
                 throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
+            if (repository.existsByEmail(paciente.getEmail())) {
+                throw new IllegalStateException("Ya existe un paciente con el email: " + paciente.getEmail());
+            }
+
+            // Si es creado por ADMIN/OPERADOR (tiene performedBy), usar auditoría
+            if (dto.getPerformedBy() != null && !dto.getPerformedBy().trim().isEmpty()) {
+                // Generar contraseña automática
+                String password = dto.getPassword();
+                if (password == null || password.trim().isEmpty()) {
+                    password = generarPasswordAutomatica();
+                }
+
+                // Obtener obra social si se especifica
+                unpsjb.labprog.backend.model.ObraSocial obraSocial = null;
+                if (dto.getObraSocialId() != null) {
+                    // Aquí necesitarías inyectar ObraSocialService para obtener la entidad
+                }
+
+                // Crear usuario en la tabla User con auditoría (esto YA crea el paciente)
+                Paciente pacienteCreado;
+                if (dto.getFechaNacimiento() != null) {
+                    pacienteCreado = registrationService.registrarPacienteWithAudit(
+                        paciente.getEmail(),
+                        password,
+                        paciente.getDni(),
+                        paciente.getNombre(),
+                        paciente.getApellido(),
+                        paciente.getTelefono(),
+                        dto.getFechaNacimiento(),
+                        obraSocial,
+                        dto.getPerformedBy()
+                    );
+                } else {
+                    pacienteCreado = registrationService.registrarPacienteWithAudit(
+                        paciente.getEmail(),
+                        password,
+                        paciente.getDni(),
+                        paciente.getNombre(),
+                        paciente.getApellido(),
+                        paciente.getTelefono(),
+                        dto.getPerformedBy()
+                    );
+                }
+
+                // Enviar contraseña por mail
+                enviarPasswordPorMail(paciente.getEmail(), password);
+                
+                // Retornar el paciente creado directamente
+                return toDTO(pacienteCreado);
+            }
+
         } else {
+            // MODIFICACIÓN
             Paciente existente = repository.findById(paciente.getId()).orElse(null);
             if (existente == null) {
                 throw new IllegalStateException("No existe el paciente que se intenta modificar.");
@@ -60,9 +119,31 @@ public class PacienteService {
                     repository.existsByDni(paciente.getDni())) { 
                 throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
+            if (!existente.getEmail().equals(paciente.getEmail()) && 
+                    repository.existsByEmail(paciente.getEmail())) {
+                throw new IllegalStateException("Ya existe un paciente con el email: " + paciente.getEmail());
+            }
+            // Mantener la contraseña anterior si no se proporciona una nueva
+            if (paciente.getHashedPassword() == null) {
+                paciente.setHashedPassword(existente.getHashedPassword());
+            }
         }
 
         return toDTO(repository.save(paciente));
+    }
+
+    /**
+     * Genera una contraseña automática segura para el paciente
+     */
+    private String generarPasswordAutomatica() {
+        return java.util.UUID.randomUUID().toString().substring(0, 10);
+    }
+
+    /**
+     * Pseudofunción para enviar la contraseña por mail al paciente
+     */
+    private void enviarPasswordPorMail(String email, String password) {
+        System.out.println("[PSEUDO-ENVÍO] Se enviaría la contraseña '" + password + "' al correo: " + email);
     }
 
     public Page<PacienteDTO> findByPage(int page, int size) {

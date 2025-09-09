@@ -30,6 +30,10 @@ public class ObraSocialService {
         return repository.findById(id).map(this::toDTO);
     }
 
+    public Optional<ObraSocial> findEntityById(Integer id) {
+        return repository.findById(id);
+    }
+
     @Transactional
     public ObraSocialDTO saveOrUpdate(ObraSocialDTO dto) {
         ObraSocial obraSocial = toEntity(dto);

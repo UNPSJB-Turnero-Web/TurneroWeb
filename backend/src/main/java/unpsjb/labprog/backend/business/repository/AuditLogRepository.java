@@ -113,4 +113,59 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     // Obtener datos básicos de logs recientes sin campos LOB problemáticos
     @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at, reason, turno_id FROM audit_log WHERE performed_at >= :since ORDER BY performed_at DESC", nativeQuery = true)
     List<Object[]> findSafeRecentLogs(@Param("since") LocalDateTime since);
+
+    // ===============================
+    // MÉTODOS PARA AUDITORÍA DE ROLES Y USUARIOS
+    // ===============================
+
+    // Buscar logs por tipo de entidad y ID de entidad
+    List<AuditLog> findByEntityTypeAndEntityIdOrderByPerformedAtDesc(String entityType, Long entityId);
+
+    // Buscar logs por tipo de entidad y acción
+    List<AuditLog> findByEntityTypeAndActionOrderByPerformedAtDesc(String entityType, String action);
+
+    // Buscar logs por tipo de entidad, ID de entidad y acción
+    List<AuditLog> findByEntityTypeAndEntityIdAndActionOrderByPerformedAtDesc(String entityType, Long entityId, String action);
+
+    // Contar logs por tipo de entidad
+    @Query("SELECT COUNT(a) FROM AuditLog a WHERE a.entityType = :entityType")
+    Long countByEntityType(@Param("entityType") String entityType);
+
+    // Obtener estadísticas de cambios de rol
+    @Query("SELECT a.previousStatus, a.newStatus, COUNT(a) FROM AuditLog a " +
+           "WHERE a.entityType = 'USER' AND a.action = 'ROLE_CHANGE' " +
+           "GROUP BY a.previousStatus, a.newStatus ORDER BY COUNT(a) DESC")
+    List<Object[]> findRoleChangeStatistics();
+
+    // Obtener actividad reciente de cambios de rol
+    @Query("SELECT a FROM AuditLog a WHERE a.entityType = 'USER' AND a.action = 'ROLE_CHANGE' " +
+           "AND a.performedAt >= :since ORDER BY a.performedAt DESC")
+    List<AuditLog> findRecentRoleChanges(@Param("since") LocalDateTime since);
+
+    // Buscar cambios de rol por usuario específico
+    @Query("SELECT a FROM AuditLog a WHERE a.entityType = 'USER' AND a.action = 'ROLE_CHANGE' " +
+           "AND a.entityId = :userId ORDER BY a.performedAt DESC")
+    List<AuditLog> findRoleChangesByUserId(@Param("userId") Long userId);
+
+    // Obtener logs de creación de usuarios
+    @Query("SELECT a FROM AuditLog a WHERE a.entityType = 'USER' AND a.action = 'USER_CREATE' " +
+           "ORDER BY a.performedAt DESC")
+    List<AuditLog> findUserCreationLogs();
+
+    // Buscar logs por múltiples acciones
+    @Query("SELECT a FROM AuditLog a WHERE a.entityType = :entityType AND a.action IN :actions " +
+           "ORDER BY a.performedAt DESC")
+    List<AuditLog> findByEntityTypeAndActionIn(@Param("entityType") String entityType, 
+                                               @Param("actions") List<String> actions);
+
+    // Obtener resumen de actividad de usuarios (creación, cambios de rol, etc.)
+    @Query("SELECT a.action, COUNT(a) FROM AuditLog a WHERE a.entityType = 'USER' " +
+           "GROUP BY a.action ORDER BY COUNT(a) DESC")
+    List<Object[]> findUserActivitySummary();
+
+    // Buscar logs de un usuario específico ejecutados por otro usuario
+    @Query("SELECT a FROM AuditLog a WHERE a.entityType = 'USER' AND a.entityId = :targetUserId " +
+           "AND a.performedBy = :performedBy ORDER BY a.performedAt DESC")
+    List<AuditLog> findUserLogsByPerformedBy(@Param("targetUserId") Long targetUserId, 
+                                             @Param("performedBy") String performedBy);
 }

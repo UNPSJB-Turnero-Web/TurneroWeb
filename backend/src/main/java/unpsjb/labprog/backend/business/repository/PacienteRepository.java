@@ -10,6 +10,7 @@ import unpsjb.labprog.backend.model.Paciente;
 @Repository
 public interface PacienteRepository extends JpaRepository<Paciente, Integer> {
     boolean existsByDni(Long dni);
+    boolean existsByEmail(String email);
     Optional<Paciente> findByDni(Long dni);
     Optional<Paciente> findByEmail(String email);
 }

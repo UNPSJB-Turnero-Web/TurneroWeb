@@ -1,6 +1,8 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class UserService implements UserDetailsService {
     
     @Autowired
     private RoleService roleService;
+    
+    @Autowired
+    private AuditLogService auditLogService;
     
     // ===============================
     // IMPLEMENTACIÓN DE UserDetailsService
@@ -174,5 +179,138 @@ public class UserService implements UserDetailsService {
         }
         
         userRepository.deleteById(userId);
+    }
+
+    // ===============================
+    // MÉTODOS CON AUDITORÍA INTEGRADA
+    // ===============================
+
+    /**
+     * Cambia el rol de un usuario con auditoría
+     * @param userId ID del usuario
+     * @param newRoleName nombre del nuevo rol
+     * @param performedBy email del usuario que realiza el cambio
+     * @param reason motivo del cambio
+     * @return User usuario actualizado
+     * @throws IllegalArgumentException si el usuario no existe o el rol es inválido
+     */
+    public User changeUserRole(Long userId, String newRoleName, String performedBy, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + userId));
+        
+        String previousRoleName = user.getRole().getName();
+        
+        // Verificar que el rol sea diferente
+        if (previousRoleName.equals(newRoleName)) {
+            throw new IllegalArgumentException("El usuario ya tiene el rol: " + newRoleName);
+        }
+        
+        // Obtener el nuevo rol
+        Role newRole = roleService.getOrCreateRole(newRoleName);
+        
+        // Cambiar el rol
+        user.setRole(newRole);
+        User updatedUser = userRepository.save(user);
+        
+        // Registrar en auditoría
+        auditLogService.logRoleChange(userId, performedBy, previousRoleName, newRoleName, reason);
+        
+        return updatedUser;
+    }
+
+    /**
+     * Actualiza información de usuario con auditoría
+     * @param userId ID del usuario
+     * @param nombre nuevo nombre
+     * @param apellido nuevo apellido
+     * @param telefono nuevo teléfono
+     * @param performedBy email del usuario que realiza la actualización
+     * @return User usuario actualizado
+     */
+    public User updateUserInfoWithAudit(Long userId, String nombre, String apellido, String telefono, String performedBy) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + userId));
+        
+        // Capturar datos anteriores
+        Map<String, Object> oldData = new HashMap<>();
+        oldData.put("nombre", user.getNombre());
+        oldData.put("apellido", user.getApellido());
+        oldData.put("telefono", user.getTelefono());
+        
+        // Actualizar datos
+        user.setNombre(nombre);
+        user.setApellido(apellido);
+        user.setTelefono(telefono);
+        
+        User updatedUser = userRepository.save(user);
+        
+        // Capturar datos nuevos
+        Map<String, Object> newData = new HashMap<>();
+        newData.put("nombre", nombre);
+        newData.put("apellido", apellido);
+        newData.put("telefono", telefono);
+        
+        // Registrar en auditoría
+        auditLogService.logUserUpdated(userId, performedBy, oldData, newData, "Actualización de información personal");
+        
+        return updatedUser;
+    }
+
+    /**
+     * Deshabilita un usuario con auditoría
+     * @param userId ID del usuario
+     * @param performedBy email del usuario que realiza la acción
+     * @param reason motivo de la deshabilitación
+     */
+    public void disableUserWithAudit(Long userId, String performedBy, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + userId));
+        
+        boolean wasEnabled = user.getEnabled();
+        user.disable();
+        userRepository.save(user);
+        
+        // Registrar en auditoría
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, false, reason);
+    }
+
+    /**
+     * Habilita un usuario con auditoría
+     * @param userId ID del usuario
+     * @param performedBy email del usuario que realiza la acción
+     * @param reason motivo de la habilitación
+     */
+    public void enableUserWithAudit(Long userId, String performedBy, String reason) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + userId));
+        
+        boolean wasEnabled = user.getEnabled();
+        user.enable();
+        userRepository.save(user);
+        
+        // Registrar en auditoría
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, true, reason);
+    }
+
+    /**
+     * Crea un usuario con auditoría integrada
+     * @param nombre nombre del usuario
+     * @param apellido apellido del usuario
+     * @param dni DNI del usuario
+     * @param email email del usuario
+     * @param hashedPassword contraseña hasheada
+     * @param telefono teléfono del usuario
+     * @param roleName nombre del rol
+     * @param performedBy email del usuario que crea la cuenta
+     * @return User usuario creado
+     */
+    public User createUserWithAudit(String nombre, String apellido, Long dni, String email, 
+                                   String hashedPassword, String telefono, String roleName, String performedBy) {
+        User user = createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName);
+        
+        // Registrar en auditoría
+        auditLogService.logUserCreated(user.getId(), email, roleName, performedBy);
+        
+        return user;
     }
 }

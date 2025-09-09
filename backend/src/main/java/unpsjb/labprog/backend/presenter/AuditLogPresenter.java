@@ -261,4 +261,115 @@ public class AuditLogPresenter {
             return Response.error(null, "Error al recuperar las estadísticas de usuarios: " + e.getMessage());
         }
     }
+
+    // ===============================
+    // ENDPOINTS PARA AUDITORÍA DE ROLES Y USUARIOS
+    // ===============================
+
+    /**
+     * Obtiene el historial de auditoría de un usuario específico
+     */
+    @GetMapping("/usuario/{userId}")
+    public ResponseEntity<Object> getUserAuditHistory(@PathVariable Long userId) {
+        try {
+            List<AuditLog> auditHistory = auditLogService.getUserAuditHistory(userId);
+            return Response.ok(auditHistory, "Historial de auditoría del usuario recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el historial del usuario: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene todos los cambios de rol del sistema
+     */
+    @GetMapping("/roles/cambios")
+    public ResponseEntity<Object> getAllRoleChanges() {
+        try {
+            List<AuditLog> roleChanges = auditLogService.getAllRoleChanges();
+            return Response.ok(roleChanges, "Historial de cambios de rol recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los cambios de rol: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene cambios de rol de un usuario específico
+     */
+    @GetMapping("/usuario/{userId}/roles")
+    public ResponseEntity<Object> getRoleChangesByUser(@PathVariable Long userId) {
+        try {
+            List<AuditLog> roleChanges = auditLogService.getRoleChangesByUser(userId);
+            return Response.ok(roleChanges, "Cambios de rol del usuario recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los cambios de rol del usuario: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de cambios de rol
+     */
+    @GetMapping("/roles/estadisticas")
+    public ResponseEntity<Object> getRoleChangeStatistics() {
+        try {
+            Map<String, Object> stats = auditLogService.getRoleChangeStatistics();
+            return Response.ok(stats, "Estadísticas de cambios de rol recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar las estadísticas de roles: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene cambios de rol recientes (últimas 24 horas)
+     */
+    @GetMapping("/roles/recientes")
+    public ResponseEntity<Object> getRecentRoleChanges() {
+        try {
+            LocalDateTime since = LocalDateTime.now().minusDays(1);
+            List<AuditLog> recentChanges = auditLogService.getRecentRoleChanges(since);
+            return Response.ok(recentChanges, "Cambios de rol recientes recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los cambios recientes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene logs de creación de usuarios
+     */
+    @GetMapping("/usuarios/creaciones")
+    public ResponseEntity<Object> getUserCreationLogs() {
+        try {
+            List<AuditLog> userCreations = auditLogService.getUserCreationLogs();
+            return Response.ok(userCreations, "Logs de creación de usuarios recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los logs de creación: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene resumen de actividad de usuarios (creación, cambios de rol, etc.)
+     */
+    @GetMapping("/usuarios/resumen")
+    public ResponseEntity<Object> getUserActivitySummary() {
+        try {
+            Map<String, Object> summary = auditLogService.getUserActivitySummary();
+            return Response.ok(summary, "Resumen de actividad de usuarios recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el resumen de actividad: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Busca logs por tipo de entidad y acción
+     */
+    @GetMapping("/entidad/{entityType}/accion/{action}")
+    public ResponseEntity<Object> getLogsByEntityTypeAndAction(
+            @PathVariable String entityType, 
+            @PathVariable String action) {
+        try {
+            List<AuditLog> logs = auditLogService.getLogsByEntityTypeAndAction(entityType, action);
+            return Response.ok(logs, "Logs por entidad y acción recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los logs: " + e.getMessage());
+        }
+    }
 }
