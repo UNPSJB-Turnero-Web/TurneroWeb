@@ -89,8 +89,6 @@ public class RegistrationService {
         // Guardar médico usando el repository
         Medico savedMedico = medicoRepository.save(medico);
         
-        // 5. Asignar rol (cuando esté disponible RoleService)
-        // roleService.assignMedicoRole(dni, "REGISTRATION_SYSTEM");
         
         return savedMedico;
     }
@@ -144,9 +142,6 @@ public class RegistrationService {
         
         // Guardar paciente usando el repository
         Paciente savedPaciente = pacienteRepository.save(paciente);
-        
-        // 5. Asignar rol (cuando esté disponible RoleService)
-        // roleService.assignPacienteRole(dni, "REGISTRATION_SYSTEM");
         
         return savedPaciente;
     }
@@ -213,16 +208,16 @@ public class RegistrationService {
                                   String nombre, String apellido, String telefono) {
         // Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
-        
+
         // Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
-        
+
         // Crear User para autenticación con rol OPERADOR
-        // El rol debe existir previamente en la base de datos
-        User user = userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Operador");
-        
+        userService.createUser(nombre, apellido, dni, email, hashedPassword, telefono, "Operador");
+
         // Retornar el usuario creado
-        return user;
+        return userService.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Error al obtener usuario después del registro de operador"));
     }
 
     // ===============================

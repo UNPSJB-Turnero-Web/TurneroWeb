@@ -6,5 +6,5 @@ export interface Operador {
   email: string;
   username: string;
   activo: boolean;
+  telefono: string;
 }
-//    telefono: string; --- IGNORE ---

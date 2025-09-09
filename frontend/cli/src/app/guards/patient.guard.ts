@@ -24,8 +24,6 @@ export class PatientGuard implements CanActivate {
     if (userRole === 'PACIENTE') {
       return true;
     } else {
-      // Redirigir según su rol
-      this.authService.redirectByRole();
       return false;
     }
   }

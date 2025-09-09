@@ -42,9 +42,22 @@ import { AuditDashboardComponent } from "./turnos/audit-dashboard.component";
 import { AdminGuard } from "./guards/admin.guard";
 import { PatientGuard } from "./guards/patient.guard";
 import { MedicoGuard } from "./guards/medico.guard";
+import { OperadorGuard } from "./guards/operador.guard";
+
+import { OperadorDashboardComponent } from "./operador/operador-dashboard.component";
+//import { OperadorAgendaComponent } from "./operador/operador-agenda.component";
+import { OperadoresComponent } from "./operador/operadores.component";
+import { OperadorDetailComponent } from "./operador/operador-detail.component";
 
 export const routes: Routes = [
       { path: '', component: HomeComponent },
+
+  // Rutas de Operador (protegidas por OperadorGuard)
+  { path: 'operador-dashboard', component: OperadorDashboardComponent, canActivate: [OperadorGuard] },
+  //{ path: 'operador-agenda', component: OperadorAgendaComponent, canActivate: [OperadorGuard] },
+  { path: 'operadores', component: OperadoresComponent, canActivate: [OperadorGuard] },
+  { path: 'operadores/new', component: OperadorDetailComponent, canActivate: [OperadorGuard] },
+  { path: 'operadores/:id', component: OperadorDetailComponent, canActivate: [OperadorGuard] },
 
   
     { path: 'ingresar', component: InicioSesionComponent },

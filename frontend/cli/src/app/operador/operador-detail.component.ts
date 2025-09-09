@@ -346,6 +346,7 @@ export class OperadorDetailComponent implements OnInit {
     nombre: "",
     apellido: "",
     username: "",
+    telefono: "",
     activo: true,
     dni: 0,
     email: "",

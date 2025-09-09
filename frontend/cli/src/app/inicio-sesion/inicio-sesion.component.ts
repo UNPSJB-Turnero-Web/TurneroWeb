@@ -51,7 +51,7 @@ export class InicioSesionComponent {
   constructor(private router: Router, private authService: AuthService) {
     // Verificar si el usuario ya está autenticado
     if (this.authService.isAuthenticated()) {
-      this.authService.redirectByRole();
+      this.router.navigate(['/']);
       return;
     }
 

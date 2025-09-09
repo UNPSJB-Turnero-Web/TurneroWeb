@@ -249,7 +249,7 @@ export class AuthService {
     const roleMapping: { [key: string]: string } = {
       'PACIENTE': 'paciente',
       'MEDICO': 'medico',
-      'OPERARIO': 'operador',
+      'OPERADOR': 'operador',
       'ADMINISTRADOR': 'admin'
     };
 
@@ -259,36 +259,31 @@ export class AuthService {
   /**
    * Redirige al usuario según su rol
    */
+    /**
+   * Redirige al usuario a la ruta correspondiente según su rol
+   */
   redirectByRole(): void {
     const role = this.getUserRole();
-    if (role) {
-      const route = this.mapRoleToRoute(role);
-      
-      // Si es un paciente, obtener su ID antes de redirigir
-      if (role === 'PACIENTE') {
-        const email = this.getUserEmail();
-        if (email) {
-          this.pacienteService.findByEmail(email).subscribe({
-            next: (response: DataPackage<{pacienteId: number}>) => {
-              if (response.status_code === 200 && response.data) {
-                localStorage.setItem('pacienteId', response.data.pacienteId.toString());
-                console.log('ID del paciente guardado:', response.data.pacienteId);
-              }
-              this.router.navigate([`/${route}-dashboard`]);
-            },
-            error: (error: any) => {
-              console.error('Error obteniendo ID del paciente:', error);
-              // Redirigir de todas formas
-            }
-          });
-        } else {
-          this.router.navigate([`/${route}-dashboard`]);
-        }
-      } else {
-        this.router.navigate([`/${route}-dashboard`]);
-      }
-    } else {
+    if (!role) {
       this.router.navigate(['/']);
+      return;
+    }
+    switch (role.toUpperCase()) {
+      case 'PACIENTE':
+        this.router.navigate(['/paciente-dashboard']);
+        break;
+      case 'OPERADOR':
+        this.router.navigate(['/operador-dashboard']);
+        break;
+      case 'MEDICO':
+        this.router.navigate(['/medico-dashboard']);
+        break;
+      case 'ADMINISTRADOR':
+        this.router.navigate(['/turnos']);
+        break;
+      default:
+        this.router.navigate(['/']);
+        break;
     }
   }
 

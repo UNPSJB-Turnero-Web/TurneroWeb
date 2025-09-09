@@ -5,7 +5,7 @@ import { AuthService } from '../inicio-sesion/auth.service';
 @Injectable({
   providedIn: 'root'
 })
-export class AdminGuard implements CanActivate {
+export class OperadorGuard implements CanActivate {
   constructor(
     private router: Router,
     private authService: AuthService
@@ -18,10 +18,10 @@ export class AdminGuard implements CanActivate {
       return false;
     }
 
-    // Verificar si tiene rol de admin
+    // Verificar si tiene rol de operador
     const userRole = this.authService.getUserRole();
     
-    if (userRole === 'ADMINISTRADOR') {
+    if (userRole === 'OPERADOR') {
       return true;
     } else {
       return false;
