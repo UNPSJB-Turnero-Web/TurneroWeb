@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { MedicoService } from './medico.service';
+import { MedicoSessionService } from '../services/medico-session.service';
 import { Medico } from './medico';
 import { Especialidad } from '../especialidades/especialidad';
 
@@ -290,17 +291,17 @@ import { Especialidad } from '../especialidades/especialidad';
               <div class="specialty-selection">
                 <div class="form-group">
                   <label class="form-label">Seleccionar Especialidad *</label>
-                  <select class="form-select specialty-select" [(ngModel)]="especialidadSeleccionada" name="especialidad">
+                  <select class="form-select specialty-select" [(ngModel)]="especialidadSeleccionada" name="especialidad" [disabled]="modoEdicion">
                     <option value="">Seleccionar especialidad...</option>
                     <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
                       {{ especialidad.nombre }}
-                      <span *ngIf="especialidadTieneDisponibilidades(especialidad.id)" class="specialty-status">(Ya configurada)</span>
+                      <span *ngIf="especialidadTieneDisponibilidades(especialidad.id) && !modoEdicion" class="specialty-status">(Ya configurada)</span>
                     </option>
                   </select>
                   <div class="specialty-info" *ngIf="especialidadSeleccionada">
                     <div class="info-card">
                       <i class="fas fa-info-circle me-2"></i>
-                      Configurando horarios para: <strong>{{ getNombreEspecialidad(especialidadSeleccionada) }}</strong>
+                      {{ modoEdicion ? 'Editando horarios para:' : 'Configurando horarios para:' }} <strong>{{ getNombreEspecialidad(especialidadSeleccionada) }}</strong>
                     </div>
                   </div>
                   <div class="specialty-warning" *ngIf="!especialidadSeleccionada">
@@ -872,6 +873,7 @@ import { Especialidad } from '../especialidades/especialidad';
       padding-bottom: 1.5rem;
       border-bottom: 1px solid rgba(226, 232, 240, 0.6);
       background: white!important;
+      box-shadow:none!important;
     }
 
     .especialidad-info {
@@ -1168,33 +1170,11 @@ import { Especialidad } from '../especialidades/especialidad';
       border: 1px solid rgba(226, 232, 240, 0.4);
       border-radius: 20px;
       overflow: hidden;
-      transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-      box-shadow: 
-        0 16px 32px rgba(0, 0, 0, 0.06),
-        0 8px 16px rgba(0, 0, 0, 0.03),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+     
     }
 
-    .horario-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #f59e0b 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
 
-    .horario-card:hover {
-      transform: translateY(-6px) scale(1.02);
-      box-shadow: 
-        0 24px 48px rgba(0, 0, 0, 0.1),
-        0 12px 24px rgba(0, 0, 0, 0.06),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    }
-
+    
     .horario-card:hover::before {
       opacity: 1;
     }
@@ -2067,49 +2047,83 @@ export class MedicoHorariosComponent implements OnInit {
   constructor(
     private router: Router,
     private disponibilidadService: DisponibilidadMedicoService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private medicoSessionService: MedicoSessionService
   ) {
     this.initializeParticles();
   }
 
   ngOnInit() {
-    this.cargarMedicoYEspecialidades();
+    console.log('=== INICIANDO COMPONENTE MEDICO-HORARIOS ===');
     this.verificarConfiguracionSesion();
+    
+    // Pequeña pausa para que se vean los logs antes de continuar
+    setTimeout(() => {
+      this.cargarMedicoYEspecialidades();
+    }, 100);
   }
 
   verificarConfiguracionSesion() {
-    console.log('=== VERIFICACIÓN DE SESIÓN ===');
+    console.log('=== VERIFICACIÓN DE SESIÓN DETALLADA ===');
     console.log('Todas las claves en localStorage:', Object.keys(localStorage));
-    console.log('currentUser:', localStorage.getItem('currentUser'));
-    console.log('staffMedicoId:', localStorage.getItem('staffMedicoId'));
-    console.log('userId:', localStorage.getItem('userId'));
-    console.log('medicoId:', localStorage.getItem('medicoId'));
-    console.log('=== FIN VERIFICACIÓN ===');
+    
+    // Verificar cada key individualmente
+    const keys = ['currentUser', 'staffMedicoId', 'userId', 'medicoId', 'id'];
+    keys.forEach(key => {
+      const value = localStorage.getItem(key);
+      console.log(`${key}:`, value);
+      
+      if (key === 'currentUser' && value) {
+        try {
+          const parsed = JSON.parse(value);
+          console.log(`${key} parsed:`, parsed);
+        } catch (e) {
+          console.error(`Error parsing ${key}:`, e);
+        }
+      }
+    });
+    
+    // Verificar el resultado del getMedicoIdFromSession
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
+    console.log('ID final detectado por getMedicoIdFromSession():', medicoId);
+    
+    console.log('=== FIN VERIFICACIÓN DETALLADA ===');
   }
 
   cargarMedicoYEspecialidades() {
-    const medicoId = this.getMedicoIdFromSession();
+    // Para cargar el médico usamos el ID original (medicoId)
+    const medicoId = this.medicoSessionService.getMedicoIdOriginalFromSession();
 
-    if (!medicoId || medicoId === 0) {
+    if (!medicoId || medicoId === '0' || medicoId === 'null') {
       console.error('Error: No se pudo obtener el ID del médico');
       this.router.navigate(['/login']);
       return;
     }
 
+    console.log('Intentando cargar médico con ID original:', medicoId);
+
     // Cargar información del médico y sus especialidades
-    this.medicoService.findById(medicoId).subscribe({
+    this.medicoService.findById(parseInt(medicoId, 10)).subscribe({
       next: (medico) => {
+        console.log('Médico encontrado exitosamente:', medico);
         this.medicoActual = medico;
         this.especialidades = medico.especialidades || [];
-        console.log('Médico cargado:', medico);
-        console.log('Especialidades:', this.especialidades);
+        console.log('Especialidades cargadas:', this.especialidades);
         
-        // Una vez que tenemos las especialidades, cargar las disponibilidades
+        // Solo cargar disponibilidades si el médico existe
         this.cargarDisponibilidades();
       },
       error: (error) => {
         console.error('Error al cargar médico:', error);
-        this.router.navigate(['/login']);
+        console.error('Error completo:', JSON.stringify(error, null, 2));
+        
+        if (error.status === 404) {
+          alert(`Error: No se encontró el médico con ID ${medicoId}. Su sesión puede ser inválida. Redirigiendo al login...`);
+          localStorage.clear();
+          this.router.navigate(['/login']);
+        } else {
+          alert(`Error al cargar información del médico: ${error.error?.message || error.message}`);
+        }
       }
     });
   }
@@ -2120,7 +2134,7 @@ export class MedicoHorariosComponent implements OnInit {
 
   cargarDisponibilidades() {
     this.cargando = true;
-    const medicoId = this.getMedicoIdFromSession();
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
 
     // Validar que tenemos un ID válido
     if (!medicoId || medicoId === 0) {
@@ -2136,6 +2150,10 @@ export class MedicoHorariosComponent implements OnInit {
       next: (response) => {
         console.log('Respuesta del servidor (cargar):', response);
         this.disponibilidades = response.data || [];
+        
+        // Sincronizar el ID correcto si encontramos disponibilidades
+        this.medicoSessionService.sincronizarIdCorrecto(this.disponibilidadService);
+        
         this.organizarDisponibilidadesPorEspecialidad();
         this.cargando = false;
       },
@@ -2161,6 +2179,9 @@ export class MedicoHorariosComponent implements OnInit {
   organizarDisponibilidadesPorEspecialidad() {
     this.disponibilidadesPorEspecialidad = {};
     
+    // Separar disponibilidades con y sin especialidad
+    const disponibilidadesSinEspecialidad: DisponibilidadMedico[] = [];
+    
     // Organizar disponibilidades existentes por especialidad
     this.disponibilidades.forEach(disponibilidad => {
       const especialidadId = disponibilidad.especialidadId;
@@ -2169,9 +2190,35 @@ export class MedicoHorariosComponent implements OnInit {
           this.disponibilidadesPorEspecialidad[especialidadId] = [];
         }
         this.disponibilidadesPorEspecialidad[especialidadId].push(disponibilidad);
+      } else {
+        // Disponibilidades del sistema anterior sin especialidad
+        disponibilidadesSinEspecialidad.push(disponibilidad);
+        console.warn('Disponibilidad sin especialidad encontrada:', disponibilidad);
       }
     });
-    
+
+    // Si hay disponibilidades sin especialidad y tenemos especialidades disponibles,
+    // mostrar un mensaje informativo
+    if (disponibilidadesSinEspecialidad.length > 0 && this.especialidades.length > 0) {
+      console.log(`Se encontraron ${disponibilidadesSinEspecialidad.length} disponibilidades del sistema anterior sin especialidad asociada.`);
+      
+      // Para mantener compatibilidad, asignar a la primera especialidad si es posible
+      // Esto es temporal hasta que el usuario las migre manualmente
+      const primeraEspecialidad = this.especialidades[0];
+      if (primeraEspecialidad) {
+        console.log(`Asignando temporalmente a la especialidad: ${primeraEspecialidad.nombre}`);
+        disponibilidadesSinEspecialidad.forEach(disp => {
+          disp.especialidadId = primeraEspecialidad.id;
+          disp.especialidad = primeraEspecialidad;
+        });
+        
+        if (!this.disponibilidadesPorEspecialidad[primeraEspecialidad.id]) {
+          this.disponibilidadesPorEspecialidad[primeraEspecialidad.id] = [];
+        }
+        this.disponibilidadesPorEspecialidad[primeraEspecialidad.id].push(...disponibilidadesSinEspecialidad);
+      }
+    }
+
     console.log('Disponibilidades organizadas por especialidad:', this.disponibilidadesPorEspecialidad);
   }
 
@@ -2192,7 +2239,7 @@ export class MedicoHorariosComponent implements OnInit {
         
         const disponibilidades = this.disponibilidadesPorEspecialidad[especialidadId];
         disponibilidades.forEach(disponibilidad => {
-          disponibilidad.horarios.forEach(horarioExistente => {
+          disponibilidad.horarios.forEach((horarioExistente: any) => {
             if (horarioExistente.dia === nuevoHorario.dia) {
               // Verificar si hay solapamiento de horarios
               if (this.horariosSeSolapan(nuevoHorario, horarioExistente)) {
@@ -2286,11 +2333,23 @@ export class MedicoHorariosComponent implements OnInit {
       
       console.log('Modo edición - usando staffMedicoId existente:', staffMedicoIdExistente);
       console.log('Horarios a guardar:', horarios);
+      console.log('Especialidad seleccionada:', this.especialidadSeleccionada);
+
+      // Asegurar que siempre tengamos una especialidad asociada
+      const especialidadFinal = this.especialidadSeleccionada || 
+                                this.disponibilidadEditando.especialidadId || 
+                                (this.especialidades.length > 0 ? this.especialidades[0].id : null);
+
+      if (!especialidadFinal) {
+        alert('Error: Debe seleccionar una especialidad antes de guardar.');
+        this.guardando = false;
+        return;
+      }
 
       const disponibilidadActualizada = {
         id: this.disponibilidadEditando.id!,
         staffMedicoId: staffMedicoIdExistente,
-        especialidadId: this.especialidadSeleccionada,
+        especialidadId: especialidadFinal,
         horarios
       } as DisponibilidadMedico;
 
@@ -2316,7 +2375,7 @@ export class MedicoHorariosComponent implements OnInit {
       });
     } else {
       // Al crear nueva disponibilidad, usar el medicoId del localStorage
-      const staffMedicoId = this.getMedicoIdFromSession();
+      const staffMedicoId = this.medicoSessionService.getMedicoIdFromSession();
 
       if (!staffMedicoId || staffMedicoId === 0) {
         alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
@@ -2325,8 +2384,80 @@ export class MedicoHorariosComponent implements OnInit {
         return;
       }
 
+      // Validar que el ID sea consistente con disponibilidades existentes
+      if (this.disponibilidades.length > 0) {
+        const idExistente = this.disponibilidades[0].staffMedicoId;
+        if (staffMedicoId !== idExistente) {
+          console.warn(`Inconsistencia de IDs detectada. Usando ID de disponibilidad existente: ${idExistente}`);
+          const staffMedicoIdCorregido = idExistente;
+          
+          console.log('Modo creación - usando ID corregido:', staffMedicoIdCorregido);
+          console.log('Horarios a guardar:', horarios);
+          console.log('Especialidad seleccionada:', this.especialidadSeleccionada);
+
+          const nuevaDisponibilidad = {
+            id: 0,
+            staffMedicoId: staffMedicoIdCorregido,
+            especialidadId: this.especialidadSeleccionada,
+            horarios
+          } as DisponibilidadMedico;
+
+          console.log('Creando nueva disponibilidad con ID corregido:', nuevaDisponibilidad);
+
+          this.disponibilidadService.create(nuevaDisponibilidad).subscribe({
+            next: (response) => {
+              console.log('Respuesta del servidor (crear):', response);
+              this.guardando = false;
+              this.cancelarFormulario();
+              this.cargarDisponibilidades();
+              alert('Horarios guardados correctamente');
+            },
+            error: (error) => {
+              console.error('Error al guardar disponibilidad:', error);
+              console.error('Error completo:', JSON.stringify(error, null, 2));
+              this.guardando = false;
+              
+              let errorMessage = 'Error desconocido al guardar los horarios';
+              
+              if (error.status === 404) {
+                errorMessage = 'Error: No se encontró el médico. Verifique que su sesión sea válida.';
+              } else if (error.status === 400) {
+                // Error 400 podría ser el problema del StaffMedico
+                if (error.error?.status_text?.includes('StaffMedico no encontrado')) {
+                  errorMessage = `Error: El médico con ID ${staffMedicoIdCorregido} no existe en el sistema. Por favor, contacte al administrador o inicie sesión nuevamente.`;
+                  console.error('StaffMedico no encontrado con ID corregido:', staffMedicoIdCorregido);
+                  
+                  // Limpiar localStorage y redirigir al login
+                  localStorage.clear();
+                  setTimeout(() => {
+                    this.router.navigate(['/login']);
+                  }, 3000);
+                } else {
+                  errorMessage = `Error de validación: ${error.error?.status_text || error.error?.message || 'Datos inválidos'}`;
+                }
+              } else if (error.status === 403) {
+                errorMessage = 'Error de permisos. Verifique que su sesión sea válida.';
+              } else {
+                errorMessage = `Error al guardar los horarios: ${error.error?.status_text || error.error?.message || error.message}`;
+              }
+              
+              alert(errorMessage);
+            }
+          });
+          return;
+        }
+      }
+
+      // Asegurar que tengamos una especialidad seleccionada
+      if (!this.especialidadSeleccionada) {
+        alert('Error: Debe seleccionar una especialidad antes de guardar.');
+        this.guardando = false;
+        return;
+      }
+
       console.log('Modo creación - usando medicoId del localStorage:', staffMedicoId);
       console.log('Horarios a guardar:', horarios);
+      console.log('Especialidad seleccionada:', this.especialidadSeleccionada);
 
       const nuevaDisponibilidad = {
         id: 0,
@@ -2346,13 +2477,35 @@ export class MedicoHorariosComponent implements OnInit {
           alert('Horarios guardados correctamente');
         },
         error: (error) => {
-          console.error('Error al guardar:', error);
+          console.error('Error al guardar disponibilidad:', error);
+          console.error('Error completo:', JSON.stringify(error, null, 2));
           this.guardando = false;
+          
+          let errorMessage = 'Error desconocido al guardar los horarios';
+          
           if (error.status === 404) {
-            alert('Error: No se encontró el médico. Verifique que su sesión sea válida.');
+            errorMessage = 'Error: No se encontró el médico. Verifique que su sesión sea válida.';
+          } else if (error.status === 400) {
+            // Error 400 podría ser el problema del StaffMedico
+            if (error.error?.status_text?.includes('StaffMedico no encontrado')) {
+              errorMessage = `Error: El médico con ID ${staffMedicoId} no existe en el sistema. Por favor, contacte al administrador o inicie sesión nuevamente.`;
+              console.error('StaffMedico no encontrado con ID:', staffMedicoId);
+              
+              // Limpiar localStorage y redirigir al login
+              localStorage.clear();
+              setTimeout(() => {
+                this.router.navigate(['/login']);
+              }, 3000);
+            } else {
+              errorMessage = `Error de validación: ${error.error?.status_text || error.error?.message || 'Datos inválidos'}`;
+            }
+          } else if (error.status === 403) {
+            errorMessage = 'Error de permisos. Verifique que su sesión sea válida.';
           } else {
-            alert(`Error al guardar los horarios: ${error.error?.status_text || error.message}`);
+            errorMessage = `Error al guardar los horarios: ${error.error?.status_text || error.error?.message || error.message}`;
           }
+          
+          alert(errorMessage);
         }
       });
     }
@@ -2362,6 +2515,8 @@ export class MedicoHorariosComponent implements OnInit {
     this.modoEdicion = true;
     this.disponibilidadEditando = disponibilidad;
     this.mostrarFormulario = true;
+    
+    // Asegurar que tenemos la especialidad asociada
     this.especialidadSeleccionada = disponibilidad.especialidadId || null;
 
     // Debug: verificar qué días están llegando de la BD
@@ -2369,8 +2524,18 @@ export class MedicoHorariosComponent implements OnInit {
     console.log('Horarios:', disponibilidad.horarios);
     console.log('Especialidad ID:', disponibilidad.especialidadId);
 
+    // Si no tiene especialidadId, es una disponibilidad del sistema anterior
+    if (!disponibilidad.especialidadId) {
+      console.warn('Disponibilidad sin especialidadId detectada - sistema anterior');
+      // Podríamos asignar la primera especialidad disponible o mostrar un selector
+      if (this.especialidades.length > 0) {
+        this.especialidadSeleccionada = this.especialidades[0].id;
+        console.log('Asignando especialidad por defecto:', this.especialidades[0].nombre);
+      }
+    }
+
     // Cargar datos para edición - asegurarnos de que el día se cargue correctamente
-    this.horariosForm = disponibilidad.horarios?.map(horario => {
+    this.horariosForm = disponibilidad.horarios?.map((horario: any) => {
       console.log('Día del horario original:', horario.dia);
       const diaNormalizado = this.normalizarDia(horario.dia);
       console.log('Día normalizado:', diaNormalizado);
@@ -2418,46 +2583,6 @@ export class MedicoHorariosComponent implements OnInit {
     this.router.navigate(['/medico-dashboard']);
   }
 
-  private getMedicoIdFromSession(): number {
-    // Verificar diferentes posibles keys en localStorage
-    let medicoId = localStorage.getItem('staffMedicoId') || 
-                   localStorage.getItem('medicoId') || 
-                   localStorage.getItem('userId') ||
-                   localStorage.getItem('id');
-    
-    console.log('Datos en localStorage:', {
-      staffMedicoId: localStorage.getItem('staffMedicoId'),
-      medicoId: localStorage.getItem('medicoId'),
-      userId: localStorage.getItem('userId'),
-      id: localStorage.getItem('id'),
-      currentUser: localStorage.getItem('currentUser')
-    });
-
-    // Si no encuentra ningún ID, intentar obtenerlo del currentUser
-    if (!medicoId) {
-      const currentUser = localStorage.getItem('currentUser');
-      if (currentUser) {
-        try {
-          const user = JSON.parse(currentUser);
-          medicoId = user.id || user.staffMedicoId || user.medicoId;
-          console.log('ID obtenido de currentUser:', medicoId);
-        } catch (e) {
-          console.error('Error al parsear currentUser:', e);
-        }
-      }
-    }
-
-    console.log('ID final obtenido:', medicoId);
-    
-    if (!medicoId) {
-      console.error('No se pudo obtener el ID del médico. Redirigiendo al login...');
-      this.router.navigate(['/login']);
-      return 0;
-    }
-
-    return medicoId ? parseInt(medicoId, 10) : 0;
-  }
-
   private initializeParticles() {
     this.particles = [];
     for (let i = 0; i < 50; i++) {
@@ -2477,7 +2602,7 @@ export class MedicoHorariosComponent implements OnInit {
   getDiasActivos(): number {
     const diasUnicos = new Set();
     this.disponibilidades.forEach(disponibilidad => {
-      disponibilidad.horarios?.forEach(horario => {
+      disponibilidad.horarios?.forEach((horario: any) => {
         diasUnicos.add(horario.dia);
       });
     });

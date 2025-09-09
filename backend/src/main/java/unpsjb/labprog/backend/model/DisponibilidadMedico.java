@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,6 +34,10 @@ public class DisponibilidadMedico {
     @ManyToOne(optional = false)
     @JsonBackReference
     private StaffMedico staffMedico; // Relación con StaffMedico
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "especialidad_id")
+    private Especialidad especialidad; // Relación con Especialidad
     
     @Embeddable
     @Getter

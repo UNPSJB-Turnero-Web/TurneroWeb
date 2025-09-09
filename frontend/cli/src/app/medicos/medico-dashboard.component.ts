@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { MedicoService } from './medico.service';
+import { MedicoSessionService } from '../services/medico-session.service';
 import { Turno } from '../turnos/turno';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { Medico } from './medico';
@@ -1318,13 +1319,28 @@ export class MedicoDashboardComponent implements OnInit {
     private router: Router,
     private turnoService: TurnoService,
     private disponibilidadService: DisponibilidadMedicoService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private medicoSessionService: MedicoSessionService
   ) {
     this.initializeParticles();
   }
 
   ngOnInit() {
     this.cargarDatosMedico();
+    // Sincronizar ID correcto desde disponibilidades antes de cargar estadísticas
+    this.sincronizarIdYCargarDatos();
+  }
+
+  private async sincronizarIdYCargarDatos() {
+    try {
+      // Intentar sincronizar el ID correcto desde disponibilidades
+      await this.medicoSessionService.sincronizarIdCorrecto(this.disponibilidadService);
+      console.log('ID sincronizado correctamente desde disponibilidades');
+    } catch (error) {
+      console.log('No se pudieron cargar disponibilidades para sincronizar ID (normal en primera carga)');
+    }
+    
+    // Cargar datos independientemente de si se pudo sincronizar o no
     this.cargarEstadisticas();
     this.cargarTurnosHoy();
     this.cargarProximosTurnos();
@@ -1332,9 +1348,16 @@ export class MedicoDashboardComponent implements OnInit {
   }
 
   private cargarDatosMedico() {
-    // TODO: Obtener el médico actual desde la sesión/autenticación
-    // Por ahora, simulamos que el médico tiene ID 1
-    const medicoId = this.getMedicoIdFromSession();
+    // Para cargar datos del médico usamos el ID original (del usuario)
+    const medicoIdOriginal = this.medicoSessionService.getMedicoIdOriginalFromSession();
+    
+    if (!medicoIdOriginal) {
+      console.error('No se pudo obtener el ID original del médico');
+      return;
+    }
+
+    // Convertir a número si es necesario
+    const medicoId = typeof medicoIdOriginal === 'string' ? parseInt(medicoIdOriginal, 10) : medicoIdOriginal;
     
     this.medicoService.findById(medicoId).subscribe({
       next: (medico) => {
@@ -1342,12 +1365,26 @@ export class MedicoDashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al cargar datos del médico:', error);
+        // Si no se puede cargar con el ID original, intentar con el ID de sesión como fallback
+        console.log('Intentando cargar con ID de sesión como fallback...');
+        const fallbackId = this.medicoSessionService.getMedicoIdFromSession();
+        if (fallbackId && fallbackId !== medicoId) {
+          this.medicoService.findById(fallbackId).subscribe({
+            next: (medico) => {
+              this.medicoActual = medico;
+              console.log('Médico cargado con ID de fallback:', fallbackId);
+            },
+            error: (fallbackError) => {
+              console.error('Error también con ID de fallback:', fallbackError);
+            }
+          });
+        }
       }
     });
   }
 
   private cargarEstadisticas() {
-    const medicoId = this.getMedicoIdFromSession();
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
     const hoy = new Date().toISOString().split('T')[0];
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
     
@@ -1389,7 +1426,7 @@ export class MedicoDashboardComponent implements OnInit {
   }
 
   private cargarTurnosHoy() {
-    const medicoId = this.getMedicoIdFromSession();
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
     const hoy = new Date().toISOString().split('T')[0];
     
     this.turnoService.searchWithSimpleFilters({
@@ -1402,7 +1439,7 @@ export class MedicoDashboardComponent implements OnInit {
   }
 
   private cargarProximosTurnos() {
-    const medicoId = this.getMedicoIdFromSession();
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
     
     this.turnoService.searchWithSimpleFilters({
@@ -1416,7 +1453,7 @@ export class MedicoDashboardComponent implements OnInit {
   }
 
   private cargarDisponibilidad() {
-    const medicoId = this.getMedicoIdFromSession();
+    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
     
     this.disponibilidadService.byMedico(medicoId).subscribe({
       next: (response) => {
@@ -1447,66 +1484,6 @@ export class MedicoDashboardComponent implements OnInit {
 
   configurarPerfil() {
     this.router.navigate(['/medico-perfil']);
-  }
-
-  // Utility methods
-  private getMedicoIdFromSession(): number {
-    console.log('=== DEBUG getMedicoIdFromSession (Dashboard) ===');
-    
-    // Recopilar datos del localStorage
-    const datos = {
-      staffMedicoId: localStorage.getItem('staffMedicoId'),
-      medicoId: localStorage.getItem('medicoId'),
-      userId: localStorage.getItem('userId'),
-      id: localStorage.getItem('id'),
-      currentUser: localStorage.getItem('currentUser')
-    };
-    
-    console.log('Datos en localStorage:', datos);
-    
-    // Intentar obtener ID desde diferentes fuentes
-    let id = 0;
-    
-    // 1. Intentar desde medicoId directo
-    if (datos.medicoId && datos.medicoId !== 'null') {
-      id = parseInt(datos.medicoId, 10);
-      console.log('ID obtenido desde medicoId:', id);
-    }
-    
-    // 2. Intentar desde staffMedicoId
-    else if (datos.staffMedicoId && datos.staffMedicoId !== 'null') {
-      id = parseInt(datos.staffMedicoId, 10);
-      console.log('ID obtenido desde staffMedicoId:', id);
-    }
-    
-    // 3. Intentar parsear currentUser JSON
-    else if (datos.currentUser && datos.currentUser !== 'null') {
-      try {
-        const currentUser = JSON.parse(datos.currentUser);
-        if (currentUser && currentUser.id) {
-          id = parseInt(currentUser.id, 10);
-          console.log('ID obtenido desde currentUser.id:', id);
-        } else if (currentUser && currentUser.medicoId) {
-          id = parseInt(currentUser.medicoId, 10);
-          console.log('ID obtenido desde currentUser.medicoId:', id);
-        }
-      } catch (e) {
-        console.error('Error al parsear currentUser:', e);
-      }
-    }
-    
-    // Validar que el ID sea válido
-    if (!id || isNaN(id) || id <= 0) {
-      console.error('No se pudo obtener un ID válido del médico');
-      // Redirigir al login si no hay ID válido
-      this.router.navigate(['/login']);
-      return 0;
-    }
-    
-    console.log('ID final obtenido:', id);
-    console.log('=== FIN DEBUG ===');
-    
-    return id;
   }
 
   private getStartOfWeek(date: Date): Date {

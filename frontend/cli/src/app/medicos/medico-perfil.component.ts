@@ -243,7 +243,7 @@ interface CambioPassword {
               </div>
             </form>
           </div>
-        </div>
+        </div>      
         <!-- Configuración de Notificaciones -->
         <div class="perfil-section">
           <div class="section-header">

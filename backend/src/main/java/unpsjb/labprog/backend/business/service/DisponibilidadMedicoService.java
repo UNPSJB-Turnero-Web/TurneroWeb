@@ -12,8 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.DisponibilidadMedicoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
+import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.dto.DisponibilidadMedicoDTO;
 import unpsjb.labprog.backend.model.DisponibilidadMedico;
+import unpsjb.labprog.backend.model.Especialidad;
 
 @Service
 public class DisponibilidadMedicoService {
@@ -23,6 +25,9 @@ public class DisponibilidadMedicoService {
 
     @Autowired
     private StaffMedicoRepository staffMedicoRepository;
+
+    @Autowired
+    private EspecialidadRepository especialidadRepository;
 
     public List<DisponibilidadMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -66,8 +71,8 @@ public class DisponibilidadMedicoService {
                 }
             }
         } else {
-            // Validar duplicados para actualización
-            DisponibilidadMedico existente = repository.findById(disponibilidadMedico.getId())
+            // Validar duplicados para actualización - simplemente verificar que existe
+            repository.findById(disponibilidadMedico.getId())
                     .orElseThrow(() -> new IllegalStateException("No existe la disponibilidad que se intenta modificar."));
 
             for (DisponibilidadMedico.DiaHorario horario : disponibilidadMedico.getHorarios()) {
@@ -99,6 +104,12 @@ public class DisponibilidadMedicoService {
         DisponibilidadMedicoDTO dto = new DisponibilidadMedicoDTO();
         dto.setId(disponibilidad.getId());
         dto.setStaffMedicoId(disponibilidad.getStaffMedico().getId());
+        
+        // Incluir especialidadId si existe la relación
+        if (disponibilidad.getEspecialidad() != null) {
+            dto.setEspecialidadId(disponibilidad.getEspecialidad().getId());
+        }
+        
         dto.setHorarios(disponibilidad.getHorarios().stream().map(horario -> {
             DisponibilidadMedicoDTO.DiaHorarioDTO horarioDTO = new DisponibilidadMedicoDTO.DiaHorarioDTO();
             horarioDTO.setDia(horario.getDia());
@@ -115,6 +126,14 @@ public class DisponibilidadMedicoService {
         disponibilidad.setStaffMedico(
                 staffMedicoRepository.findById(dto.getStaffMedicoId())
                         .orElseThrow(() -> new IllegalArgumentException("StaffMedico no encontrado con ID: " + dto.getStaffMedicoId())));
+        
+        // Establecer especialidad si se proporciona especialidadId
+        if (dto.getEspecialidadId() != null) {
+            Especialidad especialidad = especialidadRepository.findById(dto.getEspecialidadId())
+                    .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada con ID: " + dto.getEspecialidadId()));
+            disponibilidad.setEspecialidad(especialidad);
+        }
+        
         disponibilidad.setHorarios(dto.getHorarios().stream().map(horarioDTO -> {
             DisponibilidadMedico.DiaHorario horario = new DisponibilidadMedico.DiaHorario();
             horario.setDia(horarioDTO.getDia());
