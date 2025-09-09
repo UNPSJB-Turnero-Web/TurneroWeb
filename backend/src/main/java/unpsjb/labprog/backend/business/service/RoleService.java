@@ -114,20 +114,20 @@ public class RoleService {
         createDefaultRoleIfNotExists(Role.PACIENTE, "Paciente", "Usuario paciente del sistema de turnos");
         createDefaultRoleIfNotExists(Role.MEDICO, "Médico", "Profesional médico del sistema");
         createDefaultRoleIfNotExists(Role.ADMINISTRADOR, "Administrador", "Administrador del sistema");
-        createDefaultRoleIfNotExists(Role.OPERARIO, "Operario", "Operario del centro de atención");
+        createDefaultRoleIfNotExists(Role.OPERADOR, "Operador", "Operador del centro de atención");
     }
     
     /**
      * Crea un rol por defecto basado en el nombre
      */
     private Role createDefaultRole(String roleName) {
-        String upperRoleName = roleName.toUpperCase();
+        String upperRoleName = roleName.toUpperCase(); 
         
         return switch (upperRoleName) {
             case Role.PACIENTE -> roleRepository.save(Role.createPacienteRole());
             case Role.MEDICO -> roleRepository.save(Role.createMedicoRole());
             case Role.ADMINISTRADOR -> roleRepository.save(Role.createAdministradorRole());
-            case Role.OPERARIO -> roleRepository.save(Role.createOperarioRole());
+            case Role.OPERADOR -> roleRepository.save(Role.createOperarioRole());
             default -> roleRepository.save(new Role(upperRoleName, roleName, "Rol personalizado"));
         };
     }

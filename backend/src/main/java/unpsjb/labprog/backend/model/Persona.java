@@ -34,7 +34,7 @@ public abstract class Persona {
      private String hashedPassword; // Hash de la contraseña
 
     
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
      private String telefono;
 
 }

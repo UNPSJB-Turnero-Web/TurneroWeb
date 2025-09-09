@@ -20,7 +20,7 @@ public class Role {
     public static final String PACIENTE = "PACIENTE";
     public static final String MEDICO = "MEDICO";
     public static final String ADMINISTRADOR = "ADMINISTRADOR";
-    public static final String OPERARIO = "OPERARIO";
+    public static final String OPERADOR = "OPERADOR";
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -77,7 +77,7 @@ public class Role {
     }
     
     public static Role createOperarioRole() {
-        return new Role(OPERARIO, "Operario", "Operario del centro de atención");
+        return new Role(OPERADOR, "Operador", "Operador del centro de atención");
     }
     
     // ===============================
