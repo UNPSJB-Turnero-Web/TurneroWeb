@@ -178,4 +178,50 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     if (!disponibilidad.horarios) return [];
     return disponibilidad.horarios.filter(horario => horario.dia === dia);
   }
+
+  /**
+   * Obtiene la string de horario para mostrar en el calendario simplificado
+   */
+  getHorarioStringDisponibilidad(horario: any): string {
+    if (!horario.horaInicio || !horario.horaFin) return '';
+    const inicio = horario.horaInicio.substring(0, 5);
+    const fin = horario.horaFin.substring(0, 5);
+    return `${inicio}-${fin}`;
+  }
+
+  /**
+   * Calcula la duración total de disponibilidad en un día
+   */
+  getDuracionTotalDia(disponibilidad: DisponibilidadMedico, dia: string): string {
+    const horarios = this.getHorariosPorDia(disponibilidad, dia);
+    if (horarios.length === 0) return '';
+    
+    let totalMinutos = 0;
+    horarios.forEach(horario => {
+      if (horario.horaInicio && horario.horaFin) {
+        const inicio = new Date(`1970-01-01T${horario.horaInicio}`);
+        const fin = new Date(`1970-01-01T${horario.horaFin}`);
+        totalMinutos += (fin.getTime() - inicio.getTime()) / (1000 * 60);
+      }
+    });
+    
+    const horas = Math.floor(totalMinutos / 60);
+    const minutos = totalMinutos % 60;
+    
+    if (horas > 0 && minutos > 0) {
+      return `${horas}h ${minutos}m`;
+    } else if (horas > 0) {
+      return `${horas}h`;
+    } else if (minutos > 0) {
+      return `${minutos}m`;
+    }
+    return '';
+  }
+
+  /**
+   * Obtiene el total de disponibilidades configuradas para un staff médico
+   */
+  getTotalDisponibilidades(staff: StaffMedico): number {
+    return this.verDisponibilidadesStaff(staff).length;
+  }
 }

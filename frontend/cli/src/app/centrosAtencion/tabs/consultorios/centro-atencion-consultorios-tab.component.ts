@@ -185,4 +185,18 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
   onEditarEsquema(esquema: EsquemaTurno): void {
     this.editarEsquema.emit(esquema);
   }
+
+  /**
+   * Obtiene la string de horario para un día específico de un esquema
+   */
+  getHorarioStringPorDia(esquema: EsquemaTurno, dia: string): string {
+    const horarios = this.getHorariosPorDia(esquema, dia);
+    if (horarios.length > 0) {
+      const horario = horarios[0]; // Tomar el primer horario del día
+      const inicio = horario.horaInicio ? horario.horaInicio.substring(0,5) : '';
+      const fin = horario.horaFin ? horario.horaFin.substring(0,5) : '';
+      return `${inicio}-${fin}`;
+    }
+    return '';
+  }
 }
