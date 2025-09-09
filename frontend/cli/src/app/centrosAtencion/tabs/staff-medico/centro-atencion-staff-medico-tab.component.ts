@@ -108,6 +108,45 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     );
   }
 
+  /**
+   * Abre el modal para editar una disponibilidad existente
+   */
+  abrirModalEditarDisponibilidad(staff: StaffMedico): void {
+    // Buscar la disponibilidad existente del staff médico
+    const disponibilidadesExistentes = this.verDisponibilidadesStaff(staff);
+    
+    if (disponibilidadesExistentes.length > 0) {
+      // Si tiene disponibilidades, abrir modal en modo edición con la primera disponibilidad
+      const disponibilidadParaEditar = disponibilidadesExistentes[0];
+      
+      const modalRef = this.modalService.open(DisponibilidadModalComponent, {
+        size: 'lg',
+        backdrop: 'static',
+        keyboard: false
+      });
+
+      // Pasar datos al modal
+      modalRef.componentInstance.staffMedico = staff;
+      modalRef.componentInstance.disponibilidadExistente = disponibilidadParaEditar;
+
+      // Manejar el resultado del modal
+      modalRef.result.then(
+        (disponibilidadActualizada: DisponibilidadMedico) => {
+          if (disponibilidadActualizada) {
+            // Emitir evento para que el componente padre actualice las disponibilidades
+            this.disponibilidadCreada.emit(disponibilidadActualizada);
+          }
+        },
+        (dismissed) => {
+          console.log('Modal de edición de disponibilidad cerrado sin guardar');
+        }
+      );
+    } else {
+      // Si no tiene disponibilidades, abrir modal en modo creación
+      this.abrirModalDisponibilidad(staff);
+    }
+  }
+
   medicoYaAsociado(): boolean {
     if (!this.medicoSeleccionado) return false;
     
@@ -138,7 +177,18 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
 
   verDisponibilidadesStaff(staff: StaffMedico): DisponibilidadMedico[] {
     if (!staff.id) return [];
-    return this.disponibilidadesStaff[staff.id] || [];
+    const resultado = this.disponibilidadesStaff[staff.id] || [];
+    
+    // Log para debug
+    if (staff.medico?.nombre === 'Cecilia') {
+      console.log('🔍 Debug disponibilidades Cecilia:', {
+        staffId: staff.id,
+        disponibilidadesStaff: this.disponibilidadesStaff,
+        resultado: resultado
+      });
+    }
+    
+    return resultado;
   }
 
   /**
@@ -166,9 +216,22 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
    */
   getDisponibilidadesPorDia(staff: StaffMedico, dia: string): DisponibilidadMedico[] {
     const disponibilidades = this.verDisponibilidadesStaff(staff);
-    return disponibilidades.filter(disponibilidad => 
+    const resultado = disponibilidades.filter(disponibilidad => 
       disponibilidad.horarios?.some(horario => horario.dia === dia)
     );
+    
+    // Log para debug
+    if (staff.medico?.nombre === 'Cecilia' && dia === 'JUEVES') {
+      console.log('🔍 Debug Cecilia JUEVES:', {
+        staff: staff,
+        dia: dia,
+        disponibilidades: disponibilidades,
+        disponibilidadesConJueves: resultado,
+        horariosTotales: disponibilidades.flatMap(d => d.horarios || [])
+      });
+    }
+    
+    return resultado;
   }
 
   /**
