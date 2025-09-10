@@ -1,3 +1,4 @@
+    
 package unpsjb.labprog.backend.presenter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,8 @@ import java.util.concurrent.CompletableFuture;
  * Solo para desarrollo y testing.
  */
 @RestController
-@RequestMapping("/api/email/test")
-public class EmailTestController {
+@RequestMapping("/api/email")
+public class EmailController {
 
     @Autowired
     private EmailService emailService;
@@ -68,9 +69,27 @@ public class EmailTestController {
 
             CompletableFuture<Void> future = emailService.sendTextEmailAsync(to, subject, body);
             
-            return Response.ok(null, "Correo de texto programado para envío asíncrono");
+            return Response.ok(future, "Correo de texto programado para envío asíncrono");
         } catch (Exception e) {
             return Response.error(null, "Error al enviar correo asíncrono: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para probar el envío asíncrono de correo HTML.
+     */
+    @PostMapping("/html/async")
+    public ResponseEntity<Object> sendHtmlEmailAsync(@RequestBody Map<String, String> request) {
+        try {
+            String to = request.get("to");
+            String subject = request.get("subject");
+            String htmlBody = request.get("htmlBody");
+
+            CompletableFuture<Void> future = emailService.sendHtmlEmailAsync(to, subject, htmlBody);
+
+            return Response.ok(future, "Correo HTML programado para envío asíncrono");
+        } catch (Exception e) {
+            return Response.error(null, "Error al enviar correo HTML asíncrono: " + e.getMessage());
         }
     }
 
@@ -85,7 +104,7 @@ public class EmailTestController {
 
             CompletableFuture<Void> future = emailService.sendPasswordResetEmail(to, resetLink);
             
-            return Response.ok(null, "Correo de recuperación de contraseña enviado");
+            return Response.ok(future, "Correo programado para envío de recuperación de contraseña");
         } catch (Exception e) {
             return Response.error(null, "Error al enviar correo de recuperación: " + e.getMessage());
         }
@@ -103,7 +122,7 @@ public class EmailTestController {
 
             CompletableFuture<Void> future = emailService.sendAccountActivationEmail(to, activationLink, userName);
             
-            return Response.ok(null, "Correo de activación de cuenta enviado");
+            return Response.ok(future, "Correo programado para envío de activación de cuenta");
         } catch (Exception e) {
             return Response.error(null, "Error al enviar correo de activación: " + e.getMessage());
         }
@@ -121,9 +140,26 @@ public class EmailTestController {
 
             CompletableFuture<Void> future = emailService.sendInitialCredentialsEmail(to, userName, temporaryPassword);
             
-            return Response.ok(null, "Correo de credenciales iniciales enviado");
+            return Response.ok(future, "Correo programado para envío de credenciales iniciales");
         } catch (Exception e) {
             return Response.error(null, "Error al enviar correo de credenciales: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para probar el correo de confirmación de turno.
+     */
+    @PostMapping("/appointment-confirmation")
+    public ResponseEntity<Object> sendAppointmentConfirmationEmail(@RequestBody Map<String, String> request) {
+        try {
+            String to = request.get("to");
+            String patientName = request.get("patientName");
+            String appointmentDetails = request.get("appointmentDetails");
+
+            CompletableFuture<Void> future = emailService.sendAppointmentConfirmationEmail(to, patientName, appointmentDetails);
+            return Response.ok(future, "Correo programado para envío de confirmación de turno");
+        } catch (Exception e) {
+            return Response.error(null, "Error al enviar correo de confirmación de turno: " + e.getMessage());
         }
     }
 }

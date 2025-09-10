@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * DTO para response de verificación de email
+ * DTO para response de verificación de email por auth controller
  */
 @Getter
 @Setter
