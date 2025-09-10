@@ -1,0 +1,569 @@
+/* Estilos principales del organigrama */
+.modern-card {
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+}
+
+.modern-card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+  padding: 1.5rem;
+}
+
+.modern-card-body {
+  padding: 1.5rem;
+}
+
+/* Estadísticas */
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.stat-content h3 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.stat-content p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Filtros */
+.filtros-section {
+  margin-bottom: 2rem;
+}
+
+.filtros-section h6 {
+  color: #495057;
+  font-weight: 600;
+}
+
+/* Vista Semanal */
+.vista-semanal {
+  margin-top: 1rem;
+}
+
+.dia-section {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dia-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1rem 1.5rem;
+  border-left: 4px solid #007bff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dia-titulo {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.dia-count {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.consultorios-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+}
+
+.consultorio-dia-card {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.consultorio-dia-card.has-esquemas {
+  border-color: #28a745;
+  background: rgba(40, 167, 69, 0.02);
+}
+
+.consultorio-dia-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.consultorio-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.consultorio-numero {
+  background: #007bff;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.consultorio-nombre {
+  font-weight: 600;
+  color: #495057;
+}
+
+.esquemas-list {
+  min-height: 60px;
+}
+
+.esquema-item {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid #28a745;
+}
+
+.esquema-item:last-child {
+  margin-bottom: 0;
+}
+
+.esquema-horario {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.esquema-medico {
+  color: #495057;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.esquema-especialidad {
+  color: #6c757d;
+  font-size: 0.75rem;
+  font-style: italic;
+  margin-bottom: 0.25rem;
+}
+
+.esquema-intervalo {
+  background: #e9ecef;
+  color: #495057;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  display: inline-block;
+}
+
+.sin-esquemas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: #adb5bd;
+  font-size: 1.5rem;
+}
+
+/* Vista Por Consultorio */
+.vista-por-consultorio {
+  margin-top: 1rem;
+}
+
+.consultorio-section {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.consultorio-section-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.consultorio-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.consultorio-numero-grande {
+  background: #007bff;
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.consultorio-datos h5 {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.consultorio-datos p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.esquemas-consultorio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+}
+
+.esquema-consultorio-card {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.esquema-consultorio-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.esquema-medico-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.medico-avatar {
+  background: #28a745;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.medico-info {
+  flex: 1;
+}
+
+.medico-info h6 {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.especialidad {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.esquema-intervalo-badge {
+  background: #17a2b8;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.horarios-semana {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.horario-dia {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid #007bff;
+}
+
+.dia-label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.8rem;
+}
+
+.horario-tiempo {
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.sin-esquemas-consultorio {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 1rem;
+}
+
+/* Vista Matriz */
+.vista-matriz {
+  margin-top: 1rem;
+}
+
+.matriz-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tabla-responsive {
+  overflow-x: auto;
+}
+
+.tabla-matriz {
+  margin: 0;
+  width: 100%;
+  border: none;
+}
+
+.tabla-matriz thead th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: none;
+  padding: 1rem;
+  font-weight: 600;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.consultorio-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border-right: 2px solid #dee2e6 !important;
+  min-width: 200px;
+}
+
+.dia-header-matriz {
+  min-width: 120px;
+  font-weight: 700;
+}
+
+.consultorio-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.consultorio-row:hover {
+  background: rgba(0, 123, 255, 0.02);
+}
+
+.consultorio-cell {
+  background: #f8f9fa;
+  border-right: 2px solid #dee2e6;
+  padding: 1rem;
+  vertical-align: middle;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.consultorio-info-matriz {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.numero-matriz {
+  background: #007bff;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.nombre-matriz {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.85rem;
+}
+
+.esquema-cell {
+  padding: 0.5rem;
+  vertical-align: top;
+  border-right: 1px solid #f0f0f0;
+  min-height: 80px;
+}
+
+.esquemas-dia-matriz {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.esquema-matriz-item {
+  background: #e3f2fd;
+  border-radius: 4px;
+  padding: 0.375rem;
+  border-left: 2px solid #2196f3;
+  font-size: 0.75rem;
+}
+
+.horario-matriz {
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 0.125rem;
+}
+
+.medico-matriz {
+  color: #424242;
+  font-size: 0.7rem;
+}
+
+.vacio-matriz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  color: #ccc;
+  font-size: 1.2rem;
+}
+
+/* Sin datos */
+.sin-datos {
+  margin-top: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .consultorios-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .esquemas-consultorio-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .consultorio-cell {
+    position: static;
+  }
+  
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .consultorio-info {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.esquema-item,
+.esquema-consultorio-card,
+.esquema-matriz-item {
+  animation: fadeIn 0.3s ease;
+}
+
+/* Botones de vista */
+.btn-group .btn.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.btn-group .btn:not(.active) {
+  background-color: white;
+  color: #007bff;
+}
+
+.btn-group .btn:not(.active):hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+/* Variables CSS */
+:root {
+  --primary-color: #007bff;
+  --success-color: #28a745;
+  --info-color: #17a2b8;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --secondary-color: #6c757d;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+}

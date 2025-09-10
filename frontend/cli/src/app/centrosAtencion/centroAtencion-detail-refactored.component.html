@@ -46,6 +46,11 @@
         <i class="icon-medicos me-2"></i> Staff Médico
       </button>
     </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'organigrama'" (click)="activeTab = 'organigrama'" type="button">
+        <i class="fa fa-sitemap me-2"></i> Organigrama
+      </button>
+    </li>
   </ul>
 
   <div class="tab-content">
@@ -138,6 +143,17 @@
         (crearNuevaDisponibilidad)="crearNuevaDisponibilidad($event)"
         (disponibilidadCreada)="onDisponibilidadCreada($event)">
       </app-centro-atencion-staff-medico-tab>
+    </div>
+
+    <!-- TAB ORGANIGRAMA -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'organigrama'" [class.active]="activeTab === 'organigrama'">
+      <app-centro-atencion-organigrama-tab
+        [consultorios]="consultorios"
+        [esquemasSemana]="esquemasSemana"
+        [esquemasConsultorio]="esquemasConsultorio"
+        [staffMedicoCentro]="staffMedicoCentro"
+        [centroId]="centroAtencion.id || 0">
+      </app-centro-atencion-organigrama-tab>
     </div>
   </div>
 </div>

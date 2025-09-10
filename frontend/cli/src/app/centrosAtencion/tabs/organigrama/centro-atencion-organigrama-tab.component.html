@@ -1,0 +1,288 @@
+<div class="modern-card">
+  <div class="modern-card-header">
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="me-3">
+          <i class="fa fa-sitemap" style="font-size: 2rem; color: var(--primary-color);"></i>
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold">Organigrama de Esquemas de Turno</h4>
+          <small class="opacity-75">Vista consolidada de todos los esquemas del centro</small>
+        </div>
+      </div>
+      
+      <!-- Controles de vista -->
+      <div class="d-flex gap-2">
+        <div class="btn-group" role="group">
+          <button type="button" 
+                  class="btn btn-outline-primary btn-sm" 
+                  [class.active]="vistaActual === 'semanal'"
+                  (click)="cambiarVista('semanal')">
+            <i class="fa fa-calendar-week me-1"></i> Semanal
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-primary btn-sm" 
+                  [class.active]="vistaActual === 'porConsultorio'"
+                  (click)="cambiarVista('porConsultorio')">
+            <i class="fa fa-building me-1"></i> Por Consultorio
+          </button>
+          <button type="button" 
+                  class="btn btn-outline-primary btn-sm" 
+                  [class.active]="vistaActual === 'matriz'"
+                  (click)="cambiarVista('matriz')">
+            <i class="fa fa-table me-1"></i> Matriz
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modern-card-body">
+    
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa fa-calendar-check text-primary"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas.totalEsquemas }}</h3>
+            <p>Esquemas Totales</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa fa-building text-success"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas.consultoriosConEsquemas }}</h3>
+            <p>Consultorios Activos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa fa-user-md text-info"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ estadisticas.medicosActivos }}</h3>
+            <p>Médicos Activos</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <i class="fa fa-percentage text-warning"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{ consultorios.length > 0 ? ((estadisticas.consultoriosConEsquemas / consultorios.length) * 100).toFixed(0) : 0 }}%</h3>
+            <p>Ocupación</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section mb-4 p-3" style="background: rgba(0, 123, 255, 0.05); border-radius: 10px; border: 1px solid rgba(0, 123, 255, 0.1);">
+      <h6 class="mb-3">
+        <i class="fa fa-filter me-2"></i>Filtros
+      </h6>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Consultorio:</label>
+          <select [(ngModel)]="filtroConsultorio" class="form-select form-select-sm" (change)="aplicarFiltros()">
+            <option [ngValue]="null">Todos los consultorios</option>
+            <option *ngFor="let consultorio of consultorios" [ngValue]="consultorio.id">
+              Consultorio #{{ consultorio.numero }} - {{ consultorio.nombre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Día:</label>
+          <select [(ngModel)]="filtroDia" class="form-select form-select-sm" (change)="aplicarFiltros()">
+            <option [ngValue]="null">Todos los días</option>
+            <option *ngFor="let dia of getDiasConEsquemas()" [ngValue]="dia">{{ dia }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Médico:</label>
+          <select [(ngModel)]="filtroMedico" class="form-select form-select-sm" (change)="aplicarFiltros()">
+            <option [ngValue]="null">Todos los médicos</option>
+            <option *ngFor="let medico of getMedicosConEsquemas()" [ngValue]="medico.id">
+              {{ medico.nombre }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-outline-secondary btn-sm d-block w-100" (click)="limpiarFiltros()">
+            <i class="fa fa-eraser me-1"></i> Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Semanal -->
+    <div *ngIf="vistaActual === 'semanal'" class="vista-semanal">
+      <div class="organigrama-semanal">
+        <div *ngFor="let diaData of organigramaSemanal" class="dia-section">
+          <div class="dia-header" [style.border-left-color]="getColorDia(diaData.dia)">
+            <h5 class="dia-titulo">{{ diaData.diaLabel }}</h5>
+            <span class="dia-count">
+              {{ contarEsquemasPorDia(diaData) }} esquemas
+            </span>
+          </div>
+          
+          <div class="consultorios-grid">
+            <div *ngFor="let consultorioData of diaData.consultorios" 
+                 class="consultorio-dia-card"
+                 [class.has-esquemas]="tieneEsquemasFiltrados(consultorioData.esquemas)">
+              
+              <div class="consultorio-header">
+                <div class="consultorio-numero">{{ consultorioData.consultorio.numero }}</div>
+                <div class="consultorio-nombre">{{ consultorioData.consultorio.nombre }}</div>
+              </div>
+              
+              <div class="esquemas-list">
+                <div *ngFor="let esquema of obtenerEsquemasFiltrados(consultorioData.esquemas)" 
+                     class="esquema-item">
+                  <div class="esquema-horario">
+                    {{ getHorarioStringPorDia(esquema, diaData.dia) }}
+                  </div>
+                  <div class="esquema-medico">
+                    {{ getNombreMedico(esquema) }}
+                  </div>
+                  <div class="esquema-especialidad">
+                    {{ getEspecialidadMedico(esquema) }}
+                  </div>
+                  <div class="esquema-intervalo">
+                    {{ esquema.intervalo }} min/turno
+                  </div>
+                </div>
+                
+                <div *ngIf="obtenerEsquemasFiltrados(consultorioData.esquemas).length === 0" 
+                     class="sin-esquemas">
+                  <i class="fa fa-minus text-muted"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Por Consultorio -->
+    <div *ngIf="vistaActual === 'porConsultorio'" class="vista-por-consultorio">
+      <div class="consultorios-organigrama">
+        <div *ngFor="let consultorio of consultorios" class="consultorio-section">
+          <div class="consultorio-section-header">
+            <div class="consultorio-info">
+              <div class="consultorio-numero-grande">{{ consultorio.numero }}</div>
+              <div class="consultorio-datos">
+                <h5>{{ consultorio.nombre }}</h5>
+                <p class="text-muted">
+                  {{ getEsquemasFiltrados(consultorio.id!).length }} esquemas configurados
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="esquemas-consultorio-grid">
+            <div *ngFor="let esquema of getEsquemasFiltrados(consultorio.id!)" 
+                 class="esquema-consultorio-card">
+              
+              <div class="esquema-medico-header">
+                <div class="medico-avatar">Dr</div>
+                <div class="medico-info">
+                  <h6>{{ getNombreMedico(esquema) }}</h6>
+                  <p class="especialidad">{{ getEspecialidadMedico(esquema) }}</p>
+                </div>
+                <div class="esquema-intervalo-badge">
+                  {{ esquema.intervalo }} min
+                </div>
+              </div>
+              
+              <div class="horarios-semana">
+                <div *ngFor="let horario of esquema.horarios" 
+                     class="horario-dia"
+                     [style.border-left-color]="getColorDia(horario.dia!)">
+                  <div class="dia-label">{{ horario.dia }}</div>
+                  <div class="horario-tiempo">
+                    {{ horario.horaInicio?.substring(0,5) }} - {{ horario.horaFin?.substring(0,5) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="getEsquemasFiltrados(consultorio.id!).length === 0" 
+               class="sin-esquemas-consultorio">
+            <i class="fa fa-calendar-times text-muted me-2"></i>
+            Sin esquemas configurados para este consultorio
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Matriz -->
+    <div *ngIf="vistaActual === 'matriz'" class="vista-matriz">
+      <div class="matriz-container">
+        <div class="tabla-responsive">
+          <table class="table tabla-matriz">
+            <thead>
+              <tr>
+                <th class="consultorio-header">Consultorio</th>
+                <th *ngFor="let dia of ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']" 
+                    class="dia-header-matriz"
+                    [style.color]="getColorDia(dia)">
+                  {{ dia }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let consultorio of consultorios" class="consultorio-row">
+                <td class="consultorio-cell">
+                  <div class="consultorio-info-matriz">
+                    <div class="numero-matriz">#{{ consultorio.numero }}</div>
+                    <div class="nombre-matriz">{{ consultorio.nombre }}</div>
+                  </div>
+                </td>
+                <td *ngFor="let dia of ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO']" 
+                    class="esquema-cell">
+                  <div class="esquemas-dia-matriz">
+                    <div *ngFor="let esquema of obtenerEsquemasFiltrados(getEsquemasDelConsultorioPorDia(consultorio.id!, dia))" 
+                         class="esquema-matriz-item">
+                      <div class="horario-matriz">{{ getHorarioStringPorDia(esquema, dia) }}</div>
+                      <div class="medico-matriz">{{ getNombreMedico(esquema).replace('Dr. ', '') }}</div>
+                    </div>
+                    <div *ngIf="obtenerEsquemasFiltrados(getEsquemasDelConsultorioPorDia(consultorio.id!, dia)).length === 0" 
+                         class="vacio-matriz">
+                      —
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay esquemas -->
+    <div *ngIf="estadisticas.totalEsquemas === 0" class="sin-datos">
+      <div class="text-center py-5">
+        <i class="fa fa-sitemap" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
+        <h5 class="text-muted">No hay esquemas de turno configurados</h5>
+        <p class="text-muted">
+          Para ver el organigrama, primero configure esquemas de turno en los consultorios.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>

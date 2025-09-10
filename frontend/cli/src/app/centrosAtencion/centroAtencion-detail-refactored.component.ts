@@ -28,6 +28,7 @@ import { CentroAtencionDetalleTabComponent } from './tabs/detalle/centro-atencio
 import { CentroAtencionConsultoriosTabComponent } from './tabs/consultorios/centro-atencion-consultorios-tab.component';
 import { CentroAtencionEspecialidadesTabComponent } from './tabs/especialidades/centro-atencion-especialidades-tab.component';
 import { CentroAtencionStaffMedicoTabComponent } from './tabs/staff-medico/centro-atencion-staff-medico-tab.component';
+import { CentroAtencionOrganigramaTabComponent } from './tabs/organigrama/centro-atencion-organigrama-tab.component';
 
 @Component({
   selector: 'app-centro-atencion-detail-refactored',
@@ -40,7 +41,8 @@ import { CentroAtencionStaffMedicoTabComponent } from './tabs/staff-medico/centr
     CentroAtencionDetalleTabComponent,
     CentroAtencionConsultoriosTabComponent,
     CentroAtencionEspecialidadesTabComponent,
-    CentroAtencionStaffMedicoTabComponent
+    CentroAtencionStaffMedicoTabComponent,
+    CentroAtencionOrganigramaTabComponent
   ],
   templateUrl: './centroAtencion-detail-refactored.component.html',
   styleUrls: ['./centroAtencion-detail.component.css'],
