@@ -32,7 +32,6 @@ import { PacienteNotificacionesComponent } from './pacientes/paciente-notificaci
 
 // Medico components
 import { MedicoDashboardComponent } from "./medicos/medico-dashboard.component";
-import { MedicoTurnosComponent } from "./medicos/medico-turnos.component";
 import { MedicoHorariosComponent } from "./medicos/medico-horarios.component";
 import { MedicoEstadisticasComponent } from "./medicos/medico-estadisticas.component";
 import { MedicoPerfilComponent } from "./medicos/medico-perfil.component";
@@ -80,11 +79,6 @@ export const routes: Routes = [
     canActivate: [MedicoGuard],
   },
   {
-    path: "medico-turnos",
-    component: MedicoTurnosComponent,
-    canActivate: [MedicoGuard],
-  },
-  {
     path: "medico-horarios",
     component: MedicoHorariosComponent,
     canActivate: [MedicoGuard],
@@ -92,11 +86,6 @@ export const routes: Routes = [
   {
     path: "medico-estadisticas",
     component: MedicoEstadisticasComponent,
-    canActivate: [MedicoGuard],
-  },
-  {
-    path: "medico-historial",
-    component: MedicoTurnosComponent,
     canActivate: [MedicoGuard],
   },
   {

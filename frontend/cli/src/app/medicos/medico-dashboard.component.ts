@@ -142,19 +142,6 @@ interface DashboardStats {
           <p class="section-description">Accede rápidamente a las funciones principales</p>
         </div>
         <div class="actions-grid">
-          <div class="action-card action-turnos" (click)="verTurnosHoy()">
-            <div class="card-icon">
-              <i class="fas fa-list-alt"></i>
-            </div>
-            <div class="card-content">
-              <h3>Turnos de Hoy</h3>
-              <p>Revisar agenda y citas del día</p>
-            </div>
-            <div class="card-arrow">
-              <i class="fas fa-arrow-right"></i>
-            </div>
-          </div>
-          
           <div class="action-card action-horarios" (click)="gestionarHorarios()">
             <div class="card-icon">
               <i class="fas fa-clock"></i>
@@ -168,16 +155,20 @@ interface DashboardStats {
             </div>
           </div>
           
-          <div class="action-card action-historial" (click)="verHistorial()">
+          <div class="action-card action-notificaciones" (click)="verNotificaciones()">
             <div class="card-icon">
-              <i class="fas fa-history"></i>
+              <i class="fas fa-bell"></i>
             </div>
             <div class="card-content">
-              <h3>Historial Médico</h3>
-              <p>Ver historial de consultas pasadas</p>
+              <h3>Notificaciones</h3>
+              <p>Ver alertas y mensajes importantes</p>
             </div>
             <div class="card-arrow">
               <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="notification-badge" *ngIf="stats.turnosPendientes > 0">
+              <span>{{ stats.turnosPendientes }}</span>
+              <div class="notification-pulse"></div>
             </div>
           </div>
           
@@ -198,132 +189,97 @@ interface DashboardStats {
 
       <!-- Main Content Grid -->
       <div class="main-content">
-        <!-- Turnos de Hoy -->
-        <div class="turnos-section">
+        <!-- Gestión de Turnos Médicos -->
+        <div class="turnos-management">
           <div class="section-background"></div>
-          <div class="section-header">
-            <div class="section-title">
-              <div class="title-icon">
-                <i class="fas fa-calendar-day"></i>
-              </div>
-              <div class="title-content">
-                <h2>Turnos de Hoy</h2>
-                <p class="section-subtitle">{{ fechaHoy | date:'EEEE, dd MMMM yyyy' }}</p>
-              </div>
+          <div class="turnos-header">
+            <div class="turnos-title">
+              <i class="fas fa-calendar-medical"></i>
+              <span>Mis Turnos Médicos</span>
             </div>
-            <button class="btn-view-all" (click)="verTurnosHoy()">
-              <span>Ver Todos</span>
-              <i class="fas fa-external-link-alt"></i>
-            </button>
-          </div>
-
-          <div class="turnos-container">
-            <div *ngIf="turnosHoy.length === 0" class="empty-state">
-              <div class="empty-illustration">
-                <div class="empty-icon">
-                  <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="empty-content">
-                  <h3>No hay turnos programados para hoy</h3>
-                  <p>Disfruta de tu día libre o revisa la configuración de horarios</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="turnos-grid" *ngIf="turnosHoy.length > 0">
-              <div class="turno-card" *ngFor="let turno of turnosHoy.slice(0, 4)" [class]="'status-' + (turno.estado || '').toLowerCase()">>
-                <div class="turno-time">
-                  <div class="time-circle">
-                    <span class="hour">{{ turno.horaInicio }}</span>
-                    <span class="duration">{{ turno.horaFin }}</span>
-                  </div>
-                </div>
-                
-                <div class="turno-info">
-                  <div class="patient-name">{{ turno.nombrePaciente }} {{ turno.apellidoPaciente }}</div>
-                  <div class="location-info">
-                    <i class="fas fa-map-marker-alt me-1"></i>
-                    {{ turno.nombreCentro }} - {{ turno.consultorioNombre }}
-                  </div>
-                </div>
-                
-                <div class="turno-status">
-                  <span class="status-badge" [class]="'status-' + (turno.estado || '').toLowerCase()">>
-                    {{ turno.estado }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div *ngIf="turnosHoy.length > 4" class="more-turnos">
-              <button class="btn-more" (click)="verTurnosHoy()">
-                <span>Ver {{ turnosHoy.length - 4 }} turnos más</span>
-                <i class="fas fa-plus"></i>
+            <div class="filter-tabs">
+              <button 
+                class="filter-tab" 
+                [class.active]="currentFilter === 'upcoming'" 
+                (click)="setTurnosFilter('upcoming')">
+                <i class="fas fa-clock"></i>
+                <span>Próximos</span>
+                <span class="filter-count">{{ getFilterCount('upcoming') }}</span>
+              </button>
+              <button 
+                class="filter-tab" 
+                [class.active]="currentFilter === 'past'" 
+                (click)="setTurnosFilter('past')">
+                <i class="fas fa-history"></i>
+                <span>Pasados</span>
+                <span class="filter-count">{{ getFilterCount('past') }}</span>
+              </button>
+              <button 
+                class="filter-tab" 
+                [class.active]="currentFilter === 'all'" 
+                (click)="setTurnosFilter('all')">
+                <i class="fas fa-list"></i>
+                <span>Todos</span>
+                <span class="filter-count">{{ getFilterCount('all') }}</span>
               </button>
             </div>
           </div>
-        </div>
 
-        <!-- Sidebar - Información Adicional -->
-        <div class="sidebar-section">
-          <!-- Próximos Turnos -->
-          <div class="sidebar-card">
-            <div class="card-header">
-              <div class="card-title">
-                <i class="fas fa-clock me-2"></i>
-                Próximos Turnos
-              </div>
-            </div>
-            <div class="card-body">
-              <div *ngIf="proximosTurnos.length === 0" class="no-data">
-                <i class="fas fa-calendar-times"></i>
-                <span>No hay turnos próximos</span>
-              </div>
-              <div *ngFor="let turno of proximosTurnos.slice(0, 3)" class="proximo-turno">
-                <div class="turno-date">
-                  <span class="day">{{ turno.fecha | date:'dd' }}</span>
-                  <span class="month">{{ turno.fecha | date:'MMM' }}</span>
-                </div>
-                <div class="turno-details">
-                  <div class="time">{{ turno.horaInicio }}</div>
-                  <div class="patient">{{ turno.nombrePaciente }}</div>
-                </div>
-                <div class="turno-badge">
-                  <span class="badge" [class]="'badge-' + (turno.estado || '').toLowerCase()">>
-                    {{ turno.estado }}
-                  </span>
-                </div>
-              </div>
-            </div>
+          <!-- Loading state -->
+          <div *ngIf="isLoadingTurnos" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Cargando turnos...</p>
           </div>
 
-          <!-- Notificaciones -->
-          <div class="sidebar-card">
-            <div class="card-header">
-              <div class="card-title">
-                <i class="fas fa-bell me-2"></i>
-                Notificaciones
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="notification-item" *ngIf="stats.turnosPendientes > 0">
-                <div class="notification-icon warning">
-                  <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <div class="notification-content">
-                  <div class="notification-title">Turnos Pendientes</div>
-                  <div class="notification-text">{{ stats.turnosPendientes }} turnos por confirmar</div>
-                </div>
-              </div>
+          <!-- Empty state -->
+          <div *ngIf="!isLoadingTurnos && filteredTurnos.length === 0" class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <h3>{{ getEmptyStateMessage() }}</h3>
+            <p>No se encontraron turnos para mostrar.</p>
+          </div>
+
+          <!-- Turnos grid -->
+          <div *ngIf="!isLoadingTurnos && filteredTurnos.length > 0" class="turnos-grid">
+            <div 
+              *ngFor="let turno of filteredTurnos; trackBy: trackByTurno" 
+              class="turno-management-card">
               
-              <div class="notification-item" *ngIf="stats.turnosPendientes === 0">
-                <div class="notification-icon success">
-                  <i class="fas fa-check-circle"></i>
+              <!-- Date section -->
+              <div class="turno-date-section">
+                <div class="date-bubble">
+                  <div class="date-day">{{ formatDay(turno.fecha) }}</div>
+                  <div class="date-month">{{ formatMonth(turno.fecha) }}</div>
                 </div>
-                <div class="notification-content">
-                  <div class="notification-title">Todo al día</div>
-                  <div class="notification-text">No hay notificaciones pendientes</div>
+                <div class="turno-time-info">
+                  <div class="turno-time">{{ turno.horaInicio }} - {{ turno.horaFin }}</div>
+                  <div class="turno-duration">Duración: 15 min</div>
                 </div>
+              </div>
+
+              <!-- Patient info -->
+              <div class="turno-details">
+                <div class="patient-info">
+                  <div class="patient-name">
+                    <i class="fas fa-user"></i>
+                    {{ turno.nombrePaciente }} {{ turno.apellidoPaciente }}
+                  </div>
+                  <div class="patient-details">
+                    <div class="detail-item">
+                      <i class="fas fa-map-marker-alt"></i>
+                      <span>{{ turno.nombreCentro || 'Centro Médico' }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <i class="fas fa-door-open"></i>
+                      <span>{{ turno.consultorioNombre || 'Consultorio' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="turno-status" [class]="turno.estado?.toUpperCase()">
+                <i [class]="getStatusIcon(turno.estado)"></i>
+                <span>{{ getStatusText(turno.estado) }}</span>
               </div>
             </div>
           </div>
@@ -817,19 +773,36 @@ interface DashboardStats {
       transform: translateX(5px);
     }
 
-    /* Main Content */
-    .main-content {
-      display: grid;
-      grid-template-columns: 1fr 350px;
-      gap: 2rem;
+    /* Estilos específicos para la card de notificaciones */
+    .action-notificaciones {
       position: relative;
-      z-index: 10;
     }
 
-    @media (max-width: 1200px) {
-      .main-content {
-        grid-template-columns: 1fr;
-      }
+    .action-notificaciones .card-icon {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .action-notificaciones .card-icon i {
+      color: #ffffff;
+      animation: bellRing 2s ease-in-out infinite;
+    }
+
+    .action-notificaciones:hover .card-icon {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      transform: scale(1.1);
+    }
+
+    @keyframes bellRing {
+      0%, 50%, 100% { transform: rotate(0deg); }
+      10%, 30% { transform: rotate(-10deg); }
+      20% { transform: rotate(10deg); }
+    }
+
+    /* Main Content */
+    .main-content {
+      position: relative;
+      z-index: 10;
+      width: 100%;
     }
 
     /* Turnos Section */
@@ -1296,6 +1269,367 @@ interface DashboardStats {
         gap: 1rem;
       }
     }
+
+    /* === ESTILOS PARA LA NUEVA GESTIÓN DE TURNOS === */
+    
+    .turnos-management {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 2rem;
+      margin-top: 2rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .turnos-management::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+    }
+
+    .turnos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .turnos-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .turnos-title i {
+      color: #6366f1;
+      font-size: 2rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .filter-tab {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #6b7280;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .filter-tab.active {
+      background: #6366f1;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .filter-tab:hover:not(.active) {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .filter-count {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .filter-tab.active .filter-count {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .filter-tab:not(.active) .filter-count {
+      background: #d1d5db;
+      color: #374151;
+    }
+
+    .turnos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .turno-management-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .turno-management-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 16px 16px 0 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .turno-management-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      border-color: #d1d5db;
+    }
+
+    .turno-management-card:hover::before {
+      opacity: 1;
+    }
+
+    .turno-date-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .date-bubble {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      min-width: 70px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .date-day {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .date-month {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+    }
+
+    .turno-time-info {
+      flex: 1;
+    }
+
+    .turno-time {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.25rem;
+    }
+
+    .turno-duration {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .turno-details {
+      margin-bottom: 1.5rem;
+    }
+
+    .patient-info {
+      background: #f9fafb;
+      border: 1px solid #f3f4f6;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .patient-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .patient-name i {
+      color: #6366f1;
+    }
+
+    .patient-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-item i {
+      color: #9ca3af;
+      width: 16px;
+    }
+
+    .turno-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .turno-status.CONFIRMADO {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #bbf7d0;
+    }
+
+    .turno-status.PROGRAMADO {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .turno-status.CANCELADO {
+      background: #fecaca;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .turno-status.REAGENDADO {
+      background: #ddd6fe;
+      color: #5b21b6;
+      border: 1px solid #c4b5fd;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6b7280;
+    }
+
+    .empty-state i {
+      font-size: 4rem;
+      color: #d1d5db;
+      margin-bottom: 1.5rem;
+    }
+
+    .empty-state h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      font-size: 1rem;
+      color: #6b7280;
+    }
+
+    .loading-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6b7280;
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f4f6;
+      border-top: 3px solid #6366f1;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .turnos-management {
+        margin: 1rem 0;
+        padding: 1.5rem;
+        border-radius: 16px;
+      }
+
+      .turnos-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+      }
+
+      .turnos-title {
+        font-size: 1.5rem;
+        justify-content: center;
+      }
+
+      .filter-tabs {
+        justify-content: center;
+      }
+
+      .filter-tab {
+        flex: 1;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+      }
+
+      .turnos-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .turno-management-card {
+        padding: 1rem;
+      }
+
+      .patient-details {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+    }
   `]
 })
 export class MedicoDashboardComponent implements OnInit {
@@ -1311,6 +1645,12 @@ export class MedicoDashboardComponent implements OnInit {
   proximosTurnos: Turno[] = [];
   disponibilidadActual: DisponibilidadMedico[] = [];
   fechaHoy: Date = new Date();
+  
+  // === NUEVA FUNCIONALIDAD: GESTIÓN COMPLETA DE TURNOS ===
+  allTurnos: any[] = [];          // Todos los turnos del médico
+  filteredTurnos: any[] = [];     // Turnos filtrados según el tab activo
+  currentFilter = 'upcoming';     // 'upcoming', 'past', 'all'
+  isLoadingTurnos = false;        // Estado de carga
   
   // Particles for background animation
   particles: Array<{x: number, y: number}> = [];
@@ -1536,6 +1876,22 @@ export class MedicoDashboardComponent implements OnInit {
         this.proximosTurnos = proximosTurnos.slice(0, 10); // Solo primeros 10
         console.log(`📊 PRÓXIMOS turnos (después de hoy):`, this.proximosTurnos.length);
         
+        // === NUEVA FUNCIONALIDAD: CARGAR TODOS LOS TURNOS PARA LA SECCIÓN ===
+        this.allTurnos = todosTurnos.map((turno: any) => ({
+          ...turno,
+          // Agregar campos calculados para compatibilidad con el template
+          day: this.formatDay(turno.fecha),
+          month: this.formatMonth(turno.fecha),
+          year: this.formatYear(turno.fecha),
+          time: `${turno.horaInicio} - ${turno.horaFin}`,
+          doctor: `${this.medicoActual?.nombre || ''} ${this.medicoActual?.apellido || ''}`,
+          specialty: this.medicoActual?.especialidad || 'Medicina General',
+          location: turno.nombreCentro || 'Centro Médico'
+        }));
+        
+        this.applyTurnosFilter();
+        console.log('🎯 NUEVA SECCIÓN: Todos los turnos cargados para gestión completa:', this.allTurnos.length);
+        
         // Log detallado de turnos de hoy
         if (turnosHoy.length > 0) {
           turnosHoy.forEach((turno: any, index: number) => {
@@ -1600,15 +1956,23 @@ export class MedicoDashboardComponent implements OnInit {
 
   // Navigation methods
   verTurnosHoy() {
-    this.router.navigate(['/medico-turnos'], { queryParams: { fecha: new Date().toISOString().split('T')[0] } });
+    // Cambiar al filtro de próximos turnos para mostrar turnos de hoy y futuros
+    this.setTurnosFilter('upcoming');
+    
+    // Scroll to the turnos section
+    const turnosSection = document.querySelector('.turnos-management');
+    if (turnosSection) {
+      turnosSection.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   gestionarHorarios() {
     this.router.navigate(['/medico-horarios']);
   }
 
-  verHistorial() {
-    this.router.navigate(['/medico-historial']);
+  verNotificaciones() {
+    // Navegar a una página de notificaciones o mostrar un modal
+    this.router.navigate(['/medico-notificaciones']);
   }
 
   verEstadisticas() {
@@ -1641,5 +2005,119 @@ export class MedicoDashboardComponent implements OnInit {
         y: Math.random() * window.innerHeight
       });
     }
+  }
+
+  // === MÉTODOS PARA LA NUEVA GESTIÓN DE TURNOS ===
+
+  setTurnosFilter(filter: string) {
+    console.log('🔍 Cambiando filtro de turnos a:', filter);
+    this.currentFilter = filter;
+    this.applyTurnosFilter();
+  }
+
+  applyTurnosFilter() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    switch (this.currentFilter) {
+      case 'upcoming':
+        this.filteredTurnos = this.allTurnos.filter(turno => turno.fecha >= today);
+        break;
+      case 'past':
+        this.filteredTurnos = this.allTurnos.filter(turno => turno.fecha < today);
+        break;
+      case 'all':
+      default:
+        this.filteredTurnos = [...this.allTurnos];
+        break;
+    }
+    
+    // Ordenar por fecha y hora
+    this.filteredTurnos.sort((a, b) => {
+      const dateComparison = a.fecha.localeCompare(b.fecha);
+      if (dateComparison === 0) {
+        return a.horaInicio.localeCompare(b.horaInicio);
+      }
+      return this.currentFilter === 'past' ? dateComparison * -1 : dateComparison;
+    });
+    
+    console.log(`📊 Filtro '${this.currentFilter}' aplicado:`, this.filteredTurnos.length, 'turnos');
+  }
+
+  getFilterCount(filter: string): number {
+    const today = new Date().toISOString().split('T')[0];
+    
+    switch (filter) {
+      case 'upcoming':
+        return this.allTurnos.filter(turno => turno.fecha >= today).length;
+      case 'past':
+        return this.allTurnos.filter(turno => turno.fecha < today).length;
+      case 'all':
+        return this.allTurnos.length;
+      default:
+        return 0;
+    }
+  }
+
+  getEmptyStateMessage(): string {
+    switch (this.currentFilter) {
+      case 'upcoming':
+        return 'No tienes turnos programados próximamente.';
+      case 'past':
+        return 'No tienes turnos anteriores registrados.';
+      case 'all':
+        return 'No tienes turnos registrados en el sistema.';
+      default:
+        return 'No hay turnos para mostrar.';
+    }
+  }
+
+  // Métodos de formato para las fechas
+  formatDay(fecha: string): string {
+    return new Date(fecha).getDate().toString().padStart(2, '0');
+  }
+
+  formatMonth(fecha: string): string {
+    const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    return months[new Date(fecha).getMonth()];
+  }
+
+  formatYear(fecha: string): string {
+    return new Date(fecha).getFullYear().toString();
+  }
+
+  // Métodos para iconos y textos de estado
+  getStatusIcon(estado: string): string {
+    switch (estado?.toUpperCase()) {
+      case 'CONFIRMADO':
+        return 'fa-check-circle';
+      case 'PROGRAMADO':
+        return 'fa-clock';
+      case 'CANCELADO':
+        return 'fa-times-circle';
+      case 'REAGENDADO':
+        return 'fa-calendar-alt';
+      default:
+        return 'fa-question-circle';
+    }
+  }
+
+  getStatusText(estado: string): string {
+    switch (estado?.toUpperCase()) {
+      case 'CONFIRMADO':
+        return 'Confirmado';
+      case 'PROGRAMADO':
+        return 'Programado';
+      case 'CANCELADO':
+        return 'Cancelado';
+      case 'REAGENDADO':
+        return 'Reagendado';
+      default:
+        return estado || 'Desconocido';
+    }
+  }
+
+  // TrackBy function para mejor performance en ngFor
+  trackByTurno(index: number, turno: any): any {
+    return turno.id;
   }
 }
