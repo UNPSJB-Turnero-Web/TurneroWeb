@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { MedicoService } from './medico.service';
-import { MedicoSessionService } from '../services/medico-session.service';
 import { Turno } from '../turnos/turno';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { Medico } from './medico';
@@ -1301,6 +1300,7 @@ interface DashboardStats {
 })
 export class MedicoDashboardComponent implements OnInit {
   medicoActual: Medico | null = null;
+  staffMedicoId: number | null = null; // ID para consultar turnos
   stats: DashboardStats = {
     turnosHoy: 0,
     turnosManana: 0,
@@ -1319,89 +1319,187 @@ export class MedicoDashboardComponent implements OnInit {
     private router: Router,
     private turnoService: TurnoService,
     private disponibilidadService: DisponibilidadMedicoService,
-    private medicoService: MedicoService,
-    private medicoSessionService: MedicoSessionService
+    private medicoService: MedicoService
   ) {
     this.initializeParticles();
   }
 
   ngOnInit() {
     this.cargarDatosMedico();
-    // Sincronizar ID correcto desde disponibilidades antes de cargar estadísticas
-    this.sincronizarIdYCargarDatos();
+    // Primero cargar disponibilidades para obtener el staffMedicoId correcto
+    this.cargarDisponibilidadYDatos();
   }
 
-  private async sincronizarIdYCargarDatos() {
-    try {
-      // Intentar sincronizar el ID correcto desde disponibilidades
-      await this.medicoSessionService.sincronizarIdCorrecto(this.disponibilidadService);
-      console.log('ID sincronizado correctamente desde disponibilidades');
-    } catch (error) {
-      console.log('No se pudieron cargar disponibilidades para sincronizar ID (normal en primera carga)');
+  private cargarDisponibilidadYDatos() {
+    const medicoId = this.getMedicoIdFromLocalStorage();
+    
+    if (!medicoId) {
+      console.error('No se pudo obtener el ID del médico para cargar disponibilidad');
+      return;
     }
     
-    // Cargar datos independientemente de si se pudo sincronizar o no
+    console.log('Cargando disponibilidades para obtener staffMedicoId...');
+    
+    this.disponibilidadService.byMedico(medicoId).subscribe({
+      next: (response) => {
+        this.disponibilidadActual = response.data || [];
+        
+        // Obtener el staffMedicoId de las disponibilidades
+        if (this.disponibilidadActual.length > 0) {
+          this.staffMedicoId = this.disponibilidadActual[0].staffMedicoId;
+          console.log('staffMedicoId obtenido de disponibilidades:', this.staffMedicoId);
+          
+          // Ahora cargar los datos de turnos con el staffMedicoId correcto
+          this.cargarDatos();
+        } else {
+          console.warn('No se encontraron disponibilidades. Usando ID del médico como staffMedicoId');
+          this.staffMedicoId = medicoId;
+          this.cargarDatos();
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar disponibilidad:', error);
+        console.warn('Usando ID del médico como staffMedicoId por error en disponibilidades');
+        this.staffMedicoId = medicoId;
+        this.cargarDatos();
+      }
+    });
+  }
+
+  private cargarDatos() {
+    // Solo cargar si tenemos el staffMedicoId
+    if (!this.staffMedicoId) {
+      console.error('No se pudo obtener el staffMedicoId para cargar datos');
+      return;
+    }
+    
+    console.log('Cargando datos con staffMedicoId:', this.staffMedicoId);
     this.cargarEstadisticas();
     this.cargarTurnosHoy();
     this.cargarProximosTurnos();
-    this.cargarDisponibilidad();
+  }
+
+  // Helper method to get medico ID from localStorage
+  private getMedicoIdFromLocalStorage(): number | null {
+    console.log('=== DEBUG: getMedicoIdFromLocalStorage ===');
+    
+    // Try to get medico ID from different possible localStorage keys
+    const staffMedicoId = localStorage.getItem('staffMedicoId');
+    const medicoId = localStorage.getItem('medicoId');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    console.log('LocalStorage values:', {
+      staffMedicoId,
+      medicoId,
+      currentUser: currentUser ? 'exists' : 'null'
+    });
+    
+    // First try staffMedicoId
+    if (staffMedicoId && staffMedicoId !== '0' && staffMedicoId !== 'null' && staffMedicoId !== 'undefined') {
+      const id = parseInt(staffMedicoId, 10);
+      if (!isNaN(id) && id > 0) {
+        console.log('Using staffMedicoId:', id);
+        return id;
+      }
+    }
+    
+    // Then try medicoId
+    if (medicoId && medicoId !== '0' && medicoId !== 'null' && medicoId !== 'undefined') {
+      const id = parseInt(medicoId, 10);
+      if (!isNaN(id) && id > 0) {
+        console.log('Using medicoId:', id);
+        return id;
+      }
+    }
+    
+    // Finally try currentUser
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        console.log('Parsed currentUser:', user);
+        
+        if (user.medicoId && user.medicoId !== 0) {
+          console.log('Using currentUser.medicoId:', user.medicoId);
+          return user.medicoId;
+        }
+        if (user.id && user.id !== 0) {
+          console.log('Using currentUser.id:', user.id);
+          return user.id;
+        }
+      } catch (e) {
+        console.error('Error parsing currentUser from localStorage:', e);
+      }
+    }
+    
+    console.error('No valid medico ID found in localStorage');
+    return null;
   }
 
   private cargarDatosMedico() {
-    // Para cargar datos del médico usamos el ID original (del usuario)
-    const medicoIdOriginal = this.medicoSessionService.getMedicoIdOriginalFromSession();
+    const medicoId = this.getMedicoIdFromLocalStorage();
     
-    if (!medicoIdOriginal) {
-      console.error('No se pudo obtener el ID original del médico');
+    if (!medicoId) {
+      console.error('No se pudo obtener el ID del médico');
+      console.log('Debug localStorage:', {
+        staffMedicoId: localStorage.getItem('staffMedicoId'),
+        medicoId: localStorage.getItem('medicoId'),
+        currentUser: localStorage.getItem('currentUser')
+      });
+      alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
+      this.router.navigate(['/login']);
       return;
     }
 
-    // Convertir a número si es necesario
-    const medicoId = typeof medicoIdOriginal === 'string' ? parseInt(medicoIdOriginal, 10) : medicoIdOriginal;
-    
+    console.log('Cargando médico con ID:', medicoId);
+
     this.medicoService.findById(medicoId).subscribe({
       next: (medico) => {
         this.medicoActual = medico;
+        console.log('Médico cargado exitosamente:', medico);
       },
       error: (error) => {
         console.error('Error al cargar datos del médico:', error);
-        // Si no se puede cargar con el ID original, intentar con el ID de sesión como fallback
-        console.log('Intentando cargar con ID de sesión como fallback...');
-        const fallbackId = this.medicoSessionService.getMedicoIdFromSession();
-        if (fallbackId && fallbackId !== medicoId) {
-          this.medicoService.findById(fallbackId).subscribe({
-            next: (medico) => {
-              this.medicoActual = medico;
-              console.log('Médico cargado con ID de fallback:', fallbackId);
-            },
-            error: (fallbackError) => {
-              console.error('Error también con ID de fallback:', fallbackError);
-            }
-          });
+        
+        if (error.status === 404) {
+          console.error(`Médico con ID ${medicoId} no encontrado en el servidor`);
+          alert(`Error: No se encontró el médico con ID ${medicoId}. Su sesión puede ser inválida. Redirigiendo al login...`);
+          localStorage.clear();
+          this.router.navigate(['/login']);
+        } else {
+          console.error('Error del servidor:', error.message || error);
+          alert(`Error al cargar información del médico: ${error.error?.message || error.message}`);
         }
       }
     });
   }
 
   private cargarEstadisticas() {
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
+    if (!this.staffMedicoId) {
+      console.error('No se pudo obtener el staffMedicoId para cargar estadísticas');
+      return;
+    }
+    
+    console.log('Cargando estadísticas para staffMedicoId:', this.staffMedicoId);
+    
     const hoy = new Date().toISOString().split('T')[0];
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
     
     // Turnos de hoy
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       fechaExacta: hoy
     }).subscribe(response => {
       this.stats.turnosHoy = response.data?.length || 0;
+      console.log('Turnos hoy:', this.stats.turnosHoy);
     });
 
     // Turnos de mañana
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       fechaExacta: manana
     }).subscribe(response => {
       this.stats.turnosManana = response.data?.length || 0;
+      console.log('Turnos mañana:', this.stats.turnosManana);
     });
 
     // Turnos de la semana
@@ -1409,59 +1507,62 @@ export class MedicoDashboardComponent implements OnInit {
     const finSemana = this.getEndOfWeek(new Date()).toISOString().split('T')[0];
     
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       fechaDesde: inicioSemana,
       fechaHasta: finSemana
     }).subscribe(response => {
       this.stats.turnosSemana = response.data?.length || 0;
+      console.log('Turnos semana:', this.stats.turnosSemana);
     });
 
     // Turnos pendientes
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       estado: 'PROGRAMADO'
     }).subscribe(response => {
       this.stats.turnosPendientes = response.data?.length || 0;
+      console.log('Turnos pendientes:', this.stats.turnosPendientes);
     });
   }
 
   private cargarTurnosHoy() {
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
+    if (!this.staffMedicoId) {
+      console.error('No se pudo obtener el staffMedicoId para cargar turnos de hoy');
+      return;
+    }
+    
     const hoy = new Date().toISOString().split('T')[0];
     
+    console.log('Cargando turnos de hoy para staffMedicoId:', this.staffMedicoId);
+    
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       fechaExacta: hoy,
       sortBy: 'horaInicio'
     }).subscribe(response => {
       this.turnosHoy = response.data || [];
+      console.log('Turnos de hoy cargados:', this.turnosHoy.length);
     });
   }
 
   private cargarProximosTurnos() {
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
+    if (!this.staffMedicoId) {
+      console.error('No se pudo obtener el staffMedicoId para cargar próximos turnos');
+      return;
+    }
+    
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
     
+    console.log('Cargando próximos turnos para staffMedicoId:', this.staffMedicoId);
+    
     this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
+      staffMedicoId: this.staffMedicoId,
       fechaDesde: manana,
       sortBy: 'fecha',
       size: 10
     }).subscribe(response => {
       this.proximosTurnos = response.data || [];
-    });
-  }
-
-  private cargarDisponibilidad() {
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
-    
-    this.disponibilidadService.byMedico(medicoId).subscribe({
-      next: (response) => {
-        this.disponibilidadActual = response.data;
-      },
-      error: (error) => {
-        console.error('Error al cargar disponibilidad:', error);
-      }
+      console.log('Próximos turnos cargados:', this.proximosTurnos.length);
     });
   }
 

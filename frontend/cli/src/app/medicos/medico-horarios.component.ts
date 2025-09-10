@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { MedicoService } from './medico.service';
-import { MedicoSessionService } from '../services/medico-session.service';
 import { Medico } from './medico';
 import { Especialidad } from '../especialidades/especialidad';
 
@@ -2048,9 +2047,64 @@ export class MedicoHorariosComponent implements OnInit {
     private router: Router,
     private disponibilidadService: DisponibilidadMedicoService,
     private medicoService: MedicoService,
-    private medicoSessionService: MedicoSessionService
   ) {
     this.initializeParticles();
+  }
+
+  // Helper method to get medico ID from localStorage
+  private getMedicoIdFromLocalStorage(): number | null {
+    console.log('=== DEBUG: getMedicoIdFromLocalStorage ===');
+    
+    // Try to get medico ID from different possible localStorage keys
+    const staffMedicoId = localStorage.getItem('staffMedicoId');
+    const medicoId = localStorage.getItem('medicoId');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    console.log('LocalStorage values:', {
+      staffMedicoId,
+      medicoId,
+      currentUser: currentUser ? 'exists' : 'null'
+    });
+    
+    // First try staffMedicoId
+    if (staffMedicoId && staffMedicoId !== '0' && staffMedicoId !== 'null' && staffMedicoId !== 'undefined') {
+      const id = parseInt(staffMedicoId, 10);
+      if (!isNaN(id) && id > 0) {
+        console.log('Using staffMedicoId:', id);
+        return id;
+      }
+    }
+    
+    // Then try medicoId
+    if (medicoId && medicoId !== '0' && medicoId !== 'null' && medicoId !== 'undefined') {
+      const id = parseInt(medicoId, 10);
+      if (!isNaN(id) && id > 0) {
+        console.log('Using medicoId:', id);
+        return id;
+      }
+    }
+    
+    // Finally try currentUser
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        console.log('Parsed currentUser:', user);
+        
+        if (user.medicoId && user.medicoId !== 0) {
+          console.log('Using currentUser.medicoId:', user.medicoId);
+          return user.medicoId;
+        }
+        if (user.id && user.id !== 0) {
+          console.log('Using currentUser.id:', user.id);
+          return user.id;
+        }
+      } catch (e) {
+        console.error('Error parsing currentUser from localStorage:', e);
+      }
+    }
+    
+    console.error('No valid medico ID found in localStorage');
+    return null;
   }
 
   ngOnInit() {
@@ -2083,27 +2137,27 @@ export class MedicoHorariosComponent implements OnInit {
       }
     });
     
-    // Verificar el resultado del getMedicoIdFromSession
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
-    console.log('ID final detectado por getMedicoIdFromSession():', medicoId);
+    // Verificar el resultado del getMedicoIdFromLocalStorage
+    const medicoId = this.getMedicoIdFromLocalStorage();
+    console.log('ID final detectado por getMedicoIdFromLocalStorage():', medicoId);
     
     console.log('=== FIN VERIFICACIÓN DETALLADA ===');
   }
 
   cargarMedicoYEspecialidades() {
-    // Para cargar el médico usamos el ID original (medicoId)
-    const medicoId = this.medicoSessionService.getMedicoIdOriginalFromSession();
+    // Para cargar el médico usamos el ID del localStorage
+    const medicoId = this.getMedicoIdFromLocalStorage();
 
-    if (!medicoId || medicoId === '0' || medicoId === 'null') {
+    if (!medicoId) {
       console.error('Error: No se pudo obtener el ID del médico');
       this.router.navigate(['/login']);
       return;
     }
 
-    console.log('Intentando cargar médico con ID original:', medicoId);
+    console.log('Intentando cargar médico con ID:', medicoId);
 
     // Cargar información del médico y sus especialidades
-    this.medicoService.findById(parseInt(medicoId, 10)).subscribe({
+    this.medicoService.findById(medicoId).subscribe({
       next: (medico) => {
         console.log('Médico encontrado exitosamente:', medico);
         this.medicoActual = medico;
@@ -2134,10 +2188,10 @@ export class MedicoHorariosComponent implements OnInit {
 
   cargarDisponibilidades() {
     this.cargando = true;
-    const medicoId = this.medicoSessionService.getMedicoIdFromSession();
+    const medicoId = this.getMedicoIdFromLocalStorage();
 
     // Validar que tenemos un ID válido
-    if (!medicoId || medicoId === 0) {
+    if (!medicoId) {
       console.error('Error: No se pudo obtener el ID del médico para cargar disponibilidades');
       this.cargando = false;
       this.router.navigate(['/login']);
@@ -2150,9 +2204,6 @@ export class MedicoHorariosComponent implements OnInit {
       next: (response) => {
         console.log('Respuesta del servidor (cargar):', response);
         this.disponibilidades = response.data || [];
-        
-        // Sincronizar el ID correcto si encontramos disponibilidades
-        this.medicoSessionService.sincronizarIdCorrecto(this.disponibilidadService);
         
         this.organizarDisponibilidadesPorEspecialidad();
         this.cargando = false;
@@ -2375,9 +2426,9 @@ export class MedicoHorariosComponent implements OnInit {
       });
     } else {
       // Al crear nueva disponibilidad, usar el medicoId del localStorage
-      const staffMedicoId = this.medicoSessionService.getMedicoIdFromSession();
+      const staffMedicoId = this.getMedicoIdFromLocalStorage();
 
-      if (!staffMedicoId || staffMedicoId === 0) {
+      if (!staffMedicoId) {
         alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
         this.guardando = false;
         this.router.navigate(['/login']);
