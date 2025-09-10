@@ -5,6 +5,7 @@ import { Router } from "@angular/router";
 import { PacienteService } from "../pacientes/paciente.service";
 import { Paciente } from "../pacientes/paciente";
 import { MedicoService } from "../medicos/medico.service";
+import { OperadorService } from "../operador/operador.service";
 
 @Component({
   selector: "app-home",
@@ -44,15 +45,14 @@ export class HomeComponent {
     obraSocialId: "",
   };
   operadorCredentials = {
-    username: "",
-    email: "",
-    password: "",
+    dni: "",
   };
 
   constructor(
     private router: Router,
     private pacienteService: PacienteService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private operadorService: OperadorService
   ) {
     this.loadObrasSociales();
   }
@@ -207,17 +207,49 @@ export class HomeComponent {
     this.errorMessage = "";
 
     try {
-      // Aquí iría tu llamada al backend para validar el operador
-      await new Promise((resolve) => setTimeout(resolve, 800)); // Simula delay
+      const dni = parseInt(this.operadorCredentials.dni);
 
-      // Guardar en localStorage
-      localStorage.setItem("userRole", "operador");
-      localStorage.setItem("userName", this.operadorCredentials.username);
+      // Validación del DNI
+      if (isNaN(dni) || dni <= 0) {
+        this.errorMessage = "Por favor ingresa un DNI válido";
+        this.isLoading = false;
+        return;
+      }
 
-      this.isLoading = false;
-      this.router.navigate(["/operador-dashboard"]); // Ajustar ruta
+      this.operadorService.findByDni(dni).subscribe({
+        next: (response: any) => {
+          console.log("Respuesta del servidor:", response);
+
+          if (response && response.data && response.status_code === 200) {
+            // Operador encontrado
+            localStorage.setItem("userRole", "operador");
+            localStorage.setItem("operadorDNI", this.operadorCredentials.dni);
+            localStorage.setItem("operadorData", JSON.stringify(response.data));
+            localStorage.setItem(
+              "userName",
+              `${response.data.nombre} ${response.data.apellido}`
+            );
+
+            this.isLoading = false;
+            this.router.navigate(["/operador-dashboard"]); // 👈 aquí va la ruta del operador
+          } else {
+            this.errorMessage = "Operador no encontrado";
+            this.isLoading = false;
+          }
+        },
+        error: (error) => {
+          console.error("Error al buscar operador:", error);
+          if (error.status === 404) {
+            this.errorMessage = "Operador no encontrado";
+          } else {
+            this.errorMessage =
+              "Error al conectar con el servidor. Intenta nuevamente.";
+          }
+          this.isLoading = false;
+        },
+      });
     } catch (error) {
-      this.errorMessage = "Usuario o contraseña inválidos";
+      this.errorMessage = "Error inesperado. Por favor intenta nuevamente.";
       this.isLoading = false;
     }
   }
