@@ -1375,8 +1375,8 @@ export class MedicoDashboardComponent implements OnInit {
     
     console.log('Cargando datos con staffMedicoId:', this.staffMedicoId);
     this.cargarEstadisticas();
-    this.cargarTurnosHoy();
-    this.cargarProximosTurnos();
+    // this.cargarTurnosHoy(); // Ya incluido en cargarEstadisticas()
+    // this.cargarProximosTurnos(); // Ya incluido en cargarEstadisticas()
   }
 
   // Helper method to get medico ID from localStorage
@@ -1479,70 +1479,85 @@ export class MedicoDashboardComponent implements OnInit {
       return;
     }
     
-    console.log('Cargando estadísticas para staffMedicoId:', this.staffMedicoId);
+    console.log('� OPTIMIZADO: Cargando TODOS los datos en UNA sola consulta');
+    console.log('StaffMedicoId:', this.staffMedicoId);
     
     const hoy = new Date().toISOString().split('T')[0];
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
-    
-    // Turnos de hoy
-    this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: this.staffMedicoId,
-      fechaExacta: hoy
-    }).subscribe(response => {
-      this.stats.turnosHoy = response.data?.length || 0;
-      console.log('Turnos hoy:', this.stats.turnosHoy);
-    });
-
-    // Turnos de mañana
-    this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: this.staffMedicoId,
-      fechaExacta: manana
-    }).subscribe(response => {
-      this.stats.turnosManana = response.data?.length || 0;
-      console.log('Turnos mañana:', this.stats.turnosManana);
-    });
-
-    // Turnos de la semana
     const inicioSemana = this.getStartOfWeek(new Date()).toISOString().split('T')[0];
     const finSemana = this.getEndOfWeek(new Date()).toISOString().split('T')[0];
     
-    this.turnoService.searchWithSimpleFilters({
+    console.log('=== DEBUG FECHAS ===');
+    console.log('Fecha hoy:', hoy);
+    console.log('Fecha mañana:', manana);
+    console.log('Rango semana:', { inicioSemana, finSemana });
+    
+    // === UNA SOLA CONSULTA PARA TODOS LOS TURNOS DEL MÉDICO ===
+    const filtrosCompletos = {
       staffMedicoId: this.staffMedicoId,
-      fechaDesde: inicioSemana,
-      fechaHasta: finSemana
-    }).subscribe(response => {
-      this.stats.turnosSemana = response.data?.length || 0;
-      console.log('Turnos semana:', this.stats.turnosSemana);
-    });
-
-    // Turnos pendientes
-    this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: this.staffMedicoId,
-      estado: 'PROGRAMADO'
-    }).subscribe(response => {
-      this.stats.turnosPendientes = response.data?.length || 0;
-      console.log('Turnos pendientes:', this.stats.turnosPendientes);
+      sortBy: 'fecha',
+      size: 100  // Traer todos los turnos del médico
+    };
+    console.log('🎯 Filtros ÚNICOS para TODOS los turnos:', filtrosCompletos);
+    
+    this.turnoService.searchWithFilters(filtrosCompletos).subscribe({
+      next: (response) => {
+        const todosTurnos = response.data?.content || response.data || [];
+        console.log('✅ TODOS los turnos del médico cargados:', todosTurnos.length);
+        console.log('✅ Datos completos:', todosTurnos);
+        
+        // === FILTRAR EN EL FRONTEND ===
+        
+        // Turnos de hoy
+        const turnosHoy = todosTurnos.filter((turno: any) => turno.fecha === hoy);
+        this.stats.turnosHoy = turnosHoy.length;
+        this.turnosHoy = turnosHoy;
+        console.log(`📊 Turnos HOY (${hoy}):`, this.stats.turnosHoy);
+        
+        // Turnos de mañana  
+        const turnosManana = todosTurnos.filter((turno: any) => turno.fecha === manana);
+        this.stats.turnosManana = turnosManana.length;
+        console.log(`📊 Turnos MAÑANA (${manana}):`, this.stats.turnosManana);
+        
+        // Turnos de la semana
+        const turnosSemana = todosTurnos.filter((turno: any) => {
+          return turno.fecha >= inicioSemana && turno.fecha <= finSemana;
+        });
+        this.stats.turnosSemana = turnosSemana.length;
+        console.log(`📊 Turnos SEMANA (${inicioSemana} - ${finSemana}):`, this.stats.turnosSemana);
+        
+        // Turnos pendientes
+        const turnosPendientes = todosTurnos.filter((turno: any) => turno.estado === 'PROGRAMADO');
+        this.stats.turnosPendientes = turnosPendientes.length;
+        console.log(`📊 Turnos PENDIENTES (PROGRAMADO):`, this.stats.turnosPendientes);
+        
+        // Próximos turnos (desde mañana)
+        const proximosTurnos = todosTurnos.filter((turno: any) => turno.fecha > hoy);
+        this.proximosTurnos = proximosTurnos.slice(0, 10); // Solo primeros 10
+        console.log(`📊 PRÓXIMOS turnos (después de hoy):`, this.proximosTurnos.length);
+        
+        // Log detallado de turnos de hoy
+        if (turnosHoy.length > 0) {
+          turnosHoy.forEach((turno: any, index: number) => {
+            console.log(`🔍 Turno HOY ${index + 1} - Fecha: ${turno.fecha}, Hora: ${turno.horaInicio}-${turno.horaFin}, Paciente: ${turno.nombrePaciente} ${turno.apellidoPaciente}`);
+          });
+        }
+        
+        console.log('🎉 OPTIMIZACIÓN COMPLETA: 1 consulta en lugar de 6');
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar datos:', error);
+        this.stats = { turnosHoy: 0, turnosManana: 0, turnosSemana: 0, turnosPendientes: 0 };
+        this.turnosHoy = [];
+        this.proximosTurnos = [];
+      }
     });
   }
 
   private cargarTurnosHoy() {
-    if (!this.staffMedicoId) {
-      console.error('No se pudo obtener el staffMedicoId para cargar turnos de hoy');
-      return;
-    }
-    
-    const hoy = new Date().toISOString().split('T')[0];
-    
-    console.log('Cargando turnos de hoy para staffMedicoId:', this.staffMedicoId);
-    
-    this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: this.staffMedicoId,
-      fechaExacta: hoy,
-      sortBy: 'horaInicio'
-    }).subscribe(response => {
-      this.turnosHoy = response.data || [];
-      console.log('Turnos de hoy cargados:', this.turnosHoy.length);
-    });
+    console.log('⚠️ cargarTurnosHoy() DESHABILITADO - Ya se carga en cargarEstadisticas()');
+    console.log('✅ Los turnos de hoy ya están disponibles en this.turnosHoy');
+    return;
   }
 
   private cargarProximosTurnos() {
@@ -1553,16 +1568,33 @@ export class MedicoDashboardComponent implements OnInit {
     
     const manana = new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0];
     
-    console.log('Cargando próximos turnos para staffMedicoId:', this.staffMedicoId);
+    console.log('🔍 DEBUG Próximos turnos:');
+    console.log('   - staffMedicoId:', this.staffMedicoId);
+    console.log('   - fecha desde (mañana):', manana);
     
-    this.turnoService.searchWithSimpleFilters({
+    const filtros = {
       staffMedicoId: this.staffMedicoId,
       fechaDesde: manana,
       sortBy: 'fecha',
       size: 10
-    }).subscribe(response => {
-      this.proximosTurnos = response.data || [];
-      console.log('Próximos turnos cargados:', this.proximosTurnos.length);
+    };
+    console.log('   - filtros completos:', filtros);
+    
+    this.turnoService.searchWithFilters(filtros).subscribe({
+      next: (response) => {
+        const turnos = response.data?.content || response.data || [];
+        this.proximosTurnos = turnos;
+        console.log('✅ Próximos turnos encontrados:', turnos.length);
+        console.log('✅ Datos de próximos turnos:', turnos);
+        
+        if (turnos.length === 0) {
+          console.log('⚠️ No hay próximos turnos para este médico desde mañana');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al cargar próximos turnos:', error);
+        this.proximosTurnos = [];
+      }
     });
   }
 

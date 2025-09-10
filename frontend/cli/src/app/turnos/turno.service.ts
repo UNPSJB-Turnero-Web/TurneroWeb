@@ -222,12 +222,13 @@ export class TurnoService {
 
   /** Búsqueda avanzada con filtros múltiples */
   searchWithFilters(filter: TurnoFilter): Observable<DataPackage<any>> {
-    // console.log('🔍 DEBUG Frontend - Filtro original:', filter);
+    console.log('🔍 DEBUG Frontend - Filtro original:', filter);
     
     // Convertir fechas al formato esperado por el backend (dd-MM-yyyy)
     const convertedFilter = this.convertDateFormat(filter);
     
-    // console.log('🔍 DEBUG Frontend - Filtro convertido:', convertedFilter);
+    console.log('🔍 DEBUG Frontend - Filtro convertido:', convertedFilter);
+    console.log('🌐 DEBUG Frontend - URL del request:', `${this.url}/search`);
     
     return this.http.post<DataPackage<any>>(`${this.url}/search`, convertedFilter);
   }
@@ -239,19 +240,19 @@ export class TurnoService {
     if (convertedFilter.fechaDesde) {
       const original = convertedFilter.fechaDesde;
       convertedFilter.fechaDesde = this.formatDateForBackend(convertedFilter.fechaDesde as any);
-      // console.log(`📅 DEBUG fechaDesde: ${original} → ${convertedFilter.fechaDesde}`);
+      console.log(`📅 DEBUG fechaDesde: ${original} → ${convertedFilter.fechaDesde}`);
     }
     
     if (convertedFilter.fechaHasta) {
       const original = convertedFilter.fechaHasta;
       convertedFilter.fechaHasta = this.formatDateForBackend(convertedFilter.fechaHasta as any);
-      // console.log(`📅 DEBUG fechaHasta: ${original} → ${convertedFilter.fechaHasta}`);
+      console.log(`📅 DEBUG fechaHasta: ${original} → ${convertedFilter.fechaHasta}`);
     }
     
     if (convertedFilter.fechaExacta) {
       const original = convertedFilter.fechaExacta;
       convertedFilter.fechaExacta = this.formatDateForBackend(convertedFilter.fechaExacta as any);
-      // console.log(`📅 DEBUG fechaExacta: ${original} → ${convertedFilter.fechaExacta}`);
+      console.log(`📅 DEBUG fechaExacta: ${original} → ${convertedFilter.fechaExacta}`);
     }
     
     return convertedFilter;
