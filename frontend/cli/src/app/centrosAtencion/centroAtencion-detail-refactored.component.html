@@ -30,15 +30,15 @@
       </button>
     </li>
     <li class="nav-item" role="presentation">
-      <button class="nav-link" [class.active]="activeTab === 'consultorios'" (click)="activeTab = 'consultorios'"
-        type="button">
-        <i class="icon-consultorios me-2"></i> Consultorios
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
       <button class="nav-link" [class.active]="activeTab === 'especialidades'" (click)="activeTab = 'especialidades'"
         type="button">
         <i class="icon-especialidades me-2"></i> Especialidades
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'consultorios'" (click)="activeTab = 'consultorios'"
+        type="button">
+        <i class="icon-consultorios me-2"></i> Consultorios
       </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -75,6 +75,20 @@
       </app-centro-atencion-detalle-tab>
     </div>
 
+    <!-- TAB ESPECIALIDADES -->
+    <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'" [class.active]="activeTab === 'especialidades'">
+      <app-centro-atencion-especialidades-tab
+        [especialidadesAsociadas]="especialidadesAsociadas"
+        [especialidadesDisponibles]="especialidadesDisponibles"
+        [especialidadSeleccionada]="especialidadSeleccionada"
+        [mensaje]="mensaje"
+        [tipoMensaje]="tipoMensaje"
+        (especialidadSeleccionadaChange)="especialidadSeleccionada = $event"
+        (asociarEspecialidad)="asociarEspecialidad()"
+        (desasociarEspecialidad)="desasociarEspecialidad($event)">
+      </app-centro-atencion-especialidades-tab>
+    </div>
+
     <!-- TAB CONSULTORIOS -->
     <div class="tab-pane fade" [class.show]="activeTab === 'consultorios'" [class.active]="activeTab === 'consultorios'">
       <app-centro-atencion-consultorios-tab
@@ -104,20 +118,6 @@
         (editarEsquema)="editarEsquema($event)"
         (esquemaCreado)="onEsquemaCreado($event)">
       </app-centro-atencion-consultorios-tab>
-    </div>
-
-    <!-- TAB ESPECIALIDADES -->
-    <div class="tab-pane fade" [class.show]="activeTab === 'especialidades'" [class.active]="activeTab === 'especialidades'">
-      <app-centro-atencion-especialidades-tab
-        [especialidadesAsociadas]="especialidadesAsociadas"
-        [especialidadesDisponibles]="especialidadesDisponibles"
-        [especialidadSeleccionada]="especialidadSeleccionada"
-        [mensaje]="mensaje"
-        [tipoMensaje]="tipoMensaje"
-        (especialidadSeleccionadaChange)="especialidadSeleccionada = $event"
-        (asociarEspecialidad)="asociarEspecialidad()"
-        (desasociarEspecialidad)="desasociarEspecialidad($event)">
-      </app-centro-atencion-especialidades-tab>
     </div>
 
     <!-- TAB STAFF MÉDICO -->
