@@ -13,8 +13,8 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
   template: `
     <div class="modal-header">
       <h4 class="modal-title">
-        <i class="fa fa-calendar-plus me-2"></i>
-        Nueva Disponibilidad - Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}
+        <i class="fa" [class.fa-calendar-plus]="!modoEdicion" [class.fa-edit]="modoEdicion" me-2></i>
+        {{ modoEdicion ? 'Editar' : 'Nueva' }} Disponibilidad - Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}
       </h4>
       <button type="button" class="btn-close" (click)="activeModal.dismiss()">
         <span aria-hidden="true">&times;</span>
@@ -118,7 +118,8 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
           <div class="form-help mt-2">
             <small class="text-muted">
               <i class="fa fa-info-circle me-1"></i>
-              Configure los días y horarios en los que el médico estará disponible para atender pacientes.
+              Configure los días y horarios en los que el médico estará disponible para atender pacientes en este centro. 
+              {{ modoEdicion ? 'Modifique los horarios existentes según sea necesario.' : 'Puede agregar múltiples horarios para diferentes días.' }}
             </small>
           </div>
         </div>
@@ -142,7 +143,7 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
         [disabled]="!puedeGuardar() || guardando"
       >
         <i class="fa" [class.fa-save]="!guardando" [class.fa-spinner]="guardando" [class.fa-spin]="guardando" ></i>
-        {{ guardando ? 'Guardando...' : 'Guardar Disponibilidad' }}
+        {{ guardando ? (modoEdicion ? 'Actualizando...' : 'Guardando...') : (modoEdicion ? 'Actualizar Disponibilidad' : 'Guardar Disponibilidad') }}
       </button>
     </div>
   `,
@@ -276,6 +277,8 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
 export class DisponibilidadModalComponent {
   staffMedico: StaffMedico;
   disponibilidad: DisponibilidadMedico;
+  disponibilidadExistente?: DisponibilidadMedico; // Para cargar disponibilidad existente
+  modoEdicion = false; // Para determinar si estamos editando o creando
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   
   mensajeError = '';
@@ -302,8 +305,18 @@ export class DisponibilidadModalComponent {
   }
 
   ngOnInit(): void {
-    // Agregar un horario por defecto
-    this.addHorario();
+    // Si hay una disponibilidad existente, cargarla para edición
+    if (this.disponibilidadExistente) {
+      this.modoEdicion = true;
+      this.disponibilidad = {
+        ...this.disponibilidadExistente,
+        horarios: [...this.disponibilidadExistente.horarios] // Clonar horarios
+      };
+      console.log('Cargando disponibilidad existente para edición:', this.disponibilidad);
+    } else {
+      // Modo creación - agregar un horario por defecto
+      this.addHorario();
+    }
   }
 
   addHorario(): void {
@@ -352,11 +365,11 @@ export class DisponibilidadModalComponent {
       }
     }
 
-    // Validar que no haya duplicados del mismo día
+    // Validar que no haya duplicados del mismo día DENTRO de esta disponibilidad
     const diasUsados = new Set();
     for (let horario of this.disponibilidad.horarios) {
       if (diasUsados.has(horario.dia)) {
-        return `El día ${this.getDiaNombre(horario.dia)} está duplicado. Cada día puede tener solo un horario.`;
+        return `El día ${this.getDiaNombre(horario.dia)} está duplicado. Cada día puede tener solo un horario por disponibilidad.`;
       }
       diasUsados.add(horario.dia);
     }
@@ -384,11 +397,19 @@ export class DisponibilidadModalComponent {
     const diasOrden = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
     this.disponibilidad.horarios.sort((a, b) => diasOrden.indexOf(a.dia) - diasOrden.indexOf(b.dia));
 
-    // Crear la disponibilidad
-    this.disponibilidadService.create(this.disponibilidad).subscribe({
+    // Determinar si crear o actualizar
+    const operacion = this.modoEdicion 
+      ? this.disponibilidadService.update(this.disponibilidad.id!, this.disponibilidad)
+      : this.disponibilidadService.create(this.disponibilidad);
+
+    const mensajeExito = this.modoEdicion 
+      ? 'Disponibilidad actualizada exitosamente'
+      : 'Disponibilidad creada exitosamente';
+
+    operacion.subscribe({
       next: (response) => {
         this.guardando = false;
-        this.mensajeExito = 'Disponibilidad creada exitosamente';
+        this.mensajeExito = mensajeExito;
         
         // Cerrar modal después de un breve delay
         setTimeout(() => {
@@ -397,8 +418,8 @@ export class DisponibilidadModalComponent {
       },
       error: (error) => {
         this.guardando = false;
-        console.error('Error al crear la disponibilidad:', error);
-        this.mensajeError = error?.error?.message || 'Error al crear la disponibilidad. Intente nuevamente.';
+        console.error(`Error al ${this.modoEdicion ? 'actualizar' : 'crear'} la disponibilidad:`, error);
+        this.mensajeError = error?.error?.message || `Error al ${this.modoEdicion ? 'actualizar' : 'crear'} la disponibilidad. Intente nuevamente.`;
       }
     });
   }

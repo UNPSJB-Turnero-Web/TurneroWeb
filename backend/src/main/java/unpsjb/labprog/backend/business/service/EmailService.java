@@ -1,0 +1,340 @@
+package unpsjb.labprog.backend.business.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Servicio para el envío de correos electrónicos.
+ * Soporta envío de mensajes de texto plano y HTML de forma síncrona y asíncrona.
+ * 
+ * @author Sistema TurneroWeb
+ */
+@Service
+public class EmailService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    
+    @Autowired
+    private JavaMailSender mailSender;
+    
+    @Value("${spring.mail.username:noreply@hospital.com}")
+    private String fromEmail;
+    
+    @Value("${app.name:TurneroWeb}")
+    private String appName;
+    
+    @Value("${app.url:http://localhost:4200}")
+    private String appUrl;
+
+    /**
+     * Envía un correo electrónico de texto plano de forma síncrona.
+     * 
+     * @param to Dirección de correo del destinatario
+     * @param subject Asunto del correo
+     * @param body Cuerpo del mensaje en texto plano
+     * @throws EmailSendException Si ocurre un error al enviar el correo
+     */
+    public void sendTextEmail(String to, String subject, String body) {
+        validateEmailParameters(to, subject, body);
+        
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            
+            mailSender.send(message);
+            logger.info("Correo de texto enviado exitosamente a: {}", to);
+            
+        } catch (MailException e) {
+            logger.error("Error al enviar correo de texto a {}: {}", to, e.getMessage());
+            throw new EmailSendException("Error al enviar correo electrónico", e);
+        }
+    }
+
+    /**
+     * Envía un correo electrónico HTML de forma síncrona.
+     * 
+     * @param to Dirección de correo del destinatario
+     * @param subject Asunto del correo
+     * @param htmlBody Cuerpo del mensaje en HTML
+     * @throws EmailSendException Si ocurre un error al enviar el correo
+     */
+    public void sendHtmlEmail(String to, String subject, String htmlBody) {
+        validateEmailParameters(to, subject, htmlBody);
+        
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true); // true indica que es HTML
+            
+            mailSender.send(message);
+            logger.info("Correo HTML enviado exitosamente a: {}", to);
+            
+        } catch (MessagingException | MailException e) {
+            logger.error("Error al enviar correo HTML a {}: {}", to, e.getMessage());
+            throw new EmailSendException("Error al enviar correo electrónico HTML", e);
+        }
+    }
+
+    /**
+     * Envía un correo electrónico de texto plano de forma asíncrona.
+     * 
+     * @param to Dirección de correo del destinatario
+     * @param subject Asunto del correo
+     * @param body Cuerpo del mensaje en texto plano
+     * @return CompletableFuture<Void> para manejar el resultado asíncrono
+     */
+    @Async
+    public CompletableFuture<Void> sendTextEmailAsync(String to, String subject, String body) {
+        try {
+            sendTextEmail(to, subject, body);
+            return CompletableFuture.completedFuture(null);
+        } catch (EmailSendException e) {
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * Envía un correo electrónico HTML de forma asíncrona.
+     * 
+     * @param to Dirección de correo del destinatario
+     * @param subject Asunto del correo
+     * @param htmlBody Cuerpo del mensaje en HTML
+     * @return CompletableFuture<Void> para manejar el resultado asíncrono
+     */
+    @Async
+    public CompletableFuture<Void> sendHtmlEmailAsync(String to, String subject, String htmlBody) {
+        try {
+            sendHtmlEmail(to, subject, htmlBody);
+            return CompletableFuture.completedFuture(null);
+        } catch (EmailSendException e) {
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * Envía un correo para restablecer contraseña.
+     * 
+     * @param to Dirección de correo del usuario
+     * @param resetLink Enlace para restablecer la contraseña
+     */
+    @Async
+    public CompletableFuture<Void> sendPasswordResetEmail(String to, String resetLink) {
+        String subject = appName + " - Restablecer contraseña";
+        String htmlBody = buildPasswordResetEmailBody(resetLink);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
+    /**
+     * Envía un correo de activación de cuenta.
+     * 
+     * @param to Dirección de correo del usuario
+     * @param activationLink Enlace para activar la cuenta
+     * @param userName Nombre del usuario
+     */
+    @Async
+    public CompletableFuture<Void> sendAccountActivationEmail(String to, String activationLink, String userName) {
+        String subject = appName + " - Activar tu cuenta";
+        String htmlBody = buildAccountActivationEmailBody(activationLink, userName);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
+    /**
+     * Envía credenciales iniciales a un nuevo usuario.
+     * 
+     * @param to Dirección de correo del usuario
+     * @param userName Nombre del usuario
+     * @param temporaryPassword Contraseña temporal
+     */
+    @Async
+    public CompletableFuture<Void> sendInitialCredentialsEmail(String to, String userName, String temporaryPassword) {
+        String subject = appName + " - Credenciales de acceso";
+        String htmlBody = buildInitialCredentialsEmailBody(userName, temporaryPassword);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
+    /**
+     * Envía una notificación de turno confirmado.
+     * 
+     * @param to Dirección de correo del paciente
+     * @param patientName Nombre del paciente
+     * @param appointmentDetails Detalles del turno
+     */
+    @Async
+    public CompletableFuture<Void> sendAppointmentConfirmationEmail(String to, String patientName, String appointmentDetails) {
+        String subject = appName + " - Confirmación de turno";
+        String htmlBody = buildAppointmentConfirmationEmailBody(patientName, appointmentDetails);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
+    // Métodos privados para construir los cuerpos de los correos
+
+    private String buildPasswordResetEmailBody(String resetLink) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Restablecer contraseña</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c5aa0;">Restablecer contraseña - %s</h2>
+                    <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
+                    <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Restablecer contraseña</a>
+                    </div>
+                    <p><strong>Este enlace expirará en 24 horas por seguridad.</strong></p>
+                    <p>Si no solicitaste este cambio, puedes ignorar este correo.</p>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, resetLink);
+    }
+
+    private String buildAccountActivationEmailBody(String activationLink, String userName) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Activar cuenta</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c5aa0;">¡Bienvenido a %s, %s!</h2>
+                    <p>Tu cuenta ha sido creada exitosamente. Para comenzar a usar nuestros servicios, necesitas activar tu cuenta.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #17a2b8; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Activar cuenta</a>
+                    </div>
+                    <p>Una vez activada tu cuenta, podrás acceder a todas las funcionalidades del sistema.</p>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, userName, activationLink);
+    }
+
+    private String buildInitialCredentialsEmailBody(String userName, String temporaryPassword) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Credenciales de acceso</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #2c5aa0;">Credenciales de acceso - %s</h2>
+                    <p>Hola %s,</p>
+                    <p>Se ha creado tu cuenta en nuestro sistema. Aquí tienes tus credenciales de acceso:</p>
+                    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p><strong>Usuario:</strong> Tu dirección de correo electrónico</p>
+                        <p><strong>Contraseña temporal:</strong> <code>%s</code></p>
+                    </div>
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin: 20px 0;">
+                        <p style="margin: 0;"><strong>⚠️ Importante:</strong> Por seguridad, cambia tu contraseña en el primer acceso.</p>
+                    </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Acceder al sistema</a>
+                    </div>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, userName, temporaryPassword, appUrl);
+    }
+
+    private String buildAppointmentConfirmationEmailBody(String patientName, String appointmentDetails) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Confirmación de turno</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #28a745;">Turno confirmado - %s</h2>
+                    <p>Hola %s,</p>
+                    <p>Tu turno ha sido confirmado exitosamente. Aquí tienes los detalles:</p>
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        %s
+                    </div>
+                    <p><strong>Recordatorio:</strong> Llega 15 minutos antes de tu cita con tu DNI y carnet de obra social (si corresponde).</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Ver mis turnos</a>
+                    </div>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, patientName, appointmentDetails, appUrl);
+    }
+
+    /**
+     * Valida los parámetros básicos para el envío de correos.
+     * 
+     * @param to Dirección de correo del destinatario
+     * @param subject Asunto del correo
+     * @param body Cuerpo del mensaje
+     * @throws IllegalArgumentException Si algún parámetro es inválido
+     */
+    private void validateEmailParameters(String to, String subject, String body) {
+        if (to == null || to.trim().isEmpty()) {
+            throw new IllegalArgumentException("La dirección de correo del destinatario no puede estar vacía");
+        }
+        
+        if (subject == null || subject.trim().isEmpty()) {
+            throw new IllegalArgumentException("El asunto del correo no puede estar vacío");
+        }
+        
+        if (body == null || body.trim().isEmpty()) {
+            throw new IllegalArgumentException("El cuerpo del mensaje no puede estar vacío");
+        }
+        
+        // Validación básica de formato de email
+        if (!to.contains("@") || !to.contains(".")) {
+            throw new IllegalArgumentException("El formato de la dirección de correo es inválido");
+        }
+    }
+
+    // Excepción personalizada para errores de envío de correo
+    public static class EmailSendException extends RuntimeException {
+        public EmailSendException(String message) {
+            super(message);
+        }
+        
+        public EmailSendException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+}

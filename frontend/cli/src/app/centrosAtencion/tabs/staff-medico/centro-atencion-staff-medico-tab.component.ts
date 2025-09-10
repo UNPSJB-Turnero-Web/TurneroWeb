@@ -108,6 +108,45 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     );
   }
 
+  /**
+   * Abre el modal para editar una disponibilidad existente
+   */
+  abrirModalEditarDisponibilidad(staff: StaffMedico): void {
+    // Buscar la disponibilidad existente del staff médico
+    const disponibilidadesExistentes = this.verDisponibilidadesStaff(staff);
+    
+    if (disponibilidadesExistentes.length > 0) {
+      // Si tiene disponibilidades, abrir modal en modo edición con la primera disponibilidad
+      const disponibilidadParaEditar = disponibilidadesExistentes[0];
+      
+      const modalRef = this.modalService.open(DisponibilidadModalComponent, {
+        size: 'lg',
+        backdrop: 'static',
+        keyboard: false
+      });
+
+      // Pasar datos al modal
+      modalRef.componentInstance.staffMedico = staff;
+      modalRef.componentInstance.disponibilidadExistente = disponibilidadParaEditar;
+
+      // Manejar el resultado del modal
+      modalRef.result.then(
+        (disponibilidadActualizada: DisponibilidadMedico) => {
+          if (disponibilidadActualizada) {
+            // Emitir evento para que el componente padre actualice las disponibilidades
+            this.disponibilidadCreada.emit(disponibilidadActualizada);
+          }
+        },
+        (dismissed) => {
+          console.log('Modal de edición de disponibilidad cerrado sin guardar');
+        }
+      );
+    } else {
+      // Si no tiene disponibilidades, abrir modal en modo creación
+      this.abrirModalDisponibilidad(staff);
+    }
+  }
+
   medicoYaAsociado(): boolean {
     if (!this.medicoSeleccionado) return false;
     
@@ -177,5 +216,51 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   getHorariosPorDia(disponibilidad: DisponibilidadMedico, dia: string): any[] {
     if (!disponibilidad.horarios) return [];
     return disponibilidad.horarios.filter(horario => horario.dia === dia);
+  }
+
+  /**
+   * Obtiene la string de horario para mostrar en el calendario simplificado
+   */
+  getHorarioStringDisponibilidad(horario: any): string {
+    if (!horario.horaInicio || !horario.horaFin) return '';
+    const inicio = horario.horaInicio.substring(0, 5);
+    const fin = horario.horaFin.substring(0, 5);
+    return `${inicio}-${fin}`;
+  }
+
+  /**
+   * Calcula la duración total de disponibilidad en un día
+   */
+  getDuracionTotalDia(disponibilidad: DisponibilidadMedico, dia: string): string {
+    const horarios = this.getHorariosPorDia(disponibilidad, dia);
+    if (horarios.length === 0) return '';
+    
+    let totalMinutos = 0;
+    horarios.forEach(horario => {
+      if (horario.horaInicio && horario.horaFin) {
+        const inicio = new Date(`1970-01-01T${horario.horaInicio}`);
+        const fin = new Date(`1970-01-01T${horario.horaFin}`);
+        totalMinutos += (fin.getTime() - inicio.getTime()) / (1000 * 60);
+      }
+    });
+    
+    const horas = Math.floor(totalMinutos / 60);
+    const minutos = totalMinutos % 60;
+    
+    if (horas > 0 && minutos > 0) {
+      return `${horas}h ${minutos}m`;
+    } else if (horas > 0) {
+      return `${horas}h`;
+    } else if (minutos > 0) {
+      return `${minutos}m`;
+    }
+    return '';
+  }
+
+  /**
+   * Obtiene el total de disponibilidades configuradas para un staff médico
+   */
+  getTotalDisponibilidades(staff: StaffMedico): number {
+    return this.verDisponibilidadesStaff(staff).length;
   }
 }
