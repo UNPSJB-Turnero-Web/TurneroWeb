@@ -29,13 +29,13 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
     
-    @Value("${spring.mail.username:noreply@hospital.com}")
+    @Value("${spring.mail.username}")
     private String fromEmail;
     
-    @Value("${app.name:TurneroWeb}")
+    @Value("${app.name}")
     private String appName;
     
-    @Value("${app.url:http://localhost:4200}")
+    @Value("${app.url}")
     private String appUrl;
 
     /**
@@ -104,12 +104,17 @@ public class EmailService {
      */
     @Async
     public CompletableFuture<Void> sendTextEmailAsync(String to, String subject, String body) {
-        try {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             sendTextEmail(to, subject, body);
-            return CompletableFuture.completedFuture(null);
-        } catch (EmailSendException e) {
-            return CompletableFuture.failedFuture(e);
-        }
+        });
+        future.whenComplete((result, ex) -> {
+            if (ex != null) {
+                logger.error("[Async] Error al enviar correo de texto a {}: {}", to, ex.getMessage());
+            } else {
+                logger.info("[Async] Correo de texto enviado exitosamente a: {}", to);
+            }
+        });
+        return future;
     }
 
     /**
@@ -122,12 +127,17 @@ public class EmailService {
      */
     @Async
     public CompletableFuture<Void> sendHtmlEmailAsync(String to, String subject, String htmlBody) {
-        try {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
             sendHtmlEmail(to, subject, htmlBody);
-            return CompletableFuture.completedFuture(null);
-        } catch (EmailSendException e) {
-            return CompletableFuture.failedFuture(e);
-        }
+        });
+        future.whenComplete((result, ex) -> {
+            if (ex != null) {
+                logger.error("[Async] Error al enviar correo HTML a {}: {}", to, ex.getMessage());
+            } else {
+                logger.info("[Async] Correo HTML enviado exitosamente a: {}", to);
+            }
+        });
+        return future;
     }
 
     /**
