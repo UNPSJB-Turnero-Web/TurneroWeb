@@ -294,7 +294,15 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
   }
 
   editarHorariosConsultorio(consultorio: Consultorio): void {
-    this.router.navigate(['/consultorios', consultorio.id, 'horarios']);
+    // Si recibe el consultorio actualizado del modal, actualizar la lista
+    if (consultorio && consultorio.id) {
+      const index = this.consultorios.findIndex(c => c.id === consultorio.id);
+      if (index !== -1) {
+        this.consultorios[index] = consultorio;
+        this.showConsultorioMessage('Horarios actualizados correctamente', 'success');
+        this.getConsultorios(); // Recargar para obtener datos frescos del servidor
+      }
+    }
   }
 
   guardarEdicionConsultorio(index: number): void {

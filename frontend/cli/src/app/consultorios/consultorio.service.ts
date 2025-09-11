@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DataPackage } from '../data.package';
-import { Consultorio } from './consultorio';
+import { Consultorio, HorarioConsultorio } from './consultorio';
 
 @Injectable({
   providedIn: 'root'
@@ -49,6 +49,29 @@ export class ConsultorioService {
     return this.http.get<DataPackage<Consultorio[]>>(
     `${this.consultoriosUrl}/centrosAtencion/${centroId}/consultorios`
     );
+  }
+
+  /** Actualiza los horarios semanales de un consultorio */
+  updateHorarios(consultorioId: number, horarios: HorarioConsultorio[]): Observable<DataPackage<Consultorio>> {
+    // Primero obtenemos el consultorio actual
+    return new Observable(observer => {
+      this.getById(consultorioId).subscribe({
+        next: (consultorioResponse) => {
+          // Actualizamos el consultorio con los nuevos horarios
+          const consultorioActualizado = {
+            ...consultorioResponse.data,
+            horariosSemanales: horarios
+          };
+          
+          // Enviamos la actualización completa
+          this.update(consultorioId, consultorioActualizado).subscribe({
+            next: (response) => observer.next(response),
+            error: (error) => observer.error(error)
+          });
+        },
+        error: (error) => observer.error(error)
+      });
+    });
   }
 
   byPage(page: number, size: number): Observable<DataPackage> {

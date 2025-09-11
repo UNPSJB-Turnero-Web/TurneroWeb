@@ -6,6 +6,7 @@ import { Consultorio } from '../../../consultorios/consultorio';
 import { EsquemaTurno } from '../../../esquemaTurno/esquemaTurno';
 import { StaffMedico } from '../../../staffMedicos/staffMedico';
 import { EsquemaTurnoModalComponent } from './esquema-turno-modal.component';
+import { HorariosConsultorioModalComponent } from './horarios-consultorio-modal.component';
 
 @Component({
   selector: 'app-centro-atencion-consultorios-tab',
@@ -79,7 +80,28 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
   }
 
   onEditarHorariosConsultorio(consultorio: Consultorio): void {
-    this.editarHorariosConsultorio.emit(consultorio);
+    const modalRef = this.modalService.open(HorariosConsultorioModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      keyboard: false
+    });
+
+    // Pasar el consultorio al modal
+    modalRef.componentInstance.consultorio = consultorio;
+
+    // Manejar el resultado del modal
+    modalRef.result.then(
+      (consultorioActualizado: Consultorio) => {
+        if (consultorioActualizado) {
+          // Emitir evento para que el componente padre actualice la lista
+          this.editarHorariosConsultorio.emit(consultorioActualizado);
+        }
+      },
+      (dismissed) => {
+        // Modal fue cancelado o cerrado sin guardar
+        console.log('Modal de horarios cerrado sin guardar');
+      }
+    );
   }
 
   /**
