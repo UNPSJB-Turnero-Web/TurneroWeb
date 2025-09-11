@@ -1,13 +1,10 @@
 package unpsjb.labprog.backend.presenter;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
-import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.business.service.MedicoService;
-import unpsjb.labprog.backend.business.service.RegistrationService;
 import unpsjb.labprog.backend.config.AuditContext;
-import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
-
-import unpsjb.labprog.backend.model.Especialidad;
-import unpsjb.labprog.backend.model.Medico;
 
 @RestController
 @RequestMapping("medicos")
@@ -37,12 +28,6 @@ public class MedicoPresenter {
 
     @Autowired
     private MedicoService service;
-
-    @Autowired
-    private RegistrationService registrationService;
-
-    @Autowired
-    private EspecialidadService especialidadService;
 
     @GetMapping
     public ResponseEntity<Object> findAll() {
@@ -65,18 +50,8 @@ public class MedicoPresenter {
             }
             MedicoDTO saved = service.saveOrUpdate(medicoDTO);
             return Response.ok(saved, "Médico creado correctamente");
-        } catch (IllegalArgumentException e) {
-            String msg = e.getMessage();
-            if (msg != null && (
-                    msg.toLowerCase().contains("dni incorrecto") ||
-                    msg.toLowerCase().contains("obligatorio") ||
-                    msg.toLowerCase().contains("no existe") ||
-                    msg.toLowerCase().contains("inválido") ||
-                    msg.toLowerCase().contains("debe tener entre")
-                )) {
-                return Response.error(medicoDTO, msg);
-            }
-            return Response.dbError(msg);
+        } catch (IllegalArgumentException e) {           
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, e.getMessage());
         }
@@ -135,82 +110,6 @@ public class MedicoPresenter {
     // REGISTRO DE NUEVO MÉDICO
     // ===============================
     
-    /**
-     * Registra un nuevo médico en el sistema
-     * POST /medicos/register
-     * 
-     * Este endpoint se encarga específicamente del registro de médicos,
-     * usando el RegistrationService para coordinar la creación del usuario
-     * y la entidad médico.
-     */
-    @PostMapping("/register")
-    public ResponseEntity<Object> registrarMedico(@RequestBody MedicoDTO registroDTO) {
-        try {
-            // Verificar si el usuario ya existe
-            if (registrationService.existsByEmail(registroDTO.getEmail())) {
-                return Response.response(HttpStatus.CONFLICT, 
-                                       "Ya existe un usuario con el email: " + registroDTO.getEmail(), 
-                                       null);
-            }
-
-            if (registrationService.existsByDni(Long.parseLong(registroDTO.getDni()))) {
-                return Response.response(HttpStatus.CONFLICT, 
-                                       "Ya existe un usuario con el DNI: " + registroDTO.getDni(), 
-                                       null);
-            }
-
-            // Validar que las especialidades existen y crear el conjunto
-            Set<Especialidad> especialidades = new HashSet<>();
-            if (registroDTO.getEspecialidadIds() == null || registroDTO.getEspecialidadIds().isEmpty()) {
-                return Response.response(HttpStatus.BAD_REQUEST, 
-                                       "Debe especificar al menos una especialidad", 
-                                       null);
-            }
-
-            for (Integer especialidadId : registroDTO.getEspecialidadIds()) {
-                EspecialidadDTO especialidadDTO = especialidadService.findById(especialidadId);
-                if (especialidadDTO == null) {
-                    return Response.response(HttpStatus.BAD_REQUEST, 
-                                           "No existe la especialidad con ID: " + especialidadId, 
-                                           null);
-                }
-
-                // Crear objeto Especialidad desde el DTO
-                Especialidad especialidad = new Especialidad();
-                especialidad.setId(especialidadDTO.getId());
-                especialidad.setNombre(especialidadDTO.getNombre());
-                especialidad.setDescripcion(especialidadDTO.getDescripcion());
-                
-                especialidades.add(especialidad);
-            }
-
-            // Registrar el médico usando el RegistrationService
-            Medico medicoRegistrado = registrationService.registrarMedico(
-                registroDTO.getEmail(),
-                registroDTO.getPassword(),
-                Long.parseLong(registroDTO.getDni()),
-                registroDTO.getNombre(),
-                registroDTO.getApellido(),
-                registroDTO.getTelefono(),
-                registroDTO.getMatricula(),
-                especialidades
-            );
-            
-            // Convertir a DTO para la respuesta
-            MedicoDTO medicoDTO = service.findById(medicoRegistrado.getId()).orElse(null);
-            
-            return Response.response(HttpStatus.CREATED, 
-                                   "Médico registrado exitosamente", 
-                                   medicoDTO);
-
-        } catch (IllegalArgumentException e) {
-            return Response.response(HttpStatus.BAD_REQUEST, e.getMessage(), null);
-        } catch (Exception e) {
-            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, 
-                                   "Error interno del servidor: " + e.getMessage(), 
-                                   null);
-        }
-    }
 
     /**
      * Crear médico por ADMIN con auditoría

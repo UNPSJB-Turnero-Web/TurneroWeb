@@ -6,10 +6,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +24,19 @@ import unpsjb.labprog.backend.model.Medico;
 @Service
 public class MedicoService {
 
+    private static final Logger logger = LoggerFactory.getLogger(MedicoService.class);
+
     @Autowired
     private MedicoRepository repository;
 
     @Autowired
     private EspecialidadRepository especialidadRepo;
+
+     @Autowired
+    private RegistrationService registrationService;
+
+    @Autowired
+    private EmailService emailService;
 
     public List<MedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -43,11 +52,7 @@ public class MedicoService {
         return repository.findByMatricula(matricula).map(this::toDTO);
     }
 
-    @Autowired
-    private RegistrationService registrationService;
-
-    @Autowired 
-    private PasswordEncoder passwordEncoder;
+   
 
     @Transactional
     public MedicoDTO saveOrUpdate(MedicoDTO dto) {
@@ -96,23 +101,26 @@ public class MedicoService {
                         .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada: " + id)))
                     .collect(Collectors.toSet());
 
-                // Crear usuario en la tabla User con auditoría (esto YA crea el médico)
-                Medico medicoCreado = registrationService.registrarMedicoWithAudit(
+                // 1. Crear usuario en la tabla User con auditoría
+                registrationService.registrarMedicoWithAudit(
                     medico.getEmail(),
                     password,
                     medico.getDni(),
                     medico.getNombre(),
                     medico.getApellido(),
                     medico.getTelefono(),
-                    medico.getMatricula(),
-                    especialidades,
                     dto.getPerformedBy()
                 );
 
-                // Enviar contraseña por mail
+                // 2. Crear entidad médico
+                medico.setEspecialidades(especialidades);
+                
+                Medico medicoCreado = repository.save(medico);
+
+                // 3. Enviar contraseña por mail
                 enviarPasswordPorMail(medico.getEmail(), password);
                 
-                // Retornar el médico creado directamente
+                // Retornar el médico creado
                 return toDTO(medicoCreado);
             } else {
                 // Validar especialidades normalmente para registro directo
@@ -158,10 +166,7 @@ public class MedicoService {
                 throw new IllegalStateException("Ya existe un médico con el email: " + medico.getEmail());
             }
 
-            // Mantener la contraseña anterior si no se proporciona una nueva
-            if (medico.getHashedPassword() == null) {
-                medico.setHashedPassword(existente.getHashedPassword());
-            }
+            // No manejamos contraseña en la entidad médico, solo en User
 
             // Actualizar campos editables
             existente.setNombre(medico.getNombre());
@@ -171,9 +176,7 @@ public class MedicoService {
             existente.setTelefono(medico.getTelefono());
             existente.setEspecialidades(medico.getEspecialidades());
             existente.setMatricula(medico.getMatricula());
-            if (medico.getHashedPassword() != null) {
-                existente.setHashedPassword(medico.getHashedPassword());
-            }
+            // No manejamos contraseña en entidad médico
             medico = existente;
         }
 
@@ -188,10 +191,18 @@ public class MedicoService {
     }
 
     /**
-     * Pseudofunción para enviar la contraseña por mail al médico
+     * Envía la contraseña inicial por correo electrónico al médico
      */
     private void enviarPasswordPorMail(String email, String password) {
-        System.out.println("[PSEUDO-ENVÍO] Se enviaría la contraseña '" + password + "' al correo: " + email);
+        try {
+            // Obtener el nombre del médico desde el email o usar un nombre genérico
+            String userName = email.split("@")[0];
+            emailService.sendInitialCredentialsEmail(email, userName, password);
+            logger.info("Credenciales iniciales enviadas por correo a médico: {}", email);
+        } catch (Exception e) {
+            logger.error("Error al enviar credenciales iniciales por correo a médico {}: {}", email, e.getMessage());
+            // No lanzamos excepción para no interrumpir el flujo de creación del médico
+        }
     }
 
     public Page<MedicoDTO> findByPage(int page, int size) {

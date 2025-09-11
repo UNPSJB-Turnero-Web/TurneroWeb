@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -13,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.business.repository.OperadorRepository;
 import unpsjb.labprog.backend.dto.OperadorDTO;
 import unpsjb.labprog.backend.model.Operador;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class OperadorService {
@@ -25,7 +26,10 @@ public class OperadorService {
     private RegistrationService registrationService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private EmailService emailService;
+
+    private static final Logger logger = LoggerFactory.getLogger(OperadorService.class);
+
 
     public List<OperadorDTO> findAll() {
         return repository.findAll().stream()
@@ -75,8 +79,6 @@ public class OperadorService {
                         dto.getPerformedBy());
 
                 // Crear operador en tabla operador
-                String hashedPassword = passwordEncoder.encode(password);
-                operador.setHashedPassword(hashedPassword);
                 Operador operadorCreado = repository.save(operador);
 
                 // Enviar contraseña por mail
@@ -85,8 +87,6 @@ public class OperadorService {
             } else {
                 // Creación normal sin auditoría
                 String password = generarPasswordAutomatica();
-                String hashedPassword = passwordEncoder.encode(password);
-                operador.setHashedPassword(hashedPassword);
 
                 // Crear usuario en la tabla User
                 registrationService.registrarOperador(
@@ -97,7 +97,7 @@ public class OperadorService {
                         operador.getApellido(),
                         operador.getTelefono());
 
-                // Pseudofunción para enviar la contraseña por mail
+                // Enviar la contraseña por mail
                 enviarPasswordPorMail(operador.getEmail(), password);
             }
 
@@ -111,8 +111,7 @@ public class OperadorService {
                     repository.existsByDni(operador.getDni())) {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
-            // Mantener la contraseña anterior
-            operador.setHashedPassword(existente.getHashedPassword());
+            // No manejamos contraseña en la entidad operador, solo en User
         }
 
         return toDTO(repository.save(operador));
@@ -132,11 +131,18 @@ public class OperadorService {
     }
 
     /**
-     * Pseudofunción para enviar la contraseña por mail al operador
+     * Envía la contraseña inicial por correo electrónico al operador
      */
     private void enviarPasswordPorMail(String email, String password) {
-        // TODO: Implementar el envío real de email
-        System.out.println("[PSEUDO-ENVÍO] Se enviaría la contraseña '" + password + "' al correo: " + email);
+        try {
+            // Obtener el nombre del operador desde el email o usar un nombre genérico
+            String userName = email.split("@")[0];
+            emailService.sendInitialCredentialsEmail(email, userName, password);
+            logger.info("Credenciales iniciales enviadas por correo a operador: {}", email);
+        } catch (Exception e) {
+            logger.error("Error al enviar credenciales iniciales por correo a operador {}: {}", email, e.getMessage());
+            // No lanzamos excepción para no interrumpir el flujo de creación del operador
+        }
     }
 
     @Transactional

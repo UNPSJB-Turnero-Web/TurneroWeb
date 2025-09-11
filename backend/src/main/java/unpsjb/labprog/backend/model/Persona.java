@@ -28,11 +28,6 @@ public abstract class Persona {
     
     @Column(nullable = false, unique = true)
     private String email;
-
-    
-     @Column(nullable = false)
-     private String hashedPassword; // Hash de la contraseña
-
     
     @Column(nullable = false, unique = true)
      private String telefono;
