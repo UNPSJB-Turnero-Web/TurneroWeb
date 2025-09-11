@@ -82,6 +82,14 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
     this.editarHorariosConsultorio.emit(consultorio);
   }
 
+  /**
+   * Verifica si el consultorio tiene horarios configurados (por defecto o semanales)
+   */
+  tieneHorariosConfigurados(consultorio: Consultorio): boolean {
+    return !!(consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0) || 
+           !!(consultorio.horaAperturaDefault && consultorio.horaCierreDefault);
+  }
+
   onGuardarEdicionConsultorio(index: number): void {
     this.guardarEdicionConsultorio.emit(index);
   }
@@ -184,6 +192,45 @@ export class CentroAtencionConsultoriosTabComponent implements OnInit {
 
   onEditarEsquema(esquema: EsquemaTurno): void {
     this.editarEsquema.emit(esquema);
+  }
+
+  /**
+   * Verifica si el consultorio tiene horarios configurados para un día específico
+   */
+  tieneHorarioEnDia(consultorio: Consultorio, dia: string): boolean {
+    // Verificar si tiene horariosSemanales y encontrar el día específico
+    if (consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0) {
+      const horarioDia = consultorio.horariosSemanales.find(h => h.diaSemana === dia);
+      return horarioDia ? horarioDia.activo : false;
+    }
+    
+    // Fallback a horarios por defecto si no tiene horariosSemanales
+    return !!(consultorio.horaAperturaDefault && consultorio.horaCierreDefault);
+  }
+
+  /**
+   * Obtiene el horario formateado para un día específico del consultorio
+   */
+  getHorarioConsultorioDia(consultorio: Consultorio, dia: string): string {
+    // Usar horariosSemanales si están disponibles
+    if (consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0) {
+      const horarioDia = consultorio.horariosSemanales.find(h => h.diaSemana === dia);
+      if (horarioDia && horarioDia.activo && horarioDia.horaApertura && horarioDia.horaCierre) {
+        const apertura = horarioDia.horaApertura.substring(0, 5);
+        const cierre = horarioDia.horaCierre.substring(0, 5);
+        return `${apertura} - ${cierre}`;
+      }
+      return '';
+    }
+    
+    // Fallback a horarios por defecto
+    if (consultorio.horaAperturaDefault && consultorio.horaCierreDefault) {
+      const apertura = consultorio.horaAperturaDefault.substring(0, 5);
+      const cierre = consultorio.horaCierreDefault.substring(0, 5);
+      return `${apertura} - ${cierre}`;
+    }
+    
+    return '';
   }
 
   /**

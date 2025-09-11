@@ -82,10 +82,14 @@
                        placeholder="Nombre del consultorio">
                 
                 <!-- Badge de horarios -->
-                <div class="consultorio-horario-badge" *ngIf="consultorio.horaAperturaDefault && consultorio.horaCierreDefault">
-                  <span class="badge-horario">
+                <div class="consultorio-horario-badge" *ngIf="tieneHorariosConfigurados(consultorio)">
+                  <span class="badge-horario" 
+                        [class.badge-semanal]="consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0">
                     <i class="fa fa-clock me-1"></i>
-                    {{ consultorio.horaAperturaDefault?.substring(0,5) }} - {{ consultorio.horaCierreDefault?.substring(0,5) }}
+                    <span *ngIf="consultorio.horariosSemanales && consultorio.horariosSemanales.length > 0">Horarios por día</span>
+                    <span *ngIf="(!consultorio.horariosSemanales || consultorio.horariosSemanales.length === 0) && consultorio.horaAperturaDefault && consultorio.horaCierreDefault">
+                      {{ consultorio.horaAperturaDefault.substring(0,5) }} - {{ consultorio.horaCierreDefault.substring(0,5) }}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -121,6 +125,52 @@
             </div>
           </div>
           
+          <!-- Horarios de Atención del Consultorio -->
+          <div class="horarios-atencion-section">
+            <div class="horarios-section-header">
+              <h6 class="horarios-title">
+                <i class="fa fa-clock me-2"></i>Horarios de Atención
+              </h6>
+              <div class="horarios-actions">
+                <button *ngIf="editConsultorioIndex !== i" 
+                        class="btn btn-outline-secondary btn-sm" 
+                        (click)="onEditarHorariosConsultorio(consultorio)"
+                        title="Editar horarios de atención">
+                  <i class="fa fa-edit me-1"></i>
+                  <span class="d-none d-md-inline">Editar</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Calendario Semanal Minimalista de Horarios -->
+            <div class="calendario-horarios-minimal">
+              <div class="dias-horarios-header">
+                <div *ngFor="let dia of ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']" 
+                     class="dia-horario-header">
+                  {{ dia }}
+                </div>
+              </div>
+              
+              <div class="dias-horarios-content">
+                <div *ngFor="let dia of ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO']; let j = index" 
+                     class="dia-horario-column">
+                  
+                  <!-- Horario del día -->
+                  <div class="horario-dia-item" *ngIf="tieneHorarioEnDia(consultorio, dia)">
+                    <div class="horario-texto">
+                      {{ getHorarioConsultorioDia(consultorio, dia) }}
+                    </div>
+                  </div>
+                  
+                  <!-- Día cerrado -->
+                  <div class="dia-cerrado" *ngIf="!tieneHorarioEnDia(consultorio, dia)">
+                    <span class="cerrado-texto">Cerrado</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Calendario Semanal de Esquemas - Siempre Visible -->
           <div class="esquemas-semanales-section">
             <div class="esquemas-section-header">
