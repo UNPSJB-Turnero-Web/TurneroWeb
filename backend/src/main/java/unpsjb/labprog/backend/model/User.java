@@ -46,6 +46,17 @@ public class User extends Persona implements UserDetails {
     @Column(nullable = false)
     private Boolean credentialsNonExpired = true;
     
+    /**
+     * Indica si la cuenta ha sido activada mediante email
+     */
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
+    
+    /**
+     * Fecha y hora de activación de la cuenta
+     */
+    private java.time.LocalDateTime emailVerifiedAt;
+    
     // ===============================
     // MÉTODOS DE CONVENIENCIA
     // ===============================
@@ -145,6 +156,28 @@ public class User extends Persona implements UserDetails {
      */
     public boolean isActive() {
         return enabled && accountNonExpired && accountNonLocked && credentialsNonExpired;
+    }
+    
+    /**
+     * Activa la cuenta marcando el email como verificado
+     */
+    public void activateAccount() {
+        this.emailVerified = true;
+        this.emailVerifiedAt = java.time.LocalDateTime.now();
+    }
+    
+    /**
+     * Verifica si el email ha sido verificado
+     */
+    public boolean isEmailVerified() {
+        return emailVerified != null && emailVerified;
+    }
+    
+    /**
+     * Verifica si la cuenta está completamente verificada y activa
+     */
+    public boolean isFullyActivated() {
+        return isActive() && isEmailVerified();
     }
     
     // ===============================
