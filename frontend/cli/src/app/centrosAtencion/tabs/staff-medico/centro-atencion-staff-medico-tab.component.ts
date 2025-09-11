@@ -108,45 +108,6 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     );
   }
 
-  /**
-   * Abre el modal para editar una disponibilidad existente
-   */
-  abrirModalEditarDisponibilidad(staff: StaffMedico): void {
-    // Buscar la disponibilidad existente del staff médico
-    const disponibilidadesExistentes = this.verDisponibilidadesStaff(staff);
-    
-    if (disponibilidadesExistentes.length > 0) {
-      // Si tiene disponibilidades, abrir modal en modo edición con la primera disponibilidad
-      const disponibilidadParaEditar = disponibilidadesExistentes[0];
-      
-      const modalRef = this.modalService.open(DisponibilidadModalComponent, {
-        size: 'lg',
-        backdrop: 'static',
-        keyboard: false
-      });
-
-      // Pasar datos al modal
-      modalRef.componentInstance.staffMedico = staff;
-      modalRef.componentInstance.disponibilidadExistente = disponibilidadParaEditar;
-
-      // Manejar el resultado del modal
-      modalRef.result.then(
-        (disponibilidadActualizada: DisponibilidadMedico) => {
-          if (disponibilidadActualizada) {
-            // Emitir evento para que el componente padre actualice las disponibilidades
-            this.disponibilidadCreada.emit(disponibilidadActualizada);
-          }
-        },
-        (dismissed) => {
-          console.log('Modal de edición de disponibilidad cerrado sin guardar');
-        }
-      );
-    } else {
-      // Si no tiene disponibilidades, abrir modal en modo creación
-      this.abrirModalDisponibilidad(staff);
-    }
-  }
-
   medicoYaAsociado(): boolean {
     if (!this.medicoSeleccionado) return false;
     
