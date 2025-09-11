@@ -51,6 +51,28 @@ public class JwtTokenProvider {
     }
 
     /**
+     * Extrae el userId del token
+     */
+    public Long extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        Object userIdObj = claims.get("userId");
+        if (userIdObj instanceof Integer) {
+            return ((Integer) userIdObj).longValue();
+        } else if (userIdObj instanceof Long) {
+            return (Long) userIdObj;
+        }
+        return null;
+    }
+
+    /**
+     * Extrae el rol del token
+     */
+    public String extractRole(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    /**
      * Extrae un claim específico del token
      */
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -84,6 +106,7 @@ public class JwtTokenProvider {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof User) {
             User user = (User) userDetails;
+            claims.put("userId", user.getId()); // Agregar userId al token
             claims.put("role", user.getRole() != null ? user.getRole().getName() : "USER");
         }
         return createToken(claims, userDetails.getUsername(), accessTokenExpiration);
