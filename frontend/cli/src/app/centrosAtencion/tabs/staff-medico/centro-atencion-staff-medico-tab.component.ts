@@ -263,4 +263,204 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   getTotalDisponibilidades(staff: StaffMedico): number {
     return this.verDisponibilidadesStaff(staff).length;
   }
+
+  /**
+   * Agrupa los médicos por ID para evitar duplicados
+   */
+  getMedicosAgrupados(): any[] {
+    const medicosMap = new Map();
+    
+    this.staffMedicoCentro.forEach(staff => {
+      if (staff.medico?.id) {
+        const medicoId = staff.medico.id;
+        
+        if (!medicosMap.has(medicoId)) {
+          // Primera vez que vemos este médico
+          medicosMap.set(medicoId, {
+            medico: staff.medico,
+            staffEntries: [staff],
+            especialidades: staff.especialidad ? [staff.especialidad] : [],
+            allDisponibilidades: this.verDisponibilidadesStaff(staff)
+          });
+        } else {
+          // Ya existe este médico, agregar la especialidad y disponibilidades
+          const medicoData = medicosMap.get(medicoId);
+          medicoData.staffEntries.push(staff);
+          
+          // Agregar especialidad si no existe
+          if (staff.especialidad && !medicoData.especialidades.find((e: any) => e.id === staff.especialidad!.id)) {
+            medicoData.especialidades.push(staff.especialidad);
+          }
+          
+          // Agregar disponibilidades de este staff
+          const disponibilidadesStaff = this.verDisponibilidadesStaff(staff);
+          medicoData.allDisponibilidades.push(...disponibilidadesStaff);
+        }
+      }
+    });
+    
+    const medicosAgrupados = Array.from(medicosMap.values());
+    
+    // Debug: Log de médicos agrupados
+    console.log('Médicos agrupados:', medicosAgrupados);
+    
+    return medicosAgrupados;
+  }
+
+  /**
+   * Obtiene todas las disponibilidades de un médico agrupado
+   */
+  getDisponibilidadesTotalesMedico(medico: any): DisponibilidadMedico[] {
+    return medico.allDisponibilidades || [];
+  }
+
+  /**
+   * Verifica si un médico tiene disponibilidades configuradas
+   */
+  medicoTieneDisponibilidades(medico: any): boolean {
+    return this.getDisponibilidadesTotalesMedico(medico).length > 0;
+  }
+
+  /**
+   * Obtiene el primer staff entry de un médico (para operaciones que necesitan un staff específico)
+   */
+  getPrimerStaffDelMedico(medico: any): StaffMedico {
+    return medico.staffEntries[0];
+  }
+
+  /**
+   * Obtiene disponibilidades por día para un médico agrupado
+   */
+  getDisponibilidadesPorDiaMedico(medico: any, dia: string): DisponibilidadMedico[] {
+    const todasLasDisponibilidades = this.getDisponibilidadesTotalesMedico(medico);
+    return todasLasDisponibilidades.filter(disponibilidad => 
+      disponibilidad.horarios?.some(horario => horario.dia === dia)
+    );
+  }
+
+  /**
+   * Verifica si una especialidad tiene disponibilidades configuradas para un médico
+   */
+  especialidadTieneDisponibilidades(medico: any, especialidad: any): boolean {
+    const todasLasDisponibilidades = this.getDisponibilidadesTotalesMedico(medico);
+    
+    // Si no hay especialidadId en la disponibilidad, se considera que es para todas las especialidades del médico
+    return todasLasDisponibilidades.some(disponibilidad => 
+      !disponibilidad.especialidadId || disponibilidad.especialidadId === especialidad.id
+    );
+  }
+
+  /**
+   * Obtiene las disponibilidades de un médico filtradas por especialidad y día
+   */
+  getDisponibilidadesPorEspecialidadYDia(medico: any, especialidad: any, dia: string): DisponibilidadMedico[] {
+    const todasLasDisponibilidades = this.getDisponibilidadesTotalesMedico(medico);
+    
+    // Filtrar por especialidad (si no tiene especialidadId, se considera para todas)
+    const disponibilidadesEspecialidad = todasLasDisponibilidades.filter(disponibilidad =>
+      !disponibilidad.especialidadId || disponibilidad.especialidadId === especialidad.id
+    );
+    
+    // Filtrar por día
+    return disponibilidadesEspecialidad.filter(disponibilidad => 
+      disponibilidad.horarios?.some(horario => horario.dia === dia)
+    );
+  }
+
+  /**
+   * Abre el modal para gestionar disponibilidades de una especialidad específica
+   */
+  abrirModalDisponibilidadEspecialidad(medico: any, especialidad: any): void {
+    const primerStaff = this.getPrimerStaffDelMedico(medico);
+    
+    if (!primerStaff || !primerStaff.id) {
+      console.error('No se puede encontrar el staff del médico');
+      return;
+    }
+
+    const modalRef = this.modalService.open(DisponibilidadModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      keyboard: false
+    });
+
+    // Configurar el modal con información específica de la especialidad
+    modalRef.componentInstance.staffMedico = primerStaff;
+    modalRef.componentInstance.especialidadId = especialidad.id; // ID de la especialidad específica
+    modalRef.componentInstance.especialidadNombre = especialidad.nombre; // Nombre para mostrar en el modal
+
+    // Si ya tiene disponibilidades para esta especialidad, cargarlas en modo edición
+    const disponibilidadesExistentes = this.getDisponibilidadesEspecialidad(medico, especialidad);
+    if (disponibilidadesExistentes.length > 0) {
+      modalRef.componentInstance.disponibilidadExistente = disponibilidadesExistentes[0];
+    }
+
+    // Manejar el resultado del modal
+    modalRef.result.then(
+      (nuevaDisponibilidad: DisponibilidadMedico) => {
+        if (nuevaDisponibilidad) {
+          // Emitir evento para que el componente padre actualice las disponibilidades
+          this.disponibilidadCreada.emit(nuevaDisponibilidad);
+        }
+      },
+      (dismissed) => {
+        console.log('Modal de disponibilidad para especialidad cerrado sin guardar');
+      }
+    );
+  }
+
+  /**
+   * Abre el modal para editar disponibilidades existentes de una especialidad
+   */
+  editarDisponibilidadEspecialidad(medico: any, especialidad: any): void {
+    const disponibilidadesExistentes = this.getDisponibilidadesEspecialidad(medico, especialidad);
+    
+    if (disponibilidadesExistentes.length === 0) {
+      // Si no hay disponibilidades, crear una nueva
+      this.abrirModalDisponibilidadEspecialidad(medico, especialidad);
+      return;
+    }
+
+    const primerStaff = this.getPrimerStaffDelMedico(medico);
+    
+    if (!primerStaff || !primerStaff.id) {
+      console.error('No se puede encontrar el staff del médico');
+      return;
+    }
+
+    const modalRef = this.modalService.open(DisponibilidadModalComponent, {
+      size: 'lg',
+      backdrop: 'static',
+      keyboard: false
+    });
+
+    // Configurar el modal en modo edición para la especialidad específica
+    modalRef.componentInstance.staffMedico = primerStaff;
+    modalRef.componentInstance.especialidadId = especialidad.id;
+    modalRef.componentInstance.especialidadNombre = especialidad.nombre;
+    modalRef.componentInstance.disponibilidadExistente = disponibilidadesExistentes[0];
+
+    // Manejar el resultado del modal
+    modalRef.result.then(
+      (disponibilidadActualizada: DisponibilidadMedico) => {
+        if (disponibilidadActualizada) {
+          this.disponibilidadCreada.emit(disponibilidadActualizada);
+        }
+      },
+      (dismissed) => {
+        console.log('Modal de edición de disponibilidad para especialidad cerrado');
+      }
+    );
+  }
+
+  /**
+   * Obtiene las disponibilidades de un médico para una especialidad específica
+   */
+  private getDisponibilidadesEspecialidad(medico: any, especialidad: any): DisponibilidadMedico[] {
+    const todasLasDisponibilidades = this.getDisponibilidadesTotalesMedico(medico);
+    
+    return todasLasDisponibilidades.filter(disponibilidad =>
+      !disponibilidad.especialidadId || disponibilidad.especialidadId === especialidad.id
+    );
+  }
 }

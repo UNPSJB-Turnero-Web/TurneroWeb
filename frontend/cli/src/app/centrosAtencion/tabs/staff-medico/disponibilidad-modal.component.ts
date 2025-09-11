@@ -15,6 +15,9 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
       <h4 class="modal-title">
         <i class="fa" [class.fa-calendar-plus]="!modoEdicion" [class.fa-edit]="modoEdicion" me-2></i>
         {{ modoEdicion ? 'Editar' : 'Nueva' }} Disponibilidad - Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}
+        <span *ngIf="especialidadNombre" class="badge ms-2" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white;">
+          {{ especialidadNombre }}
+        </span>
       </h4>
       <button type="button" class="btn-close" (click)="activeModal.dismiss()">
         <span aria-hidden="true">&times;</span>
@@ -43,7 +46,9 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
             <div>
               <h6 class="mb-1">Dr. {{ staffMedico.medico?.nombre }} {{ staffMedico.medico?.apellido }}</h6>
               <small class="text-muted">
-                <i class="fa fa-stethoscope me-1"></i>{{ staffMedico.especialidad?.nombre }}
+                <i class="fa fa-stethoscope me-1"></i>
+                <span *ngIf="especialidadNombre">{{ especialidadNombre }}</span>
+                <span *ngIf="!especialidadNombre">{{ staffMedico.especialidad?.nombre }}</span>
                 <span class="ms-2">
                   <i class="fa fa-id-badge me-1"></i>Matrícula: {{ staffMedico.medico?.matricula }}
                 </span>
@@ -278,6 +283,8 @@ export class DisponibilidadModalComponent {
   staffMedico: StaffMedico;
   disponibilidad: DisponibilidadMedico;
   disponibilidadExistente?: DisponibilidadMedico; // Para cargar disponibilidad existente
+  especialidadId?: number; // ID de especialidad específica
+  especialidadNombre?: string; // Nombre de especialidad específica para mostrar
   modoEdicion = false; // Para determinar si estamos editando o creando
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
   
@@ -392,6 +399,11 @@ export class DisponibilidadModalComponent {
 
     // Asignar el ID del staff médico
     this.disponibilidad.staffMedicoId = this.staffMedico.id!;
+    
+    // Asignar el ID de especialidad si se proporcionó
+    if (this.especialidadId) {
+      this.disponibilidad.especialidadId = this.especialidadId;
+    }
 
     // Ordenar los horarios por el orden de los días de la semana
     const diasOrden = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];

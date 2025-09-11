@@ -972,7 +972,6 @@
   background-color: #d1ecf1;
   border-color: #bee5eb;
   color: #0c5460;
-}
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1311,4 +1310,188 @@
   border-radius: 0.25rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
+}
+
+/* ==================== MÚLTIPLES BADGES DE ESPECIALIDADES ==================== */
+.medico-especialidades-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.medico-especialidades-badges .badge-especialidad {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, var(--especialidad-purple) 0%, #9c27b0 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(111, 66, 193, 0.3);
+  transition: all 0.2s ease;
+}
+
+.medico-especialidades-badges .badge-especialidad:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(111, 66, 193, 0.4);
+}
+
+.medico-especialidades-badges .badge-especialidad:nth-child(1) {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.medico-especialidades-badges .badge-especialidad:nth-child(2) {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.medico-especialidades-badges .badge-especialidad:nth-child(3) {
+  background: linear-gradient(135deg, #6f42c1 0%, #495057 100%);
+}
+
+.medico-especialidades-badges .badge-especialidad:nth-child(4) {
+  background: linear-gradient(135deg, #fd7e14 0%, #e55353 100%);
+}
+
+/* Estilos para las Especialidades con Disponibilidades */
+.especialidades-container {
+  margin-top: 1rem;
+}
+
+.especialidad-section {
+  margin-bottom: 1.5rem;
+}
+
+.especialidad-card {
+  border: 1px solid #e0e6ed;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.especialidad-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.especialidad-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1rem;
+  border-bottom: 1px solid #e0e6ed;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.especialidad-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.especialidad-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.especialidad-icon.icon-variant-1 {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.especialidad-icon.icon-variant-2 {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.especialidad-icon.icon-variant-3 {
+  background: linear-gradient(135deg, #6f42c1 0%, #495057 100%);
+}
+
+.especialidad-icon.icon-variant-4 {
+  background: linear-gradient(135deg, #fd7e14 0%, #e55353 100%);
+}
+
+.especialidad-details h6 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+}
+
+.status-badge.status-configured {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.status-badge.status-pending {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.horarios-content {
+  padding: 1rem;
+}
+
+.sin-disponibilidades-especialidad {
+  padding: 1rem;
+}
+
+.sin-disponibilidades-especialidad .alert {
+  margin: 0;
+  background: rgba(23, 162, 184, 0.08);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+  color: #17a2b8;
+  border-radius: 8px;
+}
+
+/* Botones de gestión por especialidad */
+.especialidad-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.especialidad-actions .btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.especialidad-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.especialidad-actions .btn-outline-primary:hover {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.especialidad-actions .btn-outline-success:hover {
+  background: #28a745;
+  border-color: #28a745;
+  color: white;
 }
