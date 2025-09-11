@@ -32,6 +32,9 @@ public class User extends Persona implements UserDetails {
     private Role role;
     
     @Column(nullable = false)
+    private String hashedPassword; // Hash de la contraseña para autenticación
+    
+    @Column(nullable = false)
     private Boolean enabled = true;
     
     @Column(nullable = false)
@@ -55,7 +58,7 @@ public class User extends Persona implements UserDetails {
         this.setApellido(apellido);
         this.setDni(dni);
         this.setEmail(email);
-        this.setHashedPassword(hashedPassword);
+        this.hashedPassword = hashedPassword; // Asignar directamente al campo de User
         this.setTelefono(telefono);
         // El rol se debe asignar después de crear el usuario usando el RoleService
         this.enabled = true;
@@ -72,7 +75,7 @@ public class User extends Persona implements UserDetails {
         this.setApellido(apellido);
         this.setDni(dni);
         this.setEmail(email);
-        this.setHashedPassword(hashedPassword);
+        this.hashedPassword = hashedPassword; // Asignar directamente al campo de User
         this.setTelefono(telefono);
         this.role = role;
         this.enabled = true;
@@ -155,7 +158,7 @@ public class User extends Persona implements UserDetails {
     
     @Override
     public String getPassword() {
-        return this.getHashedPassword(); // Usar el campo hashedPassword de Persona
+        return this.hashedPassword; // Usar el campo hashedPassword propio de User
     }
     
     @Override

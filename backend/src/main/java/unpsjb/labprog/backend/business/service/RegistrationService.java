@@ -2,22 +2,11 @@
 
 package unpsjb.labprog.backend.business.service;
 
-import java.util.Date;
-import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unpsjb.labprog.backend.business.repository.MedicoRepository;
-import unpsjb.labprog.backend.business.repository.PacienteRepository;
-import unpsjb.labprog.backend.model.Especialidad;
-import unpsjb.labprog.backend.model.Medico;
-import unpsjb.labprog.backend.model.ObraSocial;
-import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.User;
-import unpsjb.labprog.backend.model.Medico;
-import unpsjb.labprog.backend.model.ObraSocial;
-import unpsjb.labprog.backend.model.Paciente;
 
 /**
  * Servicio para orquestar el registro completo de usuarios en el sistema.
@@ -34,38 +23,14 @@ public class RegistrationService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
-    @Autowired
-    private MedicoRepository medicoRepository;
-    
-    @Autowired
-    private PacienteRepository pacienteRepository;
+
     
     
-    /**
-     * Registra un nuevo médico en el sistema
-     * Crea tanto el usuario para autenticación como la entidad médico para lógica de negocio
-     * 
-     * @param email email del médico
-     * @param plainPassword contraseña en texto plano
-     * @param dni DNI del médico
-     * @param nombre nombre del médico
-     * @param apellido apellido del médico
-     * @param telefono teléfono del médico
-     * @param matricula matrícula profesional del médico
-     * @param especialidad especialidad médica
-     * @return Medico entidad del médico creado
-     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
-     */
-    public Medico registrarMedico(String email, String plainPassword, Long dni, 
-                                 String nombre, String apellido, String telefono,
-                                 String matricula, Set<Especialidad> especialidades) {
-        return registrarMedicoWithAudit(email, plainPassword, dni, nombre, apellido, 
-                                       telefono, matricula, especialidades, "AUTO_REGISTRO");
-    }
+
 
     /**
      * Registra un nuevo médico con auditoría (creado por ADMIN)
-     * Crea tanto el usuario para autenticación como la entidad médico para lógica de negocio
+     * Solo crea el usuario para autenticación, la entidad médico se crea en MedicoService
      * 
      * @param email email del médico
      * @param plainPassword contraseña en texto plano
@@ -73,77 +38,36 @@ public class RegistrationService {
      * @param nombre nombre del médico
      * @param apellido apellido del médico
      * @param telefono teléfono del médico
-     * @param matricula matrícula profesional del médico
-     * @param especialidades especialidades médicas
      * @param performedBy usuario que registra al médico (ADMIN)
-     * @return Medico entidad del médico creado
+     * @return User entidad del usuario creado
      * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
      */
-    public Medico registrarMedicoWithAudit(String email, String plainPassword, Long dni, 
-                                          String nombre, String apellido, String telefono,
-                                          String matricula, Set<Especialidad> especialidades, 
-                                          String performedBy) {
+    public User registrarMedicoWithAudit(String email, String plainPassword, Long dni, 
+                                        String nombre, String apellido, String telefono,
+                                        String performedBy) {
         
         // 1. Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
-        validateMedicoData(matricula, especialidades);
         
         // 2. Hashear la contraseña con BCrypt
         String hashedPassword = hashPassword(plainPassword);
         
         // 3. Crear User para autenticación con auditoría
-        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
+        User user = userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
                                                    telefono, "Medico", performedBy);
         
-        // 4. Crear Medico para lógica de negocio
-        Medico medico = new Medico();
-        medico.setNombre(nombre);
-        medico.setApellido(apellido);
-        medico.setDni(dni);
-        medico.setEmail(email);
-        medico.setHashedPassword(hashedPassword); // Misma contraseña hasheada
-        medico.setTelefono(telefono);
-        medico.setMatricula(matricula);
-        medico.setEspecialidades(especialidades);
-        
-        // Validar que no exista médico con esa matrícula
-        if (medicoRepository.existsByMatricula(matricula)) {
-            throw new IllegalArgumentException("Ya existe un médico con la matrícula: " + matricula);
-        }
-        
-        // Guardar médico usando el repository
-        Medico savedMedico = medicoRepository.save(medico);
-        
-        return savedMedico;
+        return user;
     }
 
     
-    
-    /**
-     * Registra un nuevo paciente en el sistema
-     * Crea tanto el usuario para autenticación como la entidad paciente para lógica de negocio
-     * 
-     * @param email email del paciente
-     * @param plainPassword contraseña en texto plano
-     * @param dni DNI del paciente
-     * @param nombre nombre del paciente
-     * @param apellido apellido del paciente
-     * @param telefono teléfono del paciente
-     * @param fechaNacimiento fecha de nacimiento del paciente
-     * @param obraSocial obra social del paciente (puede ser null)
-     * @return Paciente entidad del paciente creado
-     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
-     */
-    public Paciente registrarPaciente(String email, String plainPassword, Long dni,
-                                    String nombre, String apellido, String telefono,
-                                    Date fechaNacimiento, ObraSocial obraSocial) {
-        return registrarPacienteWithAudit(email, plainPassword, dni, nombre, apellido, 
-                                        telefono, fechaNacimiento, obraSocial, "AUTO_REGISTRO");
+     public User registrarPaciente(String email, String password, Long dniAsLong, String nombre, String apellido,
+            String telefono) {
+        return registrarPacienteWithAudit(email, password, dniAsLong, nombre, apellido, telefono, "AUTO REGISTRO");
     }
-
+    
     /**
      * Registra un nuevo paciente con auditoría (creado por ADMIN/OPERADOR)
-     * Crea tanto el usuario para autenticación como la entidad paciente para lógica de negocio
+     * Solo crea el usuario para autenticación, la entidad paciente se crea en PacienteService
      * 
      * @param email email del paciente
      * @param plainPassword contraseña en texto plano
@@ -151,114 +75,25 @@ public class RegistrationService {
      * @param nombre nombre del paciente
      * @param apellido apellido del paciente
      * @param telefono teléfono del paciente
-     * @param fechaNacimiento fecha de nacimiento del paciente
-     * @param obraSocial obra social del paciente (puede ser null)
      * @param performedBy usuario que registra al paciente (ADMIN/OPERADOR)
-     * @return Paciente entidad del paciente creado
+     * @return User entidad del usuario creado
      * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
      */
-    public Paciente registrarPacienteWithAudit(String email, String plainPassword, Long dni,
-                                             String nombre, String apellido, String telefono,
-                                             Date fechaNacimiento, ObraSocial obraSocial, 
-                                             String performedBy) {
+    public User registrarPacienteWithAudit(String email, String plainPassword, Long dni,
+                                          String nombre, String apellido, String telefono,
+                                          String performedBy) {
         
         // 1. Validar datos básicos
         validateBasicData(email, dni, nombre, apellido);
-        //validatePacienteData(fechaNacimiento);
         
         // 2. Hashear la contraseña
         String hashedPassword = hashPassword(plainPassword);
         
         // 3. Crear User para autenticación con auditoría
-        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
+        User user = userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
                                                    telefono, "Paciente", performedBy);
         
-        // 4. Crear Paciente para lógica de negocio
-        Paciente paciente = new Paciente();
-        paciente.setNombre(nombre);
-        paciente.setApellido(apellido);
-        paciente.setDni(dni);
-        paciente.setEmail(email);
-        paciente.setHashedPassword(hashedPassword);
-        paciente.setTelefono(telefono);
-        paciente.setFechaNacimiento(fechaNacimiento);
-        paciente.setObraSocial(obraSocial);
-        
-        // Validar que no exista paciente con ese DNI
-        if (pacienteRepository.existsByDni(dni)) {
-            throw new IllegalArgumentException("Ya existe un paciente con el DNI: " + dni);
-        }
-        
-        // Guardar paciente usando el repository
-        Paciente savedPaciente = pacienteRepository.save(paciente);
-        
-        return savedPaciente;
-    }
-    
-    /**
-     * Sobrecarga del metodo registrarPaciente sin obra social ni fecha de nacimiento, usado para el registro
-     * 
-     * @param email email del paciente
-     * @param plainPassword contraseña en texto plano
-     * @param dni DNI del paciente
-     * @param nombre nombre del paciente
-     * @param apellido apellido del paciente
-     * @param telefono teléfono del paciente
-     * @return Paciente entidad del paciente creado
-     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
-     */
-    public Paciente registrarPaciente(String email, String plainPassword, Long dni,
-                                    String nombre, String apellido, String telefono) {
-        return registrarPacienteWithAudit(email, plainPassword, dni, nombre, apellido, 
-                                        telefono, "AUTO_REGISTRO");
-    }
-
-    /**
-     * Sobrecarga con auditoría del método registrarPaciente sin obra social ni fecha de nacimiento
-     * 
-     * @param email email del paciente
-     * @param plainPassword contraseña en texto plano
-     * @param dni DNI del paciente
-     * @param nombre nombre del paciente
-     * @param apellido apellido del paciente
-     * @param telefono teléfono del paciente
-     * @param performedBy usuario que registra al paciente
-     * @return Paciente entidad del paciente creado
-     * @throws IllegalArgumentException si los datos son inválidos o ya existe el usuario
-     */
-    public Paciente registrarPacienteWithAudit(String email, String plainPassword, Long dni,
-                                             String nombre, String apellido, String telefono,
-                                             String performedBy) {
-        
-        // 1. Validar datos básicos
-        validateBasicData(email, dni, nombre, apellido);
-        //validatePacienteData(fechaNacimiento);
-        
-        // 2. Hashear la contraseña
-        String hashedPassword = hashPassword(plainPassword);
-        
-        // 3. Crear User para autenticación con auditoría
-        userService.createUserWithAudit(nombre, apellido, dni, email, hashedPassword, 
-                                                   telefono, "Paciente", performedBy);
-        
-        // 4. Crear Paciente para lógica de negocio
-        Paciente paciente = new Paciente();
-        paciente.setNombre(nombre);
-        paciente.setApellido(apellido);
-        paciente.setDni(dni);
-        paciente.setEmail(email);
-        paciente.setHashedPassword(hashedPassword);
-        paciente.setTelefono(telefono);
-        
-        // Validar que no exista paciente con ese DNI
-        if (pacienteRepository.existsByDni(dni)) {
-            throw new IllegalArgumentException("Ya existe un paciente con el DNI: " + dni);
-        }
-        
-        // Guardar paciente usando el repository
-        Paciente savedPaciente = pacienteRepository.save(paciente);
-        
-        return savedPaciente;
+        return user;
     }
 
         /**
@@ -332,32 +167,7 @@ public class RegistrationService {
         }
     }
     
-    /**
-     * Valida datos específicos de médico
-     */
-    private void validateMedicoData(String matricula, Set<Especialidad> especialidades) {
-        if (matricula == null || matricula.trim().isEmpty()) {
-            throw new IllegalArgumentException("Matrícula es requerida");
-        }
-        
-        if (especialidades == null || especialidades.isEmpty()) {
-            throw new IllegalArgumentException("Debe especificar al menos una especialidad");
-        }
-    }
-    
-    /**
-     * Valida datos específicos de paciente
-     */
-    private void validatePacienteData(Date fechaNacimiento) {
-        if (fechaNacimiento == null) {
-            throw new IllegalArgumentException("Fecha de nacimiento es requerida");
-        }
-        
-        // Validar que no sea fecha futura
-        if (fechaNacimiento.after(new Date())) {
-            throw new IllegalArgumentException("La fecha de nacimiento no puede ser futura");
-        }
-    }
+
     
     /**
      * Valida formato básico de email
@@ -398,4 +208,8 @@ public class RegistrationService {
     public boolean existsByDni(Long dni) {
         return userService.findByDni(dni).isPresent();
     }
+
+
+
+   
 }
