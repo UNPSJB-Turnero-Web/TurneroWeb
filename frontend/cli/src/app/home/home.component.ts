@@ -229,6 +229,7 @@ export class HomeComponent {
               "userName",
               `${response.data.nombre} ${response.data.apellido}`
             );
+            localStorage.setItem("userEmail", response.data.email); // 👈 Agregado
 
             this.isLoading = false;
             this.router.navigate(["/operador-dashboard"]); // 👈 aquí va la ruta del operador

@@ -30,7 +30,6 @@ public class OperadorService {
 
     private static final Logger logger = LoggerFactory.getLogger(OperadorService.class);
 
-
     public List<OperadorDTO> findAll() {
         return repository.findAll().stream()
                 .map(this::toDTO)
@@ -200,8 +199,15 @@ public class OperadorService {
         if (operador.getEmail() == null || operador.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
         }
-
-        if (repository.existsByTelefono(operador.getTelefono())) {
+        // Validación de teléfono: excluir ID actual en updates
+        if (operador.getId() != null && operador.getId() > 0L) {
+            // Solo validar si el teléfono cambió (opcional, para optimizar)
+            Operador existente = repository.findById(operador.getId()).orElseThrow();
+            if (!existente.getTelefono().equals(operador.getTelefono()) &&
+                    repository.existsByTelefonoAndIdNot(operador.getTelefono(), operador.getId())) {
+                throw new IllegalArgumentException("El teléfono ya está en uso por otro operador");
+            }
+        } else if (repository.existsByTelefono(operador.getTelefono())) {
             throw new IllegalArgumentException("El teléfono ya está en uso por otro operador");
         }
     }

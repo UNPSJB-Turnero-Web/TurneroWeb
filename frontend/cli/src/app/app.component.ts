@@ -78,6 +78,20 @@ import { AuthService } from "./inicio-sesion/auth.service";
                   <span class="item-desc">Administrar consultorios</span>
                 </div>
               </a>
+              <a
+                ngbDropdownItem
+                class="dropdown-item"
+                (click)="navigateTo('/operador-dashboard')"
+                [class.active]="isRouteActive('/operador-dashboard')"
+              >
+                <i
+                  class="fas fa-user-cog icon-item icon-operador-dashboard"
+                ></i>
+                <div class="item-content">
+                  <span class="item-title">Mi Panel Principal</span>
+                  <span class="item-desc">Panel Principal</span>
+                </div>
+              </a>
             </div>
           </div>
 
@@ -163,7 +177,9 @@ import { AuthService } from "./inicio-sesion/auth.service";
                 (click)="navigateTo('/operadores')"
                 [class.active]="isRouteActive('/operadores')"
               >
-                <i class="fas fa-heart-pulse icon-item icon-obra-social"></i>
+                <i
+                  class="fas fa-user-cog icon-item icon-operador-dashboard"
+                ></i>
                 <div class="item-content">
                   <span class="item-title">Operadores</span>
                   <span class="item-desc">Registro de Operadores</span>
@@ -860,6 +876,9 @@ import { AuthService } from "./inicio-sesion/auth.service";
       }
       .icon-consultorios {
         background: var(--consultorios-color);
+      }
+      .icon-operador-dashboard {
+        background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
       }
       .icon-medicos {
         background: var(--medicos-color);

@@ -26,7 +26,7 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
       </div>
 
       <!-- Header Section -->
-      <div class="dashboard-header">
+      <div class="dashboard-header" *ngIf="isAuthenticated()">
         <div class="header-glow"></div>
         <div class="welcome-section">
           <div class="welcome-content">
@@ -37,11 +37,11 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
               <h1>¡Bienvenido/a a tu Panel de Operaciones!</h1>
               <p class="operator-info">
                 <i class="fas fa-user me-2"></i>
-                {{ operatorName }}
+                {{ getUserName() }}
               </p>
               <p class="operator-info">
                 <i class="fas fa-envelope me-2"></i>
-                {{ operatorEmail }}
+                {{ getUserEmail() }}
               </p>
               <p class="tagline">
                 Gestiona las operaciones de manera eficiente
@@ -99,7 +99,7 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
             </div>
             <div class="card-content">
               <h3>Gestionar Centros</h3>
-              <p>Administrar centros médicos y especialidades</p>
+              <p>Administrar centros médicos y establecimientos de salud</p>
             </div>
             <div class="card-arrow">
               <i class="fas fa-arrow-right"></i>
@@ -1753,6 +1753,17 @@ export class OperadorDashboardComponent implements OnInit {
       });
     }
   }
+  isAuthenticated(): boolean {
+    const userRole = localStorage.getItem("userRole");
+    return userRole !== null && userRole !== "";
+  }
+
+  getUserName(): string {
+    return localStorage.getItem("userName") || "Usuario";
+  }
+  getUserEmail(): string {
+    return localStorage.getItem("userEmail") || "Usuario";
+  }
 
   ngOnInit() {
     this.cargarTurnos();
@@ -2143,11 +2154,11 @@ export class OperadorDashboardComponent implements OnInit {
   }
 
   goToCentros() {
-    this.router.navigate(["/centros"]);
+    this.router.navigate(["/centrosAtencion"]);
   }
 
   goToReportes() {
-    this.router.navigate(["/reportes"]);
+    this.router.navigate(["/turnos/audit-dashboard"]);
   }
 
   viewNotifications() {
