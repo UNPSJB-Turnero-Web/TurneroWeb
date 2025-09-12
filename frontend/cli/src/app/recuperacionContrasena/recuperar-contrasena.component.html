@@ -13,58 +13,173 @@
         <i class="fas fa-key"></i>
       </div>
       <div class="header-content">
-        <h1>Recuperar Contraseña</h1>
-        <p>Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña</p>
+        <h1 *ngIf="!token">Recuperar Contraseña</h1>
+        <h1 *ngIf="token">Cambiar Contraseña</h1>
+        <p *ngIf="!token">Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña</p>
+        <p *ngIf="token && !tokenChecked">Validando tu enlace de recuperación...</p>
+        <p *ngIf="token && tokenChecked && tokenValid">Ingresa tu nueva contraseña</p>
+        <p *ngIf="token && tokenChecked && !tokenValid">El enlace de recuperación no es válido</p>
       </div>
     </div>
 
     <div class="card-body">
-      <form [formGroup]="correoForm" (ngSubmit)="enviarSolicitud()">
-        <div class="form-group">
-          <label for="email">Correo Electrónico</label>
-          <div class="input-container">
-            <i class="fas fa-envelope"></i>
-            <input 
-              id="email" 
-              type="email"
-              formControlName="email" 
-              placeholder="ejemplo@correo.com"
-              [class.error]="emailControl?.invalid && emailControl?.touched" />
+      
+      <!-- Formulario para solicitar recuperación (cuando no hay token) -->
+      <div *ngIf="!token">
+        <form [formGroup]="correoForm" (ngSubmit)="enviarSolicitud()">
+          <div class="form-group">
+            <label for="email">Correo Electrónico</label>
+            <div class="input-container">
+              <i class="fas fa-envelope"></i>
+              <input 
+                id="email" 
+                type="email"
+                formControlName="email" 
+                placeholder="ejemplo@correo.com"
+                [class.error]="emailControl?.invalid && emailControl?.touched" />
+            </div>
+            <div *ngIf="emailControl?.invalid && emailControl?.touched" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              <span *ngIf="emailControl?.errors?.['required']">El correo es obligatorio</span>
+              <span *ngIf="emailControl?.errors?.['email']">Ingrese un correo válido</span>
+            </div>
           </div>
-          <div *ngIf="emailControl?.invalid && emailControl?.touched" class="error-message">
-            <i class="fas fa-exclamation-circle"></i>
-            <span *ngIf="emailControl?.errors?.['required']">El correo es obligatorio</span>
-            <span *ngIf="emailControl?.errors?.['email']">Ingrese un correo válido</span>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="enviando || correoForm.invalid">
+              <i *ngIf="!enviando" class="fas fa-paper-plane"></i>
+              <i *ngIf="enviando" class="fas fa-spinner fa-spin"></i>
+              <span *ngIf="!enviando">Enviar Instrucciones</span>
+              <span *ngIf="enviando">Enviando...</span>
+            </button>
+            
+            <a href="/ingresar" class="btn-secondary">
+              <i class="fas fa-arrow-left"></i>
+              Volver al Login
+            </a>
           </div>
-        </div>
+        </form>
 
-        <div class="form-actions">
-          <button type="submit" class="btn-primary" [disabled]="enviando || correoForm.invalid">
-            <i *ngIf="!enviando" class="fas fa-paper-plane"></i>
-            <i *ngIf="enviando" class="fas fa-spinner fa-spin"></i>
-            <span *ngIf="!enviando">Enviar Instrucciones</span>
-            <span *ngIf="enviando">Enviando...</span>
-          </button>
-          
-          <a href="/ingresar" class="btn-secondary">
-            <i class="fas fa-arrow-left"></i>
-            Volver al Login
-          </a>
-        </div>
-      </form>
-
-      <!-- Mensaje de resultado -->
-      <div *ngIf="enviadoOk !== null" class="result-message" [class.success]="enviadoOk" [class.info]="!enviadoOk">
-        <div class="message-icon">
-          <i *ngIf="enviadoOk" class="fas fa-check-circle"></i>
-          <i *ngIf="!enviadoOk" class="fas fa-info-circle"></i>
-        </div>
-        <div class="message-content">
-          <h4 *ngIf="enviadoOk">¡Correo Enviado!</h4>
-          <h4 *ngIf="!enviadoOk">Información</h4>
-          <p>{{ mensaje }}</p>
+        <!-- Mensaje de resultado -->
+        <div *ngIf="enviadoOk !== null" class="result-message" [class.success]="enviadoOk" [class.info]="!enviadoOk">
+          <div class="message-icon">
+            <i *ngIf="enviadoOk" class="fas fa-check-circle"></i>
+            <i *ngIf="!enviadoOk" class="fas fa-info-circle"></i>
+          </div>
+          <div class="message-content">
+            <h4 *ngIf="enviadoOk">¡Correo Enviado!</h4>
+            <h4 *ngIf="!enviadoOk">Información</h4>
+            <p>{{ mensaje }}</p>
+          </div>
         </div>
       </div>
+
+      <!-- Validación de token (cuando hay token pero aún no se validó) -->
+      <div *ngIf="token && !tokenChecked" class="loading-section">
+        <div class="spinner">
+          <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <p>Validando enlace de recuperación...</p>
+      </div>
+
+      <!-- Formulario para nueva contraseña (cuando el token es válido) -->
+      <div *ngIf="token && tokenChecked && tokenValid && !resetSuccess">
+        <form [formGroup]="passwordForm" (ngSubmit)="enviarNuevaContrasena()">
+          <div class="form-group">
+            <label for="password">Nueva Contraseña</label>
+            <div class="input-container">
+              <i class="fas fa-lock"></i>
+              <input 
+                id="password" 
+                type="password"
+                formControlName="password" 
+                placeholder="Mínimo 8 caracteres"
+                [class.error]="passwordControl?.invalid && passwordControl?.touched" />
+            </div>
+            <div *ngIf="passwordControl?.invalid && passwordControl?.touched" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              <span *ngIf="passwordControl?.errors?.['required']">La contraseña es obligatoria</span>
+              <span *ngIf="passwordControl?.errors?.['minlength']">La contraseña debe tener al menos 8 caracteres</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirmar Contraseña</label>
+            <div class="input-container">
+              <i class="fas fa-lock"></i>
+              <input 
+                id="confirmPassword" 
+                type="password"
+                formControlName="confirmPassword" 
+                placeholder="Repite la contraseña"
+                [class.error]="confirmPasswordControl?.invalid && confirmPasswordControl?.touched" />
+            </div>
+            <div *ngIf="confirmPasswordControl?.invalid && confirmPasswordControl?.touched" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              <span *ngIf="confirmPasswordControl?.errors?.['required']">Confirma tu contraseña</span>
+            </div>
+            <div *ngIf="passwordForm.errors?.['passwordsMismatch'] && passwordForm.touched" class="error-message">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>Las contraseñas no coinciden</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="enviando || passwordForm.invalid">
+              <i *ngIf="!enviando" class="fas fa-save"></i>
+              <i *ngIf="enviando" class="fas fa-spinner fa-spin"></i>
+              <span *ngIf="!enviando">Cambiar Contraseña</span>
+              <span *ngIf="enviando">Guardando...</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Mensaje de error al cambiar contraseña -->
+        <div *ngIf="resetError" class="result-message error">
+          <div class="message-icon">
+            <i class="fas fa-exclamation-circle"></i>
+          </div>
+          <div class="message-content">
+            <h4>Error</h4>
+            <p>{{ resetError }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Token inválido o expirado -->
+      <div *ngIf="token && tokenChecked && !tokenValid" class="result-message error">
+        <div class="message-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="message-content">
+          <h4>Enlace Inválido</h4>
+          <p>{{ resetError }}</p>
+          <div class="form-actions" style="margin-top: 1rem;">
+            <a href="/recuperar-contrasena" class="btn-secondary">
+              <i class="fas fa-arrow-left"></i>
+              Solicitar Nuevo Enlace
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contraseña cambiada exitosamente -->
+      <div *ngIf="resetSuccess" class="result-message success">
+        <div class="message-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="message-content">
+          <h4>¡Contraseña Cambiada!</h4>
+          <p>Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión con tu nueva contraseña.</p>
+          <div class="form-actions" style="margin-top: 1rem;">
+            <a href="/ingresar" class="btn-primary">
+              <i class="fas fa-sign-in-alt"></i>
+              Iniciar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Footer info -->
@@ -432,5 +547,38 @@
     .form-actions {
       gap: 0.75rem;
     }
+  }
+
+  /* Estilos para validación de token y nueva contraseña */
+  .loading-section {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .loading-section .spinner {
+    margin-bottom: 1rem;
+  }
+
+  .loading-section .spinner i {
+    font-size: 2rem;
+    color: #667eea;
+  }
+
+  .loading-section p {
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  .result-message.error {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+  }
+
+  .result-message.error .message-icon i {
+    color: #dc3545;
+  }
+
+  .result-message.error h4 {
+    color: #dc3545;
   }
 </style>
