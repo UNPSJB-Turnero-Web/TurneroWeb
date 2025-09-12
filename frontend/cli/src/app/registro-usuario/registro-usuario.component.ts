@@ -3,9 +3,9 @@ import { NgForm, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation } from '../animations';
-import { RegistroService, PacienteRegistroDTO } from './registro.service';
+import { RegistroService, PacienteRegistroDTO, RegisterSuccessResponse } from './registro.service';
 import { DataPackage } from '../data.package';
-import { AuthService, LoginResponse } from '../inicio-sesion/auth.service';
+import { AuthService } from '../inicio-sesion/auth.service';
 
 // objeto usado en el formulario frontend
 interface UsuarioFormulario {
@@ -93,19 +93,16 @@ export class RegistroUsuarioComponent {
    */
   private registrarUsuario(datos: PacienteRegistroDTO): void {
     this.registroService.registrarPaciente(datos).subscribe({
-      next: (response: DataPackage<LoginResponse>) => {
+      next: (response: DataPackage<RegisterSuccessResponse>) => {
         this.isLoading = false;        
-        if (response.status_code === 200 && response.data) {
-          // Manejar auto-login después del registro
-          this.authService.handlePostRegistrationLogin(response.data, false);
+        if (response.status_code === 200) {
+          // El registro fue exitoso, mostrar mensaje sobre activación de cuenta
+          this.successMessage = response.status_text || '¡Registro exitoso! Revisa tu email para activar tu cuenta.';
           
-          // Mostrar mensaje de éxito
-          this.successMessage = '¡Registro exitoso! Redirigiendo a tu dashboard...';
-          
-          // Redirigir al dashboard del paciente después de un breve delay
+          // Opcional: Redirigir a login después de mostrar el mensaje
           setTimeout(() => {
-            this.router.navigate(['/paciente-dashboard']);
-          }, 1500);
+            this.router.navigate(['/ingresar']);
+          }, 4000);
         } else {
           this.errorMessage = response.status_text || 'Error en el registro';
         }

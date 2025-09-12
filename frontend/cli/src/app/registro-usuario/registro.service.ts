@@ -2,7 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DataPackage } from '../data.package';
-import { LoginResponse } from '../inicio-sesion/auth.service';
+// Interfaz para la respuesta de registro exitoso del backend
+export interface RegisterSuccessResponse {
+  email: string;
+  fullName: string;
+  activationMessage: string;
+}
 
 // Interfaz para los datos de registro que espera el backend
 export interface PacienteRegistroDTO {
@@ -38,14 +43,14 @@ export class RegistroService {
   /**
    * Registra un nuevo paciente en el sistema
    * @param datos Datos del paciente a registrar
-   * @returns Observable con la respuesta del servidor incluyendo tokens JWT
+   * @returns Observable con la respuesta del servidor con información de activación
    */
-  registrarPaciente(datos: PacienteRegistroDTO): Observable<DataPackage<LoginResponse>> {
+  registrarPaciente(datos: PacienteRegistroDTO): Observable<DataPackage<RegisterSuccessResponse>> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json'
     });
 
-    return this.http.post<DataPackage<LoginResponse>>(`${this.apiUrl}/register`, datos, { headers });
+    return this.http.post<DataPackage<RegisterSuccessResponse>>(`${this.apiUrl}/register`, datos, { headers });
   }
 
   /**
