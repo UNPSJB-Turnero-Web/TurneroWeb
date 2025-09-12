@@ -89,8 +89,7 @@ public class AuthController {
             if (!user.isEmailVerified()) {
                 logger.warn("Intento de login con cuenta no verificada: {}", user.getEmail());
                 return Response.response(HttpStatus.FORBIDDEN, 
-                    "Cuenta no verificada. Por favor, verifica tu email antes de iniciar sesión. " +
-                    "Si no has recibido el email, puedes solicitar el reenvío.", 
+                    "Cuenta no verificada. Por favor, verifica tu email antes de iniciar sesión. ", 
                     null);
             }
 
