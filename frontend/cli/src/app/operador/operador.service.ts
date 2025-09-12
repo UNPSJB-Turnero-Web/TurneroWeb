@@ -65,4 +65,9 @@ export class OperadorService {
       `${this.url}/by-username/${username}`
     );
   }
+
+  /** Busca un operador por email */
+  findByEmail(email: string): Observable<DataPackage<Operador>> {
+    return this.http.get<DataPackage<Operador>>(`${this.url}/by-email/${encodeURIComponent(email)}`);
+  }
 }
