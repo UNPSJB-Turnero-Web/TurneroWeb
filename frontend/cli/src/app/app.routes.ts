@@ -3,6 +3,7 @@ import { HomeComponent } from "./home/home.component";
 import { InicioSesionComponent } from "./inicio-sesion/inicio-sesion.component";
 import { RegistroUsuarioComponent } from "./registro-usuario/registro-usuario.component";
 import { RecuperarContrasenaComponent } from "./recuperacionContrasena/recuperacionContrasena.component";
+import { ActivacionCuentaComponent } from "./activacion-cuenta/activacion-cuenta.component";
 import { TurnosComponent } from "./turnos/turnos.component";
 import { TurnoDetailComponent } from "./turnos/turno-detail.component";
 import { AdminAgendaComponent } from "./agenda/admin-agenda.component";
@@ -82,9 +83,12 @@ export const routes: Routes = [
     canActivate: [OperadorGuard],
   },
 
+  // rutas de autenticación
   { path: "ingresar", component: InicioSesionComponent },
   { path: "registro-usuario", component: RegistroUsuarioComponent },
   { path: "recuperar-contrasena", component: RecuperarContrasenaComponent },
+  { path: "reset-password", component: RecuperarContrasenaComponent },
+  { path: "activate-account", component: ActivacionCuentaComponent },
 
   // Patient Routes
   {
