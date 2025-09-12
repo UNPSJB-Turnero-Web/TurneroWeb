@@ -901,4 +901,66 @@ public class AuditLogService {
             return new java.util.ArrayList<>();
         }
     }
+    
+    /**
+     * Registra activación de cuenta
+     */
+    @Transactional
+    public AuditLog logAccountActivation(Long userId, String userEmail, String activationType, String reason) {
+        System.out.println("🔍 DEBUG logAccountActivation: Usuario ID: " + userId + ", Email: " + userEmail + 
+                          ", Tipo: " + activationType + ", Ejecutado por: " + userEmail);
+        
+        try {
+            Map<String, Object> activationData = new HashMap<>();
+            activationData.put("userId", userId);
+            activationData.put("activationType", activationType); // "EMAIL_VERIFICATION", "ADMIN_ACTIVATION"
+            activationData.put("timestamp", LocalDateTime.now());
+            
+            String activationJson = objectMapper.writeValueAsString(activationData);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                userEmail, "No verificado", "Cuenta activada", null, activationJson, reason
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Activación de cuenta auditada con ID: " + saved.getId());
+            return saved;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al auditar activación de cuenta: " + e.getMessage());
+            throw new RuntimeException("Error al registrar auditoría de activación de cuenta", e);
+        }
+    }
+
+    /**
+     * Registra cambios de contraseña
+     */
+    @Transactional
+    public AuditLog logPasswordChange(Long userId, String userEmail, String changeType, String reason) {
+        System.out.println("🔍 DEBUG logPasswordChange: Usuario ID: " + userId + ", Email: " + userEmail + 
+                          ", Tipo: " + changeType + ", Ejecutado por: " + userEmail);
+        
+        try {
+            Map<String, Object> passwordChange = new HashMap<>();
+            passwordChange.put("userId", userId);
+            passwordChange.put("changeType", changeType); // "PROFILE_CHANGE", "FORGOT_PASSWORD", "ADMIN_RESET"
+            passwordChange.put("timestamp", LocalDateTime.now());
+            
+            String changeJson = objectMapper.writeValueAsString(passwordChange);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                userEmail, null, "Contraseña actualizada", null, changeJson, reason
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Cambio de contraseña auditado con ID: " + saved.getId());
+            return saved;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al auditar cambio de contraseña: " + e.getMessage());
+            throw new RuntimeException("Error al registrar auditoría de cambio de contraseña", e);
+        }
+    }
 }

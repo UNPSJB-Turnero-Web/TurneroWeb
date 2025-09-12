@@ -51,6 +51,9 @@ public class TurnoService {
 
     @Autowired
     private NotificacionService notificacionService;
+    
+    @Autowired
+    private EmailService emailService;
 
     // === VALIDACIONES DE TRANSICIÓN DE ESTADO ===
     
@@ -1001,10 +1004,70 @@ public class TurnoService {
                 especialidad,
                 medico
             );
+            
+            // Enviar email de confirmación al paciente
+            enviarEmailConfirmacionTurno(turno, fechaTurno, especialidad, medico);
+            
         } catch (Exception e) {
             // Log error pero no fallar la operación principal
             System.err.println("Error al crear notificación de confirmación: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Envía email de confirmación de turno al paciente
+     */
+    private void enviarEmailConfirmacionTurno(Turno turno, String fechaTurno, String especialidad, String medico) {
+        try {
+            // Verificar que el paciente tenga email
+            if (turno.getPaciente() == null || turno.getPaciente().getEmail() == null || 
+                turno.getPaciente().getEmail().trim().isEmpty()) {
+                System.err.println("No se pudo enviar email: paciente sin email válido para turno ID: " + turno.getId());
+                return;
+            }
+            
+            String patientEmail = turno.getPaciente().getEmail();
+            String patientName = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+            
+            // Construir detalles del turno para el email
+            String appointmentDetails = construirDetallesTurnoEmail(turno, fechaTurno, especialidad, medico);
+            
+            // Enviar email de forma asíncrona
+            emailService.sendAppointmentConfirmationEmail(patientEmail, patientName, appointmentDetails);
+            
+            System.out.println("Email de confirmación enviado a: " + patientEmail + " para turno ID: " + turno.getId());
+            
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("Error al enviar email de confirmación para turno ID " + turno.getId() + ": " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Construye los detalles del turno formateados para el email
+     */
+    private String construirDetallesTurnoEmail(Turno turno, String fechaTurno, String especialidad, String medico) {
+        StringBuilder detalles = new StringBuilder();
+        
+        detalles.append("<p><strong>Fecha y Hora:</strong> ").append(fechaTurno).append("</p>");
+        detalles.append("<p><strong>Especialidad:</strong> ").append(especialidad).append("</p>");
+        detalles.append("<p><strong>Médico:</strong> Dr/a. ").append(medico).append("</p>");
+        
+        // Agregar información del consultorio si está disponible
+        if (turno.getConsultorio() != null) {
+            detalles.append("<p><strong>Consultorio:</strong> ").append(turno.getConsultorio().getNombre());
+            
+            // Agregar centro de atención si está disponible
+            if (turno.getConsultorio().getCentroAtencion() != null) {
+                detalles.append(" - ").append(turno.getConsultorio().getCentroAtencion().getNombre());
+            }
+            detalles.append("</p>");
+        }
+        
+        // Agregar número de turno
+        detalles.append("<p><strong>Número de Turno:</strong> #").append(turno.getId()).append("</p>");
+        
+        return detalles.toString();
     }
 
     private void crearNotificacionReagendamiento(Turno turno, Map<String, Object> oldValues) {
