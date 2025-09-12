@@ -93,7 +93,8 @@ import { AuthService } from "./inicio-sesion/auth.service";
                 isRouteActive('/medicos') ||
                 isRouteActive('/staffMedico') ||
                 isRouteActive('/pacientes') ||
-                isRouteActive('/obraSocial')
+                isRouteActive('/obraSocial') ||
+                isRouteActive('/operadores')
               "
               ngbDropdownToggle
               id="personasDropdown"
@@ -154,6 +155,18 @@ import { AuthService } from "./inicio-sesion/auth.service";
                 <div class="item-content">
                   <span class="item-title">Obras Sociales</span>
                   <span class="item-desc">Coberturas médicas</span>
+                </div>
+              </a>
+              <a
+                ngbDropdownItem
+                class="dropdown-item"
+                (click)="navigateTo('/operadores')"
+                [class.active]="isRouteActive('/operadores')"
+              >
+                <i class="fas fa-heart-pulse icon-item icon-obra-social"></i>
+                <div class="item-content">
+                  <span class="item-title">Operadores</span>
+                  <span class="item-desc">Registro de Operadores</span>
                 </div>
               </a>
             </div>
