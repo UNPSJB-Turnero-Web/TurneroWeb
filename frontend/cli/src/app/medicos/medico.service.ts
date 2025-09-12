@@ -64,6 +64,11 @@ export class MedicoService {
     return this.http.get<DataPackage<Medico>>(`${this.medicosUrl}/matricula/${matricula}`);
   }
 
+  /** Busca un médico por email */
+  findByEmail(email: string): Observable<DataPackage<Medico>> {
+    return this.http.get<DataPackage<Medico>>(`${this.medicosUrl}/email/${encodeURIComponent(email)}`);
+  }
+
   /** Paginación */
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.medicosUrl}/page?page=${page - 1}&size=${size}`);
