@@ -2072,17 +2072,25 @@ export class MedicoDashboardComponent implements OnInit {
   }
 
   // Métodos de formato para las fechas
+  /**
+   * Parsea una fecha en formato YYYY-MM-DD evitando problemas de zona horaria
+   */
+  private parsearFecha(fechaStr: string): Date {
+    const [year, month, day] = fechaStr.split('-').map(Number);
+    return new Date(year, month - 1, day); // month - 1 porque Date usa 0-11 para meses
+  }
+
   formatDay(fecha: string): string {
-    return new Date(fecha).getDate().toString().padStart(2, '0');
+    return this.parsearFecha(fecha).getDate().toString().padStart(2, '0');
   }
 
   formatMonth(fecha: string): string {
     const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-    return months[new Date(fecha).getMonth()];
+    return months[this.parsearFecha(fecha).getMonth()];
   }
 
   formatYear(fecha: string): string {
-    return new Date(fecha).getFullYear().toString();
+    return this.parsearFecha(fecha).getFullYear().toString();
   }
 
   // Métodos para iconos y textos de estado
