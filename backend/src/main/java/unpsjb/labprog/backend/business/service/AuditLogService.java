@@ -951,7 +951,7 @@ public class AuditLogService {
 
             AuditLog auditLog = new AuditLog(
                 AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
-                userEmail, null, "Contraseña actualizada", null, changeJson, reason
+                userEmail, null, "PASSWORD_UPDATED", null, changeJson, reason
             );
 
             AuditLog saved = auditLogRepository.save(auditLog);
