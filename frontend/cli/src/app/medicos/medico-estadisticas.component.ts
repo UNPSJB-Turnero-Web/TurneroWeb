@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TurnoService } from '../turnos/turno.service';
 import { MedicoService } from './medico.service';
+import { AuditService } from '../audit/audit.service';
 
 interface EstadisticasPeriodo {
   periodo: string;
@@ -514,7 +515,8 @@ export class MedicoEstadisticasComponent implements OnInit {
   constructor(
     private router: Router, 
     private turnoService: TurnoService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private auditService: AuditService
   ) {}
 
   ngOnInit() {
@@ -552,9 +554,12 @@ export class MedicoEstadisticasComponent implements OnInit {
 
   cargarEstadisticas() {
     const medicoId = this.getMedicoIdFromSession();
+    const staffMedicoId = this.getStaffMedicoIdFromSession();
     
-    // Cargar estadísticas reales de turnos del médico
-    this.cargarEstadisticasTurnos(medicoId);
+    console.log('🔍 IDs para estadísticas - MedicoId:', medicoId, 'StaffMedicoId:', staffMedicoId);
+    
+    // Cargar estadísticas reales de turnos del médico usando staffMedicoId
+    this.cargarEstadisticasTurnos(staffMedicoId);
     
     // Para especialidades, mostrar solo la del médico logueado
     if (this.especialidadMedico) {
@@ -568,22 +573,159 @@ export class MedicoEstadisticasComponent implements OnInit {
     }
   }
 
-  cargarEstadisticasTurnos(medicoId: number) {
-    // Obtener estadísticas para el período actual
-    const filtro = this.getFiltroParaPeriodo();
+  cargarEstadisticasTurnos(staffMedicoId: number) {
+    console.log('📊 Cargando estadísticas con StaffMedicoId:', staffMedicoId);
     
-    this.turnoService.searchWithSimpleFilters({
-      staffMedicoId: medicoId,
-      ...filtro,
-      size: 1000
-    }).subscribe({
-      next: (response) => {
-        const turnos = response.data || [];
-        this.calcularEstadisticas(turnos);
+    // Primero obtener datos generales del dashboard
+    this.auditService.getDashboardStatistics().subscribe({
+      next: (response: any) => {
+        console.log('✅ Response del dashboard:', response);
+        
+        const data = response?.data;
+        if (!data) {
+          console.warn('⚠️ No hay datos en la respuesta del dashboard');
+          this.cargarEstadisticasSimuladas();
+          return;
+        }
+        
+        console.log('📊 Datos del dashboard extraídos:', data);
+        
+        // Usar los datos del dashboard para conteos básicos
+        const turnosConfirmados = data.turnosConfirmados || 0;
+        const turnosCancelados = data.turnosCancelados || 0;
+        
+        // Ahora obtener turnos reales del médico para calcular horas trabajadas correctamente
+        const filtro = this.getFiltroParaPeriodo();
+        const turnosFilter = {
+          staffMedicoId: staffMedicoId, // Usar el staffMedicoId correcto
+          ...filtro,
+          size: 1000
+        };
+        
+        console.log('🔍 Filtro para búsqueda de turnos:', turnosFilter);
+        console.log('🏥 StaffMedicoId usado:', staffMedicoId);
+        console.log('👤 Datos del médico actual:', this.medicoData);
+        console.log('🏥 ID desde sesión:', this.getMedicoIdFromSession());
+        
+        this.turnoService.searchWithSimpleFilters(turnosFilter).subscribe({
+          next: (turnosResponse: any) => {
+            console.log('✅ Turnos reales del médico obtenidos:', turnosResponse);
+            
+            const turnos = turnosResponse.data || [];
+            console.log(`📋 Número de turnos encontrados: ${turnos.length}`);
+            
+            if (turnos.length > 0) {
+              console.log('🔍 Primer turno como muestra:', turnos[0]);
+            }
+            
+            // Si no hay turnos del médico específico, buscar por nombre
+            if (turnos.length === 0) {
+              console.warn('⚠️ No se encontraron turnos específicos por ID, buscando por nombre...');
+              
+              // Buscar todos los turnos del período para filtrar por nombre
+              this.turnoService.searchWithSimpleFilters({
+                fechaDesde: turnosFilter.fechaDesde,
+                fechaHasta: turnosFilter.fechaHasta,
+                size: 1000
+              }).subscribe({
+                next: (todosLosTurnos: any) => {
+                  const todosTurnos = todosLosTurnos.data || [];
+                  console.log(`� Total de turnos en el período: ${todosTurnos.length}`);
+                  
+                  if (todosTurnos.length > 0) {
+                    const nombreMedico = `${this.medicoData?.nombre} ${this.medicoData?.apellido}`;
+                    console.log(`🔍 Buscando turnos para: "${nombreMedico}"`);
+                    
+                    // Filtrar por nombre del médico
+                    const turnosPorNombre = todosTurnos.filter((turno: any) => {
+                      const nombreTurno = `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`;
+                      return nombreTurno === nombreMedico;
+                    });
+                    
+                    console.log(`✅ Turnos encontrados por nombre: ${turnosPorNombre.length}`);
+                    
+                    if (turnosPorNombre.length > 0) {
+                      console.log('🔍 Primer turno encontrado por nombre:', turnosPorNombre[0]);
+                      
+                      // Calcular estadísticas precisas con los turnos encontrados
+                      const turnosConfirmadosReales = turnosPorNombre.filter((turno: any) => 
+                        turno.estado === 'CONFIRMADO' || turno.estado === 'COMPLETADO'
+                      );
+                      const turnosCanceladosReales = turnosPorNombre.filter((turno: any) => 
+                        turno.estado === 'CANCELADO'
+                      );
+                      
+                      const horasReales = this.calcularHorasTrabajadasReales(turnosConfirmadosReales);
+                      const pacientesReales = this.contarPacientesUnicos(turnosPorNombre);
+                      
+                      this.estadisticasActuales = {
+                        periodo: this.getPeriodoNombre(),
+                        turnosRealizados: turnosConfirmadosReales.length,
+                        turnosCancelados: turnosCanceladosReales.length,
+                        pacientesAtendidos: pacientesReales,
+                        horasTrabajadas: horasReales
+                      };
+                      
+                      console.log('📈 Estadísticas calculadas con datos reales por nombre:', this.estadisticasActuales);
+                      return;
+                    }
+                    
+                    // Debug: mostrar información disponible
+                    const idsUnicos = [...new Set(todosTurnos.map((turno: any) => turno.staffMedicoId))];
+                    const nombres = [...new Set(todosTurnos.map((turno: any) => 
+                      `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`
+                    ))];
+                    console.log('🆔 IDs únicos disponibles:', idsUnicos);
+                    console.log('� Nombres únicos disponibles:', nombres);
+                    console.log(`❌ No se encontró coincidencia para "${nombreMedico}"`);
+                  }
+                  
+                  // Fallback a estimación si no se encuentra nada
+                  this.usarEstimacionFallback(turnosConfirmados, turnosCancelados);
+                },
+                error: (error) => {
+                  console.error('❌ Error al buscar turnos por nombre:', error);
+                  this.usarEstimacionFallback(turnosConfirmados, turnosCancelados);
+                }
+              });
+              
+              return; // Salir aquí para evitar duplicar lógica
+            }
+            
+            const horasTrabajadas = this.calcularHorasTrabajadasReales(turnos);
+            const pacientesUnicos = this.contarPacientesUnicos(turnos);
+            
+            // Combinar datos del dashboard con cálculos precisos de turnos
+            this.estadisticasActuales = {
+              periodo: this.getPeriodoNombre(),
+              turnosRealizados: turnosConfirmados,
+              turnosCancelados: turnosCancelados,
+              pacientesAtendidos: pacientesUnicos || Math.floor(turnosConfirmados * 0.8),
+              horasTrabajadas: Math.round(horasTrabajadas * 100) / 100
+            };
+            
+            console.log('📈 Estadísticas actualizadas con datos precisos:', this.estadisticasActuales);
+          },
+          error: (turnosError: any) => {
+            console.warn('⚠️ Error al obtener turnos específicos, usando estimación:', turnosError);
+            
+            // Fallback: usar datos del dashboard con estimación de horas
+            this.estadisticasActuales = {
+              periodo: this.getPeriodoNombre(),
+              turnosRealizados: turnosConfirmados,
+              turnosCancelados: turnosCancelados,
+              pacientesAtendidos: Math.floor(turnosConfirmados * 0.8),
+              horasTrabajadas: Math.round(turnosConfirmados * 0.75 * 100) / 100 // Estimación: 45 min por turno
+            };
+            
+            console.log('📈 Estadísticas con estimación:', this.estadisticasActuales);
+          }
+        });
+        
       },
-      error: (error) => {
-        console.error('Error al cargar estadísticas de turnos:', error);
-        this.cargarEstadisticasSimuladas(); // Fallback
+      error: (error: any) => {
+        console.error('❌ Error al cargar dashboard:', error);
+        this.cargarEstadisticasSimuladas();
       }
     });
   }
@@ -655,6 +797,28 @@ export class MedicoEstadisticasComponent implements OnInit {
     return parsedId > 0 ? parsedId : 1; // Fallback a 1 si todo falla
   }
 
+  /**
+   * Obtiene el ID del StaffMedico desde localStorage
+   * Este es el ID que se usa para relacionar con turnos
+   */
+  private getStaffMedicoIdFromSession(): number {
+    // Primero intentar con el staffMedicoId del localStorage
+    const staffMedicoId = localStorage.getItem('staffMedicoId');
+    if (staffMedicoId && staffMedicoId !== 'null' && staffMedicoId !== '0') {
+      const parsedStaffId = parseInt(staffMedicoId, 10);
+      if (parsedStaffId > 0) {
+        console.log('✅ StaffMedicoId encontrado en localStorage:', parsedStaffId);
+        return parsedStaffId;
+      }
+    }
+
+    // Fallback: usar el medicoId como staffMedicoId 
+    // (esto puede funcionar si las IDs coinciden en algunos casos)
+    const medicoId = this.getMedicoIdFromSession();
+    console.log('⚠️ No se encontró staffMedicoId, usando medicoId como fallback:', medicoId);
+    return medicoId;
+  }
+
   private getFiltroParaPeriodo(): any {
     const ahora = new Date();
     let filtro: any = {};
@@ -697,6 +861,106 @@ export class MedicoEstadisticasComponent implements OnInit {
     return periodo ? periodo.nombre : 'Período Actual';
   }
 
+  /**
+   * Calcula las horas trabajadas reales basándose en horaInicio y horaFin de los turnos
+   */
+  private calcularHorasTrabajadasReales(turnos: any[]): number {
+    let totalMinutos = 0;
+    
+    turnos.forEach(turno => {
+      if (turno.horaInicio && turno.horaFin && 
+          (turno.estado === 'CONFIRMADO' || turno.estado === 'COMPLETADO' || turno.estado === 'REALIZADO')) {
+        
+        try {
+          // Parsear las horas (formato esperado: "HH:MM")
+          const [horaInicioHours, horaInicioMinutes] = turno.horaInicio.split(':').map(Number);
+          const [horaFinHours, horaFinMinutes] = turno.horaFin.split(':').map(Number);
+          
+          const inicioEnMinutos = horaInicioHours * 60 + horaInicioMinutes;
+          const finEnMinutos = horaFinHours * 60 + horaFinMinutes;
+          
+          // Calcular duración en minutos
+          let duracionMinutos = finEnMinutos - inicioEnMinutos;
+          
+          // Manejar caso donde el turno cruza medianoche
+          if (duracionMinutos < 0) {
+            duracionMinutos += 24 * 60; // Sumar 24 horas
+          }
+          
+          totalMinutos += duracionMinutos;
+          
+          console.log(`🕐 Turno ${turno.id}: ${turno.horaInicio}-${turno.horaFin} = ${duracionMinutos} minutos`);
+          
+        } catch (error) {
+          console.warn(`⚠️ Error al parsear horas del turno ${turno.id}:`, turno.horaInicio, '-', turno.horaFin);
+        }
+      }
+    });
+    
+    const totalHoras = totalMinutos / 60;
+    console.log(`📊 Total calculado: ${totalMinutos} minutos = ${totalHoras.toFixed(2)} horas`);
+    
+    return totalHoras;
+  }
+
+  /**
+   * Cuenta los pacientes únicos atendidos
+   */
+  private contarPacientesUnicos(turnos: any[]): number {
+    const pacientesSet = new Set();
+    
+    turnos.forEach(turno => {
+      if (turno.pacienteId && 
+          (turno.estado === 'CONFIRMADO' || turno.estado === 'COMPLETADO' || turno.estado === 'REALIZADO')) {
+        pacientesSet.add(turno.pacienteId);
+      }
+    });
+    
+    const totalPacientes = pacientesSet.size;
+    console.log(`👥 Pacientes únicos calculados: ${totalPacientes}`);
+    
+    return totalPacientes;
+  }
+
+  /**
+   * Hace una búsqueda de turnos sin filtro de médico específico para debugging
+   */
+  private verificarTurnosDisponibles() {
+    console.log('🔍 Verificando si hay turnos disponibles en el sistema...');
+    
+    this.turnoService.searchWithSimpleFilters({
+      size: 10 // Solo los primeros 10 para debugging
+    }).subscribe({
+      next: (response: any) => {
+        const turnos = response?.data || [];
+        console.log(`📋 Turnos encontrados en el sistema: ${turnos.length}`);
+        
+        if (turnos.length > 0) {
+          console.log('🔍 Primer turno del sistema:', turnos[0]);
+          console.log('🏥 staffMedicoId del primer turno:', turnos[0].staffMedicoId);
+        }
+        
+        // Buscar turnos que coincidan con nuestro médico
+        const turnosDelMedico = turnos.filter((t: any) => t.staffMedicoId == this.getMedicoIdFromSession());
+        console.log(`🎯 Turnos que coinciden con médico ID ${this.getMedicoIdFromSession()}: ${turnosDelMedico.length}`);
+        
+        // Debug: IDs únicos de staffMedico en los turnos
+        const idsUnicos = [...new Set(turnos.map((t: any) => t.staffMedicoId))];
+        console.log('🆔 IDs únicos de staffMedico en turnos:', idsUnicos);
+        console.log('🔗 ID actual del médico desde sesión:', this.getMedicoIdFromSession());
+        console.log('❓ ¿Coincide algún ID?', idsUnicos.includes(this.getMedicoIdFromSession()));
+        
+        // Debug: Nombres de médicos en los turnos
+        const nombresUnicos = [...new Set(turnos.map((t: any) => `${t.staffMedicoNombre} ${t.staffMedicoApellido}`))];
+        console.log('👤 Nombres de médicos en turnos:', nombresUnicos);
+        console.log('👤 Nombre del médico actual:', `${this.medicoData?.nombre} ${this.medicoData?.apellido}`);
+      },
+      error: (error) => {
+        console.error('❌ Error al verificar turnos:', error);
+      }
+    });
+  }
+
   volverAlDashboard() {
     this.router.navigate(['/medico-dashboard']);
   }
@@ -705,6 +969,29 @@ export class MedicoEstadisticasComponent implements OnInit {
     const total = this.estadisticasActuales.turnosRealizados + this.estadisticasActuales.turnosCancelados;
     if (total === 0) return 0;
     return Math.round((this.estadisticasActuales.turnosCancelados / total) * 100);
+  }
+
+  /**
+   * Método fallback para usar estimación cuando no se encuentran turnos específicos
+   */
+  private usarEstimacionFallback(turnosConfirmados: number, turnosCancelados: number) {
+    console.log('💡 Usando datos del dashboard con estimación de duración');
+    
+    // Hacer verificación para debugging
+    this.verificarTurnosDisponibles();
+    
+    // Usar estimación inteligente basada en turnos típicos (30-45 min)
+    const horasEstimadas = turnosConfirmados * 0.75; // 45 minutos por turno
+    
+    this.estadisticasActuales = {
+      periodo: this.getPeriodoNombre(),
+      turnosRealizados: turnosConfirmados,
+      turnosCancelados: turnosCancelados,
+      pacientesAtendidos: Math.floor(turnosConfirmados * 0.8), // Estimación
+      horasTrabajadas: Math.round(horasEstimadas * 100) / 100
+    };
+    
+    console.log('📈 Estadísticas con estimación inteligente:', this.estadisticasActuales);
   }
 
   calcularTasaExito(stat: EstadisticasPeriodo): number {

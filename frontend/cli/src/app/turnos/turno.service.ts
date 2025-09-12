@@ -411,4 +411,47 @@ export class TurnoService {
     return this.http.get<DataPackage<string[]>>(`${this.url}/${turnoId}/estados-validos`);
   }
 
+  // === MÉTODOS PARA ESTADÍSTICAS DE MÉDICOS ===
+
+  /** Obtiene estadísticas generales de un médico */
+  getEstadisticasMedico(medicoId: number, periodo: string = 'mes_actual'): Observable<DataPackage<any>> {
+    const params = new HttpParams()
+      .set('medicoId', medicoId.toString())
+      .set('periodo', periodo);
+    return this.http.get<DataPackage<any>>(`rest/estadisticas/medico`, { params });
+  }
+
+  /** Obtiene evolución temporal de turnos del médico */
+  getEvolucionTurnos(medicoId: number, periodo: string): Observable<DataPackage<any[]>> {
+    const params = new HttpParams()
+      .set('medicoId', medicoId.toString())
+      .set('periodo', periodo);
+    return this.http.get<DataPackage<any[]>>(`rest/estadisticas/medico/evolucion`, { params });
+  }
+
+  /** Obtiene estadísticas por especialidad del médico */
+  getEstadisticasPorEspecialidad(medicoId: number, periodo: string): Observable<DataPackage<any[]>> {
+    const params = new HttpParams()
+      .set('medicoId', medicoId.toString())
+      .set('periodo', periodo);
+    return this.http.get<DataPackage<any[]>>(`rest/estadisticas/medico/especialidades`, { params });
+  }
+
+  /** Obtiene rendimiento mensual del médico */
+  getRendimientoMensual(medicoId: number, anio: number = new Date().getFullYear()): Observable<DataPackage<any[]>> {
+    const params = new HttpParams()
+      .set('medicoId', medicoId.toString())
+      .set('anio', anio.toString());
+    return this.http.get<DataPackage<any[]>>(`rest/estadisticas/medico/rendimiento-mensual`, { params });
+  }
+
+  /** Obtiene comparativas con período anterior */
+  getComparativasPeriodos(medicoId: number, periodoActual: string, periodoAnterior: string): Observable<DataPackage<any>> {
+    const params = new HttpParams()
+      .set('medicoId', medicoId.toString())
+      .set('periodoActual', periodoActual)
+      .set('periodoAnterior', periodoAnterior);
+    return this.http.get<DataPackage<any>>(`rest/estadisticas/medico/comparativas`, { params });
+  }
+
 }
