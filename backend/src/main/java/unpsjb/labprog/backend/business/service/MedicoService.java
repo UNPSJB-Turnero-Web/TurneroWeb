@@ -51,6 +51,10 @@ public class MedicoService {
     public Optional<MedicoDTO> findByMatricula(String matricula) {
         return repository.findByMatricula(matricula).map(this::toDTO);
     }
+    
+    public Optional<MedicoDTO> findByEmail(String email) {
+        return repository.findByEmail(email).map(this::toDTO);
+    }
 
    
 

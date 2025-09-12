@@ -106,6 +106,13 @@ public class MedicoPresenter {
                 .orElse(ResponseEntity.notFound().build());
     }
     
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Object> findByEmail(@PathVariable String email) {
+        return service.findByEmail(email)
+                .map(medico -> Response.ok(medico, "Médico encontrado por email"))
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
     // ===============================
     // REGISTRO DE NUEVO MÉDICO
     // ===============================
