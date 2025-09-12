@@ -197,6 +197,7 @@ interface CambioPassword {
                       id="email" 
                       class="form-control"
                       formControlName="email"
+                      placeholder="ejemplo@correo.com (opcional)"
                       [class.is-invalid]="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid"
                     >
                     <div *ngIf="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid" 
@@ -212,6 +213,7 @@ interface CambioPassword {
                       id="telefono" 
                       class="form-control"
                       formControlName="telefono"
+                      placeholder="+54 9 11 1234-5678 (opcional)"
                       [class.is-invalid]="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid"
                     >
                     <div *ngIf="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid" 
@@ -1651,18 +1653,24 @@ export class MedicoPerfilComponent implements OnInit {
 
     this.cargandoGuardado = true;
 
-    // Preparar datos para el backend
+    // Preparar datos para el backend - manejar valores nulos/vacíos correctamente
+    const emailValue = this.perfilForm.get('email')?.value?.trim();
+    const telefonoValue = this.perfilForm.get('telefono')?.value?.trim();
+    
     const datosActualizados = {
       id: medicoId,
-      nombre: this.perfilForm.get('nombre')?.value,
-      apellido: this.perfilForm.get('apellido')?.value,
-      dni: this.perfilForm.get('dni')?.value,
-      matricula: this.perfilForm.get('matricula')?.value,
-      email: this.perfilForm.get('email')?.value,
-      telefono: this.perfilForm.get('telefono')?.value,
+      nombre: this.perfilForm.get('nombre')?.value?.trim() || '',
+      apellido: this.perfilForm.get('apellido')?.value?.trim() || '',
+      dni: this.perfilForm.get('dni')?.value?.trim() || '',
+      matricula: this.perfilForm.get('matricula')?.value?.trim() || '',
+      // Solo incluir email y telefono si tienen valores válidos
+      ...(emailValue && emailValue.length > 0 ? { email: emailValue } : {}),
+      ...(telefonoValue && telefonoValue.length > 0 ? { telefono: telefonoValue } : {}),
       // Mantener las especialidades existentes
       especialidades: this.medicoActual?.especialidades || []
     };
+
+    console.log('Datos a enviar al backend:', datosActualizados);
 
     // Llamar al servicio para actualizar
     this.medicoService.update(medicoId, datosActualizados).subscribe({
@@ -1823,8 +1831,8 @@ export class MedicoPerfilComponent implements OnInit {
         Validators.maxLength(9)
       ]],
       matricula: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
-      email: ['', [Validators.required, Validators.email]],
-      telefono: ['', [Validators.pattern(/^[\d\s\-\+\(\)]{7,15}$/)]]
+      email: ['', [Validators.email]], // Email opcional pero debe ser válido si se proporciona
+      telefono: ['', [Validators.pattern(/^[\d\s\-\+\(\)]{7,15}$/)]] // Teléfono opcional
     });
   }
 
