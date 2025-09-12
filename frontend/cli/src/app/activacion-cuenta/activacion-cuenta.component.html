@@ -1,0 +1,82 @@
+<div class="activation-container" [@fadeIn]>
+  <div class="activation-card" [@slideUp]>
+    
+    <!-- Header con logo -->
+    <div class="header-section">
+      <div class="logo-container">
+        <i class="fas fa-user-check logo-icon"></i>
+        <h1 class="app-title">CheTurno</h1>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-section">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Activando cuenta...</span>
+      </div>
+      <p class="loading-text">Activando tu cuenta, por favor espera...</p>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="!isLoading && isActivated" class="success-section">
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h3 class="success-title">Tu cuenta ha sido activada correctamente.</h3>
+
+      
+      <div class="action-buttons">
+        <button 
+          type="button" 
+          class="btn btn-primary btn-lg"
+          (click)="navigateToLogin()">
+          <i class="fas fa-sign-in-alt me-2"></i>
+          Iniciar Sesión
+        </button>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="!isLoading && !isActivated && errorMessage" class="error-section">
+      <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <h3 class="error-title">Error de Activación</h3>
+      <p class="error-message">{{ errorMessage }}</p>
+      
+      <div class="error-suggestions">
+        <p class="suggestion-text">¿Qué puedes hacer?</p>
+        <ul class="suggestion-list">
+          <li>Verifica que el enlace esté completo y no se haya cortado</li>
+          <li>Intenta copiar y pegar el enlace directamente desde tu email</li>
+          <li>Asegúrate de que no haya pasado más tiempo del permitido desde el registro</li>
+        </ul>
+      </div>
+      
+      <div class="action-buttons">
+        <button 
+          type="button" 
+          class="btn btn-outline-primary"
+          (click)="resendActivationEmail()">
+          <i class="fas fa-envelope me-2"></i>
+          Solicitar Nuevo Enlace
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary ms-2"
+          (click)="navigateToLogin()">
+          <i class="fas fa-sign-in-alt me-2"></i>
+          Ir a Iniciar Sesión
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+      <p class="footer-text">
+        ¿Necesitas ayuda? <a href="mailto:soporte.cheturno@gmail.com" class="support-link">Contacta soporte</a>
+      </p>
+    </div>
+
+  </div>
+</div>
