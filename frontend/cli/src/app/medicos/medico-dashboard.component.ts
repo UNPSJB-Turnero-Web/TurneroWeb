@@ -8,6 +8,7 @@ import { MedicoService } from './medico.service';
 import { Turno } from '../turnos/turno';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { Medico } from './medico';
+import { AuthService } from '../inicio-sesion/auth.service';
 
 interface DashboardStats {
   turnosHoy: number;
@@ -1659,7 +1660,8 @@ export class MedicoDashboardComponent implements OnInit {
     private router: Router,
     private turnoService: TurnoService,
     private disponibilidadService: DisponibilidadMedicoService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private authService: AuthService
   ) {
     this.initializeParticles();
   }
@@ -1775,11 +1777,20 @@ export class MedicoDashboardComponent implements OnInit {
     // this.cargarProximosTurnos(); // Ya incluido en cargarEstadisticas()
   }
 
-  // Helper method to get medico ID from localStorage
+  // Helper method to get medico ID from localStorage (fallback) or AuthService
   private getMedicoIdFromLocalStorage(): number | null {
     console.log('=== DEBUG: getMedicoIdFromLocalStorage ===');
     
-    // Try to get medico ID from different possible localStorage keys
+    // PRIMERA OPCIÓN: Usar AuthService moderno para obtener el médico por email
+    const userEmail = this.authService.getUserEmail();
+    if (userEmail) {
+      console.log('Usando AuthService - Email del usuario:', userEmail);
+      // En lugar de hacer la búsqueda aquí, delegamos a cargarDatosMedico() 
+      // para hacer la búsqueda por email
+      return -1; // Valor especial para indicar que se debe buscar por email
+    }
+    
+    // FALLBACK: Intentar obtener de localStorage (sistema legacy)
     const staffMedicoId = localStorage.getItem('staffMedicoId');
     const medicoId = localStorage.getItem('medicoId');
     const currentUser = localStorage.getItem('currentUser');
@@ -1789,9 +1800,6 @@ export class MedicoDashboardComponent implements OnInit {
       medicoId,
       currentUser: currentUser ? 'exists' : 'null'
     });
-    
-    // ⚠️ IMPORTANTE: PRIMERO intentar con medicoId, NO con staffMedicoId
-    // El staffMedicoId es diferente al medicoId y causa problemas de autenticación
     
     // First try medicoId (este es el ID correcto del médico)
     if (medicoId && medicoId !== '0' && medicoId !== 'null' && medicoId !== 'undefined') {
@@ -1828,7 +1836,42 @@ export class MedicoDashboardComponent implements OnInit {
   private cargarDatosMedico() {
     const medicoId = this.getMedicoIdFromLocalStorage();
     
-    if (!medicoId) {
+    // Caso especial: buscar por email usando AuthService
+    if (medicoId === -1) {
+      const userEmail = this.authService.getUserEmail();
+      if (!userEmail) {
+        console.error('No se pudo obtener el email del usuario autenticado');
+        alert('Error: Sesión inválida. Por favor, inicie sesión nuevamente.');
+        this.router.navigate(['/ingresar']);
+        return;
+      }
+      
+      console.log('Buscando médico por email:', userEmail);
+      this.medicoService.findByEmail(userEmail).subscribe({
+        next: (response: any) => {
+          if (response && response.data) {
+            this.medicoActual = response.data;
+            console.log('Médico cargado exitosamente por email:', this.medicoActual);
+            // Guardar el ID para futuros usos
+            if (this.medicoActual && this.medicoActual.id) {
+              localStorage.setItem('medicoId', this.medicoActual.id.toString());
+            }
+          } else {
+            console.error('No se encontró médico con email:', userEmail);
+            alert('Error: No se encontró un médico asociado a esta cuenta.');
+            this.router.navigate(['/ingresar']);
+          }
+        },
+        error: (error: any) => {
+          console.error('Error buscando médico por email:', error);
+          alert('Error al cargar datos del médico. Por favor, inicie sesión nuevamente.');
+          this.router.navigate(['/ingresar']);
+        }
+      });
+      return;
+    }
+    
+    if (!medicoId || medicoId <= 0) {
       console.error('No se pudo obtener el ID del médico');
       console.log('Debug localStorage:', {
         staffMedicoId: localStorage.getItem('staffMedicoId'),
@@ -1836,7 +1879,7 @@ export class MedicoDashboardComponent implements OnInit {
         currentUser: localStorage.getItem('currentUser')
       });
       alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
-      this.router.navigate(['/login']);
+      this.router.navigate(['/ingresar']);
       return;
     }
 

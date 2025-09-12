@@ -1092,8 +1092,9 @@ export class AppComponent implements OnInit, OnDestroy {
    * Detecta si el usuario actual es operador
    */
   public isOperador(): boolean {
-    return localStorage.getItem("userRole") === "operador";
+    return this.authService.getUserRole()?.toUpperCase() === "OPERADOR";
   }
+  
   ngOnDestroy() {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
@@ -1111,44 +1112,47 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   isAuthenticated(): boolean {
-    const userRole = localStorage.getItem("userRole");
-    return userRole !== null && userRole !== "";
+    return this.authService.isAuthenticated();
   }
 
   isAdmin(): boolean {
-    return localStorage.getItem("userRole") === "admin";
+    return this.authService.getUserRole()?.toUpperCase() === "ADMINISTRADOR";
   }
 
   isPatient(): boolean {
-    return localStorage.getItem("userRole") === "patient";
+    return this.authService.getUserRole()?.toUpperCase() === "PACIENTE";
+  }
+
+  isMedico(): boolean {
+    return this.authService.getUserRole()?.toUpperCase() === "MEDICO";
   }
 
   getUserName(): string {
-    return localStorage.getItem("userName") || "Usuario";
+    return this.authService.getUserName() || "Usuario";
   }
 
   getUserRoleDisplay(): string {
-    const role = localStorage.getItem("userRole");
-    switch (role) {
-      case "admin":
+    const role = this.authService.getUserRole();
+    switch (role?.toUpperCase()) {
+      case "ADMINISTRADOR":
         return "Administrador";
-      case "patient":
+      case "PACIENTE":
         return "Paciente";
-      case "medico":
+      case "MEDICO":
         return "Médico";
+      case "OPERADOR":
+        return "Operador";
       default:
         return "Usuario";
     }
   }
 
   goToLogin(): void {
-    this.router.navigate(["/"]);
+    this.router.navigate(["/ingresar"]);
   }
 
   logout(): void {
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
-    this.router.navigate(["/"]);
+    this.authService.logout();
   }
 
   isRouteActive(route: string): boolean {

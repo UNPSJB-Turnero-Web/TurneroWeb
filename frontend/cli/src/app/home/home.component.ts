@@ -6,6 +6,7 @@ import { PacienteService } from "../pacientes/paciente.service";
 import { Paciente } from "../pacientes/paciente";
 import { MedicoService } from "../medicos/medico.service";
 import { OperadorService } from "../operador/operador.service";
+import { AuthService } from "../inicio-sesion/auth.service";
 
 @Component({
   selector: "app-home",
@@ -52,15 +53,15 @@ export class HomeComponent {
     private router: Router,
     private pacienteService: PacienteService,
     private medicoService: MedicoService,
-    private operadorService: OperadorService
+    private operadorService: OperadorService,
+    private authService: AuthService
   ) {
     this.loadObrasSociales();
   }
 
   selectRole(role: "admin" | "medico" | "patient" | "operador") {
-    this.selectedRole = role;
-    this.errorMessage = "";
-    this.showRegistrationPrompt = false;
+    // Redirigir al sistema de autenticación moderno
+    this.router.navigate(["/ingresar"]);
   }
 
   goBack() {
