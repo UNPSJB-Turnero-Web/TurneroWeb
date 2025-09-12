@@ -2066,20 +2066,14 @@ export class MedicoHorariosComponent implements OnInit {
       currentUser: currentUser ? 'exists' : 'null'
     });
     
-    // First try staffMedicoId
-    if (staffMedicoId && staffMedicoId !== '0' && staffMedicoId !== 'null' && staffMedicoId !== 'undefined') {
-      const id = parseInt(staffMedicoId, 10);
-      if (!isNaN(id) && id > 0) {
-        console.log('Using staffMedicoId:', id);
-        return id;
-      }
-    }
+    // ⚠️ IMPORTANTE: PRIMERO intentar con medicoId, NO con staffMedicoId
+    // El staffMedicoId es diferente al medicoId y causa problemas de autenticación
     
-    // Then try medicoId
+    // First try medicoId (este es el ID correcto del médico)
     if (medicoId && medicoId !== '0' && medicoId !== 'null' && medicoId !== 'undefined') {
       const id = parseInt(medicoId, 10);
       if (!isNaN(id) && id > 0) {
-        console.log('Using medicoId:', id);
+        console.log('✅ Using medicoId:', id);
         return id;
       }
     }
@@ -2111,10 +2105,64 @@ export class MedicoHorariosComponent implements OnInit {
     console.log('=== INICIANDO COMPONENTE MEDICO-HORARIOS ===');
     this.verificarConfiguracionSesion();
     
+    // Validar y corregir localStorage
+    this.validarYCorregirLocalStorage();
+    
     // Pequeña pausa para que se vean los logs antes de continuar
     setTimeout(() => {
       this.cargarMedicoYEspecialidades();
     }, 100);
+  }
+
+  /**
+   * Valida y corrige problemas comunes en localStorage
+   */
+  private validarYCorregirLocalStorage() {
+    console.log('🔍 Validando localStorage en componente de horarios...');
+    
+    const medicoId = localStorage.getItem('medicoId');
+    const staffMedicoId = localStorage.getItem('staffMedicoId');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    console.log('📋 Estado actual del localStorage:', {
+      medicoId,
+      staffMedicoId,
+      currentUser: currentUser ? 'exists' : 'null'
+    });
+    
+    // Verificar si tenemos los IDs correctos
+    if (!medicoId || medicoId === '0' || medicoId === 'null') {
+      console.warn('⚠️ medicoId faltante o inválido en componente de horarios');
+      
+      // Intentar recuperar desde currentUser
+      if (currentUser) {
+        try {
+          const user = JSON.parse(currentUser);
+          if (user.medicoId && user.medicoId !== 0) {
+            console.log('🔧 Corrigiendo medicoId desde currentUser:', user.medicoId);
+            localStorage.setItem('medicoId', user.medicoId.toString());
+          } else if (user.id && user.id !== 0 && user.id !== parseInt(staffMedicoId || '0', 10)) {
+            console.log('🔧 Usando user.id como medicoId:', user.id);
+            localStorage.setItem('medicoId', user.id.toString());
+          }
+        } catch (e) {
+          console.error('Error parseando currentUser:', e);
+        }
+      }
+    }
+    
+    // Verificar que medicoId y staffMedicoId no sean el mismo (común error)
+    const finalMedicoId = localStorage.getItem('medicoId');
+    const finalStaffMedicoId = localStorage.getItem('staffMedicoId');
+    
+    if (finalMedicoId === finalStaffMedicoId && finalMedicoId && finalMedicoId !== '0') {
+      console.warn('🚨 PROBLEMA en horarios: medicoId y staffMedicoId son iguales!', {
+        medicoId: finalMedicoId,
+        staffMedicoId: finalStaffMedicoId
+      });
+    }
+    
+    console.log('✅ Validación de localStorage completada en horarios');
   }
 
   verificarConfiguracionSesion() {
@@ -2170,11 +2218,25 @@ export class MedicoHorariosComponent implements OnInit {
       error: (error) => {
         console.error('Error al cargar médico:', error);
         console.error('Error completo:', JSON.stringify(error, null, 2));
+        console.error('Medico ID usado:', medicoId);
         
         if (error.status === 404) {
-          alert(`Error: No se encontró el médico con ID ${medicoId}. Su sesión puede ser inválida. Redirigiendo al login...`);
-          localStorage.clear();
-          this.router.navigate(['/login']);
+          console.error(`⚠️ Médico con ID ${medicoId} no encontrado en el servidor`);
+          
+          alert(`Error: No se encontró el médico con ID ${medicoId}. 
+          
+Posible problema de configuración. Verifique:
+- LocalStorage medicoId: ${localStorage.getItem('medicoId')}
+- LocalStorage staffMedicoId: ${localStorage.getItem('staffMedicoId')}
+
+¿Desea continuar o ir al login?`);
+          
+          // Solo limpiar localStorage si el usuario lo confirma
+          const shouldLogout = confirm('¿Desea cerrar sesión e ir al login?');
+          if (shouldLogout) {
+            localStorage.clear();
+            this.router.navigate(['/login']);
+          }
         } else {
           alert(`Error al cargar información del médico: ${error.error?.message || error.message}`);
         }

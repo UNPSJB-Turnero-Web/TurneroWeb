@@ -67,7 +67,9 @@ interface CambioPassword {
           </div>
           
           <div class="section-content">
-            <div class="info-grid">
+            
+            <!-- Vista de Solo Lectura -->
+            <div *ngIf="!editandoPerfil" class="info-grid">
               <div class="info-card">
                 <label>Nombre Completo</label>
                 <div class="info-value">
@@ -84,7 +86,7 @@ interface CambioPassword {
                 </div>
               </div>
               
-                                          <div class="info-card">
+              <div class="info-card">
                 <label>Especialidad(es)</label>
                 <div class="info-value">
                   <i class="fas fa-stethoscope me-2"></i>
@@ -116,11 +118,147 @@ interface CambioPassword {
               </div>
             </div>
             
+            <!-- Formulario de Edición -->
+            <div *ngIf="editandoPerfil" class="edit-form">
+              <form [formGroup]="perfilForm" (ngSubmit)="guardarPerfil()">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="nombre">Nombre <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      id="nombre" 
+                      class="form-control"
+                      formControlName="nombre"
+                      placeholder="Ingrese su nombre"
+                      [class.is-invalid]="perfilForm.get('nombre')?.touched && perfilForm.get('nombre')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('nombre')?.touched && perfilForm.get('nombre')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('nombre')?.errors?.['required']">El nombre es obligatorio</small>
+                      <small *ngIf="perfilForm.get('nombre')?.errors?.['minlength']">Mínimo 2 caracteres</small>
+                      <small *ngIf="perfilForm.get('nombre')?.errors?.['maxlength']">Máximo 50 caracteres</small>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="apellido">Apellido <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      id="apellido" 
+                      class="form-control"
+                      formControlName="apellido"
+                      placeholder="Ingrese su apellido"
+                      [class.is-invalid]="perfilForm.get('apellido')?.touched && perfilForm.get('apellido')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('apellido')?.touched && perfilForm.get('apellido')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('apellido')?.errors?.['required']">El apellido es obligatorio</small>
+                      <small *ngIf="perfilForm.get('apellido')?.errors?.['minlength']">Mínimo 2 caracteres</small>
+                      <small *ngIf="perfilForm.get('apellido')?.errors?.['maxlength']">Máximo 50 caracteres</small>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="dni">DNI <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      id="dni" 
+                      class="form-control"
+                      formControlName="dni"
+                      [class.is-invalid]="perfilForm.get('dni')?.touched && perfilForm.get('dni')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('dni')?.touched && perfilForm.get('dni')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('dni')?.errors?.['required']">El DNI es obligatorio</small>
+                      <small *ngIf="perfilForm.get('dni')?.errors?.['pattern']">Formato inválido (7-9 dígitos)</small>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="matricula">Matrícula <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      id="matricula" 
+                      class="form-control"
+                      formControlName="matricula"
+                      [class.is-invalid]="perfilForm.get('matricula')?.touched && perfilForm.get('matricula')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('matricula')?.touched && perfilForm.get('matricula')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('matricula')?.errors?.['required']">La matrícula es obligatoria</small>
+                      <small *ngIf="perfilForm.get('matricula')?.errors?.['minlength']">Mínimo 3 caracteres</small>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="email">Email</label>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      class="form-control"
+                      formControlName="email"
+                      [class.is-invalid]="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('email')?.errors?.['email']">Email inválido</small>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="telefono">Teléfono</label>
+                    <input 
+                      type="text" 
+                      id="telefono" 
+                      class="form-control"
+                      formControlName="telefono"
+                      [class.is-invalid]="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid"
+                    >
+                    <div *ngIf="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid" 
+                         class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('telefono')?.errors?.['pattern']">Formato inválido</small>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              
+              <div class="edit-note">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Nota:</strong> Las especialidades se gestionan desde el panel administrativo
+              </div>
+            </div>
+            
+            <!-- Botones de Acción -->
             <div class="section-actions">
-              <button class="btn-secondary" (click)="editarPerfil()">
-                <i class="fas fa-edit me-2"></i>
-                Editar Información
-              </button>
+              <div *ngIf="!editandoPerfil">
+                <button class="btn-secondary" (click)="editarPerfil()">
+                  <i class="fas fa-edit me-2"></i>
+                  Editar Información
+                </button>
+              </div>
+              
+              <div *ngIf="editandoPerfil" class="edit-actions">
+                <button 
+                  type="button" 
+                  class="btn-primary" 
+                  (click)="guardarPerfil()"
+                  [disabled]="!perfilForm.valid || cargandoGuardado"
+                >
+                  <i *ngIf="!cargandoGuardado" class="fas fa-save me-2"></i>
+                  <i *ngIf="cargandoGuardado" class="fas fa-spinner fa-spin me-2"></i>
+                  {{ cargandoGuardado ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+                
+                <button 
+                  type="button" 
+                  class="btn-secondary" 
+                  (click)="cancelarEdicion()"
+                  [disabled]="cargandoGuardado"
+                >
+                  <i class="fas fa-times me-2"></i>
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -698,14 +836,18 @@ interface CambioPassword {
     }
 
     .btn-secondary {
-      background: rgba(108, 117, 125, 0.1);
-      color: #6c757d;
-      border: 2px solid rgba(108, 117, 125, 0.2);
+      background: #ffffff;
+      color: #374151;
+      border: 2px solid #d1d5db;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .btn-secondary:hover {
-      background: #6c757d;
-      color: white;
+      background: #f3f4f6;
+      color: #1f2937;
+      border-color: #9ca3af;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .btn-danger {
@@ -1080,11 +1222,318 @@ interface CambioPassword {
         gap: 1rem;
       }
     }
+
+    /* Edit Form Styles */
+    .edit-form {
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .edit-form::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group label::before {
+      content: '';
+      width: 3px;
+      height: 3px;
+      background: #3b82f6;
+      border-radius: 50%;
+    }
+
+    .required {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .form-control {
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+      border: 2px solid #d1d5db;
+      border-radius: 12px;
+      color: #1f2937;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .form-control:hover {
+      border-color: #9ca3af;
+      background: #f9fafb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 8px 24px rgba(59, 130, 246, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .form-control::placeholder {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .form-control.is-invalid {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+    }
+
+    .form-control.is-invalid:focus {
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    }
+
+    .invalid-feedback {
+      color: #dc2626;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(239, 68, 68, 0.05);
+      border-radius: 6px;
+      border-left: 3px solid #dc2626;
+    }
+
+    .invalid-feedback small {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .invalid-feedback small:last-child {
+      margin-bottom: 0;
+    }
+
+    .edit-note {
+      display: flex;
+      align-items: center;
+      padding: 1.25rem;
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 12px;
+      color: #1e40af;
+      font-size: 0.9rem;
+      margin-top: 1.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+    }
+
+    .edit-note i {
+      color: #60a5fa;
+      font-size: 1.1rem;
+      margin-right: 0.75rem;
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .edit-actions button {
+      min-width: 140px;
+      padding: 0.875rem 1.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .edit-actions button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .edit-actions button:hover::before {
+      left: 100%;
+    }
+
+    .edit-actions .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border: none;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    }
+
+    .edit-actions .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    }
+
+    .edit-actions .btn-secondary {
+      background: #ffffff;
+      border: 2px solid #d1d5db;
+      color: #374151;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .edit-actions .btn-secondary:hover:not(:disabled) {
+      background: #f9fafb;
+      border-color: #9ca3af;
+      color: #1f2937;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .edit-actions button:disabled {
+      opacity: 0.6;
+      transform: none !important;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+
+    .edit-actions .btn-secondary:disabled {
+      background: #f3f4f6 !important;
+      border-color: #d1d5db !important;
+      color: #9ca3af !important;
+    }
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .edit-form {
+        padding: 1.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .edit-actions {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .edit-actions button {
+        width: 100%;
+        min-width: unset;
+        padding: 1rem 1.5rem;
+      }
+
+      .form-control {
+        padding: 0.875rem 1rem;
+        font-size: 16px; /* Previene zoom en iOS */
+      }
+
+      .edit-note {
+        padding: 1rem;
+        font-size: 0.85rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .edit-form {
+        padding: 1rem;
+        border-radius: 12px;
+      }
+
+      .form-grid {
+        gap: 1.25rem;
+      }
+
+      .form-group label {
+        font-size: 0.85rem;
+      }
+
+      .form-control {
+        padding: 0.75rem;
+      }
+
+      .edit-actions {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+      }
+    }
+
+    /* Animaciones adicionales */
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .edit-form {
+      animation: slideInUp 0.4s ease-out;
+    }
+
+    .form-group {
+      animation: slideInUp 0.4s ease-out;
+      animation-fill-mode: both;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.15s; }
+    .form-group:nth-child(3) { animation-delay: 0.2s; }
+    .form-group:nth-child(4) { animation-delay: 0.25s; }
+    .form-group:nth-child(5) { animation-delay: 0.3s; }
+    .form-group:nth-child(6) { animation-delay: 0.35s; }
   `]
 })
 export class MedicoPerfilComponent implements OnInit {
   medicoActual: Medico | null = null;
   cargando = true;
+  
+  // Profile editing properties
+  editandoPerfil = false;
+  perfilForm: FormGroup;
+  cargandoGuardado = false;
   
   // Password form properties
   passwordForm: FormGroup;
@@ -1111,6 +1560,7 @@ export class MedicoPerfilComponent implements OnInit {
   ) {
     this.initializeParticles();
     this.passwordForm = this.initializePasswordForm();
+    this.perfilForm = this.initializePerfilForm();
   }
 
   ngOnInit() {
@@ -1169,8 +1619,99 @@ export class MedicoPerfilComponent implements OnInit {
   }
 
   editarPerfil() {
-    // TODO: Implementar edición de perfil
-    alert('Funcionalidad de edición en desarrollo');
+    if (!this.medicoActual) {
+      alert('Error: No hay datos del médico para editar');
+      return;
+    }
+    
+    // Llenar el formulario con los datos actuales
+    this.perfilForm.patchValue({
+      nombre: this.medicoActual.nombre || '',
+      apellido: this.medicoActual.apellido || '',
+      dni: this.medicoActual.dni || '',
+      matricula: this.medicoActual.matricula || '',
+      email: '', // Se obtendría del backend si está disponible
+      telefono: '' // Se obtendría del backend si está disponible
+    });
+    
+    // Activar modo edición
+    this.editandoPerfil = true;
+  }
+
+  guardarPerfil() {
+    if (!this.perfilForm.valid || this.cargandoGuardado) {
+      return;
+    }
+
+    const medicoId = this.getMedicoIdFromSession();
+    if (!medicoId || medicoId === 0) {
+      alert('Error: No se pudo obtener la información del médico');
+      return;
+    }
+
+    this.cargandoGuardado = true;
+
+    // Preparar datos para el backend
+    const datosActualizados = {
+      id: medicoId,
+      nombre: this.perfilForm.get('nombre')?.value,
+      apellido: this.perfilForm.get('apellido')?.value,
+      dni: this.perfilForm.get('dni')?.value,
+      matricula: this.perfilForm.get('matricula')?.value,
+      email: this.perfilForm.get('email')?.value,
+      telefono: this.perfilForm.get('telefono')?.value,
+      // Mantener las especialidades existentes
+      especialidades: this.medicoActual?.especialidades || []
+    };
+
+    // Llamar al servicio para actualizar
+    this.medicoService.update(medicoId, datosActualizados).subscribe({
+      next: (response) => {
+        console.log('Perfil actualizado:', response);
+        
+        // Actualizar el objeto medicoActual con los nuevos datos
+        if (this.medicoActual) {
+          this.medicoActual.nombre = datosActualizados.nombre;
+          this.medicoActual.apellido = datosActualizados.apellido;
+          this.medicoActual.dni = datosActualizados.dni;
+          this.medicoActual.matricula = datosActualizados.matricula;
+        }
+        
+        // Salir del modo edición
+        this.editandoPerfil = false;
+        this.cargandoGuardado = false;
+        
+        alert('Perfil actualizado exitosamente');
+      },
+      error: (error) => {
+        console.error('Error al actualizar perfil:', error);
+        this.cargandoGuardado = false;
+        
+        let mensajeError = 'Error al actualizar el perfil';
+        if (error?.error?.message) {
+          mensajeError = error.error.message;
+        } else if (typeof error?.error === 'string') {
+          mensajeError = error.error;
+        }
+        
+        alert(`Error: ${mensajeError}`);
+      }
+    });
+  }
+
+  cancelarEdicion() {
+    // Confirmar cancelación si hay cambios sin guardar
+    if (this.perfilForm.dirty) {
+      const confirmar = confirm('¿Estás seguro de cancelar? Se perderán los cambios no guardados.');
+      if (!confirmar) {
+        return;
+      }
+    }
+    
+    // Salir del modo edición y resetear formulario
+    this.editandoPerfil = false;
+    this.perfilForm.reset();
+    this.cargandoGuardado = false;
   }
 
   // Utility methods
@@ -1199,32 +1740,40 @@ export class MedicoPerfilComponent implements OnInit {
     // Intentar obtener ID desde diferentes fuentes
     let id = 0;
     
-    // 1. Intentar desde medicoId directo
+    // ⚠️ IMPORTANTE: PRIMERO medicoId, NUNCA staffMedicoId para autenticación
+    
+    // 1. Intentar desde medicoId directo (CORRECTO)
     if (datos.medicoId && datos.medicoId !== 'null') {
       id = parseInt(datos.medicoId, 10);
-      console.log('ID obtenido desde medicoId:', id);
+      console.log('✅ ID obtenido desde medicoId:', id);
     }
     
-    // 2. Intentar desde staffMedicoId
-    else if (datos.staffMedicoId && datos.staffMedicoId !== 'null') {
-      id = parseInt(datos.staffMedicoId, 10);
-      console.log('ID obtenido desde staffMedicoId:', id);
-    }
-    
-    // 3. Intentar parsear currentUser JSON
+    // 2. Intentar parsear currentUser JSON
     else if (datos.currentUser && datos.currentUser !== 'null') {
       try {
         const currentUser = JSON.parse(datos.currentUser);
-        if (currentUser && currentUser.id) {
-          id = parseInt(currentUser.id, 10);
-          console.log('ID obtenido desde currentUser.id:', id);
-        } else if (currentUser && currentUser.medicoId) {
+        if (currentUser && currentUser.medicoId) {
           id = parseInt(currentUser.medicoId, 10);
-          console.log('ID obtenido desde currentUser.medicoId:', id);
+          console.log('✅ ID obtenido desde currentUser.medicoId:', id);
+        } else if (currentUser && currentUser.id && currentUser.id !== parseInt(datos.staffMedicoId || '0', 10)) {
+          id = parseInt(currentUser.id, 10);
+          console.log('✅ ID obtenido desde currentUser.id:', id);
         }
       } catch (e) {
         console.error('Error al parsear currentUser:', e);
       }
+    }
+    
+    // 3. Como ÚLTIMO recurso, otros campos (PERO NO staffMedicoId para auth)
+    else if (datos.userId && datos.userId !== 'null') {
+      id = parseInt(datos.userId, 10);
+      console.log('⚠️ ID obtenido desde userId (fallback):', id);
+    }
+    
+    // NUNCA usar staffMedicoId para autenticación de médico
+    if (id === parseInt(datos.staffMedicoId || '0', 10) && id !== 0) {
+      console.error('🚨 ALERTA: Se detectó que medicoId === staffMedicoId. Esto puede causar errores!');
+      console.error('MedicoId:', id, 'StaffMedicoId:', datos.staffMedicoId);
     }
     
     // Validar que el ID sea válido
@@ -1260,6 +1809,23 @@ export class MedicoPerfilComponent implements OnInit {
       ]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
+  }
+
+  // Profile form initialization
+  private initializePerfilForm(): FormGroup {
+    return this.formBuilder.group({
+      nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      apellido: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+      dni: ['', [
+        Validators.required,
+        Validators.pattern(/^\d{7,9}$/),
+        Validators.minLength(7),
+        Validators.maxLength(9)
+      ]],
+      matricula: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
+      email: ['', [Validators.required, Validators.email]],
+      telefono: ['', [Validators.pattern(/^[\d\s\-\+\(\)]{7,15}$/)]]
+    });
   }
 
   private passwordMatchValidator(control: AbstractControl): {[key: string]: boolean} | null {
