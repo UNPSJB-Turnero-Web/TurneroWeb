@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
@@ -49,6 +49,15 @@ export interface CheckEmailResponse {
   email: string;
   nombre: string;
   role: string;
+}
+
+/**
+ * Interfaz para el request de cambio de contraseña
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 /**
@@ -145,17 +154,36 @@ export class AuthService {
    * Limpia datos de usuario anterior para evitar conflictos
    */
   private clearPreviousUserData(): void {
-    // Limpiar datos específicos del paciente anterior
-    localStorage.removeItem('pacienteId');
-    localStorage.removeItem('patientData');
-    localStorage.removeItem('patientDNI');
-    localStorage.removeItem('userRole');
+    // Tokens de autenticación JWT
+    const tokenKeys = [this.ACCESS_TOKEN_KEY, this.REFRESH_TOKEN_KEY, this.USER_DATA_KEY];
     
-    // También limpiar de sessionStorage
-    sessionStorage.removeItem('pacienteId');
-    sessionStorage.removeItem('patientData');
-    sessionStorage.removeItem('patientDNI');
-    sessionStorage.removeItem('userRole');
+    // Datos comunes a todos los roles
+    const commonKeys = ['userRole', 'userId', 'userName', 'userEmail', 'id', 'currentUser'];
+    
+    // Datos específicos de pacientes
+    const pacienteKeys = ['pacienteId', 'patientData', 'patientDNI'];
+    
+    // Datos específicos de médicos
+    const medicoKeys = ['medicoId', 'medicoData', 'medicoMatricula', 'especialidadId', 'staffMedicoId', 'notificacionesMedico'];
+    
+    // Datos específicos de operadores
+    const operadorKeys = ['operadorId', 'operadorData', 'operadorDNI', 'centroAsignado'];
+    
+    // Datos específicos de administradores
+    const adminKeys = ['adminId', 'adminData', 'permissions'];
+    
+    // Combinar todas las claves que pueden existir
+    const allKeys = [...tokenKeys, ...commonKeys, ...pacienteKeys, ...medicoKeys, ...operadorKeys, ...adminKeys];
+    
+    // Limpiar de localStorage
+    allKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Limpiar de sessionStorage
+    allKeys.forEach(key => {
+      sessionStorage.removeItem(key);
+    });
   }
 
   /**
@@ -323,19 +351,8 @@ export class AuthService {
    * Cierra la sesión del usuario
    */
   logout(): void {
-    // Limpiar localStorage
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_DATA_KEY);
-    localStorage.removeItem('userRole'); // Compatible con guards existentes
-    localStorage.removeItem('pacienteId'); // ID del paciente
-    localStorage.removeItem('patientData'); // Datos del paciente desde home
-    localStorage.removeItem('patientDNI'); // DNI del paciente
-
-    // Limpiar sessionStorage
-    sessionStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    sessionStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    sessionStorage.removeItem(this.USER_DATA_KEY);
+    // Limpiar todos los datos de usuario (incluyendo tokens JWT)
+    this.clearPreviousUserData();
 
     // Actualizar estado de autenticación
     this.authStateSubject.next(false);
@@ -417,6 +434,23 @@ export class AuthService {
     const fiveMinutesInMs = 5 * 60 * 1000;
 
     return timeUntilExpiration < fiveMinutesInMs;
+  }
+
+  /**
+   * Cambia la contraseña del usuario autenticado
+   * @param request Datos de cambio de contraseña
+   * @returns Observable con la respuesta del servidor
+   */
+  changePassword(request: ChangePasswordRequest): Observable<DataPackage<any>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.getToken()}`
+    });
+
+    return this.http.post<DataPackage<any>>(`${this.API_BASE_URL}/change-password`, request, { headers })
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   /**

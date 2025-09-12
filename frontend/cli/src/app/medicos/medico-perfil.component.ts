@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, A
 import { Router } from '@angular/router';
 import { MedicoService } from './medico.service';
 import { Medico } from './medico';
+import { AuthService, ChangePasswordRequest } from '../inicio-sesion/auth.service';
 
 interface ConfiguracionNotificaciones {
   emailTurnos: boolean;
@@ -1558,7 +1559,8 @@ export class MedicoPerfilComponent implements OnInit {
   constructor(
     private router: Router,
     private medicoService: MedicoService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private authService: AuthService
   ) {
     this.initializeParticles();
     this.passwordForm = this.initializePasswordForm();
@@ -1861,26 +1863,40 @@ export class MedicoPerfilComponent implements OnInit {
         return;
       }
       
-      // TODO: Implementar servicio de cambio de contraseña
-      // this.medicoService.cambiarPassword(medicoId, passwordData).subscribe({
-      //   next: (response) => {
-      //     alert('Contraseña cambiada exitosamente');
-      //     this.resetPasswordForm();
-      //     this.cargandoCambioPassword = false;
-      //   },
-      //   error: (error) => {
-      //     console.error('Error al cambiar contraseña:', error);
-      //     alert('Error al cambiar la contraseña. Verifique su contraseña actual.');
-      //     this.cargandoCambioPassword = false;
-      //   }
-      // });
-      
-      // Simulación temporal
-      setTimeout(() => {
-        alert('Contraseña cambiada exitosamente (simulación)');
-        this.resetPasswordForm();
-        this.cargandoCambioPassword = false;
-      }, 2000);
+      // Implementación real del cambio de contraseña
+      const changePasswordRequest: ChangePasswordRequest = {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword
+      };
+
+      this.authService.changePassword(changePasswordRequest).subscribe({
+        next: (response) => {
+          if (response.status_code === 200) {
+            alert('Contraseña cambiada exitosamente');
+            this.resetPasswordForm();
+          } else {
+            alert('Error: ' + (response.status_text || 'No se pudo cambiar la contraseña'));
+          }
+          this.cargandoCambioPassword = false;
+        },
+        error: (error) => {
+          console.error('Error al cambiar contraseña:', error);
+          let errorMessage = 'Error al cambiar la contraseña. ';
+          
+          if (error.status === 400) {
+            errorMessage += 'Verifique que su contraseña actual sea correcta y que la nueva contraseña cumpla con los requisitos.';
+          } else if (error.status === 401) {
+            errorMessage += 'Sesión expirada. Por favor, inicie sesión nuevamente.';
+            this.router.navigate(['/ingresar']);
+          } else {
+            errorMessage += 'Por favor, inténtelo de nuevo más tarde.';
+          }
+          
+          alert(errorMessage);
+          this.cargandoCambioPassword = false;
+        }
+      });
     }
   }
 
