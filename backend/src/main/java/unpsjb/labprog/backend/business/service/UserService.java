@@ -313,4 +313,13 @@ public class UserService implements UserDetailsService {
         
         return user;
     }
+    
+    /**
+     * Guarda un usuario existente
+     * @param user usuario a guardar
+     * @return User usuario guardado
+     */
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 }
