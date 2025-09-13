@@ -1,5 +1,10 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
-import { RouterOutlet, Router, NavigationEnd } from "@angular/router";
+import {
+  RouterOutlet,
+  Router,
+  NavigationEnd,
+  RouterLink,
+} from "@angular/router";
 import { NgbDropdownModule } from "@ng-bootstrap/ng-bootstrap";
 import { CommonModule } from "@angular/common";
 import { filter } from "rxjs/operators";
@@ -10,7 +15,7 @@ import { AuthService } from "./inicio-sesion/auth.service";
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, RouterLink],
   template: `
     <nav class="modern-navbar">
       <div class="navbar-container">
@@ -394,7 +399,11 @@ import { AuthService } from "./inicio-sesion/auth.service";
               class="modern-dropdown user-dropdown"
               aria-labelledby="userDropdown"
             >
-              <a ngbDropdownItem class="dropdown-item" href="#">
+              <a
+                ngbDropdownItem
+                class="dropdown-item"
+                routerLink="/paciente-perfil"
+              >
                 <i class="fas fa-cog icon-item icon-configuracion"></i>
                 <div class="item-content">
                   <span class="item-title">Configuración</span>
@@ -1094,7 +1103,7 @@ export class AppComponent implements OnInit, OnDestroy {
   public isOperador(): boolean {
     return this.authService.getUserRole()?.toUpperCase() === "OPERADOR";
   }
-  
+
   ngOnDestroy() {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }

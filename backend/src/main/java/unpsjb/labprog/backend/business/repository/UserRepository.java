@@ -54,4 +54,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return lista de usuarios que coinciden
      */
     java.util.List<User> findByNombreContainingIgnoreCaseAndApellidoContainingIgnoreCase(String nombre, String apellido);
+    
+    /**
+     * Cuenta usuarios por rol
+     * @param role rol a contar
+     * @return número de usuarios con ese rol
+     */
+    long countByRole(unpsjb.labprog.backend.model.Role role);
 }

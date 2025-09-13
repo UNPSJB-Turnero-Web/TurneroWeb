@@ -1,11 +1,20 @@
-import { Component } from '@angular/core';
-import { NgForm, FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation } from '../animations';
-import { RegistroService, PacienteRegistroDTO, RegisterSuccessResponse } from './registro.service';
-import { DataPackage } from '../data.package';
-import { AuthService } from '../inicio-sesion/auth.service';
+import { Component } from "@angular/core";
+import { NgForm, FormsModule } from "@angular/forms";
+import { CommonModule } from "@angular/common";
+import { Router } from "@angular/router";
+import {
+  fadeInAnimation,
+  slideUpAnimation,
+  pulseAnimation,
+  logoAnimation,
+} from "../animations";
+import {
+  RegistroService,
+  PacienteRegistroDTO,
+  RegisterSuccessResponse,
+} from "./registro.service";
+import { DataPackage } from "../data.package";
+import { AuthService } from "../inicio-sesion/auth.service";
 
 // objeto usado en el formulario frontend
 interface UsuarioFormulario {
@@ -19,31 +28,34 @@ interface UsuarioFormulario {
   confirmPassword: string;
 }
 
-
 @Component({
-  selector: 'app-registro-usuario',
+  selector: "app-registro-usuario",
   imports: [CommonModule, FormsModule],
-  templateUrl: './registro-usuario.component.html',
-  styleUrl: './registro-usuario.component.css',
-  animations: [fadeInAnimation, slideUpAnimation, pulseAnimation, logoAnimation]
+  templateUrl: "./registro-usuario.component.html",
+  styleUrl: "./registro-usuario.component.css",
+  animations: [
+    fadeInAnimation,
+    slideUpAnimation,
+    pulseAnimation,
+    logoAnimation,
+  ],
 })
 export class RegistroUsuarioComponent {
-  
   usuario: UsuarioFormulario = {
-    nombre: '',
-    apellido: '',
-    dni: '',
-    codigoPais: '+54', // Valor por defecto Argentina
-    telefono: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    nombre: "",
+    apellido: "",
+    dni: "",
+    codigoPais: "+54", // Valor por defecto Argentina
+    telefono: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   };
 
-  pulseState = 'idle';
+  pulseState = "idle";
   isLoading = false;
-  errorMessage = '';
-  successMessage = '';
+  errorMessage = "";
+  successMessage = "";
 
   constructor(
     private router: Router,
@@ -64,12 +76,12 @@ export class RegistroUsuarioComponent {
   onSubmit(form: NgForm): void {
     if (form.valid && this.passwordsMatch()) {
       this.isLoading = true;
-      this.errorMessage = '';
-      this.successMessage = '';
+      this.errorMessage = "";
+      this.successMessage = "";
 
       // Construir el número de teléfono completo
       const telefonoCompleto = `${this.usuario.codigoPais} ${this.usuario.telefono}`;
-      
+
       // Crear objeto de datos para enviar al backend
       const datosRegistro: PacienteRegistroDTO = {
         nombre: this.usuario.nombre,
@@ -77,13 +89,13 @@ export class RegistroUsuarioComponent {
         dni: this.usuario.dni,
         telefono: telefonoCompleto,
         email: this.usuario.email,
-        password: this.usuario.password
+        password: this.usuario.password,
       };
-      
+
       // Llamada al servicio de registro
       this.registrarUsuario(datosRegistro);
     } else {
-      console.log('Formulario inválido');
+      console.log("Formulario inválido");
       this.marcarCamposComoTocados(form);
     }
   }
@@ -94,40 +106,53 @@ export class RegistroUsuarioComponent {
   private registrarUsuario(datos: PacienteRegistroDTO): void {
     this.registroService.registrarPaciente(datos).subscribe({
       next: (response: DataPackage<RegisterSuccessResponse>) => {
-        this.isLoading = false;        
+        this.isLoading = false;
         if (response.status_code === 200) {
           // El registro fue exitoso, mostrar mensaje sobre activación de cuenta
-          this.successMessage = response.status_text || '¡Registro exitoso! Revisa tu email para activar tu cuenta.';
-          
+          this.successMessage =
+            response.status_text ||
+            "¡Registro exitoso! Revisa tu email para activar tu cuenta.";
+
           // Opcional: Redirigir a login después de mostrar el mensaje
           setTimeout(() => {
-            this.router.navigate(['/ingresar']);
+            this.router.navigate(["/ingresar"]);
           }, 4000);
         } else {
-          this.errorMessage = response.status_text || 'Error en el registro';
+          this.errorMessage = response.status_text || "Error en el registro";
         }
       },
       error: (error) => {
         this.isLoading = false;
-        console.error('Error al registrar usuario:', error);
-        
+        console.error("Error al registrar usuario:", error);
+
         // Manejar diferentes tipos de errores HTTP con mensajes profesionales
         if (error.status === 409) {
-          this.errorMessage = 'Este email o DNI ya está registrado en nuestro sistema. Por favor, verifica tus datos o intenta iniciar sesión.';
+          this.errorMessage =
+            "Este email o DNI ya está registrado en nuestro sistema. Por favor, verifica tus datos o intenta iniciar sesión.";
         } else if (error.status === 400) {
-          this.errorMessage = error.error?.status_text || error.error?.message || 'Los datos ingresados no son válidos. Por favor, revisa la información y vuelve a intentarlo.';
+          this.errorMessage =
+            error.error?.status_text ||
+            error.error?.message ||
+            "Los datos ingresados no son válidos. Por favor, revisa la información y vuelve a intentarlo.";
         } else if (error.status === 500) {
-          this.errorMessage = 'Estamos experimentando problemas técnicos temporales. Por favor, intenta nuevamente en unos minutos.';
+          this.errorMessage =
+            "Estamos experimentando problemas técnicos temporales. Por favor, intenta nuevamente en unos minutos.";
         } else if (error.status === 0) {
-          this.errorMessage = 'No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.';
+          this.errorMessage =
+            "No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.";
         } else if (error.status === 422) {
-          this.errorMessage = 'Algunos campos contienen información incorrecta. Por favor, revisa los datos e intenta nuevamente.';
+          this.errorMessage =
+            "Algunos campos contienen información incorrecta. Por favor, revisa los datos e intenta nuevamente.";
         } else if (error.status === 503) {
-          this.errorMessage = 'El servicio no está disponible temporalmente. Por favor, intenta más tarde.';
+          this.errorMessage =
+            "El servicio no está disponible temporalmente. Por favor, intenta más tarde.";
         } else {
-          this.errorMessage = error.error?.status_text || error.error?.message || 'Ha ocurrido un error inesperado. Por favor, intenta nuevamente o contacta al soporte técnico.';
+          this.errorMessage =
+            error.error?.status_text ||
+            error.error?.message ||
+            "Ha ocurrido un error inesperado. Por favor, intenta nuevamente o contacta al soporte técnico.";
         }
-      }
+      },
     });
   }
 
@@ -135,7 +160,7 @@ export class RegistroUsuarioComponent {
    * Marca todos los campos como tocados para mostrar errores de validación
    */
   private marcarCamposComoTocados(form: NgForm): void {
-    Object.keys(form.controls).forEach(field => {
+    Object.keys(form.controls).forEach((field) => {
       const control = form.controls[field];
       control.markAsTouched({ onlySelf: true });
     });
@@ -143,60 +168,56 @@ export class RegistroUsuarioComponent {
 
   // Función para permitir solo números en el campo de dni y teléfono
   onlyNumbers(event: KeyboardEvent) {
-  const charCode = event.charCode;
-  if (charCode < 48 || charCode > 57) {
-    event.preventDefault(); // bloquea letras y símbolos
+    const charCode = event.charCode;
+    if (charCode < 48 || charCode > 57) {
+      event.preventDefault(); // bloquea letras y símbolos
+    }
   }
-}
 
   // Función para permitir solo letras y espacios en los campos de nombre y apellido
-onlyText(event: KeyboardEvent) {
-  const char = String.fromCharCode(event.charCode);
+  onlyText(event: KeyboardEvent) {
+    const char = String.fromCharCode(event.charCode);
 
-  // Regex: solo letras (mayúsculas/minúsculas, acentos, ñ, Ñ) y espacios
-  const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    // Regex: solo letras (mayúsculas/minúsculas, acentos, ñ, Ñ) y espacios
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
 
-  if (!regex.test(char)) {
-    event.preventDefault(); // bloquea caracteres no permitidos
+    if (!regex.test(char)) {
+      event.preventDefault(); // bloquea caracteres no permitidos
+    }
   }
-}
 
-// Función para validar el contenido pegado en campos de texto (nombre, apellido)
-validateTextPaste(event: ClipboardEvent) {
-  const pastedText = event.clipboardData?.getData('text') || '';
-  
-  // Regex: solo letras (mayúsculas/minúsculas, acentos, ñ, Ñ) y espacios
-  const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-  
-  if (!regex.test(pastedText)) {
-    event.preventDefault();
-    this.errorMessage = 'Solo se permiten letras y espacios en este campo.';
+  // Función para validar el contenido pegado en campos de texto (nombre, apellido)
+  validateTextPaste(event: ClipboardEvent) {
+    const pastedText = event.clipboardData?.getData("text") || "";
+
+    // Regex: solo letras (mayúsculas/minúsculas, acentos, ñ, Ñ) y espacios
+    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
+    if (!regex.test(pastedText)) {
+      event.preventDefault();
+      this.errorMessage = "Solo se permiten letras y espacios en este campo.";
+    }
   }
-}
 
-// Función para validar el contenido pegado en campos numéricos (DNI, teléfono)
-validateNumberPaste(event: ClipboardEvent) {
-  const pastedText = event.clipboardData?.getData('text') || '';
-  
-  // Regex: solo números
-  const regex = /^[0-9]+$/;
-  
-  if (!regex.test(pastedText)) {
-    event.preventDefault();
-    this.errorMessage = 'Solo se permiten números en este campo.';
+  // Función para validar el contenido pegado en campos numéricos (DNI, teléfono)
+  validateNumberPaste(event: ClipboardEvent) {
+    const pastedText = event.clipboardData?.getData("text") || "";
+
+    // Regex: solo números
+    const regex = /^[0-9]+$/;
+
+    if (!regex.test(pastedText)) {
+      event.preventDefault();
+      this.errorMessage = "Solo se permiten números en este campo.";
+    }
   }
-}
-
-
-
-
 
   /**
    * Limpia los mensajes de error y éxito
    */
   limpiarMensajes(): void {
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.errorMessage = "";
+    this.successMessage = "";
   }
 
   /**
@@ -204,10 +225,10 @@ validateNumberPaste(event: ClipboardEvent) {
    */
   navigateToLogin(): void {
     // Trigger pulse animation
-    this.pulseState = 'clicked';
-    
-      this.router.navigate(['/ingresar']);
-      this.pulseState = 'idle';
+    this.pulseState = "clicked";
+
+    this.router.navigate(["/ingresar"]);
+    this.pulseState = "idle";
   }
 
   /**
@@ -235,9 +256,10 @@ validateNumberPaste(event: ClipboardEvent) {
   }
 
   /**
-   * Valida la contraseña (mínimo 8 caracteres)
+   * Valida la contraseña (mínimo 8 caracteres con letras y números)
    */
   validarPassword(): boolean {
-    return this.usuario.password.length >= 8;
+    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordPattern.test(this.usuario.password);
   }
 }

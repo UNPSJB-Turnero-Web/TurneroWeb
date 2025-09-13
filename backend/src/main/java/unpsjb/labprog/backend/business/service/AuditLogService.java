@@ -963,4 +963,40 @@ public class AuditLogService {
             throw new RuntimeException("Error al registrar auditoría de cambio de contraseña", e);
         }
     }
+
+    /**
+     * Registra la creación del administrador inicial del sistema
+     * Este método específico documenta que fue creado automáticamente por el seed inicial
+     */
+    @Transactional
+    public AuditLog logAdminInitialCreation(Long userId, String adminEmail, Long adminDni) {
+        System.out.println("🔍 DEBUG logAdminInitialCreation: Admin ID: " + userId + ", Email: " + adminEmail);
+        
+        try {
+            Map<String, Object> adminData = new HashMap<>();
+            adminData.put("email", adminEmail);
+            adminData.put("dni", adminDni);
+            adminData.put("role", "ADMINISTRADOR");
+            adminData.put("mustChangePassword", true);
+            adminData.put("firstLogin", true);
+            adminData.put("createdBy", "SYSTEM_SEED");
+            adminData.put("createdAt", LocalDateTime.now().toString());
+            
+            String adminDataJson = objectMapper.writeValueAsString(adminData);
+
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_CREATE,
+                "SYSTEM_SEED", null, "ADMIN_INITIAL_CREATED", 
+                null, adminDataJson, "Creación automática del administrador inicial del sistema"
+            );
+
+            AuditLog saved = auditLogRepository.save(auditLog);
+            System.out.println("✅ DEBUG: Administrador inicial auditado con ID: " + saved.getId());
+            return saved;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al auditar creación del administrador inicial: " + e.getMessage());
+            throw new RuntimeException("Error al registrar auditoría de administrador inicial", e);
+        }
+    }
 }

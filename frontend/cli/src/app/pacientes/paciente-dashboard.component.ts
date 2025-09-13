@@ -1,21 +1,27 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TurnoService } from '../turnos/turno.service';
-import { Turno } from '../turnos/turno';
-import { DataPackage } from '../data.package';
-import { NotificacionService } from '../services/notificacion.service';
-import { AuthService } from '../inicio-sesion/auth.service';
+import { Component, OnInit } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import { TurnoService } from "../turnos/turno.service";
+import { Turno } from "../turnos/turno";
+import { DataPackage } from "../data.package";
+import { NotificacionService } from "../services/notificacion.service";
+import { AuthService } from "../inicio-sesion/auth.service";
 
 @Component({
-  selector: 'app-paciente-dashboard',
+  selector: "app-paciente-dashboard",
   imports: [CommonModule, FormsModule],
   template: `
     <div class="patient-dashboard">
       <!-- Floating Particles Background -->
       <div class="particles-bg">
-        <div class="particle" *ngFor="let p of particles; let i = index" [style.left.px]="p.x" [style.top.px]="p.y" [style.animation-delay.s]="i * 0.2"></div>
+        <div
+          class="particle"
+          *ngFor="let p of particles; let i = index"
+          [style.left.px]="p.x"
+          [style.top.px]="p.y"
+          [style.animation-delay.s]="i * 0.2"
+        ></div>
       </div>
 
       <!-- Header Section -->
@@ -57,7 +63,9 @@ import { AuthService } from '../inicio-sesion/auth.service';
         <div class="section-background"></div>
         <div class="section-title-container">
           <h2><i class="fas fa-rocket me-3"></i>Acciones Rápidas</h2>
-          <p class="section-description">Accede rápidamente a las funciones principales</p>
+          <p class="section-description">
+            Accede rápidamente a las funciones principales
+          </p>
         </div>
         <div class="actions-grid">
           <div class="action-card action-agenda" (click)="viewAgenda()">
@@ -72,7 +80,7 @@ import { AuthService } from '../inicio-sesion/auth.service';
               <i class="fas fa-arrow-right"></i>
             </div>
           </div>
-          
+
           <div class="action-card action-profile" (click)="viewProfile()">
             <div class="card-icon">
               <i class="fas fa-user-circle"></i>
@@ -85,8 +93,11 @@ import { AuthService } from '../inicio-sesion/auth.service';
               <i class="fas fa-arrow-right"></i>
             </div>
           </div>
-          
-          <div class="action-card action-notifications" (click)="viewNotifications()">
+
+          <div
+            class="action-card action-notifications"
+            (click)="viewNotifications()"
+          >
             <div class="card-icon">
               <i class="fas fa-bell"></i>
             </div>
@@ -95,15 +106,13 @@ import { AuthService } from '../inicio-sesion/auth.service';
               <p>Ver mensajes y alertas del sistema</p>
             </div>
             <div class="notification-badge" *ngIf="contadorNotificaciones > 0">
-              <span>{{contadorNotificaciones}}</span>
+              <span>{{ contadorNotificaciones }}</span>
               <div class="notification-pulse"></div>
             </div>
             <div class="card-arrow">
               <i class="fas fa-arrow-right"></i>
             </div>
           </div>
-          
-          
         </div>
       </div>
 
@@ -117,10 +126,15 @@ import { AuthService } from '../inicio-sesion/auth.service';
             </div>
             <div class="title-content">
               <h2>Mis Turnos Médicos</h2>
-              <p class="section-subtitle">Gestiona tus citas médicas de forma inteligente</p>
+              <p class="section-subtitle">
+                Gestiona tus citas médicas de forma inteligente
+              </p>
             </div>
           </div>
-          <button class="btn-schedule-appointment" (click)="scheduleAppointment()">
+          <button
+            class="btn-schedule-appointment"
+            (click)="scheduleAppointment()"
+          >
             <div class="btn-icon">
               <i class="fas fa-plus"></i>
             </div>
@@ -128,12 +142,12 @@ import { AuthService } from '../inicio-sesion/auth.service';
             <div class="btn-shine"></div>
           </button>
         </div>
-        
+
         <!-- Filtros Mejorados -->
         <div class="filter-container">
           <div class="filter-tabs">
-            <button 
-              class="filter-tab" 
+            <button
+              class="filter-tab"
               [class.active]="currentFilter === 'upcoming'"
               (click)="setFilter('upcoming')"
             >
@@ -142,12 +156,16 @@ import { AuthService } from '../inicio-sesion/auth.service';
               </div>
               <div class="tab-content">
                 <span class="tab-label">Próximos</span>
-                <span class="tab-count" *ngIf="getFilterCount('upcoming') > 0">{{getFilterCount('upcoming')}}</span>
+                <span
+                  class="tab-count"
+                  *ngIf="getFilterCount('upcoming') > 0"
+                  >{{ getFilterCount("upcoming") }}</span
+                >
               </div>
               <div class="tab-indicator"></div>
             </button>
-            <button 
-              class="filter-tab" 
+            <button
+              class="filter-tab"
               [class.active]="currentFilter === 'past'"
               (click)="setFilter('past')"
             >
@@ -156,12 +174,14 @@ import { AuthService } from '../inicio-sesion/auth.service';
               </div>
               <div class="tab-content">
                 <span class="tab-label">Pasados</span>
-                <span class="tab-count" *ngIf="getFilterCount('past') > 0">{{getFilterCount('past')}}</span>
+                <span class="tab-count" *ngIf="getFilterCount('past') > 0">{{
+                  getFilterCount("past")
+                }}</span>
               </div>
               <div class="tab-indicator"></div>
             </button>
-            <button 
-              class="filter-tab" 
+            <button
+              class="filter-tab"
               [class.active]="currentFilter === 'all'"
               (click)="setFilter('all')"
             >
@@ -170,13 +190,13 @@ import { AuthService } from '../inicio-sesion/auth.service';
               </div>
               <div class="tab-content">
                 <span class="tab-label">Todos</span>
-                <span class="tab-count">{{allTurnos.length}}</span>
+                <span class="tab-count">{{ allTurnos.length }}</span>
               </div>
               <div class="tab-indicator"></div>
             </button>
           </div>
         </div>
-        
+
         <!-- Loading state -->
         <div class="loading-container" *ngIf="isLoadingTurnos">
           <div class="loading-spinner">
@@ -184,13 +204,17 @@ import { AuthService } from '../inicio-sesion/auth.service';
             <p>Cargando turnos...</p>
           </div>
         </div>
-        
+
         <!-- Appointments grid -->
-        <div class="appointments-grid" *ngIf="!isLoadingTurnos && filteredTurnos.length > 0">
-          <div class="appointment-card" 
-               *ngFor="let turno of filteredTurnos; trackBy: trackByTurno" 
-               [class]="'status-' + turno.status">
-            
+        <div
+          class="appointments-grid"
+          *ngIf="!isLoadingTurnos && filteredTurnos.length > 0"
+        >
+          <div
+            class="appointment-card"
+            *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
+            [class]="'status-' + turno.status"
+          >
             <!-- Card Header -->
             <div class="card-header">
               <div class="date-container">
@@ -206,13 +230,13 @@ import { AuthService } from '../inicio-sesion/auth.service';
                   </span>
                 </div>
               </div>
-              
+
               <div class="status-badge" [class]="'status-' + turno.status">
                 <i class="fas" [class]="getStatusIcon(turno.status)"></i>
                 <span>{{ getStatusText(turno.status) }}</span>
               </div>
             </div>
-            
+
             <!-- Card Body -->
             <div class="card-body">
               <div class="doctor-section">
@@ -227,44 +251,53 @@ import { AuthService } from '../inicio-sesion/auth.service';
                   </p>
                 </div>
               </div>
-              
+
               <div class="location-info">
                 <i class="fas fa-map-marker-alt me-2"></i>
                 <span>{{ turno.location }}</span>
               </div>
             </div>
-            
+
             <!-- Card Actions -->
             <div class="card-actions" *ngIf="canPerformActions(turno)">
-              <button class="action-btn confirm-btn" 
-                      *ngIf="canConfirm(turno)"
-                      (click)="confirmarTurno(turno)"
-                      title="Confirmar turno">
+              <button
+                class="action-btn confirm-btn"
+                *ngIf="canConfirm(turno)"
+                (click)="confirmarTurno(turno)"
+                title="Confirmar turno"
+              >
                 <i class="fas fa-check"></i>
                 <span>Confirmar</span>
               </button>
-              
-              <button class="action-btn reschedule-btn" 
-                      *ngIf="canReschedule(turno)"
-                      (click)="reprogramarTurno(turno)"
-                      title="Reagendar turno">
+
+              <button
+                class="action-btn reschedule-btn"
+                *ngIf="canReschedule(turno)"
+                (click)="reprogramarTurno(turno)"
+                title="Reagendar turno"
+              >
                 <i class="fas fa-calendar-alt"></i>
                 <span>Reagendar</span>
               </button>
-              
-              <button class="action-btn cancel-btn" 
-                      *ngIf="canCancel(turno)"
-                      (click)="cancelarTurno(turno)"
-                      title="Cancelar turno">
+
+              <button
+                class="action-btn cancel-btn"
+                *ngIf="canCancel(turno)"
+                (click)="cancelarTurno(turno)"
+                title="Cancelar turno"
+              >
                 <i class="fas fa-times"></i>
                 <span>Cancelar</span>
               </button>
             </div>
           </div>
         </div>
-        
+
         <!-- Empty state -->
-        <div class="empty-state" *ngIf="!isLoadingTurnos && filteredTurnos.length === 0">
+        <div
+          class="empty-state"
+          *ngIf="!isLoadingTurnos && filteredTurnos.length === 0"
+        >
           <div class="empty-illustration">
             <div class="empty-icon">
               <i class="fas fa-calendar-times"></i>
@@ -272,9 +305,11 @@ import { AuthService } from '../inicio-sesion/auth.service';
             <div class="empty-content">
               <h3>No tienes turnos {{ getEmptyStateText() }}</h3>
               <p>{{ getEmptyStateDescription() }}</p>
-              <button class="btn btn-primary btn-lg" 
-                      (click)="scheduleAppointment()" 
-                      *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'">
+              <button
+                class="btn btn-primary btn-lg"
+                (click)="scheduleAppointment()"
+                *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'"
+              >
                 <i class="fas fa-plus me-2"></i>
                 Solicitar mi primer turno
               </button>
@@ -286,40 +321,57 @@ import { AuthService } from '../inicio-sesion/auth.service';
       <!-- Modal for Cancel -->
       <div class="modal" *ngIf="showReasonModal">
         <div class="modal-content">
-          <span class="close" (click)="closeModal()" [style.display]="isSubmitting ? 'none' : 'block'">&times;</span>
+          <span
+            class="close"
+            (click)="closeModal()"
+            [style.display]="isSubmitting ? 'none' : 'block'"
+            >&times;</span
+          >
           <h2>Cancelar Turno</h2>
-          
+
           <div *ngIf="selectedTurno" class="turno-info">
-            <p><strong>Turno:</strong> {{ selectedTurno.day }}/{{ selectedTurno.month }} a las {{ selectedTurno.time }}</p>
+            <p>
+              <strong>Turno:</strong> {{ selectedTurno.day }}/{{
+                selectedTurno.month
+              }}
+              a las {{ selectedTurno.time }}
+            </p>
             <p><strong>Médico:</strong> {{ selectedTurno.doctor }}</p>
             <p><strong>Lugar:</strong> {{ selectedTurno.location }}</p>
           </div>
-          
+
           <p>Por favor, proporciona un motivo para cancelar el turno:</p>
-          <textarea 
-            [(ngModel)]="motivo" 
-            rows="4" 
+          <textarea
+            [(ngModel)]="motivo"
+            rows="4"
             placeholder="Escribe tu motivo aquí (mínimo 5 caracteres)..."
             [disabled]="isSubmitting"
-            class="form-control"></textarea>
-          <small class="text-muted">El motivo es obligatorio y debe tener al menos 5 caracteres</small>
+            class="form-control"
+          ></textarea>
+          <small class="text-muted"
+            >El motivo es obligatorio y debe tener al menos 5 caracteres</small
+          >
           <div *ngIf="motivo && motivo.length < 5" class="text-danger mt-1">
             ⚠️ El motivo debe tener al menos 5 caracteres
           </div>
-          
+
           <div class="modal-actions">
-            <button 
-              class="btn btn-primary" 
+            <button
+              class="btn btn-primary"
               (click)="submitReason()"
-              [disabled]="!motivo.trim() || motivo.trim().length < 5 || isSubmitting">
+              [disabled]="
+                !motivo.trim() || motivo.trim().length < 5 || isSubmitting
+              "
+            >
               <span *ngIf="isSubmitting" class="spinner"></span>
               <i *ngIf="!isSubmitting" class="fas fa-times"></i>
-              {{ isSubmitting ? 'Procesando...' : 'Cancelar Turno' }}
+              {{ isSubmitting ? "Procesando..." : "Cancelar Turno" }}
             </button>
-            <button 
-              class="btn btn-secondary" 
+            <button
+              class="btn btn-secondary"
               (click)="closeModal()"
-              [disabled]="isSubmitting">
+              [disabled]="isSubmitting"
+            >
               <i class="fas fa-arrow-left"></i>
               Volver
             </button>
@@ -2213,17 +2265,17 @@ import { AuthService } from '../inicio-sesion/auth.service';
       }
     }
    }
-  `
+  `,
 })
 export class PacienteDashboardComponent implements OnInit {
-  patientDNI: string = '';
-  patientName: string = '';
-  patientEmail: string = '';
+  patientDNI: string = "";
+  patientName: string = "";
+  patientEmail: string = "";
   proximosTurnos: any[] = [];
   allTurnos: any[] = [];
   filteredTurnos: any[] = [];
   isLoadingTurnos = false;
-  currentFilter: 'upcoming' | 'past' | 'all' = 'upcoming';
+  currentFilter: "upcoming" | "past" | "all" = "upcoming";
 
   // Notificaciones
   contadorNotificaciones = 0;
@@ -2231,7 +2283,7 @@ export class PacienteDashboardComponent implements OnInit {
   // Modal de cancelación con motivo
   showReasonModal: boolean = false;
   selectedTurno: any = null;
-  motivo: string = '';
+  motivo: string = "";
   isSubmitting: boolean = false;
 
   // Particles for background animation
@@ -2244,10 +2296,10 @@ export class PacienteDashboardComponent implements OnInit {
     private authService: AuthService
   ) {
     // Obtener datos del usuario autenticado
-    this.patientEmail = this.authService.getUserEmail() || '';
-    this.patientName = this.authService.getUserName() || '';
+    this.patientEmail = this.authService.getUserEmail() || "";
+    this.patientName = this.authService.getUserName() || "";
     // Para el DNI, lo obtenemos del localStorage por ahora
-    this.patientDNI = localStorage.getItem('patientDNI') || '';
+    this.patientDNI = localStorage.getItem("patientDNI") || "";
     this.generateParticles();
   }
 
@@ -2256,8 +2308,12 @@ export class PacienteDashboardComponent implements OnInit {
     const particleCount = 15;
     for (let i = 0; i < particleCount; i++) {
       this.particles.push({
-        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
-        y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800)
+        x:
+          Math.random() *
+          (typeof window !== "undefined" ? window.innerWidth : 1200),
+        y:
+          Math.random() *
+          (typeof window !== "undefined" ? window.innerHeight : 800),
       });
     }
   }
@@ -2267,29 +2323,31 @@ export class PacienteDashboardComponent implements OnInit {
     this.cargarContadorNotificaciones();
   }
 
-  getFilterCount(filter: 'upcoming' | 'past' | 'all'): number {
+  getFilterCount(filter: "upcoming" | "past" | "all"): number {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
+
     switch (filter) {
-      case 'upcoming':
-        return this.allTurnos.filter(turno => {
+      case "upcoming":
+        return this.allTurnos.filter((turno) => {
           const fechaTurno = this.parseFecha(turno);
-          return fechaTurno >= hoy && 
-                 (turno.status === 'confirmado' || 
-                  turno.status === 'programado' ||
-                  turno.status === 'reagendado');
+          return (
+            fechaTurno >= hoy &&
+            (turno.status === "confirmado" ||
+              turno.status === "programado" ||
+              turno.status === "reagendado")
+          );
         }).length;
-        
-      case 'past':
-        return this.allTurnos.filter(turno => {
+
+      case "past":
+        return this.allTurnos.filter((turno) => {
           const fechaTurno = this.parseFecha(turno);
-          return fechaTurno < hoy || turno.status === 'completo';
+          return fechaTurno < hoy || turno.status === "completo";
         }).length;
-        
-      case 'all':
+
+      case "all":
         return this.allTurnos.length;
-        
+
       default:
         return 0;
     }
@@ -2300,281 +2358,328 @@ export class PacienteDashboardComponent implements OnInit {
   }
 
   private cargarContadorNotificaciones() {
-    const pacienteId = parseInt(localStorage.getItem('pacienteId') || '0');
-    if (pacienteId > 0) {
-      this.notificacionService.contarNotificacionesNoLeidas(pacienteId).subscribe({
-        next: (count) => {
-          this.contadorNotificaciones = count;
-        },
-        error: (error) => {
-          console.error('Error cargando contador de notificaciones:', error);
-        }
-      });
+    const pacienteId = this.authService.getCurrentPatientId();
+    if (pacienteId && pacienteId > 0) {
+      this.notificacionService
+        .contarNotificacionesNoLeidas(pacienteId)
+        .subscribe({
+          next: (count) => {
+            this.contadorNotificaciones = count;
+          },
+          error: (error) => {
+            console.error("Error cargando contador de notificaciones:", error);
+          },
+        });
     }
   }
 
   cargarTurnosPaciente() {
-    // Intentar obtener el ID del paciente de diferentes formas
-    let pacienteId = localStorage.getItem('pacienteId');
-    
-    if (!pacienteId) {
-      // Si no hay pacienteId, intentar obtenerlo de patientData
-      const patientDataStr = localStorage.getItem('patientData');
-      if (patientDataStr) {
-        try {
-          const patientData = JSON.parse(patientDataStr);
-          pacienteId = patientData.id?.toString();
-          // Guardarlo para futuras consultas
-          if (pacienteId) {
-            localStorage.setItem('pacienteId', pacienteId);
-          }
-        } catch (e) {
-          console.error('Error parsing patient data:', e);
-        }
-      }
-    }
+    // Usar el método robusto del AuthService
+    const pacienteId = this.authService.getCurrentPatientId();
 
     if (!pacienteId) {
-      console.error('No se encontró ID del paciente en localStorage');
+      console.error("No se encontró ID del paciente en localStorage");
       return;
     }
 
     this.isLoadingTurnos = true;
-    console.log('Cargando todos los turnos para paciente ID:', pacienteId);
-    
-    this.turnoService.getByPacienteId(parseInt(pacienteId)).subscribe({
+    console.log("Cargando todos los turnos para paciente ID:", pacienteId);
+
+    this.turnoService.getByPacienteId(pacienteId).subscribe({
       next: (dataPackage: DataPackage<Turno[]>) => {
-        console.log('Turnos recibidos en dashboard:', dataPackage);
+        console.log("Turnos recibidos en dashboard:", dataPackage);
         const turnos = dataPackage.data || [];
-        
+
         // Convertir todos los turnos para el dashboard
-        this.allTurnos = turnos.map(turno => this.convertirTurnoParaDashboard(turno));
-        
+        this.allTurnos = turnos.map((turno) =>
+          this.convertirTurnoParaDashboard(turno)
+        );
+
         // Aplicar filtro inicial
         this.applyFilter();
-        
+
         this.isLoadingTurnos = false;
       },
       error: (error) => {
-        console.error('Error cargando turnos:', error);
+        console.error("Error cargando turnos:", error);
         this.isLoadingTurnos = false;
-      }
+      },
     });
   }
 
   applyFilter() {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
+
     switch (this.currentFilter) {
-      case 'upcoming':
-        this.filteredTurnos = this.allTurnos.filter(turno => {
-          const fechaTurno = this.parseFecha(turno);
-          return fechaTurno >= hoy && 
-                 (turno.status === 'confirmado' || 
-                  turno.status === 'programado' ||
-                  turno.status === 'reagendado');
-        }).sort((a, b) => this.parseFecha(a).getTime() - this.parseFecha(b).getTime());
+      case "upcoming":
+        this.filteredTurnos = this.allTurnos
+          .filter((turno) => {
+            const fechaTurno = this.parseFecha(turno);
+            return (
+              fechaTurno >= hoy &&
+              (turno.status === "confirmado" ||
+                turno.status === "programado" ||
+                turno.status === "reagendado")
+            );
+          })
+          .sort(
+            (a, b) =>
+              this.parseFecha(a).getTime() - this.parseFecha(b).getTime()
+          );
         break;
-        
-      case 'past':
-        this.filteredTurnos = this.allTurnos.filter(turno => {
-          const fechaTurno = this.parseFecha(turno);
-          return fechaTurno < hoy || turno.status === 'completo';
-        }).sort((a, b) => this.parseFecha(b).getTime() - this.parseFecha(a).getTime());
+
+      case "past":
+        this.filteredTurnos = this.allTurnos
+          .filter((turno) => {
+            const fechaTurno = this.parseFecha(turno);
+            return fechaTurno < hoy || turno.status === "completo";
+          })
+          .sort(
+            (a, b) =>
+              this.parseFecha(b).getTime() - this.parseFecha(a).getTime()
+          );
         break;
-        
-      case 'all':
-        this.filteredTurnos = [...this.allTurnos].sort((a, b) => this.parseFecha(b).getTime() - this.parseFecha(a).getTime());
+
+      case "all":
+        this.filteredTurnos = [...this.allTurnos].sort(
+          (a, b) => this.parseFecha(b).getTime() - this.parseFecha(a).getTime()
+        );
         break;
     }
   }
 
   private parseFecha(turno: any): Date {
-    const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
-                   'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    const meses = [
+      "ENE",
+      "FEB",
+      "MAR",
+      "ABR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AGO",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DIC",
+    ];
     const monthIndex = meses.indexOf(turno.month);
-    return new Date(turno.year || new Date().getFullYear(), monthIndex, parseInt(turno.day));
+    return new Date(
+      turno.year || new Date().getFullYear(),
+      monthIndex,
+      parseInt(turno.day)
+    );
   }
 
-  setFilter(filter: 'upcoming' | 'past' | 'all') {
+  setFilter(filter: "upcoming" | "past" | "all") {
     this.currentFilter = filter;
     this.applyFilter();
   }
 
   // Métodos para verificar qué acciones se pueden realizar
   canPerformActions(turno: any): boolean {
-    return turno.status !== 'cancelado' && turno.status !== 'completo';
+    return turno.status !== "cancelado" && turno.status !== "completo";
   }
 
   canConfirm(turno: any): boolean {
-    return turno.status === 'programado' || turno.status === 'reagendado';
+    return turno.status === "programado" || turno.status === "reagendado";
   }
 
   canReschedule(turno: any): boolean {
-    return turno.status === 'programado' || turno.status === 'confirmado' || turno.status === 'reagendado';
+    return (
+      turno.status === "programado" ||
+      turno.status === "confirmado" ||
+      turno.status === "reagendado"
+    );
   }
 
   canCancel(turno: any): boolean {
-    return turno.status === 'programado' || turno.status === 'confirmado' || turno.status === 'reagendado';
+    return (
+      turno.status === "programado" ||
+      turno.status === "confirmado" ||
+      turno.status === "reagendado"
+    );
   }
 
   getStatusIcon(status: string): string {
     const iconMap: { [key: string]: string } = {
-      'confirmado': 'fa-check-circle',
-      'programado': 'fa-clock',
-      'reagendado': 'fa-calendar-alt',
-      'completo': 'fa-check-square',
-      'cancelado': 'fa-times-circle'
+      confirmado: "fa-check-circle",
+      programado: "fa-clock",
+      reagendado: "fa-calendar-alt",
+      completo: "fa-check-square",
+      cancelado: "fa-times-circle",
     };
-    return iconMap[status] || 'fa-clock';
+    return iconMap[status] || "fa-clock";
   }
 
   getEmptyStateText(): string {
     switch (this.currentFilter) {
-      case 'upcoming': return 'próximos';
-      case 'past': return 'pasados';
-      case 'all': return 'registrados';
-      default: return '';
+      case "upcoming":
+        return "próximos";
+      case "past":
+        return "pasados";
+      case "all":
+        return "registrados";
+      default:
+        return "";
     }
   }
 
   getEmptyStateDescription(): string {
     switch (this.currentFilter) {
-      case 'upcoming': return '¡Programa tu próxima cita médica!';
-      case 'past': return 'Aún no has tenido consultas médicas.';
-      case 'all': return '¡Programa tu primera cita médica!';
-      default: return '';
+      case "upcoming":
+        return "¡Programa tu próxima cita médica!";
+      case "past":
+        return "Aún no has tenido consultas médicas.";
+      case "all":
+        return "¡Programa tu primera cita médica!";
+      default:
+        return "";
     }
   }
 
   private convertirTurnoParaDashboard(turno: Turno): any {
     // Parsear fecha sin conversión a UTC para evitar problemas de zona horaria
-    const [year, month, day] = turno.fecha.split('-').map(Number);
+    const [year, month, day] = turno.fecha.split("-").map(Number);
     const fecha = new Date(year, month - 1, day); // month es 0-indexed
-    const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 
-                   'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-    
+    const meses = [
+      "ENE",
+      "FEB",
+      "MAR",
+      "ABR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AGO",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DIC",
+    ];
+
     return {
       id: turno.id,
-      day: fecha.getDate().toString().padStart(2, '0'),
+      day: fecha.getDate().toString().padStart(2, "0"),
       month: meses[fecha.getMonth()],
       year: fecha.getFullYear(),
       time: turno.horaInicio,
       doctor: `${turno.staffMedicoNombre} ${turno.staffMedicoApellido}`,
       specialty: turno.especialidadStaffMedico,
       location: turno.nombreCentro,
-      status: turno.estado?.toLowerCase() || 'programado'
+      status: turno.estado?.toLowerCase() || "programado",
     };
   }
 
   getStatusText(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'confirmado': 'Confirmado',
-      'programado': 'Programado',
-      'reagendado': 'Reagendar',
-      'completed': 'Completado',
-      'cancelled': 'Cancelado'
+      confirmado: "Confirmado",
+      programado: "Programado",
+      reagendado: "Reagendar",
+      completed: "Completado",
+      cancelled: "Cancelado",
     };
     return statusMap[status] || status;
   }
 
   confirmarTurno(turno: any) {
     const confirmMessage = `¿Deseas confirmar este turno?\n\nFecha: ${turno.day}/${turno.month}\nHora: ${turno.time}\nMédico: ${turno.doctor}`;
-    
+
     if (confirm(confirmMessage)) {
       this.turnoService.confirmar(turno.id).subscribe({
         next: (response) => {
-          console.log('Turno confirmado exitosamente:', response);
+          console.log("Turno confirmado exitosamente:", response);
           // Actualizar el estado localmente
-          turno.status = 'confirmado';
+          turno.status = "confirmado";
           // Mostrar mensaje de éxito
-          alert('Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.');
+          alert(
+            "Turno confirmado exitosamente. Te esperamos en la fecha y hora programada."
+          );
           // Recargar la lista de turnos para reflejar cambios
           this.cargarTurnosPaciente();
         },
         error: (error) => {
-          console.error('Error confirmando el turno:', error);
-          alert('No se pudo confirmar el turno. Por favor, intenta nuevamente.');
-        }
+          console.error("Error confirmando el turno:", error);
+          alert(
+            "No se pudo confirmar el turno. Por favor, intenta nuevamente."
+          );
+        },
       });
     }
   }
 
   reprogramarTurno(turno: any) {
     // Redirigir al componente de reagendamiento con el ID del turno
-    this.router.navigate(['/paciente-reagendar-turno', turno.id]);
+    this.router.navigate(["/paciente-reagendar-turno", turno.id]);
   }
 
   cancelarTurno(turno: any) {
     this.selectedTurno = turno;
-    this.motivo = '';
+    this.motivo = "";
     this.showReasonModal = true;
   }
 
   closeModal() {
     this.showReasonModal = false;
-    this.motivo = '';
+    this.motivo = "";
     this.selectedTurno = null;
     this.isSubmitting = false;
   }
 
   submitReason() {
     if (!this.motivo.trim()) {
-      alert('Por favor, ingresa un motivo.');
+      alert("Por favor, ingresa un motivo.");
       return;
     }
 
     if (this.motivo.trim().length < 5) {
-      alert('El motivo debe tener al menos 5 caracteres.');
+      alert("El motivo debe tener al menos 5 caracteres.");
       return;
     }
 
     this.isSubmitting = true;
 
     // Solo se usa para cancelar, ya que reagendar redirige a otro componente
-    this.turnoService.updateEstado(this.selectedTurno.id, 'CANCELADO', this.motivo.trim()).subscribe({
-      next: (response) => {
-        console.log('Turno cancelado exitosamente:', response);
-        alert('Turno cancelado exitosamente.');
-        this.cargarTurnosPaciente();
-        this.closeModal();
-      },
-      error: (error) => {
-        console.error('Error cancelando el turno:', error);
-        let errorMessage = 'No se pudo cancelar el turno.';
-        if (error.error && error.error.status_text) {
-          errorMessage += ' Motivo: ' + error.error.status_text;
-        }
-        alert(errorMessage);
-        this.isSubmitting = false;
-      }
-    });
+    this.turnoService
+      .updateEstado(this.selectedTurno.id, "CANCELADO", this.motivo.trim())
+      .subscribe({
+        next: (response) => {
+          console.log("Turno cancelado exitosamente:", response);
+          alert("Turno cancelado exitosamente.");
+          this.cargarTurnosPaciente();
+          this.closeModal();
+        },
+        error: (error) => {
+          console.error("Error cancelando el turno:", error);
+          let errorMessage = "No se pudo cancelar el turno.";
+          if (error.error && error.error.status_text) {
+            errorMessage += " Motivo: " + error.error.status_text;
+          }
+          alert(errorMessage);
+          this.isSubmitting = false;
+        },
+      });
   }
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/']);
+    this.router.navigate(["/"]);
   }
 
-
-
   scheduleAppointment() {
-    this.router.navigate(['/paciente-agenda']);
+    this.router.navigate(["/paciente-agenda"]);
   }
 
   viewAgenda() {
-    this.router.navigate(['/paciente-agenda']);
+    this.router.navigate(["/paciente-agenda"]);
   }
 
   viewProfile() {
     // Navegar a la ruta específica para el perfil del paciente
-    this.router.navigate(['/paciente-perfil']);
+    this.router.navigate(["/paciente-perfil"]);
   }
 
   viewNotifications() {
-    this.router.navigate(['/paciente-notificaciones']);
+    this.router.navigate(["/paciente-notificaciones"]);
   }
-
-  
 }

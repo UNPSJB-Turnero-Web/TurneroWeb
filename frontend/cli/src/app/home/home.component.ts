@@ -49,6 +49,12 @@ export class HomeComponent {
     dni: "",
   };
 
+  // Datos para búsqueda de CAP
+  capSearchData = {
+    tipoAtencion: "",
+    sintomas: ""
+  };
+
   constructor(
     private router: Router,
     private pacienteService: PacienteService,
@@ -164,6 +170,8 @@ export class HomeComponent {
       this.pacienteService.findByDni(dni).subscribe({
         next: (response: any) => {
           console.log("Respuesta del servidor:", response);
+          console.log("Datos del paciente:", response.data);
+          console.log("ID del paciente:", response.data?.id);
 
           // Verificar si la respuesta tiene los datos del paciente
           // El backend envía status_code, no status
@@ -172,7 +180,20 @@ export class HomeComponent {
             localStorage.setItem("userRole", "patient");
             localStorage.setItem("patientDNI", this.patientCredentials.dni);
             localStorage.setItem("patientData", JSON.stringify(response.data));
-            localStorage.setItem("pacienteId", response.data.id.toString()); // ← Agregar esta línea
+
+            // Verificar si el ID existe antes de guardarlo
+            if (response.data.id) {
+              localStorage.setItem("pacienteId", response.data.id.toString());
+              console.log(
+                "pacienteId guardado en localStorage:",
+                response.data.id.toString()
+              );
+            } else {
+              console.error(
+                "El ID del paciente no está presente en la respuesta"
+              );
+            }
+
             localStorage.setItem(
               "userName",
               `${response.data.nombre} ${response.data.apellido}`
@@ -304,12 +325,29 @@ export class HomeComponent {
       // Crear paciente
       this.pacienteService.create(nuevoPaciente as Paciente).subscribe({
         next: (response) => {
+          console.log("Respuesta de creación de paciente:", response);
+          console.log("Datos del nuevo paciente:", response.data);
+          console.log("ID del nuevo paciente:", response.data?.id);
+
           if (response && response.data) {
             // Registro exitoso - iniciar sesión automáticamente
             localStorage.setItem("userRole", "patient");
             localStorage.setItem("patientDNI", this.registrationData.dni);
             localStorage.setItem("patientData", JSON.stringify(response.data));
-            localStorage.setItem("pacienteId", response.data.id.toString());
+
+            // Verificar si el ID existe antes de guardarlo
+            if (response.data.id) {
+              localStorage.setItem("pacienteId", response.data.id.toString());
+              console.log(
+                "pacienteId (nuevo) guardado en localStorage:",
+                response.data.id.toString()
+              );
+            } else {
+              console.error(
+                "El ID del nuevo paciente no está presente en la respuesta"
+              );
+            }
+
             localStorage.setItem(
               "userName",
               `${response.data.nombre} ${response.data.apellido}`
@@ -352,5 +390,28 @@ export class HomeComponent {
       fechaNacimiento: "",
       obraSocialId: "",
     };
+  }
+
+  // Método para buscar CAPs
+  buscarCAPS() {
+    console.log('Búsqueda de CAP:', this.capSearchData);
+    
+    // Mostrar mensaje temporal mientras se implementa la funcionalidad completa
+    alert(`Buscando centros de atención para:
+Tipo: ${this.getTipoAtencionLabel(this.capSearchData.tipoAtencion)}
+Síntomas/Observaciones: ${this.capSearchData.sintomas || 'No especificado'}
+
+Esta funcionalidad será completamente implementada próximamente.`);
+  }
+
+  // Método auxiliar para mostrar las etiquetas amigables
+  private getTipoAtencionLabel(tipo: string): string {
+    const labels: { [key: string]: string } = {
+      'MEDICO_CLINICO': 'Médico Clínico',
+      'VACUNACION': 'Vacunación',
+      'NINO_SANO': 'Niño Sano',
+      'MADRE_SANA': 'Madre Sana'
+    };
+    return labels[tipo] || tipo;
   }
 }
