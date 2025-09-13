@@ -51,6 +51,7 @@ import { OperadorDashboardComponent } from "./operador/operador-dashboard.compon
 import { OperadoresComponent } from "./operador/operadores.component";
 import { OperadorDetailComponent } from "./operador/operador-detail.component";
 import { OperadorAgendaComponent } from "./operador/operador-agenda.component";
+import { TokenStatusComponent } from "./components/token-status.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -139,6 +140,7 @@ export const routes: Routes = [
     canActivate: [MedicoGuard],
   },
 
+  { path: "debug/tokens", component: TokenStatusComponent}, // ruta para debug de tokens
   // Admin Routes (protected)
   { path: "turnos", component: TurnosComponent, canActivate: [AdminGuard] },
   {

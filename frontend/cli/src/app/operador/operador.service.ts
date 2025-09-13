@@ -70,4 +70,9 @@ export class OperadorService {
   findByEmail(email: string): Observable<DataPackage<Operador>> {
     return this.http.get<DataPackage<Operador>>(`${this.url}/by-email/${encodeURIComponent(email)}`);
   }
+
+  /** Crea un operador desde el perfil de administrador con auditoría */
+  createByAdmin(operador: Operador): Observable<DataPackage<Operador>> {
+    return this.http.post<DataPackage<Operador>>(`${this.url}/create-by-admin`, operador);
+  }
 }

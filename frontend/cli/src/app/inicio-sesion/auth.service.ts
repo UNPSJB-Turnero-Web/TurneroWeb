@@ -10,6 +10,7 @@ import { catchError, tap } from "rxjs/operators";
 import { JwtHelperService } from "@auth0/angular-jwt";
 import { DataPackage } from "../data.package";
 import { PacienteService } from "../pacientes/paciente.service";
+import { ModalService } from "../modal/modal.service";
 
 /**
  * Interfaz para los datos de login compatibles con InicioSesionComponent
@@ -82,11 +83,17 @@ export class AuthService {
   );
   public authState$ = this.authStateSubject.asObservable();
 
+  private tokenRefreshTimer: any = null;
+
   constructor(
     private http: HttpClient,
     private router: Router,
-    private pacienteService: PacienteService
-  ) {}
+    private pacienteService: PacienteService,
+    private modalService: ModalService
+  ) {
+    // Inicializar el auto-refresh si hay un token válido
+    this.initializeTokenRefresh();
+  }
 
   /**
    * Realiza el login del usuario
@@ -109,6 +116,8 @@ export class AuthService {
           if (response.data) {
             this.storeTokens(response.data, loginData.rememberMe);
             this.authStateSubject.next(true);
+            // Programar el refresh automático para el nuevo token
+            this.scheduleTokenRefresh(response.data.accessToken);
           }
         }),
         catchError(this.handleError)
@@ -144,6 +153,8 @@ export class AuthService {
   ): void {
     this.storeTokens(loginResponse, rememberMe);
     this.authStateSubject.next(true);
+    // Programar el refresh automático para el nuevo token
+    this.scheduleTokenRefresh(loginResponse.accessToken);
   }
 
   /**
@@ -153,7 +164,7 @@ export class AuthService {
    */
   private storeTokens(loginResponse: LoginResponse, rememberMe: boolean): void {
     // Limpiar datos de usuario anterior antes de almacenar los nuevos
-    this.clearPreviousUserData();
+    this.clearAllStorageData();
 
     const storage = rememberMe ? localStorage : sessionStorage;
 
@@ -169,9 +180,42 @@ export class AuthService {
   }
 
   /**
-   * Limpia datos de usuario anterior para evitar conflictos
+   * Maneja la expiración completa de tokens notificando al usuario
+   * @param message Mensaje a mostrar al usuario
    */
-  private clearPreviousUserData(): void {
+  private handleTokenExpired(message: string): void {
+    console.log('🚨 Manejo de expiración de tokens:', message);
+    
+    // Cancelar cualquier timer de refresh activo
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+
+    // Limpiar completamente todo el almacenamiento
+    this.clearAllStorageData();
+
+    // Actualizar estado de autenticación
+    this.authStateSubject.next(false);
+
+    // Mostrar notificación al usuario
+    this.modalService.alert(
+      'Sesión Expirada',
+      message
+    );
+
+    // Redirigir al login después de un breve delay para que se vea el modal
+    setTimeout(() => {
+      this.router.navigate(["/ingresar"]);
+    }, 100);
+  }
+
+  /**
+   * Limpia completamente todo el almacenamiento (localStorage y sessionStorage)
+   */
+  private clearAllStorageData(): void {
+    console.log('🧹 Limpiando todo el almacenamiento...');
+
     // Tokens de autenticación JWT
     const tokenKeys = [
       this.ACCESS_TOKEN_KEY,
@@ -240,7 +284,47 @@ export class AuthService {
    */
   isAuthenticated(): boolean {
     const token = this.getToken();
-    return token !== null && !this.jwtHelper.isTokenExpired(token);
+    if (!token) {
+      console.log('🔍 No hay token disponible');
+      return false;
+    }
+    
+    const isExpired = this.jwtHelper.isTokenExpired(token);
+    if (isExpired) {
+      console.log('⏰ Token expirado, intentando refresh automático...');
+      // Si el token está expirado, intentar refresh automático silencioso
+      this.attemptSilentRefresh();
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Intenta hacer un refresh silencioso del token
+   */
+  private attemptSilentRefresh(): void {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      console.log('❌ No hay refresh token disponible');
+      return;
+    }
+
+    this.refreshAccessToken().subscribe({
+      next: (response) => {
+        if (response.data) {
+          console.log('✅ Token renovado silenciosamente');
+          this.updateStoredTokens(response.data);
+          this.authStateSubject.next(true);
+          this.scheduleTokenRefresh(response.data.accessToken);
+        }
+      },
+      error: (error) => {
+        console.log('❌ Error en refresh silencioso:', error);
+        // Si falla el refresh silencioso, la sesión ha expirado completamente
+        this.handleTokenExpired('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+    });
   }
 
   /**
@@ -409,8 +493,14 @@ export class AuthService {
    * Cierra la sesión del usuario
    */
   logout(): void {
+    // Cancelar el timer de refresh si existe
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+    
     // Limpiar todos los datos de usuario (incluyendo tokens JWT)
-    this.clearPreviousUserData();
+    this.clearAllStorageData();
 
     // Actualizar estado de autenticación
     this.authStateSubject.next(false);
@@ -588,5 +678,172 @@ export class AuthService {
     }
 
     return null;
+  }
+
+  /**
+   * Método público para manejar errores de autenticación desde otros servicios
+   * @param error Error HTTP recibido
+   * @param customMessage Mensaje personalizado para el usuario
+   */
+  public handleAuthError(error: any, customMessage?: string): void {
+    if (error.status === 401 || error.status === 403) {
+      const message = customMessage || 'Su sesión ha expirado o no tiene permisos. Por favor, inicie sesión nuevamente.';
+      this.handleTokenExpired(message);
+    }
+  }
+
+
+
+  /**
+   * Obtiene información sobre el estado del token
+   * @returns Información útil para debugging
+   */
+  public getTokenInfo(): { hasToken: boolean; isExpired: boolean; expiresAt: Date | null; timeLeft: string } {
+    const token = this.getToken();
+    
+    if (!token) {
+      return { hasToken: false, isExpired: true, expiresAt: null, timeLeft: 'No token' };
+    }
+
+    try {
+      const isExpired = this.jwtHelper.isTokenExpired(token);
+      const expirationDate = this.jwtHelper.getTokenExpirationDate(token);
+      
+      let timeLeft = 'N/A';
+      if (expirationDate) {
+        const now = new Date();
+        const timeUntilExpiry = expirationDate.getTime() - now.getTime();
+        if (timeUntilExpiry > 0) {
+          const minutes = Math.floor(timeUntilExpiry / (1000 * 60));
+          const seconds = Math.floor((timeUntilExpiry % (1000 * 60)) / 1000);
+          timeLeft = `${minutes}m ${seconds}s`;
+        } else {
+          timeLeft = 'Expirado';
+        }
+      }
+
+      return { hasToken: true, isExpired, expiresAt: expirationDate, timeLeft };
+    } catch (error) {
+      return { hasToken: true, isExpired: true, expiresAt: null, timeLeft: 'Error' };
+    }
+  }
+
+  /**
+   * Inicializa el sistema de refresh automático de tokens
+   */
+  private initializeTokenRefresh(): void {
+    const token = this.getToken();
+    if (token && !this.jwtHelper.isTokenExpired(token)) {
+      this.scheduleTokenRefresh(token);
+    }
+  }
+
+  /**
+   * Programa el refresh del token antes de que expire
+   * @param token Token actual
+   */
+  private scheduleTokenRefresh(token: string): void {
+    // Cancelar timer anterior si existe
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+    }
+
+    try {
+      const expirationDate = this.jwtHelper.getTokenExpirationDate(token);
+      if (!expirationDate) return;
+
+      const now = new Date();
+      const timeUntilExpiry = expirationDate.getTime() - now.getTime();
+      
+      // Renovar 2 minutos antes de que expire (o la mitad del tiempo si es menos de 4 minutos)
+      const refreshTime = Math.max(timeUntilExpiry - (2 * 60 * 1000), timeUntilExpiry / 2);
+
+      if (refreshTime > 0) {
+        console.log(`🔄 Token refresh programado en ${Math.round(refreshTime / 1000)} segundos`);
+        
+        this.tokenRefreshTimer = setTimeout(() => {
+          this.refreshAccessToken().subscribe({
+            next: (response) => {
+              console.log('✅ Token renovado automáticamente');
+              if (response.data) {
+                this.updateStoredTokens(response.data);
+                this.scheduleTokenRefresh(response.data.accessToken);
+              }
+            },
+            error: (error) => {
+              console.error('❌ Error al renovar token automáticamente:', error);
+              // Si falla el refresh automático, notificar al usuario y cerrar sesión
+              this.handleTokenExpired('La sesión ha expirado. Por favor, inicie sesión nuevamente.');
+            }
+          });
+        }, refreshTime);
+      }
+    } catch (error) {
+      console.error('Error al programar refresh de token:', error);
+    }
+  }
+
+  /**
+   * Actualiza los tokens almacenados manteniendo el mismo storage
+   * @param loginResponse Nueva respuesta con tokens
+   */
+  private updateStoredTokens(loginResponse: LoginResponse): void {
+    // Determinar qué storage se estaba usando
+    const isUsingLocalStorage = localStorage.getItem(this.ACCESS_TOKEN_KEY) !== null;
+    const storage = isUsingLocalStorage ? localStorage : sessionStorage;
+
+    // Actualizar tokens
+    storage.setItem(this.ACCESS_TOKEN_KEY, loginResponse.accessToken);
+    storage.setItem(this.REFRESH_TOKEN_KEY, loginResponse.refreshToken);
+    
+    // Actualizar datos de usuario si vienen en la respuesta
+    if (loginResponse.email && loginResponse.nombre) {
+      storage.setItem(
+        this.USER_DATA_KEY,
+        JSON.stringify({
+          email: loginResponse.email,
+          fullName: loginResponse.nombre,
+        })
+      );
+    }
+  }
+
+  /**
+   * Renueva el access token usando el refresh token
+   * @returns Observable con la nueva respuesta de tokens
+   */
+  public refreshAccessToken(): Observable<DataPackage<LoginResponse>> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      console.log('❌ No hay refresh token disponible para renovar');
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    console.log('🔄 Intentando renovar token...');
+    const refreshPayload: RefreshTokenRequest = {
+      refreshToken: refreshToken
+    };
+
+    return this.http
+      .post<DataPackage<LoginResponse>>(
+        `${this.API_BASE_URL}/refresh`,
+        refreshPayload
+      )
+      .pipe(
+        catchError((error) => {
+          console.error('❌ Error en refresh token:', error);
+          
+          // Diferentes tipos de errores de refresh
+          if (error.status === 401) {
+            console.log('🚨 Refresh token inválido o expirado');
+          } else if (error.status === 403) {
+            console.log('🚨 Refresh token no autorizado');
+          } else {
+            console.log('🚨 Error de servidor en refresh');
+          }
+          
+          return throwError(() => error);
+        })
+      );
   }
 }
