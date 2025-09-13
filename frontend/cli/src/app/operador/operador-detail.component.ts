@@ -261,8 +261,19 @@ import { ModalService } from "../modal/modal.service";
                 </div>
               </div>
 
-              <!-- Contraseña: obligatorio en creación, opcional en edición -->
-              <div class="col-md-12" *ngIf="esNuevo() || cambiarPassword">
+              <!-- Información sobre contraseña automática para nuevos operadores -->
+              <div class="col-md-12" *ngIf="esNuevo()">
+                <div class="alert alert-info d-flex align-items-center">
+                  <i class="fas fa-info-circle me-3"></i>
+                  <div>
+                    <strong>Contraseña automática:</strong> 
+                    Se generará una contraseña segura automáticamente y será enviada por correo electrónico al operador.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contraseña: solo para edición cuando se activa el cambio -->
+              <div class="col-md-12" *ngIf="!esNuevo() && cambiarPassword">
                 <div class="row g-3">
                   <div class="col-md-6">
                     <div class="form-floating">
@@ -273,12 +284,12 @@ import { ModalService } from "../modal/modal.service";
                         type="password"
                         class="form-control form-control-modern"
                         placeholder="Contraseña"
-                        [required]="esNuevo()"
+                        required
                         minlength="6"
                         #pwd="ngModel"
                       />
                       <label for="password"
-                        ><i class="fas fa-lock me-2"></i>Contraseña</label
+                        ><i class="fas fa-lock me-2"></i>Nueva Contraseña</label
                       >
                     </div>
                     <div
@@ -303,7 +314,7 @@ import { ModalService } from "../modal/modal.service";
                         type="password"
                         class="form-control form-control-modern"
                         placeholder="Confirmar contraseña"
-                        [required]="esNuevo()"
+                        required
                         #cpwd="ngModel"
                       />
                       <label for="confirmPassword"
@@ -348,12 +359,14 @@ import { ModalService } from "../modal/modal.service";
 
             <!-- Botones de acción -->
             <div class="d-flex flex-wrap gap-3 mt-5 pt-4 border-top">
-              <button
+                            <button
                 type="submit"
-                class="btn btn-success-gradient btn-lg rounded-pill px-4"
-                [disabled]="form.invalid || passwordMismatch()"
+                class="btn btn-modern btn-primary rounded-pill px-5 py-3 fw-bold"
+                [disabled]="form.invalid || (!esNuevo() && cambiarPassword && passwordMismatch())"
               >
-                <i class="fas fa-save me-2"></i>Guardar Operador
+                <i class="fas fa-save me-2"></i>
+                <span *ngIf="esNuevo()">Crear Operador</span>
+                <span *ngIf="!esNuevo()">Guardar Cambios</span>
               </button>
 
               <button
@@ -527,8 +540,8 @@ export class OperadorDetailComponent implements OnInit {
   }
 
   passwordMismatch(): boolean {
-    // Si estamos en creación o en cambiarPassword en edición, verificar match
-    if (this.esNuevo() || this.cambiarPassword) {
+    // Solo verificar match si estamos cambiando contraseña en edición (no en creación)
+    if (!this.esNuevo() && this.cambiarPassword) {
       return (
         !!(this.password || this.confirmPassword) &&
         this.password !== this.confirmPassword
@@ -547,17 +560,21 @@ export class OperadorDetailComponent implements OnInit {
 
   save(): void {
     // marcar controles tocados para mostrar errores
-    if (this.form.invalid || this.passwordMismatch()) {
+    if (this.form.invalid || (!this.esNuevo() && this.cambiarPassword && this.passwordMismatch())) {
       Object.keys(this.form.controls).forEach((key) =>
         this.form.controls[key].markAsTouched()
       );
       return;
     }
 
-    // Preparar payload: si no estamos cambiando contraseña en edición, no mandarla
+    // Preparar payload
     const payload: any = { ...this.operador };
-    if (this.esNuevo() || this.cambiarPassword) {
-      // agregar password solo si fue completada
+    
+    if (this.esNuevo()) {
+      // Para nuevos operadores: no incluir contraseña, se genera automáticamente
+      delete payload.password;
+    } else if (this.cambiarPassword) {
+      // Para edición con cambio de contraseña: validar y agregar password
       if (!this.password || this.password.length < 6) {
         this.modalService.alert(
           "Error",
@@ -567,20 +584,21 @@ export class OperadorDetailComponent implements OnInit {
       }
       payload.password = this.password;
     } else {
-      // asegurarse de eliminar cualquier password accidental
+      // Para edición sin cambio de contraseña: no incluir password
       delete payload.password;
     }
 
+    // Seleccionar el método correcto según el caso
     const op$ = this.operador.id
       ? this.operadorService.update(this.operador.id, payload)
-      : this.operadorService.create(payload);
+      : this.operadorService.createByAdmin(payload);
 
     op$.subscribe({
       next: () => {
         this.modalService.alert(
           "Éxito",
           this.esNuevo()
-            ? "Operador creado correctamente"
+            ? "Operador creado correctamente. Se ha enviado una contraseña automática por correo electrónico."
             : "Operador actualizado correctamente"
         );
         this.router.navigate(["/operadores"]);
