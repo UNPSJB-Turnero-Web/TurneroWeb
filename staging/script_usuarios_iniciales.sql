@@ -3,23 +3,32 @@
 -- Contraseña para todos los usuarios: "password"
 
 -- =====================================
--- 1. INSERTAR ROLES (si no existen)
+-- 1. INSERTAR ROLES (verificar si existen)
 -- =====================================
 
-INSERT INTO roles (name, display_name, description, active, created_at) VALUES
-('ADMINISTRADOR', 'Administrador', 'Administrador del sistema con acceso completo', true, NOW()),
-('PACIENTE', 'Paciente', 'Usuario paciente que puede solicitar turnos', true, NOW()),
-('MEDICO', 'Médico', 'Profesional médico que atiende pacientes', true, NOW()),
-('OPERADOR', 'Operador', 'Operador del sistema que gestiona turnos', true, NOW())
-ON CONFLICT (name) DO NOTHING;
+INSERT INTO roles (name, display_name, description, active, created_at) 
+SELECT 'ADMINISTRADOR', 'Administrador', 'Administrador del sistema con acceso completo', true, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ADMINISTRADOR');
+
+INSERT INTO roles (name, display_name, description, active, created_at) 
+SELECT 'PACIENTE', 'Paciente', 'Usuario paciente que puede solicitar turnos', true, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'PACIENTE');
+
+INSERT INTO roles (name, display_name, description, active, created_at) 
+SELECT 'MEDICO', 'Médico', 'Profesional médico que atiende pacientes', true, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'MEDICO');
+
+INSERT INTO roles (name, display_name, description, active, created_at) 
+SELECT 'OPERADOR', 'Operador', 'Operador del sistema que gestiona turnos', true, NOW()
+WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'OPERADOR');
 
 -- =====================================
 -- 2. INSERTAR OBRA SOCIAL (para paciente)
 -- =====================================
 
-INSERT INTO obra_social (id, nombre, codigo, descripcion) VALUES
-(1, 'OSDE', 'OSDE001', 'Obra Social de los Empleados de Comercio')
-ON CONFLICT (codigo) DO NOTHING;
+INSERT INTO obra_social (id, nombre, codigo, descripcion) 
+SELECT 1, 'OSDE', 'OSDE001', 'Obra Social de los Empleados de Comercio'
+WHERE NOT EXISTS (SELECT 1 FROM obra_social WHERE id = 1);
 
 -- =====================================
 -- 3. INSERTAR ESPECIALIDAD (para médico)
@@ -34,85 +43,76 @@ WHERE NOT EXISTS (SELECT 1 FROM especialidad WHERE id = 1);
 -- =====================================
 
 -- Usuario Administrador
--- Email: admin@turnero.com, Password: password
 INSERT INTO users (
     nombre, apellido, dni, email, telefono, 
     hashed_password, role_id, enabled, account_non_expired, 
     account_non_locked, credentials_non_expired, email_verified
-) VALUES (
+) 
+SELECT 
     'Carlos', 'Administrador', 11111111, 'admin@turnero.com', '+5492804111111',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
     (SELECT id FROM roles WHERE name = 'ADMINISTRADOR'), 
     true, true, true, true, true
-)
-ON CONFLICT (email) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@turnero.com');
 
 -- Usuario Paciente  
--- Email: paciente@turnero.com, Password: password
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
     hashed_password, role_id, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
-) VALUES (
+) 
+SELECT 
     'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
     (SELECT id FROM roles WHERE name = 'PACIENTE'),
     true, true, true, true, true
-)
-ON CONFLICT (email) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'paciente@turnero.com');
 
 -- Usuario Médico
--- Email: medico@turnero.com, Password: password  
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
     hashed_password, role_id, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
-) VALUES (
+) 
+SELECT 
     'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
     (SELECT id FROM roles WHERE name = 'MEDICO'),
     true, true, true, true, true
-)
-ON CONFLICT (email) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'medico@turnero.com');
 
 -- Usuario Operador
--- Email: operador@turnero.com, Password: password
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
     hashed_password, role_id, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
-) VALUES (
+) 
+SELECT 
     'Ana', 'Operadora', 44444444, 'operador@turnero.com', '+5492804444444',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
     (SELECT id FROM roles WHERE name = 'OPERADOR'),
     true, true, true, true, true
-)
-ON CONFLICT (email) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'operador@turnero.com');
 
 -- =====================================
 -- 5. INSERTAR EN TABLAS ESPECÍFICAS
 -- =====================================
 
--- Tabla Administrador (comentada - no existe en la DB actual)
--- INSERT INTO administrador (nombre, apellido, dni, email, telefono) VALUES
--- ('Carlos', 'Administrador', 11111111, 'admin@turnero.com', '+5492804111111')
--- ON CONFLICT (email) DO NOTHING;
-
 -- Tabla Paciente
-INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) VALUES
-(1, 'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222', 
- '1990-05-15', 1)
-ON CONFLICT (dni) DO NOTHING;
+INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) 
+SELECT 1, 'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222', 
+       '1990-05-15', 1
+WHERE NOT EXISTS (SELECT 1 FROM paciente WHERE id = 1);
 
 -- Tabla Medico
-INSERT INTO medico (id, nombre, apellido, dni, email, telefono, matricula) VALUES
-(1, 'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333', 'MP-12345')
-ON CONFLICT (dni) DO NOTHING;
+INSERT INTO medico (id, nombre, apellido, dni, email, telefono, matricula) 
+SELECT 1, 'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333', 'MP-12345'
+WHERE NOT EXISTS (SELECT 1 FROM medico WHERE id = 1);
 
 -- Tabla Operador
-INSERT INTO operador (nombre, apellido, dni, email, telefono, activo) VALUES
-('Ana', 'Operadora', 44444444, 'operador@turnero.com', '+5492804444444', true)
-ON CONFLICT (email) DO NOTHING;
+INSERT INTO operador (nombre, apellido, dni, email, telefono, activo) 
+SELECT 'Ana', 'Operadora', 44444444, 'operador@turnero.com', '+5492804444444', true
+WHERE NOT EXISTS (SELECT 1 FROM operador WHERE email = 'operador@turnero.com');
 
 -- =====================================
 -- 6. RELACIONES ADICIONALES
@@ -127,37 +127,9 @@ WHERE NOT EXISTS (
 );
 
 -- =====================================
--- RESUMEN DE USUARIOS CREADOS:
--- =====================================
--- 
--- 1. ADMINISTRADOR:
---    Email: admin@turnero.com
---    Password: password
---    DNI: 11111111
---
--- 2. PACIENTE:
---    Email: paciente@turnero.com  
---    Password: password
---    DNI: 22222222
---    Obra Social: OSDE
---
--- 3. MÉDICO:
---    Email: medico@turnero.com
---    Password: password
---    DNI: 33333333
---    Matrícula: MP-12345
---    Especialidad: Cardiología
---
--- 4. OPERADOR:
---    Email: operador@turnero.com
---    Password: password
---    DNI: 44444444
---
--- =====================================
--- 7. ACTUALIZAR SECUENCIAS (evitar conflictos futuros)
+-- 7. ACTUALIZAR SECUENCIAS
 -- =====================================
 
--- Actualizar secuencias para evitar conflictos con IDs manuales
 SELECT setval(pg_get_serial_sequence('obra_social', 'id'), 
               COALESCE((SELECT MAX(id) FROM obra_social), 1));
               
@@ -170,6 +142,8 @@ SELECT setval(pg_get_serial_sequence('paciente', 'id'),
 SELECT setval(pg_get_serial_sequence('medico', 'id'), 
               COALESCE((SELECT MAX(id) FROM medico), 1));
 
+-- =====================================
+-- 8. VERIFICACIÓN FINAL
 -- =====================================
 
 SELECT 'Script ejecutado exitosamente. Usuarios creados:' AS mensaje;
