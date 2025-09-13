@@ -889,37 +889,52 @@ export class MedicoEstadisticasComponent implements OnInit {
    */
   private procesarTurnosYEstadisticas(turnos: any[]) {
     console.log('📊 Procesando turnos para estadísticas:', turnos.length, 'turnos');
-    console.log('📊 Estados de turnos encontrados:', turnos.map(t => `${t.id}: ${t.estado}`));
+    console.log('📊 Estados de turnos encontrados:', turnos.map(t => `${t.id}: ${t.estado} - ${t.fecha} ${t.hora}`));
     
-    // Definir estados que cuentan como "realizados"
+    // Definir estados que pueden contar como "realizados" (pero aún necesitan filtro por fecha)
     const estadosRealizados = ['CONFIRMADO', 'COMPLETADO', 'REALIZADO'];
     const estadosCancelados = ['CANCELADO'];
     const estadosProgramados = ['PROGRAMADO'];
     
-    // Filtrar turnos por estado
-    const turnosRealizados = turnos.filter(t => estadosRealizados.includes(t.estado));
+    // Obtener fecha y hora actual
+    const ahora = new Date();
+    console.log('⏰ Fecha/hora actual para comparación:', ahora.toLocaleString('es-ES'));
+    
+    
+    // Filtrar turnos por estado Y por fecha (solo contar como realizados los que ya pasaron)
+    const turnosRealizados = turnos.filter(t => 
+      estadosRealizados.includes(t.estado) && this.turnoYaPaso(t)
+    );
     const turnosCancelados = turnos.filter(t => estadosCancelados.includes(t.estado));
     const turnosProgramados = turnos.filter(t => estadosProgramados.includes(t.estado));
     
-    // Calcular estadísticas básicas
-    const horasTrabajadas = this.calcularHorasTrabajadasReales(turnosRealizados);
-    const pacientesUnicos = this.contarPacientesUnicos([...turnosRealizados, ...turnosProgramados]);
+    // Separar turnos programados entre pasados y futuros
+    const turnosProgramadosPasados = turnosProgramados.filter(t => this.turnoYaPaso(t));
+    const turnosProgramadosFuturos = turnosProgramados.filter(t => !this.turnoYaPaso(t));
+    
+    // Calcular estadísticas básicas (solo con turnos que ya pasaron)
+    const turnosEfectivamenteRealizados = [...turnosRealizados, ...turnosProgramadosPasados];
+    const horasTrabajadas = this.calcularHorasTrabajadasReales(turnosEfectivamenteRealizados);
+    const pacientesUnicos = this.contarPacientesUnicos(turnosEfectivamenteRealizados);
     
     const totalTurnosRealizados = turnosRealizados.length;
     const totalTurnosCancelados = turnosCancelados.length;
-    const totalTurnosProgramados = turnosProgramados.length;
+    const totalTurnosProgramadosPasados = turnosProgramadosPasados.length;
+    const totalTurnosProgramadosFuturos = turnosProgramadosFuturos.length;
     const totalTurnos = turnos.length;
     
-    console.log(`📈 Conteos por estado:
-      - Realizados (Confirmados/Completados): ${totalTurnosRealizados}
-      - Programados: ${totalTurnosProgramados}
+    console.log(`📈 Conteos por estado y tiempo:
+      - Realizados (estados válidos + fecha pasada): ${totalTurnosRealizados}
+      - Programados pasados (contados como realizados): ${totalTurnosProgramadosPasados}
+      - Programados futuros (NO contados): ${totalTurnosProgramadosFuturos}
       - Cancelados: ${totalTurnosCancelados}
-      - Total: ${totalTurnos}`);
+      - Total efectivamente realizados: ${turnosEfectivamenteRealizados.length}
+      - Total turnos: ${totalTurnos}`);
     
-    // Establecer estadísticas actuales
+    // Establecer estadísticas actuales (solo contar turnos que ya pasaron)
     this.estadisticasActuales = {
       periodo: this.getPeriodoNombre(),
-      turnosRealizados: totalTurnosRealizados + totalTurnosProgramados, // Incluir programados en el conteo
+      turnosRealizados: turnosEfectivamenteRealizados.length, // Solo turnos que ya pasaron
       turnosCancelados: totalTurnosCancelados,
       pacientesAtendidos: pacientesUnicos,
       horasTrabajadas: parseFloat(horasTrabajadas.toFixed(1)) // Redondear a 1 decimal
@@ -938,6 +953,21 @@ export class MedicoEstadisticasComponent implements OnInit {
     this.generarDatosComparativos();
     
     console.log('✅ Estadísticas procesadas:', this.estadisticasActuales);
+  }
+
+  /**
+   * Helper para determinar si un turno ya pasó (puede ser reutilizado por otros métodos)
+   */
+  private turnoYaPaso(turno: any): boolean {
+    try {
+      // Combinar fecha y hora del turno
+      const fechaTurno = new Date(`${turno.fecha}T${turno.hora}`);
+      const ahora = new Date();
+      return fechaTurno <= ahora;
+    } catch (error) {
+      console.warn(`⚠️ Error procesando fecha/hora del turno ${turno.id}:`, error);
+      return false; // Si no se puede determinar, no contar como realizado
+    }
   }
 
   /**
@@ -1019,7 +1049,8 @@ export class MedicoEstadisticasComponent implements OnInit {
       
       const datos = datosAgrupados.get(clave);
       
-      if (estadosRealizados.includes(turno.estado)) {
+      // Solo contar como realizados los turnos que ya pasaron
+      if (estadosRealizados.includes(turno.estado) && this.turnoYaPaso(turno)) {
         datos.turnosRealizados++;
         // Calcular horas trabajadas solo para turnos realizados
         if (turno.horaInicio && turno.horaFin) {
@@ -1032,7 +1063,8 @@ export class MedicoEstadisticasComponent implements OnInit {
         }
       } else if (estadosCancelados.includes(turno.estado)) {
         datos.turnosCancelados++;
-      } else if (estadosProgramados.includes(turno.estado)) {
+      } else if (estadosProgramados.includes(turno.estado) && this.turnoYaPaso(turno)) {
+        // Solo contar programados que ya pasaron como realizados
         datos.turnosProgramados++;
       }
       
@@ -1066,7 +1098,8 @@ export class MedicoEstadisticasComponent implements OnInit {
     const estadosContables = ['CONFIRMADO', 'COMPLETADO', 'REALIZADO', 'PROGRAMADO'];
     
     turnos.forEach(turno => {
-      if (turno.especialidadStaffMedico && estadosContables.includes(turno.estado)) {
+      // Solo contar turnos que ya pasaron para estadísticas de especialidades
+      if (turno.especialidadStaffMedico && estadosContables.includes(turno.estado) && this.turnoYaPaso(turno)) {
         const especialidad = turno.especialidadStaffMedico;
         especialidadesMap.set(especialidad, (especialidadesMap.get(especialidad) || 0) + 1);
       }
@@ -1132,7 +1165,8 @@ export class MedicoEstadisticasComponent implements OnInit {
       
       const datosMes = mesesMap.get(claveMes);
       
-      if (estadosRealizados.includes(turno.estado)) {
+      // Solo contar como realizados los turnos que ya pasaron
+      if (estadosRealizados.includes(turno.estado) && this.turnoYaPaso(turno)) {
         datosMes.turnosRealizados++;
         // Calcular horas para este turno
         if (turno.horaInicio && turno.horaFin) {
@@ -1145,7 +1179,8 @@ export class MedicoEstadisticasComponent implements OnInit {
         }
       } else if (estadosCancelados.includes(turno.estado)) {
         datosMes.turnosCancelados++;
-      } else if (estadosProgramados.includes(turno.estado)) {
+      } else if (estadosProgramados.includes(turno.estado) && this.turnoYaPaso(turno)) {
+        // Solo contar programados que ya pasaron como realizados
         datosMes.turnosProgramados++;
       }
       
