@@ -1,11 +1,15 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
-import { JwtHelperService } from '@auth0/angular-jwt';
-import { DataPackage } from '../data.package';
-import { PacienteService } from '../pacientes/paciente.service';
+import { Injectable } from "@angular/core";
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+} from "@angular/common/http";
+import { Router } from "@angular/router";
+import { Observable, throwError, BehaviorSubject } from "rxjs";
+import { catchError, tap } from "rxjs/operators";
+import { JwtHelperService } from "@auth0/angular-jwt";
+import { DataPackage } from "../data.package";
+import { PacienteService } from "../pacientes/paciente.service";
 
 /**
  * Interfaz para los datos de login compatibles con InicioSesionComponent
@@ -64,16 +68,18 @@ export interface ChangePasswordRequest {
  * Servicio de autenticación que maneja JWT con Spring Boot backend
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class AuthService {
-  private readonly API_BASE_URL = 'rest/api/auth';
-  private readonly ACCESS_TOKEN_KEY = 'access_token';
-  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
-  private readonly USER_DATA_KEY = 'user_data';
+  private readonly API_BASE_URL = "rest/api/auth";
+  private readonly ACCESS_TOKEN_KEY = "access_token";
+  private readonly REFRESH_TOKEN_KEY = "refresh_token";
+  private readonly USER_DATA_KEY = "user_data";
 
   private jwtHelper = new JwtHelperService();
-  private authStateSubject = new BehaviorSubject<boolean>(this.isAuthenticated());
+  private authStateSubject = new BehaviorSubject<boolean>(
+    this.isAuthenticated()
+  );
   public authState$ = this.authStateSubject.asObservable();
 
   constructor(
@@ -90,12 +96,16 @@ export class AuthService {
   login(loginData: LoginData): Observable<DataPackage<LoginResponse>> {
     const loginPayload = {
       email: loginData.email,
-      password: loginData.password
+      password: loginData.password,
     };
 
-    return this.http.post<DataPackage<LoginResponse>>(`${this.API_BASE_URL}/login`, loginPayload)
+    return this.http
+      .post<DataPackage<LoginResponse>>(
+        `${this.API_BASE_URL}/login`,
+        loginPayload
+      )
       .pipe(
-        tap(response => {
+        tap((response) => {
           if (response.data) {
             this.storeTokens(response.data, loginData.rememberMe);
             this.authStateSubject.next(true);
@@ -112,13 +122,15 @@ export class AuthService {
    */
   checkEmail(email: string): Observable<DataPackage<CheckEmailResponse>> {
     const checkEmailPayload: CheckEmailRequest = {
-      email: email
+      email: email,
     };
 
-    return this.http.post<DataPackage<CheckEmailResponse>>(`${this.API_BASE_URL}/check-email`, checkEmailPayload)
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<DataPackage<CheckEmailResponse>>(
+        `${this.API_BASE_URL}/check-email`,
+        checkEmailPayload
+      )
+      .pipe(catchError(this.handleError));
   }
 
   /**
@@ -126,7 +138,10 @@ export class AuthService {
    * @param loginResponse Respuesta del registro con tokens
    * @param rememberMe Si mantener la sesión activa
    */
-  handlePostRegistrationLogin(loginResponse: LoginResponse, rememberMe: boolean = false): void {
+  handlePostRegistrationLogin(
+    loginResponse: LoginResponse,
+    rememberMe: boolean = false
+  ): void {
     this.storeTokens(loginResponse, rememberMe);
     this.authStateSubject.next(true);
   }
@@ -139,15 +154,18 @@ export class AuthService {
   private storeTokens(loginResponse: LoginResponse, rememberMe: boolean): void {
     // Limpiar datos de usuario anterior antes de almacenar los nuevos
     this.clearPreviousUserData();
-    
+
     const storage = rememberMe ? localStorage : sessionStorage;
-    
+
     storage.setItem(this.ACCESS_TOKEN_KEY, loginResponse.accessToken);
     storage.setItem(this.REFRESH_TOKEN_KEY, loginResponse.refreshToken);
-    storage.setItem(this.USER_DATA_KEY, JSON.stringify({
-      email: loginResponse.email,
-      fullName: loginResponse.nombre
-    }));
+    storage.setItem(
+      this.USER_DATA_KEY,
+      JSON.stringify({
+        email: loginResponse.email,
+        fullName: loginResponse.nombre,
+      })
+    );
   }
 
   /**
@@ -155,33 +173,63 @@ export class AuthService {
    */
   private clearPreviousUserData(): void {
     // Tokens de autenticación JWT
-    const tokenKeys = [this.ACCESS_TOKEN_KEY, this.REFRESH_TOKEN_KEY, this.USER_DATA_KEY];
-    
+    const tokenKeys = [
+      this.ACCESS_TOKEN_KEY,
+      this.REFRESH_TOKEN_KEY,
+      this.USER_DATA_KEY,
+    ];
+
     // Datos comunes a todos los roles
-    const commonKeys = ['userRole', 'userId', 'userName', 'userEmail', 'id', 'currentUser'];
-    
+    const commonKeys = [
+      "userRole",
+      "userId",
+      "userName",
+      "userEmail",
+      "id",
+      "currentUser",
+    ];
+
     // Datos específicos de pacientes
-    const pacienteKeys = ['pacienteId', 'patientData', 'patientDNI'];
-    
+    const pacienteKeys = ["pacienteId", "patientData", "patientDNI"];
+
     // Datos específicos de médicos
-    const medicoKeys = ['medicoId', 'medicoData', 'medicoMatricula', 'especialidadId', 'staffMedicoId', 'notificacionesMedico'];
-    
+    const medicoKeys = [
+      "medicoId",
+      "medicoData",
+      "medicoMatricula",
+      "especialidadId",
+      "staffMedicoId",
+      "notificacionesMedico",
+    ];
+
     // Datos específicos de operadores
-    const operadorKeys = ['operadorId', 'operadorData', 'operadorDNI', 'centroAsignado'];
-    
+    const operadorKeys = [
+      "operadorId",
+      "operadorData",
+      "operadorDNI",
+      "centroAsignado",
+    ];
+
     // Datos específicos de administradores
-    const adminKeys = ['adminId', 'adminData', 'permissions'];
-    
+    const adminKeys = ["adminId", "adminData", "permissions"];
+
     // Combinar todas las claves que pueden existir
-    const allKeys = [...tokenKeys, ...commonKeys, ...pacienteKeys, ...medicoKeys, ...operadorKeys, ...adminKeys];
-    
+    const allKeys = [
+      ...tokenKeys,
+      ...commonKeys,
+      ...pacienteKeys,
+      ...medicoKeys,
+      ...operadorKeys,
+      ...adminKeys,
+    ];
+
     // Limpiar de localStorage
-    allKeys.forEach(key => {
+    allKeys.forEach((key) => {
       localStorage.removeItem(key);
     });
-    
+
     // Limpiar de sessionStorage
-    allKeys.forEach(key => {
+    allKeys.forEach((key) => {
       sessionStorage.removeItem(key);
     });
   }
@@ -200,8 +248,10 @@ export class AuthService {
    * @returns El token JWT o null si no existe
    */
   getToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY) || 
-           sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    return (
+      localStorage.getItem(this.ACCESS_TOKEN_KEY) ||
+      sessionStorage.getItem(this.ACCESS_TOKEN_KEY)
+    );
   }
 
   /**
@@ -209,8 +259,10 @@ export class AuthService {
    * @returns El refresh token o null si no existe
    */
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY) || 
-           sessionStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return (
+      localStorage.getItem(this.REFRESH_TOKEN_KEY) ||
+      sessionStorage.getItem(this.REFRESH_TOKEN_KEY)
+    );
   }
 
   /**
@@ -226,7 +278,7 @@ export class AuthService {
       // El rol viene en el claim 'role' del token JWT
       return decodedToken.role || null;
     } catch (error) {
-      console.error('Error decodificando token:', error);
+      console.error("Error decodificando token:", error);
       return null;
     }
   }
@@ -244,7 +296,7 @@ export class AuthService {
       // El email viene en el subject del token JWT
       return decodedToken.sub || null;
     } catch (error) {
-      console.error('Error decodificando token:', error);
+      console.error("Error decodificando token:", error);
       return null;
     }
   }
@@ -254,16 +306,17 @@ export class AuthService {
    * @returns El nombre completo del usuario o null si no se puede obtener
    */
   getUserName(): string | null {
-    const userData = localStorage.getItem(this.USER_DATA_KEY) || 
-                   sessionStorage.getItem(this.USER_DATA_KEY);
-    
+    const userData =
+      localStorage.getItem(this.USER_DATA_KEY) ||
+      sessionStorage.getItem(this.USER_DATA_KEY);
+
     if (!userData) return null;
 
     try {
       const parsedData = JSON.parse(userData);
       return parsedData.fullName || null;
     } catch (error) {
-      console.error('Error parseando datos de usuario:', error);
+      console.error("Error parseando datos de usuario:", error);
       return null;
     }
   }
@@ -275,42 +328,42 @@ export class AuthService {
    */
   mapRoleToRoute(backendRole: string): string {
     const roleMapping: { [key: string]: string } = {
-      'PACIENTE': 'paciente',
-      'MEDICO': 'medico',
-      'OPERADOR': 'operador',
-      'ADMINISTRADOR': 'admin'
+      PACIENTE: "paciente",
+      MEDICO: "medico",
+      OPERADOR: "operador",
+      ADMINISTRADOR: "admin",
     };
 
-    return roleMapping[backendRole] || 'home';
+    return roleMapping[backendRole] || "home";
   }
 
   /**
    * Redirige al usuario según su rol
    */
-    /**
+  /**
    * Redirige al usuario a la ruta correspondiente según su rol
    */
   redirectByRole(): void {
     const role = this.getUserRole();
     if (!role) {
-      this.router.navigate(['/']);
+      this.router.navigate(["/"]);
       return;
     }
     switch (role.toUpperCase()) {
-      case 'PACIENTE':
-        this.router.navigate(['/paciente-dashboard']);
+      case "PACIENTE":
+        this.router.navigate(["/paciente-dashboard"]);
         break;
-      case 'OPERADOR':
-        this.router.navigate(['/operador-dashboard']);
+      case "OPERADOR":
+        this.router.navigate(["/operador-dashboard"]);
         break;
-      case 'MEDICO':
-        this.router.navigate(['/medico-dashboard']);
+      case "MEDICO":
+        this.router.navigate(["/medico-dashboard"]);
         break;
-      case 'ADMINISTRADOR':
-        this.router.navigate(['/turnos']);
+      case "ADMINISTRADOR":
+        this.router.navigate(["/turnos"]);
         break;
       default:
-        this.router.navigate(['/']);
+        this.router.navigate(["/"]);
         break;
     }
   }
@@ -321,25 +374,30 @@ export class AuthService {
    */
   refreshToken(): Observable<DataPackage<LoginResponse>> {
     const refreshToken = this.getRefreshToken();
-    
+
     if (!refreshToken) {
-      return throwError(() => new Error('No hay refresh token disponible'));
+      return throwError(() => new Error("No hay refresh token disponible"));
     }
 
     const refreshPayload: RefreshTokenRequest = {
-      refreshToken: refreshToken
+      refreshToken: refreshToken,
     };
 
-    return this.http.post<DataPackage<LoginResponse>>(`${this.API_BASE_URL}/refresh`, refreshPayload)
+    return this.http
+      .post<DataPackage<LoginResponse>>(
+        `${this.API_BASE_URL}/refresh`,
+        refreshPayload
+      )
       .pipe(
-        tap(response => {
+        tap((response) => {
           if (response.data) {
             // Determinar si estamos en localStorage o sessionStorage
-            const usingLocalStorage = localStorage.getItem(this.ACCESS_TOKEN_KEY) !== null;
+            const usingLocalStorage =
+              localStorage.getItem(this.ACCESS_TOKEN_KEY) !== null;
             this.storeTokens(response.data, usingLocalStorage);
           }
         }),
-        catchError(error => {
+        catchError((error) => {
           // Si el refresh token también está expirado, cerrar sesión
           this.logout();
           return this.handleError(error);
@@ -358,7 +416,7 @@ export class AuthService {
     this.authStateSubject.next(false);
 
     // Redirigir al login
-    this.router.navigate(['/ingresar']);
+    this.router.navigate(["/ingresar"]);
   }
 
   /**
@@ -366,18 +424,19 @@ export class AuthService {
    * @returns Datos del usuario o null
    */
   getUserData(): { email: string; fullName: string } | null {
-    const userDataStr = localStorage.getItem(this.USER_DATA_KEY) || 
-                       sessionStorage.getItem(this.USER_DATA_KEY);
-    
+    const userDataStr =
+      localStorage.getItem(this.USER_DATA_KEY) ||
+      sessionStorage.getItem(this.USER_DATA_KEY);
+
     if (userDataStr) {
       try {
         return JSON.parse(userDataStr);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error("Error parsing user data:", error);
         return null;
       }
     }
-    
+
     return null;
   }
 
@@ -387,26 +446,27 @@ export class AuthService {
    * @returns Observable con error
    */
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let errorMessage = 'Error desconocido';
+    let errorMessage = "Error desconocido";
 
     if (error.error instanceof ErrorEvent) {
       // Error del lado del cliente
       errorMessage = `Error: ${error.error.message}`;
     } else {
       // Error del lado del servidor
-      if (error.error && typeof error.error === 'object') {
+      if (error.error && typeof error.error === "object") {
         // Usar message o status_text de DataPackage
-        errorMessage = error.error.message || error.error.status_text || errorMessage;
+        errorMessage =
+          error.error.message || error.error.status_text || errorMessage;
       } else {
         switch (error.status) {
           case 401:
-            errorMessage = 'Credenciales inválidas';
+            errorMessage = "Credenciales inválidas";
             break;
           case 403:
-            errorMessage = 'Acceso denegado';
+            errorMessage = "Acceso denegado";
             break;
           case 500:
-            errorMessage = 'Error interno del servidor';
+            errorMessage = "Error interno del servidor";
             break;
           default:
             errorMessage = `Error del servidor: ${error.status}`;
@@ -414,7 +474,7 @@ export class AuthService {
       }
     }
 
-    console.error('Error en AuthService:', errorMessage);
+    console.error("Error en AuthService:", errorMessage);
     return throwError(() => new Error(errorMessage));
   }
 
@@ -443,14 +503,15 @@ export class AuthService {
    */
   changePassword(request: ChangePasswordRequest): Observable<DataPackage<any>> {
     const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.getToken()}`
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${this.getToken()}`,
     });
 
-    return this.http.post<DataPackage<any>>(`${this.API_BASE_URL}/change-password`, request, { headers })
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http
+      .post<DataPackage<any>>(`${this.API_BASE_URL}/change-password`, request, {
+        headers,
+      })
+      .pipe(catchError(this.handleError));
   }
 
   /**
@@ -462,11 +523,70 @@ export class AuthService {
       if (this.isTokenExpiringSoon()) {
         this.refreshToken().subscribe({
           next: () => resolve(),
-          error: (error) => reject(error)
+          error: (error) => reject(error),
         });
       } else {
         resolve();
       }
     });
+  }
+
+  /**
+   * Obtiene el ID del paciente actual de forma robusta
+   * @returns El ID del paciente o null si no se encuentra
+   */
+  getCurrentPatientId(): number | null {
+    // Intentar obtener desde pacienteId
+
+    const pacienteId = localStorage.getItem("pacienteId");
+    if (pacienteId && pacienteId !== "null") {
+      const id = parseInt(pacienteId);
+      if (!isNaN(id) && id > 0) {
+        return id;
+      }
+    }
+
+    // Intentar obtener desde patientData como respaldo
+    const patientData = localStorage.getItem("patientData");
+    if (patientData && patientData !== "null") {
+      try {
+        const parsedData = JSON.parse(patientData);
+        if (parsedData && parsedData.id) {
+          const id = parseInt(parsedData.id.toString());
+          if (!isNaN(id) && id > 0) {
+            // Guardar el ID encontrado para futuras referencias
+            localStorage.setItem("pacienteId", id.toString());
+            return id;
+          }
+        }
+      } catch (error) {
+        console.error("Error al parsear patientData:", error);
+      }
+    }
+
+    // Intentar obtener desde el token JWT si está disponible
+    const token = this.getToken();
+    if (token && !this.jwtHelper.isTokenExpired(token)) {
+      try {
+        const decodedToken = this.jwtHelper.decodeToken(token);
+        console.log("Token decodificado:", decodedToken);
+
+        // Buscar el claim pacienteId específicamente para usuarios tipo PACIENTE
+        if (decodedToken && decodedToken.pacienteId) {
+          const id = parseInt(decodedToken.pacienteId.toString());
+          if (!isNaN(id) && id > 0) {
+            console.log("ID del paciente encontrado en token:", id);
+            localStorage.setItem("pacienteId", id.toString());
+            return id;
+          }
+        }
+
+        console.warn("No se encontró pacienteId en el token JWT");
+      } catch (error) {
+        console.error("Error al decodificar token:", error);
+      }
+    }
+
+    return null;
   }
 }

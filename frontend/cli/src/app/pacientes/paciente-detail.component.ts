@@ -723,35 +723,55 @@ export class PacienteDetailComponent implements OnInit {
 
       // Si estamos en la ruta del perfil del paciente, usar el ID del localStorage
       if (path === "paciente-perfil") {
-        const pacienteId = localStorage.getItem("pacienteId");
+        console.log("Entrando a ruta paciente-perfil");
+
+        // Usar el método robusto del AuthService para obtener el ID
+        const pacienteId = this.authService.getCurrentPatientId();
+        console.log("ID del paciente obtenido:", pacienteId);
+
         if (!pacienteId) {
-          console.error("No se encontró el ID del paciente en localStorage");
-          alert("No se pudo cargar el perfil. Por favor, intenta nuevamente.");
-          this.router.navigate(["/paciente-dashboard"]);
+          console.error("No se pudo obtener el ID del paciente actual");
+          alert(
+            "No se pudo cargar el perfil. Por favor, inicia sesión nuevamente."
+          );
+          this.router.navigate(["/ingresar"]);
           return;
         }
-        id = parseInt(pacienteId);
+
+        id = pacienteId;
+        console.log("ID final del paciente a buscar:", id);
       } else {
         // Para rutas de admin, usar el parámetro de la URL
         id = +this.route.snapshot.paramMap.get("id")!;
       }
 
-      this.pacienteService.get(id).subscribe((dp: DataPackage<Paciente>) => {
-        this.paciente = dp.data;
+      console.log("Llamando a pacienteService.get con ID:", id);
+      this.pacienteService.get(id).subscribe({
+        next: (dp: DataPackage<Paciente>) => {
+          console.log("Respuesta del servicio de paciente:", dp);
+          this.paciente = dp.data;
 
-        // Asignar la obra social asociada al paciente
-        if (this.paciente.obraSocial) {
-          const obraSocial = this.obrasSociales.find(
-            (os) => os.id === this.paciente.obraSocial?.id
-          );
-          if (obraSocial) {
-            this.paciente.obraSocial = obraSocial;
+          // Asignar la obra social asociada al paciente
+          if (this.paciente.obraSocial) {
+            const obraSocial = this.obrasSociales.find(
+              (os) => os.id === this.paciente.obraSocial?.id
+            );
+            if (obraSocial) {
+              this.paciente.obraSocial = obraSocial;
+            }
           }
-        }
 
-        this.route.queryParams.subscribe((params) => {
-          this.modoEdicion = params["edit"] === "true";
-        });
+          this.route.queryParams.subscribe((params) => {
+            this.modoEdicion = params["edit"] === "true";
+          });
+        },
+        error: (error) => {
+          console.error("Error al obtener los datos del paciente:", error);
+          alert(
+            `Error al cargar el perfil: ${error.message || "Error desconocido"}`
+          );
+          this.router.navigate(["/paciente-dashboard"]);
+        },
       });
     }
   }

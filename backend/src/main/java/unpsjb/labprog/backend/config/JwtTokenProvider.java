@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.business.service.PacienteService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Proveedor de tokens JWT para autenticación
@@ -35,6 +38,11 @@ public class JwtTokenProvider {
     // Tiempo de expiración del refresh token (7 días)
     @Value("${jwt.refresh-token-expiration:604800000}")
     private long refreshTokenExpiration;
+
+    // Servicio para buscar pacientes por email
+    @Autowired
+    @Lazy
+    private PacienteService pacienteService;
 
     /**
      * Extrae el username (email) del token
@@ -106,8 +114,26 @@ public class JwtTokenProvider {
         Map<String, Object> claims = new HashMap<>();
         if (userDetails instanceof User) {
             User user = (User) userDetails;
-            claims.put("userId", user.getId()); // Agregar userId al token
+            claims.put("userId", user.getId());
             claims.put("role", user.getRole() != null ? user.getRole().getName() : "USER");
+
+            // Si el usuario es PACIENTE y tiene relación con Paciente, agregar pacienteId
+            if (user.getRole() != null && "PACIENTE".equalsIgnoreCase(user.getRole().getName())) {
+                try {
+                    // Buscar el paciente asociado por email usando el servicio
+                    // Suponiendo que el email es único y coincide entre User y Paciente
+                    var optionalPacienteDTO = pacienteService.findByEmail(user.getEmail());
+                    System.out.println("Optional pacienteDTO: " + optionalPacienteDTO);
+                    if (optionalPacienteDTO.isPresent()) {
+                        var pacienteDTO = optionalPacienteDTO.get();
+                        if (pacienteDTO.getId() != null) {
+                            claims.put("pacienteId", pacienteDTO.getId());
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignorar si no se puede obtener el paciente
+                }
+            }
         }
         return createToken(claims, userDetails.getUsername(), accessTokenExpiration);
     }
