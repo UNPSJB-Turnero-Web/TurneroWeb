@@ -80,7 +80,10 @@
             <span>Administrador</span>
             <small>Gestión completa del sistema</small>
           </button>
-          <button class="role-btn operador-btn" (click)="selectRole('operador')">
+          <button
+            class="role-btn operador-btn"
+            (click)="selectRole('operador')"
+          >
             <i class="fas fa-user-cog"></i>
             <span>Operador</span>
             <small>Gestión de turnos y operaciones</small>
@@ -123,12 +126,27 @@
         <form (ngSubmit)="loginOperador()" #operadorForm="ngForm">
           <div class="form-group">
             <label for="dni">DNI:</label>
-            <input type="text" id="dni" name="dni" [(ngModel)]="operadorCredentials.dni" class="form-control" required
-              placeholder="Ingresa tu DNI (sin puntos)" pattern="[0-9]+" maxlength="12">
-            <small class="form-text">Ingresa tu DNI sin puntos ni espacios</small>
+            <input
+              type="text"
+              id="dni"
+              name="dni"
+              [(ngModel)]="operadorCredentials.dni"
+              class="form-control"
+              required
+              placeholder="Ingresa tu DNI (sin puntos)"
+              pattern="[0-9]+"
+              maxlength="12"
+            />
+            <small class="form-text"
+              >Ingresa tu DNI sin puntos ni espacios</small
+            >
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-login" [disabled]="!operadorForm.valid">
+            <button
+              type="submit"
+              class="btn btn-login"
+              [disabled]="!operadorForm.valid"
+            >
               <i class="fas fa-sign-in-alt"></i>
               Ingresar
             </button>
@@ -159,13 +177,25 @@
         <form (ngSubmit)="loginMedico()" #medicoForm="ngForm">
           <div class="form-group">
             <label for="matricula">Matrícula:</label>
-            <input type="text" id="matricula" name="matricula" [(ngModel)]="medicoCredentials.matricula"
-              class="form-control" required placeholder="Ingresa tu número de matrícula" pattern="[0-9]{5}-[0-9]{1}"
-              maxlength="7">
+            <input
+              type="text"
+              id="matricula"
+              name="matricula"
+              [(ngModel)]="medicoCredentials.matricula"
+              class="form-control"
+              required
+              placeholder="Ingresa tu número de matrícula"
+              pattern="[0-9]{5}-[0-9]{1}"
+              maxlength="7"
+            />
             <small class="form-text">Formato: 12345-6</small>
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-login" [disabled]="!medicoForm.valid">
+            <button
+              type="submit"
+              class="btn btn-login"
+              [disabled]="!medicoForm.valid"
+            >
               <i class="fas fa-sign-in-alt"></i>
               Ingresar
             </button>
@@ -183,12 +213,27 @@
         <form (ngSubmit)="loginPatient()" #patientForm="ngForm">
           <div class="form-group">
             <label for="dni">DNI:</label>
-            <input type="text" id="dni" name="dni" [(ngModel)]="patientCredentials.dni" class="form-control" required
-              placeholder="Ingresa tu DNI (sin puntos)" pattern="[0-9]+" maxlength="12">
-            <small class="form-text">Ingresa tu DNI sin puntos ni espacios</small>
+            <input
+              type="text"
+              id="dni"
+              name="dni"
+              [(ngModel)]="patientCredentials.dni"
+              class="form-control"
+              required
+              placeholder="Ingresa tu DNI (sin puntos)"
+              pattern="[0-9]+"
+              maxlength="12"
+            />
+            <small class="form-text"
+              >Ingresa tu DNI sin puntos ni espacios</small
+            >
           </div>
           <div class="form-actions">
-            <button type="submit" class="btn btn-login" [disabled]="!patientForm.valid">
+            <button
+              type="submit"
+              class="btn btn-login"
+              [disabled]="!patientForm.valid"
+            >
               <i class="fas fa-sign-in-alt"></i>
               Ingresar
             </button>
@@ -202,7 +247,10 @@
         <!-- Registration prompt -->
         <div class="registration-prompt" *ngIf="showRegistrationPrompt">
           <p>No encontramos tu DNI en el sistema.</p>
-          <button class="btn btn-register" (click)="showRegistrationForm = true">
+          <button
+            class="btn btn-register"
+            (click)="showRegistrationForm = true"
+          >
             <i class="fas fa-user-plus"></i>
             Registrarse como Paciente
           </button>
@@ -215,44 +263,90 @@
         <form (ngSubmit)="submitRegistration()" #registrationForm="ngForm">
           <div class="form-group">
             <label for="regDni">DNI:</label>
-            <input type="text" id="regDni" name="regDni" [(ngModel)]="registrationData.dni" class="form-control"
-              required [value]="patientCredentials.dni">
+            <input
+              type="text"
+              id="regDni"
+              name="regDni"
+              [(ngModel)]="registrationData.dni"
+              class="form-control"
+              required
+              [value]="patientCredentials.dni"
+            />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label for="nombre">Nombre:</label>
-              <input type="text" id="nombre" name="nombre" [(ngModel)]="registrationData.nombre" class="form-control"
-                required placeholder="Tu nombre">
+              <input
+                type="text"
+                id="nombre"
+                name="nombre"
+                [(ngModel)]="registrationData.nombre"
+                class="form-control"
+                required
+                placeholder="Tu nombre"
+              />
             </div>
             <div class="form-group">
               <label for="apellido">Apellido:</label>
-              <input type="text" id="apellido" name="apellido" [(ngModel)]="registrationData.apellido"
-                class="form-control" required placeholder="Tu apellido">
+              <input
+                type="text"
+                id="apellido"
+                name="apellido"
+                [(ngModel)]="registrationData.apellido"
+                class="form-control"
+                required
+                placeholder="Tu apellido"
+              />
             </div>
           </div>
 
           <div class="form-group">
             <label for="email">Email:</label>
-            <input type="email" id="email" name="email" [(ngModel)]="registrationData.email" class="form-control"
-              required placeholder="tu@email.com">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              [(ngModel)]="registrationData.email"
+              class="form-control"
+              required
+              placeholder="tu@email.com"
+            />
           </div>
 
           <div class="form-group">
             <label for="telefono">Teléfono:</label>
-            <input type="tel" id="telefono" name="telefono" [(ngModel)]="registrationData.telefono" class="form-control"
-              required placeholder="Tu número de teléfono">
+            <input
+              type="tel"
+              id="telefono"
+              name="telefono"
+              [(ngModel)]="registrationData.telefono"
+              class="form-control"
+              required
+              placeholder="Tu número de teléfono"
+            />
           </div>
 
           <div class="form-group">
             <label for="fechaNacimiento">Fecha de Nacimiento:</label>
-            <input type="date" id="fechaNacimiento" name="fechaNacimiento"
-              [(ngModel)]="registrationData.fechaNacimiento" class="form-control" required>
+            <input
+              type="date"
+              id="fechaNacimiento"
+              name="fechaNacimiento"
+              [(ngModel)]="registrationData.fechaNacimiento"
+              class="form-control"
+              required
+            />
           </div>
 
           <div class="form-group">
             <label for="obraSocial">Obra Social (opcional):</label>
-            <select id="obraSocial" name="obraSocial" [(ngModel)]="registrationData.obraSocialId" class="form-control">
+            <select
+              id="obraSocial"
+              name="obraSocial"
+              [(ngModel)]="registrationData.obraSocialId"
+              class="form-control"
+            >
               <option value="">Sin obra social</option>
               <option *ngFor="let obra of obrasSociales" [value]="obra.id">
                 {{ obra.nombre }}
@@ -261,12 +355,20 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-register" [disabled]="!registrationForm.valid || isRegistering">
+            <button
+              type="submit"
+              class="btn btn-register"
+              [disabled]="!registrationForm.valid || isRegistering"
+            >
               <i class="fas fa-user-plus" *ngIf="!isRegistering"></i>
               <i class="fas fa-spinner fa-spin" *ngIf="isRegistering"></i>
               {{ isRegistering ? 'Registrando...' : 'Registrar' }}
             </button>
-            <button type="button" class="btn btn-back" (click)="cancelRegistration()">
+            <button
+              type="button"
+              class="btn btn-back"
+              (click)="cancelRegistration()"
+            >
               <i class="fas fa-arrow-left"></i>
               Cancelar
             </button>
