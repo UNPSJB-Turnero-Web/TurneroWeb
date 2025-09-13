@@ -395,9 +395,11 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
     @Query("""
         SELECT t FROM Turno t 
         WHERE t.estado = :estado 
-        AND t.fechaHora <= :fechaLimite
-        AND t.fechaHora > CURRENT_TIMESTAMP
-        ORDER BY t.fechaHora ASC
+        AND (t.fecha < CAST(:fechaLimite AS LocalDate) 
+             OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
+        AND (t.fecha > CURRENT_DATE 
+             OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
+        ORDER BY t.fecha ASC, t.horaInicio ASC
         """)
     List<Turno> findTurnosParaCancelacionAutomatica(
         @Param("estado") EstadoTurno estado,
@@ -414,8 +416,10 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
     @Query("""
         SELECT COUNT(t) FROM Turno t 
         WHERE t.estado = :estado 
-        AND t.fechaHora <= :fechaLimite
-        AND t.fechaHora > CURRENT_TIMESTAMP
+        AND (t.fecha < CAST(:fechaLimite AS LocalDate) 
+             OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
+        AND (t.fecha > CURRENT_DATE 
+             OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
         """)
     long countTurnosParaCancelacionAutomatica(
         @Param("estado") EstadoTurno estado,

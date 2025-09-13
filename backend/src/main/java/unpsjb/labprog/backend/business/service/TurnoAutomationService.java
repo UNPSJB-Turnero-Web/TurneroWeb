@@ -93,33 +93,30 @@ public class TurnoAutomationService {
      * @param turno el turno a cancelar
      */
     private void cancelarTurnoAutomaticamente(Turno turno) {
-        logger.info("🚫 Cancelando turno ID {} - Paciente: {} {} - Fecha: {}", 
+        logger.info("🚫 Cancelando turno ID {} - Paciente: {} {} - Fecha: {} {}", 
             turno.getId(), 
             turno.getPaciente().getNombre(),
             turno.getPaciente().getApellido(),
-            turno.getFechaHora()
+            turno.getFecha(),
+            turno.getHoraInicio()
         );
-        
+
         // Cambiar estado a CANCELADO
         turno.setEstado(EstadoTurno.CANCELADO);
-        turno.setObservaciones(
-            String.format("Cancelado automáticamente por falta de confirmación (%d hs de anticipación)", 
-                         horasAnticipacion)
-        );
-        turno.setFechaModificacion(LocalDateTime.now());
-        
+        // No existe observaciones ni fechaModificacion en Turno, si se requiere guardar motivo, hacerlo en auditoría
+
         // Guardar cambios
         turnoRepository.save(turno);
-        
+
         // Registrar en auditoría
         auditLogService.logTurnoCancelledAutomatically(
-            turno.getId(),
-            turno.getPaciente().getId(),
+            turno.getId() != null ? turno.getId().longValue() : null,
+            turno.getPaciente() != null && turno.getPaciente().getId() != null ? turno.getPaciente().getId().longValue() : null,
             String.format("Cancelación automática por falta de confirmación %d horas antes", horasAnticipacion)
         );
-        
+
         logger.debug("✅ Turno ID {} cancelado y registrado en auditoría", turno.getId());
-        
+
         // TODO: Aquí se podría agregar notificación al paciente
         // notificationService.notificarCancelacionAutomatica(turno);
     }
