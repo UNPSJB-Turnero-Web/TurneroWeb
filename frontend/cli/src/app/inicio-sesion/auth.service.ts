@@ -66,6 +66,33 @@ export interface ChangePasswordRequest {
 }
 
 /**
+ * Interfaz para el request de actualización de perfil
+ */
+export interface UpdateProfileRequest {
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string;
+  dni: string;
+}
+
+/**
+ * Interfaz para la respuesta de actualización de perfil
+ */
+export interface UpdateProfileResponse {
+  message: string;
+  user: {
+    id: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    telefono: string;
+    dni: string;
+    role: string;
+  };
+}
+
+/**
  * Servicio de autenticación que maneja JWT con Spring Boot backend
  */
 @Injectable({
@@ -76,6 +103,8 @@ export class AuthService {
   private readonly ACCESS_TOKEN_KEY = "access_token";
   private readonly REFRESH_TOKEN_KEY = "refresh_token";
   private readonly USER_DATA_KEY = "user_data";
+  private readonly SESSION_SYNC_KEY = "session_sync";
+  private readonly SESSION_TIMESTAMP_KEY = "session_timestamp";
 
   private jwtHelper = new JwtHelperService();
   private authStateSubject = new BehaviorSubject<boolean>(
@@ -84,6 +113,8 @@ export class AuthService {
   public authState$ = this.authStateSubject.asObservable();
 
   private tokenRefreshTimer: any = null;
+  private storageListener: ((event: StorageEvent) => void) | null = null;
+  private timestampUpdateTimer: any = null;
 
   constructor(
     private http: HttpClient,
@@ -91,8 +122,34 @@ export class AuthService {
     private pacienteService: PacienteService,
     private modalService: ModalService
   ) {
+    // Inicializar sincronización de sesiones entre pestañas
+    this.initializeSessionSync();
+    
     // Inicializar el auto-refresh si hay un token válido
     this.initializeTokenRefresh();
+    
+    // Inicializar actualización periódica de timestamp para sessionStorage
+    this.startPeriodicTimestampUpdate();
+  }
+
+  /**
+   * Verifica si ya existe una sesión activa que impida el login
+   * @returns true si hay una sesión activa que debe prevenir el login
+   */
+  public hasActiveSessionConflict(): boolean {
+    const sessionTimestamp = localStorage.getItem(this.SESSION_TIMESTAMP_KEY);
+    const currentTime = Date.now();
+    
+    if (sessionTimestamp) {
+      const sessionTime = parseInt(sessionTimestamp);
+      // Si hay una sesión de hace menos de 30 minutos
+      if (currentTime - sessionTime < 1800000) { // 30 minutos
+        // Verificar si hay tokens válidos en cualquier storage
+        return this.hasValidTokensInAnyStorage();
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -101,6 +158,13 @@ export class AuthService {
    * @returns Observable con la respuesta del backend
    */
   login(loginData: LoginData): Observable<DataPackage<LoginResponse>> {
+    // Verificar si ya existe una sesión activa
+    if (this.hasActiveSessionConflict()) {
+      const errorMessage = 'Ya existe una sesión activa. Por favor, cierre la sesión en las otras pestañas antes de iniciar una nueva sesión.';
+      this.modalService.alert('Sesión Activa Detectada', errorMessage);
+      return throwError(() => new Error(errorMessage));
+    }
+
     const loginPayload = {
       email: loginData.email,
       password: loginData.password,
@@ -116,6 +180,17 @@ export class AuthService {
           if (response.data) {
             this.storeTokens(response.data, loginData.rememberMe);
             this.authStateSubject.next(true);
+            this.updateSessionTimestamp();
+            
+            // Notificar a otras pestañas sobre el login con un pequeño delay
+            // para asegurar que los datos se hayan guardado correctamente
+            setTimeout(() => {
+              this.notifyOtherTabs('login', {
+                email: response.data.email,
+                role: response.data.role
+              });
+            }, 100);
+            
             // Programar el refresh automático para el nuevo token
             this.scheduleTokenRefresh(response.data.accessToken);
           }
@@ -153,6 +228,15 @@ export class AuthService {
   ): void {
     this.storeTokens(loginResponse, rememberMe);
     this.authStateSubject.next(true);
+    
+    // Notificar a otras pestañas sobre el login con delay
+    setTimeout(() => {
+      this.notifyOtherTabs('login', {
+        email: loginResponse.email,
+        role: loginResponse.role
+      });
+    }, 100);
+    
     // Programar el refresh automático para el nuevo token
     this.scheduleTokenRefresh(loginResponse.accessToken);
   }
@@ -177,6 +261,12 @@ export class AuthService {
         fullName: loginResponse.nombre,
       })
     );
+
+    // Guardar userRole siempre en localStorage para sincronización entre pestañas
+    localStorage.setItem("userRole", loginResponse.role);
+    
+    // Actualizar timestamp de sesión
+    this.updateSessionTimestamp();
   }
 
   /**
@@ -257,6 +347,9 @@ export class AuthService {
     // Datos específicos de administradores
     const adminKeys = ["adminId", "adminData", "permissions"];
 
+    // Claves de sincronización de sesión
+    const sessionSyncKeys = [this.SESSION_SYNC_KEY, this.SESSION_TIMESTAMP_KEY];
+
     // Combinar todas las claves que pueden existir
     const allKeys = [
       ...tokenKeys,
@@ -265,6 +358,7 @@ export class AuthService {
       ...medicoKeys,
       ...operadorKeys,
       ...adminKeys,
+      ...sessionSyncKeys,
     ];
 
     // Limpiar de localStorage
@@ -444,7 +538,7 @@ export class AuthService {
         this.router.navigate(["/medico-dashboard"]);
         break;
       case "ADMINISTRADOR":
-        this.router.navigate(["/turnos"]);
+        this.router.navigate(["/admin-dashboard"]);
         break;
       default:
         this.router.navigate(["/"]);
@@ -504,6 +598,9 @@ export class AuthService {
 
     // Actualizar estado de autenticación
     this.authStateSubject.next(false);
+
+    // Notificar a otras pestañas sobre el logout
+    this.notifyOtherTabs('logout');
 
     // Redirigir al login
     this.router.navigate(["/ingresar"]);
@@ -602,6 +699,52 @@ export class AuthService {
         headers,
       })
       .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Actualiza los datos del perfil del usuario autenticado
+   * @param request Datos de actualización de perfil
+   * @returns Observable con la respuesta del servidor
+   */
+  updateProfile(request: UpdateProfileRequest): Observable<DataPackage<UpdateProfileResponse>> {
+    const headers = new HttpHeaders({
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${this.getToken()}`,
+    });
+
+    return this.http
+      .put<DataPackage<UpdateProfileResponse>>(`${this.API_BASE_URL}/update-profile`, request, {
+        headers,
+      })
+      .pipe(
+        tap((response) => {
+          // Actualizar los datos del usuario en el localStorage si la actualización es exitosa
+          if (response.status_code === 200 && response.data?.user) {
+            // Obtener datos actuales del usuario
+            const currentUserStr = localStorage.getItem('currentUser');
+            if (currentUserStr) {
+              try {
+                const currentUser = JSON.parse(currentUserStr);
+                const updatedUser = {
+                  ...currentUser,
+                  nombre: response.data.user.nombre,
+                  apellido: response.data.user.apellido,
+                  email: response.data.user.email,
+                  telefono: response.data.user.telefono,
+                  dni: response.data.user.dni
+                };
+                localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                
+                // Notificar a otras pestañas sobre el cambio
+                localStorage.setItem('userDataUpdated', Date.now().toString());
+              } catch (error) {
+                console.error('Error updating user data in localStorage:', error);
+              }
+            }
+          }
+        }),
+        catchError(this.handleError)
+      );
   }
 
   /**
@@ -806,6 +949,14 @@ export class AuthService {
         })
       );
     }
+
+    // Actualizar userRole siempre en localStorage si viene en la respuesta
+    if (loginResponse.role) {
+      localStorage.setItem("userRole", loginResponse.role);
+    }
+    
+    // Actualizar timestamp de sesión
+    this.updateSessionTimestamp();
   }
 
   /**
@@ -845,5 +996,270 @@ export class AuthService {
           return throwError(() => error);
         })
       );
+  }
+
+  /**
+   * Inicializa la sincronización de sesiones entre pestañas
+   */
+  private initializeSessionSync(): void {
+    // Verificar si ya existe una sesión activa en otra pestaña
+    this.checkExistingSession();
+    
+    // Escuchar cambios en localStorage para sincronizar entre pestañas
+    this.setupStorageListener();
+  }
+
+  /**
+   * Verifica si ya existe una sesión activa en otra pestaña
+   */
+  private checkExistingSession(): void {
+    const sessionTimestamp = localStorage.getItem(this.SESSION_TIMESTAMP_KEY);
+    const currentTime = Date.now();
+    
+    if (sessionTimestamp) {
+      const sessionTime = parseInt(sessionTimestamp);
+      // Si la sesión es de hace menos de 1 hora
+      if (currentTime - sessionTime < 3600000) {
+        // Verificar si hay tokens válidos en cualquier storage
+        const hasValidSession = this.hasValidTokensInAnyStorage();
+        
+        if (hasValidSession) {
+          console.log('🔄 Sesión activa detectada en otra pestaña');
+          this.authStateSubject.next(true);
+          this.updateSessionTimestamp();
+          return;
+        }
+      }
+    }
+    
+    // Si llegamos aquí, verificar si esta pestaña ya tiene una sesión activa
+    if (this.getToken() && !this.jwtHelper.isTokenExpired(this.getToken()!)) {
+      console.log('🔄 Sesión válida en esta pestaña, actualizando timestamp');
+      this.updateSessionTimestamp();
+    }
+  }
+
+  /**
+   * Verifica si hay tokens válidos en localStorage o sessionStorage
+   */
+  private hasValidTokensInAnyStorage(): boolean {
+    // Verificar localStorage
+    const localToken = localStorage.getItem(this.ACCESS_TOKEN_KEY);
+    if (localToken && !this.jwtHelper.isTokenExpired(localToken)) {
+      return true;
+    }
+    
+    // Verificar sessionStorage
+    const sessionToken = sessionStorage.getItem(this.ACCESS_TOKEN_KEY);
+    if (sessionToken && !this.jwtHelper.isTokenExpired(sessionToken)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Configura el listener para eventos de storage (cambios en otras pestañas)
+   */
+  private setupStorageListener(): void {
+    if (typeof window !== 'undefined') {
+      this.storageListener = (event: StorageEvent) => {
+        if (event.key === this.SESSION_SYNC_KEY) {
+          const syncData = event.newValue;
+          if (syncData) {
+            const data = JSON.parse(syncData);
+            this.handleSessionSync(data);
+          }
+        } else if (event.key === this.ACCESS_TOKEN_KEY) {
+          // Si se elimina el token en otra pestaña, cerrar sesión aquí también
+          if (!event.newValue && this.isAuthenticated()) {
+            console.log('🚪 Sesión cerrada en otra pestaña, cerrando aquí también');
+            this.forceLogout();
+          }
+          // Si se agrega un token en otra pestaña, sincronizar
+          else if (event.newValue && !this.isAuthenticated()) {
+            console.log('🔑 Nueva sesión detectada en otra pestaña');
+            this.authStateSubject.next(true);
+            this.updateSessionTimestamp();
+          }
+        }
+      };
+      
+      window.addEventListener('storage', this.storageListener);
+    }
+  }
+
+  /**
+   * Maneja la sincronización cuando se recibe un evento de otra pestaña
+   */
+  private handleSessionSync(data: any): void {
+    switch (data.action) {
+      case 'login':
+        // Al recibir notificación de login en otra pestaña
+        console.log('🔄 Nueva sesión detectada en otra pestaña');
+        
+        // Si esta pestaña no tiene sesión, mostrar notificación
+        if (!this.hasValidTokensInAnyStorage()) {
+          this.modalService.alert(
+            'Sesión Iniciada en Otra Pestaña',
+            'Se ha detectado un inicio de sesión en otra pestaña. Esta pestaña se mantendrá en la página de login.'
+          );
+        }
+        // Si esta pestaña tiene tokens en sessionStorage, forzar logout
+        else if (sessionStorage.getItem(this.ACCESS_TOKEN_KEY)) {
+          console.log('� Forzando logout por nueva sesión en otra pestaña');
+          this.modalService.alert(
+            'Nueva Sesión Detectada',
+            'Se ha iniciado una nueva sesión en otra pestaña. Su sesión actual será cerrada.'
+          );
+          setTimeout(() => this.forceLogoutPreservingNewSession(data.data), 2000);
+        }
+        break;
+        
+      case 'logout':
+        if (this.isAuthenticated()) {
+          console.log('🔄 Sincronizando logout desde otra pestaña');
+          this.forceLogout();
+        }
+        break;
+        
+      case 'token_refresh':
+        // Solo sincronizar si los tokens están en localStorage
+        if (localStorage.getItem(this.ACCESS_TOKEN_KEY)) {
+          console.log('🔄 Token actualizado en otra pestaña');
+          this.authStateSubject.next(true);
+        }
+        break;
+    }
+  }
+
+  /**
+   * Actualiza el timestamp de la sesión
+   */
+  private updateSessionTimestamp(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.SESSION_TIMESTAMP_KEY, Date.now().toString());
+    }
+  }
+
+  /**
+   * Inicia un timer periódico para actualizar el timestamp cuando hay sesiones en sessionStorage
+   */
+  private startPeriodicTimestampUpdate(): void {
+    if (typeof window !== 'undefined') {
+      // Actualizar timestamp cada 5 minutos si hay una sesión activa
+      this.timestampUpdateTimer = setInterval(() => {
+        if (this.hasValidTokensInAnyStorage()) {
+          this.updateSessionTimestamp();
+        }
+      }, 300000); // 5 minutos
+    }
+  }
+
+  /**
+   * Notifica a otras pestañas sobre cambios de sesión
+   */
+  private notifyOtherTabs(action: string, data?: any): void {
+    if (typeof window !== 'undefined') {
+      const syncData = {
+        action,
+        timestamp: Date.now(),
+        data: data || null
+      };
+      
+      localStorage.setItem(this.SESSION_SYNC_KEY, JSON.stringify(syncData));
+      // Eliminar inmediatamente para permitir múltiples notificaciones
+      setTimeout(() => {
+        localStorage.removeItem(this.SESSION_SYNC_KEY);
+      }, 100);
+    }
+  }
+
+  /**
+   * Fuerza el cierre de sesión sin notificar a otras pestañas
+   */
+  private forceLogout(): void {
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+    
+    this.clearAllStorageData();
+    this.authStateSubject.next(false);
+    
+    // Redirigir a login si no estamos ya ahí
+    if (this.router.url !== '/ingresar') {
+      this.router.navigate(['/ingresar']);
+    }
+  }
+
+  /**
+   * Fuerza el cierre de sesión sin tocar localStorage (para preservar nueva sesión)
+   * @param newSessionData Datos de la nueva sesión (no se usa pero se mantiene por compatibilidad)
+   */
+  private forceLogoutPreservingNewSession(newSessionData?: any): void {
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+      this.tokenRefreshTimer = null;
+    }
+    
+    // NO limpiar localStorage - solo limpiar sessionStorage de esta pestaña
+    // para evitar borrar los datos de la nueva sesión
+    const sessionKeys = [
+      this.ACCESS_TOKEN_KEY,
+      this.REFRESH_TOKEN_KEY,
+      this.USER_DATA_KEY,
+      "userRole",
+      "userId",
+      "userName",
+      "userEmail",
+      "id",
+      "currentUser",
+      "pacienteId",
+      "patientData",
+      "patientDNI",
+      "medicoId",
+      "medicoData",
+      "medicoMatricula",
+      "especialidadId",
+      "staffMedicoId",
+      "notificacionesMedico",
+      "operadorId",
+      "operadorData",
+      "operadorDNI",
+      "centroAsignado",
+      "adminId",
+      "adminData",
+      "permissions"
+    ];
+    
+    // Solo limpiar sessionStorage (no localStorage) 
+    sessionKeys.forEach((key) => {
+      sessionStorage.removeItem(key);
+    });
+    
+    this.authStateSubject.next(false);
+    
+    // Redirigir a login si no estamos ya ahí
+    if (this.router.url !== '/ingresar') {
+      this.router.navigate(['/ingresar']);
+    }
+  }
+
+  /**
+   * Cleanup al destruir el servicio
+   */
+  ngOnDestroy(): void {
+    if (this.storageListener && typeof window !== 'undefined') {
+      window.removeEventListener('storage', this.storageListener);
+    }
+    
+    if (this.tokenRefreshTimer) {
+      clearTimeout(this.tokenRefreshTimer);
+    }
+    
+    if (this.timestampUpdateTimer) {
+      clearInterval(this.timestampUpdateTimer);
+    }
   }
 }

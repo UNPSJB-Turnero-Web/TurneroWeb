@@ -14,7 +14,7 @@ export class AdminOperadorGuard implements CanActivate {
   canActivate(): boolean {
 
     //DESARROLLO: acceso libre a todas las rutas
-    return true; // quitar esta línea para activar la protección de rutas
+    //return true; // quitar esta línea para activar la protección de rutas
 
     //PRODUCCION: rutas protegidas
 
@@ -30,7 +30,6 @@ export class AdminOperadorGuard implements CanActivate {
     if (userRole === 'ADMINISTRADOR' || userRole === 'OPERADOR') {
       return true;
     } else {
-      this.router.navigate(['/']);
       return false;
     }
   }
