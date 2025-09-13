@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import unpsjb.labprog.backend.business.service.UserService;
 import unpsjb.labprog.backend.model.Role;
+import unpsjb.labprog.backend.model.User;
 
 /**
  * Componente que se ejecuta al inicio de la aplicación para crear 
@@ -68,7 +69,7 @@ public class AdminInitializer implements CommandLineRunner {
             // Crear el usuario administrador usando UserService
             String hashedPassword = passwordEncoder.encode(adminPassword);
             
-            userService.createUserWithAudit(
+            User adminUser = userService.createUserWithAudit(
                 adminNombre,
                 adminApellido, 
                 adminDni,
@@ -78,6 +79,12 @@ public class AdminInitializer implements CommandLineRunner {
                 "ADMINISTRADOR",
                 "SYSTEM_INITIAL_SEED"
             );
+            
+            // Activar la cuenta del administrador (emailVerified = true)
+            adminUser.activateAccount();
+            userService.save(adminUser);
+            
+            logger.info("✅ Cuenta de administrador activada automáticamente (email verificado)");
             
             
             logger.info("✅ Administrador inicial creado exitosamente:");
