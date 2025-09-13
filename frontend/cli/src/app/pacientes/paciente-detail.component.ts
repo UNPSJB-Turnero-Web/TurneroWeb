@@ -734,6 +734,7 @@ export class PacienteDetailComponent implements OnInit {
           alert(
             "No se pudo cargar el perfil. Por favor, inicia sesión nuevamente."
           );
+          this.authService.logout();
           this.router.navigate(["/ingresar"]);
           return;
         }

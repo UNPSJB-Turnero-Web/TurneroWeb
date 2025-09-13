@@ -52,7 +52,10 @@ import { OperadorDashboardComponent } from "./operador/operador-dashboard.compon
 import { OperadoresComponent } from "./operador/operadores.component";
 import { OperadorDetailComponent } from "./operador/operador-detail.component";
 import { OperadorAgendaComponent } from "./operador/operador-agenda.component";
+import { OperadorPerfilComponent } from "./operador/operador-perfil.component";
+import { AdminPerfilComponent } from "./admin/admin-perfil.component";
 import { TokenStatusComponent } from "./components/token-status.component";
+import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -83,6 +86,16 @@ export const routes: Routes = [
     path: "operadores/:id",
     component: OperadorDetailComponent,
     canActivate: [OperadorGuard],
+  },
+  {
+    path: "operador-perfil",
+    component: OperadorPerfilComponent,
+    canActivate: [OperadorGuard],
+  },
+  {
+    path: "admin-perfil",
+    component: AdminPerfilComponent,
+    canActivate: [AdminGuard],
   },
 
   // rutas de autenticación
@@ -308,6 +321,11 @@ export const routes: Routes = [
   {
     path: "esquema-turno/:id",
     component: EsquemaTurnoDetailComponent,
+    canActivate: [AdminGuard],
+  },
+  {
+    path: "admin-dashboard",
+    component: AdminDashboardComponent,
     canActivate: [AdminGuard],
   },
 ];

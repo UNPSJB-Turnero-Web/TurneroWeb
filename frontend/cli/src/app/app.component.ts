@@ -86,8 +86,8 @@ import { AuthService } from "./inicio-sesion/auth.service";
               <a
                 ngbDropdownItem
                 class="dropdown-item"
-                (click)="navigateTo('/operador-dashboard')"
-                [class.active]="isRouteActive('/operador-dashboard')"
+                (click)="goToDashboard()"
+                [class.active]="isRouteActive(getDashboardRoute())"
               >
                 <i
                   class="fas fa-user-cog icon-item icon-operador-dashboard"
@@ -402,7 +402,8 @@ import { AuthService } from "./inicio-sesion/auth.service";
               <a
                 ngbDropdownItem
                 class="dropdown-item"
-                routerLink="/paciente-perfil"
+                (click)="goToUserProfile()"
+                style="cursor: pointer;"
               >
                 <i class="fas fa-cog icon-item icon-configuracion"></i>
                 <div class="item-content">
@@ -1172,6 +1173,46 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.navigate([route]);
   }
 
+  // Método para obtener la ruta del dashboard según el rol del usuario
+  getDashboardRoute(): string {
+    const role = this.authService.getUserRole();
+    switch(role) {
+      case 'PACIENTE':
+        return '/paciente-dashboard';
+      case 'MEDICO':
+        return '/medico-dashboard';
+      case 'OPERADOR':
+        return '/operador-dashboard';
+      case 'ADMINISTRADOR':
+        return '/admin-dashboard';
+      default:
+        // Error: no se pudo obtener el rol del usuario
+        console.error('Error: No se pudo obtener el rol del usuario. Rol recibido:', role);
+        this.handleAuthenticationError('No se pudo determinar el rol del usuario');
+        return '/ingresar';
+    }
+  }
+
+  // Método para navegar al dashboard correspondiente según el rol
+  goToDashboard(): void {
+    const dashboardRoute = this.getDashboardRoute();
+    this.navigateTo(dashboardRoute);
+  }
+
+  // Método para manejar errores de autenticación
+  private handleAuthenticationError(message: string): void {
+    console.error('Error de autenticación:', message);
+    
+    // Limpiar datos de autenticación
+    this.authService.logout();
+    
+    // Mostrar mensaje de error al usuario
+    alert(`Error de autenticación: ${message}. Será redirigido al login.`);
+    
+    // Redirigir al login
+    this.router.navigate(['/ingresar']);
+  }
+
   // Métodos para gestión de notificaciones de auditoría
   hasUnreadNotifications(): boolean {
     // Mock implementation - debería conectarse con el servicio de notificaciones
@@ -1191,5 +1232,32 @@ export class AppComponent implements OnInit, OnDestroy {
       return 0;
     }
     return this.patientNotificationCount;
+  }
+
+  /**
+   * Navega al perfil/configuración correspondiente según el rol del usuario
+   */
+  goToUserProfile() {
+    const role = this.authService.getUserRole();
+    
+    switch(role) {
+      case 'PACIENTE':
+        this.router.navigate(['/paciente-perfil']);
+        break;
+      case 'MEDICO':
+        this.router.navigate(['/medico-perfil']);
+        break;
+      case 'OPERADOR':
+        this.router.navigate(['/operador-perfil']);
+        break;
+      case 'ADMINISTRADOR':
+        this.router.navigate(['/admin-perfil']);
+        break;
+      default:
+        // Error: no se pudo obtener el rol del usuario
+        console.error('Error: No se pudo obtener el rol del usuario para navegación al perfil. Rol recibido:', role);
+        this.handleAuthenticationError('No se pudo determinar el rol del usuario para acceder al perfil');
+        break;
+    }
   }
 }

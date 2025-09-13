@@ -1827,10 +1827,10 @@ export class OperadorDashboardComponent implements OnInit {
   }
 
   getUserName(): string {
-    return localStorage.getItem("userName") || "Usuario";
+    return this.authService.getUserName() || "Usuario";
   }
   getUserEmail(): string {
-    return localStorage.getItem("userEmail") || "Usuario";
+    return this.authService.getUserEmail() || "Usuario";
   }
 
   ngOnInit() {
