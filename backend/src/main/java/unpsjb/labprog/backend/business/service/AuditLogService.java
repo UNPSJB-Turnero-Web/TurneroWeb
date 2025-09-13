@@ -999,4 +999,40 @@ public class AuditLogService {
             throw new RuntimeException("Error al registrar auditoría de administrador inicial", e);
         }
     }
+
+    /**
+     * Registra cancelación automática de turno
+     * @param turnoId ID del turno cancelado
+     * @param pacienteId ID del paciente afectado
+     * @param motivo Motivo de la cancelación automática
+     * @return AuditLog registro de auditoría creado
+     */
+    @Transactional
+    public AuditLog logTurnoCancelledAutomatically(Long turnoId, Long pacienteId, String motivo) {
+        try {
+            System.out.println("🔍 AUDIT: Registrando cancelación automática de turno ID: " + turnoId);
+            
+            // Usar el constructor genérico de AuditLog que existe en la entidad
+            AuditLog auditLog = new AuditLog(
+                AuditLog.EntityTypes.TURNO,           // entityType
+                turnoId,                              // entityId
+                "CANCELLED_AUTO",                     // action
+                "SYSTEM_AUTO_CANCELLATION",          // performedBy
+                "PROGRAMADO",                         // previousStatus
+                "CANCELADO",                          // newStatus
+                "estado=PROGRAMADO",                  // oldValues
+                "estado=CANCELADO, motivo=" + motivo, // newValues
+                motivo                                // reason
+            );
+            
+            AuditLog saved = auditLogRepository.save(auditLog);
+            
+            System.out.println("✅ AUDIT: Cancelación automática de turno registrada exitosamente. ID Audit: " + saved.getId());
+            return saved;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al auditar cancelación automática de turno: " + e.getMessage());
+            throw new RuntimeException("Error al registrar auditoría de cancelación automática", e);
+        }
+    }
 }

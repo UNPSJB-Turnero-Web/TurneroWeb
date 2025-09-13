@@ -383,4 +383,42 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
         
         return spec;
     }
+
+    /**
+     * Encuentra turnos PROGRAMADOS que deben ser cancelados automáticamente
+     * Busca turnos cuya fecha/hora esté dentro del límite especificado y no hayan sido confirmados
+     * 
+     * @param estado Estado del turno (debe ser PROGRAMADO)
+     * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
+     * @return Lista de turnos que deben ser cancelados
+     */
+    @Query("""
+        SELECT t FROM Turno t 
+        WHERE t.estado = :estado 
+        AND t.fechaHora <= :fechaLimite
+        AND t.fechaHora > CURRENT_TIMESTAMP
+        ORDER BY t.fechaHora ASC
+        """)
+    List<Turno> findTurnosParaCancelacionAutomatica(
+        @Param("estado") EstadoTurno estado,
+        @Param("fechaLimite") java.time.LocalDateTime fechaLimite
+    );
+
+    /**
+     * Cuenta turnos que están por vencer para cancelación automática
+     * 
+     * @param estado Estado del turno (debe ser PROGRAMADO)
+     * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
+     * @return Cantidad de turnos que serían cancelados automáticamente
+     */
+    @Query("""
+        SELECT COUNT(t) FROM Turno t 
+        WHERE t.estado = :estado 
+        AND t.fechaHora <= :fechaLimite
+        AND t.fechaHora > CURRENT_TIMESTAMP
+        """)
+    long countTurnosParaCancelacionAutomatica(
+        @Param("estado") EstadoTurno estado,
+        @Param("fechaLimite") java.time.LocalDateTime fechaLimite
+    );
 }
