@@ -36,6 +36,8 @@ import unpsjb.labprog.backend.dto.RegisterRequest;
 import unpsjb.labprog.backend.dto.RegisterSuccessResponse;
 import unpsjb.labprog.backend.dto.ResendActivationRequestDTO;
 import unpsjb.labprog.backend.dto.TokenValidationDTO;
+import unpsjb.labprog.backend.dto.UpdateProfileRequestDTO;
+import unpsjb.labprog.backend.dto.UpdateProfileResponseDTO;
 import unpsjb.labprog.backend.model.PasswordResetToken;
 import unpsjb.labprog.backend.model.User;
 
@@ -648,6 +650,87 @@ public class AuthController {
                email.length() > 5;
     }
     
+    /**
+     * Actualiza el perfil del usuario autenticado
+     * 
+     * @param request DTO con nombre y email nuevos
+     * @param httpRequest HttpServletRequest para extraer JWT del header
+     * @return ResponseEntity con el resultado de la operación
+     */
+    @PutMapping("/update-profile")
+    public ResponseEntity<Object> updateProfile(@RequestBody UpdateProfileRequestDTO request, 
+                                              HttpServletRequest httpRequest) {
+        try {
+            // Validar datos de entrada
+            if (!request.isValid()) {
+                return Response.error(null, "Nombre y email válidos son requeridos");
+            }
+            
+            // Extraer userId del JWT token
+            Long userId = getCurrentUserId(httpRequest);
+            if (userId == null) {
+                return Response.error(null, "Token JWT requerido. Debe incluir el header Authorization con Bearer token válido.");
+            }
+            
+            // Buscar el usuario
+            Optional<User> userOpt = userService.findById(userId);
+            if (userOpt.isEmpty()) {
+                return Response.error(null, "Usuario no encontrado");
+            }
+            
+            User user = userOpt.get();
+            
+            // Verificar si el email ya está en uso por otro usuario
+            if (!user.getEmail().equals(request.getEmail())) {
+                Optional<User> existingUser = userService.findByEmail(request.getEmail());
+                if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                    return Response.error(null, "El email ya está en uso por otro usuario");
+                }
+            }
+            
+            // Actualizar el usuario con todos los campos
+            user.setNombre(request.getNombre());
+            user.setApellido(request.getApellido());
+            user.setEmail(request.getEmail());
+            user.setTelefono(request.getTelefono());
+            
+            // Manejar DNI - convertir String a Long si es válido
+            if (request.getDni() != null && !request.getDni().trim().isEmpty()) {
+                try {
+                    Long dniValue = Long.valueOf(request.getDni().trim());
+                    user.setDni(dniValue);
+                } catch (NumberFormatException e) {
+                    return Response.error(null, "DNI debe ser un número válido");
+                }
+            }
+            
+            User updatedUser = userService.save(user);
+            
+            // Crear UserDTO con todos los datos
+            UpdateProfileResponseDTO.UserDTO userDTO = new UpdateProfileResponseDTO.UserDTO(
+                updatedUser.getId(),
+                updatedUser.getNombre(),
+                updatedUser.getApellido(),
+                updatedUser.getEmail(),
+                updatedUser.getTelefono(),
+                updatedUser.getDni() != null ? updatedUser.getDni().toString() : null,
+                updatedUser.getRole().getName()
+            );
+            
+            UpdateProfileResponseDTO response = new UpdateProfileResponseDTO(
+                "Perfil actualizado correctamente",
+                userDTO
+            );
+            
+            logger.info("Perfil actualizado para usuario ID: {}", userId);
+            return Response.ok(response, "Perfil actualizado correctamente");
+            
+        } catch (Exception e) {
+            logger.error("Error actualizando perfil: {}", e.getMessage(), e);
+            return Response.error(null, "Error interno del servidor al actualizar el perfil");
+        }
+    }
+
     /**
      * Enmascara un email para mostrar solo parte de él
      */

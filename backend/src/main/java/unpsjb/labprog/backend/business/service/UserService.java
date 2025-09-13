@@ -60,6 +60,15 @@ public class UserService implements UserDetailsService {
     // ===============================
     
     /**
+     * Busca un usuario por ID
+     * @param id ID del usuario
+     * @return Optional<User> usuario encontrado o vacío
+     */
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    /**
      * Busca un usuario por email
      * @param email email del usuario
      * @return Optional<User> usuario encontrado o vacío
