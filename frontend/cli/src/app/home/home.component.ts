@@ -49,6 +49,12 @@ export class HomeComponent {
     dni: "",
   };
 
+  // Datos para búsqueda de CAP
+  capSearchData = {
+    tipoAtencion: "",
+    sintomas: ""
+  };
+
   constructor(
     private router: Router,
     private pacienteService: PacienteService,
@@ -352,5 +358,28 @@ export class HomeComponent {
       fechaNacimiento: "",
       obraSocialId: "",
     };
+  }
+
+  // Método para buscar CAPs
+  buscarCAPS() {
+    console.log('Búsqueda de CAP:', this.capSearchData);
+    
+    // Mostrar mensaje temporal mientras se implementa la funcionalidad completa
+    alert(`Buscando centros de atención para:
+Tipo: ${this.getTipoAtencionLabel(this.capSearchData.tipoAtencion)}
+Síntomas/Observaciones: ${this.capSearchData.sintomas || 'No especificado'}
+
+Esta funcionalidad será completamente implementada próximamente.`);
+  }
+
+  // Método auxiliar para mostrar las etiquetas amigables
+  private getTipoAtencionLabel(tipo: string): string {
+    const labels: { [key: string]: string } = {
+      'MEDICO_CLINICO': 'Médico Clínico',
+      'VACUNACION': 'Vacunación',
+      'NINO_SANO': 'Niño Sano',
+      'MADRE_SANA': 'Madre Sana'
+    };
+    return labels[tipo] || tipo;
   }
 }

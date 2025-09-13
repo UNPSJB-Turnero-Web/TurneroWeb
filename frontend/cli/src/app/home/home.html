@@ -1,5 +1,59 @@
 <div class="home-container">
-  <!-- Hero Section -->
+  <!-- Banner de Búsqueda de CAP - AHORA PRIMERO -->
+  <div class="cap-search-banner">
+    <div class="cap-search-container">
+      <div class="cap-search-header">
+        <i class="fas fa-map-marker-alt"></i>
+        <h2>Busca tu Centro de Atención (CAP) más cercano</h2>
+      </div>
+      <form class="cap-search-form" (ngSubmit)="buscarCAPS()" #capForm="ngForm">
+        <div class="search-fields">
+          <div class="field-group tipo-atencion">
+            <label for="tipoAtencion">Tipo de atención</label>
+            <select 
+              id="tipoAtencion" 
+              name="tipoAtencion" 
+              [(ngModel)]="capSearchData.tipoAtencion" 
+              class="form-control"
+              required>
+              <option value="">Selecciona tipo de atención</option>
+              <option value="MEDICO_CLINICO">Médico Clínico</option>
+              <option value="VACUNACION">Vacunación</option>
+              <option value="NINO_SANO">Niño Sano</option>
+              <option value="MADRE_SANA">Madre Sana</option>
+            </select>
+          </div>
+          
+          <div class="field-group sintomas">
+            <label for="sintomas">Síntomas / Observaciones</label>
+            <input 
+              type="text" 
+              id="sintomas" 
+              name="sintomas" 
+              [(ngModel)]="capSearchData.sintomas" 
+              class="form-control"
+              placeholder="Describe tus síntomas o necesidades específicas"
+              maxlength="200">
+          </div>
+          
+          <div class="field-group search-btn">
+            <button type="submit" class="btn btn-search-cap" [disabled]="!capForm.valid">
+              <i class="fas fa-search"></i>
+              Buscar CAPS por cercanía
+            </button>
+          </div>
+        </div>
+      </form>
+      
+      <!-- Mensaje informativo -->
+      <div class="cap-info">
+        <i class="fas fa-info-circle"></i>
+        <span>Encuentra el centro de atención más cercano a tu ubicación y solicita tu turno de manera rápida y sencilla</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section - AHORA SEGUNDO -->
   <div class="hero-section">
     <div class="hero-content">
       <div class="brand-logo">
