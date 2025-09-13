@@ -8,6 +8,7 @@ import { Especialidad } from '../especialidades/especialidad';
 import { EspecialidadService } from '../especialidades/especialidad.service';
 import { DataPackage } from '../data.package';
 import { ModalService } from '../modal/modal.service';
+import { AuthService } from '../inicio-sesion/auth.service';
 
 @Component({
   selector: 'app-medico-detail',
@@ -693,7 +694,8 @@ export class MedicoDetailComponent implements OnInit {
     private especialidadService: EspecialidadService,
     private route: ActivatedRoute,
     private router: Router,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -823,29 +825,71 @@ export class MedicoDetailComponent implements OnInit {
       return;
     }
     
-    // Crear una copia del médico sin el campo especialidad para enviar al backend
-    const medicoParaEnviar = {
-      id: this.medico.id,
-      nombre: this.medico.nombre,
-      apellido: this.medico.apellido,
-      dni: this.medico.dni,
-      matricula: this.medico.matricula,
-      especialidades: this.medico.especialidades
-    };
-    
-    const operacion = this.esNuevo ? 'crear' : 'actualizar';
-    const op = this.medico.id
-      ? this.medicoService.update(this.medico.id, medicoParaEnviar)
-      : this.medicoService.create(medicoParaEnviar);
+    const userRole = this.authService.getUserRole();
+    let op;
+
+    if (this.medico.id) {
+      // Para actualizaciones, siempre usar update
+      const medicoParaEnviar = {
+        id: this.medico.id,
+        nombre: this.medico.nombre,
+        apellido: this.medico.apellido,
+        dni: this.medico.dni,
+        matricula: this.medico.matricula,
+        especialidades: this.medico.especialidades
+      };
+      op = this.medicoService.update(this.medico.id, medicoParaEnviar);
+    } else {
+      // Para creaciones, usar el endpoint correcto según el tipo de usuario
+      const userEmail = this.authService.getUserEmail();
+      const userData = this.authService.getUserData();
       
+      // Preparar el médico con la información de auditoría  
+      const medicoToCreate = {
+        id: this.medico.id,
+        nombre: this.medico.nombre,
+        apellido: this.medico.apellido,
+        dni: this.medico.dni,
+        matricula: this.medico.matricula,
+        especialidades: this.medico.especialidades,
+        performedBy: userEmail || userData?.email || userRole || "UNKNOWN"
+      };
+
+      if (userRole === "ADMINISTRADOR") {
+        op = this.medicoService.createByAdmin(medicoToCreate);
+      } else if (userRole === "OPERADOR") {
+        op = this.medicoService.createByOperador(medicoToCreate);
+      } else {
+        this.modalService.alert(
+          "Error",
+          "No tienes permisos para crear médicos. Solo administradores y operadores pueden crear médicos."
+        );
+        return;
+      }
+    }
+
     op.subscribe({
-      next: () => {
+      next: (response) => {
+        const roleText = userRole === "ADMINISTRADOR" ? " por administrador" : 
+                        userRole === "OPERADOR" ? " por operador" : "";
+        const successMessage = this.esNuevo 
+          ? `Médico creado correctamente${roleText}`
+          : "Médico actualizado correctamente";
+          
+        this.modalService.alert("Éxito", successMessage);
         this.router.navigate(['/medicos']);
       },
       error: (err) => {
-        const mensaje = err?.error?.message || `No se pudo ${operacion} el médico. Intente nuevamente.`;
-        this.modalService.alert("Error", mensaje);
-        console.error(`Error al ${operacion} médico:`, err);
+        let errorMessage = "Error al guardar el médico.";
+        
+        if (err?.error?.status_text) {
+          errorMessage = err.error.status_text;
+        } else if (err?.error?.message) {
+          errorMessage = err.error.message;
+        }
+        
+        this.modalService.alert("Error", errorMessage);
+        console.error("Error al guardar médico:", err);
       }
     });
   }

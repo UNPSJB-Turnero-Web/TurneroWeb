@@ -818,6 +818,7 @@ export class PacienteDetailComponent implements OnInit {
       return;
     }
 
+    const userRole = this.authService.getUserRole();
     let op;
 
     if (this.paciente.id) {
@@ -825,34 +826,49 @@ export class PacienteDetailComponent implements OnInit {
       op = this.pacienteService.update(this.paciente.id, this.paciente);
     } else {
       // Para creaciones, usar el endpoint correcto según el tipo de usuario
-      const userRole = this.authService.getUserRole();
+      const userEmail = this.authService.getUserEmail();
+      const userData = this.authService.getUserData();
+      
+      // Preparar el paciente con la información de auditoría  
+      const pacienteToCreate = {
+        ...this.paciente,
+        performedBy: userEmail || userData?.email || userRole || "UNKNOWN"
+      };
 
       if (userRole === "ADMINISTRADOR") {
-        op = this.pacienteService.createByAdmin(this.paciente);
+        op = this.pacienteService.createByAdmin(pacienteToCreate);
       } else if (userRole === "OPERADOR") {
-        op = this.pacienteService.createByOperator(this.paciente);
+        op = this.pacienteService.createByOperator(pacienteToCreate);
       } else {
         this.modalService.alert(
           "Error",
-          "No tienes permisos para crear pacientes"
+          "No tienes permisos para crear pacientes. Solo administradores y operadores pueden crear pacientes."
         );
         return;
       }
     }
 
     op.subscribe({
-      next: () => {
-        this.modalService.alert(
-          "Éxito",
-          this.esNuevo()
-            ? "Paciente creado correctamente"
-            : "Paciente actualizado correctamente"
-        );
+      next: (response) => {
+        const roleText = userRole === "ADMINISTRADOR" ? " por administrador" : 
+                        userRole === "OPERADOR" ? " por operador" : "";
+        const successMessage = this.esNuevo() 
+          ? `Paciente creado correctamente${roleText}`
+          : "Paciente actualizado correctamente";
+          
+        this.modalService.alert("Éxito", successMessage);
         this.router.navigate(["/pacientes"]);
       },
       error: (err) => {
-        const msg = err?.error?.message || "Error al guardar el paciente.";
-        this.modalService.alert("Error", msg);
+        let errorMessage = "Error al guardar el paciente.";
+        
+        if (err?.error?.status_text) {
+          errorMessage = err.error.status_text;
+        } else if (err?.error?.message) {
+          errorMessage = err.error.message;
+        }
+        
+        this.modalService.alert("Error", errorMessage);
         console.error("Error al guardar paciente:", err);
       },
     });

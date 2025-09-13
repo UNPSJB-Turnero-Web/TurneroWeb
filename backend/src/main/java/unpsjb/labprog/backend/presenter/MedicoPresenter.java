@@ -125,16 +125,42 @@ public class MedicoPresenter {
     @PostMapping("/create-by-admin")
     public ResponseEntity<Object> createDoctorByAdmin(@RequestBody MedicoDTO request) {
         try {
-            // Establecer performedBy para indicar que es creado por admin
-            String performedBy = AuditContext.getCurrentUser();
-            if (performedBy == null) {
-                performedBy = request.getPerformedBy() != null ? request.getPerformedBy() : "ADMIN";
+            // Priorizar el performedBy del request, luego AuditContext, luego default
+            String performedBy = request.getPerformedBy();
+            if (performedBy == null || performedBy.trim().isEmpty()) {
+                performedBy = AuditContext.getCurrentUser();
+                if (performedBy == null || performedBy.trim().isEmpty()) {
+                    performedBy = "ADMIN";
+                }
             }
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
             MedicoDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Médico creado correctamente por administrador");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al crear el médico: " + e.getMessage());
+        }
+    }
+
+     @PostMapping("/create-by-operador")
+    public ResponseEntity<Object> createDoctorByOperador(@RequestBody MedicoDTO request) {
+        try {
+            // Priorizar el performedBy del request, luego AuditContext, luego default
+            String performedBy = request.getPerformedBy();
+            if (performedBy == null || performedBy.trim().isEmpty()) {
+                performedBy = AuditContext.getCurrentUser();
+                if (performedBy == null || performedBy.trim().isEmpty()) {
+                    performedBy = "OPERADOR";
+                }
+            }
+            request.setPerformedBy(performedBy);
+
+            // Usar el service que ahora maneja la lógica de auditoría
+            MedicoDTO saved = service.saveOrUpdate(request);
+            return Response.ok(saved, "Médico creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.error(null, e.getMessage());
         } catch (Exception e) {

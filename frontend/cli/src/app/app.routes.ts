@@ -45,6 +45,7 @@ import { AdminGuard } from "./guards/admin.guard";
 import { PatientGuard } from "./guards/patient.guard";
 import { MedicoGuard } from "./guards/medico.guard";
 import { OperadorGuard } from "./guards/operador.guard";
+import { AdminOperadorGuard } from "./guards/admin-operador.guard";
 
 import { OperadorDashboardComponent } from "./operador/operador-dashboard.component";
 //import { OperadorAgendaComponent } from "./operador/operador-agenda.component";
@@ -181,17 +182,17 @@ export const routes: Routes = [
   {
     path: "pacientes",
     component: PacientesComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "pacientes/new",
     component: PacienteDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "pacientes/:id",
     component: PacienteDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "obraSocial",
@@ -253,16 +254,16 @@ export const routes: Routes = [
     component: ConsultorioDetailComponent,
     canActivate: [AdminGuard],
   },
-  { path: "medicos", component: MedicosComponent, canActivate: [AdminGuard] },
+  { path: "medicos", component: MedicosComponent, canActivate: [AdminOperadorGuard] },
   {
     path: "medicos/new",
     component: MedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "medicos/:id",
     component: MedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "staffMedico",

@@ -119,6 +119,58 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
             </div>
           </div>
 
+          <div class="action-card action-pacientes" (click)="goToPacientes()">
+            <div class="card-icon">
+              <i class="fas fa-user-injured"></i>
+            </div>
+            <div class="card-content">
+              <h3>Gestionar Pacientes</h3>
+              <p>Ver y administrar información de pacientes</p>
+            </div>
+            <div class="card-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+
+          <div class="action-card action-nuevo-paciente" (click)="createPaciente()">
+            <div class="card-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="card-content">
+              <h3>Crear Paciente</h3>
+              <p>Registrar un nuevo paciente en el sistema</p>
+            </div>
+            <div class="card-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+
+          <div class="action-card action-medicos" (click)="goToMedicos()">
+            <div class="card-icon">
+              <i class="fas fa-user-md"></i>
+            </div>
+            <div class="card-content">
+              <h3>Gestionar Médicos</h3>
+              <p>Ver y administrar información de médicos</p>
+            </div>
+            <div class="card-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+
+          <div class="action-card action-nuevo-medico" (click)="createMedico()">
+            <div class="card-icon">
+              <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="card-content">
+              <h3>Crear Médico</h3>
+              <p>Registrar un nuevo médico en el sistema</p>
+            </div>
+            <div class="card-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+
           <div
             class="action-card action-notifications"
             (click)="viewNotifications()"
@@ -773,6 +825,22 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
 
     .action-reportes .card-icon {
       background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .action-pacientes .card-icon {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .action-nuevo-paciente .card-icon {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .action-medicos .card-icon {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    }
+
+    .action-nuevo-medico .card-icon {
+      background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
     }
 
     .action-notifications .card-icon {
@@ -2163,5 +2231,23 @@ export class OperadorDashboardComponent implements OnInit {
 
   viewNotifications() {
     this.router.navigate(["/operador-notificaciones"]); // Ruta adaptada para operador
+  }
+
+  // Navegación para gestión de pacientes
+  goToPacientes() {
+    this.router.navigate(["/pacientes"]);
+  }
+
+  createPaciente() {
+    this.router.navigate(["/pacientes/new"]);
+  }
+
+  // Navegación para gestión de médicos
+  goToMedicos() {
+    this.router.navigate(["/medicos"]);
+  }
+
+  createMedico() {
+    this.router.navigate(["/medicos/new"]);
   }
 }

@@ -44,6 +44,22 @@ export class MedicoService {
     return this.http.post<DataPackage<Medico>>(this.medicosUrl, medico);
   }
 
+  /** Crea un nuevo médico por administrador */
+  createByAdmin(medico: Medico): Observable<DataPackage<Medico>> {
+    return this.http.post<DataPackage<Medico>>(
+      `${this.medicosUrl}/create-by-admin`,
+      medico
+    );
+  }
+
+  /** Crea un nuevo médico por operador */
+  createByOperador(medico: Medico): Observable<DataPackage<Medico>> {
+    return this.http.post<DataPackage<Medico>>(
+      `${this.medicosUrl}/create-by-operador`,
+      medico
+    );
+  }
+
   /** Actualiza un médico existente */
   update(id: number, medico: Medico): Observable<DataPackage<Medico>> {
     return this.http.put<DataPackage<Medico>>(`${this.medicosUrl}/${id}`, medico);
