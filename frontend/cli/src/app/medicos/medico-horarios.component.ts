@@ -7,6 +7,7 @@ import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMed
 import { MedicoService } from './medico.service';
 import { Medico } from './medico';
 import { Especialidad } from '../especialidades/especialidad';
+import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 
 @Component({
   selector: 'app-medico-horarios',
@@ -2047,6 +2048,7 @@ export class MedicoHorariosComponent implements OnInit {
     private router: Router,
     private disponibilidadService: DisponibilidadMedicoService,
     private medicoService: MedicoService,
+    private staffMedicoService: StaffMedicoService,
   ) {
     this.initializeParticles();
   }
@@ -2099,6 +2101,60 @@ export class MedicoHorariosComponent implements OnInit {
     
     console.error('No valid medico ID found in localStorage');
     return null;
+  }
+
+  // Helper method to get or fetch staffMedicoId and store it in localStorage
+  private getOrFetchStaffMedicoId(): Promise<number | null> {
+    return new Promise((resolve) => {
+      // First try to get staffMedicoId from localStorage
+      const staffMedicoIdStr = localStorage.getItem('staffMedicoId');
+      
+      if (staffMedicoIdStr && staffMedicoIdStr !== 'null' && staffMedicoIdStr !== '0') {
+        const staffMedicoId = parseInt(staffMedicoIdStr, 10);
+        if (!isNaN(staffMedicoId) && staffMedicoId > 0) {
+          console.log('✅ Found staffMedicoId in localStorage:', staffMedicoId);
+          resolve(staffMedicoId);
+          return;
+        }
+      }
+
+      // If not in localStorage, fetch by medicoId
+      const medicoId = this.getMedicoIdFromLocalStorage();
+      if (!medicoId) {
+        console.error('❌ No medicoId found to search for staffMedicoId');
+        resolve(null);
+        return;
+      }
+
+      console.log('🔍 Searching for StaffMedico by medicoId:', medicoId);
+      
+      this.staffMedicoService.all().subscribe({
+        next: (response: any) => {
+          const staffMedicos = response?.data || [];
+          
+          // Find all StaffMedicos that belong to this doctor
+          const staffMedicosDelMedico = staffMedicos.filter((sm: any) => 
+            sm.medico && sm.medico.id === medicoId
+          );
+          
+          if (staffMedicosDelMedico.length > 0) {
+            const staffMedicoId = staffMedicosDelMedico[0].id;
+            console.log(`✅ Found ${staffMedicosDelMedico.length} StaffMedico records for doctor. Using first one:`, staffMedicoId);
+            
+            // Store in localStorage for future use
+            localStorage.setItem('staffMedicoId', staffMedicoId.toString());
+            resolve(staffMedicoId);
+          } else {
+            console.error('❌ No StaffMedico records found for medicoId:', medicoId);
+            resolve(null);
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ Error fetching StaffMedicos:', error);
+          resolve(null);
+        }
+      });
+    });
   }
 
   ngOnInit() {
@@ -2413,7 +2469,7 @@ Posible problema de configuración. Verifique:
     });
   }
 
-  guardarDisponibilidad() {
+  async guardarDisponibilidad() {
     const horarios = this.horariosForm.filter(h => h.dia && h.horaInicio && h.horaFin);
     
     if (horarios.length === 0) {
@@ -2487,11 +2543,11 @@ Posible problema de configuración. Verifique:
         }
       });
     } else {
-      // Al crear nueva disponibilidad, usar el medicoId del localStorage
-      const staffMedicoId = this.getMedicoIdFromLocalStorage();
+      // Al crear nueva disponibilidad, obtener o buscar el staffMedicoId
+      const staffMedicoIdNum = await this.getOrFetchStaffMedicoId();
 
-      if (!staffMedicoId) {
-        alert('Error: No se pudo obtener el ID del médico. Por favor, inicie sesión nuevamente.');
+      if (!staffMedicoIdNum) {
+        alert('Error: No se pudo obtener el ID del médico en el centro. Por favor, verifique su sesión o contacte al administrador.');
         this.guardando = false;
         this.router.navigate(['/login']);
         return;
@@ -2500,7 +2556,7 @@ Posible problema de configuración. Verifique:
       // Validar que el ID sea consistente con disponibilidades existentes
       if (this.disponibilidades.length > 0) {
         const idExistente = this.disponibilidades[0].staffMedicoId;
-        if (staffMedicoId !== idExistente) {
+        if (staffMedicoIdNum !== idExistente) {
           console.warn(`Inconsistencia de IDs detectada. Usando ID de disponibilidad existente: ${idExistente}`);
           const staffMedicoIdCorregido = idExistente;
           
@@ -2568,13 +2624,13 @@ Posible problema de configuración. Verifique:
         return;
       }
 
-      console.log('Modo creación - usando medicoId del localStorage:', staffMedicoId);
+      console.log('Modo creación - usando staffMedicoId del localStorage:', staffMedicoIdNum);
       console.log('Horarios a guardar:', horarios);
       console.log('Especialidad seleccionada:', this.especialidadSeleccionada);
 
       const nuevaDisponibilidad = {
         id: 0,
-        staffMedicoId,
+        staffMedicoId: staffMedicoIdNum,
         especialidadId: this.especialidadSeleccionada,
         horarios
       } as DisponibilidadMedico;
@@ -2601,8 +2657,8 @@ Posible problema de configuración. Verifique:
           } else if (error.status === 400) {
             // Error 400 podría ser el problema del StaffMedico
             if (error.error?.status_text?.includes('StaffMedico no encontrado')) {
-              errorMessage = `Error: El médico con ID ${staffMedicoId} no existe en el sistema. Por favor, contacte al administrador o inicie sesión nuevamente.`;
-              console.error('StaffMedico no encontrado con ID:', staffMedicoId);
+              errorMessage = `Error: El médico con ID ${staffMedicoIdNum} no existe en el sistema. Por favor, contacte al administrador o inicie sesión nuevamente.`;
+              console.error('StaffMedico no encontrado con ID:', staffMedicoIdNum);
               
               // Limpiar localStorage y redirigir al login
               localStorage.clear();

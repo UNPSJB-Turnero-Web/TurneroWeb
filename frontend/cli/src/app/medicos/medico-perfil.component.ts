@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { MedicoService } from './medico.service';
 import { Medico } from './medico';
 import { AuthService, ChangePasswordRequest } from '../inicio-sesion/auth.service';
+import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 
 interface ConfiguracionNotificaciones {
   emailTurnos: boolean;
@@ -1560,14 +1561,17 @@ export class MedicoPerfilComponent implements OnInit {
     private router: Router,
     private medicoService: MedicoService,
     private formBuilder: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private staffMedicoService: StaffMedicoService
   ) {
     this.initializeParticles();
     this.passwordForm = this.initializePasswordForm();
     this.perfilForm = this.initializePerfilForm();
   }
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Asegurar que staffMedicoId esté disponible en localStorage
+    await this.getOrFetchStaffMedicoId();
     this.cargarDatosMedico();
     this.cargarConfiguracionNotificaciones();
   }
@@ -1796,6 +1800,60 @@ export class MedicoPerfilComponent implements OnInit {
     console.log('=== FIN DEBUG ===');
     
     return id;
+  }
+
+  // Helper method to get or fetch staffMedicoId and store it in localStorage
+  private getOrFetchStaffMedicoId(): Promise<number | null> {
+    return new Promise((resolve) => {
+      // First try to get staffMedicoId from localStorage
+      const staffMedicoIdStr = localStorage.getItem('staffMedicoId');
+      
+      if (staffMedicoIdStr && staffMedicoIdStr !== 'null' && staffMedicoIdStr !== '0') {
+        const staffMedicoId = parseInt(staffMedicoIdStr, 10);
+        if (!isNaN(staffMedicoId) && staffMedicoId > 0) {
+          console.log('✅ Found staffMedicoId in localStorage:', staffMedicoId);
+          resolve(staffMedicoId);
+          return;
+        }
+      }
+
+      // If not in localStorage, fetch by medicoId
+      const medicoId = this.getMedicoIdFromSession();
+      if (!medicoId) {
+        console.error('❌ No medicoId found to search for staffMedicoId');
+        resolve(null);
+        return;
+      }
+
+      console.log('🔍 Searching for StaffMedico by medicoId:', medicoId);
+      
+      this.staffMedicoService.all().subscribe({
+        next: (response: any) => {
+          const staffMedicos = response?.data || [];
+          
+          // Find all StaffMedicos that belong to this doctor
+          const staffMedicosDelMedico = staffMedicos.filter((sm: any) => 
+            sm.medico && sm.medico.id === medicoId
+          );
+          
+          if (staffMedicosDelMedico.length > 0) {
+            const staffMedicoId = staffMedicosDelMedico[0].id;
+            console.log(`✅ Found ${staffMedicosDelMedico.length} StaffMedico records for doctor. Using first one:`, staffMedicoId);
+            
+            // Store in localStorage for future use
+            localStorage.setItem('staffMedicoId', staffMedicoId.toString());
+            resolve(staffMedicoId);
+          } else {
+            console.error('❌ No StaffMedico records found for medicoId:', medicoId);
+            resolve(null);
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ Error fetching StaffMedicos:', error);
+          resolve(null);
+        }
+      });
+    });
   }
 
   private initializeParticles() {

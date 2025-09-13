@@ -521,7 +521,9 @@ export class MedicoEstadisticasComponent implements OnInit {
     private staffMedicoService: StaffMedicoService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Asegurar que staffMedicoId esté disponible en localStorage
+    await this.getOrFetchStaffMedicoId();
     this.cargarDatosMedico();
   }
 
@@ -756,6 +758,60 @@ export class MedicoEstadisticasComponent implements OnInit {
    * Obtiene el ID del StaffMedico desde localStorage
    * Este es el ID que se usa para relacionar con turnos
    */
+  private getOrFetchStaffMedicoId(): Promise<number | null> {
+    return new Promise((resolve) => {
+      // First try to get staffMedicoId from localStorage
+      const staffMedicoIdStr = localStorage.getItem('staffMedicoId');
+      
+      if (staffMedicoIdStr && staffMedicoIdStr !== 'null' && staffMedicoIdStr !== '0') {
+        const staffMedicoId = parseInt(staffMedicoIdStr, 10);
+        if (!isNaN(staffMedicoId) && staffMedicoId > 0) {
+          console.log('✅ Found staffMedicoId in localStorage:', staffMedicoId);
+          resolve(staffMedicoId);
+          return;
+        }
+      }
+
+      // If not in localStorage, fetch by medicoId
+      const medicoId = this.getMedicoIdFromSession();
+      if (!medicoId) {
+        console.error('❌ No medicoId found to search for staffMedicoId');
+        resolve(null);
+        return;
+      }
+
+      console.log('🔍 Searching for StaffMedico by medicoId:', medicoId);
+      
+      this.staffMedicoService.all().subscribe({
+        next: (response: any) => {
+          const staffMedicos = response?.data || [];
+          
+          // Find all StaffMedicos that belong to this doctor
+          const staffMedicosDelMedico = staffMedicos.filter((sm: any) => 
+            sm.medico && sm.medico.id === medicoId
+          );
+          
+          if (staffMedicosDelMedico.length > 0) {
+            const staffMedicoId = staffMedicosDelMedico[0].id;
+            console.log(`✅ Found ${staffMedicosDelMedico.length} StaffMedico records for doctor. Using first one:`, staffMedicoId);
+            
+            // Store in localStorage for future use
+            localStorage.setItem('staffMedicoId', staffMedicoId.toString());
+            resolve(staffMedicoId);
+          } else {
+            console.error('❌ No StaffMedico records found for medicoId:', medicoId);
+            resolve(null);
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ Error fetching StaffMedicos:', error);
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  // Keep the synchronous method for backward compatibility
   private getStaffMedicoIdFromSession(): number {
     // Primero intentar con el staffMedicoId del localStorage
     const staffMedicoId = localStorage.getItem('staffMedicoId');

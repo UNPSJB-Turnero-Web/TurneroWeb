@@ -9,6 +9,7 @@ import { Turno } from '../turnos/turno';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { Medico } from './medico';
 import { AuthService } from '../inicio-sesion/auth.service';
+import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
 
 interface DashboardStats {
   turnosHoy: number;
@@ -1661,7 +1662,8 @@ export class MedicoDashboardComponent implements OnInit {
     private turnoService: TurnoService,
     private disponibilidadService: DisponibilidadMedicoService,
     private medicoService: MedicoService,
-    private authService: AuthService
+    private authService: AuthService,
+    private staffMedicoService: StaffMedicoService
   ) {
     this.initializeParticles();
   }
@@ -1719,9 +1721,12 @@ export class MedicoDashboardComponent implements OnInit {
     console.log('✅ Validación de localStorage completada');
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     // Validar y corregir localStorage al inicializar
     this.validarYCorregirLocalStorage();
+    
+    // Asegurar que staffMedicoId esté disponible en localStorage
+    await this.getOrFetchStaffMedicoId();
     
     this.cargarDatosMedico();
     // Primero cargar disponibilidades para obtener el staffMedicoId correcto
@@ -1831,6 +1836,60 @@ export class MedicoDashboardComponent implements OnInit {
     
     console.error('No valid medico ID found in localStorage');
     return null;
+  }
+
+  // Helper method to get or fetch staffMedicoId and store it in localStorage
+  private getOrFetchStaffMedicoId(): Promise<number | null> {
+    return new Promise((resolve) => {
+      // First try to get staffMedicoId from localStorage
+      const staffMedicoIdStr = localStorage.getItem('staffMedicoId');
+      
+      if (staffMedicoIdStr && staffMedicoIdStr !== 'null' && staffMedicoIdStr !== '0') {
+        const staffMedicoId = parseInt(staffMedicoIdStr, 10);
+        if (!isNaN(staffMedicoId) && staffMedicoId > 0) {
+          console.log('✅ Found staffMedicoId in localStorage:', staffMedicoId);
+          resolve(staffMedicoId);
+          return;
+        }
+      }
+
+      // If not in localStorage, fetch by medicoId
+      const medicoId = this.getMedicoIdFromLocalStorage();
+      if (!medicoId || medicoId === -1) {
+        console.error('❌ No medicoId found to search for staffMedicoId');
+        resolve(null);
+        return;
+      }
+
+      console.log('🔍 Searching for StaffMedico by medicoId:', medicoId);
+      
+      this.staffMedicoService.all().subscribe({
+        next: (response: any) => {
+          const staffMedicos = response?.data || [];
+          
+          // Find all StaffMedicos that belong to this doctor
+          const staffMedicosDelMedico = staffMedicos.filter((sm: any) => 
+            sm.medico && sm.medico.id === medicoId
+          );
+          
+          if (staffMedicosDelMedico.length > 0) {
+            const staffMedicoId = staffMedicosDelMedico[0].id;
+            console.log(`✅ Found ${staffMedicosDelMedico.length} StaffMedico records for doctor. Using first one:`, staffMedicoId);
+            
+            // Store in localStorage for future use
+            localStorage.setItem('staffMedicoId', staffMedicoId.toString());
+            resolve(staffMedicoId);
+          } else {
+            console.error('❌ No StaffMedico records found for medicoId:', medicoId);
+            resolve(null);
+          }
+        },
+        error: (error: any) => {
+          console.error('❌ Error fetching StaffMedicos:', error);
+          resolve(null);
+        }
+      });
+    });
   }
 
   private cargarDatosMedico() {
