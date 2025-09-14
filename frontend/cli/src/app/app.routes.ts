@@ -189,12 +189,12 @@ export const routes: Routes = [
   {
     path: "agenda",
     component: AdminAgendaComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "agenda/dias-excepcionales",
     component: DiasExcepcionalesComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "pacientes",
@@ -214,17 +214,17 @@ export const routes: Routes = [
   {
     path: "obraSocial",
     component: ObraSocialComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "obraSocial/new",
     component: ObraSocialDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "obraSocial/:id",
     component: ObraSocialDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "especialidades",
@@ -239,7 +239,7 @@ export const routes: Routes = [
   {
     path: "especialidades/:id",
     component: EspecialidadDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "centrosAtencion",
@@ -249,27 +249,27 @@ export const routes: Routes = [
   {
     path: "centrosAtencion/new",
     component: CentroAtencionDetailRefactoredComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "centrosAtencion/:id",
     component: CentroAtencionDetailRefactoredComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "consultorios",
     component: ConsultoriosComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "consultorios/new",
     component: ConsultorioDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "consultorios/:id",
     component: ConsultorioDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "medicos",
@@ -299,37 +299,37 @@ export const routes: Routes = [
   {
     path: "staffMedico/:id",
     component: StaffMedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "disponibilidades-medico",
     component: DisponibilidadMedicoComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "disponibilidades-medico/new",
     component: DisponibilidadMedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "disponibilidades-medico/:id",
     component: DisponibilidadMedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "esquema-turno",
     component: EsquemaTurnoComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "esquema-turno/new",
     component: EsquemaTurnoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "esquema-turno/:id",
     component: EsquemaTurnoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "admin-dashboard",
