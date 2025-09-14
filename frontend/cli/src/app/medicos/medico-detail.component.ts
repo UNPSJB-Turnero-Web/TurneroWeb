@@ -77,6 +77,26 @@ import { AuthService } from '../inicio-sesion/auth.service';
 
               <div class="info-item">
                 <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">📧</span>
+                  Email
+                </div>
+                <div class="info-value">
+                  {{ medico.email }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
+                  <span class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">📞</span>
+                  Teléfono
+                </div>
+                <div class="info-value">
+                  {{ medico.telefono }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-label">
                   <span class="info-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">🏥</span>
                   Especialidades
                 </div>
@@ -183,6 +203,56 @@ import { AuthService } from '../inicio-sesion/auth.service';
                   </div>
                   <div class="form-help">
                     Ingrese el número de matrícula profesional del médico.
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Email -->
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">📧</span>
+                    Email
+                  </label>
+                  <input
+                    [(ngModel)]="medico.email"
+                    name="email"
+                    type="email"
+                    class="form-control form-control-modern"
+                    placeholder="Correo electrónico del médico"
+                    required
+                    #email="ngModel"
+                  />
+                  <div *ngIf="email.invalid && (email.dirty || email.touched)" class="form-help text-danger">
+                    <span *ngIf="email.errors?.['required']">El email es requerido</span>
+                    <span *ngIf="email.errors?.['email']">Ingrese un email válido</span>
+                  </div>
+                  <div class="form-help">
+                    Correo electrónico de contacto del médico.
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Teléfono -->
+              <div class="col-md-6">
+                <div class="form-group-modern">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">📞</span>
+                    Teléfono
+                  </label>
+                  <input
+                    [(ngModel)]="medico.telefono"
+                    name="telefono"
+                    class="form-control form-control-modern"
+                    placeholder="Teléfono de contacto"
+                    required
+                    #telefono="ngModel"
+                  />
+                  <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="form-help text-danger">
+                    El teléfono es requerido
+                  </div>
+                  <div class="form-help">
+                    Número de teléfono de contacto del médico.
                   </div>
                 </div>
               </div>
@@ -680,6 +750,8 @@ export class MedicoDetailComponent implements OnInit {
     nombre: '', 
     apellido: '', 
     dni: '', 
+    email: '',
+    telefono: '',
     matricula: '', 
     especialidades: [],
     especialidad: { id: 0, nombre: '', descripcion: '' } // Mantener para compatibilidad
@@ -723,6 +795,8 @@ export class MedicoDetailComponent implements OnInit {
             nombre: "",
             apellido: "",
             dni: '',
+            email: '',
+            telefono: '',
             matricula: "",
             especialidades: [], // Inicializar como array vacío
             especialidad: this.selectedEspecialidad || this.especialidades[0] // Mantener para compatibilidad
@@ -755,6 +829,14 @@ export class MedicoDetailComponent implements OnInit {
           this.medicoService.getById(id).subscribe({
             next: (resp: DataPackage<Medico>) => {
               this.medico = resp.data;
+              
+              // Asegurar que los campos obligatorios estén inicializados
+              if (!this.medico.email) {
+                this.medico.email = '';
+              }
+              if (!this.medico.telefono) {
+                this.medico.telefono = '';
+              }
               
               // Migración de especialidad única a especialidades múltiples
               if (!this.medico.especialidades) {
@@ -835,6 +917,8 @@ export class MedicoDetailComponent implements OnInit {
         nombre: this.medico.nombre,
         apellido: this.medico.apellido,
         dni: this.medico.dni,
+        email: this.medico.email,
+        telefono: this.medico.telefono,
         matricula: this.medico.matricula,
         especialidades: this.medico.especialidades
       };
@@ -850,6 +934,8 @@ export class MedicoDetailComponent implements OnInit {
         nombre: this.medico.nombre,
         apellido: this.medico.apellido,
         dni: this.medico.dni,
+        email: this.medico.email,
+        telefono: this.medico.telefono,
         matricula: this.medico.matricula,
         especialidades: this.medico.especialidades,
         performedBy: userEmail || userData?.email || userRole || "UNKNOWN"

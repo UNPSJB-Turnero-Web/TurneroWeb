@@ -193,33 +193,35 @@ interface CambioPassword {
                   </div>
 
                   <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Email *</label>
                     <input 
                       type="email" 
                       id="email" 
                       class="form-control"
                       formControlName="email"
-                      placeholder="ejemplo@correo.com (opcional)"
+                      placeholder="ejemplo@correo.com"
                       [class.is-invalid]="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid"
                     >
                     <div *ngIf="perfilForm.get('email')?.touched && perfilForm.get('email')?.invalid" 
                          class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('email')?.errors?.['required']">El email es obligatorio</small>
                       <small *ngIf="perfilForm.get('email')?.errors?.['email']">Email inválido</small>
                     </div>
                   </div>
 
                   <div class="form-group">
-                    <label for="telefono">Teléfono</label>
+                    <label for="telefono">Teléfono *</label>
                     <input 
                       type="text" 
                       id="telefono" 
                       class="form-control"
                       formControlName="telefono"
-                      placeholder="+54 9 11 1234-5678 (opcional)"
+                      placeholder="+54 9 11 1234-5678"
                       [class.is-invalid]="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid"
                     >
                     <div *ngIf="perfilForm.get('telefono')?.touched && perfilForm.get('telefono')?.invalid" 
                          class="invalid-feedback">
+                      <small *ngIf="perfilForm.get('telefono')?.errors?.['required']">El teléfono es obligatorio</small>
                       <small *ngIf="perfilForm.get('telefono')?.errors?.['pattern']">Formato inválido</small>
                     </div>
                   </div>
@@ -1638,8 +1640,8 @@ export class MedicoPerfilComponent implements OnInit {
       apellido: this.medicoActual.apellido || '',
       dni: this.medicoActual.dni || '',
       matricula: this.medicoActual.matricula || '',
-      email: '', // Se obtendría del backend si está disponible
-      telefono: '' // Se obtendría del backend si está disponible
+      email: this.medicoActual.email || '',
+      telefono: this.medicoActual.telefono || ''
     });
     
     // Activar modo edición
@@ -1668,10 +1670,9 @@ export class MedicoPerfilComponent implements OnInit {
       nombre: this.perfilForm.get('nombre')?.value?.trim() || '',
       apellido: this.perfilForm.get('apellido')?.value?.trim() || '',
       dni: this.perfilForm.get('dni')?.value?.trim() || '',
+      email: emailValue || this.medicoActual?.email || '',
+      telefono: telefonoValue || this.medicoActual?.telefono || '',
       matricula: this.perfilForm.get('matricula')?.value?.trim() || '',
-      // Solo incluir email y telefono si tienen valores válidos
-      ...(emailValue && emailValue.length > 0 ? { email: emailValue } : {}),
-      ...(telefonoValue && telefonoValue.length > 0 ? { telefono: telefonoValue } : {}),
       // Mantener las especialidades existentes
       especialidades: this.medicoActual?.especialidades || []
     };
@@ -1688,6 +1689,8 @@ export class MedicoPerfilComponent implements OnInit {
           this.medicoActual.nombre = datosActualizados.nombre;
           this.medicoActual.apellido = datosActualizados.apellido;
           this.medicoActual.dni = datosActualizados.dni;
+          this.medicoActual.email = datosActualizados.email;
+          this.medicoActual.telefono = datosActualizados.telefono;
           this.medicoActual.matricula = datosActualizados.matricula;
         }
         
@@ -1891,8 +1894,8 @@ export class MedicoPerfilComponent implements OnInit {
         Validators.maxLength(9)
       ]],
       matricula: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
-      email: ['', [Validators.email]], // Email opcional pero debe ser válido si se proporciona
-      telefono: ['', [Validators.pattern(/^[\d\s\-\+\(\)]{7,15}$/)]] // Teléfono opcional
+      email: ['', [Validators.required, Validators.email]], // Email requerido y debe ser válido
+      telefono: ['', [Validators.required, Validators.pattern(/^[\d\s\-\+\(\)]{7,15}$/)]] // Teléfono requerido
     });
   }
 

@@ -225,6 +225,8 @@ public class MedicoService {
         dto.setNombre(medico.getNombre());
         dto.setApellido(medico.getApellido());
         dto.setDni(medico.getDni() != null ? String.valueOf(medico.getDni()) : null);
+        dto.setEmail(medico.getEmail());
+        dto.setTelefono(medico.getTelefono());
         dto.setMatricula(medico.getMatricula());
 
         // Mapear Especialidades (múltiples)
@@ -254,6 +256,8 @@ public class MedicoService {
         } else {
             medico.setDni(null);
         }
+        medico.setEmail(dto.getEmail());
+        medico.setTelefono(dto.getTelefono());
         medico.setMatricula(dto.getMatricula());
 
         // Asignar Especialidades (múltiples)

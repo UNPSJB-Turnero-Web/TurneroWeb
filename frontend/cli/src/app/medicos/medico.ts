@@ -5,6 +5,8 @@ export interface Medico {
   nombre: string;
   apellido: string;
   dni: string;
+  email: string;
+  telefono: string;
   matricula: string;
   especialidades: Especialidad[]; // Cambiado de especialidad singular a especialidades plural
   
