@@ -91,6 +91,10 @@ public class UserService implements UserDetailsService {
     }
     
     public User createUser(String nombre, String apellido, Long dni, String email, String hashedPassword, String telefono, String roleName) {
+        return createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName, false);
+    }
+    
+    public User createUser(String nombre, String apellido, Long dni, String email, String hashedPassword, String telefono, String roleName, boolean autoVerifyEmail) {
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Ya existe un usuario con el email: " + email);
         }
@@ -110,6 +114,11 @@ public class UserService implements UserDetailsService {
         user.setHashedPassword(hashedPassword);
         user.setTelefono(telefono);
         user.setRole(role);
+        
+        // Auto-verificar email en entorno dev cuando se crea por admin/operador
+        if (autoVerifyEmail) {
+            user.activateAccount();
+        }
         
         return userRepository.save(user);
     }
@@ -315,7 +324,13 @@ public class UserService implements UserDetailsService {
      */
     public User createUserWithAudit(String nombre, String apellido, Long dni, String email, 
                                    String hashedPassword, String telefono, String roleName, String performedBy) {
-        User user = createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName);
+        // Auto-verificar email cuando se crea por admin/operador (entorno dev)
+        // NO auto-verificar para auto-registros de pacientes
+        boolean autoVerifyEmail = performedBy != null && 
+                                 !performedBy.equals("AUTO REGISTRO") && 
+                                 !performedBy.trim().isEmpty();
+        
+        User user = createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName, autoVerifyEmail);
         
         // Registrar en auditoría
         auditLogService.logUserCreated(user.getId(), email, roleName, performedBy);

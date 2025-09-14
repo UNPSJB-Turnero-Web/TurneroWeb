@@ -91,7 +91,7 @@ public class MedicoService {
                 throw new IllegalArgumentException("Debe proporcionar al menos una especialidad válida");
             }
 
-            // Si es creado por ADMIN (tiene performedBy), usar auditoría
+            // Si es creado por ADMIN u OPERADOR (tiene performedBy), usar auditoría
             if (dto.getPerformedBy() != null && !dto.getPerformedBy().trim().isEmpty()) {
                 // Generar contraseña automática
                 String password = dto.getPassword();
