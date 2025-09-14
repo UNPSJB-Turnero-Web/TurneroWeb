@@ -851,6 +851,17 @@ export class PacienteDetailComponent implements OnInit {
 
     op.subscribe({
       next: (response) => {
+        console.log("Respuesta recibida en next:", response);
+        
+        // Verificar si la respuesta indica un error (status_code diferente de 200)
+        if (response.status_code && response.status_code !== 200) {
+          const errorMessage = response.status_text || "Error al guardar el paciente.";
+          this.modalService.alert("Error", errorMessage);
+          console.log("Error detectado en respuesta exitosa:", errorMessage);
+          return;
+        }
+
+        // Si llegamos aquí, es una respuesta exitosa
         const roleText = userRole === "ADMINISTRADOR" ? " por administrador" : 
                         userRole === "OPERADOR" ? " por operador" : "";
         const successMessage = this.esNuevo() 
@@ -861,12 +872,15 @@ export class PacienteDetailComponent implements OnInit {
         this.router.navigate(["/pacientes"]);
       },
       error: (err) => {
+        console.log("Respuesta recibida en error:", err);
         let errorMessage = "Error al guardar el paciente.";
         
         if (err?.error?.status_text) {
           errorMessage = err.error.status_text;
         } else if (err?.error?.message) {
           errorMessage = err.error.message;
+        } else if (err?.message) {
+          errorMessage = err.message;
         }
         
         this.modalService.alert("Error", errorMessage);

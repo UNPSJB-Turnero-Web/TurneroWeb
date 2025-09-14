@@ -49,7 +49,7 @@ public class PacientePresenter {
         try {
             PacienteDTO saved = service.saveOrUpdate(pacienteDTO);
             return Response.ok(saved, "Paciente creado correctamente");
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error al crear el paciente: " + e.getMessage());
@@ -156,7 +156,7 @@ public class PacientePresenter {
             PacienteDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Paciente creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return Response.error(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.serverError("Error al crear el paciente: " + e.getMessage());
         }
@@ -183,7 +183,7 @@ public class PacientePresenter {
            PacienteDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Paciente creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return Response.error(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.serverError("Error al crear el paciente: " + e.getMessage());
         }

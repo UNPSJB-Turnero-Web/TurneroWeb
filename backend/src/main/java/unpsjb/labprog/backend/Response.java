@@ -39,7 +39,6 @@ return response(HttpStatus.BAD_REQUEST, msj, responseObj);
 }
 
 public static ResponseEntity<Object> dbError(String msj) {
-System.out.println("DEBUG: dbError llamado con mensaje: " + msj);
 return response(HttpStatus.CONFLICT, msj, null);
 }
 
