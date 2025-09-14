@@ -139,7 +139,7 @@ public class MedicoPresenter {
             MedicoDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Médico creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return Response.error(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.serverError("Error al crear el médico: " + e.getMessage());
         }
@@ -162,7 +162,7 @@ public class MedicoPresenter {
             MedicoDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Médico creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return Response.error(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.serverError("Error al crear el médico: " + e.getMessage());
         }

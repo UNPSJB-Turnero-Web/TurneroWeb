@@ -70,22 +70,22 @@ export const routes: Routes = [
   {
     path: "operador-agenda",
     component: OperadorAgendaComponent,
-    canActivate: [OperadorGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "operadores",
     component: OperadoresComponent,
-    canActivate: [OperadorGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "operadores/new",
     component: OperadorDetailComponent,
-    canActivate: [OperadorGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "operadores/:id",
     component: OperadorDetailComponent,
-    canActivate: [OperadorGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "operador-perfil",

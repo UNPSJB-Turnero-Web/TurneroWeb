@@ -47,7 +47,7 @@ public class OperadorPresenter {
         try {
             OperadorDTO saved = service.saveOrUpdate(operadorDTO);
             return Response.ok(saved, "Operador creado correctamente");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error al crear el operador: " + e.getMessage());
@@ -62,7 +62,7 @@ public class OperadorPresenter {
             }
             OperadorDTO updated = service.saveOrUpdate(operadorDTO);
             return Response.ok(updated, "Operador actualizado correctamente");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error al actualizar el operador: " + e.getMessage());
@@ -76,7 +76,7 @@ public class OperadorPresenter {
             operadorDTO.setId(id);
             OperadorDTO updated = service.saveOrUpdate(operadorDTO);
             return Response.ok(updated, "Operador actualizado correctamente");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error al actualizar el operador: " + e.getMessage());
@@ -165,7 +165,7 @@ public class OperadorPresenter {
             OperadorDTO saved = service.saveOrUpdate(request);
             return Response.ok(saved, "Operador creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return Response.error(null, e.getMessage());
+            return Response.dbError(e.getMessage());
         } catch (Exception e) {
             return Response.serverError("Error al crear el operador: " + e.getMessage());
         }
