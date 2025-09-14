@@ -154,13 +154,17 @@ export const routes: Routes = [
     canActivate: [MedicoGuard],
   },
 
-  { path: "debug/tokens", component: TokenStatusComponent}, // ruta para debug de tokens
+  { path: "debug/tokens", component: TokenStatusComponent }, // ruta para debug de tokens
   // Admin Routes (protected)
-  { path: "turnos", component: TurnosComponent, canActivate: [AdminGuard] },
+  {
+    path: "turnos",
+    component: TurnosComponent,
+    canActivate: [AdminOperadorGuard],
+  },
   {
     path: "turnos/new",
     component: TurnoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "turnos/advanced-search",
@@ -240,7 +244,7 @@ export const routes: Routes = [
   {
     path: "centrosAtencion",
     component: CentrosAtencionComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "centrosAtencion/new",
@@ -267,7 +271,11 @@ export const routes: Routes = [
     component: ConsultorioDetailComponent,
     canActivate: [AdminGuard],
   },
-  { path: "medicos", component: MedicosComponent, canActivate: [AdminOperadorGuard] },
+  {
+    path: "medicos",
+    component: MedicosComponent,
+    canActivate: [AdminOperadorGuard],
+  },
   {
     path: "medicos/new",
     component: MedicoDetailComponent,
@@ -281,12 +289,12 @@ export const routes: Routes = [
   {
     path: "staffMedico",
     component: StaffMedicosComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "staffMedico/new",
     component: StaffMedicoDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "staffMedico/:id",

@@ -132,7 +132,10 @@ import { OperadorService } from "./operador.service"; // Asumiendo que existe es
             </div>
           </div>
 
-          <div class="action-card action-nuevo-paciente" (click)="createPaciente()">
+          <div
+            class="action-card action-nuevo-paciente"
+            (click)="createPaciente()"
+          >
             <div class="card-icon">
               <i class="fas fa-user-plus"></i>
             </div>
