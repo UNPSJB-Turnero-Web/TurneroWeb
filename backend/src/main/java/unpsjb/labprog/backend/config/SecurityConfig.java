@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,31 @@ import unpsjb.labprog.backend.business.service.UserService;
 
 /**
  * Configuración de seguridad con JWT y autenticación stateless
+ * 
+ * CONTROL DE ACCESO BASADO EN ROLES:
+ * =================================
+ * - ADMINISTRADOR: Acceso completo al sistema, gestión de usuarios, auditoría
+ * - OPERADOR: Gestión de turnos, pacientes, médicos, obras sociales
+ * - MEDICO: Dashboard médico, horarios, estadísticas, perfil
+ * - PACIENTE: Dashboard paciente, agenda, notificaciones, perfil
+ * 
+ * MODO DE DESARROLLO vs PRODUCCIÓN:
+ * ================================
+ * Para alternar entre modos usar cualquiera de estas opciones:
+ * 
+ * 1. Variable de entorno:
+ *    export SECURITY_DEV_MODE=false
+ * 
+ * 2. Parámetro JVM al ejecutar:
+ *    java -Dsecurity.dev.mode=false -jar app.jar
+ * 
+ * 3. En application.properties:
+ *    security.dev.mode=false
+ * 
+ * 4. Modificar directamente la anotación @Value en esta clase
+ * 
+ * - devMode=true: DESARROLLO - Todos los endpoints públicos
+ * - devMode=false: PRODUCCIÓN - Control de roles aplicado
  */
 @Configuration
 @EnableWebSecurity
@@ -58,43 +84,114 @@ public class SecurityConfig {
     }
 
     /**
+     * Variable para controlar el modo de seguridad
+     * - true: Modo desarrollo (todos los endpoints públicos)
+     * - false: Modo producción (control de roles aplicado)
+     * 
+     * Para cambiar el modo:
+     * 1. Variable de entorno: SECURITY_DEV_MODE=false
+     * 2. Parámetro JVM: -Dsecurity.dev.mode=false  
+     * 3. Modificar application.properties: security.dev.mode=false
+     */
+    @Value("${security.dev.mode:true}")
+    private boolean devMode;
+
+    /**
      * Configuración de la cadena de filtros de seguridad
+     * 
+     * MODO DESARROLLO (devMode=true):
+     * - Todos los endpoints son públicos para facilitar desarrollo
+     * 
+     * MODO PRODUCCIÓN (devMode=false):
+     * - Control de acceso basado en roles JWT
+     * - Seguridad completa aplicada según roles del sistema
      */
     @Bean
-  /*   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos de autenticación
-                .requestMatchers("/api/auth/**").permitAll()
-                
-                // Solo el registro de pacientes es público (auto-registro)
-                .requestMatchers("/pacientes/register").permitAll()
-                
-                // El registro de médicos requiere autenticación (solo admins pueden crear médicos)
-                .requestMatchers("/medicos/register").authenticated()
-                
-                // Todos los demás endpoints requieren autenticación
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(auth -> {
+                if (devMode) {
+                    // =================================
+                    // MODO DESARROLLO - ACCESO LIBRE
+                    // =================================
+                    auth.anyRequest().permitAll();
+                } else {
+                    // =================================
+                    // MODO PRODUCCIÓN - CONTROL DE ROLES
+                    // =================================
+                    
+                    // ========== ENDPOINTS PÚBLICOS ==========
+                    auth
+                        // Autenticación y recuperación de contraseñas
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Auto-registro de pacientes (público)
+                        .requestMatchers("/registro-usuario").permitAll()
+                        // Activación de cuentas
+                        .requestMatchers("/activate-account").permitAll()
+                        
+                    // ========== ENDPOINTS SOLO ADMINISTRADOR ==========
+                    // Rutas que requieren AdminGuard en el frontend
+                        .requestMatchers("/turnos/advanced-search/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/turnos/audit-dashboard/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/turnos/{id}/edit").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/especialidades/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/admin-dashboard/**").hasRole("ADMINISTRADOR")
+                        .requestMatchers("/admin-perfil/**").hasRole("ADMINISTRADOR")
+                        // Creación de operadores (solo admin puede crear otros operadores)
+                        .requestMatchers("/operadores/create-by-admin").hasRole("ADMINISTRADOR")
+                        
+                    // ========== ENDPOINTS SOLO PACIENTE ==========
+                    // Rutas que requieren PatientGuard en el frontend
+                        .requestMatchers("/paciente-dashboard/**").hasRole("PACIENTE")
+                        .requestMatchers("/paciente-agenda/**").hasRole("PACIENTE")
+                        .requestMatchers("/paciente-notificaciones/**").hasRole("PACIENTE")
+                        .requestMatchers("/paciente-perfil/**").hasRole("PACIENTE")
+                        .requestMatchers("/paciente-reagendar-turno/**").hasRole("PACIENTE")
+                        
+                    // ========== ENDPOINTS SOLO MÉDICO ==========
+                    // Rutas que requieren MedicoGuard en el frontend
+                        .requestMatchers("/medico-dashboard/**").hasRole("MEDICO")
+                        .requestMatchers("/medico-horarios/**").hasRole("MEDICO")
+                        .requestMatchers("/medico-estadisticas/**").hasRole("MEDICO")
+                        .requestMatchers("/medico-perfil/**").hasRole("MEDICO")
+                        
+                    // ========== ENDPOINTS SOLO OPERADOR ==========
+                    // Rutas que requieren OperadorGuard en el frontend
+                        .requestMatchers("/operador-dashboard/**").hasRole("OPERADOR")
+                        .requestMatchers("/operador-agenda/**").hasRole("OPERADOR")
+                        .requestMatchers("/operadores/**").hasRole("OPERADOR")
+                        .requestMatchers("/operador-perfil/**").hasRole("OPERADOR")
+                        
+                    // ========== ENDPOINTS ADMIN + OPERADOR ==========
+                    // Rutas que requieren AdminOperadorGuard en el frontend
+                        .requestMatchers("/turnos/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/agenda/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/pacientes/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/obraSocial/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/centrosAtencion/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/consultorios/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/medicos/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/staffMedico/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/disponibilidades-medico/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        .requestMatchers("/esquema-turno/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                        
+                    // ========== ENDPOINTS CON AUTENTICACIÓN GENERAL ==========
+                    // Endpoints de utilidad que requieren estar logueado
+                        .requestMatchers("/roles/**").authenticated()
+                        .requestMatchers("/debug/tokens").authenticated()
+                        
+                    // ========== RESTO DE ENDPOINTS ==========
+                    // Cualquier otro endpoint requiere autenticación
+                        .anyRequest().authenticated();
+                }
+            })
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    } */
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .anyRequest().permitAll() // <--- TODOS los endpoints son accesibles sin autenticación
-        )
-        .authenticationProvider(authenticationProvider())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
-    return http.build();
-}
+    }
 
 
 }
