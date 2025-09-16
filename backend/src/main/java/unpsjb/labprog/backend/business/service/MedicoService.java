@@ -86,8 +86,17 @@ public class MedicoService {
                 throw new IllegalStateException("Ya existe un médico con el email: " + medico.getEmail());
             }
 
-            // Validar Especialidades
-            if (dto.getEspecialidadIds() == null || dto.getEspecialidadIds().isEmpty()) {
+            // Obtener IDs de especialidades - verificar ambas formas
+            Set<Integer> especialidadIds;
+            if (dto.getEspecialidadIds() != null && !dto.getEspecialidadIds().isEmpty()) {
+                // Usar especialidadIds si está presente
+                especialidadIds = dto.getEspecialidadIds();
+            } else if (dto.getEspecialidades() != null && !dto.getEspecialidades().isEmpty()) {
+                // Extraer IDs de los objetos especialidades
+                especialidadIds = dto.getEspecialidades().stream()
+                    .map(EspecialidadDTO::getId)
+                    .collect(Collectors.toSet());
+            } else {
                 throw new IllegalArgumentException("Debe proporcionar al menos una especialidad válida");
             }
 
@@ -99,8 +108,8 @@ public class MedicoService {
                     password = generarPasswordAutomatica();
                 }
 
-                // Obtener especialidades
-                Set<Especialidad> especialidades = dto.getEspecialidadIds().stream()
+                // Obtener especialidades usando los IDs validados
+                Set<Especialidad> especialidades = especialidadIds.stream()
                     .map(id -> especialidadRepo.findById(id)
                         .orElseThrow(() -> new IllegalArgumentException("Especialidad no encontrada: " + id)))
                     .collect(Collectors.toSet());
