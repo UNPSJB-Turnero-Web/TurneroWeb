@@ -18,7 +18,7 @@ ON CONFLICT (name) DO NOTHING;
 -- =====================================
 
 INSERT INTO obra_social (id, nombre, codigo, descripcion) VALUES
-(1, 'OSDE', 'OSDE001', 'Obra Social de los Empleados de Comercio')
+(99999, 'OSDE', 'OSDE001', 'Obra Social de los Empleados de Comercio')
 ON CONFLICT (codigo) DO NOTHING;
 
 -- =====================================
@@ -26,8 +26,8 @@ ON CONFLICT (codigo) DO NOTHING;
 -- =====================================
 
 INSERT INTO especialidad (id, nombre, descripcion) 
-SELECT 1, 'Cardiología', 'Especialidad médica que se ocupa del corazón y sistema cardiovascular'
-WHERE NOT EXISTS (SELECT 1 FROM especialidad WHERE id = 1);
+SELECT 99998, 'Cardiología', 'Especialidad médica que se ocupa del corazón y sistema cardiovascular'
+WHERE NOT EXISTS (SELECT 1 FROM especialidad WHERE nombre = 'Cardiología');
 
 -- =====================================
 -- 4. INSERTAR USUARIOS EN TABLA USERS
@@ -99,14 +99,16 @@ ON CONFLICT (email) DO NOTHING;
 -- ON CONFLICT (email) DO NOTHING;
 
 -- Tabla Paciente
-INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) VALUES
-(1, 'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222', 
- '1990-05-15', 1)
-ON CONFLICT (dni) DO NOTHING;
+INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) 
+SELECT 99997, 'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222', 
+       '1990-05-15', os.id
+FROM obra_social os 
+WHERE os.codigo = 'OSDE001'
+AND NOT EXISTS (SELECT 1 FROM paciente WHERE dni = 22222222);
 
 -- Tabla Medico
 INSERT INTO medico (id, nombre, apellido, dni, email, telefono, matricula) VALUES
-(1, 'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333', 'MP-12345')
+(99996, 'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333', 'MP-12345')
 ON CONFLICT (dni) DO NOTHING;
 
 -- Tabla Operador
@@ -120,10 +122,13 @@ ON CONFLICT (email) DO NOTHING;
 
 -- Relacionar médico con especialidad
 INSERT INTO medico_especialidad (medico_id, especialidad_id) 
-SELECT 1, 1
-WHERE NOT EXISTS (
-    SELECT 1 FROM medico_especialidad 
-    WHERE medico_id = 1 AND especialidad_id = 1
+SELECT m.id, e.id
+FROM medico m, especialidad e
+WHERE m.dni = 33333333 
+  AND e.nombre = 'Cardiología'
+  AND NOT EXISTS (
+    SELECT 1 FROM medico_especialidad me
+    WHERE me.medico_id = m.id AND me.especialidad_id = e.id
 );
 
 -- =====================================
@@ -157,18 +162,18 @@ WHERE NOT EXISTS (
 -- 7. ACTUALIZAR SECUENCIAS (evitar conflictos futuros)
 -- =====================================
 
--- Actualizar secuencias para evitar conflictos con IDs manuales
+-- Actualizar secuencias para evitar conflictos con IDs futuros
 SELECT setval(pg_get_serial_sequence('obra_social', 'id'), 
-              COALESCE((SELECT MAX(id) FROM obra_social), 1));
+              COALESCE((SELECT MAX(id) FROM obra_social), 1), true);
               
 SELECT setval(pg_get_serial_sequence('especialidad', 'id'), 
-              COALESCE((SELECT MAX(id) FROM especialidad), 1));
+              COALESCE((SELECT MAX(id) FROM especialidad), 1), true);
               
 SELECT setval(pg_get_serial_sequence('paciente', 'id'), 
-              COALESCE((SELECT MAX(id) FROM paciente), 1));
+              COALESCE((SELECT MAX(id) FROM paciente), 1), true);
               
 SELECT setval(pg_get_serial_sequence('medico', 'id'), 
-              COALESCE((SELECT MAX(id) FROM medico), 1));
+              COALESCE((SELECT MAX(id) FROM medico), 1), true);
 
 -- =====================================
 
