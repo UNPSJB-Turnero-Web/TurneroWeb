@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
+import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.EspecialidadRepository;
 import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
@@ -37,6 +38,8 @@ public class StaffMedicoService {
     private CentroAtencionRepository centroRepository;
     @Autowired
     private EspecialidadRepository especialidadRepository;
+    @Autowired
+    private ConsultorioRepository consultorioRepository;
 
     public List<StaffMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -107,47 +110,105 @@ public class StaffMedicoService {
         dto.setDisponibilidad(toDisponibilidadDTOList(staff.getDisponibilidad()));
         dto.setConsultorio(toConsultorioDTO(staff.getConsultorio()));
         dto.setPorcentaje(staff.getPorcentaje());
+        
+        // Agregar IDs para compatibilidad con frontend
+        if (staff.getCentroAtencion() != null) {
+            dto.setCentroAtencionId(staff.getCentroAtencion().getId());
+        }
+        if (staff.getMedico() != null) {
+            dto.setMedicoId(staff.getMedico().getId());
+        }
+        if (staff.getEspecialidad() != null) {
+            dto.setEspecialidadId(staff.getEspecialidad().getId());
+        }
+        if (staff.getConsultorio() != null) {
+            dto.setConsultorioId(staff.getConsultorio().getId());
+        }
+        
         return dto;
     }
 
     private StaffMedico toEntity(StaffMedicoDTO dto) {
         StaffMedico staff = new StaffMedico();
         staff.setId(dto.getId());
+        staff.setPorcentaje(dto.getPorcentaje());
 
-        // Buscar médico por DNI y matrícula
-        Long dni = Long.valueOf(dto.getMedico().getDni());
-        Optional<Medico> medicoOpt = medicoRepository.findByDni(dni);
-        if (medicoOpt.isEmpty()) {
-            throw new IllegalStateException("Médico no existe con el dni indicado");
-        }
-        Medico medico = medicoOpt.get();
-        if (!medico.getMatricula().equals(dto.getMedico().getMatricula())) {
-            throw new IllegalStateException("Médico no existe con la matrícula indicada");
-        }
-        staff.setMedico(medico);
-
-        // Buscar centro por nombre
-        CentroAtencion centro = centroRepository.findByNombre(dto.getCentro().getNombre());
-        if (centro == null) {
-            throw new IllegalStateException("Centro de atención no existe con el nombre indicado");
-        }
-        staff.setCentroAtencion(centro);
-
-        // Consultorio (opcional)
-        if (dto.getConsultorio() != null && dto.getConsultorio().getId() != null) {
-            Consultorio consultorio = new Consultorio();
-            consultorio.setId(dto.getConsultorio().getId());
-            staff.setConsultorio(consultorio);
+        // 1. Médico - priorizar ID si está presente
+        if (dto.getMedicoId() != null) {
+            Optional<Medico> medicoOpt = medicoRepository.findById(dto.getMedicoId());
+            if (medicoOpt.isEmpty()) {
+                throw new IllegalStateException("Médico no existe con el ID: " + dto.getMedicoId());
+            }
+            staff.setMedico(medicoOpt.get());
+        } else if (dto.getMedico() != null) {
+            // Buscar médico por DNI y matrícula (método anterior)
+            Long dni = Long.valueOf(dto.getMedico().getDni());
+            Optional<Medico> medicoOpt = medicoRepository.findByDni(dni);
+            if (medicoOpt.isEmpty()) {
+                throw new IllegalStateException("Médico no existe con el dni indicado");
+            }
+            Medico medico = medicoOpt.get();
+            if (!medico.getMatricula().equals(dto.getMedico().getMatricula())) {
+                throw new IllegalStateException("Médico no existe con la matrícula indicada");
+            }
+            staff.setMedico(medico);
+        } else {
+            throw new IllegalStateException("Debe proporcionar médico (ID o datos completos)");
         }
 
-        // Buscar especialidad por nombre
-        if (dto.getEspecialidad() != null && dto.getEspecialidad().getNombre() != null) {
+        // 2. Centro de atención - priorizar ID si está presente
+        if (dto.getCentroAtencionId() != null) {
+            Optional<CentroAtencion> centroOpt = centroRepository.findById(dto.getCentroAtencionId());
+            if (centroOpt.isEmpty()) {
+                throw new IllegalStateException("Centro de atención no existe con el ID: " + dto.getCentroAtencionId());
+            }
+            staff.setCentroAtencion(centroOpt.get());
+        } else if (dto.getCentro() != null) {
+            // Buscar centro por nombre (método anterior)
+            CentroAtencion centro = centroRepository.findByNombre(dto.getCentro().getNombre());
+            if (centro == null) {
+                throw new IllegalStateException("Centro de atención no existe con el nombre indicado");
+            }
+            staff.setCentroAtencion(centro);
+        } else {
+            throw new IllegalStateException("Debe proporcionar centro de atención (ID o datos completos)");
+        }
+
+        // 3. Especialidad - priorizar ID si está presente
+        if (dto.getEspecialidadId() != null) {
+            Optional<Especialidad> especialidadOpt = especialidadRepository.findById(dto.getEspecialidadId());
+            if (especialidadOpt.isEmpty()) {
+                throw new IllegalStateException("Especialidad no existe con el ID: " + dto.getEspecialidadId());
+            }
+            staff.setEspecialidad(especialidadOpt.get());
+        } else if (dto.getEspecialidad() != null && dto.getEspecialidad().getNombre() != null) {
+            // Buscar especialidad por nombre (método anterior)
             Especialidad especialidad = especialidadRepository.findByNombreIgnoreCase(dto.getEspecialidad().getNombre());
             if (especialidad == null) {
                 throw new IllegalStateException("Especialidad no existe con el nombre indicado");
             }
             staff.setEspecialidad(especialidad);
+        } else {
+            throw new IllegalStateException("Debe proporcionar especialidad (ID o datos completos)");
         }
+
+        // 4. Consultorio (opcional) - priorizar ID si está presente
+        if (dto.getConsultorioId() != null) {
+            Optional<Consultorio> consultorioOpt = consultorioRepository.findById(dto.getConsultorioId());
+            if (consultorioOpt.isEmpty()) {
+                throw new IllegalStateException("Consultorio no existe con el ID: " + dto.getConsultorioId());
+            }
+            staff.setConsultorio(consultorioOpt.get());
+        } else if (dto.getConsultorio() != null && dto.getConsultorio().getId() != null) {
+            Optional<Consultorio> consultorioOpt = consultorioRepository.findById(dto.getConsultorio().getId());
+            if (consultorioOpt.isEmpty()) {
+                throw new IllegalStateException("Consultorio no existe con el ID: " + dto.getConsultorio().getId());
+            }
+            staff.setConsultorio(consultorioOpt.get());
+        }
+
+        // 5. Disponibilidad (si está presente)
+        // La disponibilidad se maneja por separado, no necesita procesamiento aquí
 
         return staff;
     }
