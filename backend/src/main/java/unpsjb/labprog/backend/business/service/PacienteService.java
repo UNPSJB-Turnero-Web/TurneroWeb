@@ -63,9 +63,8 @@ public class PacienteService {
             if (repository.existsByDni(paciente.getDni())) {
                 throw new IllegalStateException("Ya existe un paciente con el DNI: " + paciente.getDni());
             }
-            // La verificación de email se hace en el RegistrationService
 
-            // Si es creado por ADMIN/OPERADOR (tiene performedBy), usar auditoría
+            // Si es creado por ADMIN/OPERADOR (tiene performedBy), crear también el User
             if (dto.getPerformedBy() != null && !dto.getPerformedBy().trim().isEmpty()) {
                 // Generar contraseña automática
                 String password = dto.getPassword();
@@ -95,6 +94,22 @@ public class PacienteService {
                 // 3. Enviar contraseña por mail
                 enviarPasswordPorMail(paciente.getEmail(), password);
 
+                return toDTO(pacienteCreado);
+            } else {
+                // Creación simple (solo entidad Paciente) - asume que el User ya existe
+                // Esto ocurre cuando se llama desde AuthController después de crear el User
+                
+                // Verificar que no exista ya un paciente con este email
+                if (repository.existsByEmail(paciente.getEmail())) {
+                    throw new IllegalStateException("Ya existe un paciente con el email: " + paciente.getEmail());
+                }
+                
+                // Obtener obra social si se especifica
+                if (dto.getObraSocialId() != null) {
+                    //TODO 
+                }
+                
+                Paciente pacienteCreado = repository.save(paciente);
                 return toDTO(pacienteCreado);
             }
 

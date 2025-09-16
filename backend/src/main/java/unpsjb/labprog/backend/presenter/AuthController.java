@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.AccountActivationService;
+import unpsjb.labprog.backend.business.service.PacienteService;
 import unpsjb.labprog.backend.business.service.PasswordResetService;
 import unpsjb.labprog.backend.business.service.PasswordService;
 import unpsjb.labprog.backend.business.service.RegistrationService;
@@ -36,6 +37,7 @@ import unpsjb.labprog.backend.dto.RegisterRequest;
 import unpsjb.labprog.backend.dto.RegisterSuccessResponse;
 import unpsjb.labprog.backend.dto.ResendActivationRequestDTO;
 import unpsjb.labprog.backend.dto.TokenValidationDTO;
+import unpsjb.labprog.backend.dto.PacienteDTO;
 import unpsjb.labprog.backend.dto.UpdateProfileRequestDTO;
 import unpsjb.labprog.backend.dto.UpdateProfileResponseDTO;
 import unpsjb.labprog.backend.model.PasswordResetToken;
@@ -72,6 +74,9 @@ public class AuthController {
     @Autowired
     private AccountActivationService accountActivationService;
 
+    @Autowired
+    private PacienteService pacienteService;
+
 
     /**
      * Endpoint de login
@@ -89,7 +94,7 @@ public class AuthController {
             
             // TEMPORAL: Validación de activación de cuenta deshabilitada
             // TODO: Reactivar esta validación cuando el sistema de activación esté completamente configurado
-            
+
             /*
             // Verificar si la cuenta está activada (email verificado)
             if (!user.isEmailVerified()) {
@@ -156,6 +161,7 @@ public class AuthController {
 
     /**
      * Endpoint de registro de nuevo PACIENTE
+     * Crea tanto el User (para autenticación) como la entidad Paciente (lógica de negocio)
      * POST /api/auth/register
      */
     @PostMapping("/register")
@@ -171,8 +177,8 @@ public class AuthController {
                 return Response.response(HttpStatus.CONFLICT, "El DNI ya está registrado", null);
             }
 
-            // Registrar paciente usando RegistrationService (crea tanto User como Paciente)
-            registrationService.registrarPaciente(
+            // 1. Registrar usuario para autenticación usando RegistrationService
+            User newUser = registrationService.registrarPaciente(
                 request.getEmail(),
                 request.getPassword(),
                 request.getDniAsLong(),
@@ -181,9 +187,17 @@ public class AuthController {
                 request.getTelefono()
             );
 
-            // Obtener el usuario creado
-            User newUser = userService.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Error al obtener usuario después del registro"));
+            // 2. Crear la entidad Paciente usando PacienteService
+            PacienteDTO pacienteDTO = new PacienteDTO();
+            pacienteDTO.setNombre(request.getNombre());
+            pacienteDTO.setApellido(request.getApellido());
+            pacienteDTO.setDni(request.getDniAsLong());
+            pacienteDTO.setEmail(request.getEmail());
+            pacienteDTO.setTelefono(request.getTelefono());
+            // No asignar fecha de nacimiento ni obra social en el registro básico
+            
+            // Crear la entidad Paciente sin auditoría (auto-registro)
+            pacienteService.saveOrUpdate(pacienteDTO);
 
             // Enviar email de activación automáticamente
             accountActivationService.initiateAccountActivation(newUser.getEmail());
