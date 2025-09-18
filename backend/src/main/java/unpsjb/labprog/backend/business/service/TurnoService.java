@@ -21,8 +21,10 @@ import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.PacienteRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
+import unpsjb.labprog.backend.dto.CancelacionDataDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
+import unpsjb.labprog.backend.dto.ValidacionContactoDTO;
 import unpsjb.labprog.backend.model.AuditLog;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EstadoTurno;
@@ -30,6 +32,7 @@ import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.StaffMedico;
 import unpsjb.labprog.backend.model.TipoNotificacion;
 import unpsjb.labprog.backend.model.Turno;
+import unpsjb.labprog.backend.model.User;
 
 @Service
 public class TurnoService {
@@ -54,6 +57,9 @@ public class TurnoService {
     
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private UserService userService;
 
     // === VALIDACIONES DE TRANSICIÓN DE ESTADO ===
     
@@ -205,6 +211,12 @@ public class TurnoService {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
         }
         
+        // Validar medios de contacto ANTES de cancelar
+        ValidacionContactoDTO validacionContacto = validarMediosContactoInterno(turno);
+        
+        // Capturar datos de cancelación ANTES de cambiar el estado
+        CancelacionDataDTO cancelacionData = extraerDatosCancelacion(turno, motivo, performedBy);
+        
         turno.setEstado(EstadoTurno.CANCELADO);
         Turno savedTurno = repository.save(turno);
         
@@ -214,7 +226,72 @@ public class TurnoService {
         // Crear notificación de cancelación para el paciente
         crearNotificacionCancelacion(savedTurno, motivo);
         
+        // Log de los datos capturados para futuras funcionalidades (notificacion)
+        System.out.println("📋 Datos de cancelación capturados: " + cancelacionData.toString());
+        
+        // Log de advertencia si no tiene medios de contacto válidos
+        if (!validacionContacto.isTieneMediosValidos()) {
+            System.out.println("⚠️ ADVERTENCIA DE CONTACTO: " + validacionContacto.getMensaje());
+            System.out.println("📧 Estado detallado: " + validacionContacto.getEstadoDetallado());
+        }
+        
         return toDTO(savedTurno);
+    }
+    
+    /**
+     * Método adicional para obtener datos completos de cancelación
+     * Útil para casos donde se necesita información detallada sin cancelar el turno inmediatamente
+     */
+    public CancelacionDataDTO obtenerDatosCancelacion(Integer id, String motivo, String performedBy) {
+        Optional<Turno> turnoOpt = repository.findById(id);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
+        }
+
+        Turno turno = turnoOpt.get();
+        return extraerDatosCancelacion(turno, motivo, performedBy);
+    }
+    
+    /**
+     * Valida si el paciente del turno tiene medios de contacto válidos para recibir notificaciones
+     * Retorna información detallada sobre el estado de los medios de contacto
+     */
+    public ValidacionContactoDTO validarMediosContacto(Integer turnoId) {
+        Optional<Turno> turnoOpt = repository.findById(turnoId);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + turnoId);
+        }
+
+        Turno turno = turnoOpt.get();
+        Paciente paciente = turno.getPaciente();
+        
+        if (paciente == null) {
+            return ValidacionContactoDTO.conAdvertencia(
+                "Advertencia: El turno no tiene un paciente asignado",
+                "Sin paciente asignado al turno",
+                null, null
+            );
+        }
+        
+        boolean tieneContactoValido = tieneMediosContactoValidos(paciente);
+        String estadoDetallado = obtenerEstadoMediosContacto(paciente);
+        
+        if (tieneContactoValido) {
+            return ValidacionContactoDTO.conMediosValidos(
+                estadoDetallado,
+                paciente.getEmail(),
+                paciente.getTelefono()
+            );
+        } else {
+            String mensaje = "⚠️ Advertencia: El paciente no tiene medios de contacto válidos para recibir la notificación de cancelación. " +
+                           "Es posible que no se entere de la cancelación del turno.";
+            return ValidacionContactoDTO.conAdvertencia(
+                mensaje,
+                estadoDetallado,
+                paciente.getEmail(),
+                paciente.getTelefono()
+            );
+        }
     }
 
     @Transactional
@@ -1257,6 +1334,138 @@ public class TurnoService {
     private boolean isValidCancellationReason(String reason) {
         return reason != null && reason.trim().length() >= 5; // Mínimo 5 caracteres
     }
+    
+    /**
+     * Determina el rol del usuario basado en el nombre de usuario
+     * En un sistema real, esto se obtendría del token JWT o la base de datos de usuarios
+     */
+    private String determinarRolUsuario(String performedBy) {
+        if (performedBy == null || performedBy.trim().isEmpty()) {
+            return "DESCONOCIDO";
+        }
+        
+        String username = performedBy.toLowerCase();
+        
+        // Patrones para identificar roles
+        if (username.contains("admin") || username.equals("system")) {
+            return "ADMINISTRADOR";
+        } else if (username.contains("operador") || username.contains("operator")) {
+            return "OPERADOR";
+        } else if (username.contains("medico") || username.contains("doctor") || username.contains("dr")) {
+            return "MEDICO";
+        } else if (username.contains("paciente") || username.contains("patient")) {
+            return "PACIENTE";
+        }
+        
+        // Por defecto, asumir que es OPERADOR si no se puede determinar
+        // (la mayoría de cancelaciones administrativas las realizan operadores)
+        return "OPERADOR";
+    }
+    
+    /**
+     * Verifica si el paciente tiene medios de contacto válidos para recibir notificaciones
+     * Actualmente solo verifica email verificado
+     */
+    private boolean tieneMediosContactoValidos(Paciente paciente) {
+        if (paciente == null) {
+            return false;
+        }
+        
+        // Verificar si tiene email
+        if (paciente.getEmail() == null || paciente.getEmail().trim().isEmpty()) {
+            return false;
+        }
+        
+        // Verificar si el email está verificado buscando el usuario correspondiente
+        try {
+            Optional<User> userOpt = userService.findByEmail(paciente.getEmail());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                return user.getEmailVerified() != null && user.getEmailVerified();
+            }
+            // Si no se encuentra el usuario, asumir que el email no está verificado
+            return false;
+        } catch (Exception e) {
+            System.err.println("Error al verificar medios de contacto para paciente " + paciente.getId() + ": " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Obtiene información detallada sobre los medios de contacto del paciente
+     */
+    private String obtenerEstadoMediosContacto(Paciente paciente) {
+        if (paciente == null) {
+            return "Paciente no encontrado";
+        }
+        
+        StringBuilder estado = new StringBuilder();
+        
+        // Información sobre email
+        if (paciente.getEmail() == null || paciente.getEmail().trim().isEmpty()) {
+            estado.append("Sin email registrado. ");
+        } else {
+            try {
+                Optional<User> userOpt = userService.findByEmail(paciente.getEmail());
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    if (user.getEmailVerified() != null && user.getEmailVerified()) {
+                        estado.append("Email verificado: ").append(paciente.getEmail()).append(". ");
+                    } else {
+                        estado.append("Email NO verificado: ").append(paciente.getEmail()).append(". ");
+                    }
+                } else {
+                    estado.append("Email registrado pero sin verificar: ").append(paciente.getEmail()).append(". ");
+                }
+            } catch (Exception e) {
+                estado.append("Error al verificar email: ").append(paciente.getEmail()).append(". ");
+            }
+        }
+        
+        // Información sobre teléfono (futuro)
+        if (paciente.getTelefono() == null || paciente.getTelefono().trim().isEmpty()) {
+            estado.append("Sin teléfono registrado.");
+        } else {
+            estado.append("Teléfono registrado: ").append(paciente.getTelefono()).append(" (notificaciones no implementadas).");
+        }
+        
+        return estado.toString().trim();
+    }
+    
+    /**
+     * Versión interna de validación de medios de contacto que trabaja directamente con un Turno
+     */
+    private ValidacionContactoDTO validarMediosContactoInterno(Turno turno) {
+        Paciente paciente = turno.getPaciente();
+        
+        if (paciente == null) {
+            return ValidacionContactoDTO.conAdvertencia(
+                "Advertencia: El turno no tiene un paciente asignado",
+                "Sin paciente asignado al turno",
+                null, null
+            );
+        }
+        
+        boolean tieneContactoValido = tieneMediosContactoValidos(paciente);
+        String estadoDetallado = obtenerEstadoMediosContacto(paciente);
+        
+        if (tieneContactoValido) {
+            return ValidacionContactoDTO.conMediosValidos(
+                estadoDetallado,
+                paciente.getEmail(),
+                paciente.getTelefono()
+            );
+        } else {
+            String mensaje = "⚠️ Advertencia: El paciente no tiene medios de contacto válidos para recibir la notificación de cancelación. " +
+                           "Es posible que no se entere de la cancelación del turno.";
+            return ValidacionContactoDTO.conAdvertencia(
+                mensaje,
+                estadoDetallado,
+                paciente.getEmail(),
+                paciente.getTelefono()
+            );
+        }
+    }
 
     /**
      * Valida motivo de reagendamiento
@@ -1305,6 +1514,89 @@ public class TurnoService {
         } catch (Exception e) {
             System.err.println("❌ ERROR: No se pudo validar la fecha " + fieldName + ": " + e.getMessage());
             return null;
+        }
+    }
+    
+    /**
+     * Extrae todos los datos necesarios de la cancelación de un turno
+     * para uso en plantillas de notificación y auditoría
+     */
+    private CancelacionDataDTO extraerDatosCancelacion(Turno turno, String motivo, String performedBy) {
+        try {
+            CancelacionDataDTO cancelacionData = new CancelacionDataDTO();
+            
+            // Información básica del turno
+            cancelacionData.setTurnoId(turno.getId().longValue());
+            cancelacionData.setFechaTurno(turno.getFecha());
+            cancelacionData.setHoraTurno(turno.getHoraInicio());
+            cancelacionData.setRazonCancelacion(motivo);
+            
+            // Información del centro médico y consultorio
+            if (turno.getConsultorio() != null) {
+                cancelacionData.setConsultorio(turno.getConsultorio().getNombre());
+                
+                if (turno.getConsultorio().getCentroAtencion() != null) {
+                    cancelacionData.setCentroMedico(turno.getConsultorio().getCentroAtencion().getNombre());
+                } else {
+                    cancelacionData.setCentroMedico("Centro no disponible");
+                }
+            } else {
+                cancelacionData.setConsultorio("Consultorio no disponible");
+                cancelacionData.setCentroMedico("Centro no disponible");
+            }
+            
+            // Información del médico y especialidad
+            if (turno.getStaffMedico() != null) {
+                if (turno.getStaffMedico().getEspecialidad() != null) {
+                    cancelacionData.setEspecialidad(turno.getStaffMedico().getEspecialidad().getNombre());
+                } else {
+                    cancelacionData.setEspecialidad("Especialidad no disponible");
+                }
+                
+                if (turno.getStaffMedico().getMedico() != null) {
+                    String nombreMedico = turno.getStaffMedico().getMedico().getNombre() + " " + 
+                                         turno.getStaffMedico().getMedico().getApellido();
+                    cancelacionData.setMedico(nombreMedico);
+                } else {
+                    cancelacionData.setMedico("Médico no disponible");
+                }
+            } else {
+                cancelacionData.setEspecialidad("Especialidad no disponible");
+                cancelacionData.setMedico("Médico no disponible");
+            }
+            
+            // Información del paciente
+            if (turno.getPaciente() != null) {
+                cancelacionData.setPacienteId(turno.getPaciente().getId().longValue());
+                cancelacionData.setPacienteNombre(turno.getPaciente().getNombre());
+                cancelacionData.setPacienteApellido(turno.getPaciente().getApellido());
+                cancelacionData.setPacienteEmail(turno.getPaciente().getEmail());
+                cancelacionData.setPacienteTelefono(turno.getPaciente().getTelefono());
+            } else {
+                cancelacionData.setPacienteId(null);
+                cancelacionData.setPacienteNombre("Paciente no disponible");
+                cancelacionData.setPacienteApellido("");
+                cancelacionData.setPacienteEmail("");
+                cancelacionData.setPacienteTelefono("");
+            }
+            
+            // Información de auditoría
+            cancelacionData.setCanceladoPor(performedBy);
+            cancelacionData.setRolCancelacion(determinarRolUsuario(performedBy));
+            
+            return cancelacionData;
+            
+        } catch (Exception e) {
+            System.err.println("Error al extraer datos de cancelación: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Retornar un DTO básico en caso de error
+            CancelacionDataDTO errorData = new CancelacionDataDTO();
+            errorData.setTurnoId(turno.getId().longValue());
+            errorData.setRazonCancelacion(motivo);
+            errorData.setCanceladoPor(performedBy);
+            errorData.setRolCancelacion("ERROR_EXTRACTION");
+            return errorData;
         }
     }
 }
