@@ -194,6 +194,9 @@ public class TurnoService {
         Turno turno = turnoOpt.get();
         EstadoTurno previousStatus = turno.getEstado();
         
+        // Validar que el usuario tenga permisos para cancelar
+        validarPermisosCancelacion(performedBy);
+        
         // Validaciones de negocio para cancelación
         validarCancelacion(turno);
         
@@ -1220,6 +1223,17 @@ public class TurnoService {
         // Cancelaciones y reagendamientos siempre requieren motivo
         return newState == EstadoTurno.CANCELADO || newState == EstadoTurno.REAGENDADO;
     }
+
+    /**
+     * Valida que el usuario tenga permisos para cancelar turnos
+     */
+    private void validarPermisosCancelacion(String performedBy) {
+        if (performedBy == null || performedBy.trim().isEmpty()) {
+            throw new IllegalArgumentException("Usuario requerido para cancelar turno");
+        }
+        
+    }
+
 
     /**
      * Valida permisos de usuario (simplificado - en producción integrar con sistema de autenticación)
