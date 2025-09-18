@@ -15,6 +15,8 @@ public interface StaffMedicoRepository extends JpaRepository<StaffMedico, Intege
 
     List<StaffMedico> findByCentroAtencionId(Integer centroId);
 
+    List<StaffMedico> findByMedicoId(Integer medicoId);
+
     boolean existsByMedicoAndCentroAtencionAndEspecialidad(Medico medico, CentroAtencion centro, Especialidad especialidad);
 
     StaffMedico findByMedicoAndCentroAtencionAndEspecialidad(Medico medico, CentroAtencion centroAtencion, Especialidad especialidad);

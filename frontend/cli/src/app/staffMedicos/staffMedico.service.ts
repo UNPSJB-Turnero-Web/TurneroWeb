@@ -22,6 +22,11 @@ export class StaffMedicoService {
     return this.http.get<DataPackage<StaffMedico>>(`${this.url}/${id}`);
   }
 
+  /** Obtiene todos los staff médicos de un médico específico */
+  getByMedicoId(medicoId: number): Observable<DataPackage<StaffMedico[]>> {
+    return this.http.get<DataPackage<StaffMedico[]>>(`${this.url}/medico/${medicoId}`);
+  }
+
   /** Crea un nuevo staff médico */
   create(staffMedico: StaffMedico): Observable<DataPackage<StaffMedico>> {
     return this.http.post<DataPackage<StaffMedico>>(this.url, staffMedico);

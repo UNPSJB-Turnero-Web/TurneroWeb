@@ -50,6 +50,17 @@ public class StaffMedicoPresenter {
         return Response.ok(staff, "Staff médico recuperado correctamente");
     }
 
+    // Obtener todos los staff médicos de un médico específico
+    @GetMapping("/medico/{medicoId}")
+    public ResponseEntity<Object> getStaffMedicoByMedico(@PathVariable Integer medicoId) {
+        try {
+            List<StaffMedicoDTO> staffMedicos = service.findByMedicoId(medicoId);
+            return Response.ok(staffMedicos, "Staff médico recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar staff médicos del médico: " + e.getMessage());
+        }
+    }
+
     // Listar médicos con paginación
     @GetMapping("/page")
     public ResponseEntity<Object> getByPage(

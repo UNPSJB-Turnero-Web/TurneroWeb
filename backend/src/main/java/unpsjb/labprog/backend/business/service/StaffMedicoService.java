@@ -57,6 +57,12 @@ public class StaffMedicoService {
                 .toList();
     }
 
+    public List<StaffMedicoDTO> findByMedicoId(Integer medicoId) {
+        return repository.findByMedicoId(medicoId).stream()
+                .map(this::toDTO)
+                .toList();
+    }
+
     public Page<StaffMedicoDTO> findByPage(int page, int size) {
         Page<StaffMedico> pageResult = repository.findAll(PageRequest.of(page, size));
         return pageResult.map(this::toDTO);

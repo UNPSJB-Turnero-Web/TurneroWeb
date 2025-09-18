@@ -24,5 +24,14 @@ public class StaffMedicoDTO {
     private Integer especialidadId;
     private Integer consultorioId;
 
+    // Alias para compatibilidad - el frontend espera 'centroAtencion' en lugar de 'centro'
+    public CentroAtencionDTO getCentroAtencion() {
+        return this.centro;
+    }
+    
+    public void setCentroAtencion(CentroAtencionDTO centroAtencion) {
+        this.centro = centroAtencion;
+    }
+
     // Getters y Setters
 }
