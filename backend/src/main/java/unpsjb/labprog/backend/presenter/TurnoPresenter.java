@@ -25,8 +25,10 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ExportService;
 import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.config.JwtTokenProvider;
+import unpsjb.labprog.backend.dto.CancelacionDataDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
+import unpsjb.labprog.backend.dto.ValidacionContactoDTO;
 import unpsjb.labprog.backend.model.AuditLog;
 import unpsjb.labprog.backend.model.EstadoTurno;
 
@@ -145,18 +147,56 @@ public class TurnoPresenter {
                                                HttpServletRequest request) {
         try {
             String motivo = body.get("motivo");
-            String user = body.get("usuario"); // Usar el usuario del body
             
-            // Si no viene usuario en el body, usar el método anterior como fallback
-            if (user == null || user.trim().isEmpty()) {
-                user = getCurrentUser(request);
-            }
+            String user = getCurrentUser(request);
             
             TurnoDTO turno = service.cancelarTurno(id, motivo, user);
             return Response.ok(turno, "Turno cancelado correctamente");
         } catch (IllegalArgumentException e) {
             return Response.error(null, e.getMessage());
         } catch (IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para obtener datos completos de cancelación sin cancelar el turno
+     * Útil para previsualizar la información que se capturará en una cancelación
+     */
+    @GetMapping("/{id}/datos-cancelacion")
+    public ResponseEntity<Object> obtenerDatosCancelacion(@PathVariable Integer id,
+                                                         @RequestParam(value = "motivo", defaultValue = "Previsualización") String motivo,
+                                                         HttpServletRequest request) {
+        try {
+            String user = getCurrentUser(request);
+            CancelacionDataDTO cancelacionData = service.obtenerDatosCancelacion(id, motivo, user);
+            return Response.ok(cancelacionData, "Datos de cancelación obtenidos correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para validar medios de contacto antes de cancelar un turno
+     * Útil para advertir al usuario si el paciente no podrá recibir la notificación
+     */
+    @GetMapping("/{id}/validar-contacto")
+    public ResponseEntity<Object> validarMediosContacto(@PathVariable Integer id) {
+        try {
+            ValidacionContactoDTO validacion = service.validarMediosContacto(id);
+            
+            if (validacion.isTieneMediosValidos()) {
+                return Response.ok(validacion, "El paciente tiene medios de contacto válidos");
+            } else {
+                // Retornar código 200 pero con advertencia en el mensaje
+                return Response.ok(validacion, "Advertencia: Problemas con medios de contacto del paciente");
+            }
+            
+        } catch (IllegalArgumentException e) {
             return Response.error(null, e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error interno del servidor: " + e.getMessage());
