@@ -9,7 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import unpsjb.labprog.backend.business.service.UserService;
-import unpsjb.labprog.backend.model.Role;
 import unpsjb.labprog.backend.model.User;
 
 /**

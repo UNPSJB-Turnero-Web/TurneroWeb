@@ -24,6 +24,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ExportService;
 import unpsjb.labprog.backend.business.service.TurnoService;
+import unpsjb.labprog.backend.config.JwtTokenProvider;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
 import unpsjb.labprog.backend.model.AuditLog;
@@ -40,9 +41,24 @@ public class TurnoPresenter {
     private ExportService exportService;
 
     // Método auxiliar para auditoría
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     private String getCurrentUser(HttpServletRequest request) {
-        // TODO: Implementar extracción de usuario desde JWT o sesión
-        // Por ahora retorna un valor por defecto
+        // Extraer JWT del header Authorization
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                String username = jwtTokenProvider.extractUsername(token);
+                if (username != null && !username.isEmpty()) {
+                    return username;
+                }
+            } catch (Exception e) {
+                // Token inválido o expirado, continuar con fallback
+            }
+        }
+        // Fallback: header X-User-ID (para compatibilidad)
         String user = request.getHeader("X-User-ID");
         return user != null ? user : "ADMIN";
     }
