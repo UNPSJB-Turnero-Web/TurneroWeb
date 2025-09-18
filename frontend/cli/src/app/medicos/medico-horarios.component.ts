@@ -93,9 +93,6 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
             </h3>
           </div>
           
-          <!-- Especialidades disponibles en este centro -->
-        
-          
           <!-- Selector para cambiar de centro (solo si hay múltiples centros) -->
           <div class="center-selector" *ngIf="getTotalCentrosDisponibles() > 1">
             <label>Cambiar a otro centro:</label>
@@ -142,8 +139,8 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
        
 
         <!-- Horarios Grid - Agrupados por Especialidad -->
-        <div class="especialidades-container" *ngIf="!cargando && especialidades.length > 0">
-          <div class="especialidad-section" *ngFor="let especialidad of especialidades; let i = index">
+        <div class="especialidades-container" *ngIf="!cargando && getEspecialidadesDelCentroActual().length > 0">
+          <div class="especialidad-section" *ngFor="let especialidad of getEspecialidadesDelCentroActual(); let i = index">
             <div class="especialidad-card">
               <div class="card-background"></div>
               <div class="card-glow"></div>
@@ -318,7 +315,7 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
                   <label class="form-label">Seleccionar Especialidad *</label>
                   <select class="form-select specialty-select" [(ngModel)]="especialidadSeleccionada" name="especialidad" [disabled]="modoEdicion">
                     <option value="">Seleccionar especialidad...</option>
-                    <option *ngFor="let especialidad of especialidades" [value]="especialidad.id">
+                    <option *ngFor="let especialidad of getEspecialidadesDelCentroActual()" [value]="especialidad.id">
                       {{ especialidad.nombre }}
                       <span *ngIf="especialidadTieneDisponibilidades(especialidad.id) && !modoEdicion" class="specialty-status">(Ya configurada)</span>
                     </option>
@@ -2869,6 +2866,47 @@ Posible problema de configuración. Verifique:
     }
     
     return 'Centro no disponible';
+  }
+
+  // Obtener todas las especialidades del médico en el centro actual
+  getEspecialidadesEnCentroActual(): string[] {
+    if (!this.staffMedicoSeleccionado || !this.staffMedicos) {
+      return [];
+    }
+    
+    const centroId = this.staffMedicoSeleccionado.centroAtencion?.id;
+    if (!centroId) return [];
+    
+    // Filtrar todos los StaffMedicos del mismo centro y devolver solo nombres de especialidades
+    return this.staffMedicos
+      .filter(sm => sm.centroAtencion?.id === centroId)
+      .map(sm => sm.especialidad?.nombre)
+      .filter(nombre => nombre); // Filtrar nombres nulos/undefined
+  }
+
+  // Obtener solo las especialidades que el médico tiene en el centro actual
+  getEspecialidadesDelCentroActual(): Especialidad[] {
+    if (!this.staffMedicoSeleccionado || !this.staffMedicos) {
+      return [];
+    }
+    
+    const centroId = this.staffMedicoSeleccionado.centroAtencion?.id;
+    if (!centroId) return [];
+    
+    // Filtrar StaffMedicos del mismo centro y extraer las especialidades únicas
+    const especialidadesDelCentro: Especialidad[] = [];
+    const especialidadesIds = new Set<number>();
+    
+    this.staffMedicos
+      .filter(sm => sm.centroAtencion?.id === centroId)
+      .forEach(sm => {
+        if (sm.especialidad && sm.especialidad.id && !especialidadesIds.has(sm.especialidad.id)) {
+          especialidadesIds.add(sm.especialidad.id);
+          especialidadesDelCentro.push(sm.especialidad);
+        }
+      });
+    
+    return especialidadesDelCentro;
   }
 
   // Método para obtener otros centros disponibles (excluyendo el actual)
