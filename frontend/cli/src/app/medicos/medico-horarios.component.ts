@@ -2395,14 +2395,76 @@ Posible problema de configuración. Verifique:
   validarConflictosHorarios(nuevosHorarios: { dia: string, horaInicio: string, horaFin: string }[], especialidadIdExcluir?: number): string[] {
     const conflictos: string[] = [];
     
+    // NUEVA VALIDACIÓN: Verificar superposiciones dentro de los mismos horarios que se están configurando
+    const conflictosInternos = this.validarSuperposicionesInternas(nuevosHorarios);
+    if (conflictosInternos.length > 0) {
+      conflictos.push('CONFLICTOS EN LA CONFIGURACIÓN ACTUAL:');
+      conflictos.push(...conflictosInternos);
+    }
+    
+    // Verificar conflictos con horarios existentes en el sistema
+    const conflictosExternos = this.validarConflictosConHorariosExistentes(nuevosHorarios, especialidadIdExcluir);
+    if (conflictosExternos.length > 0) {
+      if (conflictos.length > 0) {
+        conflictos.push(''); // Línea en blanco para separar
+      }
+      conflictos.push('CONFLICTOS CON HORARIOS EXISTENTES:');
+      conflictos.push(...conflictosExternos);
+    }
+    
+    return conflictos;
+  }
+
+  // NUEVA FUNCIÓN: Validar superposiciones dentro de los horarios que se están configurando
+  private validarSuperposicionesInternas(horarios: { dia: string, horaInicio: string, horaFin: string }[]): string[] {
+    const conflictos: string[] = [];
+    
+    // Agrupar horarios por día
+    const horariosPorDia: { [dia: string]: { horaInicio: string, horaFin: string, indice: number }[] } = {};
+    
+    horarios.forEach((horario, indice) => {
+      if (!horariosPorDia[horario.dia]) {
+        horariosPorDia[horario.dia] = [];
+      }
+      horariosPorDia[horario.dia].push({
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin,
+        indice: indice + 1 // Índice para mostrar al usuario (empezando en 1)
+      });
+    });
+    
+    // Verificar superposiciones dentro de cada día
+    Object.keys(horariosPorDia).forEach(dia => {
+      const horariosDelDia = horariosPorDia[dia];
+      
+      for (let i = 0; i < horariosDelDia.length; i++) {
+        for (let j = i + 1; j < horariosDelDia.length; j++) {
+          const horario1 = horariosDelDia[i];
+          const horario2 = horariosDelDia[j];
+          
+          if (this.horariosSeSolapan(horario1, horario2)) {
+            conflictos.push(`${dia}: Horario ${horario1.indice} (${horario1.horaInicio}-${horario1.horaFin}) se superpone con Horario ${horario2.indice} (${horario2.horaInicio}-${horario2.horaFin})`);
+          }
+        }
+      }
+    });
+    
+    return conflictos;
+  }
+
+  // Validar conflictos con horarios existentes en el sistema
+  private validarConflictosConHorariosExistentes(nuevosHorarios: { dia: string, horaInicio: string, horaFin: string }[], especialidadIdExcluir?: number): string[] {
+    const conflictos: string[] = [];
+    
     // Revisar cada nuevo horario contra las disponibilidades existentes
     nuevosHorarios.forEach(nuevoHorario => {
-      // Revisar contra todas las especialidades excepto la que estamos editando
+      // Revisar contra todas las especialidades
       Object.keys(this.disponibilidadesPorEspecialidad).forEach(especialidadIdStr => {
         const especialidadId = parseInt(especialidadIdStr);
         
-        // Skip la especialidad que estamos editando
-        if (especialidadIdExcluir && especialidadId === especialidadIdExcluir) {
+        // En modo edición, excluir la especialidad que estamos editando
+        // En modo creación, NO excluir ninguna especialidad (incluyendo la misma)
+        if (this.modoEdicion && especialidadIdExcluir && especialidadId === especialidadIdExcluir) {
           return;
         }
         
@@ -2414,7 +2476,13 @@ Posible problema de configuración. Verifique:
               if (this.horariosSeSolapan(nuevoHorario, horarioExistente)) {
                 const especialidad = this.especialidades.find(e => e.id === especialidadId);
                 const nombreEspecialidad = especialidad?.nombre || `Especialidad ID ${especialidadId}`;
-                conflictos.push(`${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se solapa con ${nombreEspecialidad} (${horarioExistente.horaInicio}-${horarioExistente.horaFin})`);
+                
+                // Diferenciar si es la misma especialidad u otra
+                if (especialidadId === this.especialidadSeleccionada) {
+                  conflictos.push(`${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se superpone con horario existente de ${nombreEspecialidad} (${horarioExistente.horaInicio}-${horarioExistente.horaFin})`);
+                } else {
+                  conflictos.push(`${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se solapa con ${nombreEspecialidad} (${horarioExistente.horaInicio}-${horarioExistente.horaFin})`);
+                }
               }
             }
           });
@@ -2483,14 +2551,24 @@ Posible problema de configuración. Verifique:
       return;
     }
 
-    // Validar conflictos de horarios con otras especialidades
+    // Validar conflictos de horarios
     const especialidadExcluir = this.modoEdicion ? this.disponibilidadEditando?.especialidadId : undefined;
     const conflictos = this.validarConflictosHorarios(horarios, especialidadExcluir);
     
     if (conflictos.length > 0) {
-      const mensaje = 'Se encontraron conflictos de horarios:\n\n' + conflictos.join('\n') + '\n\n¿Desea continuar de todas formas?';
-      if (!confirm(mensaje)) {
+      // Separar conflictos internos de externos
+      const tieneConflictosInternos = conflictos.some(c => c.includes('CONFLICTOS EN LA CONFIGURACIÓN ACTUAL:'));
+      
+      if (tieneConflictosInternos) {
+        // Los conflictos internos (superposiciones en el mismo formulario) no se permiten
+        alert('ERROR: No se puede guardar la configuración debido a superposiciones de horarios:\n\n' + conflictos.join('\n') + '\n\nPor favor, corrija los conflictos antes de continuar.');
         return;
+      } else {
+        // Los conflictos externos (con otras especialidades) pueden ser confirmados por el usuario
+        const mensaje = 'Se encontraron conflictos con horarios existentes:\n\n' + conflictos.join('\n') + '\n\n¿Desea continuar de todas formas?';
+        if (!confirm(mensaje)) {
+          return;
+        }
       }
     }
 
