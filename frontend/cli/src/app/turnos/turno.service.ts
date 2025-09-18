@@ -14,32 +14,96 @@ export class TurnoService {
 
   // === MÉTODOS UTILITARIOS ===
 
-  /** Obtiene la información del usuario actual desde localStorage */
+  /** Obtiene la información del usuario actual desde el JWT token */
   private getCurrentUser(): string {
+    try {
+      // Obtener el token JWT del localStorage (buscar en ambos storages)
+      const token = localStorage.getItem('access_token') || 
+                   sessionStorage.getItem('access_token') ||
+                   localStorage.getItem('token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('jwt');
+      
+      if (!token) {
+        console.warn('⚠️ No hay token JWT disponible');
+        return 'UNKNOWN';
+      }
+
+      // Decodificar el payload del JWT (sin validar la firma - solo para extraer datos)
+      const payload = this.decodeJWTPayload(token);
+      
+      if (!payload) {
+        console.warn('⚠️ No se pudo decodificar el token JWT');
+        return 'UNKNOWN';
+      }
+
+      // Extraer el username (email) del token
+      const username = payload.sub || payload.username;
+      const role = payload.role;
+      const userId = payload.userId;
+
+      console.log('🔍 DEBUG TurnoService: Usuario obtenido del JWT:');
+      console.log('   - username:', username);
+      console.log('   - role:', role);
+      console.log('   - userId:', userId);
+
+      // Retornar el username (email) como identificador principal
+      // El backend ya tiene la lógica para obtener este mismo valor del JWT
+      return username || 'UNKNOWN';
+      
+    } catch (error) {
+      console.error('❌ Error al obtener usuario del JWT:', error);
+      // Fallback al método anterior solo en caso de error
+      return this.getCurrentUserFromLocalStorage();
+    }
+  }
+
+  /** Decodifica el payload de un JWT sin validar la firma */
+  private decodeJWTPayload(token: string): any {
+    try {
+      // Remover 'Bearer ' si está presente
+      const cleanToken = token.replace('Bearer ', '');
+      
+      // Un JWT tiene 3 partes separadas por puntos: header.payload.signature
+      const parts = cleanToken.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Token JWT inválido');
+      }
+
+      // Decodificar el payload (segunda parte)
+      const payload = parts[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Error al decodificar JWT payload:', error);
+      return null;
+    }
+  }
+
+  /** Método de fallback que usa localStorage (método anterior) */
+  private getCurrentUserFromLocalStorage(): string {
     const userRole = localStorage.getItem('userRole');
     const userName = localStorage.getItem('userName');
     
-    // // console.log('🔍 DEBUG TurnoService: Obteniendo información del usuario:');
-    // console.log('   - userRole:', userRole);
-    // console.log('   - userName:', userName);
+    console.log('🔄 FALLBACK: Usando localStorage para obtener usuario');
+    console.log('   - userRole:', userRole);
+    console.log('   - userName:', userName);
     
     let currentUser = 'UNKNOWN';
     
     if (userRole === 'patient') {
       const patientDNI = localStorage.getItem('patientDNI');
-      console.log('   - patientDNI:', patientDNI);
       currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
     } else if (userRole === 'admin') {
       currentUser = 'ADMIN';
     } else if (userRole === 'medico') {
       currentUser = 'MEDICO';
     } else {
-      console.log('   - Rol no reconocido, usando AUDITOR_DASHBOARD');
       currentUser = 'AUDITOR_DASHBOARD';
     }
     
-    console.log('   - currentUser final:', currentUser);
-    
+    console.log('   - currentUser final (fallback):', currentUser);
     return currentUser;
   }
 
