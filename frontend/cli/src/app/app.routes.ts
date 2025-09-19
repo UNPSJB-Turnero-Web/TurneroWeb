@@ -169,7 +169,7 @@ export const routes: Routes = [
   {
     path: "turnos/advanced-search",
     component: TurnoAdvancedSearchComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "turnos/audit-dashboard",
