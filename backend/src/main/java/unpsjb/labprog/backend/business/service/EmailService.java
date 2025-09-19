@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
  * Servicio para el envío de correos electrónicos.
  * Soporta envío de mensajes de texto plano y HTML de forma síncrona y asíncrona.
  * 
- * @author Sistema TurneroWeb
  */
 @Service
 public class EmailService {
@@ -199,6 +198,22 @@ public class EmailService {
         return sendHtmlEmailAsync(to, subject, htmlBody);
     }
 
+    /**
+     * Envía una notificación de turno cancelado.
+     * 
+     * @param to Dirección de correo del paciente
+     * @param patientName Nombre del paciente
+     * @param cancellationDetails Detalles de la cancelación
+     * @param rescheduleUrl URL para reagendar turno
+     */
+    @Async
+    public CompletableFuture<Void> sendAppointmentCancellationEmail(String to, String patientName, String cancellationDetails, String rescheduleUrl) {
+        String subject = appName + " - Turno cancelado";
+        String htmlBody = buildAppointmentCancellationEmailBody(patientName, cancellationDetails, rescheduleUrl);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
     // Métodos privados para construir los cuerpos de los correos
 
     private String buildPasswordResetEmailBody(String resetLink) {
@@ -308,6 +323,39 @@ public class EmailService {
             </body>
             </html>
             """, appName, patientName, appointmentDetails, appUrl);
+    }
+
+    private String buildAppointmentCancellationEmailBody(String patientName, String cancellationDetails, String rescheduleUrl) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Turno cancelado</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc3545;">Turno cancelado - %s</h2>
+                    <p>Hola %s,</p>
+                    <p>Lamentamos informarte que tu turno ha sido cancelado. Aquí tienes los detalles:</p>
+                    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        %s
+                    </div>
+                    <p><strong>¿Necesitas reagendar?</strong> Puedes reservar un nuevo turno fácilmente:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Agendar nuevo turno</a>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">
+                        <!-- TODO: Aplicar filtros automáticos para misma especialidad y centro médico del turno original -->
+                        El enlace te llevará directamente a la agenda de turnos.
+                    </p>
+                    <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, patientName, cancellationDetails, rescheduleUrl);
     }
 
     /**
