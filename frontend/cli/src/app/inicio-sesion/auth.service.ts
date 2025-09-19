@@ -689,14 +689,9 @@ export class AuthService {
    * @returns Observable con la respuesta del servidor
    */
   changePassword(request: ChangePasswordRequest): Observable<DataPackage<any>> {
-    const headers = new HttpHeaders({
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.getToken()}`,
-    });
-
     return this.http
       .post<DataPackage<any>>(`${this.API_BASE_URL}/change-password`, request, {
-        headers,
+        headers: new HttpHeaders({ "Content-Type": "application/json" })
       })
       .pipe(catchError(this.handleError));
   }
@@ -707,14 +702,9 @@ export class AuthService {
    * @returns Observable con la respuesta del servidor
    */
   updateProfile(request: UpdateProfileRequest): Observable<DataPackage<UpdateProfileResponse>> {
-    const headers = new HttpHeaders({
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.getToken()}`,
-    });
-
     return this.http
       .put<DataPackage<UpdateProfileResponse>>(`${this.API_BASE_URL}/update-profile`, request, {
-        headers,
+        headers: new HttpHeaders({ "Content-Type": "application/json" })
       })
       .pipe(
         tap((response) => {
