@@ -62,7 +62,7 @@ public class TurnoPresenter {
         }
         // Fallback: header X-User-ID (para compatibilidad)
         String user = request.getHeader("X-User-ID");
-        return user != null ? user : "ADMIN";
+        return user != null ? user : "UNKNOWN";
     }
 
     @GetMapping
@@ -141,6 +141,11 @@ public class TurnoPresenter {
 
     // ========== ENDPOINTS PARA CAMBIOS DE ESTADO ==========
     
+    /**
+     * @deprecated Utilice PUT /turno/{id}/estado con el cuerpo {"estado": "CANCELADO", "motivo": "..."}.
+     * Este endpoint se mantiene por compatibilidad con versiones anteriores, pero el endpoint /estado
+     * ofrece la misma funcionalidad con una mejor consistencia de la API.
+     */
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<Object> cancelarTurno(@PathVariable Integer id, 
                                                @RequestBody Map<String, String> body,
@@ -277,6 +282,9 @@ public class TurnoPresenter {
         }
     }
 
+    /*
+     * Endpoint genérico para cambiar el estado del turno (confirmado, completado, cancelado, etc.)
+     */
     @PutMapping("/{id}/estado")
     public ResponseEntity<Object> cambiarEstado(@PathVariable Integer id,
                                                @RequestBody Map<String, String> body,
@@ -284,12 +292,8 @@ public class TurnoPresenter {
         try {
             String estadoStr = body.get("estado");
             String motivo = body.get("motivo");
-            String user = body.get("usuario"); // Usar el usuario del body
-            
-            // Si no viene usuario en el body, usar el método anterior como fallback
-            if (user == null || user.trim().isEmpty()) {
-                user = getCurrentUser(request);
-            }
+            String user = getCurrentUser(request);
+
             
             EstadoTurno newState = EstadoTurno.valueOf(estadoStr.toUpperCase());
             TurnoDTO turno = service.changeEstado(id, newState, motivo, user);

@@ -33,6 +33,8 @@ import unpsjb.labprog.backend.model.StaffMedico;
 import unpsjb.labprog.backend.model.TipoNotificacion;
 import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.business.repository.OperadorRepository;
+import unpsjb.labprog.backend.business.repository.UserRepository;
 
 @Service
 public class TurnoService {
@@ -60,6 +62,13 @@ public class TurnoService {
     
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private OperadorRepository operadorRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
 
     // === VALIDACIONES DE TRANSICIÓN DE ESTADO ===
     
@@ -235,6 +244,9 @@ public class TurnoService {
             System.out.println("📧 Estado detallado: " + validacionContacto.getEstadoDetallado());
         }
         
+        // Enviar notificación por email si el paciente tiene email verificado
+        enviarNotificacionCancelacionEmail(savedTurno, cancelacionData, validacionContacto);
+        
         return toDTO(savedTurno);
     }
     
@@ -388,6 +400,11 @@ public class TurnoService {
      */
     @Transactional
     public TurnoDTO changeEstado(Integer id, EstadoTurno newState, String motivo, String performedBy) {
+        // Si es una cancelación, delegar al método específico que tiene toda la lógica
+        if (newState == EstadoTurno.CANCELADO) {
+            return cancelarTurno(id, motivo, performedBy);
+        }
+
         Optional<Turno> turnoOpt = repository.findById(id);
         if (turnoOpt.isEmpty()) {
             throw new IllegalArgumentException("Turno no encontrado con ID: " + id);
@@ -395,43 +412,35 @@ public class TurnoService {
 
         Turno turno = turnoOpt.get();
         EstadoTurno previousStatus = turno.getEstado();
-        
+
         // Validar que el usuario tiene permisos
         if (!hasPermissionToModifyTurno(performedBy)) {
             throw new IllegalArgumentException("Usuario sin permisos para modificar turnos");
         }
-        
+
         // Validar que el turno puede ser modificado
         if (!canTurnoBeModified(turno)) {
             throw new IllegalStateException("No se puede modificar un turno cancelado");
         }
-        
+
         // Validar transición de estado
         if (!isValidStateTransition(previousStatus, newState)) {
-            throw new IllegalStateException("Transición de estado inválida de " + 
+            throw new IllegalStateException("Transición de estado inválida de " +
                                            previousStatus + " a " + newState);
         }
-        
+
         // Validar motivo si es requerido
         if (requiresReason(newState)) {
-            if (newState == EstadoTurno.CANCELADO && !isValidCancellationReason(motivo)) {
-                throw new IllegalArgumentException("El motivo de cancelación es obligatorio y debe tener al menos 5 caracteres");
-            }
             if (newState == EstadoTurno.REAGENDADO && !isValidReschedulingReason(motivo)) {
                 throw new IllegalArgumentException("El motivo de reagendamiento es obligatorio y debe tener al menos 5 caracteres");
             }
         }
-        
+
         turno.setEstado(newState);
         Turno savedTurno = repository.save(turno);
-        
+
         // Registrar auditoría según el tipo de cambio
         switch (newState) {
-            case CANCELADO:
-                auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
-                // Crear notificación de cancelación
-                crearNotificacionCancelacion(savedTurno, motivo != null ? motivo : "Cancelado por el sistema");
-                break;
             case CONFIRMADO:
                 auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
                 // Crear notificación de confirmación
@@ -445,7 +454,7 @@ public class TurnoService {
                 auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
                 break;
         }
-        
+
         return toDTO(savedTurno);
     }
 
@@ -1339,27 +1348,35 @@ public class TurnoService {
      * Determina el rol del usuario basado en el nombre de usuario
      * En un sistema real, esto se obtendría del token JWT o la base de datos de usuarios
      */
+    /**
+     * Determina el rol real del usuario a partir de su email, consultando la base de datos.
+     * Si no se encuentra, usa heurística por nombre/email como fallback.
+     */
     private String determinarRolUsuario(String performedBy) {
+
         if (performedBy == null || performedBy.trim().isEmpty()) {
             return "DESCONOCIDO";
         }
+
+        String email = performedBy.trim().toLowerCase();
         
-        String username = performedBy.toLowerCase();
-        
-        // Patrones para identificar roles
-        if (username.contains("admin") || username.equals("system")) {
-            return "ADMINISTRADOR";
-        } else if (username.contains("operador") || username.contains("operator")) {
-            return "OPERADOR";
-        } else if (username.contains("medico") || username.contains("doctor") || username.contains("dr")) {
-            return "MEDICO";
-        } else if (username.contains("paciente") || username.contains("patient")) {
+        // Buscar en PACIENTE
+        if (pacienteRepository != null && pacienteRepository.existsByEmail(email)) {
             return "PACIENTE";
         }
+
+        // Buscar en OPERADOR
+        if (operadorRepository.findByEmail(email).isPresent()) {
+            return "OPERADOR";
+        }
         
-        // Por defecto, asumir que es OPERADOR si no se puede determinar
-        // (la mayoría de cancelaciones administrativas las realizan operadores)
-        return "OPERADOR";
+        // Buscar en USER (admins)
+        if (userRepository.existsByEmail(email)) {
+            return "ADMINISTRADOR";
+        }
+
+        return "DESCONOCIDO";
+
     }
     
     /**
@@ -1598,5 +1615,61 @@ public class TurnoService {
             errorData.setRolCancelacion("ERROR_EXTRACTION");
             return errorData;
         }
+    }
+    
+    /**
+     * Envía notificación por email de cancelación de turno al paciente
+     * Solo se envía si el paciente tiene email verificado
+     */
+    private void enviarNotificacionCancelacionEmail(Turno turno, CancelacionDataDTO cancelacionData, ValidacionContactoDTO validacionContacto) {
+        try {
+            // Solo enviar email si el paciente tiene email verificado
+            if (!validacionContacto.isPuedeRecibirEmail()) {
+                System.out.println("📧 No se envía email de cancelación: paciente sin email verificado");
+                return;
+            }
+            
+            // Verificar que tengamos email del paciente
+            if (cancelacionData.getPacienteEmail() == null || cancelacionData.getPacienteEmail().trim().isEmpty()) {
+                System.out.println("📧 No se envía email de cancelación: paciente sin email registrado");
+                return;
+            }
+            
+            String patientEmail = cancelacionData.getPacienteEmail();
+            String patientName = cancelacionData.getPacienteNombreCompleto();
+            
+            // Construir detalles de la cancelación para el email
+            String cancellationDetails = construirDetallesCancelacionEmail(cancelacionData);
+            
+            // URL para reagendar turno (provisional)
+            String rescheduleUrl = "http://localhost:4200/paciente-agenda"; // TODO: Aplicar filtros de especialidad y centro médico del turno original
+            
+            // Enviar email de forma asíncrona
+            emailService.sendAppointmentCancellationEmail(patientEmail, patientName, cancellationDetails, rescheduleUrl);
+            
+            System.out.println("📧 Email de cancelación enviado a: " + patientEmail + " para turno ID: " + turno.getId());
+            
+        } catch (Exception e) {
+            // Log error pero no fallar la operación principal
+            System.err.println("❌ Error al enviar email de cancelación para turno ID " + turno.getId() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Construye los detalles de la cancelación formateados para el email
+     */
+    private String construirDetallesCancelacionEmail(CancelacionDataDTO cancelacionData) {
+        StringBuilder detalles = new StringBuilder();
+        
+        detalles.append("<p><strong>Fecha y Hora del Turno:</strong> ").append(cancelacionData.getFechaHoraFormateada()).append("</p>");
+        detalles.append("<p><strong>Centro Médico:</strong> ").append(cancelacionData.getCentroMedico()).append("</p>");
+        detalles.append("<p><strong>Consultorio:</strong> ").append(cancelacionData.getConsultorio()).append("</p>");
+        detalles.append("<p><strong>Especialidad:</strong> ").append(cancelacionData.getEspecialidad()).append("</p>");
+        detalles.append("<p><strong>Profesional:</strong> ").append(cancelacionData.getMedico()).append("</p>");
+        detalles.append("<p><strong>Razón de la Cancelación:</strong> ").append(cancelacionData.getRazonCancelacion()).append("</p>");
+        detalles.append("<p><strong>Cancelado por:</strong> ").append(cancelacionData.getCanceladoPor()).append(" (").append(cancelacionData.getRolCancelacion()).append(")</p>");
+        
+        return detalles.toString();
     }
 }

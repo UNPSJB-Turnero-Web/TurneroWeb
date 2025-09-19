@@ -147,7 +147,11 @@ export class TurnoService {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/paciente/${pacienteId}`);
   }
 
-  /** Cancela un turno */
+  /** 
+   * @deprecated Utilice updateEstado(id, "CANCELADO") en su lugar.
+   * Este método se mantiene por compatibilidad con versiones anteriores, pero updateEstado()
+   * proporciona la misma funcionalidad con una mejor consistencia de la API.
+   */
   cancelar(id: number): Observable<DataPackage<Turno>> {
     const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { usuario: currentUser });
@@ -430,7 +434,11 @@ export class TurnoService {
 
   // === MÉTODOS DE GESTIÓN CON AUDITORÍA ===
 
-  /** Cancela un turno con motivo */
+  /** 
+   * @deprecated Utilice updateEstado(id, "CANCELADO", motivo) en su lugar.
+   * Este método se mantiene por compatibilidad con versiones anteriores, pero updateEstado()
+   * proporciona la misma funcionalidad con mayor consistencia de API.
+   */
   cancelarConMotivo(id: number, motivo: string): Observable<DataPackage<Turno>> {
     const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { 
