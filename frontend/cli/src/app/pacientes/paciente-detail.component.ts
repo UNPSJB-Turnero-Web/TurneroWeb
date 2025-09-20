@@ -289,7 +289,7 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     [(ngModel)]="paciente.dni"
                     name="dni"
                     id="dni"
-                    type="number"
+                    type="text"
                     class="form-control form-control-modern"
                     placeholder="DNI"
                     required
@@ -358,6 +358,17 @@ import { AuthService } from "../inicio-sesion/auth.service";
                 </div>
               </div>
             </div>
+
+            <!-- Información sobre contraseña automática para nuevos pacientes -->
+              <div class="col-md-12 mt-2" *ngIf="esNuevo()">
+                <div class="alert alert-info d-flex align-items-center password-alert">
+                  <i class="fas fa-info-circle me-3"></i>
+                  <div>
+                    <strong>Contraseña automática:</strong> 
+                    Se generará una contraseña segura automáticamente y será enviada por correo electrónico al paciente.
+                  </div>
+                </div>
+              </div>
 
             <!-- Botones de acción -->
             <div class="d-flex flex-wrap gap-3 mt-5 pt-4 border-top">
@@ -617,6 +628,13 @@ import { AuthService } from "../inicio-sesion/auth.service";
         color: white;
       }
 
+      /* Espaciado extra para la alerta de contraseña automática */
+      .password-alert {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+
       /* Validación de formularios */
       .invalid-feedback {
         color: #ef4444;
@@ -692,7 +710,7 @@ export class PacienteDetailComponent implements OnInit {
     apellido: "",
     email: "",
     telefono: "",
-    dni: 0,
+    dni: null,
     fechaNacimiento: "",
   };
   modoEdicion = false;

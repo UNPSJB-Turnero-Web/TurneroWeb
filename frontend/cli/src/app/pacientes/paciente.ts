@@ -4,7 +4,7 @@ export interface Paciente {
     apellido: string;
     email: string;
     telefono: string;
-    dni: number;
+    dni: number | null;
     fechaNacimiento: string; // Usar formato ISO para fechas
     obraSocial?: {
         id: number;

@@ -211,7 +211,7 @@ import { ModalService } from "../modal/modal.service";
                     [(ngModel)]="operador.dni"
                     name="dni"
                     id="dni"
-                    type="number"
+                    type="text"
                     class="form-control form-control-modern"
                     placeholder="DNI"
                     required
@@ -483,7 +483,7 @@ export class OperadorDetailComponent implements OnInit {
     id: 0,
     nombre: "",
     apellido: "",
-    dni: 0,
+    dni: null,
     email: "",
     activo: true,
     telefono: "",

@@ -299,6 +299,18 @@ import { AuthService } from '../inicio-sesion/auth.service';
                   </div>
                 </div>
               </div>
+
+                <!-- Información sobre contraseña automática para nuevos médicos -->
+                <div class="col-md-12 mt-2" *ngIf="esNuevo">
+                  <div class="alert alert-info d-flex align-items-center medico-password-alert">
+                    <i class="fas fa-info-circle me-3"></i>
+                    <div>
+                      <strong>Contraseña automática:</strong>
+                      Se generará una contraseña segura automáticamente y será enviada por correo electrónico al médico.
+                    </div>
+                  </div>
+                </div> 
+                
             </div>
           </form>
         </div>
@@ -701,6 +713,12 @@ import { AuthService } from '../inicio-sesion/auth.service';
       opacity: 0.7;
       transform: none !important;
       box-shadow: none !important;
+    }
+    /* Espaciado extra para la alerta de contraseña automática en médicos */
+    .medico-password-alert {
+      margin-top: 0.1rem;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
     }
     
     /* Responsive */
