@@ -1643,7 +1643,8 @@ public class TurnoService {
             
             // URL para reagendar turno (provisional)
             String rescheduleUrl = "http://localhost:4200/paciente-agenda"; // TODO: Aplicar filtros de especialidad y centro médico del turno original
-            
+            // TODO: Usuario no mantiene la sesion ingresando desde este link (fixear)
+
             // Enviar email de forma asíncrona
             emailService.sendAppointmentCancellationEmail(patientEmail, patientName, cancellationDetails, rescheduleUrl);
             
