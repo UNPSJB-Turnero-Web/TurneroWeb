@@ -17,6 +17,7 @@ import unpsjb.labprog.backend.dto.ObraSocialDTO;
 import unpsjb.labprog.backend.dto.PacienteDTO;
 import unpsjb.labprog.backend.model.ObraSocial;
 import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.model.User;
 
 @Service
 public class PacienteService {
@@ -33,6 +34,9 @@ public class PacienteService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     public List<PacienteDTO> findAll() {
         return repository.findAll().stream()
@@ -129,6 +133,21 @@ public class PacienteService {
                 throw new IllegalStateException("Ya existe un paciente con el email: " + paciente.getEmail());
             }
             // No manejamos contraseña en la entidad paciente, solo en User
+            
+            // Actualizar también el User correspondiente si existe
+            Optional<User> userOpt = userService.findByEmail(existente.getEmail());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Actualizar los datos personales del usuario
+                user.setNombre(paciente.getNombre());
+                user.setApellido(paciente.getApellido());
+                user.setEmail(paciente.getEmail());
+                user.setTelefono(paciente.getTelefono());
+                user.setDni(paciente.getDni());
+                
+                // Guardar el usuario actualizado
+                userService.save(user);
+            }
         }
 
         return toDTO(repository.save(paciente));

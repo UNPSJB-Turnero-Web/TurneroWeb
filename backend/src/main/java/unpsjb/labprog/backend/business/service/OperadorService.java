@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.business.repository.OperadorRepository;
 import unpsjb.labprog.backend.dto.OperadorDTO;
 import unpsjb.labprog.backend.model.Operador;
+import unpsjb.labprog.backend.model.User;
 
 @Service
 public class OperadorService {
@@ -27,6 +28,9 @@ public class OperadorService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(OperadorService.class);
 
@@ -111,6 +115,21 @@ public class OperadorService {
                 throw new IllegalStateException("Ya existe un operador con el DNI: " + operador.getDni());
             }
             // No manejamos contraseña en la entidad operador, solo en User
+            
+            // Actualizar también el User correspondiente si existe
+            Optional<User> userOpt = userService.findByEmail(existente.getEmail());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Actualizar los datos personales del usuario
+                user.setNombre(operador.getNombre());
+                user.setApellido(operador.getApellido());
+                user.setEmail(operador.getEmail());
+                user.setTelefono(operador.getTelefono());
+                user.setDni(operador.getDni());
+                
+                // Guardar el usuario actualizado
+                userService.save(user);
+            }
         }
 
         return toDTO(repository.save(operador));

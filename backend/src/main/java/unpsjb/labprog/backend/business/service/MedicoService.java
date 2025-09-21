@@ -20,6 +20,7 @@ import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.User;
 
 @Service
 public class MedicoService {
@@ -37,6 +38,9 @@ public class MedicoService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     public List<MedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -180,6 +184,21 @@ public class MedicoService {
             }
 
             // No manejamos contraseña en la entidad médico, solo en User
+
+            // Actualizar también el User correspondiente si existe
+            Optional<User> userOpt = userService.findByEmail(existente.getEmail());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Actualizar los datos personales del usuario
+                user.setNombre(medico.getNombre());
+                user.setApellido(medico.getApellido());
+                user.setEmail(medico.getEmail());
+                user.setTelefono(medico.getTelefono());
+                user.setDni(medico.getDni());
+                
+                // Guardar el usuario actualizado
+                userService.save(user);
+            }
 
             // Actualizar campos editables
             existente.setNombre(medico.getNombre());
