@@ -22,7 +22,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
       </p>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
+      <button *ngIf="!isAlert" type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Cancelar</button>
       <button type="button" class="btn btn-success" (click)="modal.close()">Aceptar</button>
     </div>
   `,
