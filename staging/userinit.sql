@@ -1,17 +1,3 @@
--- Script SQL para crear usuarios iniciales del sistema TurneroWeb
--- Genera 1 cuenta de cada tipo: Administrador, Paciente, Médico y Operador
--- Contraseña para todos los usuarios: "password"
-
--- =====================================
--- 1. INSERTAR ROLES (si no existen)
--- =====================================
-
-INSERT INTO roles (name, display_name, description, active, created_at) VALUES
-('ADMINISTRADOR', 'Administrador', 'Administrador del sistema con acceso completo', true, NOW()),
-('PACIENTE', 'Paciente', 'Usuario paciente que puede solicitar turnos', true, NOW()),
-('MEDICO', 'Médico', 'Profesional médico que atiende pacientes', true, NOW()),
-('OPERADOR', 'Operador', 'Operador del sistema que gestiona turnos', true, NOW())
-ON CONFLICT (name) DO NOTHING;
 
 -- =====================================
 -- 2. INSERTAR OBRA SOCIAL (para paciente)
@@ -33,58 +19,54 @@ WHERE NOT EXISTS (SELECT 1 FROM especialidad WHERE nombre = 'Cardiología');
 -- 4. INSERTAR USUARIOS EN TABLA USERS
 -- =====================================
 
--- Usuario Administrador
--- Email: admin@turnero.com, Password: password
+
 INSERT INTO users (
-    nombre, apellido, dni, email, telefono, 
-    hashed_password, role_id, enabled, account_non_expired, 
+    nombre, apellido, dni, email, telefono,
+    hashed_password, role, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
 ) VALUES (
     'Carlos', 'Administrador', 11111111, 'admin@turnero.com', '+5492804111111',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
-    (SELECT id FROM roles WHERE name = 'ADMINISTRADOR'), 
+    'ADMINISTRADOR',
     true, true, true, true, true
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Usuario Paciente  
--- Email: paciente@turnero.com, Password: password
+
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
-    hashed_password, role_id, enabled, account_non_expired,
+    hashed_password, role, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
 ) VALUES (
     'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
-    (SELECT id FROM roles WHERE name = 'PACIENTE'),
+    'PACIENTE',
     true, true, true, true, true
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Usuario Médico
--- Email: medico@turnero.com, Password: password  
+
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
-    hashed_password, role_id, enabled, account_non_expired,
+    hashed_password, role, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
 ) VALUES (
     'Dr. Juan', 'Pérez', 33333333, 'medico@turnero.com', '+5492804333333',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
-    (SELECT id FROM roles WHERE name = 'MEDICO'),
+    'MEDICO',
     true, true, true, true, true
 )
 ON CONFLICT (email) DO NOTHING;
 
--- Usuario Operador
--- Email: operador@turnero.com, Password: password
+
 INSERT INTO users (
     nombre, apellido, dni, email, telefono,
-    hashed_password, role_id, enabled, account_non_expired,
+    hashed_password, role, enabled, account_non_expired,
     account_non_locked, credentials_non_expired, email_verified
 ) VALUES (
     'Ana', 'Operadora', 44444444, 'operador@turnero.com', '+5492804444444',
     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password
-    (SELECT id FROM roles WHERE name = 'OPERADOR'),
+    'OPERADOR',
     true, true, true, true, true
 )
 ON CONFLICT (email) DO NOTHING;
@@ -178,7 +160,6 @@ SELECT setval(pg_get_serial_sequence('medico', 'id'),
 -- =====================================
 
 SELECT 'Script ejecutado exitosamente. Usuarios creados:' AS mensaje;
-SELECT u.email, r.display_name as rol, u.enabled as habilitado
-FROM users u 
-JOIN roles r ON u.role_id = r.id 
+SELECT u.email, u.role as rol, u.enabled as habilitado
+FROM users u
 WHERE u.email IN ('admin@turnero.com', 'paciente@turnero.com', 'medico@turnero.com', 'operador@turnero.com');
