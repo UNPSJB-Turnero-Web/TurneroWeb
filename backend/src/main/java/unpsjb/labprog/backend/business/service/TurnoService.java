@@ -29,6 +29,7 @@ import unpsjb.labprog.backend.model.AuditLog;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.model.Role;
 import unpsjb.labprog.backend.model.StaffMedico;
 import unpsjb.labprog.backend.model.TipoNotificacion;
 import unpsjb.labprog.backend.model.Turno;
@@ -121,7 +122,45 @@ public class TurnoService {
 
     @Transactional
     public TurnoDTO save(TurnoDTO dto, String performedBy) {
+        return save(dto, performedBy, null);
+    }
+
+    @Transactional
+    public TurnoDTO save(TurnoDTO dto, String performedBy, String currentUserEmail) {
         try {
+            // Lógica para multi-rol: si no hay pacienteId pero hay usuario actual, buscar/crear paciente
+            if (dto.getPacienteId() == null && currentUserEmail != null && !currentUserEmail.equals("UNKNOWN")) {
+                Optional<User> currentUserOpt = userRepository.findByEmail(currentUserEmail);
+                if (currentUserOpt.isPresent()) {
+                    User currentUser = currentUserOpt.get();
+                    // Verificar permisos usando jerarquía: cualquier rol puede acceder a PACIENTE
+                    if (currentUser.getRole().hasAccessTo(Role.PACIENTE)) {
+                        // Buscar paciente existente por DNI o email
+                        Optional<Paciente> pacienteOpt = pacienteRepository.findByDni(currentUser.getDni());
+                        if (pacienteOpt.isEmpty()) {
+                            pacienteOpt = pacienteRepository.findByEmail(currentUser.getEmail());
+                        }
+                        
+                        Paciente paciente;
+                        if (pacienteOpt.isPresent()) {
+                            paciente = pacienteOpt.get();
+                        } else {
+                            // Crear nuevo paciente
+                            paciente = new Paciente();
+                            paciente.setNombre(currentUser.getNombre());
+                            paciente.setApellido(currentUser.getApellido());
+                            paciente.setDni(currentUser.getDni());
+                            paciente.setEmail(currentUser.getEmail());
+                            paciente.setTelefono(currentUser.getTelefono());
+                            paciente = pacienteRepository.save(paciente);
+                        }
+                        dto.setPacienteId(paciente.getId());
+                    } else {
+                        throw new IllegalArgumentException("Usuario no autorizado para crear turnos");
+                    }
+                }
+            }
+            
             Turno turno = toEntity(dto); // Convertir DTO a entidad
             validarTurno(turno); // Validar el turno
             
@@ -133,7 +172,7 @@ public class TurnoService {
                 Optional<Turno> existingTurno = repository.findById(turno.getId());
                 if (existingTurno.isPresent()) {
                     previousStatus = existingTurno.get().getEstado();
-                }
+                }   
             }
             
             Turno saved = repository.save(turno); // Guardar el turno

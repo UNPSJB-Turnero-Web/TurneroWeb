@@ -85,8 +85,9 @@ public class TurnoPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO) {
-        TurnoDTO saved = service.save(turnoDTO);
+    public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
+        String currentUserEmail = getCurrentUser(request);
+        TurnoDTO saved = service.save(turnoDTO, currentUserEmail);
         return Response.ok(saved, "Turno creado correctamente");
     }
 
