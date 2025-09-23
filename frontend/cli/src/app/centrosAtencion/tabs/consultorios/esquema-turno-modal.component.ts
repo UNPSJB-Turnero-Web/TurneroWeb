@@ -730,15 +730,82 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
     console.log(`\n📋 Total horarios con intersección: ${horariosInterseccion.length}`);
 
-    // Filtrar horarios que no están ocupados por esquemas existentes
-    this.horariosDisponibles = horariosInterseccion.filter(horario => {
-      const ocupado = this.esQuemasOcupanHorario(horario);
-      console.log(`🔍 Horario ${horario.dia} ${horario.horaInicio}-${horario.horaFin} ocupado: ${ocupado}`);
-      return !ocupado;
-    });
+    // NUEVA LÓGICA: En lugar de filtrar completamente, dividir horarios en segmentos disponibles
+    this.horariosDisponibles = [];
+    for (const horario of horariosInterseccion) {
+      const segmentosLibres = this.calcularSegmentosLibres(horario);
+      this.horariosDisponibles.push(...segmentosLibres);
+    }
 
     console.log(`\n🎯 RESULTADO FINAL: ${this.horariosDisponibles.length} horarios disponibles:`, this.horariosDisponibles);
     console.log('🔍 === FIN CÁLCULO ===\n');
+  }
+
+  /**
+   * Nuevo método que divide un horario en segmentos libres, 
+   * excluyendo solo las partes ocupadas por esquemas existentes
+   */
+  private calcularSegmentosLibres(horario: any): any[] {
+    const segmentosLibres: any[] = [];
+    const inicioTotal = this.timeToMinutes(horario.horaInicio);
+    const finTotal = this.timeToMinutes(horario.horaFin);
+
+    // Obtener todos los horarios ocupados para este día, ordenados por hora
+    const horariosOcupados = this.esquemasExistentes
+      .flatMap(esquema => esquema.horarios)
+      .filter(h => h.dia === horario.dia)
+      .map(h => ({
+        inicio: this.timeToMinutes(h.horaInicio),
+        fin: this.timeToMinutes(h.horaFin)
+      }))
+      .sort((a, b) => a.inicio - b.inicio);
+
+    console.log(`🔍 Calculando segmentos libres para ${horario.dia} ${horario.horaInicio}-${horario.horaFin}`);
+    console.log(`📅 Horarios ocupados:`, horariosOcupados.map(h => `${this.minutesToTime(h.inicio)}-${this.minutesToTime(h.fin)}`));
+
+    if (horariosOcupados.length === 0) {
+      // No hay ocupación, todo el horario está libre
+      segmentosLibres.push(horario);
+      console.log(`✅ Todo libre: ${horario.horaInicio}-${horario.horaFin}`);
+      return segmentosLibres;
+    }
+
+    let puntoActual = inicioTotal;
+
+    for (const ocupado of horariosOcupados) {
+      // Si hay espacio libre antes de este horario ocupado
+      if (puntoActual < ocupado.inicio) {
+        const segmentoLibre = {
+          dia: horario.dia,
+          horaInicio: this.minutesToTime(puntoActual),
+          horaFin: this.minutesToTime(Math.min(ocupado.inicio, finTotal))
+        };
+        segmentosLibres.push(segmentoLibre);
+        console.log(`✅ Segmento libre: ${segmentoLibre.horaInicio}-${segmentoLibre.horaFin}`);
+      }
+
+      // Mover el punto actual al final de este horario ocupado
+      puntoActual = Math.max(puntoActual, ocupado.fin);
+
+      // Si ya cubrimos todo el horario, salir
+      if (puntoActual >= finTotal) {
+        break;
+      }
+    }
+
+    // Si queda tiempo libre después del último horario ocupado
+    if (puntoActual < finTotal) {
+      const segmentoLibre = {
+        dia: horario.dia,
+        horaInicio: this.minutesToTime(puntoActual),
+        horaFin: this.minutesToTime(finTotal)
+      };
+      segmentosLibres.push(segmentoLibre);
+      console.log(`✅ Segmento libre final: ${segmentoLibre.horaInicio}-${segmentoLibre.horaFin}`);
+    }
+
+    console.log(`� Total segmentos libres para ${horario.dia}: ${segmentosLibres.length}`);
+    return segmentosLibres;
   }
 
   private esQuemasOcupanHorario(horario: any): boolean {
