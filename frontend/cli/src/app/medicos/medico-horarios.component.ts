@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { MedicoService } from './medico.service';
@@ -75,16 +76,45 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
       <div class="center-selection-section" *ngIf="!mostrarFormulario">
         <div class="center-selection-background"></div>
         
-        <!-- Estado de carga -->
-        <div class="center-loading" *ngIf="cargando">
+        <!-- Estado de error -->
+        <div class="center-error" *ngIf="errorCarga">
+          <div class="error-card">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h4>Error al cargar información</h4>
+            <p>{{ errorCarga }}</p>
+            <button class="btn btn-primary" (click)="reintentar()">
+              <i class="fas fa-redo"></i>
+              Reintentar
+            </button>
+          </div>
+        </div>
+        
+        <!-- Estado de carga inicial -->
+        <div class="center-loading" *ngIf="cargando && !errorCarga">
           <div class="loading-spinner-small">
             <div class="spinner"></div>
-            <p>Cargando información del centro...</p>
+            <p>Cargando información del médico...</p>
+          </div>
+        </div>
+        
+        <!-- Estado de carga de centros -->
+        <div class="center-loading" *ngIf="cargandoCentros && !errorCarga">
+          <div class="loading-spinner-small">
+            <div class="spinner"></div>
+            <p>Cargando centros de atención...</p>
+          </div>
+        </div>
+        
+        <!-- Estado de cambio de centro -->
+        <div class="center-loading" *ngIf="cambiandoCentro && !errorCarga">
+          <div class="loading-spinner-small">
+            <div class="spinner"></div>
+            <p>Cambiando centro de atención...</p>
           </div>
         </div>
         
         <!-- Contenido principal simplificado -->
-        <div class="center-content" *ngIf="!cargando">
+        <div class="center-content" *ngIf="!cargando && !cargandoCentros && !cambiandoCentro && !errorCarga">
           <!-- Solo nombre del centro en la parte superior -->
           <div class="center-name-header">
             <h3>
@@ -105,6 +135,10 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
               </option>
             </select>
           </div>
+          
+
+      
+          
         </div>
       </div>
 
@@ -445,6 +479,18 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
       </div>
     </div>
   `,
+  animations: [
+    trigger('slideInOut', [
+      transition(':enter', [
+        style({ height: '0', opacity: '0', overflow: 'hidden' }),
+        animate('300ms ease-in-out', style({ height: '*', opacity: '1' }))
+      ]),
+      transition(':leave', [
+        style({ height: '*', opacity: '1', overflow: 'hidden' }),
+        animate('300ms ease-in-out', style({ height: '0', opacity: '0' }))
+      ])
+    ])
+  ],
   styles: [`
     .medico-horarios {
       min-height: 100vh;
@@ -838,6 +884,57 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
     .center-count {
       display: flex;
       align-items: center;
+    }
+
+    /* Estilos para tarjeta de error */
+    .center-error {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .error-card {
+      background: linear-gradient(135deg, #fee2e2, #fef2f2);
+      border: 2px solid #fecaca;
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .error-card i {
+      color: #dc2626;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .error-card h4 {
+      color: #dc2626;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .error-card p {
+      color: #7f1d1d;
+      margin-bottom: 1.5rem;
+    }
+
+    .error-card button {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .error-card button:hover {
+      background: linear-gradient(135deg, #b91c1c, #991b1b);
+      transform: translateY(-2px);
     }
 
     .count-badge {
@@ -2434,16 +2531,33 @@ import { StaffMedicoService } from '../staffMedicos/staffMedico.service';
       border-color: #3498db;
       box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
     }
+
+   
+
+    .text-primary { color: #3498db !important; }
+    .text-warning { color: #f39c12 !important; }
+    .text-info { color: #17a2b8 !important; }
+    .text-success { color: #27ae60 !important; }
   `]
 })
 export class MedicoHorariosComponent implements OnInit {
   disponibilidades: DisponibilidadMedico[] = []; // Disponibilidades del centro actual
   todasLasDisponibilidades: DisponibilidadMedico[] = []; // TODAS las disponibilidades del médico (para validación intercentros)
+  disponibilidadesCacheadas = false; // Flag para saber si ya se cargaron todas las disponibilidades
   mostrarFormulario = false;
   modoEdicion = false;
   disponibilidadEditando: DisponibilidadMedico | null = null;
   cargando = false;
   guardando = false;
+
+  // Estados de carga específicos
+  cargandoCentros = false;
+  
+  // Control de mensaje informativo
+  mostrarMensajeMultiCentro = false;
+  cargandoDisponibilidades = false;
+  cambiandoCentro = false;
+  errorCarga: string | null = null;
 
   // Nuevas propiedades para especialidades
   medicoActual: Medico | null = null;
@@ -2597,6 +2711,18 @@ export class MedicoHorariosComponent implements OnInit {
     }, 100);
   }
 
+  // Método para reintentar la carga cuando hay errores
+  reintentar() {
+    console.log('Reintentando carga de datos...');
+    this.errorCarga = null;
+    this.cargando = true;
+    this.cargandoCentros = false;
+    this.cambiandoCentro = false;
+    
+    // Reiniciar el proceso de carga
+    this.cargarMedicoYEspecialidades();
+  }
+
   /**
    * Valida y corrige problemas comunes en localStorage
    */
@@ -2730,6 +2856,8 @@ Posible problema de configuración. Verifique:
   // Nuevo método para cargar todos los StaffMedicos del médico
   cargarStaffMedicos(medicoId: number) {
     console.log('Cargando StaffMedicos para médico:', medicoId);
+    this.cargandoCentros = true;
+    this.errorCarga = null;
     
     this.staffMedicoService.getByMedicoId(medicoId).subscribe({
       next: (response) => {
@@ -2751,12 +2879,16 @@ Posible problema de configuración. Verifique:
         // Seleccionar el StaffMedico actual basado en localStorage
         this.seleccionarStaffMedicoActual();
         
+        this.cargandoCentros = false;
+        
         // Solo cargar disponibilidades después de tener el contexto de StaffMedico
         this.cargarDisponibilidades();
       },
       error: (error) => {
         console.error('Error al cargar StaffMedicos:', error);
-        alert('Error al cargar información de centros de atención');
+        this.cargandoCentros = false;
+        this.errorCarga = 'Error al cargar información de centros de atención. Por favor, intente nuevamente.';
+        
         // Continuar con la lógica anterior si falla
         this.cargarDisponibilidades();
       }
@@ -2810,21 +2942,39 @@ Posible problema de configuración. Verifique:
   cambiarStaffMedico(nuevoStaffMedico: any) {
     console.log('Cambiando a StaffMedico:', nuevoStaffMedico);
     
-    this.staffMedicoSeleccionado = nuevoStaffMedico;
-    this.centroActual = nuevoStaffMedico?.centroAtencion;
-    this.especialidadSeleccionada = nuevoStaffMedico?.especialidad?.id;
+    // Mostrar estado de carga durante el cambio
+    this.cambiandoCentro = true;
+    this.errorCarga = null;
     
-    // Actualizar localStorage
-    localStorage.setItem('staffMedicoId', nuevoStaffMedico.id.toString());
-    
-    // Recargar disponibilidades para el nuevo contexto
-    this.cargarDisponibilidades();
-    
-    console.log('Nuevo contexto:', {
-      staffMedico: this.staffMedicoSeleccionado,
-      centro: this.centroActual,
-      especialidad: this.especialidadSeleccionada
-    });
+    // Pequeño delay para mostrar el estado de carga
+    setTimeout(() => {
+      this.staffMedicoSeleccionado = nuevoStaffMedico;
+      this.centroActual = nuevoStaffMedico?.centroAtencion;
+      this.especialidadSeleccionada = nuevoStaffMedico?.especialidad?.id;
+      
+      // Actualizar localStorage
+      localStorage.setItem('staffMedicoId', nuevoStaffMedico.id.toString());
+      
+      // Si tenemos las disponibilidades cacheadas, solo filtrar sin recargar
+      if (this.disponibilidadesCacheadas) {
+        console.log('Usando cache - filtrando disponibilidades para el nuevo centro...');
+        this.filtrarDisponibilidadesPorCentroActual();
+      } else {
+        console.log('Sin cache - recargando disponibilidades desde servidor...');
+        this.cargarDisponibilidades();
+      }
+      
+      console.log('Nuevo contexto:', {
+        staffMedico: this.staffMedicoSeleccionado,
+        centro: this.centroActual,
+        especialidad: this.especialidadSeleccionada
+      });
+      
+      // Finalizar estado de cambio
+      setTimeout(() => {
+        this.cambiandoCentro = false;
+      }, 300);
+    }, 200);
   }
 
   getHorariosPorEspecialidad(especialidadId: number): DisponibilidadMedico[] {
@@ -2979,13 +3129,20 @@ Posible problema de configuración. Verifique:
   }
 
   cargarDisponibilidades() {
-    this.cargando = true;
+    // Si ya tenemos las disponibilidades cacheadas, solo filtrar por centro actual
+    if (this.disponibilidadesCacheadas && this.todasLasDisponibilidades.length >= 0) {
+      console.log('Usando disponibilidades cacheadas, filtrando por centro actual...');
+      this.filtrarDisponibilidadesPorCentroActual();
+      return;
+    }
+
+    this.cargandoDisponibilidades = true;
     const medicoId = this.getMedicoIdFromLocalStorage();
 
     // Validar que tenemos un ID válido
     if (!medicoId) {
       console.error('Error: No se pudo obtener el ID del médico para cargar disponibilidades');
-      this.cargando = false;
+      this.cargandoDisponibilidades = false;
       this.router.navigate(['/login']);
       return;
     }
@@ -3000,40 +3157,112 @@ Posible problema de configuración. Verifique:
         
         // Guardar TODAS las disponibilidades para validación intercentros
         this.todasLasDisponibilidades = todasLasDisponibilidades;
+        this.disponibilidadesCacheadas = true;
         console.log('Todas las disponibilidades del médico:', this.todasLasDisponibilidades);
         
         // Filtrar disponibilidades por el StaffMedico actual para mostrar en UI
-        if (this.staffMedicoSeleccionado) {
-          this.disponibilidades = todasLasDisponibilidades.filter(disp => 
-            disp.staffMedicoId === this.staffMedicoSeleccionado.id
-          );
-          console.log('Disponibilidades filtradas para StaffMedico', this.staffMedicoSeleccionado.id, ':', this.disponibilidades);
-        } else {
-          // Si no hay StaffMedico seleccionado, mostrar todas
-          this.disponibilidades = todasLasDisponibilidades;
-          console.log('Mostrando todas las disponibilidades:', this.disponibilidades);
-        }
+        this.filtrarDisponibilidadesPorCentroActual();
         
-        this.organizarDisponibilidadesPorEspecialidad();
-        this.cargando = false;
+        this.cargandoDisponibilidades = false;
       },
       error: (error) => {
         console.error('Error al cargar disponibilidades:', error);
-        this.cargando = false;
+        this.cargandoDisponibilidades = false;
         if (error.status === 404) {
           console.log('No se encontraron disponibilidades para el médico (normal para primera vez)');
           this.disponibilidades = [];
+          this.todasLasDisponibilidades = [];
+          this.disponibilidadesCacheadas = true;
           this.organizarDisponibilidadesPorEspecialidad();
         } else if (error.status === 403) {
-          alert('Error de permisos. Verifique que su sesión sea válida.');
-          this.router.navigate(['/login']);
+          this.errorCarga = 'Error de permisos. Verifique que su sesión sea válida.';
         } else {
           console.warn('Error al cargar disponibilidades:', error.message || error);
           this.disponibilidades = [];
+          this.todasLasDisponibilidades = [];
+          this.disponibilidadesCacheadas = true;
           this.organizarDisponibilidadesPorEspecialidad();
         }
       }
     });
+  }
+
+  // Nuevo método para filtrar disponibilidades sin recargar desde servidor
+  private filtrarDisponibilidadesPorCentroActual() {
+    if (this.staffMedicoSeleccionado) {
+      this.disponibilidades = this.todasLasDisponibilidades.filter(disp => 
+        disp.staffMedicoId === this.staffMedicoSeleccionado.id
+      );
+      console.log('Disponibilidades filtradas para StaffMedico', this.staffMedicoSeleccionado.id, ':', this.disponibilidades);
+    } else {
+      // Si no hay StaffMedico seleccionado, mostrar todas
+      this.disponibilidades = this.todasLasDisponibilidades;
+      console.log('Mostrando todas las disponibilidades:', this.disponibilidades);
+    }
+    
+    this.organizarDisponibilidadesPorEspecialidad();
+  }
+
+  // Método para invalidar cache cuando hay cambios en disponibilidades
+  private invalidarCacheDisponibilidades() {
+    console.log('Cache invalidado - se requerirá recarga desde servidor');
+    this.disponibilidadesCacheadas = false;
+    this.todasLasDisponibilidades = [];
+  }
+
+  // Método para mostrar/ocultar mensaje informativo sobre navegación multi-centro
+  toggleMensajeMultiCentro() {
+    this.mostrarMensajeMultiCentro = !this.mostrarMensajeMultiCentro;
+  }
+
+  // Validaciones para casos edge
+  validarCasosEdge(): string[] {
+    const problemas: string[] = [];
+    
+    // Caso 1: Médico sin centros asignados
+    if (!this.staffMedicos || this.staffMedicos.length === 0) {
+      problemas.push('El médico no tiene centros de atención asignados. Contacte al administrador.');
+    }
+    
+    // Caso 2: Centro sin especialidades
+    if (this.staffMedicoSeleccionado && this.getEspecialidadesDelCentroActual().length === 0) {
+      problemas.push(`El centro "${this.getNombreCentroActual()}" no tiene especialidades asignadas. Contacte al administrador.`);
+    }
+    
+    // Caso 3: Datos inconsistentes en localStorage
+    const staffIdEnStorage = localStorage.getItem('staffMedicoId');
+    const centroEnStorage = localStorage.getItem('centroSeleccionado');
+    
+    if (staffIdEnStorage && this.staffMedicoSeleccionado && 
+        this.staffMedicoSeleccionado.id.toString() !== staffIdEnStorage) {
+      console.warn('Inconsistencia detectada en localStorage - limpiando...');
+      localStorage.removeItem('staffMedicoId');
+      localStorage.removeItem('centroSeleccionado');
+    }
+    
+    if (centroEnStorage && this.staffMedicoSeleccionado && 
+        this.staffMedicoSeleccionado.centroAtencion !== centroEnStorage) {
+      console.warn('Centro en localStorage no coincide con selección actual - actualizando...');
+      localStorage.setItem('centroSeleccionado', this.staffMedicoSeleccionado.centroAtencion);
+    }
+    
+    return problemas;
+  }
+
+  // Método para manejar cambios rápidos de centro (debounce)
+  private cambioRapidoTimer: any;
+  
+  private manejarCambioRapido(callback: () => void) {
+    // Limpiar timer anterior si existe
+    if (this.cambioRapidoTimer) {
+      clearTimeout(this.cambioRapidoTimer);
+    }
+    
+    // Establecer nuevo timer
+    this.cambioRapidoTimer = setTimeout(() => {
+      callback();
+      this.cambioRapidoTimer = null;
+    }, 300); // 300ms de debounce
   }
 
   organizarDisponibilidadesPorEspecialidad() {
@@ -3311,6 +3540,8 @@ Posible problema de configuración. Verifique:
           console.log('Respuesta del servidor (actualizar):', response);
           this.guardando = false;
           this.cancelarFormulario();
+          // Invalidar cache antes de recargar
+          this.invalidarCacheDisponibilidades();
           this.cargarDisponibilidades();
           alert('Horarios actualizados correctamente');
         },
@@ -3360,6 +3591,8 @@ Posible problema de configuración. Verifique:
               console.log('Respuesta del servidor (crear):', response);
               this.guardando = false;
               this.cancelarFormulario();
+              // Invalidar cache antes de recargar
+              this.invalidarCacheDisponibilidades();
               this.cargarDisponibilidades();
               alert('Horarios guardados correctamente');
             },
@@ -3424,6 +3657,8 @@ Posible problema de configuración. Verifique:
           console.log('Respuesta del servidor (crear):', response);
           this.guardando = false;
           this.cancelarFormulario();
+          // Invalidar cache antes de recargar
+          this.invalidarCacheDisponibilidades();
           this.cargarDisponibilidades();
           alert('Horarios guardados correctamente');
         },
@@ -3510,6 +3745,8 @@ Posible problema de configuración. Verifique:
       if (disponibilidad.id) {
         this.disponibilidadService.remove(disponibilidad.id!).subscribe({
           next: () => {
+            // Invalidar cache antes de recargar
+            this.invalidarCacheDisponibilidades();
             this.cargarDisponibilidades();
             alert('Disponibilidad eliminada correctamente');
           },
