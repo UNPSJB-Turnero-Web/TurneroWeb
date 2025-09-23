@@ -796,7 +796,19 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
               <div class="alert alert-success">
                 <i class="fa fa-lightbulb me-2"></i>
                 <strong>{{ horariosDisponibles.length }} horario(s) disponible(s)</strong> encontrado(s) para asignar al esquema.
-                Seleccione los que desea incluir:
+                Seleccione los que desea incluir y ajuste los horarios dentro del rango disponible:
+              </div>
+              
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle me-2"></i>
+                <strong>Tip:</strong> Puede personalizar las horas de inicio y fin dentro del rango disponible de cada médico. 
+                Los campos se habilitarán cuando seleccione el horario.
+              </div>
+              
+              <!-- Error de validación -->
+              <div *ngIf="errorValidacion" class="alert alert-danger">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> {{ errorValidacion }}
               </div>
               
               <!-- Tabla de horarios disponibles para seleccionar -->
@@ -812,8 +824,8 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                                (change)="toggleTodosSeleccionados()">
                       </th>
                       <th>Día</th>
-                      <th>Hora Inicio</th>
-                      <th>Hora Fin</th>
+                      <th>Hora Inicio (Personalizable)</th>
+                      <th>Hora Fin (Personalizable)</th>
                       <th>Duración</th>
                       <th>Acción</th>
                     </tr>
@@ -830,10 +842,28 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                       <td>
                         <span class="badge bg-primary">{{ getDiaNombre(horario.dia) }}</span>
                       </td>
-                      <td>{{ horario.horaInicio }}</td>
-                      <td>{{ horario.horaFin }}</td>
                       <td>
-                        <span class="badge bg-info">{{ calcularDuracion(horario.horaInicio, horario.horaFin) }}</span>
+                        <input type="time" 
+                               class="form-control form-control-sm"
+                               [value]="getHorarioPersonalizado(horario, 'inicio')"
+                               (change)="actualizarHorarioPersonalizado(horario, 'inicio', $event)"
+                               [disabled]="!isHorarioSeleccionado(horario)"
+                               style="min-width: 120px;"
+                               placeholder="Hora inicio">
+                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                      </td>
+                      <td>
+                        <input type="time" 
+                               class="form-control form-control-sm"
+                               [value]="getHorarioPersonalizado(horario, 'fin')"
+                               (change)="actualizarHorarioPersonalizado(horario, 'fin', $event)"
+                               [disabled]="!isHorarioSeleccionado(horario)"
+                               style="min-width: 120px;"
+                               placeholder="Hora fin">
+                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                      </td>
+                      <td>
+                        <span class="badge bg-info">{{ calcularDuracion(getHorarioPersonalizado(horario, 'inicio'), getHorarioPersonalizado(horario, 'fin')) }}</span>
                       </td>
                       <td>
                         <button type="button" 
@@ -930,6 +960,19 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             <span class="resumen-valor">{{ calcularTurnosEstimados() }} turnos</span>
           </div>
         </div>
+        
+        <!-- Advertencia de horarios inválidos -->
+        <div *ngIf="tieneHorariosInvalidos()" class="alert alert-warning mt-3">
+          <i class="fa fa-exclamation-triangle me-2"></i>
+          <strong>Advertencia:</strong> Algunos horarios están fuera del rango disponible del médico:
+          <ul class="mb-0 mt-2">
+            <li *ngFor="let horarioInvalido of getHorariosInvalidos()">{{ horarioInvalido }}</li>
+          </ul>
+          <small class="d-block mt-2">
+            <i class="fa fa-info-circle me-1"></i>
+            Ajuste los horarios dentro del rango disponible para poder guardar el esquema.
+          </small>
+        </div>
       </div>
     </div>
 
@@ -971,6 +1014,10 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   consultorioHorarios: any[] = [];
   horariosDisponibles: any[] = [];
   esquemasExistentes: EsquemaTurno[] = [];
+  
+  // Propiedades para manejar rangos personalizables
+  horariosPersonalizados: { [key: string]: { horaInicio: string; horaFin: string; } } = {};
+  errorValidacion = '';
   
   mensajeError = '';
   mensajeExito = '';
@@ -1348,11 +1395,17 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
         this.esquema.horarios.splice(index, 1);
       }
     } else {
-      // Agregar el horario
-      this.esquema.horarios.push({
-        dia: horario.dia,
+      // Agregar el horario (usar personalizado si existe, sino el original)
+      const key = this.getHorarioKey(horario);
+      const horarioAgregar = this.horariosPersonalizados[key] || {
         horaInicio: horario.horaInicio,
         horaFin: horario.horaFin
+      };
+      
+      this.esquema.horarios.push({
+        dia: horario.dia,
+        horaInicio: horarioAgregar.horaInicio,
+        horaFin: horarioAgregar.horaFin
       });
     }
   }
@@ -1421,10 +1474,141 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     return Math.floor(totalMinutos / this.esquema.intervalo);
   }
 
+  // Métodos para manejar horarios personalizables
+  private getHorarioKey(horario: any): string {
+    return `${horario.dia}-${horario.horaInicio}-${horario.horaFin}`;
+  }
+
+  getHorarioPersonalizado(horario: any, tipo: 'inicio' | 'fin'): string {
+    const key = this.getHorarioKey(horario);
+    if (this.horariosPersonalizados[key]) {
+      return tipo === 'inicio' ? this.horariosPersonalizados[key].horaInicio : this.horariosPersonalizados[key].horaFin;
+    }
+    // Si no hay personalización, usar los valores originales
+    return tipo === 'inicio' ? horario.horaInicio : horario.horaFin;
+  }
+
+  actualizarHorarioPersonalizado(horario: any, tipo: 'inicio' | 'fin', event: any): void {
+    const key = this.getHorarioKey(horario);
+    const nuevoValor = event.target.value;
+    
+    if (!this.horariosPersonalizados[key]) {
+      this.horariosPersonalizados[key] = {
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin
+      };
+    }
+    
+    // Actualizar el valor correspondiente sin validaciones restrictivas
+    if (tipo === 'inicio') {
+      this.horariosPersonalizados[key].horaInicio = nuevoValor;
+      
+      // Solo asegurar que la hora de inicio no sea mayor o igual que la de fin
+      if (this.timeToMinutes(nuevoValor) >= this.timeToMinutes(this.horariosPersonalizados[key].horaFin)) {
+        // Ajustar la hora de fin para que sea al menos 30 minutos después
+        const nuevaHoraFin = this.addMinutes(nuevoValor, 30);
+        this.horariosPersonalizados[key].horaFin = nuevaHoraFin;
+      }
+    } else {
+      this.horariosPersonalizados[key].horaFin = nuevoValor;
+      
+      // Solo asegurar que la hora de fin no sea menor o igual que la de inicio
+      if (this.timeToMinutes(nuevoValor) <= this.timeToMinutes(this.horariosPersonalizados[key].horaInicio)) {
+        // Ajustar la hora de inicio para que sea al menos 30 minutos antes
+        const nuevaHoraInicio = this.subtractMinutes(nuevoValor, 30);
+        this.horariosPersonalizados[key].horaInicio = nuevaHoraInicio;
+      }
+    }
+    
+    // Limpiar mensaje de error anterior
+    this.limpiarErrorValidacion();
+    
+    // Actualizar el horario en el esquema si está seleccionado
+    this.actualizarEsquemaConHorarioPersonalizado(horario);
+  }
+
+  private actualizarEsquemaConHorarioPersonalizado(horarioOriginal: any): void {
+    if (this.isHorarioSeleccionado(horarioOriginal)) {
+      // Encontrar y actualizar el horario en el esquema
+      const index = this.esquema.horarios.findIndex(h => 
+        h.dia === horarioOriginal.dia && 
+        h.horaInicio === horarioOriginal.horaInicio && 
+        h.horaFin === horarioOriginal.horaFin
+      );
+      
+      if (index > -1) {
+        const key = this.getHorarioKey(horarioOriginal);
+        if (this.horariosPersonalizados[key]) {
+          this.esquema.horarios[index] = {
+            dia: horarioOriginal.dia,
+            horaInicio: this.horariosPersonalizados[key].horaInicio,
+            horaFin: this.horariosPersonalizados[key].horaFin
+          };
+        }
+      }
+    }
+  }
+
+  private addMinutes(time: string, minutes: number): string {
+    const totalMinutes = this.timeToMinutes(time) + minutes;
+    return this.minutesToTime(totalMinutes);
+  }
+
+  private subtractMinutes(time: string, minutes: number): string {
+    const totalMinutes = this.timeToMinutes(time) - minutes;
+    return this.minutesToTime(totalMinutes);
+  }
+
+  // Métodos para manejo de errores de validación
+  private mostrarErrorValidacion(mensaje: string): void {
+    this.errorValidacion = mensaje;
+    // Limpiar el error después de 5 segundos
+    setTimeout(() => {
+      this.limpiarErrorValidacion();
+    }, 5000);
+  }
+
+  private limpiarErrorValidacion(): void {
+    this.errorValidacion = '';
+  }
+
+  // Métodos para verificar si los horarios están dentro del rango (sin bloquear)
+  tieneHorariosInvalidos(): boolean {
+    return this.esquema.horarios.some(horario => this.esHorarioInvalido(horario));
+  }
+
+  private esHorarioInvalido(horario: any): boolean {
+    // Buscar el horario original disponible correspondiente
+    const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
+    if (!horarioOriginal) return true;
+    
+    const minutosInicio = this.timeToMinutes(horario.horaInicio);
+    const minutosFin = this.timeToMinutes(horario.horaFin);
+    const minutosOriginalInicio = this.timeToMinutes(horarioOriginal.horaInicio);
+    const minutosOriginalFin = this.timeToMinutes(horarioOriginal.horaFin);
+    
+    return minutosInicio < minutosOriginalInicio || 
+           minutosFin > minutosOriginalFin ||
+           minutosInicio >= minutosFin;
+  }
+
+  getHorariosInvalidos(): string[] {
+    const invalidos = this.esquema.horarios
+      .filter(horario => this.esHorarioInvalido(horario))
+      .map(horario => {
+        const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
+        const rangoDisponible = horarioOriginal ? `${horarioOriginal.horaInicio}-${horarioOriginal.horaFin}` : 'N/A';
+        return `${this.getDiaNombre(horario.dia)}: ${horario.horaInicio}-${horario.horaFin} (disponible: ${rangoDisponible})`;
+      });
+    
+    return invalidos;
+  }
+
   puedeGuardar(): boolean {
     return this.esquema.disponibilidadMedicoId > 0 &&
            this.esquema.horarios.length > 0 &&
-           this.esquema.intervalo > 0;
+           this.esquema.intervalo > 0 &&
+           !this.tieneHorariosInvalidos();
   }
 
   guardarEsquema(): void {
