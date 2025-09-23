@@ -133,7 +133,7 @@ public class TurnoService {
                 Optional<User> currentUserOpt = userRepository.findByEmail(currentUserEmail);
                 if (currentUserOpt.isPresent()) {
                     User currentUser = currentUserOpt.get();
-                    // Verificar permisos usando jerarquía: cualquier rol puede acceder a PACIENTE
+                    // Verificar permisos usando jerarquía centralizada: cualquier rol puede acceder a PACIENTE
                     if (currentUser.getRole().hasAccessTo(Role.PACIENTE)) {
                         // Buscar paciente existente por DNI o email
                         Optional<Paciente> pacienteOpt = pacienteRepository.findByDni(currentUser.getDni());

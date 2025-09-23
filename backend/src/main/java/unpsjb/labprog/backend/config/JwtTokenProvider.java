@@ -17,6 +17,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.Role;
 import unpsjb.labprog.backend.business.service.PacienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -117,8 +118,9 @@ public class JwtTokenProvider {
             claims.put("userId", user.getId());
             claims.put("role", user.getRole() != null ? user.getRole().getName() : "USER");
 
-            // Si el usuario es PACIENTE y tiene relación con Paciente, agregar pacienteId
-            if (user.getRole() != null && "PACIENTE".equalsIgnoreCase(user.getRole().getName())) {
+            // Si el usuario tiene acceso a PACIENTE (cualquier rol en la jerarquía), verificar paciente
+            // Usa lógica centralizada de jerarquía de roles: user.getRole().hasAccessTo(Role.PACIENTE)
+            if (user.getRole() != null && user.getRole().hasAccessTo(Role.PACIENTE)) {
                 try {
                     // Buscar el paciente asociado por email usando el servicio
                     // Suponiendo que el email es único y coincide entre User y Paciente

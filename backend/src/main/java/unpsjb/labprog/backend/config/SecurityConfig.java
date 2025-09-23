@@ -15,6 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 
 import unpsjb.labprog.backend.business.service.UserService;
 
@@ -81,6 +83,35 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    /**
+     * Configuración de la jerarquía de roles para Spring Security
+     * Permite que roles superiores hereden permisos de roles inferiores
+     * 
+     * Jerarquía:
+     * - ADMINISTRADOR: incluye todos los permisos (MEDICO, OPERADOR, PACIENTE)
+     * - MEDICO: incluye permisos de PACIENTE
+     * - OPERADOR: incluye permisos de PACIENTE  
+     * - PACIENTE: permisos básicos
+     * 
+     * Nota: MEDICO y OPERADOR son roles independientes, no hay herencia entre ellos.
+     * 
+     * Esto permite que un ADMINISTRADOR acceda a endpoints marcados con hasRole("PACIENTE")
+     * sin necesidad de validaciones manuales adicionales.
+     */
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        // Definir jerarquía: ADMINISTRADOR incluye todos, MEDICO y OPERADOR incluyen PACIENTE
+        roleHierarchy.setHierarchy(
+            "ROLE_ADMINISTRADOR > ROLE_MEDICO\n" +
+            "ROLE_ADMINISTRADOR > ROLE_OPERADOR\n" +
+            "ROLE_ADMINISTRADOR > ROLE_PACIENTE\n" +
+            "ROLE_MEDICO > ROLE_PACIENTE\n" +
+            "ROLE_OPERADOR > ROLE_PACIENTE"
+        );
+        return roleHierarchy;
     }
 
     /**
