@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { AuthService } from '../inicio-sesion/auth.service';
+import { AuthService, Role } from '../inicio-sesion/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -24,13 +24,7 @@ export class AdminOperadorGuard implements CanActivate {
       return false;
     }
 
-    // Verificar si tiene rol de admin o operador
-    const userRole = this.authService.getUserRole();
-    
-    if (userRole === 'ADMINISTRADOR' || userRole === 'OPERADOR') {
-      return true;
-    } else {
-      return false;
-    }
+    // Verificar si tiene rol de admin o operador (o superior según jerarquía)
+    return this.authService.hasAnyRole([Role.ADMINISTRADOR, Role.OPERADOR]);
   }
 }

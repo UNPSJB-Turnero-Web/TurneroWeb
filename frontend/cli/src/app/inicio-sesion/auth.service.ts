@@ -93,6 +93,26 @@ export interface UpdateProfileResponse {
 }
 
 /**
+ * Enum para los roles del sistema
+ */
+export enum Role {
+  PACIENTE = 'PACIENTE',
+  MEDICO = 'MEDICO',
+  OPERADOR = 'OPERADOR',
+  ADMINISTRADOR = 'ADMINISTRADOR'
+}
+
+/**
+ * Jerarquía de roles: qué roles incluye cada uno
+ */
+export const ROLE_HIERARCHY: Record<Role, Role[]> = {
+  [Role.PACIENTE]: [],
+  [Role.MEDICO]: [Role.PACIENTE],
+  [Role.OPERADOR]: [Role.PACIENTE],
+  [Role.ADMINISTRADOR]: [Role.PACIENTE, Role.MEDICO, Role.OPERADOR],
+};
+
+/**
  * Servicio de autenticación que maneja JWT con Spring Boot backend
  */
 @Injectable({
@@ -859,6 +879,44 @@ export class AuthService {
     } catch (error) {
       return { hasToken: true, isExpired: true, expiresAt: null, timeLeft: 'Error' };
     }
+  }
+
+  /**
+   * Obtiene todos los roles heredados por un rol dado, incluyendo el rol mismo
+   * @param role Rol base
+   * @returns Set de roles incluyendo el rol base y todos los heredados
+   */
+  getAllInheritedRoles(role: Role): Set<Role> {
+    const roles = new Set<Role>();
+    const visit = (r: Role) => {
+      if (!roles.has(r)) {
+        roles.add(r);
+        ROLE_HIERARCHY[r]?.forEach(visit);
+      }
+    };
+    visit(role);
+    return roles;
+  }
+
+  /**
+   * Verifica si el usuario actual tiene el rol requerido o lo hereda según la jerarquía
+   * @param required Rol requerido
+   * @returns true si el usuario tiene el rol o lo hereda
+   */
+  hasRole(required: Role): boolean {
+    const userRole = this.getUserRole();
+    if (!userRole) return false;
+    const inherited = this.getAllInheritedRoles(userRole as Role);
+    return userRole === required || inherited.has(required);
+  }
+
+  /**
+   * Verifica si el usuario actual tiene al menos uno de los roles requeridos o los hereda
+   * @param requiredRoles Array de roles requeridos
+   * @returns true si el usuario tiene al menos uno de los roles o los hereda
+   */
+  hasAnyRole(requiredRoles: Role[]): boolean {
+    return requiredRoles.some(role => this.hasRole(role));
   }
 
   /**
