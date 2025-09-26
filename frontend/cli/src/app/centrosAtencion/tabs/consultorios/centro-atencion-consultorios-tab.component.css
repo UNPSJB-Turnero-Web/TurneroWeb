@@ -141,6 +141,101 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
+/* Botones modernos base */
+.btn-modern {
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.025em;
+}
+
+.btn-success-modern {
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+  color: white;
+  border: 1px solid var(--success-color);
+}
+
+.btn-success-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-success-modern:hover::before {
+  left: 100%;
+}
+
+.btn-success-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success-modern:disabled {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-secondary-modern {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #94a3b8 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-secondary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #475569 0%, var(--secondary-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Inputs y selects modernos */
+.form-control-modern, .modern-select {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--lighter-color);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+.form-control-modern:focus, .modern-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.form-control-modern:hover, .modern-select:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+/* Labels modernos */
+.form-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+}
+
 /* Card individual de consultorio */
 .consultorio-card {
   background: var(--lighter-color);
