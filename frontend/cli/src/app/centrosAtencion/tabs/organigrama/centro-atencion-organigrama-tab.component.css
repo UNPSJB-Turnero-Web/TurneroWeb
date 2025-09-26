@@ -1,3 +1,26 @@
+/* ==================== ESTILOS PARA TAB DE ORGANIGRAMA ==================== */
+
+/* Variables CSS */
+:host {
+  --primary-color: #10b981;
+  --primary-light: #34d399;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --lighter-color: #ffffff;
+  --dark-color: #1e293b;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
 /* Estilos principales del organigrama */
 .modern-card {
   border-radius: 16px;
@@ -14,9 +37,101 @@
 }
 
 .modern-card-header {
-  background: linear-gradient(135deg, var(--light-color) 0%, #ffffff 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   border-bottom: 1px solid var(--border-light);
   padding: 1.75rem 2rem;
+  position: relative;
+  color: white;
+}
+
+.modern-card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+/* Header icon styling */
+.header-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modern-card-header h4 {
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.modern-card-header small {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+/* Botones en el header */
+.modern-card-header .btn-modern {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-card-header .btn-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-card-header .btn-success-modern {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-success-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-primary-modern {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.modern-card-header .btn-primary-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.modern-card-header .btn-secondary-modern {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modern-card-header .btn-secondary-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .modern-card-body {
@@ -56,17 +171,24 @@
 }
 
 .stat-icon {
-  font-size: 2.25rem;
-  width: 70px;
-  height: 70px;
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-  color: white;
+  color: white !important;
   box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-icon i {
+  color: white !important;
+  font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon:hover {

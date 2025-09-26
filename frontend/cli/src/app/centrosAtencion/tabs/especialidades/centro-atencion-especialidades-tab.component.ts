@@ -21,12 +21,27 @@ export class CentroAtencionEspecialidadesTabComponent implements OnInit {
   @Output() asociarEspecialidad = new EventEmitter<void>();
   @Output() desasociarEspecialidad = new EventEmitter<Especialidad>();
 
+  // Propiedades para el modo de asociar
+  modoAsociarEspecialidad: boolean = false;
+
   ngOnInit(): void {
     // Inicialización si es necesaria
   }
 
+  onModoAsociarEspecialidad(): void {
+    this.modoAsociarEspecialidad = true;
+  }
+
+  onCancelarAsociarEspecialidad(): void {
+    this.modoAsociarEspecialidad = false;
+    this.especialidadSeleccionada = null;
+    this.especialidadSeleccionadaChange.emit(null);
+  }
+
   onAsociarEspecialidad(): void {
     this.asociarEspecialidad.emit();
+    this.modoAsociarEspecialidad = false;
+    this.especialidadSeleccionada = null;
   }
 
   onDesasociarEspecialidad(especialidad: Especialidad): void {

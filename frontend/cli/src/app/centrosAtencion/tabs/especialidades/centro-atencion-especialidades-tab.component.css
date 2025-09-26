@@ -39,10 +39,11 @@
 }
 
 .modern-card-header {
-  background: linear-gradient(135deg, var(--light-color) 0%, #ffffff 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   border-bottom: 1px solid var(--border-light);
   padding: 1.75rem 2rem;
   position: relative;
+  color: white;
 }
 
 .modern-card-header::after {
@@ -53,6 +54,98 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+/* Header icon styling */
+.header-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modern-card-header h4 {
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.modern-card-header small {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+/* Botones en el header */
+.modern-card-header .btn-modern {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+}
+
+.modern-card-header .btn-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-card-header .btn-success-modern {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-success-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-primary-modern {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.modern-card-header .btn-primary-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary-modern {
+  background: linear-gradient(135deg, var(--info-color) 0%, #38bdf8 100%);
+  color: white;
+  border: 1px solid var(--info-color);
+}
+
+.btn-primary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0891b2 0%, var(--info-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary-modern {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #94a3b8 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-secondary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #475569 0%, var(--secondary-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .modern-card-body {

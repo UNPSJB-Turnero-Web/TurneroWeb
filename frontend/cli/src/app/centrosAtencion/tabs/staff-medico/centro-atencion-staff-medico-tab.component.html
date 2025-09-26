@@ -1,8 +1,19 @@
 <div class="modern-card">
   <div class="modern-card-header">
-    <div class="d-flex align-items-center">
-      <div class="me-3">
-        <i class="icon-medicos"></i>
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="header-icon me-3">
+          👩‍⚕️
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold">Gestión de Staff Médico</h4>
+          <small class="opacity-75">Administrar médicos del centro de atención</small>
+        </div>
+      </div>
+      <div *ngIf="!modoAsociarMedico" class="d-flex gap-2">
+        <button class="btn-modern btn-success-modern" (click)="onModoAsociarMedico()">
+          <i class="fa fa-plus me-2"></i> Nuevo Médico
+        </button>
       </div>
     </div>
   </div>
@@ -18,7 +29,7 @@
     </div>
 
     <!-- Add Médico Form -->
-    <div class="mb-4 p-4" style="  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.05) 100%) !important;
+    <div *ngIf="modoAsociarMedico" class="mb-4 p-4" style="  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.05) 100%) !important;
  border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
       <h5 class="mb-3 text-primary">
         <i class="fa fa-user-plus me-2"></i>Asociar Médico
@@ -34,7 +45,7 @@
             </option>
           </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <label class="form-label fw-semibold">Especialidad:</label>
           <select [(ngModel)]="especialidadSeleccionada" (ngModelChange)="onEspecialidadSeleccionada()"
             class="modern-select form-control" [disabled]="!medicoSeleccionado || especialidadesMedico.length === 0">
@@ -52,19 +63,15 @@
             Este médico ya tiene algunas especialidades asignadas al centro
           </small>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-asociar-medico" (click)="onAsociarMedico()"
-            [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()"
-            [class.btn-disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
-            <div class="btn-content">
-              <i class="fa fa-user-plus btn-icon"></i>
-              <span class="btn-text">Asociar</span>
-            </div>
-            <div class="btn-loading" *ngIf="false">
-              <i class="fa fa-spinner fa-spin"></i>
-            </div>
-          </button>
-        </div>
+      </div>
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn-modern btn-success-modern" (click)="onAsociarMedico()"
+          [disabled]="!medicoSeleccionado || !especialidadSeleccionada || medicoYaAsociado()">
+          <i class="fa fa-save me-2"></i> Asociar
+        </button>
+        <button class="btn-modern btn-secondary-modern" (click)="onCancelarAsociarMedico()">
+          <i class="fa fa-times me-2"></i> Cancelar
+        </button>
       </div>
       <div *ngIf="medicoYaAsociado()" class="modern-alert alert-warning mt-3">
         <i class="fa fa-info-circle me-2"></i>

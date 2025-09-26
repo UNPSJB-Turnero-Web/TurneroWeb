@@ -37,6 +37,9 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   @Output() crearNuevaDisponibilidad = new EventEmitter<StaffMedico>();
   @Output() disponibilidadCreada = new EventEmitter<DisponibilidadMedico>();
 
+  // Propiedades para el modo de asociar
+  modoAsociarMedico: boolean = false;
+
   constructor(private modalService: NgbModal) {}
 
   ngOnInit(): void {
@@ -53,11 +56,26 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     this.especialidadSeleccionadaChange.emit(this.especialidadSeleccionada);
   }
 
+  onModoAsociarMedico(): void {
+    this.modoAsociarMedico = true;
+  }
+
+  onCancelarAsociarMedico(): void {
+    this.modoAsociarMedico = false;
+    this.medicoSeleccionado = null;
+    this.especialidadSeleccionada = null;
+    this.medicoSeleccionadoChange.emit(null);
+    this.especialidadSeleccionadaChange.emit(null);
+  }
+
   onAsociarMedico(): void {
     console.log('onAsociarMedico clicked - medicoSeleccionado:', this.medicoSeleccionado);
     console.log('onAsociarMedico clicked - especialidadSeleccionada:', this.especialidadSeleccionada);
     console.log('Emitiendo evento asociarMedico...');
     this.asociarMedico.emit();
+    this.modoAsociarMedico = false;
+    this.medicoSeleccionado = null;
+    this.especialidadSeleccionada = null;
   }
 
   onDesasociarMedico(staff: StaffMedico): void {
