@@ -9,7 +9,7 @@ import { MapModalComponent } from '../../../modal/map-modal.component';
   standalone: true,
   imports: [CommonModule, FormsModule, MapModalComponent],
   templateUrl: './centro-atencion-detalle-tab.component.html',
-  styleUrls: ['../../centroAtencion-detail.component.css']
+  styleUrls: ['./centro-atencion-detalle-tab.component.css']
 })
 export class CentroAtencionDetalleTabComponent implements OnInit {
   @Input() centroAtencion!: CentroAtencion;

@@ -1,0 +1,601 @@
+/* ==================== ESTILOS PARA TAB DE DETALLE ==================== */
+
+/* Variables CSS */
+:host {
+  --primary-color: #10b981;
+  --primary-light: #34d399;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --lighter-color: #ffffff;
+  --dark-color: #1e293b;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Card principal */
+.card {
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+/* Header del card */
+.card-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%) !important;
+  border-bottom: none;
+  padding: 2rem 2.5rem;
+  position: relative;
+  color: white !important;
+}
+
+.card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.card-header h4 {
+  font-weight: 800 !important;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.card-header small {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.9;
+  letter-spacing: 0.025em;
+}
+
+.info-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.info-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-xl);
+}
+
+/* Cuerpo del card */
+.card-body {
+  padding: 2.5rem;
+  background: var(--lighter-color);
+}
+
+/* Items de información */
+.info-item {
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.info-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-radius: 0 4px 4px 0;
+}
+
+.info-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px) translateX(4px);
+  border-color: var(--primary-color);
+}
+
+.info-item .info-icon {
+  width: 45px;
+  height: 45px;
+  font-size: 1.25rem;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark-color);
+  letter-spacing: -0.025em;
+  line-height: 1.4;
+}
+
+.info-value span {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.info-value span:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.1) 100%);
+  transform: translateY(-1px);
+}
+
+/* Formularios modernos */
+.form-group-modern {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.form-label-modern {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+}
+
+.form-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-sm);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.form-control-modern {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--lighter-color);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+  width: 100%;
+}
+
+.form-control-modern:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+  outline: none;
+  transform: translateY(-1px);
+  background: var(--lighter-color);
+}
+
+.form-control-modern:hover:not(:focus) {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+.form-help {
+  font-size: 0.875rem;
+  color: var(--secondary-color);
+  margin-top: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.form-help.text-danger {
+  color: var(--danger-color) !important;
+  font-weight: 600;
+}
+
+/* Footer del card */
+.card-footer {
+  background: linear-gradient(135deg, var(--light-color) 0%, #ffffff 100%);
+  border-top: 1px solid var(--border-light);
+  padding: 1.75rem 2.5rem;
+  position: relative;
+}
+
+.card-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+/* Botones modernos */
+.btn {
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.025em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-modern {
+  /* Base para todos los botones modernos */
+}
+
+/* Botón volver */
+.btn-back {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #475569 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-back:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+  color: white;
+}
+
+/* Botón editar */
+.btn-edit {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  color: white;
+  border: 1px solid var(--primary-color);
+}
+
+.btn-edit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-edit:hover::before {
+  left: 100%;
+}
+
+.btn-edit:hover {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+  color: white;
+}
+
+/* Botón eliminar */
+.btn-delete {
+  background: white;
+  color: var(--danger-color);
+  border: 2px solid var(--danger-color);
+}
+
+.btn-delete:hover {
+  background: var(--danger-color);
+  color: white;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Botón guardar */
+.btn-save {
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+  color: white;
+  border: 1px solid var(--success-color);
+}
+
+.btn-save::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-save:hover::before {
+  left: 100%;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+  color: white;
+}
+
+.btn-save:disabled {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  border-color: #d1d5db;
+}
+
+/* Botón cancelar */
+.btn-cancel {
+  background: white;
+  color: var(--secondary-color);
+  border: 2px solid var(--secondary-color);
+}
+
+.btn-cancel:hover {
+  background: var(--secondary-color);
+  color: white;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Botón secundario */
+.btn-secondary {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #475569 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+  color: white;
+}
+
+/* Container del mapa */
+.map-container {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.map-container:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+/* Inputs en búsqueda del mapa */
+input.form-control-modern.me-2 {
+  display: inline-block !important;
+  width: auto !important;
+  min-width: 300px;
+  margin-right: 1rem !important;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .card-header {
+    padding: 1.5rem 1.75rem;
+  }
+
+  .card-body {
+    padding: 1.75rem;
+  }
+
+  .card-footer {
+    padding: 1.25rem 1.75rem;
+  }
+
+  .info-item {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .info-item .info-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    margin-right: 1rem;
+  }
+
+  .form-control-modern {
+    padding: 0.875rem 1rem;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .card-header h4 {
+    font-size: 1.25rem;
+  }
+
+  .card-header small {
+    font-size: 0.9rem;
+  }
+
+  input.form-control-modern.me-2 {
+    min-width: 250px;
+  }
+
+  .d-flex.gap-2 {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .d-flex.gap-2 .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .card {
+    border-radius: 12px;
+  }
+
+  .card-header {
+    padding: 1.25rem 1.25rem;
+  }
+
+  .card-body {
+    padding: 1.25rem;
+  }
+
+  .card-footer {
+    padding: 1rem 1.25rem;
+  }
+
+  .info-item {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .info-item .info-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+    margin-right: 0.75rem;
+  }
+
+  .form-control-modern {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+  }
+
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .form-label-modern {
+    font-size: 0.9rem;
+    gap: 0.5rem;
+  }
+
+  .form-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  input.form-control-modern.me-2 {
+    min-width: 200px;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-header .d-flex {
+    flex-direction: column;
+    align-items: center !important;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .info-item .d-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.info-item {
+  animation: slideIn 0.3s ease-out;
+}
+
+.card {
+  animation: slideIn 0.4s ease-out;
+}
+
+/* Estados de hover mejorados */
+.btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+}
+
+.info-icon {
+  cursor: pointer;
+}
+
+/* Efectos especiales para el header */
+.card-header .info-icon {
+  background: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Estados específicos para displays */
+.id-display,
+.centro-display,
+.localidad-display,
+.provincia-display,
+.telefono-display,
+.coordenadas-display {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+}
+
+/* Mejoras adicionales para formularios */
+.form-group-modern .ng-invalid.ng-touched .form-control-modern {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+}
+
+.form-group-modern .ng-valid.ng-touched .form-control-modern {
+  border-color: var(--success-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+}

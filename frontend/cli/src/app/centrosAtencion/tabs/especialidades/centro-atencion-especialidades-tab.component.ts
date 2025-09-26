@@ -8,7 +8,7 @@ import { Especialidad } from '../../../especialidades/especialidad';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './centro-atencion-especialidades-tab.component.html',
-  styleUrls: ['../../centroAtencion-detail.component.css']
+  styleUrls: ['./centro-atencion-especialidades-tab.component.css']
 })
 export class CentroAtencionEspecialidadesTabComponent implements OnInit {
   @Input() especialidadesAsociadas: Especialidad[] = [];

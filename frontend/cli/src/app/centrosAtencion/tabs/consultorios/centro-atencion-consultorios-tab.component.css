@@ -2,8 +2,8 @@
 
 /* Variables CSS */
 :host {
-  --primary-color: #4f46e5;
-  --primary-light: #8b5cf6;
+  --primary-color: #10b981;
+  --primary-light: #34d399;
   --secondary-color: #64748b;
   --success-color: #10b981;
   --success-light: #34d399;
@@ -171,7 +171,7 @@
 }
 
 .btn-gestionar-esquemas:hover {
-  background: linear-gradient(135deg, #3730a3 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   box-shadow: var(--shadow-md);
 }
 
@@ -341,7 +341,7 @@
 }
 
 .esquema-dia-card:hover {
-  background: linear-gradient(135deg, #3730a3 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   box-shadow: var(--shadow-md);
 }
 
