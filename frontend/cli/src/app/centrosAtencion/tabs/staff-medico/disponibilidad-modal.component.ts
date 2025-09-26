@@ -123,8 +123,8 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
           <div class="form-help mt-2">
             <small class="text-muted">
               <i class="fa fa-info-circle me-1"></i>
-              Configure los días y horarios en los que el médico estará disponible para atender pacientes en este centro. 
-              {{ modoEdicion ? 'Modifique los horarios existentes según sea necesario.' : 'Puede agregar múltiples horarios para diferentes días.' }}
+              Configure los días y horarios en los que el médico estará disponible para atender pacientes en este centro.
+              {{ modoEdicion ? 'Modifique los horarios existentes según sea necesario.' : 'Puede agregar múltiples horarios, incluso para el mismo día, siempre que no se superpongan.' }}
             </small>
           </div>
         </div>
@@ -372,13 +372,34 @@ export class DisponibilidadModalComponent {
       }
     }
 
-    // Validar que no haya duplicados del mismo día DENTRO de esta disponibilidad
-    const diasUsados = new Set();
+    // Validar que no haya superposición de horarios en el mismo día
+    const horariosPorDia = new Map<string, Array<{horaInicio: string, horaFin: string}>>();
+
+    // Agrupar horarios por día
     for (let horario of this.disponibilidad.horarios) {
-      if (diasUsados.has(horario.dia)) {
-        return `El día ${this.getDiaNombre(horario.dia)} está duplicado. Cada día puede tener solo un horario por disponibilidad.`;
+      if (!horariosPorDia.has(horario.dia)) {
+        horariosPorDia.set(horario.dia, []);
       }
-      diasUsados.add(horario.dia);
+      horariosPorDia.get(horario.dia)!.push({
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin
+      });
+    }
+
+    // Validar superposición en cada día
+    for (let [dia, horarios] of horariosPorDia) {
+      // Ordenar horarios por hora de inicio
+      horarios.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+
+      // Verificar superposición entre horarios consecutivos
+      for (let i = 0; i < horarios.length - 1; i++) {
+        const horarioActual = horarios[i];
+        const siguienteHorario = horarios[i + 1];
+
+        if (horarioActual.horaFin > siguienteHorario.horaInicio) {
+          return `En ${this.getDiaNombre(dia)}, el horario ${horarioActual.horaInicio}-${horarioActual.horaFin} se superpone con ${siguienteHorario.horaInicio}-${siguienteHorario.horaFin}. Los horarios no pueden superponerse.`;
+        }
+      }
     }
 
     return null;
