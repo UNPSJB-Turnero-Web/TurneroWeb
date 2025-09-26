@@ -2,17 +2,25 @@
 
 /* Variables CSS */
 :host {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --light-color: #f8f9fa;
-  --dark-color: #343a40;
-  --border-color: #dee2e6;
-  --medico-green: #28a745;
-  --especialidad-purple: #6f42c1;
+  --primary-color: #4f46e5;
+  --primary-light: #8b5cf6;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --lighter-color: #ffffff;
+  --dark-color: #1e293b;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --medico-green: #10b981;
+  --especialidad-purple: #8b5cf6;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 /* ==================== BOTÓN ASOCIAR MÉDICO MODERNO ==================== */
@@ -59,24 +67,25 @@
 .medicos-cards-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 2rem;
+  padding: 1rem 0;
 }
 
 /* Card individual de médico */
 .medico-card {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .medico-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
 }
 
 .medico-card::before {
@@ -107,17 +116,23 @@
 }
 
 .medico-avatar-circle {
-  width: 50px;
-  height: 50px;
-  background: var(--medico-green);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--medico-green) 0%, var(--success-light) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  font-weight: 700;
+  font-size: 1.4rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.medico-avatar-circle:hover {
+  box-shadow: var(--shadow-xl);
 }
 
 .medico-details h5.medico-nombre {
@@ -138,15 +153,23 @@
 }
 
 .badge-especialidad {
-  background: var(--especialidad-purple);
+  background: linear-gradient(135deg, var(--especialidad-purple) 0%, var(--primary-light) 100%);
   color: white;
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-especialidad:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 /* Acciones del médico */
@@ -157,38 +180,57 @@
 }
 
 .btn-gestionar-disponibilidad {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: white;
   border: 1px solid var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gestionar-disponibilidad::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-gestionar-disponibilidad:hover::before {
+  left: 100%;
 }
 
 .btn-gestionar-disponibilidad:hover {
-  background: #0056b3;
-  border-color: #0056b3;
-  color: white;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #3730a3 0%, #7c3aed 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-desasociar {
   background: white;
   color: var(--danger-color);
-  border: 1px solid var(--danger-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  border: 2px solid var(--danger-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-desasociar:hover {
   background: var(--danger-color);
   color: white;
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 /* Sección de disponibilidades semanales */
@@ -537,24 +579,25 @@
 .medicos-cards-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 2rem;
+  padding: 1rem 0;
 }
 
 /* Card individual de médico */
 .medico-card {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .medico-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
 }
 
 .medico-card::before {
@@ -585,17 +628,24 @@
 }
 
 .medico-avatar-circle {
-  width: 50px;
-  height: 50px;
-  background: var(--medico-green);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--medico-green) 0%, var(--success-light) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  font-weight: 700;
+  font-size: 1.4rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.medico-avatar-circle:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: var(--shadow-xl);
 }
 
 .medico-details h5.medico-nombre {
@@ -616,15 +666,23 @@
 }
 
 .badge-especialidad {
-  background: var(--especialidad-purple);
+  background: linear-gradient(135deg, var(--especialidad-purple) 0%, var(--primary-light) 100%);
   color: white;
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-especialidad:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 /* Acciones del médico */
@@ -635,38 +693,57 @@
 }
 
 .btn-gestionar-disponibilidad {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: white;
   border: 1px solid var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gestionar-disponibilidad::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-gestionar-disponibilidad:hover::before {
+  left: 100%;
 }
 
 .btn-gestionar-disponibilidad:hover {
-  background: #0056b3;
-  border-color: #0056b3;
-  color: white;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #3730a3 0%, #7c3aed 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-desasociar {
   background: white;
   color: var(--danger-color);
-  border: 1px solid var(--danger-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  border: 2px solid var(--danger-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-desasociar:hover {
   background: var(--danger-color);
   color: white;
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 /* Sección de disponibilidades semanales */
