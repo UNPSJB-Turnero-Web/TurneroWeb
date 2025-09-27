@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import unpsjb.labprog.backend.config.AuditContext;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.Response;
@@ -70,7 +72,8 @@ public class ConsultorioPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody ConsultorioDTO consultorioDTO) {
         try {
-            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO); 
+            String performedBy = AuditContext.getCurrentUser();
+            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO, performedBy); 
             return Response.ok(saved, "Consultorio creado correctamente");
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -95,8 +98,9 @@ public class ConsultorioPresenter {
     @PutMapping("/{id}")
     public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
+            String performedBy = AuditContext.getCurrentUser();
             consultorioDTO.setId(id);
-            ConsultorioDTO updated = service.saveOrUpdate(consultorioDTO); 
+            ConsultorioDTO updated = service.saveOrUpdate(consultorioDTO, performedBy); 
             return Response.ok(updated, "Consultorio actualizado correctamente");
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -115,9 +119,10 @@ public class ConsultorioPresenter {
     @PostMapping("/centro/{centroId}")
     public ResponseEntity<Object> createInCentro(@PathVariable Integer centroId, @RequestBody ConsultorioDTO consultorioDTO) {
         try {
+            String performedBy = AuditContext.getCurrentUser();
             consultorioDTO.setCentroId(centroId);
 
-            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO);
+            ConsultorioDTO saved = service.saveOrUpdate(consultorioDTO, performedBy);
             return Response.ok(saved, "Consultorio creado correctamente");
         } catch (IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
@@ -129,9 +134,11 @@ public class ConsultorioPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Integer id) {
+    public ResponseEntity<Object> delete(@PathVariable Integer id, 
+                                        @RequestParam(required = false) String reason) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy, reason != null ? reason : "Eliminación solicitada por usuario");
             return Response.ok(null, "Consultorio eliminado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al eliminar el consultorio: " + e.getMessage());

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.CentroAtencionService;
 import unpsjb.labprog.backend.dto.CentroAtencionDTO;
+import unpsjb.labprog.backend.config.AuditContext;
 
 @RestController
 @RequestMapping("centrosAtencion")
@@ -74,7 +75,8 @@ public class CentroAtencionPresenter {
             if (dto.getId() != null && dto.getId() != 0) {
                 return Response.error(dto, "El centro de atención no puede tener un ID definido al crearse.");
             }
-            CentroAtencionDTO saved = service.saveOrUpdate(dto);
+            String performedBy = AuditContext.getCurrentUser();
+            CentroAtencionDTO saved = service.saveOrUpdate(dto, performedBy);
             return Response.ok(saved, "Centro de atención creado correctamente");
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -92,7 +94,8 @@ public class CentroAtencionPresenter {
             if (dto.getId() == null || dto.getId() <= 0) {
                 return Response.error(dto, "Debe proporcionar un ID válido para actualizar.");
             }
-            CentroAtencionDTO saved = service.saveOrUpdate(dto);
+            String performedBy = AuditContext.getCurrentUser();
+            CentroAtencionDTO saved = service.saveOrUpdate(dto, performedBy);
             return Response.ok(saved, "Centro de atención modificado correctamente");
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
@@ -107,7 +110,8 @@ public class CentroAtencionPresenter {
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok("Centro de atención " + id + " eliminado correctamente.");
         } catch (ResponseStatusException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {

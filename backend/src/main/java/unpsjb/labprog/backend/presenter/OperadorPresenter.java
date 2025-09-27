@@ -45,7 +45,8 @@ public class OperadorPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody OperadorDTO operadorDTO) {
         try {
-            OperadorDTO saved = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO saved = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(saved, "Operador creado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -60,7 +61,8 @@ public class OperadorPresenter {
             if (operadorDTO.getId() == null || operadorDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            OperadorDTO updated = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO updated = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(updated, "Operador actualizado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -74,7 +76,8 @@ public class OperadorPresenter {
         try {
             // Asegurar que el ID del path coincida con el del DTO
             operadorDTO.setId(id);
-            OperadorDTO updated = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO updated = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(updated, "Operador actualizado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -86,7 +89,8 @@ public class OperadorPresenter {
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Long id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok(null, "Operador eliminado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al eliminar el operador: " + e.getMessage());
@@ -162,7 +166,7 @@ public class OperadorPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            OperadorDTO saved = service.saveOrUpdate(request);
+            OperadorDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Operador creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());

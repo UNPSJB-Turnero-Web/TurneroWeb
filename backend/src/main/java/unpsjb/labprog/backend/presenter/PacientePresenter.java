@@ -47,7 +47,8 @@ public class PacientePresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody PacienteDTO pacienteDTO) {
         try {
-            PacienteDTO saved = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO saved = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(saved, "Paciente creado correctamente");
         } catch (IllegalStateException | IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
@@ -62,7 +63,8 @@ public class PacientePresenter {
             if (pacienteDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(updated, "Paciente actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -76,7 +78,8 @@ public class PacientePresenter {
         try {
             // Asegurar que el ID del path coincida con el del DTO
             pacienteDTO.setId(id);
-            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(updated, "Paciente actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -88,7 +91,8 @@ public class PacientePresenter {
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok(null, "Paciente eliminado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al eliminar el paciente: " + e.getMessage());
@@ -153,7 +157,7 @@ public class PacientePresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            PacienteDTO saved = service.saveOrUpdate(request);
+            PacienteDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Paciente creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -180,7 +184,7 @@ public class PacientePresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-           PacienteDTO saved = service.saveOrUpdate(request);
+           PacienteDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Paciente creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());

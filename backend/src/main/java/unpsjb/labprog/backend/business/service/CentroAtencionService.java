@@ -13,14 +13,17 @@ import org.springframework.web.server.ResponseStatusException;
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class CentroAtencionService {
 
     private final CentroAtencionRepository repository;
+    private final AuditLogService auditLogService;
 
-    public CentroAtencionService(CentroAtencionRepository repository) {
+    public CentroAtencionService(CentroAtencionRepository repository, AuditLogService auditLogService) {
         this.repository = repository;
+        this.auditLogService = auditLogService;
     }
 
     public List<CentroAtencionDTO> findAll() {
@@ -49,11 +52,14 @@ public class CentroAtencionService {
     }
 
     @Transactional
-    public CentroAtencionDTO saveOrUpdate(CentroAtencionDTO dto) {
+    public CentroAtencionDTO saveOrUpdate(CentroAtencionDTO dto, String performedBy) {
         CentroAtencion centro = toEntity(dto);
 
         // Validar los campos obligatorios y formato
         validateCentroAtencion(centro);
+
+        boolean isNew = centro.getId() == null;
+        CentroAtencion existente = null;
 
         if (centro.getId() == null) {
             // 🚀 CREACIÓN
@@ -72,7 +78,7 @@ public class CentroAtencionService {
             }
         } else {
             // 🛠️ MODIFICACIÓN
-            CentroAtencion existente = repository.findById(centro.getId()).orElse(null);
+            existente = repository.findById(centro.getId()).orElse(null);
             if (existente == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No existe el centro que se intenta modificar");
             }
@@ -100,10 +106,18 @@ public class CentroAtencionService {
         centro.setLatitud(dto.getLatitud());
         centro.setLongitud(dto.getLongitud());
 
-        repository.save(centro);
+        CentroAtencion saved = repository.save(centro);
+
+        // 🎯 AUDITORÍA
+        if (isNew) {
+            auditLogService.logCentroAtencionCreated(saved.getId().longValue(), saved.getNombre(), performedBy);
+        } else {
+            auditLogService.logCentroAtencionUpdated(saved.getId().longValue(), performedBy,
+                existente, saved, "Modificación de centro de atención");
+        }
 
         // Guardar el centro y devolver el DTO
-        return toDTO(repository.save(centro));
+        return toDTO(saved);
     }
 
     @Transactional
@@ -112,7 +126,15 @@ public class CentroAtencionService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Integer id, String performedBy) {
+        CentroAtencion centro = repository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Centro de atención no encontrado"));
+        
+        // Auditar eliminación antes de borrar
+        auditLogService.logGenericAction(AuditLog.EntityTypes.CENTRO_ATENCION, id.longValue(),
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                                       centro, null, "Eliminación de centro de atención");
+        
         repository.deleteById(id);
     }
 

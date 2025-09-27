@@ -16,6 +16,7 @@ import unpsjb.labprog.backend.business.repository.OperadorRepository;
 import unpsjb.labprog.backend.dto.OperadorDTO;
 import unpsjb.labprog.backend.model.Operador;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class OperadorService {
@@ -28,6 +29,9 @@ public class OperadorService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     @Autowired
     private UserService userService;
@@ -53,7 +57,7 @@ public class OperadorService {
     }
 
     @Transactional
-    public OperadorDTO saveOrUpdate(OperadorDTO dto) {
+    public OperadorDTO saveOrUpdate(OperadorDTO dto, String performedBy) {
         Operador operador = toEntity(dto);
         validarOperador(operador);
 
@@ -132,7 +136,20 @@ public class OperadorService {
             }
         }
 
-        return toDTO(repository.save(operador));
+        Operador saved = repository.save(operador);
+
+        // 🎯 AUDITORÍA
+        if (operador.getId() == null || operador.getId() <= 0L) {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.OPERADOR, saved.getId(),
+                                           AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                           null, saved, "Operador creado");
+        } else {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.OPERADOR, saved.getId(),
+                                           AuditLog.Actions.UPDATE, performedBy, null, null,
+                                           null, saved, "Operador actualizado");
+        }
+
+        return toDTO(saved);
     }
 
     public Page<OperadorDTO> findByPage(int page, int size) {
@@ -164,7 +181,17 @@ public class OperadorService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long id, String performedBy) {
+        Operador operador = repository.findById(id).orElse(null);
+        if (operador == null) {
+            throw new IllegalStateException("No existe un operador con el ID: " + id);
+        }
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(AuditLog.EntityTypes.OPERADOR, id,
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                                       operador, null, "Operador eliminado");
+
         repository.deleteById(id); // si quieres borrado lógico, aquí cambiarías a setActivo(false)
     }
 

@@ -18,6 +18,7 @@ import unpsjb.labprog.backend.dto.PacienteDTO;
 import unpsjb.labprog.backend.model.ObraSocial;
 import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class PacienteService {
@@ -38,6 +39,9 @@ public class PacienteService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
     public List<PacienteDTO> findAll() {
         return repository.findAll().stream()
                 .map(this::toDTO)
@@ -57,7 +61,7 @@ public class PacienteService {
     }
 
     @Transactional
-    public PacienteDTO saveOrUpdate(PacienteDTO dto) {
+    public PacienteDTO saveOrUpdate(PacienteDTO dto, String performedBy) {
         Paciente paciente = toEntity(dto);
         // validarPaciente(paciente);
 
@@ -150,7 +154,20 @@ public class PacienteService {
             }
         }
 
-        return toDTO(repository.save(paciente));
+        Paciente saved = repository.save(paciente);
+
+        // 🎯 AUDITORÍA
+        if (paciente.getId() == null) {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.PACIENTE, saved.getId().longValue(),
+                                           AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                           null, saved, "Paciente creado");
+        } else {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.PACIENTE, saved.getId().longValue(),
+                                           AuditLog.Actions.UPDATE, performedBy, null, null,
+                                           null, saved, "Paciente actualizado");
+        }
+
+        return toDTO(saved);
     }
 
     /**
@@ -180,7 +197,17 @@ public class PacienteService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Integer id, String performedBy) {
+        Paciente paciente = repository.findById(id).orElse(null);
+        if (paciente == null) {
+            throw new IllegalStateException("No existe un paciente con el ID: " + id);
+        }
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(AuditLog.EntityTypes.PACIENTE, id.longValue(),
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                                       paciente, null, "Paciente eliminado");
+
         repository.deleteById(id);
     }
 

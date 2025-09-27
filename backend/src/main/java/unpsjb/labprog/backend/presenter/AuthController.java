@@ -197,7 +197,7 @@ public class AuthController {
             // No asignar fecha de nacimiento ni obra social en el registro básico
             
             // Crear la entidad Paciente sin auditoría (auto-registro)
-            pacienteService.saveOrUpdate(pacienteDTO);
+            pacienteService.saveOrUpdate(pacienteDTO, "AUTO-REGISTRO");
 
             // Enviar email de activación automáticamente
             accountActivationService.initiateAccountActivation(newUser.getEmail());

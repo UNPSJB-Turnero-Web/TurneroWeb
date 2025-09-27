@@ -372,4 +372,79 @@ public class AuditLogPresenter {
             return Response.error(null, "Error al recuperar los logs: " + e.getMessage());
         }
     }
+
+    /**
+     * Endpoint paginado y filtrable para consultar historial de auditoría general
+     * GET /audit/page?entidad=TURNO&usuario=admin&tipoAccion=CREATE&fechaDesde=2024-01-01&fechaHasta=2024-12-31&page=0&size=10
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Object> findAuditLogs(
+            @RequestParam(required = false) String entidad,
+            @RequestParam(required = false) String usuario,
+            @RequestParam(required = false) String tipoAccion,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            Page<AuditLog> pageResult = auditLogService.findByFilters(
+                entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size);
+
+            Map<String, Object> response = Map.of(
+                "content", pageResult.getContent(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber(),
+                "pageSize", pageResult.getSize()
+            );
+
+            return Response.ok(response, "Historial de auditoría recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el historial de auditoría: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene el historial de auditoría de una entidad específica
+     * GET /audit/entidad/TURNO/123
+     */
+    @GetMapping("/entidad/{entityType}/{entityId}")
+    public ResponseEntity<Object> getEntityAuditHistory(
+            @PathVariable String entityType,
+            @PathVariable Long entityId) {
+        try {
+            List<AuditLog> auditHistory = auditLogService.getEntityAuditHistory(entityType, entityId);
+            return Response.ok(auditHistory, "Historial de auditoría de la entidad recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el historial de auditoría: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de auditoría por tipo de entidad
+     * GET /audit/estadisticas/entidad
+     */
+    @GetMapping("/estadisticas/entidad")
+    public ResponseEntity<Object> getEntityAuditStatistics() {
+        try {
+            List<Map<String, Object>> statistics = auditLogService.getEntityAuditStatistics();
+            return Response.ok(statistics, "Estadísticas de auditoría por entidad recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar las estadísticas: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene logs recientes de auditoría (últimas 24 horas)
+     * GET /audit/recientes
+     */
+    @GetMapping("/recientes")
+    public ResponseEntity<Object> getRecentAuditLogs() {
+        try {
+            List<AuditLog> recentLogs = auditLogService.getRecentLogs();
+            return Response.ok(recentLogs, "Logs recientes de auditoría recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los logs recientes: " + e.getMessage());
+        }
+    }
 }

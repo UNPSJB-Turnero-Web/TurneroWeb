@@ -48,7 +48,8 @@ public class MedicoPresenter {
             if (medicoDTO.getId() != null && medicoDTO.getId() != 0) {
                 return Response.error(medicoDTO, "El médico no puede tener un ID definido al crearse.");
             }
-            MedicoDTO saved = service.saveOrUpdate(medicoDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            MedicoDTO saved = service.saveOrUpdate(medicoDTO, performedBy);
             return Response.ok(saved, "Médico creado correctamente");
         } catch (IllegalArgumentException e) {           
             return Response.dbError(e.getMessage());
@@ -64,7 +65,8 @@ public class MedicoPresenter {
                 return Response.error(medicoDTO, "Debe proporcionar un ID válido para actualizar.");
             }
             medicoDTO.setId(id);
-            MedicoDTO updated = service.saveOrUpdate(medicoDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            MedicoDTO updated = service.saveOrUpdate(medicoDTO, performedBy);
             return Response.ok(updated, "Médico actualizado correctamente");
         } catch (org.springframework.web.server.ResponseStatusException e) {
             if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
@@ -95,7 +97,8 @@ public class MedicoPresenter {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
-        service.delete(id);
+        String performedBy = AuditContext.getCurrentUser();
+        service.delete(id, performedBy);
         return Response.ok("Médico " + id + " eliminado correctamente");
     }
 
@@ -136,7 +139,7 @@ public class MedicoPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            MedicoDTO saved = service.saveOrUpdate(request);
+            MedicoDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Médico creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -159,7 +162,7 @@ public class MedicoPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            MedicoDTO saved = service.saveOrUpdate(request);
+            MedicoDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Médico creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());

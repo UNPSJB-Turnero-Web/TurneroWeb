@@ -27,11 +27,28 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     // Buscar logs por usuario
     List<AuditLog> findByPerformedByOrderByPerformedAtDesc(String performedBy);
 
+
     // Buscar logs en un rango de fechas
     List<AuditLog> findByPerformedAtBetweenOrderByPerformedAtDesc(LocalDateTime start, LocalDateTime end);
 
-    // Buscar logs por turno y acción
-    List<AuditLog> findByTurnoIdAndActionOrderByPerformedAtDesc(Integer turnoId, String action);
+    // Buscar logs por tipo de entidad
+    List<AuditLog> findByEntityTypeOrderByPerformedAtDesc(String entityType);
+
+    // Buscar logs por tipo de entidad e ID
+
+    // Buscar logs por tipo de entidad con paginación
+    Page<AuditLog> findByEntityType(String entityType, Pageable pageable);
+
+    // Buscar logs por tipo de entidad e ID con paginación
+    Page<AuditLog> findByEntityTypeAndEntityId(String entityType, Long entityId, Pageable pageable);
+
+    // Buscar logs por acción y tipo de entidad
+
+    // Buscar logs en rango de fechas por tipo de entidad
+    List<AuditLog> findByEntityTypeAndPerformedAtBetweenOrderByPerformedAtDesc(String entityType, LocalDateTime start, LocalDateTime end);
+
+    // Buscar logs por usuario y tipo de entidad
+    List<AuditLog> findByEntityTypeAndPerformedByOrderByPerformedAtDesc(String entityType, String performedBy);
 
     // Obtener usuarios únicos que han realizado auditorías
     @Query("SELECT DISTINCT a.performedBy FROM AuditLog a ORDER BY a.performedBy")
@@ -99,11 +116,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     List<Integer> findAuditIdsByTurnoId(@Param("turnoId") Integer turnoId);
 
     // Obtener datos básicos sin campos LOB problemáticos
-    @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at FROM audit_log WHERE id = :auditId", nativeQuery = true)
+    @Query(value = "SELECT id, action, performed_by, estado_anterior, estado_nuevo, performed_at FROM audit_log WHERE id = :auditId", nativeQuery = true)
     Object[] findBasicAuditData(@Param("auditId") Integer auditId);
 
     // Consulta segura sin campos LOB problemáticos
-    @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at, reason FROM audit_log WHERE turno_id = :turnoId ORDER BY performed_at DESC", nativeQuery = true)
+    @Query(value = "SELECT id, action, performed_by, estado_anterior, estado_nuevo, performed_at, reason FROM audit_log WHERE turno_id = :turnoId ORDER BY performed_at DESC", nativeQuery = true)
     List<Object[]> findSafeAuditHistory(@Param("turnoId") Integer turnoId);
 
     // Obtener IDs de logs recientes sin campos LOB
@@ -111,7 +128,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     List<Integer> findRecentLogIds(@Param("since") LocalDateTime since);
 
     // Obtener datos básicos de logs recientes sin campos LOB problemáticos
-    @Query(value = "SELECT id, action, performed_by, previous_status, new_status, performed_at, reason, turno_id FROM audit_log WHERE performed_at >= :since ORDER BY performed_at DESC", nativeQuery = true)
+    @Query(value = "SELECT id, action, performed_by, estado_anterior, estado_nuevo, performed_at, reason, turno_id FROM audit_log WHERE performed_at >= :since ORDER BY performed_at DESC", nativeQuery = true)
     List<Object[]> findSafeRecentLogs(@Param("since") LocalDateTime since);
 
     // ===============================
@@ -132,9 +149,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     Long countByEntityType(@Param("entityType") String entityType);
 
     // Obtener estadísticas de cambios de rol
-    @Query("SELECT a.previousStatus, a.newStatus, COUNT(a) FROM AuditLog a " +
+    @Query("SELECT a.estadoAnterior, a.estadoNuevo, COUNT(a) FROM AuditLog a " +
            "WHERE a.entityType = 'USER' AND a.action = 'ROLE_CHANGE' " +
-           "GROUP BY a.previousStatus, a.newStatus ORDER BY COUNT(a) DESC")
+           "GROUP BY a.estadoAnterior, a.estadoNuevo ORDER BY COUNT(a) DESC")
     List<Object[]> findRoleChangeStatistics();
 
     // Obtener actividad reciente de cambios de rol
@@ -168,4 +185,38 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
            "AND a.performedBy = :performedBy ORDER BY a.performedAt DESC")
     List<AuditLog> findUserLogsByPerformedBy(@Param("targetUserId") Long targetUserId, 
                                              @Param("performedBy") String performedBy);
+
+    List<AuditLog> findByTurnoIdAndActionOrderByPerformedAtDesc(Integer turnoId, String action);
+
+    Long countByEntityTypeAndAction(String entityType, String action);
+
+    @Query("SELECT a.entityType, a.action, COUNT(a) FROM AuditLog a GROUP BY a.entityType, a.action ORDER BY a.entityType, COUNT(a) DESC")
+    List<Object[]> findActionStatisticsByEntityType();
+
+    @Query("SELECT a.entityType, COUNT(a) FROM AuditLog a GROUP BY a.entityType ORDER BY COUNT(a) DESC")
+    List<Object[]> findEntityTypeStatistics();
+
+    @Query("SELECT a.entityType, COUNT(a), " +
+           "SUM(CASE WHEN a.action = 'CREATE' THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN a.action = 'UPDATE' THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN a.action = 'DELETE' THEN 1 ELSE 0 END), " +
+           "MAX(a.performedAt) " +
+           "FROM AuditLog a " +
+           "GROUP BY a.entityType " +
+           "ORDER BY COUNT(a) DESC")
+    List<Object[]> getAuditStatisticsByEntityType();
+
+    @Query("SELECT a FROM AuditLog a WHERE " +
+           "(:entidad IS NULL OR a.entityType = :entidad) AND " +
+           "(:usuario IS NULL OR a.performedBy = :usuario) AND " +
+           "(:tipoAccion IS NULL OR a.action = :tipoAccion) AND " +
+           "(:fechaDesde IS NULL OR a.performedAt >= :fechaDesde) AND " +
+           "(:fechaHasta IS NULL OR a.performedAt <= :fechaHasta) " +
+           "ORDER BY a.performedAt DESC")
+    Page<AuditLog> findByFilters(@Param("entidad") String entidad,
+                                @Param("usuario") String usuario,
+                                @Param("tipoAccion") String tipoAccion,
+                                @Param("fechaDesde") LocalDateTime fechaDesde,
+                                @Param("fechaHasta") LocalDateTime fechaHasta,
+                                Pageable pageable);
 }

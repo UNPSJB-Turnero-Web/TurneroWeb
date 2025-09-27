@@ -1,13 +1,16 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -523,8 +526,8 @@ public class AuditLogService {
             }
             
             // Verificar coherencia de estados
-            if (next.getNewStatus() != null && current.getPreviousStatus() != null &&
-                !next.getNewStatus().equals(current.getPreviousStatus())) {
+            if (next.getEstadoNuevo() != null && current.getEstadoAnterior() != null &&
+                !next.getEstadoNuevo().equals(current.getEstadoAnterior())) {
                 return false;
             }
         }
@@ -657,7 +660,7 @@ public class AuditLogService {
             String newValuesJson = objectMapper.writeValueAsString(newValues);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.ROLE_CHANGE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.ROLE_CHANGE,
                 performedBy, previousRole, newRole, oldValuesJson, newValuesJson, reason
             );
 
@@ -689,7 +692,7 @@ public class AuditLogService {
             String userDataJson = objectMapper.writeValueAsString(userData);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_CREATE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_CREATE,
                 performedBy, null, userRole, null, userDataJson, "Usuario creado"
             );
 
@@ -715,7 +718,7 @@ public class AuditLogService {
             String newDataJson = newData != null ? objectMapper.writeValueAsString(newData) : null;
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_UPDATE,
                 performedBy, null, null, oldDataJson, newDataJson, reason
             );
 
@@ -749,7 +752,7 @@ public class AuditLogService {
             String statusJson = objectMapper.writeValueAsString(statusChange);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, action,
+                AuditLog.EntityTypes.USUARIO, userId, action,
                 performedBy, previousStatus, newStatus, null, statusJson, reason
             );
 
@@ -770,7 +773,7 @@ public class AuditLogService {
         System.out.println("🔍 DEBUG: Obteniendo historial de auditoría para usuario ID: " + userId);
         try {
             return auditLogRepository.findByEntityTypeAndEntityIdOrderByPerformedAtDesc(
-                AuditLog.EntityTypes.USER, userId);
+                AuditLog.EntityTypes.USUARIO, userId);
         } catch (Exception e) {
             System.err.println("❌ ERROR: Error al obtener historial de usuario: " + e.getMessage());
             return new java.util.ArrayList<>();
@@ -784,7 +787,7 @@ public class AuditLogService {
         System.out.println("🔍 DEBUG: Obteniendo todos los cambios de rol del sistema");
         try {
             return auditLogRepository.findByEntityTypeAndActionOrderByPerformedAtDesc(
-                AuditLog.EntityTypes.USER, AuditLog.Actions.ROLE_CHANGE);
+                AuditLog.EntityTypes.USUARIO, AuditLog.Actions.ROLE_CHANGE);
         } catch (Exception e) {
             System.err.println("❌ ERROR: Error al obtener historial de cambios de rol: " + e.getMessage());
             return new java.util.ArrayList<>();
@@ -798,7 +801,7 @@ public class AuditLogService {
         System.out.println("🔍 DEBUG: Obteniendo cambios de rol para usuario ID: " + userId);
         try {
             return auditLogRepository.findByEntityTypeAndEntityIdAndActionOrderByPerformedAtDesc(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.ROLE_CHANGE);
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.ROLE_CHANGE);
         } catch (Exception e) {
             System.err.println("❌ ERROR: Error al obtener cambios de rol del usuario: " + e.getMessage());
             return new java.util.ArrayList<>();
@@ -919,7 +922,7 @@ public class AuditLogService {
             String activationJson = objectMapper.writeValueAsString(activationData);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_UPDATE,
                 userEmail, "No verificado", "Cuenta activada", null, activationJson, reason
             );
 
@@ -950,7 +953,7 @@ public class AuditLogService {
             String changeJson = objectMapper.writeValueAsString(passwordChange);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_UPDATE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_UPDATE,
                 userEmail, null, "PASSWORD_UPDATED", null, changeJson, reason
             );
 
@@ -985,7 +988,7 @@ public class AuditLogService {
             String adminDataJson = objectMapper.writeValueAsString(adminData);
 
             AuditLog auditLog = new AuditLog(
-                AuditLog.EntityTypes.USER, userId, AuditLog.Actions.USER_CREATE,
+                AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_CREATE,
                 "SYSTEM_SEED", null, "ADMIN_INITIAL_CREATED", 
                 null, adminDataJson, "Creación automática del administrador inicial del sistema"
             );
@@ -1034,5 +1037,304 @@ public class AuditLogService {
             System.err.println("❌ ERROR: Error al auditar cancelación automática de turno: " + e.getMessage());
             throw new RuntimeException("Error al registrar auditoría de cancelación automática", e);
         }
+    }
+
+    // ===============================
+    // MÉTODOS GENÉRICOS PARA AUDITORÍA DE CUALQUIER ENTIDAD
+    // ===============================
+
+    /**
+     * Registra una acción genérica de auditoría para cualquier entidad
+     */
+    @Transactional
+    public AuditLog logGenericAction(String entityType, Long entityId, String action, 
+                                    String performedBy, String estadoAnterior, String estadoNuevo,
+                                    Object oldValues, Object newValues, String reason) {
+        try {
+            String oldValuesJson = oldValues != null ? objectMapper.writeValueAsString(oldValues) : null;
+            String newValuesJson = newValues != null ? objectMapper.writeValueAsString(newValues) : null;
+
+            AuditLog auditLog = new AuditLog(entityType, entityId, action, performedBy, 
+                                           estadoAnterior, estadoNuevo, oldValuesJson, newValuesJson, reason);
+            return auditLogRepository.save(auditLog);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error al serializar datos de auditoría", e);
+        }
+    }
+
+    // ===============================
+    // MÉTODOS ESPECÍFICOS PARA AUDITORÍA DE OTRAS ENTIDADES
+    // ===============================
+
+    /**
+     * Registra la creación de un consultorio
+     */
+    @Transactional
+    public AuditLog logConsultorioCreated(Long consultorioId, String nombre, Long centroId, String performedBy) {
+        try {
+            Map<String, Object> consultorioData = Map.of(
+                "id", consultorioId,
+                "nombre", nombre,
+                "centroId", centroId
+            );
+            return logGenericAction(AuditLog.EntityTypes.CONSULTORIO, consultorioId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                  null, consultorioData, "Consultorio creado");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de consultorio", e);
+        }
+    }
+
+    /**
+     * Registra la actualización de un consultorio
+     */
+    @Transactional
+    public AuditLog logConsultorioUpdated(Long consultorioId, String performedBy, 
+                                         Object oldData, Object newData, String reason) {
+        return logGenericAction(AuditLog.EntityTypes.CONSULTORIO, consultorioId, 
+                              AuditLog.Actions.UPDATE, performedBy, null, null,
+                              oldData, newData, reason != null ? reason : "Consultorio actualizado");
+    }
+
+    /**
+     * Registra la eliminación de un consultorio
+     */
+    @Transactional
+    public AuditLog logConsultorioDeleted(Long consultorioId, String performedBy, String reason) {
+        return logGenericAction(AuditLog.EntityTypes.CONSULTORIO, consultorioId, 
+                              AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                              null, null, reason != null ? reason : "Consultorio eliminado");
+    }
+
+    /**
+     * Registra la creación de un centro de atención
+     */
+    @Transactional
+    public AuditLog logCentroAtencionCreated(Long centroId, String nombre, String performedBy) {
+        try {
+            Map<String, Object> centroData = Map.of(
+                "id", centroId,
+                "nombre", nombre
+            );
+            return logGenericAction(AuditLog.EntityTypes.CENTRO_ATENCION, centroId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                  null, centroData, "Centro de atención creado");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de centro de atención", e);
+        }
+    }
+
+    /**
+     * Registra la actualización de un centro de atención
+     */
+    @Transactional
+    public AuditLog logCentroAtencionUpdated(Long centroId, String performedBy, 
+                                           Object oldData, Object newData, String reason) {
+        return logGenericAction(AuditLog.EntityTypes.CENTRO_ATENCION, centroId, 
+                              AuditLog.Actions.UPDATE, performedBy, null, null,
+                              oldData, newData, reason != null ? reason : "Centro de atención actualizado");
+    }
+
+    /**
+     * Registra la creación de una especialidad
+     */
+    @Transactional
+    public AuditLog logEspecialidadCreated(Long especialidadId, String nombre, String performedBy) {
+        try {
+            Map<String, Object> especialidadData = Map.of(
+                "id", especialidadId,
+                "nombre", nombre
+            );
+            return logGenericAction(AuditLog.EntityTypes.ESPECIALIDAD, especialidadId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVA",
+                                  null, especialidadData, "Especialidad creada");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de especialidad", e);
+        }
+    }
+
+    /**
+     * Registra la creación de un médico
+     */
+    @Transactional
+    public AuditLog logMedicoCreated(Long medicoId, String nombre, String apellido, String performedBy) {
+        try {
+            Map<String, Object> medicoData = Map.of(
+                "id", medicoId,
+                "nombre", nombre,
+                "apellido", apellido
+            );
+            return logGenericAction(AuditLog.EntityTypes.MEDICO, medicoId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                  null, medicoData, "Médico creado");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de médico", e);
+        }
+    }
+
+    /**
+     * Registra la creación de un paciente
+     */
+    @Transactional
+    public AuditLog logPacienteCreated(Long pacienteId, String nombre, String apellido, String performedBy) {
+        try {
+            Map<String, Object> pacienteData = Map.of(
+                "id", pacienteId,
+                "nombre", nombre,
+                "apellido", apellido
+            );
+            return logGenericAction(AuditLog.EntityTypes.PACIENTE, pacienteId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                  null, pacienteData, "Paciente creado");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de paciente", e);
+        }
+    }
+
+    /**
+     * Registra la creación de un operador
+     */
+    @Transactional
+    public AuditLog logOperadorCreated(Long operadorId, String nombre, String apellido, String performedBy) {
+        try {
+            Map<String, Object> operadorData = Map.of(
+                "id", operadorId,
+                "nombre", nombre,
+                "apellido", apellido
+            );
+            return logGenericAction(AuditLog.EntityTypes.OPERADOR, operadorId, 
+                                  AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
+                                  null, operadorData, "Operador creado");
+        } catch (Exception e) {
+            throw new RuntimeException("Error al auditar creación de operador", e);
+        }
+    }
+
+    /**
+     * Registra login de usuario
+     */
+    @Transactional
+    public AuditLog logUserLogin(String username, String performedBy) {
+        return logGenericAction(AuditLog.EntityTypes.USUARIO, null, 
+                              AuditLog.Actions.LOGIN, performedBy, null, "LOGGED_IN",
+                              null, Map.of("username", username), "Usuario inició sesión");
+    }
+
+    /**
+     * Registra logout de usuario
+     */
+    @Transactional
+    public AuditLog logUserLogout(String username, String performedBy) {
+        return logGenericAction(AuditLog.EntityTypes.USUARIO, null, 
+                              AuditLog.Actions.LOGOUT, performedBy, "LOGGED_IN", "LOGGED_OUT",
+                              null, Map.of("username", username), "Usuario cerró sesión");
+    }
+
+    /**
+     * Registra cambio de contraseña
+     */
+    @Transactional
+    public AuditLog logPasswordChange(Long userId, String performedBy, String reason) {
+        return logGenericAction(AuditLog.EntityTypes.USUARIO, userId, 
+                              AuditLog.Actions.PASSWORD_CHANGE, performedBy, null, null,
+                              null, null, reason != null ? reason : "Contraseña cambiada");
+    }
+
+    // ===============================
+    // MÉTODOS PARA OBTENER HISTORIALES GENÉRICOS
+    // ===============================
+
+    /**
+     * Obtiene el historial de auditoría de una entidad específica
+     */
+    public List<AuditLog> getEntityAuditHistory(String entityType, Long entityId) {
+        return auditLogRepository.findByEntityTypeAndEntityIdOrderByPerformedAtDesc(entityType, entityId);
+    }
+
+    /**
+     * Obtiene el historial de auditoría de un tipo de entidad
+     */
+    public List<AuditLog> getEntityTypeAuditHistory(String entityType) {
+        return auditLogRepository.findByEntityTypeOrderByPerformedAtDesc(entityType);
+    }
+
+    /**
+     * Obtiene logs por tipo de entidad en un rango de fechas
+     */
+    public List<AuditLog> getLogsByEntityTypeAndDateRange(String entityType, LocalDateTime start, LocalDateTime end) {
+        return auditLogRepository.findByEntityTypeAndPerformedAtBetweenOrderByPerformedAtDesc(entityType, start, end);
+    }
+
+    /**
+     * Obtiene logs por tipo de entidad y usuario
+     */
+    public List<AuditLog> getLogsByEntityTypeAndUser(String entityType, String performedBy) {
+        return auditLogRepository.findByEntityTypeAndPerformedByOrderByPerformedAtDesc(entityType, performedBy);
+    }
+
+    /**
+     * Obtiene estadísticas por tipo de entidad
+     */
+    public List<Object[]> getEntityTypeStatistics() {
+        return auditLogRepository.findEntityTypeStatistics();
+    }
+
+    /**
+     * Obtiene estadísticas de acciones por tipo de entidad
+     */
+    public List<Object[]> getActionStatisticsByEntityType() {
+        return auditLogRepository.findActionStatisticsByEntityType();
+    }
+
+    /**
+     * Cuenta logs por tipo de entidad
+     */
+    public Long countByEntityType(String entityType) {
+        return auditLogRepository.countByEntityType(entityType);
+    }
+
+    /**
+     * Cuenta logs por tipo de entidad y acción
+     */
+    public Long countByEntityTypeAndAction(String entityType, String action) {
+        return auditLogRepository.countByEntityTypeAndAction(entityType, action);
+    }
+
+    /**
+     * Busca logs de auditoría con filtros avanzados y paginación
+     */
+    public Page<AuditLog> findByFilters(String entidad, String usuario, String tipoAccion,
+                                       LocalDateTime fechaDesde, LocalDateTime fechaHasta,
+                                       int page, int size) {
+        // Limpiar parámetros vacíos
+        String entidadFilter = (entidad != null && !entidad.trim().isEmpty()) ? entidad : null;
+        String usuarioFilter = (usuario != null && !usuario.trim().isEmpty()) ? usuario : null;
+        String tipoAccionFilter = (tipoAccion != null && !tipoAccion.trim().isEmpty()) ? tipoAccion : null;
+
+        // Crear paginación ordenada por performedAt descendente
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "performedAt"));
+        return auditLogRepository.findByFilters(entidadFilter, usuarioFilter, tipoAccionFilter,
+                                               fechaDesde, fechaHasta, pageable);
+    }
+
+    /**
+     * Obtiene estadísticas de auditoría agrupadas por tipo de entidad
+     */
+    public List<Map<String, Object>> getEntityAuditStatistics() {
+        List<Object[]> results = auditLogRepository.getAuditStatisticsByEntityType();
+        List<Map<String, Object>> statistics = new ArrayList<>();
+
+        for (Object[] result : results) {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("entityType", result[0]);
+            stat.put("totalLogs", result[1]);
+            stat.put("createCount", result[2]);
+            stat.put("updateCount", result[3]);
+            stat.put("deleteCount", result[4]);
+            stat.put("lastActivity", result[5]);
+            statistics.add(stat);
+        }
+
+        return statistics;
     }
 }

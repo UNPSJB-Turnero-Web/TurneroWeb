@@ -21,6 +21,7 @@ import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
 import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class MedicoService {
@@ -38,6 +39,9 @@ public class MedicoService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     @Autowired
     private UserService userService;
@@ -63,7 +67,7 @@ public class MedicoService {
    
 
     @Transactional
-    public MedicoDTO saveOrUpdate(MedicoDTO dto) {
+    public MedicoDTO saveOrUpdate(MedicoDTO dto, String performedBy) {
         // Validar DNI en el DTO antes de convertir a entidad
         if (dto.getDni() == null || dto.getDni().isBlank()) {
             throw new IllegalArgumentException("El dni es obligatorio");
@@ -212,7 +216,19 @@ public class MedicoService {
             medico = existente;
         }
 
-        return toDTO(repository.save(medico));
+        Medico saved = repository.save(medico);
+
+        // 🎯 AUDITORÍA
+        if (medico.getId() == null || medico.getId() == 0) {
+            auditLogService.logMedicoCreated(saved.getId().longValue(), 
+                saved.getNombre(), saved.getApellido(), performedBy);
+        } else {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.MEDICO, saved.getId().longValue(),
+                                           AuditLog.Actions.UPDATE, performedBy, null, null,
+                                           null, saved, "Médico actualizado");
+        }
+
+        return toDTO(saved);
     }
 
     /**
@@ -243,7 +259,17 @@ public class MedicoService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Integer id, String performedBy) {
+        Medico medico = repository.findById(id).orElse(null);
+        if (medico == null) {
+            throw new IllegalStateException("No existe un médico con el ID: " + id);
+        }
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(AuditLog.EntityTypes.MEDICO, id.longValue(),
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                                       medico, null, "Médico eliminado");
+
         repository.deleteById(id);
     }
 

@@ -18,6 +18,7 @@ import unpsjb.labprog.backend.dto.CentroAtencionDTO;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class EspecialidadService {
@@ -28,6 +29,8 @@ public class EspecialidadService {
     private CentroAtencionRepository centroAtencionRepository;
     @Autowired
     private CentroAtencionService centroAtencionService;
+    @Autowired
+    private AuditLogService auditLogService;
 
     public List<EspecialidadDTO> findAll() {
         return repository.findAll().stream()
@@ -72,23 +75,40 @@ public class EspecialidadService {
     }
 
     @Transactional
-    public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto) {
+    public EspecialidadDTO saveOrUpdate(EspecialidadDTO dto, String performedBy) {
         Especialidad especialidad = toEntity(dto);
 
         validarEspecialidad(especialidad);
 
-        if (especialidad.getId() == null || especialidad.getId() == 0) { // Creación
+        boolean isNew = especialidad.getId() == null || especialidad.getId() == 0;
+        Especialidad existente = null;
+
+        if (isNew) { // Creación
             if (repository.existsByNombreIgnoreCase(especialidad.getNombre())) {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         } else { // Actualización
-            Especialidad existente = repository.findByNombreIgnoreCase(especialidad.getNombre());
-            if (existente != null && !existente.getId().equals(especialidad.getId())) {
+            existente = repository.findById(especialidad.getId()).orElse(null);
+            if (existente == null) {
+                throw new IllegalStateException("No existe la especialidad que se intenta modificar");
+            }
+            Especialidad otraConMismoNombre = repository.findByNombreIgnoreCase(especialidad.getNombre());
+            if (otraConMismoNombre != null && !otraConMismoNombre.getId().equals(especialidad.getId())) {
                 throw new IllegalStateException("Ya existe una especialidad con ese nombre");
             }
         }
 
         Especialidad saved = repository.save(especialidad);
+
+        // 🎯 AUDITORÍA
+        if (isNew) {
+            auditLogService.logEspecialidadCreated(saved.getId().longValue(), saved.getNombre(), performedBy);
+        } else {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.ESPECIALIDAD, saved.getId().longValue(),
+                                           AuditLog.Actions.UPDATE, performedBy, null, null,
+                                           existente, saved, "Especialidad actualizada");
+        }
+
         return toDTO(saved);
     }
 
@@ -113,10 +133,17 @@ public class EspecialidadService {
     }
 
     @Transactional
-    public void delete(Integer id) {
-        if (!repository.existsById(id)) {
+    public void delete(Integer id, String performedBy) {
+        Especialidad especialidad = repository.findById(id).orElse(null);
+        if (especialidad == null) {
             throw new IllegalStateException("No existe una especialidad con el ID: " + id);
         }
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(AuditLog.EntityTypes.ESPECIALIDAD, id.longValue(),
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVA", "ELIMINADA",
+                                       especialidad, null, "Especialidad eliminada");
+
         repository.deleteById(id);
     }
 
