@@ -374,8 +374,8 @@ public class AuditLogPresenter {
     }
 
     /**
-     * Endpoint paginado y filtrable para consultar historial de auditoría general
-     * GET /audit/page?entidad=TURNO&usuario=admin&tipoAccion=CREATE&fechaDesde=2024-01-01&fechaHasta=2024-12-31&page=0&size=10
+     * Endpoint paginado, filtrable y ordenable para consultar historial de auditoría general
+     * GET /audit/page?entidad=TURNO&usuario=admin&tipoAccion=CREATE&fechaDesde=2024-01-01&fechaHasta=2024-12-31&page=0&size=10&sortBy=fechaHora&sortDir=DESC
      */
     @GetMapping("/page")
     public ResponseEntity<Object> findAuditLogs(
@@ -385,17 +385,29 @@ public class AuditLogPresenter {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "performedAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir) {
         try {
+            // Validar parámetros de ordenamiento
+            if (!isValidSortBy(sortBy)) {
+                return Response.error(null, "Parámetro sortBy inválido. Valores permitidos: performedAt, performedBy, action, entityType");
+            }
+            if (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC")) {
+                return Response.error(null, "Parámetro sortDir debe ser 'ASC' o 'DESC'");
+            }
+
             Page<AuditLog> pageResult = auditLogService.findByFilters(
-                entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size);
+                entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size, sortBy, sortDir);
 
             Map<String, Object> response = Map.of(
                 "content", pageResult.getContent(),
                 "totalPages", pageResult.getTotalPages(),
                 "totalElements", pageResult.getTotalElements(),
                 "currentPage", pageResult.getNumber(),
-                "pageSize", pageResult.getSize()
+                "pageSize", pageResult.getSize(),
+                "sortBy", sortBy,
+                "sortDir", sortDir
             );
 
             return Response.ok(response, "Historial de auditoría recuperado correctamente");
@@ -446,5 +458,17 @@ public class AuditLogPresenter {
         } catch (Exception e) {
             return Response.error(null, "Error al recuperar los logs recientes: " + e.getMessage());
         }
+    }
+
+    /**
+     * Valida que el parámetro sortBy sea seguro y válido
+     */
+    private boolean isValidSortBy(String sortBy) {
+        return sortBy != null && (
+            sortBy.equals("performedAt") ||
+            sortBy.equals("performedBy") ||
+            sortBy.equals("action") ||
+            sortBy.equals("entityType")
+        );
     }
 }

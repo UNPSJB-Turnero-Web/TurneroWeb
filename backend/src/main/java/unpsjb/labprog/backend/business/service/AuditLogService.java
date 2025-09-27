@@ -446,7 +446,7 @@ public class AuditLogService {
                 
                 // Por ahora retornar lista vacía, pero imprimir los datos para debug
                 basicLogs.forEach(log -> {
-                    System.out.println("📋 DEBUG: Log básico - ID: " + log[0] + ", Acción: " + log[1] + ", Usuario: " + log[2] + ", Fecha: " + log[5]);
+                    System.out.println("📋 DEBUG: Log básico - ID: " + log[0] + ", Acción: " + log[1] + ", Usuario: " + log[2] + ", Fecha: " + log[3] + ", Motivo: " + log[4]);
                 });
                 
             } catch (Exception e3) {
@@ -1301,18 +1301,22 @@ public class AuditLogService {
     }
 
     /**
-     * Busca logs de auditoría con filtros avanzados y paginación
+     * Busca logs de auditoría con filtros avanzados, paginación y ordenamiento
      */
     public Page<AuditLog> findByFilters(String entidad, String usuario, String tipoAccion,
                                        LocalDateTime fechaDesde, LocalDateTime fechaHasta,
-                                       int page, int size) {
+                                       int page, int size, String sortBy, String sortDir) {
         // Limpiar parámetros vacíos
         String entidadFilter = (entidad != null && !entidad.trim().isEmpty()) ? entidad : null;
         String usuarioFilter = (usuario != null && !usuario.trim().isEmpty()) ? usuario : null;
         String tipoAccionFilter = (tipoAccion != null && !tipoAccion.trim().isEmpty()) ? tipoAccion : null;
 
-        // Crear paginación ordenada por performedAt descendente
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "performedAt"));
+        // Crear ordenamiento dinámico
+        Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sort = Sort.by(direction, sortBy);
+
+        // Crear paginación con ordenamiento
+        Pageable pageable = PageRequest.of(page, size, sort);
         return auditLogRepository.findByFilters(entidadFilter, usuarioFilter, tipoAccionFilter,
                                                fechaDesde, fechaHasta, pageable);
     }

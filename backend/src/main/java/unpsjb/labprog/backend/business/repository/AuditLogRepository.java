@@ -128,7 +128,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Integer> {
     List<Integer> findRecentLogIds(@Param("since") LocalDateTime since);
 
     // Obtener datos básicos de logs recientes sin campos LOB problemáticos
-    @Query(value = "SELECT id, action, performed_by, estado_anterior, estado_nuevo, performed_at, reason, turno_id FROM audit_log WHERE performed_at >= :since ORDER BY performed_at DESC", nativeQuery = true)
+    @Query(value = "SELECT id, action, performed_by, performed_at, COALESCE(reason, ''), turno_id FROM audit_log WHERE performed_at >= :since ORDER BY performed_at DESC", nativeQuery = true)
     List<Object[]> findSafeRecentLogs(@Param("since") LocalDateTime since);
 
     // ===============================
