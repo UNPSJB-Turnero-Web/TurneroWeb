@@ -29,12 +29,18 @@ public class TurnoAutomationService {
     
     @Autowired
     private AuditLogService auditLogService;
+    
+    @Autowired
+    private EmailService emailService;
 
     @Value("${turnos.auto-cancel.enabled:true}")
     private Boolean autoCancelEnabled;
     
     @Value("${turnos.auto-cancel.hours-before:48}")
     private Integer horasAnticipacion;
+    
+    @Value("${app.url:http://localhost:4200}")
+    private String appUrl;
 
     /**
      * Job que se ejecuta cada hora para cancelar turnos no confirmados
@@ -117,8 +123,62 @@ public class TurnoAutomationService {
 
         logger.debug("✅ Turno ID {} cancelado y registrado en auditoría", turno.getId());
 
-        // TODO: Aquí se podría agregar notificación al paciente
-        // notificationService.notificarCancelacionAutomatica(turno);
+        // Notificar al paciente por email
+        notificarCancelacionAutomatica(turno);
+
+        logger.debug("✅ Notificación enviada al paciente para turno ID {}", turno.getId());
+    }
+    
+    /**
+     * Envía notificación por email al paciente sobre la cancelación automática
+     * @param turno el turno que fue cancelado
+     */
+    private void notificarCancelacionAutomatica(Turno turno) {
+        try {
+            // Verificar que el paciente tenga email
+            if (turno.getPaciente() == null || turno.getPaciente().getEmail() == null || turno.getPaciente().getEmail().trim().isEmpty()) {
+                logger.warn("⚠️  No se puede enviar notificación: paciente sin email para turno ID {}", turno.getId());
+                return;
+            }
+            
+            String patientEmail = turno.getPaciente().getEmail();
+            String patientName = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+            
+            // Construir detalles del turno
+            String appointmentDetails = String.format(
+                "<p><strong>Fecha:</strong> %s</p>" +
+                "<p><strong>Hora:</strong> %s</p>" +
+                "<p><strong>Médico:</strong> %s %s</p>" +
+                "<p><strong>Especialidad:</strong> %s</p>" +
+                "<p><strong>Centro:</strong> %s</p>" +
+                "<p><strong>Consultorio:</strong> %s</p>",
+                turno.getFecha().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                turno.getHoraInicio(),
+                turno.getStaffMedico() != null && turno.getStaffMedico().getMedico() != null ? turno.getStaffMedico().getMedico().getNombre() : "N/A",
+                turno.getStaffMedico() != null && turno.getStaffMedico().getMedico() != null ? turno.getStaffMedico().getMedico().getApellido() : "",
+                turno.getStaffMedico() != null && turno.getStaffMedico().getEspecialidad() != null ? turno.getStaffMedico().getEspecialidad().getNombre() : "N/A",
+                turno.getConsultorio() != null && turno.getConsultorio().getCentroAtencion() != null ? turno.getConsultorio().getCentroAtencion().getNombre() : "N/A",
+                turno.getConsultorio() != null ? turno.getConsultorio().getNombre() : "N/A"
+            );
+            
+            // URL para reagendar (puede ser la URL base de la aplicación)
+            String rescheduleUrl = appUrl;
+            
+            logger.info("📧 Enviando notificación de cancelación automática a {} para turno ID {}", patientEmail, turno.getId());
+            
+            // Enviar email de forma asíncrona
+            emailService.sendAutomaticCancellationEmail(patientEmail, patientName, appointmentDetails, rescheduleUrl)
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        logger.error("❌ Error al enviar notificación de cancelación automática para turno ID {}: {}", turno.getId(), throwable.getMessage());
+                    } else {
+                        logger.info("✅ Notificación de cancelación automática enviada exitosamente para turno ID {}", turno.getId());
+                    }
+                });
+                
+        } catch (Exception e) {
+            logger.error("❌ Error al preparar notificación de cancelación automática para turno ID {}: {}", turno.getId(), e.getMessage());
+        }
     }
     
     /**

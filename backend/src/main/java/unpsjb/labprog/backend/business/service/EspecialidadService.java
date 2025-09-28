@@ -104,9 +104,11 @@ public class EspecialidadService {
         if (isNew) {
             auditLogService.logEspecialidadCreated(saved.getId().longValue(), saved.getNombre(), performedBy);
         } else {
+            // Construir motivo detallado con cambios realizados
+            String motivo = construirMotivoActualizacionEspecialidad(existente, saved);
             auditLogService.logGenericAction(AuditLog.EntityTypes.ESPECIALIDAD, saved.getId().longValue(),
                                            AuditLog.Actions.UPDATE, performedBy, null, null,
-                                           existente, saved, "Especialidad actualizada");
+                                           existente, saved, motivo);
         }
 
         return toDTO(saved);
@@ -203,5 +205,22 @@ public class EspecialidadService {
         centroAtencionService.save(centro);
 
         return toDTO(especialidad);
+    }
+
+    /**
+     * Construye un motivo detallado para la actualización de una especialidad
+     */
+    private String construirMotivoActualizacionEspecialidad(Especialidad anterior, Especialidad nueva) {
+        List<String> cambios = new ArrayList<>();
+
+        if (!anterior.getNombre().equals(nueva.getNombre())) {
+            cambios.add(String.format("Nombre: '%s' → '%s'", anterior.getNombre(), nueva.getNombre()));
+        }
+
+        if (cambios.isEmpty()) {
+            return "Especialidad actualizada (sin cambios detectados)";
+        }
+
+        return "Especialidad actualizada: " + String.join(", ", cambios);
     }
 }

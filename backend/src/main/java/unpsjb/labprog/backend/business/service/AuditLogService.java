@@ -1,13 +1,17 @@
 package unpsjb.labprog.backend.business.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -33,6 +37,10 @@ public class AuditLogService {
 
     @Autowired
     private ObjectMapper objectMapper; // Usar el ObjectMapper configurado de Spring
+
+    @Autowired
+    @Lazy
+    private CentroAtencionService centroAtencionService;
 
     /**
      * Registra una acción de auditoría para un turno.
@@ -441,12 +449,12 @@ public class AuditLogService {
             
             try {
                 // Como último recurso, usar la consulta de datos básicos
-                List<Object[]> basicLogs = auditLogRepository.findSafeRecentLogs(since);
+                List<AuditLog> basicLogs = auditLogRepository.findSafeRecentLogs(since);
                 System.out.println("🔍 DEBUG: Obtenidos " + basicLogs.size() + " registros básicos de logs recientes");
                 
                 // Por ahora retornar lista vacía, pero imprimir los datos para debug
                 basicLogs.forEach(log -> {
-                    System.out.println("📋 DEBUG: Log básico - ID: " + log[0] + ", Acción: " + log[1] + ", Usuario: " + log[2] + ", Fecha: " + log[3] + ", Motivo: " + log[4]);
+                    System.out.println("📋 DEBUG: Log básico - ID: " + log.getId() + ", Acción: " + log.getAction() + ", Usuario: " + log.getPerformedBy() + ", Fecha: " + log.getPerformedAt() + ", Motivo: " + log.getReason());
                 });
                 
             } catch (Exception e3) {
@@ -1072,14 +1080,18 @@ public class AuditLogService {
     @Transactional
     public AuditLog logConsultorioCreated(Long consultorioId, String nombre, Long centroId, String performedBy) {
         try {
+            // Obtener nombre del centro para motivo más descriptivo
+            String centroNombre = centroAtencionService.findEntityById(centroId.intValue()).getNombre();
+            
             Map<String, Object> consultorioData = Map.of(
                 "id", consultorioId,
                 "nombre", nombre,
-                "centroId", centroId
+                "centroId", centroId,
+                "centroNombre", centroNombre
             );
             return logGenericAction(AuditLog.EntityTypes.CONSULTORIO, consultorioId, 
                                   AuditLog.Actions.CREATE, performedBy, null, "ACTIVO",
-                                  null, consultorioData, "Consultorio creado");
+                                  null, consultorioData, "Consultorio '" + nombre + "' creado en " + centroNombre);
         } catch (Exception e) {
             throw new RuntimeException("Error al auditar creación de consultorio", e);
         }
@@ -1147,7 +1159,7 @@ public class AuditLogService {
             );
             return logGenericAction(AuditLog.EntityTypes.ESPECIALIDAD, especialidadId, 
                                   AuditLog.Actions.CREATE, performedBy, null, "ACTIVA",
-                                  null, especialidadData, "Especialidad creada");
+                                  null, especialidadData, "Especialidad '" + nombre + "' creada");
         } catch (Exception e) {
             throw new RuntimeException("Error al auditar creación de especialidad", e);
         }
@@ -1304,12 +1316,11 @@ public class AuditLogService {
      * Busca logs de auditoría con filtros avanzados, paginación y ordenamiento
      */
     public Page<AuditLog> findByFilters(String entidad, String usuario, String tipoAccion,
-                                       LocalDateTime fechaDesde, LocalDateTime fechaHasta,
+                                       LocalDate fechaDesde, LocalDate fechaHasta,
                                        int page, int size, String sortBy, String sortDir) {
-        // Limpiar parámetros vacíos
-        String entidadFilter = (entidad != null && !entidad.trim().isEmpty()) ? entidad : null;
-        String usuarioFilter = (usuario != null && !usuario.trim().isEmpty()) ? usuario : null;
-        String tipoAccionFilter = (tipoAccion != null && !tipoAccion.trim().isEmpty()) ? tipoAccion : null;
+        // Convertir LocalDate a LocalDateTime para el rango completo del día
+        LocalDateTime fechaDesdeFilter = fechaDesde != null ? fechaDesde.atStartOfDay() : LocalDateTime.of(1900, 1, 1, 0, 0);
+        LocalDateTime fechaHastaFilter = fechaHasta != null ? fechaHasta.atTime(23, 59, 59, 999999999) : LocalDateTime.of(2100, 1, 1, 0, 0);
 
         // Crear ordenamiento dinámico
         Sort.Direction direction = sortDir.equalsIgnoreCase("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -1317,9 +1328,44 @@ public class AuditLogService {
 
         // Crear paginación con ordenamiento
         Pageable pageable = PageRequest.of(page, size, sort);
-        return auditLogRepository.findByFilters(entidadFilter, usuarioFilter, tipoAccionFilter,
-                                               fechaDesde, fechaHasta, pageable);
+        Page<Object[]> resultPage = auditLogRepository.findByFilters(entidad, usuario, tipoAccion,
+                                               fechaDesdeFilter, fechaHastaFilter, pageable);
+
+        // Convertir Object[] a AuditLog
+        List<AuditLog> auditLogs = resultPage.getContent().stream()
+            .map(this::convertObjectArrayToAuditLog)
+            .collect(Collectors.toList());
+
+        return new PageImpl<>(auditLogs, pageable, resultPage.getTotalElements());
     }
+
+    /**
+     * Convierte un Object[] a AuditLog, evitando campos LOB problemáticos
+     */
+    private AuditLog convertObjectArrayToAuditLog(Object[] data) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setId((Integer) data[0]);
+        
+        // data[1] es ahora a.turno.id (Integer), no el objeto Turno
+        Integer turnoId = (Integer) data[1];
+        if (turnoId != null) {
+            // Si necesitamos el objeto Turno, tendríamos que buscarlo, pero por ahora lo dejamos como null
+            // auditLog.setTurno(turnoRepository.findById(turnoId).orElse(null));
+        }
+        
+        auditLog.setEntityType((String) data[2]);
+        auditLog.setEntityId(data[3] != null ? ((Number) data[3]).longValue() : null);
+        auditLog.setAction((String) data[4]);
+        auditLog.setPerformedAt((LocalDateTime) data[5]);
+        auditLog.setPerformedBy((String) data[6]);
+        auditLog.setEstadoAnterior((String) data[7]);
+        auditLog.setEstadoNuevo((String) data[8]);
+        auditLog.setReason((String) data[9]);
+        // No incluimos oldValues y newValues para evitar problemas con LOB
+        return auditLog;
+    }
+
+
 
     /**
      * Obtiene estadísticas de auditoría agrupadas por tipo de entidad

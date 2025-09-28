@@ -214,6 +214,22 @@ public class EmailService {
         return sendHtmlEmailAsync(to, subject, htmlBody);
     }
 
+    /**
+     * Envía un correo de cancelación automática de turno por falta de confirmación.
+     * 
+     * @param to Dirección de correo del paciente
+     * @param patientName Nombre del paciente
+     * @param appointmentDetails Detalles del turno cancelado
+     * @param rescheduleUrl URL para reagendar
+     * @return CompletableFuture que se completa cuando el email es enviado
+     */
+    public CompletableFuture<Void> sendAutomaticCancellationEmail(String to, String patientName, String appointmentDetails, String rescheduleUrl) {
+        String subject = appName + " - Turno cancelado automáticamente";
+        String htmlBody = buildAutomaticCancellationEmailBody(patientName, appointmentDetails, rescheduleUrl);
+        
+        return sendHtmlEmailAsync(to, subject, htmlBody);
+    }
+
     // Métodos privados para construir los cuerpos de los correos
 
     private String buildPasswordResetEmailBody(String resetLink) {
@@ -356,6 +372,41 @@ public class EmailService {
             </body>
             </html>
             """, appName, patientName, cancellationDetails, rescheduleUrl);
+    }
+
+    private String buildAutomaticCancellationEmailBody(String patientName, String appointmentDetails, String rescheduleUrl) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Turno cancelado automáticamente</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2 style="color: #dc3545;">Turno cancelado automáticamente - %s</h2>
+                    <p>Hola %s,</p>
+                    <p>Lamentamos informarte que tu turno ha sido <strong>cancelado automáticamente</strong> por no haber sido confirmado dentro del tiempo establecido.</p>
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <h4 style="margin-top: 0; color: #856404;">Detalles del turno cancelado:</h4>
+                        %s
+                    </div>
+                    <p><strong>¿Por qué fue cancelado?</strong></p>
+                    <p>Los turnos deben ser confirmados por el paciente dentro de las 48 horas previas a la cita. Si no se confirma, el sistema lo cancela automáticamente para permitir que otros pacientes puedan acceder al horario.</p>
+                    <p><strong>¿Necesitas reagendar?</strong> Puedes reservar un nuevo turno fácilmente:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="%s" style="background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Agendar nuevo turno</a>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">
+                        Recuerda confirmar tu próximo turno dentro del tiempo establecido para evitar cancelaciones automáticas.
+                    </p>
+                    <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #666;">Este es un correo automático, por favor no respondas.</p>
+                </div>
+            </body>
+            </html>
+            """, appName, patientName, appointmentDetails, rescheduleUrl);
     }
 
     /**

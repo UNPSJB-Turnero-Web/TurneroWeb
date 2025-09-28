@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -382,13 +383,17 @@ public class AuditLogPresenter {
             @RequestParam(required = false) String entidad,
             @RequestParam(required = false) String usuario,
             @RequestParam(required = false) String tipoAccion,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "performedAt") String sortBy,
-            @RequestParam(defaultValue = "DESC") String sortDir) {
+            @RequestParam(defaultValue = "performedAt,DESC") String sort) {
         try {
+            // Parsear el parámetro sort
+            String[] sortParts = sort.split(",");
+            String sortBy = sortParts[0];
+            String sortDir = sortParts.length > 1 ? sortParts[1] : "DESC";
+
             // Validar parámetros de ordenamiento
             if (!isValidSortBy(sortBy)) {
                 return Response.error(null, "Parámetro sortBy inválido. Valores permitidos: performedAt, performedBy, action, entityType");
@@ -397,8 +402,7 @@ public class AuditLogPresenter {
                 return Response.error(null, "Parámetro sortDir debe ser 'ASC' o 'DESC'");
             }
 
-            Page<AuditLog> pageResult = auditLogService.findByFilters(
-                entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size, sortBy, sortDir);
+            Page<AuditLog> pageResult = auditLogService.findByFilters(entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size, sortBy, sortDir);
 
             Map<String, Object> response = Map.of(
                 "content", pageResult.getContent(),

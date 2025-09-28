@@ -14,7 +14,7 @@ public class AuditContext {
 
     /**
      * Obtiene el usuario actual desde el SecurityContext (JWT token)
-     * Si no hay usuario autenticado, retorna null
+     * Si no hay usuario autenticado o es usuario anónimo, retorna null
      */
     public static String getCurrentUser() {
         // Primero verificar si hay un usuario establecido manualmente (para casos especiales)
@@ -25,7 +25,8 @@ public class AuditContext {
 
         // Obtener usuario del SecurityContext (JWT)
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
+        if (authentication != null && authentication.isAuthenticated() &&
+            !"anonymousUser".equals(authentication.getName())) {
             Object principal = authentication.getPrincipal();
             if (principal instanceof UserDetails) {
                 return ((UserDetails) principal).getUsername();

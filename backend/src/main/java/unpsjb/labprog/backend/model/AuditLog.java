@@ -1,6 +1,8 @@
 package unpsjb.labprog.backend.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -74,6 +76,7 @@ public class AuditLog {
     protected void onCreate() {
         if (performedAt == null) {
             performedAt = LocalDateTime.now();
+            // performedAt = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
         }
     }
 

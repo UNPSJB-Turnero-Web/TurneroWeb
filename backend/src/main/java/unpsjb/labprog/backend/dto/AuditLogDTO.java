@@ -39,4 +39,5 @@ public class AuditLogDTO {
     private String actionDescription;
     private String timeAgo;
     private String statusChange;
+
 }
