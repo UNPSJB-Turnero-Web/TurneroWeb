@@ -75,7 +75,9 @@ export interface TurnoFilter {
 // Interfaz para los logs de auditoría
 export interface AuditLog {
     id?: number;
-    turno: Turno;  // Cambiar de turnoId a turno completo
+    turno?: Turno;  // Opcional, ya que algunos logs no tienen turno
+    entityType?: string;  // Tipo de entidad auditada
+    entityId?: number;    // ID de la entidad auditada
     action: string;
     previousStatus?: string;
     newStatus?: string;
@@ -84,4 +86,29 @@ export interface AuditLog {
     performedAt: string;
     oldValues?: any;
     newValues?: any;
+}
+
+/** Filtros para búsqueda de logs de auditoría */
+export interface AuditFilter {
+    page?: number;
+    size?: number;
+    sort?: string;
+    action?: string;
+    user?: string;
+    entityType?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    turnoId?: number;
+}
+
+/** Respuesta paginada de logs de auditoría */
+export interface AuditPage {
+    content: AuditLog[];
+    totalPages: number;
+    totalElements: number;
+    currentPage: number;
+    size: number;
+    numberOfElements: number;
+    first: boolean;
+    last: boolean;
 }

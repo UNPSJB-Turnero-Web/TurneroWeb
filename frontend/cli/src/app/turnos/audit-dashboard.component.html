@@ -260,45 +260,152 @@
         <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
-              <i class="fas fa-history"></i> Actividad Reciente
+              <i class="fas fa-history"></i> Actividad de Auditoría
             </h5>
-            <div class="d-flex gap-2">
-              <select class="form-select form-select-sm" [(ngModel)]="selectedAction" style="width: auto;">
-                <option value="">Todas las acciones</option>
-                <option *ngFor="let action of availableActions" [value]="action">{{action}}</option>
-              </select>
-              <input type="text" class="form-control form-control-sm" 
-                     [(ngModel)]="selectedUser" placeholder="Filtrar por usuario..." style="width: 200px;">
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary btn-sm" (click)="refreshData()" [disabled]="loading">
+                <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+                Actualizar
+              </button>
+              <button type="button" class="btn btn-outline-primary btn-sm" (click)="goToAdvancedSearch()">
+                <i class="fas fa-search"></i>
+                Búsqueda Avanzada
+              </button>
             </div>
           </div>
         </div>
-        <div class="card-body">
+
+        <!-- Filtros Avanzados -->
+        <div class="card-body border-bottom">
+          <div class="row g-3">
+            <!-- Rango de Fechas -->
+            <div class="col-md-4">
+              <label for="dateFrom" class="form-label fw-bold">Fecha Desde</label>
+              <input type="date" class="form-control" id="dateFrom"
+                     [(ngModel)]="dateFrom" (change)="applyFilters()"
+                     aria-label="Fecha desde">
+            </div>
+            <div class="col-md-4">
+              <label for="dateTo" class="form-label fw-bold">Fecha Hasta</label>
+              <input type="date" class="form-control" id="dateTo"
+                     [(ngModel)]="dateTo" (change)="applyFilters()"
+                     aria-label="Fecha hasta">
+            </div>
+
+            <!-- Tipo de Acción -->
+            <div class="col-md-4">
+              <label for="actionFilter" class="form-label fw-bold">Tipo de Acción</label>
+              <select class="form-select" id="actionFilter"
+                      [(ngModel)]="selectedAction" (change)="applyFilters()"
+                      aria-label="Filtrar por tipo de acción">
+                <option value="">Todas las acciones</option>
+                <option *ngFor="let action of availableActions" [value]="action">{{action}}</option>
+              </select>
+            </div>
+
+            <!-- Usuario -->
+            <div class="col-md-4">
+              <label for="userFilter" class="form-label fw-bold">Usuario</label>
+              <input type="text" class="form-control" id="userFilter"
+                     [(ngModel)]="selectedUser" (input)="applyFilters()"
+                     placeholder="Buscar por usuario..."
+                     aria-label="Filtrar por usuario">
+            </div>
+
+            <!-- Tipo de Entidad -->
+            <div class="col-md-4">
+              <label for="entityFilter" class="form-label fw-bold">Tipo de Entidad</label>
+              <select class="form-select" id="entityFilter"
+                      [(ngModel)]="selectedEntityType" (change)="applyFilters()"
+                      aria-label="Filtrar por tipo de entidad">
+                <option value="">Todas las entidades</option>
+                <option *ngFor="let entity of availableEntityTypes" [value]="entity">{{entity}}</option>
+              </select>
+            </div>
+
+            <!-- Botón Limpiar Filtros -->
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" class="btn btn-outline-secondary w-100"
+                      (click)="clearFilters()"
+                      aria-label="Limpiar todos los filtros">
+                <i class="fas fa-eraser"></i>
+                Limpiar Filtros
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Paginación -->
+        <div class="card-body border-bottom bg-light" *ngIf="auditPage">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                Mostrando {{pageRange}} registros
+              </small>
+            </div>
+            <div class="col-md-6 text-end">
+              <div class="d-flex align-items-center justify-content-end gap-2">
+                <label for="pageSize" class="form-label mb-0 fw-bold">Registros por página:</label>
+                <select class="form-select form-select-sm" id="pageSize"
+                        style="width: auto;" [(ngModel)]="filters.size"
+                        (change)="changePageSize($any($event.target).value)"
+                        aria-label="Seleccionar tamaño de página">
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                  <option [value]="100">100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Logs -->
+        <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-sm table-hover">
+            <table class="table table-sm table-hover mb-0">
               <thead class="table-dark">
                 <tr>
-                  <th>Fecha/Hora</th>
-                  <th>Turno ID</th>
-                  <th>Acción</th>
-                  <th>Usuario</th>
+                  <th class="sortable" (click)="sortBy('performedAt')" role="button" tabindex="0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Fecha/Hora
+                    <i [class]="getSortIcon('performedAt')" class="ms-1"></i>
+                  </th>
+                  <th class="sortable" (click)="sortBy('turno.id')" role="button" tabindex="0">
+                    <i class="fas fa-hashtag me-1"></i>
+                    Turno ID
+                    <i [class]="getSortIcon('turno.id')" class="ms-1"></i>
+                  </th>
+                  <th class="sortable" (click)="sortBy('action')" role="button" tabindex="0">
+                    <i class="fas fa-bolt me-1"></i>
+                    Acción
+                    <i [class]="getSortIcon('action')" class="ms-1"></i>
+                  </th>
+                  <th class="sortable" (click)="sortBy('performedBy')" role="button" tabindex="0">
+                    <i class="fas fa-user me-1"></i>
+                    Usuario
+                    <i [class]="getSortIcon('performedBy')" class="ms-1"></i>
+                  </th>
                   <th>Estado Anterior</th>
                   <th>Estado Nuevo</th>
                   <th>Motivo</th>
-                  <th>Acciones</th>
+                  <th>Entidad</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let log of filteredLogs">
+                <tr *ngFor="let log of auditLogs; trackBy: trackByLogId">
                   <td>
-                    <small>{{formatDateTime(log.performedAt)}}</small>
+                    <small class="text-muted">{{formatDateTime(log.performedAt)}}</small>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-link btn-sm p-0" 
-                            (click)="goToTurnoDetail(log.turno.id!)"
-                            *ngIf="log.turno.id">
-                      #{{log.turno.id}}
+                    <button type="button" class="btn btn-link btn-sm p-0"
+                            (click)="goToTurnoDetail(log.entityId!)"
+                            *ngIf="log.entityType === 'TURNO' && log.entityId"
+                            [title]="'Ver turno #' + log.entityId!">
+                      #{{log.entityId}}
                     </button>
-                    <span *ngIf="!log.turno.id" class="text-muted">N/A</span>
+                    <span *ngIf="log.entityType !== 'TURNO' || !log.entityId" class="text-muted">N/A</span>
                   </td>
                   <td>
                     <span [class]="getActionClass(log.action)">
@@ -307,8 +414,9 @@
                     </span>
                   </td>
                   <td>
-                    <i class="fas fa-user text-muted"></i>
-                    <small>{{log.performedBy}}</small>
+                    <i class="fas fa-user text-muted me-1"></i>
+                    <small *ngIf="log.performedBy">{{log.performedBy}}</small>
+                    <small *ngIf="!log.performedBy" class="text-muted fst-italic">Sistema</small>
                   </td>
                   <td>
                     <span class="badge bg-secondary" *ngIf="log.previousStatus">{{log.previousStatus}}</span>
@@ -319,34 +427,77 @@
                     <span class="text-muted" *ngIf="!log.newStatus">-</span>
                   </td>
                   <td>
-                    <small class="text-muted">{{log.reason || 'Sin motivo'}}</small>
+                    <small class="text-muted" 
+                           [title]="log.reason || 'Sin motivo especificado'"
+                           style="cursor: help; max-width: 200px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      {{log.reason || 'Sin motivo'}}
+                    </small>
                   </td>
                   <td>
-                    <button type="button" class="btn btn-outline-primary btn-sm" 
-                            (click)="goToTurnoDetail(log.turno.id!)" title="Ver turno"
-                            *ngIf="log.turno.id">
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <span *ngIf="!log.turno.id" class="text-muted">-</span>
+                    <span class="badge bg-info">{{getEntityType(log)}}</span>
                   </td>
                 </tr>
-                <tr *ngIf="filteredLogs.length === 0 && !loading">
-                  <td colspan="8" class="text-center text-muted py-4">
-                    <i class="fas fa-history fa-2x mb-2 opacity-50"></i>
+
+                <!-- Estado vacío -->
+                <tr *ngIf="auditLogs.length === 0 && !loading">
+                  <td colspan="9" class="text-center text-muted py-5">
+                    <i class="fas fa-history fa-3x mb-3 opacity-50"></i>
                     <br>
-                    <span *ngIf="recentLogs.length === 0">No hay actividad reciente registrada</span>
-                    <span *ngIf="recentLogs.length > 0 && filteredLogs.length === 0">No hay resultados para los filtros aplicados</span>
+                    <h6>No hay actividad registrada</h6>
+                    <p class="mb-0">Intenta ajustar los filtros o verifica que haya actividad en el sistema.</p>
                   </td>
                 </tr>
+
+                <!-- Estado de carga -->
                 <tr *ngIf="loading">
-                  <td colspan="8" class="text-center py-4">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                  <td colspan="9" class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
                     <br>
-                    <span>Cargando actividad reciente...</span>
+                    <span class="text-muted">Cargando actividad de auditoría...</span>
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Paginador -->
+        <div class="card-footer" *ngIf="auditPage && auditPage.totalPages > 1">
+          <nav aria-label="Navegación de páginas de auditoría">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+              <!-- Anterior -->
+              <li class="page-item" [class.disabled]="auditPage.first">
+                <button class="page-link" (click)="previousPage()" [disabled]="auditPage.first"
+                        aria-label="Página anterior">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+              </li>
+
+              <!-- Números de página -->
+              <li class="page-item" *ngFor="let page of pageNumbers"
+                  [class.active]="page === auditPage.currentPage">
+                <button class="page-link" (click)="goToPage(page)"
+                        [attr.aria-label]="'Ir a la página ' + (page + 1)">
+                  {{page + 1}}
+                </button>
+              </li>
+
+              <!-- Siguiente -->
+              <li class="page-item" [class.disabled]="auditPage.last">
+                <button class="page-link" (click)="nextPage()" [disabled]="auditPage.last"
+                        aria-label="Página siguiente">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+          <!-- Información adicional de paginación -->
+          <div class="text-center mt-2">
+            <small class="text-muted">
+              Página {{auditPage.currentPage + 1}} de {{auditPage.totalPages}}
+              ({{auditPage.totalElements}} registros totales)
+            </small>
           </div>
         </div>
       </div>

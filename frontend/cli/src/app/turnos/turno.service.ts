@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Turno, TurnoFilter, AuditLog } from './turno';
+import { Turno, TurnoFilter, AuditLog, AuditFilter, AuditPage } from './turno';
 import { DataPackage } from '../data.package';
 
 @Injectable({
@@ -284,6 +284,39 @@ export class TurnoService {
   /** Obtiene logs recientes del sistema */
   getRecentAuditLogs(): Observable<DataPackage<AuditLog[]>> {
     return this.http.get<DataPackage<AuditLog[]>>(`rest/audit/recent`);
+  }
+
+  /** Obtiene logs de auditoría paginados con filtros avanzados */
+  getAuditLogsPaged(filter: AuditFilter): Observable<DataPackage<AuditPage>> {
+    let httpParams = new HttpParams();
+
+    // Agregar parámetros no nulos con los nombres correctos para el backend
+    if (filter.page !== undefined && filter.page !== null) {
+      httpParams = httpParams.set('page', filter.page.toString());
+    }
+    if (filter.size !== undefined && filter.size !== null) {
+      httpParams = httpParams.set('size', filter.size.toString());
+    }
+    if (filter.sort) {
+      httpParams = httpParams.set('sort', filter.sort);
+    }
+    if (filter.dateFrom) {
+      httpParams = httpParams.set('fechaDesde', filter.dateFrom);
+    }
+    if (filter.dateTo) {
+      httpParams = httpParams.set('fechaHasta', filter.dateTo);
+    }
+    if (filter.action) {
+      httpParams = httpParams.set('tipoAccion', filter.action);
+    }
+    if (filter.user) {
+      httpParams = httpParams.set('usuario', filter.user);
+    }
+    if (filter.entityType) {
+      httpParams = httpParams.set('entidad', filter.entityType);
+    }
+
+    return this.http.get<DataPackage<AuditPage>>(`rest/audit/page`, { params: httpParams });
   }
 
   // === MÉTODOS DE CONSULTA AVANZADA ===
