@@ -266,7 +266,7 @@ public class UserService implements UserDetailsService {
         newData.put("telefono", telefono);
         
         // Registrar en auditoría
-        auditLogService.logUserUpdated(userId, performedBy, oldData, newData, "Actualización de información personal");
+        auditLogService.logUserUpdated(userId, performedBy, oldData, newData, user.getNombre(), user.getApellido());
         
         return updatedUser;
     }
@@ -286,7 +286,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         
         // Registrar en auditoría
-        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, false, reason);
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, false, user.getNombre(), user.getApellido());
     }
 
     /**
@@ -304,7 +304,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         
         // Registrar en auditoría
-        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, true, reason);
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, true, user.getNombre(), user.getApellido());
     }
 
     /**
@@ -330,7 +330,7 @@ public class UserService implements UserDetailsService {
         User user = createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName, autoVerifyEmail);
         
         // Registrar en auditoría
-        auditLogService.logUserCreated(user.getId(), email, roleName, performedBy);
+        auditLogService.logUserCreated(user.getId(), email, roleName, user.getNombre(), user.getApellido(), performedBy);
         
         return user;
     }

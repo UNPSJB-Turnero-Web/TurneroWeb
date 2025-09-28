@@ -75,8 +75,7 @@ public class AuditLog {
     @PrePersist
     protected void onCreate() {
         if (performedAt == null) {
-            performedAt = LocalDateTime.now();
-            // performedAt = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
+            performedAt = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
         }
     }
 
@@ -93,7 +92,7 @@ public class AuditLog {
         this.oldValues = oldValues;
         this.newValues = newValues;
         this.reason = reason;
-        this.performedAt = LocalDateTime.now();
+        this.performedAt = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
     }
 
     // Constructor genérico para auditoría de cualquier entidad
@@ -108,7 +107,7 @@ public class AuditLog {
         this.oldValues = oldValues;
         this.newValues = newValues;
         this.reason = reason;
-        this.performedAt = LocalDateTime.now();
+        this.performedAt = ZonedDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")).toLocalDateTime();
     }
 
     // Constantes para las acciones de auditoría

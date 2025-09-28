@@ -686,7 +686,7 @@ public class AuditLogService {
      * Registra la creación de un nuevo usuario
      */
     @Transactional
-    public AuditLog logUserCreated(Long userId, String userEmail, String userRole, String performedBy) {
+    public AuditLog logUserCreated(Long userId, String userEmail, String userRole, String userNombre, String userApellido, String performedBy) {
         System.out.println("🔍 DEBUG logUserCreated: Usuario ID: " + userId + ", Email: " + 
                           userEmail + ", Rol: " + userRole + ", Creado por: " + performedBy);
         
@@ -695,13 +695,16 @@ public class AuditLogService {
             userData.put("userId", userId);
             userData.put("email", userEmail);
             userData.put("role", userRole);
+            userData.put("nombre", userNombre);
+            userData.put("apellido", userApellido);
             userData.put("enabled", true);
             
             String userDataJson = objectMapper.writeValueAsString(userData);
 
             AuditLog auditLog = new AuditLog(
                 AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_CREATE,
-                performedBy, null, userRole, null, userDataJson, "Usuario creado"
+                performedBy, null, userRole, null, userDataJson, 
+                "Usuario '" + userNombre + " " + userApellido + "' (" + userEmail + ") creado con rol " + userRole
             );
 
             AuditLog saved = auditLogRepository.save(auditLog);
@@ -718,12 +721,14 @@ public class AuditLogService {
      * Registra cambios en datos de usuario
      */
     @Transactional
-    public AuditLog logUserUpdated(Long userId, String performedBy, Object oldData, Object newData, String reason) {
+    public AuditLog logUserUpdated(Long userId, String performedBy, Object oldData, Object newData, String userNombre, String userApellido) {
         System.out.println("🔍 DEBUG logUserUpdated: Usuario ID: " + userId + ", Ejecutado por: " + performedBy);
-        
+
         try {
             String oldDataJson = oldData != null ? objectMapper.writeValueAsString(oldData) : null;
             String newDataJson = newData != null ? objectMapper.writeValueAsString(newData) : null;
+
+            String reason = String.format("Usuario '%s %s' actualizado", userNombre, userApellido);
 
             AuditLog auditLog = new AuditLog(
                 AuditLog.EntityTypes.USUARIO, userId, AuditLog.Actions.USER_UPDATE,
@@ -733,7 +738,7 @@ public class AuditLogService {
             AuditLog saved = auditLogRepository.save(auditLog);
             System.out.println("✅ DEBUG: Actualización de usuario auditada con ID: " + saved.getId());
             return saved;
-            
+
         } catch (JsonProcessingException e) {
             System.err.println("❌ ERROR: Error al serializar datos de actualización de usuario: " + e.getMessage());
             throw new RuntimeException("Error al serializar datos de actualización de usuario", e);
@@ -744,20 +749,23 @@ public class AuditLogService {
      * Registra la habilitación/deshabilitación de un usuario
      */
     @Transactional
-    public AuditLog logUserStatusChange(Long userId, String performedBy, boolean wasEnabled, boolean isEnabled, String reason) {
+    public AuditLog logUserStatusChange(Long userId, String performedBy, boolean wasEnabled, boolean isEnabled, String userNombre, String userApellido) {
         String action = isEnabled ? AuditLog.Actions.USER_ENABLE : AuditLog.Actions.USER_DISABLE;
         String previousStatus = wasEnabled ? "ENABLED" : "DISABLED";
         String newStatus = isEnabled ? "ENABLED" : "DISABLED";
-        
-        System.out.println("🔍 DEBUG logUserStatusChange: Usuario ID: " + userId + ", Estado: " + 
+
+        System.out.println("🔍 DEBUG logUserStatusChange: Usuario ID: " + userId + ", Estado: " +
                           previousStatus + " -> " + newStatus + ", Ejecutado por: " + performedBy);
-        
+
         try {
             Map<String, Object> statusChange = new HashMap<>();
             statusChange.put("userId", userId);
             statusChange.put("enabled", isEnabled);
-            
+
             String statusJson = objectMapper.writeValueAsString(statusChange);
+
+            String reason = String.format("Usuario '%s %s' %s", userNombre, userApellido,
+                                        isEnabled ? "habilitado" : "deshabilitado");
 
             AuditLog auditLog = new AuditLog(
                 AuditLog.EntityTypes.USUARIO, userId, action,
@@ -767,7 +775,7 @@ public class AuditLogService {
             AuditLog saved = auditLogRepository.save(auditLog);
             System.out.println("✅ DEBUG: Cambio de estado de usuario auditado con ID: " + saved.getId());
             return saved;
-            
+
         } catch (JsonProcessingException e) {
             System.err.println("❌ ERROR: Error al serializar datos de cambio de estado: " + e.getMessage());
             throw new RuntimeException("Error al serializar datos de cambio de estado", e);
