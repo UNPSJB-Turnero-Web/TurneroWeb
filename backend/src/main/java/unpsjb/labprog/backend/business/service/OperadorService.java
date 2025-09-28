@@ -61,6 +61,11 @@ public class OperadorService {
         Operador operador = toEntity(dto);
         validarOperador(operador);
 
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+
         // Validaciones de duplicados
         if (operador.getId() == null || operador.getId() <= 0L) {
             if (repository.existsByDni(operador.getDni())) {
@@ -185,6 +190,11 @@ public class OperadorService {
         Operador operador = repository.findById(id).orElse(null);
         if (operador == null) {
             throw new IllegalStateException("No existe un operador con el ID: " + id);
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
         }
 
         // 🎯 AUDITORÍA

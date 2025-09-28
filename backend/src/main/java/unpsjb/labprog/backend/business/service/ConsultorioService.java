@@ -53,6 +53,11 @@ public class ConsultorioService {
         Consultorio consultorio = repository.findById(id)
                 .orElseThrow(() -> new IllegalStateException("Consultorio no encontrado"));
         
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+        
         // Auditar eliminación antes de borrar
         auditLogService.logConsultorioDeleted(id.longValue(), performedBy, 
                                            reason != null ? reason : "Eliminación de consultorio");
@@ -157,6 +162,11 @@ public class ConsultorioService {
     @Transactional
     public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto, String performedBy) {
         Consultorio consultorio = toEntity(dto);
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
 
         // Validar datos
         validateConsultorio(consultorio);

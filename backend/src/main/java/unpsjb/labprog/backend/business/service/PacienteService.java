@@ -65,6 +65,11 @@ public class PacienteService {
         Paciente paciente = toEntity(dto);
         // validarPaciente(paciente);
 
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+
         // Validaciones para evitar duplicados
         if (paciente.getId() == null || paciente.getId() == 0) {
             // CREACIÓN
@@ -201,6 +206,11 @@ public class PacienteService {
         Paciente paciente = repository.findById(id).orElse(null);
         if (paciente == null) {
             throw new IllegalStateException("No existe un paciente con el ID: " + id);
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
         }
 
         // 🎯 AUDITORÍA

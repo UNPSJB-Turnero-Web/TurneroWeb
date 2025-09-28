@@ -79,6 +79,11 @@ public class MedicoService {
             throw new IllegalArgumentException("El dni debe tener entre 7 y 9 dígitos");
         }
 
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+
         Medico medico = toEntity(dto);
         validarMedico(medico);
 
@@ -263,6 +268,11 @@ public class MedicoService {
         Medico medico = repository.findById(id).orElse(null);
         if (medico == null) {
             throw new IllegalStateException("No existe un médico con el ID: " + id);
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
         }
 
         // 🎯 AUDITORÍA

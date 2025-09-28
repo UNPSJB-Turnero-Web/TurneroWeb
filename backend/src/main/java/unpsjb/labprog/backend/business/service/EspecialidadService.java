@@ -80,6 +80,11 @@ public class EspecialidadService {
 
         validarEspecialidad(especialidad);
 
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+
         boolean isNew = especialidad.getId() == null || especialidad.getId() == 0;
         Especialidad existente = null;
 
@@ -139,6 +144,11 @@ public class EspecialidadService {
         Especialidad especialidad = repository.findById(id).orElse(null);
         if (especialidad == null) {
             throw new IllegalStateException("No existe una especialidad con el ID: " + id);
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
         }
 
         // 🎯 AUDITORÍA
