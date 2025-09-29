@@ -1,6 +1,5 @@
 -- =====================================
 -- SCRIPT PARA INSERTAR MÉDICOS CON ESPECIALIDADES
--- (Las especialidades ya existen en la DB)
 -- =====================================
 
 -- =====================================
@@ -93,93 +92,94 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Cardiología (IDs 2001-2005)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2001), (2002), (2003), (2004), (2005)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades del corazón y el sistema circulatorio') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2001), (2002), (2003), (2004), (2005)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%cardi%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Pediatría (IDs 2006-2010)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2006), (2007), (2008), (2009), (2010)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Atención médica integral de niños y adolescentes') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2006), (2007), (2008), (2009), (2010)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%pediat%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Traumatología (IDs 2011-2015)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2011), (2012), (2013), (2014), (2015)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de lesiones del sistema musculoesquelético') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2011), (2012), (2013), (2014), (2015)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%traumat%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Ginecología (IDs 2016-2020)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2016), (2017), (2018), (2019), (2020)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades del aparato reproductor femenino') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2016), (2017), (2018), (2019), (2020)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%ginec%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Neurología (IDs 2021-2025)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2021), (2022), (2023), (2024), (2025)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades del sistema nervioso') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2021), (2022), (2023), (2024), (2025)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%neurol%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Medicina General (IDs 2026-2030)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2026), (2027), (2028), (2029), (2030)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Atención primaria y general de la salud') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2026), (2027), (2028), (2029), (2030)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%general%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Oftalmología (IDs 2031-2034)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2031), (2032), (2033), (2034)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades de los ojos y visión') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2031), (2032), (2033), (2034)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%oftalm%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Dermatología (IDs 2035-2038)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2035), (2036), (2037), (2038)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades de la piel, cabello y uñas') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2035), (2036), (2037), (2038)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%dermat%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Otorrinolaringología (IDs 2039-2041)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2039), (2040), (2041)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades del oído, nariz y garganta') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2039), (2040), (2041)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%otorr%' OR LOWER(nombre) LIKE '%rino%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Psiquiatría (IDs 2042-2044)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2042), (2043), (2044)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de trastornos mentales y emocionales') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2042), (2043), (2044)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%psiqu%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Gastroenterología (IDs 2045-2046)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2045), (2046)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades del sistema digestivo') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2045), (2046)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%gastro%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
--- Endocrinología/Diabetología (IDs 2047-2048)
+-- Endocrinología (IDs 2047-2048)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT m.id, e.id FROM (VALUES (2047), (2048)) AS m(id)
-CROSS JOIN (SELECT id FROM especialidad WHERE nombre = 'Tratamiento y control de la diabetes y sus complicaciones') AS e
+SELECT m.id, e.id 
+FROM (VALUES (2047), (2048)) AS m(id)
+CROSS JOIN (SELECT id FROM especialidad WHERE LOWER(nombre) LIKE '%endocr%' LIMIT 1) AS e
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Nefrología (ID 2049)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT 2049, id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades renales'
+SELECT 2049, id FROM especialidad WHERE LOWER(nombre) LIKE '%nefrol%' LIMIT 1
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
 
 -- Neumonología (ID 2050)
 INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT 2050, id FROM especialidad WHERE nombre = 'Diagnóstico y tratamiento de enfermedades pulmonares y respiratorias'
-ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
-
--- Médicos con múltiples especialidades (ejemplos)
--- Dr. Luis Fernández - Médico General + Medicina Familiar
-INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT 2026, id FROM especialidad WHERE nombre = 'Atención integral de la salud en todas las etapas de la vida'
-ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
-
--- Dra. Catalina Moreno - Medicina General + Medicina Interna
-INSERT INTO medico_especialidad (medico_id, especialidad_id)
-SELECT 2027, id FROM especialidad WHERE nombre = 'Atención integral de enfermedades médicas en adultos'
+SELECT 2050, id FROM especialidad WHERE LOWER(nombre) LIKE '%neum%' OR LOWER(nombre) LIKE '%pulmon%' LIMIT 1
 ON CONFLICT (medico_id, especialidad_id) DO NOTHING;
