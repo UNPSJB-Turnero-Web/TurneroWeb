@@ -449,11 +449,11 @@
                       <div class="col-md-6" *ngIf="log.performedBy">
                         <strong>Usuario:</strong> {{ log.performedBy }}
                       </div>
-                      <div class="col-md-6" *ngIf="log.previousStatus || log.newStatus">
+                      <div class="col-md-6" *ngIf="log.estadoAnterior || log.estadoNuevo">
                         <strong>Estado:</strong>
-                        <span class="badge bg-secondary me-1" *ngIf="log.previousStatus">{{ log.previousStatus }}</span>
-                        <i class="fas fa-arrow-right" *ngIf="log.previousStatus && log.newStatus"></i>
-                        <span class="badge bg-primary ms-1" *ngIf="log.newStatus">{{ log.newStatus }}</span>
+                        <span class="badge bg-secondary me-1" *ngIf="log.estadoAnterior">{{ log.estadoAnterior }}</span>
+                        <i class="fas fa-arrow-right" *ngIf="log.estadoAnterior && log.estadoNuevo"></i>
+                        <span class="badge bg-primary ms-1" *ngIf="log.estadoNuevo">{{ log.estadoNuevo }}</span>
                       </div>
                     </div>
                     <div class="row mt-2" *ngIf="log.reason">
