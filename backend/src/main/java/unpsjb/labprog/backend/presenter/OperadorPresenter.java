@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Page;
+
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.OperadorService;
 import unpsjb.labprog.backend.config.AuditContext;
@@ -114,21 +116,6 @@ public class OperadorPresenter {
                 .orElse(Response.notFound("Operador con DNI " + dni + " no encontrado"));
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageResult.getContent());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("totalElements", pageResult.getTotalElements());
-        response.put("currentPage", pageResult.getNumber());
-
-        return Response.ok(response);
-    }
-
     /**
      * Endpoint para obtener el operador por email
      * GET /operadores/by-email/{email}
@@ -204,6 +191,33 @@ public class OperadorPresenter {
             return Response.ok(operadores, "Operadores inactivos recuperados correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al recuperar operadores inactivos: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtener operadores paginados con filtros y ordenamiento dinámico
+     * GET /operadores/page?page=0&size=10&nombre=Juan&email=juan@example.com&estado=activo&sortBy=nombre&sortDir=asc
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Object> findByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try {
+            Page<OperadorDTO> pageResult = service.findByPage(page, size, nombre, email, estado, sortBy, sortDir);
+            Map<String, Object> response = Map.of(
+                "content", pageResult.getContent(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber()
+            );
+            return Response.ok(response, "Operadores recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar operadores paginados: " + e.getMessage());
         }
     }
 }

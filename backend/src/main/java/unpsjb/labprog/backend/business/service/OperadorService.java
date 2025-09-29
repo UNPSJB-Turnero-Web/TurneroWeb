@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,42 @@ public class OperadorService {
         return repository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Método para búsqueda paginada con filtros opcionales y ordenamiento dinámico.
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param nombre Filtro por nombre (opcional, búsqueda parcial)
+     * @param email Filtro por email (opcional, búsqueda parcial)
+     * @param estado Filtro por estado: "activo", "inactivo" o null para todos
+     * @param sortBy Campo para ordenar (opcional)
+     * @param sortDir Dirección del orden: "asc" o "desc"
+     * @return Page de OperadorDTO con resultados paginados
+     */
+    public Page<OperadorDTO> findByPage(int page, int size, String nombre, String email, String estado, String sortBy, String sortDir) {
+        // Convertir estado string a boolean
+        Boolean estadoBoolean = null;
+        if ("activo".equalsIgnoreCase(estado)) {
+            estadoBoolean = true;
+        } else if ("inactivo".equalsIgnoreCase(estado)) {
+            estadoBoolean = false;
+        }
+
+        // Crear Pageable con ordenamiento
+        PageRequest pageRequest;
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            pageRequest = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        } else {
+            pageRequest = PageRequest.of(page, size);
+        }
+
+        // Llamar al repository
+        Page<Operador> operadoresPage = repository.findByFiltros(nombre, email, estadoBoolean, pageRequest);
+
+        // Mapear a DTOs
+        return operadoresPage.map(this::toDTO);
     }
 
     public Optional<OperadorDTO> findById(Long id) {
