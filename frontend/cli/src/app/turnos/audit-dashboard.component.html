@@ -419,12 +419,12 @@
                     <small *ngIf="!log.performedBy" class="text-muted fst-italic">Sistema</small>
                   </td>
                   <td>
-                    <span class="badge bg-secondary" *ngIf="log.previousStatus">{{log.previousStatus}}</span>
-                    <span class="text-muted" *ngIf="!log.previousStatus">-</span>
+                    <span class="badge bg-secondary" *ngIf="log.estadoAnterior">{{log.estadoAnterior}}</span>
+                    <span class="text-muted" *ngIf="!log.estadoAnterior">-</span>
                   </td>
                   <td>
-                    <span class="badge bg-primary" *ngIf="log.newStatus">{{log.newStatus}}</span>
-                    <span class="text-muted" *ngIf="!log.newStatus">-</span>
+                    <span class="badge bg-primary" *ngIf="log.estadoNuevo">{{log.estadoNuevo}}</span>
+                    <span class="text-muted" *ngIf="!log.estadoNuevo">-</span>
                   </td>
                   <td>
                     <small class="text-muted" 

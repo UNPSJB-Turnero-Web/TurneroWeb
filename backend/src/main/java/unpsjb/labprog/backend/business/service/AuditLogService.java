@@ -83,25 +83,48 @@ public class AuditLogService {
     @Transactional
     public AuditLog logTurnoCreated(Turno turno, String performedBy) {
         System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoCreated para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
-        
-        // Crear un mapa con datos serializables del turno
-        Map<String, Object> turnoData = new HashMap<>();
-        turnoData.put("id", turno.getId());
-        turnoData.put("fecha", turno.getFecha().toString()); // Convertir LocalDate a String
-        turnoData.put("horaInicio", turno.getHoraInicio().toString()); // Convertir LocalTime a String
-        turnoData.put("horaFin", turno.getHoraFin().toString()); // Convertir LocalTime a String
-        turnoData.put("estado", turno.getEstado().name());
-        turnoData.put("pacienteId", turno.getPaciente().getId());
-        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
-        if (turno.getConsultorio() != null) {
-            turnoData.put("consultorioId", turno.getConsultorio().getId());
+
+        try {
+            // Crear un mapa con datos serializables del turno
+            Map<String, Object> turnoData = new HashMap<>();
+            turnoData.put("id", turno.getId());
+            turnoData.put("fecha", turno.getFecha() != null ? turno.getFecha().toString() : null);
+            turnoData.put("horaInicio", turno.getHoraInicio() != null ? turno.getHoraInicio().toString() : null);
+            turnoData.put("horaFin", turno.getHoraFin() != null ? turno.getHoraFin().toString() : null);
+            turnoData.put("estado", turno.getEstado() != null ? turno.getEstado().name() : null);
+            turnoData.put("pacienteId", turno.getPaciente() != null ? turno.getPaciente().getId() : null);
+            turnoData.put("staffMedicoId", turno.getStaffMedico() != null ? turno.getStaffMedico().getId() : null);
+            if (turno.getConsultorio() != null) {
+                turnoData.put("consultorioId", turno.getConsultorio().getId());
+            }
+
+            // Generar mensaje descriptivo con información del paciente
+            String pacienteInfo = "Desconocido";
+            try {
+                if (turno.getPaciente() != null) {
+                    pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+                } else if (turno.getPaciente() != null && turno.getPaciente().getId() != null) {
+                    pacienteInfo = "ID: " + turno.getPaciente().getId();
+                }
+            } catch (Exception e) {
+                if (turno.getPaciente() != null && turno.getPaciente().getId() != null) {
+                    pacienteInfo = "ID: " + turno.getPaciente().getId();
+                }
+            }
+
+            String performedBySafe = performedBy != null && !performedBy.trim().isEmpty() ? performedBy : "SYSTEM";
+            String creationReason = "Turno creado para paciente " + pacienteInfo + " por " + performedBySafe;
+
+            AuditLog result = logTurnoAction(turno, "PROGRAM", performedBySafe,
+                                null, turno.getEstado() != null ? turno.getEstado().name() : null,
+                                null, turnoData, creationReason);
+            return result;
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en logTurnoCreated: " + e.getMessage());
+            e.printStackTrace();
+            // No re-lanzar la excepción para no romper la creación del turno
+            return null;
         }
-        
-        AuditLog result = logTurnoAction(turno, "CREATE", performedBy, 
-                            null, turno.getEstado().name(), 
-                            null, turnoData, null); // Pasar el mapa en lugar del objeto
-        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
-        return result;
     }
 
     /**
@@ -109,9 +132,78 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logStatusChange(Turno turno, String previousStatus, String performedBy, String reason) {
-        return logTurnoAction(turno, "UPDATE_STATUS", performedBy,
-                            previousStatus, turno.getEstado().name(),
-                            null, null, reason);
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logStatusChange para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
+        try {
+            // Crear un mapa con datos serializables del turno
+            Map<String, Object> turnoData = new HashMap<>();
+            turnoData.put("id", turno.getId());
+            turnoData.put("fecha", turno.getFecha() != null ? turno.getFecha().toString() : null);
+            turnoData.put("horaInicio", turno.getHoraInicio() != null ? turno.getHoraInicio().toString() : null);
+            turnoData.put("horaFin", turno.getHoraFin() != null ? turno.getHoraFin().toString() : null);
+            turnoData.put("estado", turno.getEstado() != null ? turno.getEstado().name() : null);
+            turnoData.put("pacienteId", turno.getPaciente() != null ? turno.getPaciente().getId() : null);
+            turnoData.put("staffMedicoId", turno.getStaffMedico() != null ? turno.getStaffMedico().getId() : null);
+            if (turno.getConsultorio() != null) {
+                turnoData.put("consultorioId", turno.getConsultorio().getId());
+            }
+
+            // Generar mensaje descriptivo con información del paciente
+            String pacienteInfo = "Desconocido";
+            try {
+                if (turno.getPaciente() != null) {
+                    pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+                } else if (turno.getPaciente() != null && turno.getPaciente().getId() != null) {
+                    pacienteInfo = "ID: " + turno.getPaciente().getId();
+                }
+            } catch (Exception e) {
+                if (turno.getPaciente() != null && turno.getPaciente().getId() != null) {
+                    pacienteInfo = "ID: " + turno.getPaciente().getId();
+                }
+            }
+
+            String performedBySafe = performedBy != null && !performedBy.trim().isEmpty() ? performedBy : "SYSTEM";
+            String descriptiveReason = generateDescriptiveStatusChangeReason(previousStatus, turno.getEstado() != null ? turno.getEstado().name() : null, reason);
+            String fullReason = "Cambio de estado para paciente " + pacienteInfo + " por " + performedBySafe + " - " + descriptiveReason;
+
+            AuditLog result = logTurnoAction(turno, "UPDATE_STATUS", performedBySafe,
+                                previousStatus, turno.getEstado() != null ? turno.getEstado().name() : null,
+                                null, turnoData, fullReason);
+            System.out.println("✅ DEBUG AuditLogService: Log de cambio de estado creado con ID: " + result.getId());
+            return result;
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en logStatusChange: " + e.getMessage());
+            e.printStackTrace();
+            // No re-lanzar la excepción para no romper la operación del turno
+            return null;
+        }
+    }
+
+    /**
+     * Genera un mensaje descriptivo para cambios de estado
+     */
+    private String generateDescriptiveStatusChangeReason(String previousStatus, String newStatus, String customReason) {
+        if (customReason != null && !customReason.trim().isEmpty() && !customReason.equals("Cambio de estado")) {
+            return customReason;
+        }
+
+        // Generar mensaje automático basado en la transición
+        String transition = previousStatus + " → " + newStatus;
+
+        switch (newStatus) {
+            case "PROGRAMADO":
+                return "Turno programado inicialmente";
+            case "CONFIRMADO":
+                return "Turno confirmado por el paciente";
+            case "CANCELADO":
+                return "Turno cancelado";
+            case "REAGENDADO":
+                return "Turno reagendado";
+            case "COMPLETO":
+                return "Turno completado/marcado como atendido";
+            default:
+                return "Cambio de estado: " + transition;
+        }
     }
 
     /**
@@ -122,10 +214,37 @@ public class AuditLogService {
         if (reason == null || reason.trim().isEmpty()) {
             throw new IllegalArgumentException("El motivo de cancelación es obligatorio");
         }
-        
-        return logTurnoAction(turno, "CANCEL", performedBy,
+
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoCanceled para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
+        // Crear un mapa con datos serializables del turno
+        Map<String, Object> turnoData = new HashMap<>();
+        turnoData.put("id", turno.getId());
+        turnoData.put("fecha", turno.getFecha().toString());
+        turnoData.put("horaInicio", turno.getHoraInicio().toString());
+        turnoData.put("horaFin", turno.getHoraFin().toString());
+        turnoData.put("estado", turno.getEstado().name());
+        turnoData.put("pacienteId", turno.getPaciente().getId());
+        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        if (turno.getConsultorio() != null) {
+            turnoData.put("consultorioId", turno.getConsultorio().getId());
+        }
+
+        // Generar mensaje descriptivo con información del paciente
+        String pacienteInfo = "";
+        try {
+            pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+        } catch (Exception e) {
+            pacienteInfo = "ID: " + turno.getPaciente().getId();
+        }
+
+        String cancelReason = "Turno cancelado para paciente " + pacienteInfo + " por " + performedBy + " - Motivo: " + reason;
+
+        AuditLog result = logTurnoAction(turno, "CANCEL", performedBy,
                             previousStatus, turno.getEstado().name(),
-                            null, null, reason);
+                            null, turnoData, cancelReason);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
@@ -133,9 +252,36 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoConfirmed(Turno turno, String previousStatus, String performedBy) {
-        return logTurnoAction(turno, "CONFIRM", performedBy,
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoConfirmed para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
+        // Crear un mapa con datos serializables del turno
+        Map<String, Object> turnoData = new HashMap<>();
+        turnoData.put("id", turno.getId());
+        turnoData.put("fecha", turno.getFecha().toString());
+        turnoData.put("horaInicio", turno.getHoraInicio().toString());
+        turnoData.put("horaFin", turno.getHoraFin().toString());
+        turnoData.put("estado", turno.getEstado().name());
+        turnoData.put("pacienteId", turno.getPaciente().getId());
+        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        if (turno.getConsultorio() != null) {
+            turnoData.put("consultorioId", turno.getConsultorio().getId());
+        }
+
+        // Generar mensaje descriptivo con información del paciente
+        String pacienteInfo = "";
+        try {
+            pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+        } catch (Exception e) {
+            pacienteInfo = "ID: " + turno.getPaciente().getId();
+        }
+
+        String confirmReason = "Turno confirmado para paciente " + pacienteInfo + " por " + performedBy;
+
+        AuditLog result = logTurnoAction(turno, "CONFIRM", performedBy,
                             previousStatus, turno.getEstado().name(),
-                            null, null, null);
+                            null, turnoData, confirmReason);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
@@ -143,27 +289,71 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoCompleted(Turno turno, String previousStatus, String performedBy) {
-        return logTurnoAction(turno, "COMPLETE", performedBy,
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoCompleted para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
+        // Crear un mapa con datos serializables del turno
+        Map<String, Object> turnoData = new HashMap<>();
+        turnoData.put("id", turno.getId());
+        turnoData.put("fecha", turno.getFecha().toString());
+        turnoData.put("horaInicio", turno.getHoraInicio().toString());
+        turnoData.put("horaFin", turno.getHoraFin().toString());
+        turnoData.put("estado", turno.getEstado().name());
+        turnoData.put("pacienteId", turno.getPaciente().getId());
+        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        if (turno.getConsultorio() != null) {
+            turnoData.put("consultorioId", turno.getConsultorio().getId());
+        }
+
+        // Generar mensaje descriptivo con información del paciente
+        String pacienteInfo = "";
+        try {
+            pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+        } catch (Exception e) {
+            pacienteInfo = "ID: " + turno.getPaciente().getId();
+        }
+
+        String completeReason = "Turno completado para paciente " + pacienteInfo + " por " + performedBy;
+
+        AuditLog result = logTurnoAction(turno, "COMPLETE", performedBy,
                             previousStatus, turno.getEstado().name(),
-                            null, null, null);
+                            null, turnoData, completeReason);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
      * Registra el reagendamiento de un turno
      */
     @Transactional
-    public AuditLog logTurnoRescheduled(Turno turno, String previousStatus, Object oldValues, 
+    public AuditLog logTurnoRescheduled(Turno turno, String previousStatus, Object oldValues,
                                        String performedBy, String reason) {
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoRescheduled para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
         // Crear nuevos valores simplificados para evitar problemas de serialización
         Map<String, Object> newValues = new HashMap<>();
         newValues.put("fecha", turno.getFecha().toString());
         newValues.put("horaInicio", turno.getHoraInicio().toString());
         newValues.put("horaFin", turno.getHoraFin().toString());
         newValues.put("estado", turno.getEstado().name());
-        
-        return logTurnoAction(turno, "RESCHEDULE", performedBy,
+
+        // Generar mensaje descriptivo con información del paciente
+        String pacienteInfo = "";
+        try {
+            pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+        } catch (Exception e) {
+            pacienteInfo = "ID: " + turno.getPaciente().getId();
+        }
+
+        String rescheduleReason = "Turno reagendado para paciente " + pacienteInfo + " por " + performedBy;
+        if (reason != null && !reason.isEmpty()) {
+            rescheduleReason += " - " + reason;
+        }
+
+        AuditLog result = logTurnoAction(turno, "RESCHEDULE", performedBy,
                             previousStatus, turno.getEstado().name(),
-                            oldValues, newValues, reason);
+                            oldValues, newValues, rescheduleReason);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
@@ -171,9 +361,39 @@ public class AuditLogService {
      */
     @Transactional
     public AuditLog logTurnoDeleted(Turno turno, String performedBy, String reason) {
-        return logTurnoAction(turno, "DELETE", performedBy,
+        System.out.println("🔍 DEBUG AuditLogService: Iniciando logTurnoDeleted para turno ID: " + turno.getId() + ", Usuario: " + performedBy);
+
+        // Crear un mapa con datos serializables del turno
+        Map<String, Object> turnoData = new HashMap<>();
+        turnoData.put("id", turno.getId());
+        turnoData.put("fecha", turno.getFecha().toString());
+        turnoData.put("horaInicio", turno.getHoraInicio().toString());
+        turnoData.put("horaFin", turno.getHoraFin().toString());
+        turnoData.put("estado", turno.getEstado().name());
+        turnoData.put("pacienteId", turno.getPaciente().getId());
+        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        if (turno.getConsultorio() != null) {
+            turnoData.put("consultorioId", turno.getConsultorio().getId());
+        }
+
+        // Generar mensaje descriptivo con información del paciente
+        String pacienteInfo = "";
+        try {
+            pacienteInfo = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
+        } catch (Exception e) {
+            pacienteInfo = "ID: " + turno.getPaciente().getId();
+        }
+
+        String deleteReason = "Turno eliminado para paciente " + pacienteInfo + " por " + performedBy;
+        if (reason != null && !reason.isEmpty()) {
+            deleteReason += " - " + reason;
+        }
+
+        AuditLog result = logTurnoAction(turno, "DELETE", performedBy,
                             turno.getEstado().name(), "DELETED",
-                            turno, null, reason);
+                            turnoData, null, deleteReason);
+        System.out.println("✅ DEBUG AuditLogService: Log creado con ID: " + result.getId());
+        return result;
     }
 
     /**
@@ -556,7 +776,7 @@ public class AuditLogService {
         Long canceledCount = auditLogRepository.countByAction("CANCEL");
         Long rescheduledCount = auditLogRepository.countByAction("RESCHEDULE");
         Long statusChangedCount = auditLogRepository.countByAction("UPDATE_STATUS");
-        Long createdCount = auditLogRepository.countByAction("CREATE");
+        Long createdCount = auditLogRepository.countByAction("PROGRAM");
         
         stats.put("turnosConfirmados", confirmedCount != null ? confirmedCount : 0);
         stats.put("turnosCancelados", canceledCount != null ? canceledCount : 0);
@@ -1394,5 +1614,41 @@ public class AuditLogService {
         }
 
         return statistics;
+    }
+
+    /**
+     * MÉTODO DE DIAGNÓSTICO: Verifica todos los logs de auditoría de un turno específico
+     */
+    public void diagnosticTurnoAuditLogs(Integer turnoId) {
+        try {
+            System.out.println("🔍 DIAGNÓSTICO: Verificando logs de auditoría para turno ID: " + turnoId);
+
+            // Obtener todos los logs del turno usando el método existente
+            List<AuditLog> turnoLogs = auditLogRepository.findByEntityTypeAndEntityId("TURNO", turnoId.longValue(), Pageable.unpaged()).getContent();
+
+            System.out.println("📊 Total de logs encontrados: " + turnoLogs.size());
+
+            for (AuditLog log : turnoLogs) {
+                System.out.println("  📝 LOG ID: " + log.getId());
+                System.out.println("     Acción: " + log.getAction());
+                System.out.println("     Usuario: " + log.getPerformedBy());
+                System.out.println("     Estado Anterior: " + log.getEstadoAnterior());
+                System.out.println("     Estado Nuevo: " + log.getEstadoNuevo());
+                System.out.println("     Motivo: " + log.getReason());
+                System.out.println("     Fecha: " + log.getPerformedAt());
+                System.out.println("     ---");
+            }
+
+            // Verificar estadísticas por acción para TURNO
+            List<Object[]> actionStats = auditLogRepository.findActionStatistics();
+            System.out.println("📈 Estadísticas de acciones globales:");
+            for (Object[] stat : actionStats) {
+                System.out.println("  " + stat[0] + ": " + stat[1] + " registros");
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en diagnóstico: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

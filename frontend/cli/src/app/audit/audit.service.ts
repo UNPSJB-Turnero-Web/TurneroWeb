@@ -317,11 +317,11 @@ export class AuditService {
           stats.turnosCreados++;
           break;
         case 'STATUS_CHANGE':
-          if (log.newStatus === 'CONFIRMADO' || log.newStatus === 'COMPLETO') {
+          if (log.estadoNuevo === 'CONFIRMADO' || log.estadoNuevo === 'COMPLETO') {
             stats.turnosConfirmados++;
             // Estimar 45 minutos por turno confirmado/completado
             stats.horasTrabajadas += 0.75;
-          } else if (log.newStatus === 'CANCELADO') {
+          } else if (log.estadoNuevo === 'CANCELADO') {
             stats.turnosCancelados++;
           }
           stats.turnosModificados++;
@@ -418,10 +418,10 @@ export class AuditService {
       const dayData = groupedData.get(key);
       
       if (log.action === 'STATUS_CHANGE') {
-        if (log.newStatus === 'CONFIRMADO' || log.newStatus === 'COMPLETO') {
+        if (log.estadoNuevo === 'CONFIRMADO' || log.estadoNuevo === 'COMPLETO') {
           dayData.turnosRealizados++;
           dayData.horasTrabajadas += 0.75;
-        } else if (log.newStatus === 'CANCELADO') {
+        } else if (log.estadoNuevo === 'CANCELADO') {
           dayData.turnosCancelados++;
         }
       }

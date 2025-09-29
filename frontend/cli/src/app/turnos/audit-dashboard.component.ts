@@ -2,14 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TurnoService } from './turno.service';
 import { AuditLog, AuditFilter, AuditPage } from './turno';
 import { DataPackage } from '../data.package';
+import { TurnoModalComponent } from './turno-modal.component';
 
 @Component({
   selector: 'app-audit-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TurnoModalComponent],
   templateUrl: './audit-dashboard.component.html',
   styleUrls: ['./audit-dashboard.component.css']
 })
@@ -52,7 +54,8 @@ export class AuditDashboardComponent implements OnInit {
 
   constructor(
     private turnoService: TurnoService,
-    private router: Router
+    private router: Router,
+    private modalService: NgbModal
   ) {}
 
   ngOnInit(): void {
@@ -243,9 +246,25 @@ export class AuditDashboardComponent implements OnInit {
     return this.auditPage?.content || [];
   }
 
-  /** Navega al detalle de un turno */
+  /** Abre modal con información del turno */
   goToTurnoDetail(turnoId: number): void {
-    this.router.navigate(['/turnos', turnoId]);
+    this.turnoService.get(turnoId).subscribe({
+      next: (response: DataPackage<any>) => {
+        if (response.status_code === 200) {
+          const modalRef = this.modalService.open(TurnoModalComponent, {
+            size: 'lg',
+            centered: true,
+            backdrop: 'static'
+          });
+          modalRef.componentInstance.turno = response.data;
+        } else {
+          console.error('Error al obtener información del turno:', response.status_text);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar información del turno:', error);
+      }
+    });
   }
 
   /** Navega a la búsqueda avanzada */

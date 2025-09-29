@@ -164,32 +164,52 @@ public class TurnoService {
             Turno turno = toEntity(dto); // Convertir DTO a entidad
             validarTurno(turno); // Validar el turno
             
-            boolean isNewTurno = turno.getId() == null;
+            
+            boolean isNewTurno = dto.getId() == null || dto.getId() == 0;
             EstadoTurno previousStatus = null;
+            
             
             if (!isNewTurno) {
                 // Es una actualización, obtener el estado anterior
                 Optional<Turno> existingTurno = repository.findById(turno.getId());
                 if (existingTurno.isPresent()) {
                     previousStatus = existingTurno.get().getEstado();
-                }   
+                }
             }
             
             Turno saved = repository.save(turno); // Guardar el turno
             
-            // Registrar auditoría
+            // Asegurar que el turno tenga ID después de guardar
+            if (saved.getId() == null) {
+                throw new IllegalStateException("Error: El turno no recibió ID después de guardar");
+            }
+            
+            
             if (isNewTurno) {
-                System.out.println("🔍 DEBUG: Creando log de auditoría para nuevo turno ID: " + saved.getId() + ", Usuario: " + performedBy);
-                auditLogService.logTurnoCreated(saved, performedBy);
-                System.out.println("✅ DEBUG: Log de auditoría creado exitosamente");
+                try {
+                    auditLogService.logTurnoCreated(saved, performedBy);
+                } catch (Exception e) {
+                    // No re-lanzar para no romper la creación del turno
+                }
                 
                 // Crear notificación de nuevo turno para el paciente
                 crearNotificacionNuevoTurno(saved);
                 
             } else if (previousStatus != null && !previousStatus.equals(saved.getEstado())) {
-                System.out.println("🔍 DEBUG: Creando log de cambio de estado para turno ID: " + saved.getId());
-                auditLogService.logStatusChange(saved, previousStatus.name(), performedBy, "Actualización de turno");
-                System.out.println("✅ DEBUG: Log de cambio de estado creado exitosamente");
+                System.out.println("🔍 DEBUG TurnoService.save: Detectado cambio de estado (ID: " + saved.getId() + ", " + previousStatus + " -> " + saved.getEstado() + "), llamando a logStatusChange");
+                try {
+                    AuditLog auditResult = auditLogService.logStatusChange(saved, previousStatus.name(), performedBy, "Actualización de turno");
+                    if (auditResult != null) {
+                        System.out.println("✅ DEBUG TurnoService.save: Auditoría de cambio de estado registrada con ID: " + auditResult.getId());
+                    } else {
+                        System.err.println("❌ ERROR TurnoService.save: Falló el registro de auditoría de cambio de estado");
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ ERROR TurnoService.save: Excepción en auditoría de cambio de estado: " + e.getMessage());
+                    // No re-lanzar para no romper la actualización del turno
+                }
+            } else {
+                System.out.println("🔍 DEBUG TurnoService.save: Turno actualizado sin cambio de estado (ID: " + saved.getId() + ")");
             }
             
             return toDTO(saved); // Convertir entidad a DTO y retornar
@@ -223,7 +243,13 @@ public class TurnoService {
             Turno turno = turnoOpt.get();
             
             // Registrar auditoría antes de eliminar
-            auditLogService.logTurnoDeleted(turno, performedBy, motivo);
+            try {
+                auditLogService.logTurnoDeleted(turno, performedBy, motivo);
+                System.out.println("✅ DEBUG TurnoService.delete: Auditoría de eliminación registrada para turno ID: " + turno.getId());
+            } catch (Exception e) {
+                System.err.println("❌ ERROR TurnoService.delete: Falló auditoría de eliminación: " + e.getMessage());
+                // No re-lanzar para no romper la eliminación
+            }
         }
         
         repository.deleteById(id);
@@ -269,7 +295,13 @@ public class TurnoService {
         Turno savedTurno = repository.save(turno);
         
         // Registrar auditoría de cancelación
-        auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
+        try {
+            auditLogService.logTurnoCanceled(savedTurno, previousStatus.name(), performedBy, motivo);
+            System.out.println("✅ DEBUG TurnoService.cancelarTurno: Auditoría de cancelación registrada para turno ID: " + savedTurno.getId());
+        } catch (Exception e) {
+            System.err.println("❌ ERROR TurnoService.cancelarTurno: Falló auditoría de cancelación: " + e.getMessage());
+            // No re-lanzar para no romper la cancelación
+        }
         
         // Crear notificación de cancelación para el paciente
         crearNotificacionCancelacion(savedTurno, motivo);
@@ -367,7 +399,13 @@ public class TurnoService {
         Turno savedTurno = repository.save(turno);
         
         // Registrar auditoría de confirmación
-        auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
+        try {
+            auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
+            System.out.println("✅ DEBUG TurnoService.confirmarTurno: Auditoría de confirmación registrada para turno ID: " + savedTurno.getId());
+        } catch (Exception e) {
+            System.err.println("❌ ERROR TurnoService.confirmarTurno: Falló auditoría de confirmación: " + e.getMessage());
+            // No re-lanzar para no romper la confirmación
+        }
         
         // Crear notificación de confirmación para el paciente
         crearNotificacionConfirmacion(savedTurno);
@@ -414,7 +452,13 @@ public class TurnoService {
         Turno savedTurno = repository.save(turno);
         
         // Registrar auditoría de reagendamiento
-        auditLogService.logTurnoRescheduled(savedTurno, previousStatus.name(), oldValues, performedBy, motivo);
+        try {
+            auditLogService.logTurnoRescheduled(savedTurno, previousStatus.name(), oldValues, performedBy, motivo);
+            System.out.println("✅ DEBUG TurnoService.reagendarTurno: Auditoría de reagendamiento registrada para turno ID: " + savedTurno.getId());
+        } catch (Exception e) {
+            System.err.println("❌ ERROR TurnoService.reagendarTurno: Falló auditoría de reagendamiento: " + e.getMessage());
+            // No re-lanzar para no romper el reagendamiento
+        }
         
         // Crear notificación de reagendamiento para el paciente
         crearNotificacionReagendamiento(savedTurno, oldValues);
@@ -478,20 +522,29 @@ public class TurnoService {
         turno.setEstado(newState);
         Turno savedTurno = repository.save(turno);
 
-        // Registrar auditoría según el tipo de cambio
+        // Registrar auditoría para TODOS los cambios de estado
+        String auditReason = motivo != null ? motivo : "Cambio de estado a " + newState.name();
+        try {
+            auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, auditReason);
+            System.out.println("✅ DEBUG TurnoService.changeEstado: Auditoría de cambio de estado registrada para turno ID: " + savedTurno.getId());
+        } catch (Exception e) {
+            System.err.println("❌ ERROR TurnoService.changeEstado: Falló auditoría de cambio de estado: " + e.getMessage());
+            // No re-lanzar para no romper el cambio de estado
+        }
+
+        // Acciones específicas según el nuevo estado
         switch (newState) {
             case CONFIRMADO:
-                auditLogService.logTurnoConfirmed(savedTurno, previousStatus.name(), performedBy);
                 // Crear notificación de confirmación
                 crearNotificacionConfirmacion(savedTurno);
                 break;
+            case PROGRAMADO:
+            case CANCELADO:
+            case COMPLETO:
             case REAGENDADO:
-                auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
                 // Nota: Para reagendamiento completo se debe usar el método reagendarTurno() que incluye nueva fecha
                 break;
-            default:
-                auditLogService.logStatusChange(savedTurno, previousStatus.name(), performedBy, motivo != null ? motivo : "Cambio de estado");
-                break;
+            // Otros estados no requieren acciones específicas por ahora
         }
 
         return toDTO(savedTurno);
@@ -1012,7 +1065,13 @@ public class TurnoService {
         Turno savedTurno = repository.save(turno);
         
         // Registrar auditoría de completar turno
-        auditLogService.logTurnoCompleted(savedTurno, previousStatus.name(), performedBy);
+        try {
+            auditLogService.logTurnoCompleted(savedTurno, previousStatus.name(), performedBy);
+            System.out.println("✅ DEBUG TurnoService.completarTurno: Auditoría de completado registrada para turno ID: " + savedTurno.getId());
+        } catch (Exception e) {
+            System.err.println("❌ ERROR TurnoService.completarTurno: Falló auditoría de completado: " + e.getMessage());
+            // No re-lanzar para no romper el completado
+        }
         
         // Crear notificación de turno completado (opcional, puede ser útil para el paciente)
         try {

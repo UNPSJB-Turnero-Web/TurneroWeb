@@ -92,9 +92,10 @@ public class TurnoPresenter {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody TurnoDTO turnoDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
         turnoDTO.setId(id);
-        TurnoDTO updated = service.save(turnoDTO);
+        String currentUserEmail = getCurrentUser(request);
+        TurnoDTO updated = service.save(turnoDTO, currentUserEmail);
         return Response.ok(updated, "Turno actualizado correctamente");
     }
 
@@ -122,16 +123,22 @@ public class TurnoPresenter {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Integer id) {
-        service.delete(id);
+    public ResponseEntity<Object> delete(@PathVariable Integer id, HttpServletRequest request) {
+        String currentUserEmail = getCurrentUser(request);
+        service.delete(id, "Eliminación desde API", currentUserEmail);
         return Response.ok(null, "Turno eliminado correctamente");
     }
 
 
     @PostMapping("/asignar")
-    public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO) {
+    public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
         try {
-            TurnoDTO savedTurno = service.save(turnoDTO);
+            
+            // Forzar que sea una creación: ignorar cualquier ID que venga en el DTO
+            turnoDTO.setId(null);
+            
+            String currentUserEmail = getCurrentUser(request);
+            TurnoDTO savedTurno = service.save(turnoDTO, currentUserEmail);
             return Response.ok(savedTurno, "Turno asignado correctamente.");
         } catch (IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
@@ -141,7 +148,7 @@ public class TurnoPresenter {
     }
 
     // ========== ENDPOINTS PARA CAMBIOS DE ESTADO ==========
-    
+     
     /**
      * @deprecated Utilice PUT /turno/{id}/estado con el cuerpo {"estado": "CANCELADO", "motivo": "..."}.
      * Este endpoint se mantiene por compatibilidad con versiones anteriores, pero el endpoint /estado

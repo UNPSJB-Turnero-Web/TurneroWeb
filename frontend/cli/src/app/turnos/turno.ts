@@ -79,8 +79,8 @@ export interface AuditLog {
     entityType?: string;  // Tipo de entidad auditada
     entityId?: number;    // ID de la entidad auditada
     action: string;
-    previousStatus?: string;
-    newStatus?: string;
+    estadoAnterior?: string;  // Estado anterior (coincide con backend)
+    estadoNuevo?: string;     // Estado nuevo (coincide con backend)
     reason?: string;
     performedBy: string;
     performedAt: string;
