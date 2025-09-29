@@ -2,10 +2,12 @@ import { Component, OnInit, ChangeDetectorRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { TurnoService } from "./turno.service";
 import { Turno, TurnoFilter, AuditLog } from "./turno";
 import { DataPackage } from "../data.package";
 import { AgendaService } from "../agenda/agenda.service";
+import { TurnoModalComponent } from "./turno-modal.component";
 
 // Declaraciones para librerías externas
 declare var html2canvas: any;
@@ -138,7 +140,8 @@ export class TurnoAdvancedSearchComponent implements OnInit {
     private turnoService: TurnoService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private agendaService: AgendaService
+    private agendaService: AgendaService,
+    private modalService: NgbModal
   ) {}
 
   // === MÉTODOS UTILITARIOS ===
@@ -840,10 +843,26 @@ export class TurnoAdvancedSearchComponent implements OnInit {
 
   // === MÉTODOS DE NAVEGACIÓN ===
 
-  /** Navega al detalle de un turno */
+  /** Abre modal con detalle de un turno */
   goToDetail(turno: Turno): void {
     if (turno.id) {
-      this.router.navigate(["/turnos", turno.id]);
+      // Cargar el turno completo desde el servicio
+      this.turnoService.get(turno.id).subscribe({
+        next: (response: DataPackage<Turno>) => {
+          const isSuccessful = response.status === 1 || (response as any).status_code === 200;
+          if (isSuccessful && response.data) {
+            const modalRef = this.modalService.open(TurnoModalComponent, {
+              size: 'lg',
+              backdrop: 'static'
+            });
+            modalRef.componentInstance.turno = response.data;
+          }
+        },
+        error: (error: any) => {
+          console.error("Error al cargar turno:", error);
+          alert("Error al cargar los detalles del turno");
+        }
+      });
     }
   }
 
