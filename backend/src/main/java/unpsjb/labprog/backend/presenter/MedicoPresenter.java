@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -83,8 +84,14 @@ public class MedicoPresenter {
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String especialidad,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Page<MedicoDTO> pageResult = service.findByPage(page, size, nombre, especialidad, estado, sortBy, sortDir);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", pageResult.getContent());

@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -261,6 +263,40 @@ public class MedicoService {
     public Page<MedicoDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
+    }
+
+    /**
+     * Método de búsqueda paginada con filtros y ordenamiento dinámico para médicos
+     *
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param nombre Filtro por nombre/apellido (búsqueda parcial, opcional)
+     * @param especialidad Filtro por especialidad (búsqueda parcial, opcional)
+     * @param estado Filtro por estado (activo/inactivo, opcional)
+     * @param sortBy Campo por el cual ordenar (opcional, default: nombre)
+     * @param sortDir Dirección del ordenamiento (asc/desc, default: asc)
+     * @return Página de médicos filtrados y ordenados
+     */
+    public Page<MedicoDTO> findByPage(int page, int size, String nombre, String especialidad, String estado, String sortBy, String sortDir) {
+        // Validar y configurar ordenamiento por defecto
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "nombre";
+        }
+
+        // Validar dirección de ordenamiento
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        // Configurar ordenamiento
+        Sort sort = Sort.by(direction, sortBy);
+
+        // Crear Pageable con paginación y ordenamiento
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Ejecutar consulta con filtros
+        Page<Medico> result = repository.findByFiltros(nombre, especialidad, estado, pageable);
+
+        // Convertir a DTOs
+        return result.map(this::toDTO);
     }
 
     @Transactional
