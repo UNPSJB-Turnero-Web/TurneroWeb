@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MedicoService } from './medico.service';
 import { Medico } from './medico';
 import { ModalService } from '../modal/modal.service';
@@ -10,7 +11,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 @Component({
   selector: 'app-medicos',
   standalone: true,
-  imports: [CommonModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, RouterModule, FormsModule, PaginationComponent],
   template: `
     <div class="container-fluid mt-4">
       <div class="modern-card">
@@ -36,8 +37,42 @@ import { PaginationComponent } from '../pagination/pagination.component';
           </div>
         </div>
 
+        <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+        <div class="filters-section">
+          <div class="search-container">
+            <div class="search-input-group">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                class="form-control search-input"
+                placeholder="Buscar por nombre..."
+                [(ngModel)]="filtros.nombre"
+                (input)="onSearchChange()"
+              >
+            </div>
+            <div class="search-input-group">
+              <i class="fas fa-stethoscope search-icon"></i>
+              <input
+                type="text"
+                class="form-control search-input"
+                placeholder="Buscar por especialidad..."
+                [(ngModel)]="filtros.especialidad"
+                (input)="onSearchChange()"
+              >
+            </div>
+            <button
+              class="btn btn-clear"
+              (click)="clearFilters()"
+              [disabled]="!hasActiveFilters()"
+            >
+              <i class="fas fa-times me-2"></i>
+              Limpiar
+            </button>
+          </div>
+        </div>
+
         <!-- TABLA MODERNA NORMALIZADA -->
-        <div class="table-container">
+        <div class="table-container" [class.loading]="isLoading">
           <table class="table modern-table">
             <thead>
               <tr>
@@ -50,11 +85,15 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </th>
                 <th>
-                  <div class="header-cell">
+                  <div class="header-cell sortable" (click)="onSortChange('apellido')">
                     <div class="icon-circle medico-header">
                       <i class="fas fa-user-md"></i>
                     </div>
                     Médico
+                    <div class="sort-indicators">
+                      <i class="fas fa-chevron-up" [class.active]="sortConfig.field === 'apellido' && sortConfig.direction === 'asc'"></i>
+                      <i class="fas fa-chevron-down" [class.active]="sortConfig.field === 'apellido' && sortConfig.direction === 'desc'"></i>
+                    </div>
                   </div>
                 </th>
                 <th>
@@ -74,11 +113,15 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </th>
                 <th>
-                  <div class="header-cell">
+                  <div class="header-cell sortable" (click)="onSortChange('especialidad')">
                     <div class="icon-circle especialidad-header">
                       <i class="fas fa-stethoscope"></i>
                     </div>
                     Especialidades
+                    <div class="sort-indicators">
+                      <i class="fas fa-chevron-up" [class.active]="sortConfig.field === 'especialidad' && sortConfig.direction === 'asc'"></i>
+                      <i class="fas fa-chevron-down" [class.active]="sortConfig.field === 'especialidad' && sortConfig.direction === 'desc'"></i>
+                    </div>
                   </div>
                 </th>
                 <th>
@@ -154,6 +197,11 @@ import { PaginationComponent } from '../pagination/pagination.component';
               </tr>
             </tbody>
           </table>
+
+          <!-- Loading overlay -->
+          <div *ngIf="isLoading" class="loading-overlay">
+            <div class="spinner"></div>
+          </div>
         </div>
       </div>
       
@@ -246,6 +294,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
     .table-container {
       padding: 0;
       overflow-x: auto;
+      position: relative;
     }
 
     .modern-table {
@@ -517,6 +566,175 @@ import { PaginationComponent } from '../pagination/pagination.component';
         font-size: 0.8rem;
       }
     }
+
+    /* ESTILOS PARA FILTROS Y BÚSQUEDA */
+    .filters-section {
+      padding: 2rem;
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input-group {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      max-width: 300px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--medicos-primary);
+      z-index: 2;
+    }
+
+    .search-input {
+      padding-left: 2.5rem;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      height: 45px;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .search-input:focus {
+      border-color: var(--medicos-primary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      outline: none;
+    }
+
+    .search-select {
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      height: 45px;
+      padding: 0 1rem;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      background: white;
+      min-width: 150px;
+    }
+
+    .search-select:focus {
+      border-color: var(--medicos-primary);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      outline: none;
+    }
+
+    .btn-clear {
+      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+    }
+
+    .btn-clear:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(127, 140, 141, 0.4);
+    }
+
+    .btn-clear:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ESTILOS PARA ORDENAMIENTO */
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+
+    .sortable:hover {
+      background: rgba(52, 152, 219, 0.05);
+      border-radius: 10px;
+    }
+
+    .sort-indicators {
+      display: inline-flex;
+      flex-direction: column;
+      margin-left: 0.5rem;
+      font-size: 0.7rem;
+      color: #adb5bd;
+    }
+
+    .sort-indicators i {
+      line-height: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    .sort-indicators i.active {
+      color: var(--medicos-primary);
+      transform: scale(1.2);
+    }
+
+    .sort-indicators i.fa-chevron-up {
+      margin-bottom: 2px;
+    }
+
+    /* LOADING STATE */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: 20px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--medicos-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive para filtros */
+    @media (max-width: 768px) {
+      .filters-section {
+        padding: 1rem;
+      }
+
+      .search-container {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .search-input-group {
+        min-width: 100%;
+        max-width: none;
+      }
+
+      .search-select {
+        min-width: 100%;
+      }
+    }
   `]
 })
 export class MedicosComponent {
@@ -532,6 +750,22 @@ export class MedicosComponent {
   };
   currentPage: number = 1;
 
+  // Configuración de filtros
+  filtros = {
+    nombre: '',
+    especialidad: '',
+    estado: ''
+  };
+
+  // Configuración de ordenamiento
+  sortConfig = {
+    field: '',
+    direction: 'asc' as 'asc' | 'desc'
+  };
+
+  // Loading state
+  isLoading: boolean = false;
+
   constructor(
     private medicoService: MedicoService,
     private modalService: ModalService,
@@ -539,12 +773,29 @@ export class MedicosComponent {
   ) {}
 
   ngOnInit(): void {
-    this.getMedicos();
+    this.loadMedicos();
   }
 
-  getMedicos(): void {
-    this.medicoService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = <ResultsPage>dataPackage.data;
+  loadMedicos(): void {
+    this.isLoading = true;
+    this.medicoService.findByPage(
+      this.currentPage - 1, // Backend usa 0-based
+      10,
+      this.filtros.nombre,
+      this.filtros.especialidad,
+      this.filtros.estado,
+      this.sortConfig.field,
+      this.sortConfig.direction
+    ).subscribe({
+      next: (dataPackage) => {
+        this.resultsPage = dataPackage.data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar médicos:', error);
+        this.modalService.alert('Error', 'Error al cargar la lista de médicos');
+        this.isLoading = false;
+      }
     });
   }
 
@@ -568,7 +819,7 @@ export class MedicosComponent {
 
   remove(id: number): void {
     this.medicoService.delete(id).subscribe({
-      next: () => this.getMedicos(),
+      next: () => this.loadMedicos(),
       error: (err) => {
         const msg = err?.error?.message || "Error al eliminar el médico.";
         this.modalService.alert("Error", msg);
@@ -579,7 +830,55 @@ export class MedicosComponent {
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
-    this.getMedicos();
+    this.loadMedicos();
+  }
+
+  /**
+   * Maneja cambios en los filtros de búsqueda
+   */
+  onSearchChange(): void {
+    this.currentPage = 1; // Resetear a primera página cuando cambian filtros
+    this.loadMedicos();
+  }
+
+  /**
+   * Maneja cambios en el ordenamiento
+   */
+  onSortChange(field: string): void {
+    if (this.sortConfig.field === field) {
+      // Si es el mismo campo, alternar dirección
+      this.sortConfig.direction = this.sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Si es un campo diferente, establecer ascendente por defecto
+      this.sortConfig.field = field;
+      this.sortConfig.direction = 'asc';
+    }
+    this.currentPage = 1; // Resetear a primera página cuando cambia ordenamiento
+    this.loadMedicos();
+  }
+
+  /**
+   * Limpia todos los filtros
+   */
+  clearFilters(): void {
+    this.filtros = {
+      nombre: '',
+      especialidad: '',
+      estado: ''
+    };
+    this.sortConfig = {
+      field: '',
+      direction: 'asc'
+    };
+    this.currentPage = 1;
+    this.loadMedicos();
+  }
+
+  /**
+   * Verifica si hay filtros activos
+   */
+  hasActiveFilters(): boolean {
+    return !!(this.filtros.nombre || this.filtros.especialidad || this.filtros.estado || this.sortConfig.field);
   }
 
   goToDetail(id: number): void {
