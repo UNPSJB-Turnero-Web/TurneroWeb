@@ -396,6 +396,13 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
   desasociarEspecialidad(especialidad: Especialidad): void {
     if (!this.centroAtencion.id || !especialidad.id) return;
 
+    // Verificar si hay staff médico asociado al centro con esta especialidad
+    const staffConEspecialidad = this.staffMedicoCentro.filter(staff => staff.especialidadId === especialidad.id);
+    if (staffConEspecialidad.length > 0) {
+      this.showMessage(`No se puede desasociar la especialidad "${especialidad.nombre}" porque hay ${staffConEspecialidad.length} staff médico(s) asociado(s) al centro con esta especialidad. Por favor, resuelva esta situación en el tab de Staff Médico antes de continuar.`, 'danger');
+      return;
+    }
+
     if (confirm(`¿Está seguro que desea desasociar la especialidad ${especialidad.nombre}?`)) {
       this.especialidadService.desasociar(this.centroAtencion.id, especialidad.id).subscribe({
         next: () => {
