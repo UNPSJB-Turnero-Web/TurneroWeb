@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, AfterViewInit, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CentroAtencion } from './centroAtencion';
@@ -48,6 +48,9 @@ import { CentroAtencionOrganigramaTabComponent } from './tabs/organigrama/centro
   styleUrls: ['./centroAtencion-detail.component.css'],
 })
 export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, OnInit {
+  // ==================== VIEWCHILD ====================
+  @ViewChild(CentroAtencionEspecialidadesTabComponent) especialidadesTab!: CentroAtencionEspecialidadesTabComponent;
+
   // ==================== PROPIEDADES PRINCIPALES ====================
   centroAtencion!: CentroAtencion;
   form: any = { invalid: false, valid: true };
@@ -366,20 +369,44 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
       return;
     }
 
-    // Implementar asociación de especialidad
-    this.especialidadesAsociadas.push(this.especialidadSeleccionada);
-    this.especialidadesDisponibles = this.especialidadesDisponibles.filter(
-      esp => esp.id !== this.especialidadSeleccionada!.id
-    );
-    this.especialidadSeleccionada = null;
-    this.showMessage('Especialidad asociada correctamente', 'success');
+    // Llamar al servicio para asociar la especialidad
+    this.especialidadService.asociar(this.centroAtencion.id, this.especialidadSeleccionada.id!).subscribe({
+      next: () => {
+        // Actualizar las listas locales después de la asociación exitosa
+        this.especialidadesAsociadas.push(this.especialidadSeleccionada!);
+        this.especialidadesDisponibles = this.especialidadesDisponibles.filter(
+          esp => esp.id !== this.especialidadSeleccionada!.id
+        );
+        this.especialidadSeleccionada = null;
+        // Resetear el estado del componente hijo
+        if (this.especialidadesTab) {
+          this.especialidadesTab.modoAsociarEspecialidad = false;
+          this.especialidadesTab.especialidadSeleccionada = null;
+        }
+        this.showMessage('Especialidad asociada correctamente', 'success');
+      },
+      error: (error: any) => {
+        console.error('Error al asociar especialidad:', error);
+        this.showMessage('Error al asociar la especialidad', 'danger');
+      }
+    });
   }
 
   desasociarEspecialidad(especialidad: Especialidad): void {
+    if (!this.centroAtencion.id || !especialidad.id) return;
+
     if (confirm(`¿Está seguro que desea desasociar la especialidad ${especialidad.nombre}?`)) {
-      this.especialidadesAsociadas = this.especialidadesAsociadas.filter(esp => esp.id !== especialidad.id);
-      this.especialidadesDisponibles.push(especialidad);
-      this.showMessage('Especialidad desasociada correctamente', 'success');
+      this.especialidadService.desasociar(this.centroAtencion.id, especialidad.id).subscribe({
+        next: () => {
+          this.especialidadesAsociadas = this.especialidadesAsociadas.filter(esp => esp.id !== especialidad.id);
+          this.especialidadesDisponibles.push(especialidad);
+          this.showMessage('Especialidad desasociada correctamente', 'success');
+        },
+        error: (error: any) => {
+          console.error('Error al desasociar especialidad:', error);
+          this.showMessage('Error al desasociar la especialidad', 'danger');
+        }
+      });
     }
   }
 

@@ -28,6 +28,10 @@ export class CentroAtencionEspecialidadesTabComponent implements OnInit {
     // Inicialización si es necesaria
   }
 
+  onEspecialidadSeleccionadaChange(): void {
+    this.especialidadSeleccionadaChange.emit(this.especialidadSeleccionada);
+  }
+
   onModoAsociarEspecialidad(): void {
     this.modoAsociarEspecialidad = true;
   }
@@ -40,8 +44,6 @@ export class CentroAtencionEspecialidadesTabComponent implements OnInit {
 
   onAsociarEspecialidad(): void {
     this.asociarEspecialidad.emit();
-    this.modoAsociarEspecialidad = false;
-    this.especialidadSeleccionada = null;
   }
 
   onDesasociarEspecialidad(especialidad: Especialidad): void {
