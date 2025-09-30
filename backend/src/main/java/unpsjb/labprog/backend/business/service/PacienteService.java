@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -199,6 +201,47 @@ public class PacienteService {
     public Page<PacienteDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
                 .map(this::toDTO);
+    }
+
+    /**
+     * Búsqueda paginada avanzada con filtros y ordenamiento
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param nombre Filtro por nombre (opcional)
+     * @param apellido Filtro por apellido (opcional)
+     * @param documento Filtro por DNI (opcional)
+     * @param email Filtro por email (opcional)
+     * @param estado Filtro por estado (activo/inactivo, opcional)
+     * @param sortBy Campo para ordenar (opcional)
+     * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
+     * @return Page<PacienteDTO> con los resultados paginados
+     */
+    public Page<PacienteDTO> findByPage(
+            int page,
+            int size,
+            String nombre,
+            String apellido,
+            String documento,
+            String email,
+            String estado,
+            String sortBy,
+            String sortDir) {
+
+        // Configurar ordenamiento
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sort = Sort.by(direction, sortBy);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Ejecutar consulta con filtros
+        Page<Paciente> result = repository.findByFiltros(
+            nombre, apellido, documento, email, estado, pageable);
+
+        // Mapear a DTO
+        return result.map(this::toDTO);
     }
 
     @Transactional
