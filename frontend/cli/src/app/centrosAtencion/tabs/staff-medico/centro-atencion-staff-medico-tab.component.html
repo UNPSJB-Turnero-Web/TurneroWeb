@@ -175,19 +175,19 @@
                         <span class="d-none d-md-inline">Gestionar</span>
                       </button>
 
-                      <button class="btn btn-outline-success btn-sm"
+                      <button class="btn btn-outline-danger btn-sm"
                         *ngIf="especialidadTieneDisponibilidades(medico, especialidad)"
-                        (click)="editarDisponibilidadEspecialidad(medico, especialidad)"
-                        [attr.title]="'Editar disponibilidades de ' + especialidad.nombre">
-                        <i class="fas fa-edit me-1"></i>
-                        <span class="d-none d-md-inline">Editar</span>
+                        (click)="eliminarDisponibilidadEspecialidad(medico, especialidad)"
+                        [attr.title]="'Eliminar disponibilidades de ' + especialidad.nombre">
+                        <i class="fas fa-trash me-1"></i>
+                        <span class="d-none d-md-inline">Eliminar disponibilidad</span>
                       </button>
 
-                      <button class="btn btn-outline-danger btn-sm"
+                      <button class="btn btn-outline-success btn-sm"
                         (click)="onDesasociarEspecialidad(medico, especialidad)"
                         [attr.title]="'Desasociar especialidad ' + especialidad.nombre + ' del médico'">
                         <i class="fas fa-unlink me-1"></i>
-                        <span class="d-none d-md-inline">Desasociar</span>
+                        <span class="d-none d-md-inline">Desasociar especialidad</span>
                       </button>
                     </div>
                   </div>

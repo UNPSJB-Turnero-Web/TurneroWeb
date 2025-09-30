@@ -103,7 +103,8 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
                   type="button"
                   class="btn btn-sm btn-outline-danger"
                   (click)="removeHorario(i)"
-                  title="Eliminar horario"
+                  [disabled]="disponibilidad.horarios.length <= 1"
+                  [title]="disponibilidad.horarios.length <= 1 ? 'Debe configurar al menos un horario' : 'Eliminar horario'"
                 >
                   <i class="fa fa-trash"></i>
                 </button>

@@ -7,6 +7,7 @@ import { Medico } from '../../../medicos/medico';
 import { Especialidad } from '../../../especialidades/especialidad';
 import { DisponibilidadMedico } from '../../../disponibilidadMedicos/disponibilidadMedico';
 import { DisponibilidadModalComponent } from './disponibilidad-modal.component';
+import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disponibilidadMedico.service';
 
 @Component({
   selector: 'app-centro-atencion-staff-medico-tab',
@@ -43,7 +44,10 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   // Propiedades para el modo de asociar
   modoAsociarMedico: boolean = false;
 
-  constructor(private modalService: NgbModal) {}
+  constructor(
+    private modalService: NgbModal,
+    private disponibilidadService: DisponibilidadMedicoService
+  ) {}
 
   ngOnInit(): void {
     // Inicialización si es necesaria
@@ -137,7 +141,7 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
           this.disponibilidadCreada.emit(nuevaDisponibilidad);
         }
       },
-      (dismissed) => {
+      () => {
         // Modal fue cancelado o cerrado sin guardar
         console.log('Modal de disponibilidad cerrado sin guardar');
       }
@@ -400,64 +404,88 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
           this.disponibilidadCreada.emit(nuevaDisponibilidad);
         }
       },
-      (dismissed) => {
+      () => {
         console.log('Modal de disponibilidad para especialidad cerrado sin guardar');
       }
     );
   }
 
-  /**
-   * Abre el modal para editar disponibilidades existentes de una especialidad
-   */
-  editarDisponibilidadEspecialidad(medico: any, especialidad: any): void {
-    const disponibilidadesExistentes = this.getDisponibilidadesEspecialidad(medico, especialidad);
-    
-    if (disponibilidadesExistentes.length === 0) {
-      // Si no hay disponibilidades, crear una nueva
-      this.abrirModalDisponibilidadEspecialidad(medico, especialidad);
-      return;
-    }
-
-    const primerStaff = this.getPrimerStaffDelMedico(medico);
-    
-    if (!primerStaff || !primerStaff.id) {
-      console.error('No se puede encontrar el staff del médico');
-      return;
-    }
-
-    const modalRef = this.modalService.open(DisponibilidadModalComponent, {
-      size: 'lg',
-      backdrop: 'static',
-      keyboard: false
-    });
-
-    // Configurar el modal en modo edición para la especialidad específica
-    modalRef.componentInstance.staffMedico = primerStaff;
-    modalRef.componentInstance.especialidadId = especialidad.id;
-    modalRef.componentInstance.especialidadNombre = especialidad.nombre;
-    modalRef.componentInstance.disponibilidadExistente = disponibilidadesExistentes[0];
-
-    // Manejar el resultado del modal
-    modalRef.result.then(
-      (disponibilidadActualizada: DisponibilidadMedico) => {
-        if (disponibilidadActualizada) {
-          this.disponibilidadCreada.emit(disponibilidadActualizada);
-        }
-      },
-      (dismissed) => {
-        console.log('Modal de edición de disponibilidad para especialidad cerrado');
-      }
-    );
-  }
 
   /**
    * Obtiene las disponibilidades de un médico para una especialidad específica
    */
   private getDisponibilidadesEspecialidad(medico: any, especialidad: any): DisponibilidadMedico[] {
     const todasLasDisponibilidades = this.getDisponibilidadesTotalesMedico(medico);
-    
+
     return todasLasDisponibilidades.filter(disponibilidad =>
       !disponibilidad.especialidadId || disponibilidad.especialidadId === especialidad.id
     );
+  }
+
+  /**
+   * Elimina una disponibilidad de un médico para una especialidad específica
+   */
+  eliminarDisponibilidadEspecialidad(medico: any, especialidad: any): void {
+    const disponibilidades = this.getDisponibilidadesEspecialidad(medico, especialidad);
+
+    if (disponibilidades.length === 0) {
+      alert('No hay disponibilidades para eliminar.');
+      return;
+    }
+
+    const mensaje = `¿Está seguro que desea eliminar TODAS las disponibilidades de ${especialidad.nombre} para el Dr. ${medico.medico?.nombre} ${medico.medico?.apellido}?\n\nEsto eliminará:\n- ${disponibilidades.length} disponibilidad(es) configurada(s)\n- Todos los horarios asociados\n\n⚠️ Esta acción no se puede deshacer.`;
+
+    if (!confirm(mensaje)) {
+      return;
+    }
+
+    // Contador para saber cuándo terminaron todas las eliminaciones
+    let eliminacionesPendientes = disponibilidades.length;
+    let eliminacionesExitosas = 0;
+    let erroresEliminacion = 0;
+
+    // Eliminar todas las disponibilidades de esta especialidad
+    disponibilidades.forEach((disponibilidad) => {
+      if (disponibilidad.id) {
+        this.disponibilidadService.remove(disponibilidad.id).subscribe({
+          next: () => {
+            console.log('Disponibilidad eliminada exitosamente:', disponibilidad.id);
+            eliminacionesExitosas++;
+            eliminacionesPendientes--;
+
+            // Si terminaron todas las eliminaciones
+            if (eliminacionesPendientes === 0) {
+              this.finalizarEliminacion(eliminacionesExitosas, erroresEliminacion);
+            }
+          },
+          error: (error) => {
+            console.error('Error al eliminar disponibilidad:', error);
+            erroresEliminacion++;
+            eliminacionesPendientes--;
+
+            // Si terminaron todas las eliminaciones
+            if (eliminacionesPendientes === 0) {
+              this.finalizarEliminacion(eliminacionesExitosas, erroresEliminacion);
+            }
+          }
+        });
+      } else {
+        eliminacionesPendientes--;
+      }
+    });
+  }
+
+  /**
+   * Finaliza el proceso de eliminación y recarga los datos
+   */
+  private finalizarEliminacion(exitosas: number, errores: number): void {
+    if (errores > 0) {
+      alert(`Se eliminaron ${exitosas} disponibilidad(es) con ${errores} error(es). Recargando datos...`);
+    } else {
+      alert(`Se eliminaron ${exitosas} disponibilidad(es) exitosamente.`);
+    }
+
+    // Emitir evento para que el componente padre recargue los datos
+    this.disponibilidadCreada.emit(null as any);
   }
 }
