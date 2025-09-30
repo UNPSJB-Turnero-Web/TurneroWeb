@@ -19,16 +19,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Entidad inmutable para el registro de auditoría de cambios en entidades del sistema.
+ * Entidad inmutable para el registro de auditoría de cambios en entidades del
+ * sistema.
  * Una vez creado, un registro no puede ser modificado ni eliminado.
  * Soporta auditoría genérica para múltiples tipos de entidades.
  */
 @Entity
 @Table(indexes = {
-    @Index(name = "idx_audit_entity_type_id", columnList = "entityType, entityId"),
-    @Index(name = "idx_audit_performed_at", columnList = "performedAt"),
-    @Index(name = "idx_audit_performed_by", columnList = "performedBy"),
-    @Index(name = "idx_audit_action", columnList = "action")
+        @Index(name = "idx_audit_entity_type_id", columnList = "entityType, entityId"),
+        @Index(name = "idx_audit_performed_at", columnList = "performedAt"),
+        @Index(name = "idx_audit_performed_by", columnList = "performedBy"),
+        @Index(name = "idx_audit_action", columnList = "action")
 })
 @Getter
 @Setter
@@ -80,8 +81,8 @@ public class AuditLog {
     }
 
     // Constructor para auditoría de turnos (compatibilidad hacia atrás)
-    public AuditLog(Turno turno, String action, String performedBy, String previousStatus, 
-                   String newStatus, String oldValues, String newValues, String reason) {
+    public AuditLog(Turno turno, String action, String performedBy, String previousStatus,
+            String newStatus, String oldValues, String newValues, String reason) {
         this.turno = turno;
         this.entityType = "TURNO";
         this.entityId = turno != null ? turno.getId().longValue() : null;
@@ -96,8 +97,8 @@ public class AuditLog {
     }
 
     // Constructor genérico para auditoría de cualquier entidad
-    public AuditLog(String entityType, Long entityId, String action, String performedBy, 
-                   String estadoAnterior, String estadoNuevo, String oldValues, String newValues, String reason) {
+    public AuditLog(String entityType, Long entityId, String action, String performedBy,
+            String estadoAnterior, String estadoNuevo, String oldValues, String newValues, String reason) {
         this.entityType = entityType;
         this.entityId = entityId;
         this.action = action;
@@ -122,7 +123,7 @@ public class AuditLog {
         public static final String PASSWORD_CHANGE = "PASSWORD_CHANGE";
         public static final String ENABLE = "ENABLE";
         public static final String DISABLE = "DISABLE";
-        
+
         // Acciones específicas de turnos
         public static final String UPDATE_STATUS = "UPDATE_STATUS";
         public static final String CANCEL = "CANCEL";
@@ -131,7 +132,7 @@ public class AuditLog {
         public static final String RESCHEDULE = "RESCHEDULE";
         public static final String ASSIGN = "ASSIGN";
         public static final String MODIFY = "MODIFY";
-        
+
         // Acciones específicas de usuarios y roles
         public static final String ROLE_CHANGE = "ROLE_CHANGE";
         public static final String USER_CREATE = "USER_CREATE";
@@ -157,5 +158,6 @@ public class AuditLog {
         public static final String AGENDA = "AGENDA";
         public static final String STAFF_MEDICO = "STAFF_MEDICO";
         public static final String NOTIFICACION = "NOTIFICACION";
+        public static final String CONFIGURACION = "CONFIG";
     }
 }

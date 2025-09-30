@@ -92,6 +92,20 @@ import { AuthService } from "../inicio-sesion/auth.service";
             </div>
           </div>
 
+           <!-- Configuracion del sistema -->
+          <div class="action-card action-config" (click)="goToConfigSis()">
+            <div class="card-icon">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <div class="card-content">
+              <h3>Configuración del Sistema</h3>
+              <p>Ajustes de turnos y notificaciones</p>
+            </div>
+            <div class="card-arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+
           <div class="action-card action-config" (click)="goToConfig()">
             <div class="card-icon">
               <i class="fas fa-cogs"></i>
@@ -193,7 +207,7 @@ export class AdminDashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.generateParticles();
@@ -230,7 +244,9 @@ export class AdminDashboardComponent implements OnInit {
   goToUsers() {
     this.router.navigate(["/operadores"]);
   }
-
+  goToConfigSis() {
+    this.router.navigate(["/config"]);  // Cambiar de '/admin-perfil' a '/config'
+  }
   goToConfig() {
     this.router.navigate(["/admin-perfil"]);
   }

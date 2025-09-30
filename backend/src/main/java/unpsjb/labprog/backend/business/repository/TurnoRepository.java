@@ -72,6 +72,9 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     Page<Turno> findByFecha(LocalDate fecha, Pageable pageable);
 
+    // En TurnoRepository
+    List<Turno> findByEstadoInAndFecha(List<EstadoTurno> estados, LocalDate fecha);
+
     // === CONSULTAS USANDO SPECIFICATIONS (Solucionan problemas con PostgreSQL y
     // parámetros null) ===
 
