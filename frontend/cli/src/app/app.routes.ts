@@ -56,6 +56,7 @@ import { OperadorPerfilComponent } from "./operador/operador-perfil.component";
 import { AdminPerfilComponent } from "./admin/admin-perfil.component";
 import { TokenStatusComponent } from "./components/token-status.component";
 import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
+import { AdminConfigComponent } from "./admin/admin-config.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -336,4 +337,9 @@ export const routes: Routes = [
     component: AdminDashboardComponent,
     canActivate: [AdminGuard],
   },
+  {
+  path: "config",  // O "admin-config" si prefieres algo más descriptivo
+  component: AdminConfigComponent,
+  canActivate: [AdminOperadorGuard],  // Protege para admins y operadores
+},
 ];
