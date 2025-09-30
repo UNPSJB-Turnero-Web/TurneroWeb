@@ -287,10 +287,14 @@ export class DisponibilidadModalComponent {
   especialidadNombre?: string; // Nombre de especialidad específica para mostrar
   modoEdicion = false; // Para determinar si estamos editando o creando
   diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
-  
+
   mensajeError = '';
   mensajeExito = '';
   guardando = false;
+  cargandoDisponibilidades = false;
+
+  // Propiedad para almacenar todas las disponibilidades del médico (validación inter-centro)
+  todasLasDisponibilidadesMedico: DisponibilidadMedico[] = [];
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -324,6 +328,36 @@ export class DisponibilidadModalComponent {
       // Modo creación - agregar un horario por defecto
       this.addHorario();
     }
+
+    // Cargar todas las disponibilidades del médico para validación inter-centro
+    this.cargarDisponibilidadesMedico();
+  }
+
+  /**
+   * Carga todas las disponibilidades del médico en todos los centros
+   * para poder validar conflictos inter-centro
+   */
+  private cargarDisponibilidadesMedico(): void {
+    if (!this.staffMedico?.medico?.id) {
+      console.warn('No se pudo obtener el ID del médico para cargar disponibilidades');
+      return;
+    }
+
+    this.cargandoDisponibilidades = true;
+
+    this.disponibilidadService.byMedico(this.staffMedico.medico.id).subscribe({
+      next: (response) => {
+        this.todasLasDisponibilidadesMedico = response.data || [];
+        this.cargandoDisponibilidades = false;
+        console.log('Disponibilidades del médico cargadas para validación inter-centro:', this.todasLasDisponibilidadesMedico.length);
+      },
+      error: (error) => {
+        console.error('Error al cargar disponibilidades del médico:', error);
+        this.cargandoDisponibilidades = false;
+        // No es un error crítico, continuar sin validación inter-centro
+        this.todasLasDisponibilidadesMedico = [];
+      }
+    });
   }
 
   addHorario(): void {
@@ -366,13 +400,32 @@ export class DisponibilidadModalComponent {
       if (!horario.dia || !horario.horaInicio || !horario.horaFin) {
         return 'Todos los horarios deben tener día, hora de inicio y hora de fin.';
       }
-      
+
       if (horario.horaInicio >= horario.horaFin) {
         return 'La hora de inicio debe ser menor a la hora de fin.';
       }
     }
 
-    // Validar que no haya superposición de horarios en el mismo día
+    // Validar que no haya superposición de horarios en el mismo día (dentro de la configuración actual)
+    const errorSuperposicionInterna = this.validarSuperposicionesInternas();
+    if (errorSuperposicionInterna) {
+      return errorSuperposicionInterna;
+    }
+
+    // Validar conflictos con horarios existentes en otros centros (validación inter-centro)
+    const conflictosInterCentro = this.validarConflictosInterCentro();
+    if (conflictosInterCentro.length > 0) {
+      // Mostrar los conflictos al usuario y permitir continuar con confirmación
+      return null; // Retornar null para que continúe al método guardarDisponibilidad donde se muestra la confirmación
+    }
+
+    return null;
+  }
+
+  /**
+   * Valida que no haya superposiciones dentro de los horarios que se están configurando
+   */
+  private validarSuperposicionesInternas(): string | null {
     const horariosPorDia = new Map<string, Array<{horaInicio: string, horaFin: string}>>();
 
     // Agrupar horarios por día
@@ -405,15 +458,123 @@ export class DisponibilidadModalComponent {
     return null;
   }
 
+  /**
+   * Valida conflictos con horarios existentes en TODOS los centros (validación inter-centro)
+   * Retorna un array de mensajes de conflicto
+   */
+  private validarConflictosInterCentro(): string[] {
+    const conflictos: string[] = [];
+
+    // Si no hay disponibilidades cargadas, no podemos validar
+    if (!this.todasLasDisponibilidadesMedico || this.todasLasDisponibilidadesMedico.length === 0) {
+      return [];
+    }
+
+    // Revisar cada horario nuevo contra todas las disponibilidades existentes
+    this.disponibilidad.horarios.forEach(nuevoHorario => {
+
+      // Recorrer todas las disponibilidades del médico
+      this.todasLasDisponibilidadesMedico.forEach(disponibilidad => {
+
+        // En modo edición, excluir la disponibilidad que estamos editando
+        if (this.modoEdicion && this.disponibilidadExistente &&
+            disponibilidad.id === this.disponibilidadExistente.id) {
+          return;
+        }
+
+        // Revisar todos los horarios de esta disponibilidad
+        disponibilidad.horarios.forEach((horarioExistente: any) => {
+          if (horarioExistente.dia === nuevoHorario.dia) {
+            // Verificar si hay solapamiento de horarios
+            if (this.horariosSeSolapan(nuevoHorario, horarioExistente)) {
+
+              // Determinar si el conflicto es en el mismo centro o en otro centro
+              const esMismoCentro = disponibilidad.staffMedicoId === this.staffMedico.id;
+
+              if (esMismoCentro) {
+                // Conflicto en el mismo centro (con otra especialidad)
+                const especialidadNombre = this.especialidadNombre || 'la especialidad actual';
+                conflictos.push(
+                  `${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se superpone con horario existente en ${especialidadNombre} (${horarioExistente.horaInicio}-${horarioExistente.horaFin})`
+                );
+              } else {
+                // CONFLICTO INTERCENTROS - Más crítico
+                // Obtener información del centro desde staffMedicoId
+                const centroNombre = 'otro centro de atención';
+                conflictos.push(
+                  `⚠️ CONFLICTO INTER-CENTRO - ${nuevoHorario.dia}: ${nuevoHorario.horaInicio}-${nuevoHorario.horaFin} se superpone con horario en "${centroNombre}" (${horarioExistente.horaInicio}-${horarioExistente.horaFin}). Un médico no puede atender en múltiples centros al mismo tiempo.`
+                );
+              }
+            }
+          }
+        });
+      });
+    });
+
+    return conflictos;
+  }
+
+  /**
+   * Método auxiliar para verificar si dos horarios se solapan
+   */
+  private horariosSeSolapan(
+    horario1: { horaInicio: string, horaFin: string },
+    horario2: { horaInicio: string, horaFin: string }
+  ): boolean {
+    const inicio1 = this.convertirHoraAMinutos(horario1.horaInicio);
+    const fin1 = this.convertirHoraAMinutos(horario1.horaFin);
+    const inicio2 = this.convertirHoraAMinutos(horario2.horaInicio);
+    const fin2 = this.convertirHoraAMinutos(horario2.horaFin);
+
+    // Los horarios se solapan si uno empieza antes de que termine el otro
+    return (inicio1 < fin2) && (inicio2 < fin1);
+  }
+
+  /**
+   * Convertir hora en formato HH:MM a minutos desde medianoche
+   */
+  private convertirHoraAMinutos(hora: string): number {
+    const [horas, minutos] = hora.split(':').map(Number);
+    return horas * 60 + minutos;
+  }
+
   guardarDisponibilidad(): void {
     this.mensajeError = '';
     this.mensajeExito = '';
 
-    // Validaciones
+    // Validaciones básicas
     const errorValidacion = this.validarHorarios();
     if (errorValidacion) {
       this.mensajeError = errorValidacion;
       return;
+    }
+
+    // Validar conflictos inter-centro y mostrar advertencia si existen
+    const conflictosInterCentro = this.validarConflictosInterCentro();
+    if (conflictosInterCentro.length > 0) {
+      const tieneConflictosIntercentros = conflictosInterCentro.some(c => c.includes('⚠️ CONFLICTO INTER-CENTRO'));
+
+      if (tieneConflictosIntercentros) {
+        // Conflictos inter-centro son MUY críticos - el médico no puede estar en dos lugares a la vez
+        const mensaje = '🚨 CONFLICTOS CRÍTICOS DETECTADOS 🚨\n\n' +
+                       'Un médico no puede atender en múltiples centros al mismo tiempo:\n\n' +
+                       conflictosInterCentro.join('\n\n') +
+                       '\n\n⚠️ ADVERTENCIA: Estos conflictos pueden causar problemas serios en la programación de turnos.\n\n' +
+                       '¿Está SEGURO que desea continuar?';
+
+        if (!confirm(mensaje)) {
+          return;
+        }
+      } else {
+        // Conflictos menores (dentro del mismo centro)
+        const mensaje = 'Se encontraron conflictos de horarios:\n\n' +
+                       conflictosInterCentro.join('\n\n') +
+                       '\n\n¿Desea continuar de todas formas?';
+
+        if (!confirm(mensaje)) {
+          return;
+        }
+      }
     }
 
     this.guardando = true;
