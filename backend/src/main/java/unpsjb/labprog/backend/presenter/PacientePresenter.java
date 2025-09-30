@@ -42,15 +42,13 @@ public class PacientePresenter {
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String apellido,
+            @RequestParam(required = false) String nombreApellido,
             @RequestParam(required = false) String documento,
             @RequestParam(required = false) String email,
-            @RequestParam(required = false) String estado,
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "asc") String sortDir) {
 
-        Page<PacienteDTO> pageResult = service.findByPage(page, size, nombre, apellido, documento, email, estado, sortBy, sortDir);
+        Page<PacienteDTO> pageResult = service.findByPage(page, size, nombreApellido, documento, email, sortBy, sortDir);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", pageResult.getContent());

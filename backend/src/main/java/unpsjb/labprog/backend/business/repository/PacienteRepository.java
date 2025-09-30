@@ -20,29 +20,22 @@ public interface PacienteRepository extends JpaRepository<Paciente, Integer> {
 
     /**
      * Método para búsqueda paginada con filtros combinados y ordenamiento dinámico
-     * @param nombre Filtro por nombre (LIKE, opcional)
-     * @param apellido Filtro por apellido (LIKE, opcional)
+     * @param nombreApellido Filtro unificado para nombre O apellido (LIKE, opcional)
      * @param documento Filtro por DNI (LIKE, opcional)
      * @param email Filtro por email (LIKE, opcional)
-     * @param estado Filtro por estado (activo/inactivo basado en existencia de usuario, opcional)
      * @param pageable Configuración de paginación y ordenamiento
      * @return Página de pacientes filtrados y ordenados
      */
     @Query("""
         SELECT p FROM Paciente p
-        LEFT JOIN User u ON u.email = p.email
-        WHERE (:nombre IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
-           AND (:apellido IS NULL OR LOWER(p.apellido) LIKE LOWER(CONCAT('%', :apellido, '%')))
+        WHERE (:nombreApellido IS NULL OR
+               LOWER(p.nombre) LIKE LOWER(CONCAT('%', :nombreApellido, '%')) OR
+               LOWER(p.apellido) LIKE LOWER(CONCAT('%', :nombreApellido, '%')))
            AND (:documento IS NULL OR CAST(p.dni AS string) LIKE CONCAT('%', :documento, '%'))
            AND (:email IS NULL OR LOWER(p.email) LIKE LOWER(CONCAT('%', :email, '%')))
-           AND (:estado IS NULL OR
-                (:estado = 'activo' AND u IS NOT NULL) OR
-                (:estado = 'inactivo' AND u IS NULL))
         """)
-    Page<Paciente> findByFiltros(@Param("nombre") String nombre,
-                                 @Param("apellido") String apellido,
+    Page<Paciente> findByFiltros(@Param("nombreApellido") String nombreApellido,
                                  @Param("documento") String documento,
                                  @Param("email") String email,
-                                 @Param("estado") String estado,
                                  Pageable pageable);
 }

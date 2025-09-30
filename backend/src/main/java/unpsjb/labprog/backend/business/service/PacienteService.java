@@ -207,11 +207,9 @@ public class PacienteService {
      * Búsqueda paginada avanzada con filtros y ordenamiento
      * @param page Número de página (0-based)
      * @param size Tamaño de página
-     * @param nombre Filtro por nombre (opcional)
-     * @param apellido Filtro por apellido (opcional)
+     * @param nombreApellido Filtro unificado para nombre O apellido (opcional)
      * @param documento Filtro por DNI (opcional)
      * @param email Filtro por email (opcional)
-     * @param estado Filtro por estado (activo/inactivo, opcional)
      * @param sortBy Campo para ordenar (opcional)
      * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
      * @return Page<PacienteDTO> con los resultados paginados
@@ -219,11 +217,9 @@ public class PacienteService {
     public Page<PacienteDTO> findByPage(
             int page,
             int size,
-            String nombre,
-            String apellido,
+            String nombreApellido,
             String documento,
             String email,
-            String estado,
             String sortBy,
             String sortDir) {
 
@@ -238,7 +234,7 @@ public class PacienteService {
 
         // Ejecutar consulta con filtros
         Page<Paciente> result = repository.findByFiltros(
-            nombre, apellido, documento, email, estado, pageable);
+            nombreApellido, documento, email, pageable);
 
         // Mapear a DTO
         return result.map(this::toDTO);
