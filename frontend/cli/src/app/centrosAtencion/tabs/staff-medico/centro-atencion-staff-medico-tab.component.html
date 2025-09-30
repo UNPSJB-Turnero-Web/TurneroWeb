@@ -73,9 +73,27 @@
           <i class="fa fa-times me-2"></i> Cancelar
         </button>
       </div>
+      <div *ngIf="especialidadFaltanteParaAsociar" class="modern-alert alert-warning mt-3">
+        <i class="fa fa-exclamation-triangle me-2"></i>
+        <strong>Especialidad faltante:</strong> "{{ especialidadFaltanteParaAsociar.nombre }}" no está asociada al centro.
+        <button class="btn btn-sm btn-warning ms-2" (click)="onAsociarEspecialidadFaltante()">
+          <i class="fa fa-plus me-1"></i> Asociar Especialidad y Médico
+        </button>
+      </div>
       <div *ngIf="medicoYaAsociado()" class="modern-alert alert-warning mt-3">
         <i class="fa fa-info-circle me-2"></i>
         Este médico ya tiene todas sus especialidades asignadas al centro
+      </div>
+    </div>
+
+    <!-- Advertencia de especialidad faltante -->
+    <div *ngIf="especialidadFaltanteParaAsociar" class="modern-alert alert-warning mt-3">
+      <i class="fa fa-exclamation-triangle me-2"></i>
+      <strong>Especialidad requerida:</strong> La especialidad "{{ especialidadFaltanteParaAsociar.nombre }}" no está asociada al centro.
+      <div class="mt-2">
+        <button class="btn btn-sm btn-primary" (click)="onAsociarEspecialidadFaltanteDesdeStaff()">
+          <i class="fa fa-plus me-1"></i> Asociar especialidad al centro
+        </button>
       </div>
     </div>
 
@@ -163,6 +181,13 @@
                         [attr.title]="'Editar disponibilidades de ' + especialidad.nombre">
                         <i class="fas fa-edit me-1"></i>
                         <span class="d-none d-md-inline">Editar</span>
+                      </button>
+
+                      <button class="btn btn-outline-danger btn-sm"
+                        (click)="onDesasociarEspecialidad(medico, especialidad)"
+                        [attr.title]="'Desasociar especialidad ' + especialidad.nombre + ' del médico'">
+                        <i class="fas fa-unlink me-1"></i>
+                        <span class="d-none d-md-inline">Desasociar</span>
                       </button>
                     </div>
                   </div>

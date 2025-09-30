@@ -132,16 +132,19 @@
         [tipoMensajeStaff]="tipoMensajeStaff"
         [staffMedicoExpandido]="staffMedicoExpandido"
         [disponibilidadesStaff]="disponibilidadesStaff"
+        [especialidadFaltanteParaAsociar]="especialidadFaltanteParaAsociar"
         (medicoSeleccionadoChange)="medicoSeleccionado = $event"
         (especialidadSeleccionadaChange)="onEspecialidadSeleccionadaChange($event)"
         (medicoSeleccionado$)="onMedicoSeleccionado()"
         (asociarMedico)="asociarMedico()"
         (desasociarMedico)="desasociarMedico($event)"
+        (desasociarEspecialidad)="desasociarEspecialidadDeMedico($event)"
         (toggleStaffMedicoExpansion)="toggleStaffMedicoExpansion($event)"
         (agregarDisponibilidad)="agregarDisponibilidad($event)"
         (gestionarDisponibilidadAvanzada)="gestionarDisponibilidadAvanzada($event)"
         (crearNuevaDisponibilidad)="crearNuevaDisponibilidad($event)"
-        (disponibilidadCreada)="onDisponibilidadCreada($event)">
+        (disponibilidadCreada)="onDisponibilidadCreada($event)"
+        (asociarEspecialidadFaltanteDesdeStaff)="asociarEspecialidadFaltanteDesdeStaff()">
       </app-centro-atencion-staff-medico-tab>
     </div>
 

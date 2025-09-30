@@ -24,6 +24,7 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   @Input() mensajeStaff: string = '';
   @Input() tipoMensajeStaff: string = '';
   @Input() staffMedicoExpandido: { [staffMedicoId: number]: boolean } = {};
+  @Input() especialidadFaltanteParaAsociar: Especialidad | null = null;
   @Input() disponibilidadesStaff: { [staffMedicoId: number]: DisponibilidadMedico[] } = {};
 
   @Output() medicoSeleccionadoChange = new EventEmitter<Medico | null>();
@@ -31,11 +32,13 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
   @Output() medicoSeleccionado$ = new EventEmitter<void>();
   @Output() asociarMedico = new EventEmitter<void>();
   @Output() desasociarMedico = new EventEmitter<StaffMedico>();
+  @Output() desasociarEspecialidad = new EventEmitter<{medico: any, especialidad: Especialidad}>();
   @Output() toggleStaffMedicoExpansion = new EventEmitter<StaffMedico>();
   @Output() agregarDisponibilidad = new EventEmitter<StaffMedico>();
   @Output() gestionarDisponibilidadAvanzada = new EventEmitter<StaffMedico>();
   @Output() crearNuevaDisponibilidad = new EventEmitter<StaffMedico>();
   @Output() disponibilidadCreada = new EventEmitter<DisponibilidadMedico>();
+  @Output() asociarEspecialidadFaltanteDesdeStaff = new EventEmitter<void>();
 
   // Propiedades para el modo de asociar
   modoAsociarMedico: boolean = false;
@@ -78,8 +81,19 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
     this.especialidadSeleccionada = null;
   }
 
+  onAsociarEspecialidadFaltante(): void {
+    console.log('onAsociarEspecialidadFaltante clicked');
+    this.asociarEspecialidadFaltanteDesdeStaff.emit();
+  }
+
   onDesasociarMedico(staff: StaffMedico): void {
     this.desasociarMedico.emit(staff);
+  }
+
+  onDesasociarEspecialidad(medico: any, especialidad: Especialidad): void {
+    if (confirm(`¿Está seguro que desea desasociar la especialidad "${especialidad.nombre}" del Dr. ${medico.medico?.nombre} ${medico.medico?.apellido}?`)) {
+      this.desasociarEspecialidad.emit({medico, especialidad});
+    }
   }
 
   onToggleStaffMedicoExpansion(staff: StaffMedico): void {
@@ -96,6 +110,10 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
 
   onCrearNuevaDisponibilidad(staff: StaffMedico): void {
     this.abrirModalDisponibilidad(staff);
+  }
+
+  onAsociarEspecialidadFaltanteDesdeStaff(): void {
+    this.asociarEspecialidadFaltanteDesdeStaff.emit();
   }
 
   /**

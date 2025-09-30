@@ -76,6 +76,7 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
   esquemasConsultorio: { [consultorioId: number]: EsquemaTurno[] } = {};
   staffMedicoExpandido: { [staffMedicoId: number]: boolean } = {};
   disponibilidadesStaff: { [staffMedicoId: number]: DisponibilidadMedico[] } = {};
+  especialidadFaltanteParaAsociar: Especialidad | null = null;
 
   // ==================== ESTADO DE CONSULTORIOS (SRP) ====================
   modoCrearConsultorio: boolean = false;
@@ -413,6 +414,9 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
   // ==================== MÉTODOS DE STAFF MÉDICO ====================
 
   onMedicoSeleccionado(): void {
+    // Limpiar el estado de especialidad faltante cuando se cambia de médico
+    this.especialidadFaltanteParaAsociar = null;
+    
     if (this.medicoSeleccionado) {
       // Obtener todas las especialidades del médico
       let todasLasEspecialidades: Especialidad[] = this.medicoSeleccionado.especialidades || [];
@@ -447,28 +451,45 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     console.log('medicoSeleccionado:', this.medicoSeleccionado);
     console.log('especialidadSeleccionada:', this.especialidadSeleccionada);
     console.log('centroAtencion.id:', this.centroAtencion.id);
-    
+
     if (!this.medicoSeleccionado || !this.especialidadSeleccionada || !this.centroAtencion.id) {
       console.log('Missing required data, returning early');
       return;
     }
 
+    // Verificar si la especialidad está asociada al centro
+    const especialidadAsociadaAlCentro = this.especialidadesAsociadas.some(esp =>
+      esp.id === this.especialidadSeleccionada!.id
+    );
+
+    if (!especialidadAsociadaAlCentro) {
+      // Mostrar advertencia y permitir asociar la especialidad
+      this.showStaffMessage('La especialidad "' + this.especialidadSeleccionada.nombre + '" no está asociada al centro. Debe asociarla primero.', 'warning');
+      this.especialidadFaltanteParaAsociar = this.especialidadSeleccionada;
+      return;
+    }
+
+    // Proceder con la asociación normal
+    this.procederConAsociacionMedico();
+  }
+
+  private procederConAsociacionMedico(): void {
     const staffMedico: StaffMedico = {
       id: 0,
       medico: {
-        id: this.medicoSeleccionado.id!,
-        nombre: this.medicoSeleccionado.nombre,
-        apellido: this.medicoSeleccionado.apellido,
-        dni: this.medicoSeleccionado.dni,
-        matricula: this.medicoSeleccionado.matricula
+        id: this.medicoSeleccionado!.id!,
+        nombre: this.medicoSeleccionado!.nombre,
+        apellido: this.medicoSeleccionado!.apellido,
+        dni: this.medicoSeleccionado!.dni,
+        matricula: this.medicoSeleccionado!.matricula
       },
       centro: {
-        id: this.centroAtencion.id,
+        id: this.centroAtencion.id!,
         nombre: this.centroAtencion.nombre
       },
       especialidad: {
-        id: this.especialidadSeleccionada.id!,
-        nombre: this.especialidadSeleccionada.nombre
+        id: this.especialidadSeleccionada!.id!,
+        nombre: this.especialidadSeleccionada!.nombre
       }
     };
 
@@ -491,6 +512,48 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     });
   }
 
+  asociarEspecialidadFaltanteDesdeStaff(): void {
+    if (this.especialidadFaltanteParaAsociar) {
+      // Guardar el médico seleccionado antes de resetear
+      const medicoGuardado = this.medicoSeleccionado;
+      const especialidadGuardada = this.especialidadSeleccionada;
+
+      // Usar la especialidad faltante como la seleccionada
+      this.especialidadSeleccionada = this.especialidadFaltanteParaAsociar;
+
+      // Llamar al método de asociación de especialidad
+      this.especialidadService.asociar(this.centroAtencion.id!, this.especialidadSeleccionada.id!).subscribe({
+        next: () => {
+          // Actualizar las listas locales después de la asociación exitosa
+          this.especialidadesAsociadas.push(this.especialidadSeleccionada!);
+          this.especialidadesDisponibles = this.especialidadesDisponibles.filter(
+            esp => esp.id !== this.especialidadSeleccionada!.id
+          );
+
+          // Limpiar el estado de especialidad faltante
+          this.especialidadFaltanteParaAsociar = null;
+
+          // Mostrar mensaje de éxito para la especialidad
+          this.showStaffMessage('Especialidad asociada correctamente al centro', 'success');
+
+          // Ahora proceder con la asociación del médico
+          // Restaurar la selección del médico y especialidad
+          this.medicoSeleccionado = medicoGuardado;
+          this.especialidadSeleccionada = especialidadGuardada;
+
+          // Proceder con la asociación del médico
+          setTimeout(() => {
+            this.procederConAsociacionMedico();
+          }, 500); // Pequeño delay para que se vea el mensaje
+        },
+        error: (error: any) => {
+          console.error('Error al asociar especialidad:', error);
+          this.showStaffMessage('Error al asociar la especialidad', 'danger');
+        }
+      });
+    }
+  }
+
   desasociarMedico(staff: StaffMedico): void {
     if (!staff.id) return;
 
@@ -498,7 +561,8 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     if (confirm(`¿Está seguro que desea desasociar a ${nombreMedico}?`)) {
       this.staffMedicoService.remove(staff.id).subscribe({
         next: () => {
-          this.staffMedicoCentro = this.staffMedicoCentro.filter(s => s.id !== staff.id);
+          // Recargar completamente la lista de staff médico desde el servidor
+          this.loadStaffMedico();
           this.cargarMedicosDisponibles();
           this.showStaffMessage('Médico desasociado correctamente', 'success');
         },
@@ -508,6 +572,34 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
         }
       });
     }
+  }
+
+  desasociarEspecialidadDeMedico(data: {medico: any, especialidad: Especialidad}): void {
+    const {medico, especialidad} = data;
+    
+    // Encontrar el staff médico específico para esta especialidad
+    const staffEspecifico = this.staffMedicoCentro.find(staff => 
+      staff.medico?.id === medico.medico?.id && staff.especialidad?.id === especialidad.id
+    );
+
+    if (!staffEspecifico || !staffEspecifico.id) {
+      this.showStaffMessage('No se encontró la asociación específica para desasociar', 'danger');
+      return;
+    }
+
+    this.staffMedicoService.remove(staffEspecifico.id).subscribe({
+      next: () => {
+        // Recargar completamente la lista de staff médico desde el servidor
+        // para asegurar consistencia de datos
+        this.loadStaffMedico();
+        this.cargarMedicosDisponibles();
+        this.showStaffMessage(`Especialidad "${especialidad.nombre}" desasociada correctamente del médico`, 'success');
+      },
+      error: (error: any) => {
+        console.error('Error al desasociar especialidad del médico:', error);
+        this.showStaffMessage('Error al desasociar la especialidad del médico', 'danger');
+      }
+    });
   }
 
   toggleStaffMedicoExpansion(staff: StaffMedico): void {
@@ -680,7 +772,9 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
   }
 
   private loadStaffMedico(): void {
-    if (!this.centroAtencion.id) return;
+    if (!this.centroAtencion.id) {
+      return;
+    }
 
     this.staffMedicoService.getByCentroAtencion(this.centroAtencion.id).subscribe({
       next: (dataPackage: DataPackage<StaffMedico[]>) => {
