@@ -12,6 +12,40 @@ import { AuthService } from "../inicio-sesion/auth.service";
   selector: "app-paciente-dashboard",
   imports: [CommonModule, FormsModule],
   template: `
+    <!-- Modal de Error de Confirmación (fuera del dashboard) -->
+    <div class="error-modal" *ngIf="showErrorModal">
+      <div class="error-modal-content">
+        <div class="error-modal-header">
+          <div class="error-icon-container">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h2>No se puede confirmar el turno</h2>
+          <span class="close" (click)="closeErrorModal()">&times;</span>
+        </div>
+        <div class="error-modal-body">
+          <div class="error-message-container">
+            <p class="error-reason-label">El turno no pudo ser confirmado por la siguiente razón:</p>
+            <div class="error-message-box">
+              <i class="fas fa-info-circle me-2"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+          </div>
+          <div class="error-help-text">
+            <p>
+              <i class="fas fa-lightbulb me-2"></i>
+              Por favor, verifica los días permitidos para confirmar turnos según las políticas de la clínica.
+            </p>
+          </div>
+        </div>
+        <div class="error-modal-footer">
+          <button class="btn btn-primary" (click)="closeErrorModal()">
+            <i class="fas fa-check me-2"></i>
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="patient-dashboard">
       <!-- Floating Particles Background -->
       <div class="particles-bg">
@@ -256,8 +290,36 @@ import { AuthService } from "../inicio-sesion/auth.service";
                 <i class="fas fa-map-marker-alt me-2"></i>
                 <span>{{ turno.location }}</span>
               </div>
-            </div>
 
+              <!-- Barra de Progreso del Estado -->
+              <div class="turno-progress-container">
+                <div class="progress-label">
+                  <span class="progress-text">Estado del Turno</span>
+                  <span class="progress-percentage">{{ getProgresoTurno(turno.status).texto }}</span>
+                </div>
+
+                <div *ngIf="!getProgresoTurno(turno.status).isTerminal" class="progress" style="height: 12px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated"
+                       [ngClass]="getProgresoTurno(turno.status).colorClass"
+                       role="progressbar"
+                       [style.width.%]="getProgresoTurno(turno.status).progress"
+                       [attr.aria-valuenow]="getProgresoTurno(turno.status).progress"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                  </div>
+                </div>
+    
+                <div *ngIf="getProgresoTurno(turno.status).isTerminal" class="terminal-badge">
+                  <span class="badge-terminal" [ngClass]="getProgresoTurno(turno.status).colorClass">
+                    <i class="fas" [ngClass]="{
+                      'fa-check-circle': turno.status === 'completo',
+                      'fa-times-circle': turno.status === 'cancelado'
+                    }"></i>
+                    {{ getProgresoTurno(turno.status).texto }}
+                  </span>
+                </div>
+              </div>
+            </div>
             <!-- Card Actions -->
             <div class="card-actions" *ngIf="canPerformActions(turno)">
               <button
@@ -381,6 +443,110 @@ import { AuthService } from "../inicio-sesion/auth.service";
     </div>
   `,
   styles: `
+    /* Estilos del Modal de Error */
+    .error-modal {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      background: rgba(0, 0, 0, 0.75) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 9999 !important;
+      backdrop-filter: blur(8px);
+    }
+
+    .error-modal-content {
+      background: white;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+      z-index: 10000;
+      animation: slideInDown 0.3s ease-out;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .error-modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+    }
+
+    .error-icon-container {
+      width: 40px;
+      height: 40px;
+      background: #dc3545;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    .error-modal-header h2 {
+      margin: 0;
+      color: #dc3545;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .error-modal-body {
+      padding: 1.5rem;
+    }
+
+    .error-message-container {
+      margin-bottom: 1rem;
+    }
+
+    .error-reason-label {
+      color: #495057;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    .error-message-box {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 12px;
+      padding: 1rem;
+      color: #721c24;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .error-help-text {
+      background: #e9ecef;
+      border-radius: 12px;
+      padding: 1rem;
+      color: #495057;
+    }
+
+    .error-modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    @keyframes slideInDown {
+      from {
+        transform: translateY(-100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -2263,8 +2429,305 @@ import { AuthService } from "../inicio-sesion/auth.service";
         padding: 0.6rem;
         font-size: 0.9rem;
       }
+
+      /* === Barra de Progreso del Estado === */
+      .turno-progress-container {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+      }
+
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+
+      .progress-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .progress-percentage {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #2c3e50;
+      }
+
+      .progress {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        background: #e9ecef;
+      }
+
+      .progress-bar {
+        transition: width 0.6s ease;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .bg-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+      }
+
+      .bg-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+      }
+
+      .bg-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+      }
+
+      .bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+      }
+
+      .bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      }
+
+      .bg-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+      }
+      
+      .terminal-badge {
+        display: flex;
+        justify-content: center;
+        padding: 0.5rem 0;
+      }
+
+      .badge-terminal {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 20px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: white;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      }
+
+      .badge-terminal i {
+        font-size: 1.1rem;
+      }
+      /* === Modal de Error de Confirmación === */
+      .error-modal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.75) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 9999 !important; /* Aumentar z-index significativamente */
+        backdrop-filter: blur(10px);
+      }
+
+      .error-modal-content {
+        position: relative;
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 500px;
+        z-index: 10000 !important; /* Mayor que el overlay */
+        animation: slideInDown 0.3s ease-out;
+      }
+      .error-modal-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 20px 20px 0 0;
+        position: relative;
+        text-align: center;
+      }
+
+      .error-icon-container {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem auto;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .error-icon-container i {
+        font-size: 2.5rem;
+        color: white;
+      }
+
+      .error-modal-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: white;
+      }
+
+      .error-modal-header .close {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        top: 1rem;
+        right: 1rem;
+      }
+
+      .error-modal-header .close:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .error-modal-body {
+        padding: 2rem;
+      }
+
+      .error-message-container {
+        margin-bottom: 1.5rem;
+      }
+
+      .error-reason-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+      }
+
+      .error-message-box {
+        background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+        border-left: 4px solid #dc3545;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.1);
+      }
+
+      .error-message-box i {
+        color: #dc3545;
+        font-size: 1.2rem;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+      }
+
+      .error-message-box span {
+        color: #721c24;
+        font-weight: 500;
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+
+      .error-help-text {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid #dee2e6;
+      }
+
+      .error-help-text p {
+        margin: 0;
+        color: #495057;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        line-height: 1.5;
+      }
+
+      .error-help-text i {
+        color: #ffc107;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+
+      .error-modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid #f1f3f4;
+        display: flex;
+        justify-content: center;
+      }
+
+      .error-modal-footer .btn {
+        min-width: 150px;
+        padding: 0.9rem 2rem;
+        font-size: 1rem;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-100px) scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .error-modal-content {
+          margin: 1rem;
+        }
+
+        .error-modal-header {
+          padding: 1.5rem;
+        }
+
+        .error-icon-container {
+          width: 60px;
+          height: 60px;
+        }
+
+        .error-icon-container i {
+          font-size: 2rem;
+        }
+
+        .error-modal-header h2 {
+          font-size: 1.25rem;
+        }
+
+        .error-modal-body {
+          padding: 1.5rem;
+        }
+
+        .error-message-box {
+          padding: 1rem;
+        }
+      }
     }
-   }
+  }
   `,
 })
 export class PacienteDashboardComponent implements OnInit {
@@ -2285,9 +2748,99 @@ export class PacienteDashboardComponent implements OnInit {
   selectedTurno: any = null;
   motivo: string = "";
   isSubmitting: boolean = false;
-
+  showErrorModal: boolean = false;
+  errorMessage: string = '';
   // Particles for background animation
   particles: { x: number; y: number }[] = [];
+
+  readonly ESTADOS_FLUJO: string[] = [
+    'PROGRAMADO',   // Estado inicial
+    'CONFIRMADO',   // Estado confirmado
+    'COMPLETO'      // Estado final exitoso
+  ];
+
+
+  // Antes del constructor
+
+  /**
+   * Calcula el progreso visual del turno según su estado
+   */
+  getProgresoTurno(estado: string): {
+    progress: number;
+    colorClass: string;
+    isTerminal: boolean;
+    texto: string;
+  } {
+    const estadoUpper = estado?.toUpperCase() || 'PROGRAMADO';
+
+    // Estados terminales
+    if (estadoUpper === 'COMPLETO') {
+      return {
+        progress: 100,
+        colorClass: 'bg-success',
+        isTerminal: true,
+        texto: 'Completado'
+      };
+    }
+
+    if (estadoUpper === 'CANCELADO') {
+      return {
+        progress: 100,
+        colorClass: 'bg-danger',
+        isTerminal: true,
+        texto: 'Cancelado'
+      };
+    }
+
+    // Estados del flujo normal
+    const indice = this.ESTADOS_FLUJO.findIndex(
+      e => e === estadoUpper
+    );
+
+    if (indice === -1) {
+      // Estado desconocido
+      return {
+        progress: 0,
+        colorClass: 'bg-secondary',
+        isTerminal: false,
+        texto: 'Desconocido'
+      };
+    }
+
+    // Calcular progreso: 0% (Programado), 50% (Confirmado), 100% (Completo)
+    const progress = (indice / (this.ESTADOS_FLUJO.length - 1)) * 100;
+
+    // Determinar color según el estado
+    let colorClass = 'bg-primary';
+    if (estadoUpper === 'PROGRAMADO' || estadoUpper === 'REAGENDADO') {
+      colorClass = 'bg-warning';
+    } else if (estadoUpper === 'CONFIRMADO') {
+      colorClass = 'bg-info';
+    }
+
+    return {
+      progress: Math.round(progress),
+      colorClass: colorClass,
+      isTerminal: false,
+      texto: this.getTextoEstado(estadoUpper)
+    };
+  }
+
+  /**
+   * Convierte el estado técnico a texto amigable
+   */
+  getTextoEstado(estado: string): string {
+    const estadoMap: { [key: string]: string } = {
+      'PROGRAMADO': 'Programado',
+      'CONFIRMADO': 'Confirmado',
+      'REAGENDADO': 'Reagendado',
+      'COMPLETO': 'Completado',
+      'CANCELADO': 'Cancelado'
+    };
+
+    return estadoMap[estado?.toUpperCase()] || estado;
+  }
+
 
   constructor(
     private router: Router,
@@ -2588,26 +3141,45 @@ export class PacienteDashboardComponent implements OnInit {
     if (confirm(confirmMessage)) {
       this.turnoService.confirmar(turno.id).subscribe({
         next: (response) => {
+
+          // VERIFICAR SI LA RESPUESTA CONTIENE UN ERROR
+          if (response.status_code && response.status_code >= 400) {
+            // Es un error disfrazado de éxito
+            console.error("Error detectado en respuesta exitosa:", response);
+
+            this.errorMessage = response.status_text || 'Ocurrió un error al confirmar el turno';
+            this.showErrorModal = true;
+            return; // Detener ejecución
+          }
+
+          // Respuesta exitosa real
           console.log("Turno confirmado exitosamente:", response);
-          // Actualizar el estado localmente
           turno.status = "confirmado";
-          // Mostrar mensaje de éxito
-          alert(
-            "Turno confirmado exitosamente. Te esperamos en la fecha y hora programada."
-          );
-          // Recargar la lista de turnos para reflejar cambios
+          alert("Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.");
           this.cargarTurnosPaciente();
         },
         error: (error) => {
-          console.error("Error confirmando el turno:", error);
-          alert(
-            "No se pudo confirmar el turno. Por favor, intenta nuevamente."
-          );
+          // Extraer mensaje específico del backend
+          if (error.error && error.error.status_text) {
+            this.errorMessage = error.error.status_text;
+          } else if (error.error && typeof error.error === 'string') {
+            this.errorMessage = error.error;
+          } else if (error.message) {
+            this.errorMessage = error.message;
+          } else {
+            this.errorMessage = 'Ocurrió un error inesperado al intentar confirmar el turno. Por favor, intenta nuevamente.';
+          }
+
+          this.showErrorModal = true;
         },
       });
     }
   }
-
+  closeErrorModal() {
+    console.log('Cerrando modal de error');
+    this.showErrorModal = false;
+    this.errorMessage = '';
+  }
   reprogramarTurno(turno: any) {
     // Redirigir al componente de reagendamiento con el ID del turno
     this.router.navigate(["/paciente-reagendar-turno", turno.id]);
