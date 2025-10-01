@@ -5,6 +5,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { DisponibilidadMedico } from '../../../disponibilidadMedicos/disponibilidadMedico';
 import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disponibilidadMedico.service';
 import { StaffMedico } from '../../../staffMedicos/staffMedico';
+import { StaffMedicoService } from '../../../staffMedicos/staffMedico.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-disponibilidad-modal',
@@ -128,6 +130,56 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
               {{ modoEdicion ? 'Modifique los horarios existentes según sea necesario.' : 'Puede agregar múltiples horarios, incluso para el mismo día, siempre que no se superpongan.' }}
             </small>
           </div>
+        </div>
+
+        <!-- Tabla de Horarios Ocupados -->
+        <div class="form-group-modern mt-4" *ngIf="!cargandoDisponibilidades">
+          <label class="form-label-modern">
+            <i class="fa fa-calendar-alt me-2"></i>
+            Horarios Ocupados en Otros Centros o Especialidades
+          </label>
+
+          <div class="alert alert-info">
+            <i class="fa fa-info-circle me-2"></i>
+            Los horarios que se muestran a continuación están ocupados por otras especialidades o centros del médico.
+            Asegúrese de no crear conflictos al configurar nuevos horarios.
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th *ngFor="let dia of diasSemana">{{ getDiaNombre(dia) }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td *ngFor="let dia of diasSemana" class="horarios-dia-cell">
+                    <div *ngIf="tieneHorariosOcupados(dia); else sinHorariosDia">
+                      <div *ngFor="let horario of getHorariosOcupadosPorDia(dia)"
+                           class="horario-item"
+                           [class.otro-centro]="horario.esOtroCentro">
+                        <strong>{{ formatearHora(horario.horaInicio) }} - {{ formatearHora(horario.horaFin) }}</strong>
+                        <div class="small">{{ horario.especialidad }}</div>
+                        <div class="small">
+                          {{ horario.centro }}
+                          <span *ngIf="horario.esOtroCentro" class="badge bg-danger ms-1">Otro Centro</span>
+                        </div>
+                      </div>
+                    </div>
+                    <ng-template #sinHorariosDia>
+                      <span class="text-muted">-</span>
+                    </ng-template>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div *ngIf="cargandoDisponibilidades" class="text-center py-3">
+          <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+          <p class="mt-2 text-muted">Cargando horarios ocupados...</p>
         </div>
       </form>
     </div>
@@ -278,6 +330,72 @@ import { StaffMedico } from '../../../staffMedicos/staffMedico';
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    /* ==== TABLA DE HORARIOS OCUPADOS ==== */
+    .table-responsive {
+      margin-top: 1rem;
+      overflow-x: auto;
+    }
+
+    .table {
+      margin-bottom: 0;
+      font-size: 0.8rem;
+    }
+
+    .table thead th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.2rem;
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      vertical-align: top;
+      padding: 0.3rem;
+    }
+
+    .horarios-dia-cell {
+      width: 14.28%;
+      min-width: 85px;
+      max-width: 110px;
+    }
+
+    .horario-item {
+      background-color: rgba(255, 193, 7, 0.1);
+      border-left: 2px solid #ffc107;
+      padding: 0.25rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .horario-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .horario-item.otro-centro {
+      background-color: rgba(220, 53, 69, 0.1);
+      border-left: 2px solid #dc3545;
+    }
+
+    .horario-item strong {
+      display: block;
+      font-size: 0.75rem;
+      margin-bottom: 0.1rem;
+    }
+
+    .horario-item .small {
+      font-size: 0.7rem;
+      line-height: 1.1;
+    }
+
+    .badge {
+      font-size: 0.6rem;
+      padding: 0.1rem 0.3rem;
+    }
   `]
 })
 export class DisponibilidadModalComponent {
@@ -297,9 +415,16 @@ export class DisponibilidadModalComponent {
   // Propiedad para almacenar todas las disponibilidades del médico (validación inter-centro)
   todasLasDisponibilidadesMedico: DisponibilidadMedico[] = [];
 
+  // Mapa para almacenar información de centros y especialidades por staffMedicoId
+  staffMedicoInfoMap: Map<number, {centroNombre: string, especialidadNombre: string}> = new Map();
+
+  // Lista de todos los StaffMedico del médico (para mapear centros)
+  todosLosStaffMedico: any[] = [];
+
   constructor(
     public activeModal: NgbActiveModal,
-    private disponibilidadService: DisponibilidadMedicoService
+    private disponibilidadService: DisponibilidadMedicoService,
+    private staffMedicoService: StaffMedicoService
   ) {
     // Inicializar con valores por defecto
     this.staffMedico = {
@@ -346,17 +471,140 @@ export class DisponibilidadModalComponent {
 
     this.cargandoDisponibilidades = true;
 
-    this.disponibilidadService.byMedico(this.staffMedico.medico.id).subscribe({
+    // Cargar en paralelo: disponibilidades y todos los staffMedico del médico
+    forkJoin({
+      disponibilidades: this.disponibilidadService.byMedico(this.staffMedico.medico.id),
+      staffMedicos: this.staffMedicoService.getByMedicoId(this.staffMedico.medico.id)
+    }).subscribe({
       next: (response) => {
-        this.todasLasDisponibilidadesMedico = response.data || [];
+        this.todasLasDisponibilidadesMedico = response.disponibilidades.data || [];
+        this.todosLosStaffMedico = response.staffMedicos.data || [];
         this.cargandoDisponibilidades = false;
-        console.log('Disponibilidades del médico cargadas para validación inter-centro:', this.todasLasDisponibilidadesMedico.length);
+
+        console.log('Disponibilidades del médico cargadas:', this.todasLasDisponibilidadesMedico.length);
+        console.log('Staff médicos del médico cargados:', this.todosLosStaffMedico.length);
+        console.log('Datos de staffMedicos:', this.todosLosStaffMedico);
+
+        // Construir mapa de información de staffMedico
+        this.construirMapaStaffMedico();
+
+        // Calcular horarios ocupados para mostrar en el calendario
+        this.calcularHorariosOcupadosPorDia();
       },
       error: (error) => {
         console.error('Error al cargar disponibilidades del médico:', error);
         this.cargandoDisponibilidades = false;
         // No es un error crítico, continuar sin validación inter-centro
         this.todasLasDisponibilidadesMedico = [];
+        this.todosLosStaffMedico = [];
+      }
+    });
+  }
+
+  /**
+   * Obtiene los horarios ocupados agrupados por día de la semana
+   * Incluye todas las disponibilidades del médico EXCEPTO la que se está editando
+   */
+  getHorariosOcupadosPorDia(dia: string): Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean}> {
+    const horariosOcupados: Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean}> = [];
+
+    this.todasLasDisponibilidadesMedico.forEach(disponibilidad => {
+      // Excluir la disponibilidad que estamos editando actualmente
+      if (this.modoEdicion && this.disponibilidadExistente &&
+          disponibilidad.id === this.disponibilidadExistente.id) {
+        return;
+      }
+
+      // Obtener información del centro y especialidad desde la disponibilidad
+      let centroNombre = 'Centro desconocido';
+      let especialidadNombreDisp = 'Sin especialidad';
+      let esOtroCentro = false;
+
+      // Intentar obtener información del staffMedico
+      if (disponibilidad.staffMedico) {
+        if (disponibilidad.staffMedico.centro) {
+          centroNombre = disponibilidad.staffMedico.centro.nombre || `Centro #${disponibilidad.staffMedico.centroAtencionId}`;
+        } else if (disponibilidad.staffMedico.centroAtencionId) {
+          centroNombre = `Centro #${disponibilidad.staffMedico.centroAtencionId}`;
+        }
+
+        // Verificar si es otro centro comparando IDs
+        if (disponibilidad.staffMedico.centroAtencionId && this.staffMedico?.centroAtencionId) {
+          esOtroCentro = this.staffMedico.centroAtencionId !== disponibilidad.staffMedico.centroAtencionId;
+        } else {
+          // Si no hay IDs para comparar, comparamos staffMedicoId
+          esOtroCentro = disponibilidad.staffMedicoId !== this.staffMedico.id;
+        }
+
+        if (disponibilidad.staffMedico.especialidad) {
+          especialidadNombreDisp = disponibilidad.staffMedico.especialidad.nombre || 'Sin especialidad';
+        }
+      } else if (disponibilidad.staffMedicoId) {
+        // Si no tenemos el objeto staffMedico completo, usar el mapa de info
+        const info = this.staffMedicoInfoMap.get(disponibilidad.staffMedicoId);
+        if (info) {
+          centroNombre = info.centroNombre;
+          especialidadNombreDisp = info.especialidadNombre;
+        }
+        // Si es el mismo staffMedicoId que el actual, es el mismo centro
+        esOtroCentro = disponibilidad.staffMedicoId !== this.staffMedico.id;
+      }
+
+      // Revisar todos los horarios de esta disponibilidad
+      disponibilidad.horarios.forEach((horario: any) => {
+        if (horario.dia === dia) {
+          horariosOcupados.push({
+            horaInicio: horario.horaInicio,
+            horaFin: horario.horaFin,
+            especialidad: especialidadNombreDisp,
+            centro: centroNombre,
+            esOtroCentro: esOtroCentro
+          });
+        }
+      });
+    });
+
+    // Ordenar por hora de inicio
+    return horariosOcupados.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  }
+
+  /**
+   * Verifica si hay horarios ocupados para un día específico
+   */
+  tieneHorariosOcupados(dia: string): boolean {
+    return this.getHorariosOcupadosPorDia(dia).length > 0;
+  }
+
+  /**
+   * Calcula y almacena los horarios ocupados por día para mostrar en el calendario
+   */
+  private horariosOcupadosPorDia: { [dia: string]: Array<{horaInicio: string, horaFin: string, especialidad?: string}> } = {};
+
+  private calcularHorariosOcupadosPorDia(): void {
+    const dias = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
+
+    dias.forEach(dia => {
+      this.horariosOcupadosPorDia[dia] = this.getHorariosOcupadosPorDia(dia);
+    });
+  }
+
+  /**
+   * Construye un mapa de información de StaffMedico usando los datos pasados del padre
+   */
+  private construirMapaStaffMedico(): void {
+    console.log('Construyendo mapa de staffMedico. Datos recibidos:', this.todosLosStaffMedico);
+
+    this.todosLosStaffMedico.forEach(staff => {
+      if (staff.id) {
+        const centroNombre = staff.centro?.nombre || staff.centroAtencion?.nombre || `Centro #${staff.centroAtencionId || 'desconocido'}`;
+        const especialidadNombre = staff.especialidad?.nombre || 'Sin especialidad';
+
+        this.staffMedicoInfoMap.set(staff.id, {
+          centroNombre: centroNombre,
+          especialidadNombre: especialidadNombre
+        });
+
+        console.log(`Mapeando staffMedico ${staff.id}: ${centroNombre} - ${especialidadNombre}`);
       }
     });
   }
@@ -386,6 +634,12 @@ export class DisponibilidadModalComponent {
       'DOMINGO': 'Domingo'
     };
     return nombres[dia] || dia;
+  }
+
+  formatearHora(hora: string): string {
+    if (!hora) return '';
+    // Si la hora viene con segundos (HH:MM:SS), quitar los segundos
+    return hora.substring(0, 5);
   }
 
   puedeGuardar(): boolean {
