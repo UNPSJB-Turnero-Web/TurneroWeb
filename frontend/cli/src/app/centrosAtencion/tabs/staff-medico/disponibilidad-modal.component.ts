@@ -136,12 +136,13 @@ import { forkJoin } from 'rxjs';
         <div class="form-group-modern mt-4" *ngIf="!cargandoDisponibilidades">
           <label class="form-label-modern">
             <i class="fa fa-calendar-alt me-2"></i>
-            Horarios Ocupados en Otros Centros o Especialidades
+            Horarios Ocupados del Médico
           </label>
 
           <div class="alert alert-info">
             <i class="fa fa-info-circle me-2"></i>
-            Los horarios que se muestran a continuación están ocupados por otras especialidades o centros del médico.
+            Los horarios que se muestran a continuación están ocupados por disponibilidades del médico.
+            <span *ngIf="modoEdicion">Los horarios marcados como <span class="badge bg-primary">Actual</span> son los que está editando actualmente.</span>
             Asegúrese de no crear conflictos al configurar nuevos horarios.
           </div>
 
@@ -158,12 +159,16 @@ import { forkJoin } from 'rxjs';
                     <div *ngIf="tieneHorariosOcupados(dia); else sinHorariosDia">
                       <div *ngFor="let horario of getHorariosOcupadosPorDia(dia)"
                            class="horario-item"
-                           [class.otro-centro]="horario.esOtroCentro">
+                           [class.otro-centro]="horario.esOtroCentro"
+                           [class.mismo-centro-otra-especialidad]="horario.esMismoCentroOtraEspecialidad"
+                           [class.disponibilidad-actual]="horario.esDisponibilidadActual">
                         <strong>{{ formatearHora(horario.horaInicio) }} - {{ formatearHora(horario.horaFin) }}</strong>
                         <div class="small">{{ horario.especialidad }}</div>
                         <div class="small">
                           {{ horario.centro }}
                           <span *ngIf="horario.esOtroCentro" class="badge bg-danger ms-1">Otro Centro</span>
+                          <span *ngIf="horario.esMismoCentroOtraEspecialidad" class="badge bg-warning ms-1">Otra Especialidad</span>
+                          <span *ngIf="horario.esDisponibilidadActual" class="badge bg-primary ms-1">Actual</span>
                         </div>
                       </div>
                     </div>
@@ -381,6 +386,16 @@ import { forkJoin } from 'rxjs';
       border-left: 2px solid #dc3545;
     }
 
+    .horario-item.mismo-centro-otra-especialidad {
+      background-color: rgba(255, 193, 7, 0.15);
+      border-left: 2px solid #ffc107;
+    }
+
+    .horario-item.disponibilidad-actual {
+      background-color: rgba(13, 110, 253, 0.1);
+      border-left: 2px solid #0d6efd;
+    }
+
     .horario-item strong {
       display: block;
       font-size: 0.75rem;
@@ -477,11 +492,16 @@ export class DisponibilidadModalComponent {
       staffMedicos: this.staffMedicoService.getByMedicoId(this.staffMedico.medico.id)
     }).subscribe({
       next: (response) => {
+        console.log('Response completa de disponibilidades:', response);
+        console.log('response.disponibilidades:', response.disponibilidades);
+        console.log('response.staffMedicos:', response.staffMedicos);
+
         this.todasLasDisponibilidadesMedico = response.disponibilidades.data || [];
         this.todosLosStaffMedico = response.staffMedicos.data || [];
         this.cargandoDisponibilidades = false;
 
         console.log('Disponibilidades del médico cargadas:', this.todasLasDisponibilidadesMedico.length);
+        console.log('Datos disponibilidades:', this.todasLasDisponibilidadesMedico);
         console.log('Staff médicos del médico cargados:', this.todosLosStaffMedico.length);
         console.log('Datos de staffMedicos:', this.todosLosStaffMedico);
 
@@ -503,22 +523,21 @@ export class DisponibilidadModalComponent {
 
   /**
    * Obtiene los horarios ocupados agrupados por día de la semana
-   * Incluye todas las disponibilidades del médico EXCEPTO la que se está editando
+   * Incluye TODAS las disponibilidades del médico (incluyendo la que se está editando si aplica)
    */
-  getHorariosOcupadosPorDia(dia: string): Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean}> {
-    const horariosOcupados: Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean}> = [];
+  getHorariosOcupadosPorDia(dia: string): Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean, esMismoCentroOtraEspecialidad?: boolean, esDisponibilidadActual?: boolean}> {
+    const horariosOcupados: Array<{horaInicio: string, horaFin: string, especialidad?: string, centro?: string, esOtroCentro?: boolean, esMismoCentroOtraEspecialidad?: boolean, esDisponibilidadActual?: boolean}> = [];
+
+    console.log(`getHorariosOcupadosPorDia(${dia}) - Total disponibilidades:`, this.todasLasDisponibilidadesMedico.length);
 
     this.todasLasDisponibilidadesMedico.forEach(disponibilidad => {
-      // Excluir la disponibilidad que estamos editando actualmente
-      if (this.modoEdicion && this.disponibilidadExistente &&
-          disponibilidad.id === this.disponibilidadExistente.id) {
-        return;
-      }
+      console.log(`Procesando disponibilidad ID: ${disponibilidad.id}, tiene ${disponibilidad.horarios?.length || 0} horarios`);
 
       // Obtener información del centro y especialidad desde la disponibilidad
       let centroNombre = 'Centro desconocido';
       let especialidadNombreDisp = 'Sin especialidad';
       let esOtroCentro = false;
+      let esMismaEspecialidad = false;
 
       // Intentar obtener información del staffMedico
       if (disponibilidad.staffMedico) {
@@ -528,16 +547,20 @@ export class DisponibilidadModalComponent {
           centroNombre = `Centro #${disponibilidad.staffMedico.centroAtencionId}`;
         }
 
-        // Verificar si es otro centro comparando IDs
+        // Verificar si es otro centro comparando IDs de centro
         if (disponibilidad.staffMedico.centroAtencionId && this.staffMedico?.centroAtencionId) {
           esOtroCentro = this.staffMedico.centroAtencionId !== disponibilidad.staffMedico.centroAtencionId;
-        } else {
-          // Si no hay IDs para comparar, comparamos staffMedicoId
-          esOtroCentro = disponibilidad.staffMedicoId !== this.staffMedico.id;
         }
 
         if (disponibilidad.staffMedico.especialidad) {
           especialidadNombreDisp = disponibilidad.staffMedico.especialidad.nombre || 'Sin especialidad';
+
+          // Verificar si es la misma especialidad que estamos editando
+          if (this.especialidadId && disponibilidad.staffMedico.especialidad.id === this.especialidadId) {
+            esMismaEspecialidad = true;
+          } else if (this.staffMedico.especialidad && disponibilidad.staffMedico.especialidad.id === this.staffMedico.especialidad.id) {
+            esMismaEspecialidad = true;
+          }
         }
       } else if (disponibilidad.staffMedicoId) {
         // Si no tenemos el objeto staffMedico completo, usar el mapa de info
@@ -546,19 +569,35 @@ export class DisponibilidadModalComponent {
           centroNombre = info.centroNombre;
           especialidadNombreDisp = info.especialidadNombre;
         }
-        // Si es el mismo staffMedicoId que el actual, es el mismo centro
-        esOtroCentro = disponibilidad.staffMedicoId !== this.staffMedico.id;
+
+        // Determinar si es otro centro basado en el staffMedicoId
+        // Si el staffMedicoId es diferente, podría ser otra especialidad en el mismo centro u otro centro
+        if (disponibilidad.staffMedicoId !== this.staffMedico.id) {
+          // Para determinar si es otro centro, necesitamos comparar los centros
+          const staffInfo = this.todosLosStaffMedico.find(s => s.id === disponibilidad.staffMedicoId);
+          if (staffInfo && staffInfo.centroAtencionId && this.staffMedico?.centroAtencionId) {
+            esOtroCentro = staffInfo.centroAtencionId !== this.staffMedico.centroAtencionId;
+          }
+        }
       }
+
+      // Verificar si esta es la disponibilidad que se está editando
+      const esDisponibilidadActual = this.modoEdicion && this.disponibilidadExistente &&
+                                     disponibilidad.id === this.disponibilidadExistente.id;
 
       // Revisar todos los horarios de esta disponibilidad
       disponibilidad.horarios.forEach((horario: any) => {
         if (horario.dia === dia) {
+          const esMismoCentroOtraEspecialidad = !esOtroCentro && !esMismaEspecialidad && !esDisponibilidadActual;
+
           horariosOcupados.push({
             horaInicio: horario.horaInicio,
             horaFin: horario.horaFin,
             especialidad: especialidadNombreDisp,
             centro: centroNombre,
-            esOtroCentro: esOtroCentro
+            esOtroCentro: esOtroCentro,
+            esMismoCentroOtraEspecialidad: esMismoCentroOtraEspecialidad,
+            esDisponibilidadActual: esDisponibilidadActual
           });
         }
       });
