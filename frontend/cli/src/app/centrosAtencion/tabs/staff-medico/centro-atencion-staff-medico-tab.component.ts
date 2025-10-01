@@ -480,12 +480,12 @@ export class CentroAtencionStaffMedicoTabComponent implements OnInit {
    */
   private finalizarEliminacion(exitosas: number, errores: number): void {
     if (errores > 0) {
-      alert(`Se eliminaron ${exitosas} disponibilidad(es) con ${errores} error(es). Recargando datos...`);
+      alert(`Se eliminaron ${exitosas} disponibilidad(es) con ${errores} error(es). Recargando página...`);
     } else {
       alert(`Se eliminaron ${exitosas} disponibilidad(es) exitosamente.`);
     }
 
-    // Emitir evento para que el componente padre recargue los datos
-    this.disponibilidadCreada.emit(null as any);
+    // Recargar la ventana para actualizar todos los datos
+    window.location.reload();
   }
 }

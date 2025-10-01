@@ -22,6 +22,7 @@ import { EsquemaTurnoService } from '../esquemaTurno/esquemaTurno.service';
 import { DisponibilidadMedico } from '../disponibilidadMedicos/disponibilidadMedico';
 import { DisponibilidadMedicoService } from '../disponibilidadMedicos/disponibilidadMedico.service';
 import { DataPackage } from '../data.package';
+import { forkJoin, of } from 'rxjs';
 
 // Importar los tabs separados
 import { CentroAtencionDetalleTabComponent } from './tabs/detalle/centro-atencion-detalle-tab.component';
@@ -565,20 +566,53 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     if (!staff.id) return;
 
     const nombreMedico = `Dr. ${staff.medico?.nombre} ${staff.medico?.apellido}`;
-    if (confirm(`¿Está seguro que desea desasociar a ${nombreMedico}?`)) {
-      this.staffMedicoService.remove(staff.id).subscribe({
-        next: () => {
-          // Recargar completamente la lista de staff médico desde el servidor
-          this.loadStaffMedico();
-          this.cargarMedicosDisponibles();
-          this.showStaffMessage('Médico desasociado correctamente', 'success');
-        },
-        error: (error: any) => {
-          console.error('Error al desasociar médico:', error);
-          this.showStaffMessage('Error al desasociar el médico', 'danger');
-        }
-      });
+
+    // Obtener las disponibilidades del staff
+    const disponibilidades = this.disponibilidadesStaff[staff.id] || [];
+
+    let mensajeConfirmacion = `¿Está seguro que desea desasociar a ${nombreMedico}?`;
+    if (disponibilidades.length > 0) {
+      mensajeConfirmacion += `\n\nEsto eliminará también ${disponibilidades.length} disponibilidad(es) configurada(s) para este médico.`;
     }
+
+    if (confirm(mensajeConfirmacion)) {
+      // Si hay disponibilidades, eliminarlas primero
+      if (disponibilidades.length > 0) {
+        const eliminarDisponibilidades$ = disponibilidades
+          .filter(disp => disp.id)
+          .map(disp => this.disponibilidadMedicoService.remove(disp.id!));
+
+        // Eliminar todas las disponibilidades en paralelo
+        forkJoin(eliminarDisponibilidades$.length > 0 ? eliminarDisponibilidades$ : [of(null)]).subscribe({
+          next: () => {
+            // Ahora eliminar el staff médico
+            this.eliminarStaffMedico(staff);
+          },
+          error: (error: any) => {
+            console.error('Error al eliminar disponibilidades:', error);
+            this.showStaffMessage('Error al eliminar las disponibilidades del médico', 'danger');
+          }
+        });
+      } else {
+        // No hay disponibilidades, eliminar directamente el staff
+        this.eliminarStaffMedico(staff);
+      }
+    }
+  }
+
+  private eliminarStaffMedico(staff: StaffMedico): void {
+    this.staffMedicoService.remove(staff.id!).subscribe({
+      next: () => {
+        // Recargar completamente la lista de staff médico desde el servidor
+        this.loadStaffMedico();
+        this.cargarMedicosDisponibles();
+        this.showStaffMessage('Médico desasociado correctamente', 'success');
+      },
+      error: (error: any) => {
+        console.error('Error al desasociar médico:', error);
+        this.showStaffMessage('Error al desasociar el médico', 'danger');
+      }
+    });
   }
 
   desasociarEspecialidadDeMedico(data: {medico: any, especialidad: Especialidad}): void {
