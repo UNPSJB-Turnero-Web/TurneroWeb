@@ -758,8 +758,7 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
 
   private loadAllData(): void {
     this.getConsultorios();
-    this.cargarEspecialidadesAsociadas();
-    this.cargarEspecialidadesDisponibles();
+    this.cargarEspecialidadesAsociadas(); // Esto llamará a cargarEspecialidadesDisponibles() internamente
     this.loadStaffMedico();
     this.cargarMedicosDisponibles();
     this.cargarEsquemasTurno();
@@ -792,6 +791,8 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
     this.especialidadService.getByCentroAtencion(this.centroAtencion.id).subscribe({
       next: (dataPackage: DataPackage<Especialidad[]>) => {
         this.especialidadesAsociadas = dataPackage.data;
+        // Cargar especialidades disponibles después de tener las asociadas
+        this.cargarEspecialidadesDisponibles();
       },
       error: (error: any) => {
         console.error('Error al cargar especialidades asociadas:', error);
