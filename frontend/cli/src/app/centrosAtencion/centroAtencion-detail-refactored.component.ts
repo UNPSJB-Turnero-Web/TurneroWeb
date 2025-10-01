@@ -617,9 +617,9 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
 
   desasociarEspecialidadDeMedico(data: {medico: any, especialidad: Especialidad}): void {
     const {medico, especialidad} = data;
-    
+
     // Encontrar el staff médico específico para esta especialidad
-    const staffEspecifico = this.staffMedicoCentro.find(staff => 
+    const staffEspecifico = this.staffMedicoCentro.find(staff =>
       staff.medico?.id === medico.medico?.id && staff.especialidad?.id === especialidad.id
     );
 
@@ -628,7 +628,43 @@ export class CentroAtencionDetailRefactoredComponent implements AfterViewInit, O
       return;
     }
 
-    this.staffMedicoService.remove(staffEspecifico.id).subscribe({
+    // Obtener las disponibilidades del staff específico
+    const disponibilidades = this.disponibilidadesStaff[staffEspecifico.id] || [];
+
+    let mensajeConfirmacion = `¿Está seguro que desea desasociar la especialidad "${especialidad.nombre}" del Dr. ${medico.medico?.nombre} ${medico.medico?.apellido}?`;
+    if (disponibilidades.length > 0) {
+      mensajeConfirmacion += `\n\nEsto eliminará también ${disponibilidades.length} disponibilidad(es) configurada(s) para esta especialidad.`;
+    }
+
+    if (!confirm(mensajeConfirmacion)) {
+      return;
+    }
+
+    // Si hay disponibilidades, eliminarlas primero
+    if (disponibilidades.length > 0) {
+      const eliminarDisponibilidades$ = disponibilidades
+        .filter(disp => disp.id)
+        .map(disp => this.disponibilidadMedicoService.remove(disp.id!));
+
+      // Eliminar todas las disponibilidades en paralelo
+      forkJoin(eliminarDisponibilidades$.length > 0 ? eliminarDisponibilidades$ : [of(null)]).subscribe({
+        next: () => {
+          // Ahora eliminar el staff médico específico
+          this.eliminarStaffMedicoEspecifico(staffEspecifico, especialidad);
+        },
+        error: (error: any) => {
+          console.error('Error al eliminar disponibilidades de la especialidad:', error);
+          this.showStaffMessage('Error al eliminar las disponibilidades de la especialidad', 'danger');
+        }
+      });
+    } else {
+      // No hay disponibilidades, eliminar directamente el staff
+      this.eliminarStaffMedicoEspecifico(staffEspecifico, especialidad);
+    }
+  }
+
+  private eliminarStaffMedicoEspecifico(staffEspecifico: StaffMedico, especialidad: Especialidad): void {
+    this.staffMedicoService.remove(staffEspecifico.id!).subscribe({
       next: () => {
         // Recargar completamente la lista de staff médico desde el servidor
         // para asegurar consistencia de datos
