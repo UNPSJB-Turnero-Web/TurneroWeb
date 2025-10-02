@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +67,34 @@ public class ObraSocialService {
 
     public Page<ObraSocialDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
+    /**
+     * Búsqueda paginada avanzada con filtros combinados y ordenamiento dinámico
+     * @param page Número de página (0-indexed)
+     * @param size Cantidad de elementos por página
+     * @param nombre Filtro por nombre de la obra social (opcional)
+     * @param codigo Filtro por código de la obra social (opcional)
+     * @param sortBy Campo por el cual ordenar (por defecto: nombre)
+     * @param sortDir Dirección del ordenamiento: asc|desc (por defecto: asc)
+     * @return Página de obras sociales filtradas y ordenadas como DTOs
+     */
+    public Page<ObraSocialDTO> findByPage(int page, int size, String nombre, String codigo, 
+                                         String sortBy, String sortDir) {
+        // Configurar ordenamiento
+        String field = (sortBy != null && !sortBy.trim().isEmpty()) ? sortBy.trim() : "nombre";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? 
+                                   Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, field));
+        
+        // Normalizar filtros
+        String nombreFilter = (nombre != null && !nombre.trim().isEmpty()) ? nombre.trim() : null;
+        String codigoFilter = (codigo != null && !codigo.trim().isEmpty()) ? codigo.trim() : null;
+        
+        // Ejecutar búsqueda con filtros
+        return repository.findByFiltros(nombreFilter, codigoFilter, pageRequest)
                 .map(this::toDTO);
     }
 

@@ -25,21 +25,29 @@ public class ObraSocialPresenter {
     }
 
     @GetMapping("/page")
-    public ResponseEntity<Object> getByPage(
+    public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String codigo,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            var pageResult = service.findByPage(page, size);
+            var pageResult = service.findByPage(page, size, nombre, codigo, sortBy, sortDir);
 
             var response = Map.of(
                     "content", pageResult.getContent(),
                     "totalPages", pageResult.getTotalPages(),
                     "totalElements", pageResult.getTotalElements(),
-                    "currentPage", pageResult.getNumber());
+                    "currentPage", pageResult.getNumber(),
+                    "size", pageResult.getSize(),
+                    "numberOfElements", pageResult.getNumberOfElements(),
+                    "first", pageResult.isFirst(),
+                    "last", pageResult.isLast());
 
-            return Response.ok(response, "Obras sociales paginadas recuperadas correctamente");
+            return Response.ok(response, "Obras sociales encontradas correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al recuperar las obras sociales paginadas: " + e.getMessage());
+            return Response.error(null, "Error al buscar obras sociales: " + e.getMessage());
         }
     }
 
