@@ -11,7 +11,9 @@ import lombok.Setter;
 public class DisponibilidadMedicoDTO {
     private Integer id;
     private Integer staffMedicoId;
+    private String staffMedicoName; // Nombre completo del staff médico para display
     private Integer especialidadId; // ID de la especialidad asociada
+    private String especialidadName; // Nombre de la especialidad para display
     private List<DiaHorarioDTO> horarios; // Lista de días con horarios
 
     @Getter
