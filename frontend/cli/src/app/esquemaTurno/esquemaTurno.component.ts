@@ -44,42 +44,148 @@ import { FormsModule } from '@angular/forms';
           </div>
         </div>
 
+        <!-- BARRA DE FILTROS -->
+        <div class="filters-section">
+          <div class="filters-container">
+            <div class="filter-group">
+              <label for="staffMedicoFilter" class="form-label">
+                <i class="fas fa-user-md me-1"></i>
+                Staff Médico
+              </label>
+              <input
+                type="text"
+                id="staffMedicoFilter"
+                class="form-control"
+                placeholder="Buscar por nombre..."
+                [(ngModel)]="filters.staffMedico"
+                (input)="applyFilters()"
+              >
+            </div>
+            <div class="filter-group">
+              <label for="consultorioFilter" class="form-label">
+                <i class="fas fa-door-open me-1"></i>
+                Consultorio
+              </label>
+              <input
+                type="text"
+                id="consultorioFilter"
+                class="form-control"
+                placeholder="Buscar por consultorio..."
+                [(ngModel)]="filters.consultorio"
+                (input)="applyFilters()"
+              >
+            </div>
+            <div class="filter-group">
+              <label for="centroFilter" class="form-label">
+                <i class="fas fa-hospital me-1"></i>
+                Centro
+              </label>
+              <input
+                type="text"
+                id="centroFilter"
+                class="form-control"
+                placeholder="Buscar por centro..."
+                [(ngModel)]="filters.centro"
+                (input)="applyFilters()"
+              >
+            </div>
+            <div class="filter-actions">
+              <button
+                class="btn btn-clear"
+                (click)="clearFilters()"
+                title="Limpiar filtros"
+              >
+                <i class="fas fa-times"></i>
+                Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- TABLA MODERNA NORMALIZADA -->
         <div class="table-container">
           <table class="table modern-table">
             <thead>
               <tr>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle id-header">
-                      <i class="fas fa-hashtag"></i>
+                  <button
+                    class="sortable-header"
+                    [class.active]="filters.sortBy === 'id'"
+                    (click)="toggleSort('id')"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle id-header">
+                        <i class="fas fa-hashtag"></i>
+                      </div>
+                      ID
+                      <i
+                        class="fas fa-sort-up sort-icon"
+                        [class.fa-sort-up]="filters.sortBy === 'id' && filters.sortDir === 'asc'"
+                        [class.fa-sort-down]="filters.sortBy === 'id' && filters.sortDir === 'desc'"
+                        [class.fa-sort]="filters.sortBy !== 'id'"
+                      ></i>
                     </div>
-                    ID
-                  </div>
+                  </button>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle icon-medicos">
-                      <i class="fas fa-user-md"></i>
+                  <button
+                    class="sortable-header"
+                    [class.active]="filters.sortBy === 'staffMedico'"
+                    (click)="toggleSort('staffMedico')"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle icon-medicos">
+                        <i class="fas fa-user-md"></i>
+                      </div>
+                      Staff Médico
+                      <i
+                        class="fas fa-sort-up sort-icon"
+                        [class.fa-sort-up]="filters.sortBy === 'staffMedico' && filters.sortDir === 'asc'"
+                        [class.fa-sort-down]="filters.sortBy === 'staffMedico' && filters.sortDir === 'desc'"
+                        [class.fa-sort]="filters.sortBy !== 'staffMedico'"
+                      ></i>
                     </div>
-                    Staff Médico
-                  </div>
+                  </button>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle icon-consultorios">
-                      <i class="fas fa-door-open"></i>
+                  <button
+                    class="sortable-header"
+                    [class.active]="filters.sortBy === 'consultorio'"
+                    (click)="toggleSort('consultorio')"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle icon-consultorios">
+                        <i class="fas fa-door-open"></i>
+                      </div>
+                      Consultorio
+                      <i
+                        class="fas fa-sort-up sort-icon"
+                        [class.fa-sort-up]="filters.sortBy === 'consultorio' && filters.sortDir === 'asc'"
+                        [class.fa-sort-down]="filters.sortBy === 'consultorio' && filters.sortDir === 'desc'"
+                        [class.fa-sort]="filters.sortBy !== 'consultorio'"
+                      ></i>
                     </div>
-                    Consultorio
-                  </div>
+                  </button>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle icon-centro-atencion">
-                      <i class="fas fa-hospital"></i>
+                  <button
+                    class="sortable-header"
+                    [class.active]="filters.sortBy === 'centro'"
+                    (click)="toggleSort('centro')"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle icon-centro-atencion">
+                        <i class="fas fa-hospital"></i>
+                      </div>
+                      Centro
+                      <i
+                        class="fas fa-sort-up sort-icon"
+                        [class.fa-sort-up]="filters.sortBy === 'centro' && filters.sortDir === 'asc'"
+                        [class.fa-sort-down]="filters.sortBy === 'centro' && filters.sortDir === 'desc'"
+                        [class.fa-sort]="filters.sortBy !== 'centro'"
+                      ></i>
                     </div>
-                    Centro
-                  </div>
+                  </button>
                 </th>
                 <th>
                   <div class="header-cell">
@@ -511,6 +617,123 @@ import { FormsModule } from '@angular/forms';
         font-size: 0.7rem;
       }
     }
+
+    /* FILTROS */
+    .filters-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .filters-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      align-items: end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-group .form-label {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .filter-group .form-control {
+      padding: 0.75rem 1rem;
+      border: 2px solid #e3e6ea;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .filter-group .form-control:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+      outline: none;
+    }
+
+    .filter-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+
+    .btn-clear {
+      background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-clear:hover {
+      background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+    }
+
+    /* CABECERAS ORDENABLES */
+    .sortable-header {
+      background: none;
+      border: none;
+      width: 100%;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.3s ease;
+    }
+
+    .sortable-header:hover {
+      background: rgba(52, 152, 219, 0.05);
+      border-radius: 8px;
+    }
+
+    .sortable-header.active {
+      background: rgba(52, 152, 219, 0.1);
+      border-radius: 8px;
+    }
+
+    .sort-icon {
+      margin-left: 0.5rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      transition: all 0.3s ease;
+    }
+
+    .sortable-header.active .sort-icon {
+      opacity: 1;
+      color: #3498db;
+    }
+
+    /* RESPONSIVE PARA FILTROS */
+    @media (max-width: 768px) {
+      .filters-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .filter-actions {
+        justify-content: center;
+      }
+    }
   `]
 })
 export class EsquemaTurnoComponent {
@@ -525,6 +748,18 @@ export class EsquemaTurnoComponent {
     last: true
   };
   currentPage: number = 1;
+
+  // Filtros de búsqueda
+  filters = {
+    staffMedico: '',
+    consultorio: '',
+    centro: '',
+    sortBy: 'id',
+    sortDir: 'asc'
+  };
+
+  private filterTimeout: any;
+
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
   centrosAtencion: CentroAtencion[] = [];
@@ -550,7 +785,7 @@ export class EsquemaTurnoComponent {
   ) { }
 
   ngOnInit() {
-    this.getEsquemas();
+    this.searchEsquemas();
     this.staffMedicoService.all().subscribe(dp => {
       this.staffMedicos = dp.data as StaffMedico[];
     });
@@ -563,48 +798,83 @@ export class EsquemaTurnoComponent {
   }
 
 
-  getEsquemas(): void {
-    this.esquemaTurnoService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = <ResultsPage>dataPackage.data;
+  /** Búsqueda de esquemas de turno con filtros y paginación */
+  searchEsquemas(): void {
+    this.esquemaTurnoService.byPageAdvanced(
+      this.currentPage,
+      this.resultsPage.size,
+      this.filters.staffMedico || undefined,
+      this.filters.consultorio || undefined,
+      this.filters.centro || undefined,
+      this.filters.sortBy,
+      this.filters.sortDir
+    ).subscribe({
+      next: (dataPackage) => {
+        if (dataPackage.data) {
+          this.resultsPage = {
+            content: dataPackage.data.content || [],
+            totalElements: dataPackage.data.totalElements || 0,
+            totalPages: dataPackage.data.totalPages || 0,
+            number: dataPackage.data.currentPage || 0,
+            size: dataPackage.data.size || 10,
+            numberOfElements: dataPackage.data.numberOfElements || 0,
+            first: dataPackage.data.first || false,
+            last: dataPackage.data.last || false
+          };
 
-      // Procesar cada esquema para asignar datos relacionados
-      this.resultsPage.content.forEach((esquema: EsquemaTurno) => {
-        // Obtener el staff médico
-        if (esquema.staffMedicoId) {
-          const staff = this.staffMedicos.find(s => s.id === esquema.staffMedicoId);
-          if (staff) {
-            esquema.staffMedico = staff;
-          }
-        }
+          // Procesar cada esquema para asignar datos relacionados
+          this.resultsPage.content.forEach((esquema: EsquemaTurno) => {
+            // Obtener el staff médico
+            if (esquema.staffMedicoId) {
+              const staff = this.staffMedicos.find(s => s.id === esquema.staffMedicoId);
+              if (staff) {
+                esquema.staffMedico = staff;
+              }
+            }
 
-        // Obtener el consultorio
-        if (esquema.consultorioId) {
-          const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
-          if (consultorio) {
-            esquema.consultorio = consultorio;
-          }
-        }
+            // Obtener el consultorio
+            if (esquema.consultorioId) {
+              const consultorio = this.consultorios.find(c => c.id === esquema.consultorioId);
+              if (consultorio) {
+                esquema.consultorio = consultorio;
+              }
+            }
 
-        // Obtener el centro de atención
-        if (esquema.centroId) {
-          const centro = this.centrosAtencion.find(c => c.id === esquema.centroId);
-          if (centro) {
-            esquema.centroAtencion = centro;
-          }
-        }
+            // Obtener el centro de atención
+            if (esquema.centroId) {
+              const centro = this.centrosAtencion.find(c => c.id === esquema.centroId);
+              if (centro) {
+                esquema.centroAtencion = centro;
+              }
+            }
 
-        // Procesar los horarios del esquema
-        if (!esquema.horarios || esquema.horarios.length === 0) {
-          esquema.horarios = [];
+            // Procesar los horarios del esquema
+            if (!esquema.horarios || esquema.horarios.length === 0) {
+              esquema.horarios = [];
+            }
+          });
         }
-      });
+      },
+      error: (error) => {
+        console.error('Error al buscar esquemas de turno:', error);
+        this.resultsPage = {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 0,
+          size: 10,
+          numberOfElements: 0,
+          first: true,
+          last: true
+        };
+      }
     });
   }
 
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
-    this.getEsquemas();
+    this.searchEsquemas();
   }
 
   goToEdit(id: number): void {
@@ -624,7 +894,7 @@ export class EsquemaTurnoComponent {
       )
       .then(() => {
         this.esquemaTurnoService.remove(id).subscribe({
-          next: () => this.getEsquemas(),
+          next: () => this.searchEsquemas(),
           error: (err) => {
             const msg = err?.error?.message || "Error al eliminar el esquema.";
             alert(msg);
@@ -632,6 +902,44 @@ export class EsquemaTurnoComponent {
           }
         });
       });
+  }
+
+  /** Aplicar filtros con debounce */
+  applyFilters(): void {
+    if (this.filterTimeout) {
+      clearTimeout(this.filterTimeout);
+    }
+    this.filterTimeout = setTimeout(() => {
+      this.currentPage = 1;
+      this.searchEsquemas();
+    }, 300);
+  }
+
+  /** Limpiar todos los filtros */
+  clearFilters(): void {
+    this.filters = {
+      staffMedico: '',
+      consultorio: '',
+      centro: '',
+      sortBy: 'id',
+      sortDir: 'asc'
+    };
+    this.currentPage = 1;
+    this.searchEsquemas();
+  }
+
+  /** Toggle de ordenamiento por columna */
+  toggleSort(column: string): void {
+    if (this.filters.sortBy === column) {
+      // Si ya está ordenando por esta columna, cambiar dirección
+      this.filters.sortDir = this.filters.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Si es una nueva columna, usar ascendente por defecto
+      this.filters.sortBy = column;
+      this.filters.sortDir = 'asc';
+    }
+    this.currentPage = 1;
+    this.searchEsquemas();
   }
 
   getStaffMedicoNombre(staffMedicoId: number): string {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { EsquemaTurno } from './esquemaTurno';
 import { DataPackage } from '../data.package';
@@ -41,6 +41,39 @@ export class EsquemaTurnoService {
 
     byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page-1}&size=${size}`);
+  }
+
+  /** Búsqueda avanzada paginada de esquemas de turno */
+  byPageAdvanced(
+    page: number,
+    size: number,
+    staffMedico?: string,
+    consultorio?: string,
+    centro?: string,
+    sortBy?: string,
+    sortDir?: string
+  ): Observable<DataPackage> {
+    let params = new HttpParams()
+      .set('page', (page - 1).toString())
+      .set('size', size.toString());
+
+    if (staffMedico && staffMedico.trim()) {
+      params = params.set('staffMedico', staffMedico.trim());
+    }
+    if (consultorio && consultorio.trim()) {
+      params = params.set('consultorio', consultorio.trim());
+    }
+    if (centro && centro.trim()) {
+      params = params.set('centro', centro.trim());
+    }
+    if (sortBy && sortBy.trim()) {
+      params = params.set('sortBy', sortBy.trim());
+    }
+    if (sortDir && sortDir.trim()) {
+      params = params.set('sortDir', sortDir.trim());
+    }
+
+    return this.http.get<DataPackage>(`${this.url}/page`, { params });
   }
 
   /** Búsqueda de esquemas de turno */

@@ -134,22 +134,31 @@ public class EsquemaTurnoPresenter {
         }
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    @GetMapping("/page")
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String staffMedico,
+            @RequestParam(required = false) String consultorio,
+            @RequestParam(required = false) String centro,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            var pageResult = service.findByPage(page, size);
+            var pageResult = service.findByPage(page, size, staffMedico, consultorio, centro, sortBy, sortDir);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("content", pageResult.getContent());
-            response.put("totalPages", pageResult.getTotalPages());
-            response.put("totalElements", pageResult.getTotalElements());
-            response.put("currentPage", pageResult.getNumber());
+            var response = Map.of(
+                    "content", pageResult.getContent(),
+                    "totalPages", pageResult.getTotalPages(),
+                    "totalElements", pageResult.getTotalElements(),
+                    "currentPage", pageResult.getNumber(),
+                    "size", pageResult.getSize(),
+                    "numberOfElements", pageResult.getNumberOfElements(),
+                    "first", pageResult.isFirst(),
+                    "last", pageResult.isLast());
 
-            return Response.ok(response, "Paginación obtenida correctamente");
+            return Response.ok(response, "Esquemas de turno encontrados correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al obtener la paginación: " + e.getMessage());
+            return Response.error(null, "Error al buscar esquemas de turno: " + e.getMessage());
         }
     }
 
