@@ -49,6 +49,43 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     List<Turno> findByStaffMedico_Id(Integer staffMedicoId);
 
+    /**
+     * Búsqueda paginada avanzada con filtros combinados y ordenamiento dinámico
+     * @param paciente Filtro por nombre o apellido del paciente (LIKE, opcional)
+     * @param medico Filtro por nombre o apellido del médico (LIKE, opcional)
+     * @param consultorio Filtro por nombre del consultorio (LIKE, opcional)
+     * @param estado Filtro por estado del turno (opcional)
+     * @param fechaDesde Filtro por fecha desde (opcional)
+     * @param fechaHasta Filtro por fecha hasta (opcional)
+     * @param pageable Configuración de paginación y ordenamiento
+     * @return Página de turnos filtrados y ordenados
+     */
+    @Query("""
+        SELECT t FROM Turno t
+        JOIN t.paciente p
+        JOIN t.staffMedico sm
+        JOIN sm.medico m
+        JOIN t.consultorio c
+        WHERE (:paciente IS NULL OR 
+               LOWER(p.nombre) LIKE LOWER(CONCAT('%', :paciente, '%')) OR
+               LOWER(p.apellido) LIKE LOWER(CONCAT('%', :paciente, '%')))
+           AND (:medico IS NULL OR
+                LOWER(m.nombre) LIKE LOWER(CONCAT('%', :medico, '%')) OR
+                LOWER(m.apellido) LIKE LOWER(CONCAT('%', :medico, '%')))
+           AND (:consultorio IS NULL OR 
+                LOWER(c.nombre) LIKE LOWER(CONCAT('%', :consultorio, '%')))
+           AND (:estado IS NULL OR t.estado = :estado)
+           AND (CAST(:fechaDesde AS date) IS NULL OR t.fecha >= CAST(:fechaDesde AS date))
+           AND (CAST(:fechaHasta AS date) IS NULL OR t.fecha <= CAST(:fechaHasta AS date))
+        """)
+    Page<Turno> findByFiltros(@Param("paciente") String paciente,
+                              @Param("medico") String medico,
+                              @Param("consultorio") String consultorio,
+                              @Param("estado") EstadoTurno estado,
+                              @Param("fechaDesde") LocalDate fechaDesde,
+                              @Param("fechaHasta") LocalDate fechaHasta,
+                              Pageable pageable);
+
     Page<Turno> findByStaffMedico_Id(Integer staffMedicoId, Pageable pageable);
 
     List<Turno> findByStaffMedico_Especialidad_Id(Integer especialidadId);

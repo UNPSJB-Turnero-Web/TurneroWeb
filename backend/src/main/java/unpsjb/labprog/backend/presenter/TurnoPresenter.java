@@ -99,26 +99,40 @@ public class TurnoPresenter {
         return Response.ok(updated, "Turno actualizado correctamente");
     }
 
-     @GetMapping("/page")
+    /**
+     * Endpoint de paginación avanzada con filtros y ordenamiento
+     * GET /turno/page?page=0&size=10&paciente=Juan&medico=Garcia&estado=PROGRAMADO&sortBy=fecha&sortDir=desc
+     */
+    @GetMapping("/page")
     public ResponseEntity<Object> getByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String paciente,
+            @RequestParam(required = false) String medico,
+            @RequestParam(required = false) String consultorio,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String fechaDesde,
+            @RequestParam(required = false) String fechaHasta,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            var pageResult = service.findByPage(page, size);
+            Page<TurnoDTO> pageResult = service.findByPage(
+                page, size, paciente, medico, consultorio, 
+                estado, fechaDesde, fechaHasta, sortBy, sortDir);
 
             var response = Map.of(
                     "content", pageResult.getContent(),
                     "totalPages", pageResult.getTotalPages(),
                     "totalElements", pageResult.getTotalElements(),
-                    "number", pageResult.getNumber(),
+                    "currentPage", pageResult.getNumber(),
                     "size", pageResult.getSize(),
                     "first", pageResult.isFirst(),
                     "last", pageResult.isLast(),
                     "numberOfElements", pageResult.getNumberOfElements());
 
-            return Response.ok(response, "Staff médico paginado recuperado correctamente");
+            return Response.ok(response, "Turnos paginados recuperados correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al recuperar el staff médico paginado: " + e.getMessage());
+            return Response.error(null, "Error al recuperar turnos paginados: " + e.getMessage());
         }
     }
 

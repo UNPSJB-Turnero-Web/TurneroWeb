@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TurnoService } from './turno.service';
 import { Turno } from './turno';
 import { ModalService } from '../modal/modal.service';
@@ -10,7 +11,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 @Component({
   selector: 'app-turnos',
   standalone: true,
-  imports: [CommonModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, RouterModule, FormsModule, PaginationComponent],
   template: `
     <div class="container-fluid mt-4">
       <div class="modern-card">
@@ -56,6 +57,168 @@ import { PaginationComponent } from '../pagination/pagination.component';
           </div>
         </div>
 
+        <!-- BARRA DE FILTROS Y BÚSQUEDA -->
+        <div class="card-body">
+          <div class="filters-section">
+            <h5 class="filters-title">
+              <i class="fas fa-filter me-2"></i>
+              Filtros de búsqueda
+            </h5>
+            
+            <div class="row g-3">
+              <!-- Filtro por Paciente -->
+              <div class="col-md-3">
+                <label for="pacienteFilter" class="form-label">
+                  <i class="fas fa-user me-1"></i>
+                  Paciente
+                </label>
+                <input
+                  type="text"
+                  id="pacienteFilter"
+                  class="form-control"
+                  placeholder="Buscar por nombre/apellido"
+                  [(ngModel)]="filters.paciente"
+                  (input)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Filtro por Médico -->
+              <div class="col-md-3">
+                <label for="medicoFilter" class="form-label">
+                  <i class="fas fa-user-md me-1"></i>
+                  Médico
+                </label>
+                <input
+                  type="text"
+                  id="medicoFilter"
+                  class="form-control"
+                  placeholder="Buscar por nombre/apellido"
+                  [(ngModel)]="filters.medico"
+                  (input)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Filtro por Consultorio -->
+              <div class="col-md-3">
+                <label for="consultorioFilter" class="form-label">
+                  <i class="fas fa-hospital me-1"></i>
+                  Consultorio
+                </label>
+                <input
+                  type="text"
+                  id="consultorioFilter"
+                  class="form-control"
+                  placeholder="Buscar consultorio"
+                  [(ngModel)]="filters.consultorio"
+                  (input)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Filtro por Estado -->
+              <div class="col-md-3">
+                <label for="estadoFilter" class="form-label">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Estado
+                </label>
+                <select
+                  id="estadoFilter"
+                  class="form-select"
+                  [(ngModel)]="filters.estado"
+                  (change)="onFilterChange()"
+                >
+                  <option value="">Todos los estados</option>
+                  <option value="PROGRAMADO">Programado</option>
+                  <option value="CONFIRMADO">Confirmado</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
+              </div>
+
+              <!-- Filtro Fecha Desde -->
+              <div class="col-md-3">
+                <label for="fechaDesdeFilter" class="form-label">
+                  <i class="fas fa-calendar-alt me-1"></i>
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  id="fechaDesdeFilter"
+                  class="form-control"
+                  [(ngModel)]="filters.fechaDesde"
+                  (change)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Filtro Fecha Hasta -->
+              <div class="col-md-3">
+                <label for="fechaHastaFilter" class="form-label">
+                  <i class="fas fa-calendar-alt me-1"></i>
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  id="fechaHastaFilter"
+                  class="form-control"
+                  [(ngModel)]="filters.fechaHasta"
+                  (change)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Ordenamiento -->
+              <div class="col-md-3">
+                <label for="sortByFilter" class="form-label">
+                  <i class="fas fa-sort me-1"></i>
+                  Ordenar por
+                </label>
+                <select
+                  id="sortByFilter"
+                  class="form-select"
+                  [(ngModel)]="filters.sortBy"
+                  (change)="onFilterChange()"
+                >
+                  <option value="fecha">Fecha</option>
+                  <option value="estado">Estado</option>
+                  <option value="horaInicio">Hora</option>
+                </select>
+              </div>
+
+              <!-- Dirección de ordenamiento -->
+              <div class="col-md-3">
+                <label for="sortDirFilter" class="form-label">
+                  <i class="fas fa-sort-amount-down me-1"></i>
+                  Dirección
+                </label>
+                <select
+                  id="sortDirFilter"
+                  class="form-select"
+                  [(ngModel)]="filters.sortDir"
+                  (change)="onFilterChange()"
+                >
+                  <option value="asc">Ascendente</option>
+                  <option value="desc">Descendente</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Botones de control -->
+            <div class="filters-controls mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="clearFilters()"
+              >
+                <i class="fas fa-times me-2"></i>
+                Limpiar filtros
+              </button>
+              
+              <div class="results-info">
+                <span class="badge bg-primary">
+                  {{ resultsPage.totalElements }} resultado(s) encontrado(s)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- TABLA MODERNA NORMALIZADA -->
         <div class="table-container">
           <table class="table modern-table">
@@ -94,12 +257,23 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle icon-turnos">
-                      <i class="fas fa-calendar-alt"></i>
+                  <button 
+                    class="header-button" 
+                    (click)="toggleSort('fecha')"
+                    [class.active]="filters.sortBy === 'fecha'"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle icon-turnos">
+                        <i class="fas fa-calendar-alt"></i>
+                      </div>
+                      Fecha & Hora
+                      <i class="fas" 
+                         [class.fa-sort-up]="filters.sortBy === 'fecha' && filters.sortDir === 'asc'"
+                         [class.fa-sort-down]="filters.sortBy === 'fecha' && filters.sortDir === 'desc'"
+                         [class.fa-sort]="filters.sortBy !== 'fecha'">
+                      </i>
                     </div>
-                    Fecha & Hora
-                  </div>
+                  </button>
                 </th>
                 <th>
                   <div class="header-cell">
@@ -110,12 +284,23 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle icon-turnos">
-                      <i class="fas fa-info-circle"></i>
+                  <button 
+                    class="header-button" 
+                    (click)="toggleSort('estado')"
+                    [class.active]="filters.sortBy === 'estado'"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle icon-turnos">
+                        <i class="fas fa-info-circle"></i>
+                      </div>
+                      Estado
+                      <i class="fas" 
+                         [class.fa-sort-up]="filters.sortBy === 'estado' && filters.sortDir === 'asc'"
+                         [class.fa-sort-down]="filters.sortBy === 'estado' && filters.sortDir === 'desc'"
+                         [class.fa-sort]="filters.sortBy !== 'estado'">
+                      </i>
                     </div>
-                    Estado
-                  </div>
+                  </button>
                 </th>
                 <th>
                   <div class="header-cell">
@@ -264,6 +449,65 @@ import { PaginationComponent } from '../pagination/pagination.component';
     </div>
   `,
   styles: [`
+    /* === ESTILOS DE FILTROS === */
+    .filters-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #dee2e6;
+    }
+
+    .filters-title {
+      color: #495057;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .filters-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .results-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* === ESTILOS DE ORDENAMIENTO === */
+    .header-button {
+      background: none;
+      border: none;
+      width: 100%;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: inherit;
+    }
+
+    .header-button:hover {
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+    }
+
+    .header-button.active {
+      background: var(--turnos-light);
+      border-radius: 8px;
+    }
+
+    .header-button .header-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem;
+    }
+
     /* Turnos específicos usando sistema de colores global */
     .paciente-info, .medico-info {
       display: flex;
@@ -632,7 +876,22 @@ export class TurnosComponent {
     first: true,
     last: true
   };
+  
   currentPage: number = 1;
+  
+  // Filtros de búsqueda
+  filters = {
+    paciente: '',
+    medico: '',
+    consultorio: '',
+    estado: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    sortBy: 'fecha',
+    sortDir: 'desc'
+  };
+
+  private filterTimeout: any;
 
   constructor(
     private turnoService: TurnoService,
@@ -641,27 +900,94 @@ export class TurnosComponent {
   ) {}
 
   ngOnInit(): void {
-    this.getTurnos();
+    this.searchTurnos();
   }
 
-  getTurnos(): void {
-    this.turnoService.all().subscribe(dataPackage => {
-      console.log('DataPackage recibido:', dataPackage);
-      // El backend devuelve un array directamente, no paginado
-      const turnos = dataPackage.data || [];
-      console.log('Turnos extraídos:', turnos);
-      this.resultsPage = {
-        content: turnos,
-        totalPages: 1,
-        totalElements: turnos.length,
-        numberOfElements: turnos.length,
-        number: 0,
-        size: turnos.length,
-        first: true,
-        last: true
-      };
-      console.log('ResultsPage final:', this.resultsPage);
+  /** Búsqueda de turnos con filtros y paginación */
+  searchTurnos(): void {
+    this.turnoService.byPageAdvanced(
+      this.currentPage,
+      this.resultsPage.size,
+      this.filters.paciente || undefined,
+      this.filters.medico || undefined,
+      this.filters.consultorio || undefined,
+      this.filters.estado || undefined,
+      this.filters.fechaDesde || undefined,
+      this.filters.fechaHasta || undefined,
+      this.filters.sortBy,
+      this.filters.sortDir
+    ).subscribe({
+      next: (dataPackage) => {
+        console.log('DataPackage recibido:', dataPackage);
+        if (dataPackage.data) {
+          this.resultsPage = {
+            content: dataPackage.data.content || [],
+            totalElements: dataPackage.data.totalElements || 0,
+            totalPages: dataPackage.data.totalPages || 0,
+            number: dataPackage.data.currentPage || 0,
+            size: dataPackage.data.size || 10,
+            numberOfElements: dataPackage.data.numberOfElements || 0,
+            first: dataPackage.data.first || false,
+            last: dataPackage.data.last || false
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error al buscar turnos:', error);
+        this.resultsPage = {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 0,
+          size: 10,
+          numberOfElements: 0,
+          first: true,
+          last: true
+        };
+      }
     });
+  }
+
+  /** Manejo de cambios en filtros con debounce */
+  onFilterChange(): void {
+    if (this.filterTimeout) {
+      clearTimeout(this.filterTimeout);
+    }
+    
+    this.filterTimeout = setTimeout(() => {
+      this.currentPage = 1; // Reset a primera página
+      this.searchTurnos();
+    }, 500); // Debounce de 500ms
+  }
+
+  /** Limpiar todos los filtros */
+  clearFilters(): void {
+    this.filters = {
+      paciente: '',
+      medico: '',
+      consultorio: '',
+      estado: '',
+      fechaDesde: '',
+      fechaHasta: '',
+      sortBy: 'fecha',
+      sortDir: 'desc'
+    };
+    this.currentPage = 1;
+    this.searchTurnos();
+  }
+
+  /** Toggle de ordenamiento por columna */
+  toggleSort(column: string): void {
+    if (this.filters.sortBy === column) {
+      // Si ya está ordenando por esta columna, cambiar dirección
+      this.filters.sortDir = this.filters.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Si es una nueva columna, usar ascendente por defecto
+      this.filters.sortBy = column;
+      this.filters.sortDir = 'asc';
+    }
+    this.currentPage = 1;
+    this.searchTurnos();
   }
 
   confirmDelete(id: number): void {
@@ -677,7 +1003,7 @@ export class TurnosComponent {
 
   remove(id: number): void {
     this.turnoService.remove(id).subscribe({
-      next: () => this.getTurnos(),
+      next: () => this.searchTurnos(),
       error: (err) => {
         const msg = err?.error?.message || "Error al eliminar el turno.";
         this.modalService.alert("Error", msg);
@@ -688,7 +1014,7 @@ export class TurnosComponent {
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
-    this.getTurnos();
+    this.searchTurnos();
   }
 
   goToDetail(id: number): void {

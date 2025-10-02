@@ -239,6 +239,80 @@ public class TurnoService {
                 .map(this::toDTO);
     }
 
+    /**
+     * Búsqueda paginada avanzada con filtros y ordenamiento
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param paciente Filtro por nombre o apellido del paciente (opcional)
+     * @param medico Filtro por nombre o apellido del médico (opcional)
+     * @param consultorio Filtro por nombre del consultorio (opcional)
+     * @param estado Filtro por estado del turno (opcional)
+     * @param fechaDesde Filtro por fecha desde (formato: yyyy-MM-dd, opcional)
+     * @param fechaHasta Filtro por fecha hasta (formato: yyyy-MM-dd, opcional)
+     * @param sortBy Campo para ordenar (opcional)
+     * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
+     * @return Page<TurnoDTO> con los resultados paginados
+     */
+    public Page<TurnoDTO> findByPage(
+            int page,
+            int size,
+            String paciente,
+            String medico,
+            String consultorio,
+            String estado,
+            String fechaDesde,
+            String fechaHasta,
+            String sortBy,
+            String sortDir) {
+
+        // Configurar ordenamiento
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sort = Sort.by(direction, sortBy);
+        }
+
+        // Configurar paginación
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        // Parsear estado si viene como string
+        EstadoTurno estadoEnum = null;
+        if (estado != null && !estado.trim().isEmpty()) {
+            try {
+                estadoEnum = EstadoTurno.valueOf(estado.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Estado inválido, ignorar filtro
+                System.err.println("Estado inválido proporcionado: " + estado);
+            }
+        }
+
+        // Parsear fechas si vienen como string
+        LocalDate fechaDesdeParsed = null;
+        LocalDate fechaHastaParsed = null;
+        if (fechaDesde != null && !fechaDesde.trim().isEmpty()) {
+            try {
+                fechaDesdeParsed = LocalDate.parse(fechaDesde.trim());
+            } catch (Exception e) {
+                System.err.println("Fecha desde inválida: " + fechaDesde);
+            }
+        }
+        if (fechaHasta != null && !fechaHasta.trim().isEmpty()) {
+            try {
+                fechaHastaParsed = LocalDate.parse(fechaHasta.trim());
+            } catch (Exception e) {
+                System.err.println("Fecha hasta inválida: " + fechaHasta);
+            }
+        }
+
+        // Ejecutar consulta con filtros
+        Page<Turno> result = repository.findByFiltros(
+            paciente, medico, consultorio, estadoEnum, 
+            fechaDesdeParsed, fechaHastaParsed, pageable);
+
+        // Mapear a DTO
+        return result.map(this::toDTO);
+    }
+
     @Transactional
     public void delete(Integer id) {
         delete(id, "Eliminación de turno", "SYSTEM");

@@ -137,6 +137,51 @@ export class TurnoService {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
   }
 
+  /** Búsqueda avanzada paginada de turnos */
+  byPageAdvanced(
+    page: number,
+    size: number,
+    paciente?: string,
+    medico?: string,
+    consultorio?: string,
+    estado?: string,
+    fechaDesde?: string,
+    fechaHasta?: string,
+    sortBy?: string,
+    sortDir?: string
+  ): Observable<DataPackage> {
+    let params = new HttpParams()
+      .set('page', (page - 1).toString())
+      .set('size', size.toString());
+
+    if (paciente && paciente.trim()) {
+      params = params.set('paciente', paciente.trim());
+    }
+    if (medico && medico.trim()) {
+      params = params.set('medico', medico.trim());
+    }
+    if (consultorio && consultorio.trim()) {
+      params = params.set('consultorio', consultorio.trim());
+    }
+    if (estado && estado.trim()) {
+      params = params.set('estado', estado.trim());
+    }
+    if (fechaDesde && fechaDesde.trim()) {
+      params = params.set('fechaDesde', fechaDesde.trim());
+    }
+    if (fechaHasta && fechaHasta.trim()) {
+      params = params.set('fechaHasta', fechaHasta.trim());
+    }
+    if (sortBy && sortBy.trim()) {
+      params = params.set('sortBy', sortBy.trim());
+    }
+    if (sortDir && sortDir.trim()) {
+      params = params.set('sortDir', sortDir.trim());
+    }
+
+    return this.http.get<DataPackage>(`${this.url}/page`, { params });
+  }
+
   /** Búsqueda de turnos */
   search(term: string): Observable<DataPackage<Turno[]>> {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/search/${term}`);
