@@ -6,8 +6,10 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
@@ -340,5 +342,45 @@ public class StaffMedicoService {
         return staffMedicos.stream()
             .map(this::toDTO)
             .toList();
+    }
+
+    /**
+     * Búsqueda paginada avanzada con filtros y ordenamiento
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param medico Filtro por nombre/apellido/dni de médico (opcional)
+     * @param especialidad Filtro por nombre de especialidad (opcional)
+     * @param centro Filtro por nombre de centro de atención (opcional)
+     * @param consultorio Filtro por nombre/ID de consultorio (opcional)
+     * @param sortBy Campo para ordenar (opcional)
+     * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
+     * @return Page<StaffMedicoDTO> con los resultados paginados
+     */
+    public Page<StaffMedicoDTO> findByPage(
+            int page,
+            int size,
+            String medico,
+            String especialidad,
+            String centro,
+            String consultorio,
+            String sortBy,
+            String sortDir) {
+
+        // Configurar ordenamiento
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.trim().isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sort = Sort.by(direction, sortBy);
+        }
+
+        // Configurar paginación
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        // Ejecutar consulta con filtros
+        Page<StaffMedico> result = repository.findByFiltros(
+            medico, especialidad, centro, consultorio, pageable);
+
+        // Mapear a DTO
+        return result.map(this::toDTO);
     }
 }
