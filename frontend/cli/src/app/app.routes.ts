@@ -4,6 +4,7 @@ import { InicioSesionComponent } from "./inicio-sesion/inicio-sesion.component";
 import { RegistroUsuarioComponent } from "./registro-usuario/registro-usuario.component";
 import { RecuperarContrasenaComponent } from "./recuperacionContrasena/recuperacionContrasena.component";
 import { ActivacionCuentaComponent } from "./activacion-cuenta/activacion-cuenta.component";
+import { DeepLinkBridgeComponent } from "./deep-link/deep-link-bridge.component";
 import { TurnosComponent } from "./turnos/turnos.component";
 import { TurnoDetailComponent } from "./turnos/turno-detail.component";
 import { AdminAgendaComponent } from "./agenda/admin-agenda.component";
@@ -60,6 +61,12 @@ import { AdminConfigComponent } from "./admin/admin-config.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
+  
+  // Ruta puente para deep linking (enlaces desde email)
+  { 
+    path: "link-verificacion", 
+    component: DeepLinkBridgeComponent 
+  },
 
   // Rutas de Operador (protegidas por OperadorGuard)
   {

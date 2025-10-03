@@ -2149,14 +2149,19 @@ public class TurnoService {
             // Construir detalles de la cancelación para el email
             String cancellationDetails = construirDetallesCancelacionEmail(cancelacionData);
 
-            // URL para reagendar turno (provisional)
-            String rescheduleUrl = "http://localhost:4200/paciente-agenda"; // TODO: Aplicar filtros de especialidad y
-                                                                            // centro médico del turno original
-            // TODO: Usuario no mantiene la sesion ingresando desde este link (fixear)
+            // Obtener IDs necesarios para el deep link
+            Integer pacienteId = turno.getPaciente() != null ? turno.getPaciente().getId() : null;
+            Integer turnoId = turno.getId();
 
-            // Enviar email de forma asíncrona
-            emailService.sendAppointmentCancellationEmail(patientEmail, patientName, cancellationDetails,
-                    rescheduleUrl);
+            // Enviar email de forma asíncrona con deep link
+            // El EmailService generará automáticamente el deep link token
+            emailService.sendAppointmentCancellationEmail(
+                patientEmail, 
+                patientName, 
+                cancellationDetails,
+                pacienteId, 
+                turnoId
+            );
 
             System.out
                     .println("📧 Email de cancelación enviado a: " + patientEmail + " para turno ID: " + turno.getId());

@@ -28,6 +28,9 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+    
+    @Autowired
+    private DeepLinkService deepLinkService;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -201,16 +204,22 @@ public class EmailService {
     }
 
     /**
-     * Envía una notificación de turno cancelado.
+     * Envía una notificación de turno cancelado con deep link para reagendar.
      * 
      * @param to                  Dirección de correo del paciente
      * @param patientName         Nombre del paciente
      * @param cancellationDetails Detalles de la cancelación
-     * @param rescheduleUrl       URL para reagendar turno
+     * @param pacienteId          ID del paciente para generar deep link
+     * @param turnoId             ID del turno cancelado
      */
     @Async
     public CompletableFuture<Void> sendAppointmentCancellationEmail(String to, String patientName,
-            String cancellationDetails, String rescheduleUrl) {
+            String cancellationDetails, Integer pacienteId, Integer turnoId) {
+        
+        // Generar deep link token para reagendar
+        String deepLinkToken = deepLinkService.generarDeepLinkToken(pacienteId, turnoId, "CANCELACION");
+        String rescheduleUrl = appUrl + "/link-verificacion?token=" + deepLinkToken;
+        
         String subject = appName + " - Turno cancelado";
         String htmlBody = buildAppointmentCancellationEmailBody(patientName, cancellationDetails, rescheduleUrl);
 

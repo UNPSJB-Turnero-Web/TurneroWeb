@@ -11,6 +11,7 @@ import { StaffMedicoService } from "../staffMedicos/staffMedico.service";
 import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service";
 import { AgendaService } from "../agenda/agenda.service";
 import { DiasExcepcionalesService } from "../agenda/dias-excepcionales.service";
+import { DeepLinkService } from "../services/deep-link.service";
 import { CentrosMapaModalComponent } from "../modal/centros-mapa-modal.component";
 import { Turno } from "../turnos/turno";
 import { Especialidad } from "../especialidades/especialidad";
@@ -1538,6 +1539,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     private centroAtencionService: CentroAtencionService,
     private agendaService: AgendaService,
     private diasExcepcionalesService: DiasExcepcionalesService,
+    private deepLinkService: DeepLinkService,
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
@@ -1551,6 +1553,10 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.cargarTodosLosStaffMedicos(); // Cargar todos los staff médicos desde el inicio
     this.cargarCentrosAtencion();
     this.cargarTodosLosTurnos(); // Cargar TODOS los turnos disponibles al inicio (pero no mostrarlos)
+    
+    // Verificar si hay contexto de deep link (usuario viene desde un email)
+    // TODO: Por ahora solo limpia el contexto, pendiente implementar filtros automáticos
+    this.aplicarContextoDeepLink();
 
     // Listener para reposicionar modal en resize
     this.resizeListener = () => {
@@ -2607,5 +2613,35 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         return a.horaInicio.localeCompare(b.horaInicio);
       });
     });
+  }
+
+  /**
+   * Aplica el contexto de deep link si existe
+   * TODO: Implementar pre-selección automática de filtros basados en contexto del turno
+   */
+  private aplicarContextoDeepLink(): void {
+    const context = this.deepLinkService.getContext();
+    
+    if (!context) {
+      return; // No hay contexto, no hacer nada
+    }
+
+    console.log('Contexto de deep link disponible:', context);
+
+    // TODO: Implementar pre-selección automática de filtros
+    // Funcionalidad pendiente:
+    // - Pre-seleccionar especialidad por ID o nombre
+    // - Pre-seleccionar centro de atención por ID
+    // - Pre-seleccionar médico por ID
+    // - Aplicar filtros automáticamente
+    // - Mostrar mensaje contextual según el tipo (CANCELACION, etc.)
+
+    // Por ahora solo mostramos mensaje informativo
+    if (context.tipo === 'CANCELACION') {
+      console.log('Su turno fue cancelado. Agenda disponible para reagendar.');
+    }
+
+    // Limpiar el contexto después de usarlo
+    this.deepLinkService.clearContext();
   }
 }
