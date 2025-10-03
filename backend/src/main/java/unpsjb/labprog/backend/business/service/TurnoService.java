@@ -394,7 +394,7 @@ public class TurnoService {
         }
 
         // Crear notificación de cancelación para el paciente
-        crearNotificacionCancelacion(savedTurno, motivo);
+        crearNotificacionCancelacion(savedTurno, motivo, performedBy);
 
         // Log de los datos capturados para futuras funcionalidades (notificacion)
         System.out.println("📋 Datos de cancelación capturados: " + cancelacionData.toString());
@@ -406,7 +406,7 @@ public class TurnoService {
         }
 
         // Enviar notificación por email si el paciente tiene email verificado
-        enviarNotificacionCancelacionEmail(savedTurno, cancelacionData, validacionContacto);
+        enviarNotificacionCancelacionEmail(savedTurno, cancelacionData, validacionContacto, performedBy);
 
         return toDTO(savedTurno);
     }
@@ -1562,7 +1562,7 @@ public class TurnoService {
     }
 
     // Métodos auxiliares para crear notificaciones
-    private void crearNotificacionCancelacion(Turno turno, String motivo) {
+    private void crearNotificacionCancelacion(Turno turno, String motivo, String performedBy) {
         try {
             String fechaTurno = formatearFechaTurno(turno);
             String especialidad = obtenerEspecialidadTurno(turno);
@@ -1573,7 +1573,16 @@ public class TurnoService {
                     fechaTurno,
                     especialidad,
                     motivo);
+
+            // Registrar auditoría de notificación in-app exitosa
+            registrarAuditoriaNotificacion(turno, "IN_APP", "SUCCESS",
+                    "Notificación in-app enviada exitosamente al paciente " + turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido(), performedBy);
+
         } catch (Exception e) {
+            // Registrar auditoría de notificación fallida
+            registrarAuditoriaNotificacion(turno, "IN_APP", "FAIL",
+                    "Error al enviar notificación in-app: " + e.getMessage(), performedBy);
+
             // Log error pero no fallar la operación principal
             System.err.println("Error al crear notificación de cancelación: " + e.getMessage());
         }
@@ -2129,17 +2138,23 @@ public class TurnoService {
      * Solo se envía si el paciente tiene email verificado
      */
     private void enviarNotificacionCancelacionEmail(Turno turno, CancelacionDataDTO cancelacionData,
-            ValidacionContactoDTO validacionContacto) {
+            ValidacionContactoDTO validacionContacto, String performedBy) {
         try {
             // Solo enviar email si el paciente tiene email verificado
             if (!validacionContacto.isPuedeRecibirEmail()) {
                 System.out.println("📧 No se envía email de cancelación: paciente sin email verificado");
+                // Registrar auditoría de notificación no enviada por falta de email verificado
+                registrarAuditoriaNotificacion(turno, "EMAIL", "NOT_SENT",
+                        "Email no enviado: paciente sin email verificado", performedBy);
                 return;
             }
 
             // Verificar que tengamos email del paciente
             if (cancelacionData.getPacienteEmail() == null || cancelacionData.getPacienteEmail().trim().isEmpty()) {
                 System.out.println("📧 No se envía email de cancelación: paciente sin email registrado");
+                // Registrar auditoría de notificación no enviada por falta de email
+                registrarAuditoriaNotificacion(turno, "EMAIL", "NOT_SENT",
+                        "Email no enviado: paciente sin email registrado", performedBy);
                 return;
             }
 
@@ -2166,7 +2181,15 @@ public class TurnoService {
             System.out
                     .println("📧 Email de cancelación enviado a: " + patientEmail + " para turno ID: " + turno.getId());
 
+            // Registrar auditoría de notificación email exitosa
+            registrarAuditoriaNotificacion(turno, "EMAIL", "SUCCESS",
+                    "Email de cancelación enviado exitosamente a " + patientEmail, performedBy);
+
         } catch (Exception e) {
+            // Registrar auditoría de notificación email fallida
+            registrarAuditoriaNotificacion(turno, "EMAIL", "FAIL",
+                    "Error al enviar email de cancelación: " + e.getMessage(), performedBy);
+
             // Log error pero no fallar la operación principal
             System.err.println(
                     "❌ Error al enviar email de cancelación para turno ID " + turno.getId() + ": " + e.getMessage());
@@ -2192,5 +2215,50 @@ public class TurnoService {
                 .append(cancelacionData.getRolCancelacion()).append(")</p>");
 
         return detalles.toString();
+    }
+
+    /**
+     * Registra auditoría para el envío de notificaciones de cancelación de turno
+     */
+    private void registrarAuditoriaNotificacion(Turno turno, String notificationChannel, String status, String message, String performedBy) {
+        try {
+            System.out.println("🔍 DEBUG: performedBy = " + performedBy);
+
+            Long pacienteId = turno.getPaciente() != null ? turno.getPaciente().getId().longValue() : null;
+
+            // Crear objeto con detalles de la notificación
+            Map<String, Object> notificationDetails = new HashMap<>();
+            notificationDetails.put("turnoId", turno.getId());
+            notificationDetails.put("pacienteId", pacienteId);
+            notificationDetails.put("pacienteNombre", turno.getPaciente() != null ? turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido() : "N/A");
+            notificationDetails.put("notificationChannel", notificationChannel);
+            notificationDetails.put("status", status);
+            notificationDetails.put("message", message);
+
+            System.out.println("🔍 DEBUG: Intentando registrar auditoría - Turno: " + turno.getId() + ", Canal: " + notificationChannel + ", Status: " + status);
+
+            // TODO: BUG - El Map notificationDetails no se serializa correctamente en la DB.
+            // Actualmente se guarda el hashCode (ej. 29534) en lugar del JSON esperado.
+            // Necesario: Cambiar columna newValues en AuditLog a TEXT/JSON y serializar Map a JSON en AuditLogService.logGenericAction
+            // Registrar auditoría genérica
+            AuditLog auditLog = auditLogService.logGenericAction(
+                AuditLog.EntityTypes.TURNO,
+                turno.getId().longValue(),
+                AuditLog.Actions.CANCELACION_TURNO_NOTIFICACION,
+                performedBy,
+                null, // estadoAnterior
+                null, // estadoNuevo
+                null, // oldValues
+                notificationDetails, // newValues
+                message // reason
+            );
+
+            System.out.println("✅ Auditoría registrada exitosamente - ID: " + (auditLog != null ? auditLog.getId() : "NULL"));
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR al registrar auditoría de notificación: " + e.getMessage());
+            e.printStackTrace();
+            // No re-lanzar para no afectar la operación principal
+        }
     }
 }

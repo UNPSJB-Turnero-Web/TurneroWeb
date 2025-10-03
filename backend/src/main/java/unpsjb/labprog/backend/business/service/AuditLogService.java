@@ -1085,6 +1085,9 @@ public class AuditLogService {
     public AuditLog logGenericAction(String entityType, Long entityId, String action,
             String performedBy, String estadoAnterior, String estadoNuevo,
             Object oldValues, Object newValues, String reason) {
+        // TODO: BUG - Verificar serialización de newValues. Actualmente se guarda hashCode (ej. 29534) en lugar de JSON.
+        // Posibles causas: Columna DB es INTEGER en lugar de TEXT/JSON, o problema en mapeo JPA.
+        // Solución: Asegurar que columna sea TEXT y que ObjectMapper serialice correctamente el Map.
         try {
             String oldValuesJson = oldValues != null ? objectMapper.writeValueAsString(oldValues) : null;
             String newValuesJson = newValues != null ? objectMapper.writeValueAsString(newValues) : null;

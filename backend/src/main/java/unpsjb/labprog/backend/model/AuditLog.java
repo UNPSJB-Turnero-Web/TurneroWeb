@@ -69,6 +69,7 @@ public class AuditLog {
 
     @Lob
     private String newValues; // JSON con nuevos valores de la entidad
+    // TODO: BUG - Verificar que la columna en DB sea TEXT/JSON, no INTEGER. Actualmente se guarda hashCode del Map en lugar de JSON.
 
     @Column(length = 500)
     private String reason; // Motivo del cambio (opcional)
@@ -132,6 +133,7 @@ public class AuditLog {
         public static final String RESCHEDULE = "RESCHEDULE";
         public static final String ASSIGN = "ASSIGN";
         public static final String MODIFY = "MODIFY";
+        public static final String CANCELACION_TURNO_NOTIFICACION = "CANCELACION_TURNO_NOTIFICACION";
 
         // Acciones específicas de usuarios y roles
         public static final String ROLE_CHANGE = "ROLE_CHANGE";
