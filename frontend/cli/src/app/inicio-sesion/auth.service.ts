@@ -11,6 +11,7 @@ import { JwtHelperService } from "@auth0/angular-jwt";
 import { DataPackage } from "../data.package";
 import { PacienteService } from "../pacientes/paciente.service";
 import { ModalService } from "../modal/modal.service";
+import { UserContextService } from "../services/user-context.service";
 
 /**
  * Interfaz para los datos de login compatibles con InicioSesionComponent
@@ -31,6 +32,7 @@ export interface LoginResponse {
   email: string;
   nombre: string;
   role: string;
+  roles?: string[]; // Lista completa de roles incluyendo heredados
 }
 
 /**
@@ -140,7 +142,8 @@ export class AuthService {
     private http: HttpClient,
     private router: Router,
     private pacienteService: PacienteService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private userContextService: UserContextService
   ) {
     // Inicializar sincronización de sesiones entre pestañas
     this.initializeSessionSync();
@@ -202,15 +205,24 @@ export class AuthService {
             this.authStateSubject.next(true);
             this.updateSessionTimestamp();
             
+            // Actualizar UserContext con datos completos incluyendo roles
+            this.userContextService.updateUserContext({
+              email: response.data.email,
+              nombre: response.data.nombre,
+              primaryRole: response.data.role,
+              allRoles: response.data.roles // Roles completos desde backend
+            });
+            
             // Notificar a otras pestañas sobre el login con un pequeño delay
             // para asegurar que los datos se hayan guardado correctamente
             setTimeout(() => {
               this.notifyOtherTabs('login', {
                 email: response.data.email,
-                role: response.data.role
+                role: response.data.role,
+                roles: response.data.roles
               });
             }, 100);
-            
+
             // Programar el refresh automático para el nuevo token
             this.scheduleTokenRefresh(response.data.accessToken);
           }
@@ -249,11 +261,20 @@ export class AuthService {
     this.storeTokens(loginResponse, rememberMe);
     this.authStateSubject.next(true);
     
+    // Actualizar UserContext
+    this.userContextService.updateUserContext({
+      email: loginResponse.email,
+      nombre: loginResponse.nombre,
+      primaryRole: loginResponse.role,
+      allRoles: loginResponse.roles
+    });
+    
     // Notificar a otras pestañas sobre el login con delay
     setTimeout(() => {
       this.notifyOtherTabs('login', {
         email: loginResponse.email,
-        role: loginResponse.role
+        role: loginResponse.role,
+        roles: loginResponse.roles
       });
     }, 100);
     
@@ -618,6 +639,9 @@ export class AuthService {
 
     // Actualizar estado de autenticación
     this.authStateSubject.next(false);
+    
+    // Limpiar contexto de usuario
+    this.userContextService.clearUserContext();
 
     // Notificar a otras pestañas sobre el logout
     this.notifyOtherTabs('logout');
@@ -899,24 +923,25 @@ export class AuthService {
   }
 
   /**
+   * @deprecated Usar UserContextService.hasRole() en su lugar
    * Verifica si el usuario actual tiene el rol requerido o lo hereda según la jerarquía
    * @param required Rol requerido
    * @returns true si el usuario tiene el rol o lo hereda
    */
   hasRole(required: Role): boolean {
-    const userRole = this.getUserRole();
-    if (!userRole) return false;
-    const inherited = this.getAllInheritedRoles(userRole as Role);
-    return userRole === required || inherited.has(required);
+    console.warn('⚠️ AuthService.hasRole() está deprecado. Usar UserContextService.hasRole() en su lugar.');
+    return this.userContextService.hasRole(required);
   }
 
   /**
+   * @deprecated Usar UserContextService.hasAnyRole() en su lugar
    * Verifica si el usuario actual tiene al menos uno de los roles requeridos o los hereda
    * @param requiredRoles Array de roles requeridos
    * @returns true si el usuario tiene al menos uno de los roles o los hereda
    */
   hasAnyRole(requiredRoles: Role[]): boolean {
-    return requiredRoles.some(role => this.hasRole(role));
+    console.warn('⚠️ AuthService.hasAnyRole() está deprecado. Usar UserContextService.hasAnyRole() en su lugar.');
+    return this.userContextService.hasAnyRole(requiredRoles);
   }
 
   /**
@@ -1162,11 +1187,21 @@ export class AuthService {
           );
           setTimeout(() => this.forceLogoutPreservingNewSession(data.data), 2000);
         }
+        // Si hay datos de usuario disponibles, actualizarlos en el contexto
+        else if (data.data) {
+          this.userContextService.updateUserContext({
+            email: data.data.email,
+            nombre: data.data.nombre || '',
+            primaryRole: data.data.role,
+            allRoles: data.data.roles || [data.data.role]
+          });
+        }
         break;
         
       case 'logout':
         if (this.isAuthenticated()) {
           console.log('🔄 Sincronizando logout desde otra pestaña');
+          this.userContextService.clearUserContext();
           this.forceLogout();
         }
         break;

@@ -7,10 +7,11 @@ import {
 } from "@angular/router";
 import { NgbDropdownModule } from "@ng-bootstrap/ng-bootstrap";
 import { CommonModule } from "@angular/common";
-import { filter } from "rxjs/operators";
+import { filter, map, combineLatest } from "rxjs/operators";
 import { NotificacionService } from "./services/notificacion.service";
-import { Subscription } from "rxjs";
-import { AuthService } from "./inicio-sesion/auth.service";
+import { Subscription, Observable } from "rxjs";
+import { AuthService, Role } from "./inicio-sesion/auth.service";
+import { UserContextService, UserContext } from "./services/user-context.service";
 
 @Component({
   selector: "app-root",
@@ -1067,11 +1068,59 @@ export class AppComponent implements OnInit, OnDestroy {
   patientNotificationCount = 0;
   private subscriptions: Subscription[] = [];
 
+  // Observables reactivos para el estado del usuario
+  public userContext$: Observable<UserContext | null>;
+  public isAuthenticated$: Observable<boolean>;
+  public isAdmin$: Observable<boolean>;
+  public isOperador$: Observable<boolean>;
+  public isPatient$: Observable<boolean>;
+  public isMedico$: Observable<boolean>;
+  public userName$: Observable<string>;
+  public userRoleDisplay$: Observable<string>;
+
   constructor(
     private router: Router,
     private notificacionService: NotificacionService,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    private userContextService: UserContextService
+  ) {
+    // Inicializar observables reactivos
+    this.userContext$ = this.userContextService.userContext$;
+    this.isAuthenticated$ = this.authService.authState$;
+    
+    this.isAdmin$ = this.userContext$.pipe(
+      map(context => context ? this.userContextService.hasRole(Role.ADMINISTRADOR) : false)
+    );
+    
+    this.isOperador$ = this.userContext$.pipe(
+      map(context => context ? this.userContextService.hasRole(Role.OPERADOR) : false)
+    );
+    
+    this.isPatient$ = this.userContext$.pipe(
+      map(context => context ? this.userContextService.hasRole(Role.PACIENTE) : false)
+    );
+    
+    this.isMedico$ = this.userContext$.pipe(
+      map(context => context ? this.userContextService.hasRole(Role.MEDICO) : false)
+    );
+    
+    this.userName$ = this.userContext$.pipe(
+      map(context => context?.nombre || 'Usuario')
+    );
+    
+    this.userRoleDisplay$ = this.userContext$.pipe(
+      map(context => {
+        if (!context) return 'Usuario';
+        switch (context.primaryRole?.toUpperCase()) {
+          case 'ADMINISTRADOR': return 'Administrador';
+          case 'PACIENTE': return 'Paciente';
+          case 'MEDICO': return 'Médico';
+          case 'OPERADOR': return 'Operador';
+          default: return 'Usuario';
+        }
+      })
+    );
+  }
 
   ngOnInit() {
     // Escuchar cambios de ruta para actualizar el estado activo
@@ -1100,9 +1149,10 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   /**
    * Detecta si el usuario actual es operador
+   * @deprecated Usar isOperador$ observable para mejor rendimiento
    */
   public isOperador(): boolean {
-    return this.authService.getUserRole()?.toUpperCase() === "OPERADOR";
+    return this.userContextService.hasRole(Role.OPERADOR);
   }
 
   ngOnDestroy() {
@@ -1121,29 +1171,50 @@ export class AppComponent implements OnInit, OnDestroy {
     return pacienteId ? parseInt(pacienteId) : null;
   }
 
+  /**
+   * @deprecated Usar isAuthenticated$ observable para mejor rendimiento
+   */
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }
 
+  /**
+   * @deprecated Usar isAdmin$ observable para mejor rendimiento
+   */
   isAdmin(): boolean {
-    return this.authService.getUserRole()?.toUpperCase() === "ADMINISTRADOR";
+    return this.userContextService.hasRole(Role.ADMINISTRADOR);
   }
 
+  /**
+   * @deprecated Usar isPatient$ observable para mejor rendimiento
+   */
   isPatient(): boolean {
-    return this.authService.getUserRole()?.toUpperCase() === "PACIENTE";
+    return this.userContextService.hasRole(Role.PACIENTE);
   }
 
+  /**
+   * @deprecated Usar isMedico$ observable para mejor rendimiento
+   */
   isMedico(): boolean {
-    return this.authService.getUserRole()?.toUpperCase() === "MEDICO";
+    return this.userContextService.hasRole(Role.MEDICO);
   }
 
+  /**
+   * @deprecated Usar userName$ observable para mejor rendimiento
+   */
   getUserName(): string {
-    return this.authService.getUserName() || "Usuario";
+    const context = this.userContextService.getCurrentContext();
+    return context?.nombre || "Usuario";
   }
 
+  /**
+   * @deprecated Usar userRoleDisplay$ observable para mejor rendimiento
+   */
   getUserRoleDisplay(): string {
-    const role = this.authService.getUserRole();
-    switch (role?.toUpperCase()) {
+    const context = this.userContextService.getCurrentContext();
+    if (!context) return 'Usuario';
+    
+    switch (context.primaryRole?.toUpperCase()) {
       case "ADMINISTRADOR":
         return "Administrador";
       case "PACIENTE":

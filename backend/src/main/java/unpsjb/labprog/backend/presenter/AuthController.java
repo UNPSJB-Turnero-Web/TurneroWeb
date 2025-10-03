@@ -109,13 +109,25 @@ public class AuthController {
             String accessToken = jwtTokenProvider.generateAccessToken(user);
             String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
+            // Obtener lista completa de roles incluyendo heredados
+            java.util.List<String> allRoles = new java.util.ArrayList<>();
+            if (user.getRole() != null) {
+                // Agregar el rol principal
+                allRoles.add(user.getRole().getName());
+                // Agregar todos los roles heredados
+                user.getRole().getAllInheritedRoles().forEach(inheritedRole -> 
+                    allRoles.add(inheritedRole.getName())
+                );
+            }
+
             // Crear response
             LoginResponse loginResponse = new LoginResponse(
                 accessToken, 
                 refreshToken, 
                 user.getEmail(), 
                 user.getNombre() + " " + user.getApellido(),
-                user.getRole() != null ? user.getRole().getName() : "USER"
+                user.getRole() != null ? user.getRole().getName() : "USER",
+                allRoles
             );
 
             return Response.response(HttpStatus.OK, "Login exitoso", loginResponse);

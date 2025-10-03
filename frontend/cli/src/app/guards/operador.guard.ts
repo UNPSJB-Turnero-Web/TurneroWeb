@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { AuthService, Role } from '../inicio-sesion/auth.service';
+import { UserContextService } from '../services/user-context.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,8 @@ import { AuthService, Role } from '../inicio-sesion/auth.service';
 export class OperadorGuard implements CanActivate {
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private userContextService: UserContextService
   ) {}
 
   canActivate(): boolean {
@@ -25,7 +27,7 @@ export class OperadorGuard implements CanActivate {
       return false;
     }
 
-    // Verificar si tiene rol de operador o superior según jerarquía
-    return this.authService.hasRole(Role.OPERADOR);
+    // Verificar si tiene rol de operador o superior usando el UserContextService
+    return this.userContextService.hasRole(Role.OPERADOR);
   }
 }
