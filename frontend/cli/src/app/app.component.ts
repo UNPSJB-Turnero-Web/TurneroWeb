@@ -12,12 +12,18 @@ import { NotificacionService } from "./services/notificacion.service";
 import { Subscription, Observable } from "rxjs";
 import { AuthService, Role } from "./inicio-sesion/auth.service";
 import { UserContextService, UserContext } from "./services/user-context.service";
+import { SidebarComponent } from "./components/sidebar.component";
+import { MenuService } from "./services/menu.service";
 
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, NgbDropdownModule, CommonModule, RouterLink],
+  imports: [RouterOutlet, NgbDropdownModule, CommonModule, RouterLink, SidebarComponent],
   template: `
+    <!-- SIDEBAR DINÁMICO (Menú lateral basado en roles) - Solo visible para usuarios autenticados -->
+    <app-sidebar *ngIf="isAuthenticated()"></app-sidebar>
+
+    <!-- NAVBAR SUPERIOR SIMPLIFICADO -->
     <nav class="modern-navbar">
       <div class="navbar-container">
         <!-- LOGO Y BRAND -->
@@ -31,334 +37,6 @@ import { UserContextService, UserContext } from "./services/user-context.service
               <span class="brand-subtitle">Sistema de Turnos</span>
             </div>
           </a>
-        </div>
-
-        <!-- NAVIGATION MENU -->
-        <div class="nav-menu" *ngIf="isAuthenticated()">
-          <!-- Admin-only Menú General -->
-          <div
-            ngbDropdown
-            class="nav-dropdown"
-            *ngIf="isAdmin() || isOperador()"
-          >
-            <button
-              class="nav-button"
-              [class.active]="
-                isRouteActive('/centrosAtencion') ||
-                isRouteActive('/consultorios')
-              "
-              ngbDropdownToggle
-              id="generalDropdown"
-              aria-label="Menú de configuración general"
-            >
-              <i class="fas fa-building me-2"></i>
-              <span>General</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-            </button>
-            <div
-              ngbDropdownMenu
-              class="modern-dropdown"
-              aria-labelledby="generalDropdown"
-            >
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/centrosAtencion')"
-                [class.active]="isRouteActive('/centrosAtencion')"
-              >
-                <i class="fas fa-hospital icon-item icon-centro-atencion"></i>
-                <div class="item-content">
-                  <span class="item-title">Centros de Atención</span>
-                  <span class="item-desc">Gestionar centros médicos</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/consultorios')"
-                [class.active]="isRouteActive('/consultorios')"
-              >
-                <i class="fas fa-door-open icon-item icon-consultorios"></i>
-                <div class="item-content">
-                  <span class="item-title">Consultorios</span>
-                  <span class="item-desc">Administrar consultorios</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="goToDashboard()"
-                [class.active]="isRouteActive(getDashboardRoute())"
-              >
-                <i
-                  class="fas fa-user-cog icon-item icon-operador-dashboard"
-                ></i>
-                <div class="item-content">
-                  <span class="item-title">Mi Panel Principal</span>
-                  <span class="item-desc">Panel Principal</span>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <!-- Admin-only Menú Persona -->
-          <div
-            ngbDropdown
-            class="nav-dropdown"
-            *ngIf="isAdmin() || isOperador()"
-          >
-            <button
-              class="nav-button"
-              [class.active]="
-                isRouteActive('/medicos') ||
-                isRouteActive('/staffMedico') ||
-                isRouteActive('/pacientes') ||
-                isRouteActive('/obraSocial') ||
-                isRouteActive('/operadores')
-              "
-              ngbDropdownToggle
-              id="personasDropdown"
-              aria-label="Menú de gestión de personas"
-            >
-              <i class="fas fa-users me-2"></i>
-              <span>Personas</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-            </button>
-            <div
-              ngbDropdownMenu
-              class="modern-dropdown"
-              aria-labelledby="personasDropdown"
-            >
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/medicos')"
-                [class.active]="isRouteActive('/medicos')"
-              >
-                <i class="fas fa-user-md icon-item icon-medicos"></i>
-                <div class="item-content">
-                  <span class="item-title">Médicos</span>
-                  <span class="item-desc">Gestionar profesionales</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/staffMedico')"
-                [class.active]="isRouteActive('/staffMedico')"
-              >
-                <i class="fas fa-user-nurse icon-item icon-staff-medico"></i>
-                <div class="item-content">
-                  <span class="item-title">Staff Médico</span>
-                  <span class="item-desc">Personal médico</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/pacientes')"
-                [class.active]="isRouteActive('/pacientes')"
-              >
-                <i class="fas fa-user-injured icon-item icon-pacientes"></i>
-                <div class="item-content">
-                  <span class="item-title">Pacientes</span>
-                  <span class="item-desc">Registro de pacientes</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/obraSocial')"
-                [class.active]="isRouteActive('/obraSocial')"
-              >
-                <i class="fas fa-heart-pulse icon-item icon-obra-social"></i>
-                <div class="item-content">
-                  <span class="item-title">Obras Sociales</span>
-                  <span class="item-desc">Coberturas médicas</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/operadores')"
-                [class.active]="isRouteActive('/operadores')"
-              >
-                <i
-                  class="fas fa-user-cog icon-item icon-operador-dashboard"
-                ></i>
-                <div class="item-content">
-                  <span class="item-title">Operadores</span>
-                  <span class="item-desc">Registro de Operadores</span>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <!-- Admin-only Menú Agenda -->
-          <div
-            ngbDropdown
-            class="nav-dropdown"
-            *ngIf="isAdmin() || isOperador()"
-          >
-            <button
-              class="nav-button"
-              [class.active]="
-                isRouteActive('/disponibilidades-medico') ||
-                isRouteActive('/esquema-turno') ||
-                isRouteActive('/agenda') ||
-                isRouteActive('/turnos')
-              "
-              ngbDropdownToggle
-              id="agendaDropdown"
-              aria-label="Menú de gestión de agenda y turnos"
-            >
-              <i class="fas fa-calendar-alt me-2"></i>
-              <span>Agenda</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-            </button>
-            <div
-              ngbDropdownMenu
-              class="modern-dropdown"
-              aria-labelledby="agendaDropdown"
-            >
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/disponibilidades-medico')"
-                [class.active]="isRouteActive('/disponibilidades-medico')"
-              >
-                <i class="fas fa-clock icon-item icon-disponibilidad"></i>
-                <div class="item-content">
-                  <span class="item-title">Disponibilidades</span>
-                  <span class="item-desc">Horarios médicos</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/esquema-turno')"
-                [class.active]="isRouteActive('/esquema-turno')"
-              >
-                <i
-                  class="fas fa-calendar-check icon-item icon-esquema-turno"
-                ></i>
-                <div class="item-content">
-                  <span class="item-title">Esquemas de Turno</span>
-                  <span class="item-desc">Plantillas de turnos</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/agenda')"
-                [class.active]="isRouteActive('/agenda')"
-              >
-                <i class="fas fa-calendar-week icon-item icon-agenda"></i>
-                <div class="item-content">
-                  <span class="item-title">Agenda</span>
-                  <span class="item-desc">Vista de agenda</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/agenda/dias-excepcionales')"
-                [class.active]="isRouteActive('/agenda/dias-excepcionales')"
-              >
-                <i
-                  class="fas fa-calendar-times icon-item icon-dias-excepcionales"
-                ></i>
-                <div class="item-content">
-                  <span class="item-title">Días Excepcionales</span>
-                  <span class="item-desc">Feriados y mantenimiento</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/turnos')"
-                [class.active]="isRouteActive('/turnos')"
-              >
-                <i class="fas fa-clipboard-list icon-item icon-turnos"></i>
-                <div class="item-content">
-                  <span class="item-title">Turnos</span>
-                  <span class="item-desc">Gestión de citas</span>
-                </div>
-              </a>
-            </div>
-          </div>
-
-          <!-- Patient-only Menú -->
-          <div ngbDropdown class="nav-dropdown" *ngIf="isPatient()">
-            <button
-              class="nav-button"
-              [class.active]="
-                isRouteActive('/paciente-dashboard') ||
-                isRouteActive('/paciente-dashboard') ||
-                isRouteActive('/paciente-agenda') ||
-                isRouteActive('/paciente-notificaciones')
-              "
-              ngbDropdownToggle
-              id="pacienteDropdown"
-              aria-label="Portal del paciente"
-            >
-              <i class="fas fa-user-injured me-2"></i>
-              <span>Panel paciente</span>
-              <i class="fas fa-chevron-down ms-2"></i>
-              <span
-                class="notification-indicator"
-                *ngIf="getPatientNotificationCount() > 0"
-              ></span>
-            </button>
-            <div
-              ngbDropdownMenu
-              class="modern-dropdown"
-              aria-labelledby="pacienteDropdown"
-            >
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/paciente-dashboard')"
-                [class.active]="isRouteActive('/paciente-dashboard')"
-              >
-                <i class="fas fa-tachometer-alt icon-item icon-dashboard"></i>
-                <div class="item-content">
-                  <span class="item-title">Dashboard</span>
-                  <span class="item-desc">Panel principal</span>
-                </div>
-              </a>
-
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/paciente-agenda')"
-                [class.active]="isRouteActive('/paciente-agenda')"
-              >
-                <i class="fas fa-calendar-plus icon-item icon-agendar"></i>
-                <div class="item-content">
-                  <span class="item-title">Agendar Turno</span>
-                  <span class="item-desc">Solicitar nueva cita</span>
-                </div>
-              </a>
-              <a
-                ngbDropdownItem
-                class="dropdown-item"
-                (click)="navigateTo('/paciente-notificaciones')"
-                [class.active]="isRouteActive('/paciente-notificaciones')"
-              >
-                <i class="fas fa-bell icon-item icon-notificaciones"></i>
-                <div class="item-content">
-                  <span class="item-title">Notificaciones</span>
-                  <span class="item-desc">Mensajes y alertas</span>
-                </div>
-                <span
-                  class="notification-count"
-                  *ngIf="getPatientNotificationCount() > 0"
-                  >{{ getPatientNotificationCount() }}</span
-                >
-              </a>
-            </div>
-          </div>
         </div>
 
         <!-- USER SECTION -->
@@ -423,10 +101,9 @@ import { UserContextService, UserContext } from "./services/user-context.service
       </div>
     </nav>
 
-    <main class="main-content">
+    <!-- MAIN CONTENT CON MARGEN DINÁMICO PARA EL SIDEBAR -->
+    <main class="main-content" [class.main-content--no-sidebar]="!isAuthenticated()">
       <router-outlet></router-outlet>
-
-      <!-- Componente de notificaciones global -->
     </main>
   `,
   styles: [
@@ -873,12 +550,24 @@ import { UserContextService, UserContext } from "./services/user-context.service
         min-width: 200px;
       }
 
-      /* MAIN CONTENT */
+      /* MAIN CONTENT - Ajustado para sidebar */
       .main-content {
         margin-top: 80px;
+        margin-left: 280px; /* Espacio para el sidebar */
         padding: 2rem;
         min-height: calc(100vh - 80px);
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        transition: margin-left 0.3s ease;
+      }
+
+      /* Ajuste cuando el sidebar está cerrado */
+      .main-content.sidebar-closed {
+        margin-left: 0;
+      }
+
+      /* Ajuste cuando no hay sidebar (usuario no autenticado) */
+      .main-content--no-sidebar {
+        margin-left: 0 !important;
       }
 
       /* ICON COLORS */
@@ -999,6 +688,7 @@ import { UserContextService, UserContext } from "./services/user-context.service
 
         .main-content {
           margin-top: 70px;
+          margin-left: 0; /* Sin margen en mobile, sidebar se superpone */
           padding: 1rem;
         }
 
@@ -1082,7 +772,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private notificacionService: NotificacionService,
     private authService: AuthService,
-    private userContextService: UserContextService
+    private userContextService: UserContextService,
+    public menuService: MenuService // Inyectado como public para uso en template
   ) {
     // Inicializar observables reactivos
     this.userContext$ = this.userContextService.userContext$;
@@ -1140,10 +831,14 @@ export class AppComponent implements OnInit, OnDestroy {
       this.cargarNotificacionesPaciente();
     }
 
-    // Suscribirse al contador de notificaciones
+    // Suscribirse al contador de notificaciones y actualizar badge del menú
     const notificationSub =
       this.notificacionService.contadorNoLeidas$.subscribe(
-        (count) => (this.patientNotificationCount = count)
+        (count) => {
+          this.patientNotificationCount = count;
+          // Actualizar el badge en el menú lateral
+          this.menuService.updateBadge('/paciente-notificaciones', count);
+        }
       );
     this.subscriptions.push(notificationSub);
   }

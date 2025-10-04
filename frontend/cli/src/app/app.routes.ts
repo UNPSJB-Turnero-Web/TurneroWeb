@@ -237,12 +237,12 @@ export const routes: Routes = [
   {
     path: "especialidades",
     component: EspecialidadesComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "especialidades/new",
     component: EspecialidadDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "especialidades/:id",
