@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -292,30 +292,29 @@ import { AuthService } from "../inicio-sesion/auth.service";
               </div>
 
               <!-- Barra de Progreso del Estado -->
-              <div class="turno-progress-container">
-                <div class="progress-label">
-                  <span class="progress-text">Estado del Turno</span>
-                  <span class="progress-percentage">{{ getProgresoTurno(turno.status).texto }}</span>
-                </div>
-
-                <div *ngIf="!getProgresoTurno(turno.status).isTerminal" class="progress" style="height: 12px;">
-                  <div class="progress-bar progress-bar-striped progress-bar-animated"
-                       [ngClass]="getProgresoTurno(turno.status).colorClass"
-                       role="progressbar"
-                       [style.width.%]="getProgresoTurno(turno.status).progress"
-                       [attr.aria-valuenow]="getProgresoTurno(turno.status).progress"
-                       aria-valuemin="0"
-                       aria-valuemax="100">
-                  </div>
-                </div>
-    
-                <div *ngIf="getProgresoTurno(turno.status).isTerminal" class="terminal-badge">
-                  <span class="badge-terminal" [ngClass]="getProgresoTurno(turno.status).colorClass">
+            <div class="turno-progress-container">
+              <div class="progress-label">
+                <span class="progress-text">Estado del Turno</span>
+                <span class="progress-percentage">{{ getProgresoTurno(turno.status).texto }}</span>
+              </div>
+                          
+              <!-- Barra de progreso SIEMPRE VISIBLE (incluso para terminales, con 100% y sin striped si es final) -->
+              <div class="progress" style="height: 12px;">
+                <div class="progress-bar"
+                     [ngClass]="getProgresoTurno(turno.status).colorClass"
+                     [class.progress-bar-striped]="!getProgresoTurno(turno.status).isTerminal"
+                     [class.progress-bar-animated]="!getProgresoTurno(turno.status).isTerminal"
+                     role="progressbar"
+                     [style.width.%]="getProgresoTurno(turno.status).progress"
+                     [attr.aria-valuenow]="getProgresoTurno(turno.status).progress"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                  <!-- Icono integrado para terminales (opcional, para feedback visual sin badge separado) -->
+                  <span *ngIf="getProgresoTurno(turno.status).isTerminal" class="progress-icon">
                     <i class="fas" [ngClass]="{
-                      'fa-check-circle': turno.status === 'completo',
-                      'fa-times-circle': turno.status === 'cancelado'
+                      'fa-check-circle text-success': turno.status === 'completo',
+                      'fa-times-circle text-danger': turno.status === 'cancelado'
                     }"></i>
-                    {{ getProgresoTurno(turno.status).texto }}
                   </span>
                 </div>
               </div>
@@ -443,6 +442,31 @@ import { AuthService } from "../inicio-sesion/auth.service";
     </div>
   `,
   styles: `
+    .status-bar .progress { 
+      height: 8px; 
+      background-color: #e9ecef; 
+    }
+    .status-bar .progress-bar { 
+      transition: width 0.3s ease; 
+    }
+    .progress-bar-programado { 
+      background-color: #ffc107 !important; /* Amarillo para programado */
+    }
+    .progress-bar-confirmado { 
+      background-color: #17a2b8 !important; /* Azul para confirmado */
+    }
+    .progress-bar-reagendado { 
+      background-color: #fd7e14 !important; /* Naranja para reagendado */
+    }
+    .progress-bar-completo { 
+      background-color: #28a745 !important; 
+      width: 100% !important; /* Verde fijo para completo */
+    }
+    .progress-bar-cancelado { 
+      background-color: #dc3545 !important; 
+      width: 100% !important; /* Rojo fijo para cancelado */
+    }
+
     /* Estilos del Modal de Error */
     .error-modal {
       position: fixed !important;
@@ -2730,7 +2754,7 @@ import { AuthService } from "../inicio-sesion/auth.service";
   }
   `,
 })
-export class PacienteDashboardComponent implements OnInit {
+export class PacienteDashboardComponent implements OnInit, OnDestroy {
   patientDNI: string = "";
   patientName: string = "";
   patientEmail: string = "";
@@ -2752,6 +2776,8 @@ export class PacienteDashboardComponent implements OnInit {
   errorMessage: string = '';
   // Particles for background animation
   particles: { x: number; y: number }[] = [];
+  // Intervalo para verificar nuevos turnos cada 5 minutos
+  private verificacionInterval: any;
 
   readonly ESTADOS_FLUJO: string[] = [
     'PROGRAMADO',   // Estado inicial
@@ -2874,7 +2900,84 @@ export class PacienteDashboardComponent implements OnInit {
   ngOnInit() {
     this.cargarTurnosPaciente();
     this.cargarContadorNotificaciones();
+
+
+    // Verificar cada 5 minutos si hay turnos que deben completarse
+    this.verificacionInterval = setInterval(() => {
+      this.verificarYActualizarTurnosPasados();
+    }, 5 * 60 * 1000); // 5 minutos
   }
+
+
+  // Agregar método de limpieza
+  ngOnDestroy() {
+    if (this.verificacionInterval) {
+      clearInterval(this.verificacionInterval);
+    }
+  }
+
+  // Agregar método de verificación periódica
+  private verificarYActualizarTurnosPasados() {
+    const pacienteId = this.authService.getCurrentPatientId();
+
+    if (!pacienteId) {
+      console.error("No se encontró ID del paciente en localStorage");
+      return;
+    }
+
+    this.turnoService.getByPacienteId(pacienteId).subscribe({
+      next: (dataPackage: DataPackage<Turno[]>) => {
+        const turnos = dataPackage.data || [];
+        let huboActualizaciones = false;
+
+        const actualizaciones: Promise<void>[] = turnos.map(turno => {
+          return new Promise((resolve) => {
+            // ✅ Validar que el turno tenga ID antes de usarlo
+            if (!turno.id) {
+              console.warn("Turno sin ID encontrado, se omite.");
+              resolve();
+              return;
+            }
+
+            // ✅ Solo actualizar si corresponde
+            if ((turno.estado === 'CONFIRMADO' || turno.estado === 'PROGRAMADO') && this.turnoYaPaso(turno)) {
+              console.log(`Actualizando turno ${turno.id} a COMPLETO (verificación periódica)`);
+
+              this.turnoService.updateEstado(
+                turno.id, // ahora seguro no es undefined
+                'COMPLETO',
+                'Turno completado automáticamente'
+              ).subscribe({
+                next: () => {
+                  huboActualizaciones = true;
+                  resolve();
+                },
+                error: (error) => {
+                  console.error(`Error actualizando turno ${turno.id}:`, error);
+                  resolve();
+                }
+              });
+            } else {
+              resolve();
+            }
+          });
+        });
+
+        // Esperar a que terminen las actualizaciones
+        Promise.all(actualizaciones).then(() => {
+          if (huboActualizaciones) {
+            console.log("Se detectaron actualizaciones, recargando turnos...");
+            setTimeout(() => this.cargarTurnosPaciente(), 1000);
+          }
+        });
+      },
+      error: (error) => {
+        console.error("Error obteniendo turnos del paciente:", error);
+      }
+    });
+  }
+
+
 
   getFilterCount(filter: "upcoming" | "past" | "all"): number {
     const hoy = new Date();
@@ -2927,7 +3030,6 @@ export class PacienteDashboardComponent implements OnInit {
   }
 
   cargarTurnosPaciente() {
-    // Usar el método robusto del AuthService
     const pacienteId = this.authService.getCurrentPatientId();
 
     if (!pacienteId) {
@@ -2943,15 +3045,51 @@ export class PacienteDashboardComponent implements OnInit {
         console.log("Turnos recibidos en dashboard:", dataPackage);
         const turnos = dataPackage.data || [];
 
-        // Convertir todos los turnos para el dashboard
-        this.allTurnos = turnos.map((turno) =>
-          this.convertirTurnoParaDashboard(turno)
-        );
+        // Procesar turnos y actualizar los que ya pasaron
+        const turnosActualizados: Promise<Turno>[] = turnos.map(turno => {
+          return new Promise((resolve) => {
+            // Validar que el turno tenga ID antes de procesar
+            if (!turno.id) {
+              console.warn('Turno sin ID encontrado, se omite');
+              resolve(turno);
+              return;
+            }
 
-        // Aplicar filtro inicial
-        this.applyFilter();
+            // Si el turno está CONFIRMADO/PROGRAMADO y ya pasó, actualizarlo a COMPLETO
+            if ((turno.estado === 'CONFIRMADO' || turno.estado === 'PROGRAMADO') &&
+              this.turnoYaPaso(turno)) {
 
-        this.isLoadingTurnos = false;
+              console.log(`Actualizando turno ${turno.id} a COMPLETO (fecha/hora pasada)`);
+
+              this.turnoService.updateEstado(
+                turno.id, // Ahora TypeScript sabe que no es undefined
+                'COMPLETO',
+                'Turno completado automáticamente'
+              ).subscribe({
+                next: () => {
+                  turno.estado = 'COMPLETO';
+                  resolve(turno);
+                },
+                error: (error) => {
+                  console.error(`Error actualizando turno ${turno.id}:`, error);
+                  resolve(turno);
+                }
+              });
+            } else {
+              resolve(turno);
+            }
+          });
+        });
+
+        // Esperar a que todos los turnos se procesen
+        Promise.all(turnosActualizados).then((turnosProcesados) => {
+          this.allTurnos = turnosProcesados.map((turno) =>
+            this.convertirTurnoParaDashboard(turno)
+          );
+
+          this.applyFilter();
+          this.isLoadingTurnos = false;
+        });
       },
       error: (error) => {
         console.error("Error cargando turnos:", error);
@@ -2959,7 +3097,6 @@ export class PacienteDashboardComponent implements OnInit {
       },
     });
   }
-
   applyFilter() {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -3253,5 +3390,63 @@ export class PacienteDashboardComponent implements OnInit {
 
   viewNotifications() {
     this.router.navigate(["/paciente-notificaciones"]);
+  }
+
+
+  /**
+   * Verifica si la fecha y hora de un turno ya pasaron
+   */
+  private turnoYaPaso(turno: Turno): boolean {
+    const ahora = new Date();
+
+    // Parsear fecha del turno
+    const [year, month, day] = turno.fecha.split('-').map(Number);
+    const fechaTurno = new Date(year, month - 1, day);
+
+    // Parsear hora de fin del turno
+    const [horas, minutos] = turno.horaFin.split(':').map(Number);
+    fechaTurno.setHours(horas, minutos, 0, 0);
+
+    return ahora > fechaTurno;
+  }
+
+
+  // Nuevo método: Valor de progreso % basado en status (para barra visible siempre)
+  getProgressValue(status: string): number {
+    const progressMap: { [key: string]: number } = {
+      programado: 25,
+      confirmado: 75,
+      reagendado: 50,
+      completo: 100,
+      cancelado: 100
+    };
+    return progressMap[status] || 0;
+  }
+  // Nuevo método: Clase Bootstrap para color de barra
+  getProgressClass(status: string): string {
+    const classMap: { [key: string]: string } = {
+      programado: 'progress-bar-programado',
+      confirmado: 'progress-bar-confirmado',
+      reagendado: 'progress-bar-reagendado',
+      completo: 'progress-bar-completo',
+      cancelado: 'progress-bar-cancelado'
+    };
+    return classMap[status] || 'progress-bar-secondary';
+  }
+
+  // Nuevo método: Label descriptivo para la barra
+  getProgressLabel(status: string): string {
+    const labelMap: { [key: string]: string } = {
+      programado: 'Pendiente de confirmación',
+      confirmado: 'Listo para asistir',
+      reagendado: 'Reprogramando',
+      completo: 'Atendido exitosamente',
+      cancelado: 'Cancelado'
+    };
+    return labelMap[status] || 'Estado desconocido';
+  }
+
+  trackByTurnoId(index: number, turno: any): number {
+    return turno.id;
   }
 }
