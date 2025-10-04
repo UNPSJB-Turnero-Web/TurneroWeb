@@ -20,8 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.PacienteService;
+import unpsjb.labprog.backend.business.service.UserService;
 import unpsjb.labprog.backend.config.AuditContext;
 import unpsjb.labprog.backend.dto.PacienteDTO;
+import unpsjb.labprog.backend.model.User;
 
 @RestController
 @RequestMapping("pacientes")
@@ -29,6 +31,9 @@ public class PacientePresenter {
 
     @Autowired
     private PacienteService service;
+
+    @Autowired
+    private UserService userService;
 
 
 
@@ -201,4 +206,61 @@ public class PacientePresenter {
         }
     }
 
+    /**
+     * Endpoint para sincronización automática de usuarios multi-rol en tabla pacientes.
+     * 
+     * Este endpoint garantiza que el usuario autenticado tenga un registro correspondiente
+     * en la tabla pacientes, permitiendo operar en el dashboard de pacientes.
+     * 
+     * Se invoca automáticamente desde el frontend tras login exitoso o antes de acceder
+     * al dashboard de pacientes para usuarios con roles MEDICO, OPERADOR o ADMINISTRADOR.
+     * 
+     * Características:
+     * - Idempotente: puede llamarse múltiples veces sin crear duplicados
+     * - Busca por DNI o email del usuario autenticado
+     * - Crea registro solo si no existe
+     * - Retorna el pacienteId correspondiente
+     * 
+     * GET /pacientes/sync-current-user
+     * 
+     * @return ResponseEntity con pacienteId y datos básicos del paciente
+     */
+    @GetMapping("/sync-current-user")
+    public ResponseEntity<Object> syncCurrentUserAsPaciente() {
+        try {
+            // Obtener el email del usuario autenticado desde el contexto de auditoría
+            String currentUserEmail = AuditContext.getCurrentUser();
+            
+            if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+                return Response.error(null, "No se pudo identificar al usuario autenticado");
+            }
+            
+            // Buscar el usuario completo para obtener todos sus datos
+            User user = userService.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado en el sistema: " + currentUserEmail));
+
+            // Ejecutar sincronización
+            PacienteDTO pacienteDTO = service.ensurePacienteExistsForUser(user);
+
+            // Preparar respuesta con datos relevantes
+            Map<String, Object> response = new HashMap<>();
+            response.put("pacienteId", pacienteDTO.getId());
+            response.put("nombre", pacienteDTO.getNombre());
+            response.put("apellido", pacienteDTO.getApellido());
+            response.put("email", pacienteDTO.getEmail());
+            response.put("dni", pacienteDTO.getDni());
+            response.put("sincronizado", true);
+
+            return Response.ok(response, "Sincronización completada exitosamente");
+
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, "Error de validación: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error en sincronización de paciente: " + e.getMessage());
+        }
+    }
+
 }
+

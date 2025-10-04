@@ -143,4 +143,37 @@ export class PacienteService {
       DataPackage<{ id: number; nombre: string; codigo: string }[]>
     >(`rest/obra-social`);
   }
+
+  /**
+   * Sincronización automática del usuario actual como paciente.
+   * 
+   * Este método garantiza que el usuario autenticado tenga un registro en la tabla pacientes,
+   * permitiendo que usuarios multi-rol (MÉDICO, OPERADOR, ADMINISTRADOR) puedan operar
+   * en el dashboard de pacientes y sacar turnos.
+   * 
+   * Características:
+   * - Idempotente: puede llamarse múltiples veces sin crear duplicados
+   * - Busca por DNI o email del usuario autenticado
+   * - Crea registro solo si no existe
+   * - Retorna el pacienteId correspondiente
+   * 
+   * @returns Observable con el pacienteId y datos básicos del paciente sincronizado
+   */
+  syncCurrentUserAsPaciente(): Observable<DataPackage<{
+    pacienteId: number;
+    nombre: string;
+    apellido: string;
+    email: string;
+    dni: number;
+    sincronizado: boolean;
+  }>> {
+    return this.http.get<DataPackage<{
+      pacienteId: number;
+      nombre: string;
+      apellido: string;
+      email: string;
+      dni: number;
+      sincronizado: boolean;
+    }>>(`${this.url}/sync-current-user`);
+  }
 }

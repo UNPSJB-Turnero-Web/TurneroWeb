@@ -303,5 +303,109 @@ public class PacienteService {
         return paciente;
     }
 
+    /**
+     * Sincronización automática de usuarios multi-rol en tabla pacientes.
+     * 
+     * Este método garantiza que todo usuario con rol MEDICO, OPERADOR o ADMINISTRADOR
+     * tenga un registro correspondiente en la tabla pacientes, permitiendo que
+     * puedan operar en el dashboard de pacientes y sacar turnos.
+     * 
+     * IMPORTANTE: 
+     * - Es idempotente: puede llamarse múltiples veces sin crear duplicados
+     * - Excluye usuarios con rol PACIENTE puro (ya deben estar creados)
+     * - Utiliza DNI como identificador único primario, email como secundario
+     * 
+     * @param user Usuario autenticado que requiere sincronización
+     * @return PacienteDTO con el ID del paciente (existente o creado)
+     * @throws IllegalArgumentException si el usuario es null o no tiene datos básicos
+     */
+    @Transactional
+    public PacienteDTO ensurePacienteExistsForUser(User user) {
+        // Validaciones de entrada
+        if (user == null) {
+            throw new IllegalArgumentException("Usuario no puede ser null");
+        }
+        
+        if (user.getRole() == null) {
+            throw new IllegalArgumentException("Usuario debe tener un rol asignado");
+        }
+
+        logger.info("🔄 Iniciando sincronización de paciente para usuario: {} (rol: {})", 
+                    user.getEmail(), user.getRole());
+
+        // REGLA 1: Usuarios con rol PACIENTE puro no deben sincronizarse aquí
+        // ya que su registro debe haberse creado al momento del alta de paciente
+        if (user.getRole() == unpsjb.labprog.backend.model.Role.PACIENTE) {
+            logger.debug("⏭️  Usuario con rol PACIENTE puro - se espera registro existente");
+            // Buscar el paciente existente
+            Optional<Paciente> existingPaciente = repository.findByEmail(user.getEmail());
+            if (existingPaciente.isEmpty()) {
+                logger.warn("⚠️  Usuario PACIENTE sin registro en tabla pacientes - posible inconsistencia de datos");
+                // En este caso excepcional, crear el paciente
+                return createPacienteFromUser(user, "SYSTEM_SYNC");
+            }
+            return toDTO(existingPaciente.get());
+        }
+
+        // REGLA 2: Buscar paciente existente por DNI (identificador más confiable)
+        Optional<Paciente> pacienteByDni = Optional.empty();
+        if (user.getDni() != null) {
+            pacienteByDni = repository.findByDni(user.getDni());
+            if (pacienteByDni.isPresent()) {
+                logger.info("✅ Paciente encontrado por DNI: {}", user.getDni());
+                return toDTO(pacienteByDni.get());
+            }
+        }
+
+        // REGLA 3: Buscar paciente existente por email (fallback)
+        Optional<Paciente> pacienteByEmail = repository.findByEmail(user.getEmail());
+        if (pacienteByEmail.isPresent()) {
+            logger.info("✅ Paciente encontrado por email: {}", user.getEmail());
+            return toDTO(pacienteByEmail.get());
+        }
+
+        // REGLA 4: No existe paciente - crear uno nuevo para el usuario multi-rol
+        logger.info("🆕 Creando nuevo registro de paciente para usuario multi-rol: {}", user.getEmail());
+        return createPacienteFromUser(user, "SYSTEM_SYNC");
+    }
+
+    /**
+     * Crea un nuevo registro de paciente a partir de los datos de un usuario.
+     * Método privado auxiliar para ensurePacienteExistsForUser.
+     * 
+     * @param user Usuario origen de los datos
+     * @param performedBy Usuario que ejecuta la acción (para auditoría)
+     * @return PacienteDTO del paciente creado
+     */
+    private PacienteDTO createPacienteFromUser(User user, String performedBy) {
+        Paciente nuevoPaciente = new Paciente();
+        nuevoPaciente.setNombre(user.getNombre());
+        nuevoPaciente.setApellido(user.getApellido());
+        nuevoPaciente.setDni(user.getDni());
+        nuevoPaciente.setEmail(user.getEmail());
+        nuevoPaciente.setTelefono(user.getTelefono());
+        // fechaNacimiento y obraSocial quedan null - pueden completarse después
+
+        Paciente savedPaciente = repository.save(nuevoPaciente);
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(
+            AuditLog.EntityTypes.PACIENTE,
+            savedPaciente.getId().longValue(),
+            AuditLog.Actions.CREATE,
+            performedBy,
+            null,
+            "SINCRONIZADO",
+            null,
+            savedPaciente,
+            "Paciente creado automáticamente por sincronización multi-rol desde usuario: " + user.getEmail()
+        );
+
+        logger.info("✅ Paciente creado exitosamente - ID: {}, Email: {}", 
+                    savedPaciente.getId(), savedPaciente.getEmail());
+
+        return toDTO(savedPaciente);
+    }
+
 
 }

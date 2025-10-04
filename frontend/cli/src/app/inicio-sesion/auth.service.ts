@@ -225,10 +225,50 @@ export class AuthService {
 
             // Programar el refresh automático para el nuevo token
             this.scheduleTokenRefresh(response.data.accessToken);
+
+            // 🔄 SINCRONIZACIÓN AUTOMÁTICA: Asegurar que el usuario tenga registro en tabla pacientes
+            // Esto es crítico para usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+            this.ensurePacienteExistsForCurrentUser(response.data.role);
           }
         }),
         catchError(this.handleError)
       );
+  }
+
+  /**
+   * Sincronización automática del usuario actual como paciente.
+   * 
+   * Este método garantiza que usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+   * tengan un registro en la tabla pacientes, permitiéndoles operar en el dashboard
+   * de pacientes y sacar turnos.
+   * 
+   * Características:
+   * - Solo se ejecuta para usuarios multi-rol (no para PACIENTE puro)
+   * - Es idempotente: puede llamarse múltiples veces sin crear duplicados
+   * - Almacena el pacienteId en localStorage para uso posterior
+   * - Maneja errores silenciosamente para no interrumpir el flujo de login
+   * 
+   * @param userRole Rol primario del usuario autenticado
+   */
+  private ensurePacienteExistsForCurrentUser(userRole: string): void {
+    // Solo sincronizar para usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+    // Los usuarios PACIENTE puros ya deberían tener su registro
+    if (userRole && userRole.toUpperCase() !== 'PACIENTE') {
+      this.pacienteService.syncCurrentUserAsPaciente().subscribe({
+        next: (response) => {
+          if (response.data && response.data.pacienteId) {
+            // Almacenar el pacienteId en localStorage para uso futuro
+            localStorage.setItem('pacienteId', response.data.pacienteId.toString());
+            console.log(`✅ Sincronización paciente exitosa - ID: ${response.data.pacienteId}`);
+          }
+        },
+        error: (error) => {
+          // Loggear el error pero no interrumpir el flujo de login
+          console.error('⚠️  Error en sincronización de paciente:', error);
+          // Nota: El usuario puede seguir operando normalmente en otras secciones
+        }
+      });
+    }
   }
 
   /**
