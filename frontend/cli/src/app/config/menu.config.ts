@@ -153,14 +153,21 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Configuración personal',
         requiresPrimaryRole: true // Solo visible si el usuario es OPERADOR como rol primario
       },
-       {
+     /*  {
         label: 'Solicitar Turno',
         route: '/turnos/new',
+        icon: 'fa-calendar-plus',
+        description: 'Reservar un nuevo turno médico'
+      } */
+      {
+        label: 'Agenda de turnos',
+        route: '/agenda',
         icon: 'fa-calendar-plus',
         description: 'Reservar un nuevo turno médico'
       }
     ]
   },
+
 
   // ========================================
   // SECCIÓN: ADMINISTRADOR
