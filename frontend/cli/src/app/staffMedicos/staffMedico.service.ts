@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { StaffMedico } from './staffMedico';
 import { DataPackage } from '../data.package';
+import { ResultsPage } from '../results-page';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,11 @@ export class StaffMedicoService {
   /** Obtiene un staff médico por ID */
   get(id: number): Observable<DataPackage<StaffMedico>> {
     return this.http.get<DataPackage<StaffMedico>>(`${this.url}/${id}`);
+  }
+
+  /** Obtiene todos los staff médicos de un médico específico */
+  getByMedicoId(medicoId: number): Observable<DataPackage<StaffMedico[]>> {
+    return this.http.get<DataPackage<StaffMedico[]>>(`${this.url}/medico/${medicoId}`);
   }
 
   /** Crea un nuevo staff médico */
@@ -40,6 +46,40 @@ export class StaffMedicoService {
     /** Paginación de especialidades */
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
+  }
+
+  /**
+   * Búsqueda, filtro y ordenamiento paginado de staff médicos
+   * @param page Número de página (0-based)
+   * @param size Tamaño de página
+   * @param medico Filtro por nombre, apellido o DNI del médico (opcional)
+   * @param especialidad Filtro por nombre de especialidad (opcional)
+   * @param centro Filtro por nombre de centro de atención (opcional)
+   * @param consultorio Filtro por nombre o ID de consultorio (opcional)
+   * @param sortBy Campo para ordenar (opcional, default: id)
+   * @param sortDir Dirección del ordenamiento (asc/desc, default: asc)
+   * @returns Observable con datos paginados
+   */
+  findByPage(
+    page: number,
+    size: number,
+    medico?: string,
+    especialidad?: string,
+    centro?: string,
+    consultorio?: string,
+    sortBy?: string,
+    sortDir?: string
+  ): Observable<DataPackage<ResultsPage>> {
+    let params = `page=${page}&size=${size}`;
+
+    if (medico?.trim()) params += `&medico=${encodeURIComponent(medico.trim())}`;
+    if (especialidad?.trim()) params += `&especialidad=${encodeURIComponent(especialidad.trim())}`;
+    if (centro?.trim()) params += `&centro=${encodeURIComponent(centro.trim())}`;
+    if (consultorio?.trim()) params += `&consultorio=${encodeURIComponent(consultorio.trim())}`;
+    if (sortBy?.trim()) params += `&sortBy=${encodeURIComponent(sortBy.trim())}`;
+    if (sortDir?.trim()) params += `&sortDir=${encodeURIComponent(sortDir.trim())}`;
+
+    return this.http.get<DataPackage<ResultsPage>>(`${this.url}/page?${params}`);
   }
 
 

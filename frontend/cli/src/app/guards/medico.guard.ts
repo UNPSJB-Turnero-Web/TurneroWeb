@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
-import { AuthService } from '../inicio-sesion/auth.service';
+import { AuthService, Role } from '../inicio-sesion/auth.service';
+import { UserContextService } from '../services/user-context.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,8 @@ import { AuthService } from '../inicio-sesion/auth.service';
 export class MedicoGuard implements CanActivate {
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private userContextService: UserContextService
   ) {}
 
   canActivate(): boolean {
@@ -17,7 +19,7 @@ export class MedicoGuard implements CanActivate {
     //return true; // quitar esta línea para activar la protección de rutas
 
 
-    //PRODUCCION: rutas protegidas
+    //PRODUCCION: rutas protegidos
     
     // Verificar si está autenticado
     if (!this.authService.isAuthenticated()) {
@@ -25,13 +27,7 @@ export class MedicoGuard implements CanActivate {
       return false;
     }
 
-    // Verificar si tiene rol de medico
-    const userRole = this.authService.getUserRole();
-    
-    if (userRole === 'MEDICO') {
-      return true;
-    } else {
-      return false;
-    }
+    // Verificar si tiene rol de medico o superior usando el UserContextService
+    return this.userContextService.hasRole(Role.MEDICO);
   }
 }

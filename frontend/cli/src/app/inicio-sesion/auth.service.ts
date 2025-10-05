@@ -11,6 +11,7 @@ import { JwtHelperService } from "@auth0/angular-jwt";
 import { DataPackage } from "../data.package";
 import { PacienteService } from "../pacientes/paciente.service";
 import { ModalService } from "../modal/modal.service";
+import { UserContextService } from "../services/user-context.service";
 
 /**
  * Interfaz para los datos de login compatibles con InicioSesionComponent
@@ -31,6 +32,7 @@ export interface LoginResponse {
   email: string;
   nombre: string;
   role: string;
+  roles?: string[]; // Lista completa de roles incluyendo heredados
 }
 
 /**
@@ -93,6 +95,26 @@ export interface UpdateProfileResponse {
 }
 
 /**
+ * Enum para los roles del sistema
+ */
+export enum Role {
+  PACIENTE = 'PACIENTE',
+  MEDICO = 'MEDICO',
+  OPERADOR = 'OPERADOR',
+  ADMINISTRADOR = 'ADMINISTRADOR'
+}
+
+/**
+ * Jerarquía de roles: qué roles incluye cada uno
+ */
+export const ROLE_HIERARCHY: Record<Role, Role[]> = {
+  [Role.PACIENTE]: [],
+  [Role.MEDICO]: [Role.PACIENTE],
+  [Role.OPERADOR]: [Role.PACIENTE],
+  [Role.ADMINISTRADOR]: [Role.PACIENTE, Role.MEDICO, Role.OPERADOR],
+};
+
+/**
  * Servicio de autenticación que maneja JWT con Spring Boot backend
  */
 @Injectable({
@@ -120,7 +142,8 @@ export class AuthService {
     private http: HttpClient,
     private router: Router,
     private pacienteService: PacienteService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private userContextService: UserContextService
   ) {
     // Inicializar sincronización de sesiones entre pestañas
     this.initializeSessionSync();
@@ -182,21 +205,70 @@ export class AuthService {
             this.authStateSubject.next(true);
             this.updateSessionTimestamp();
             
+            // Actualizar UserContext con datos completos incluyendo roles
+            this.userContextService.updateUserContext({
+              email: response.data.email,
+              nombre: response.data.nombre,
+              primaryRole: response.data.role,
+              allRoles: response.data.roles // Roles completos desde backend
+            });
+            
             // Notificar a otras pestañas sobre el login con un pequeño delay
             // para asegurar que los datos se hayan guardado correctamente
             setTimeout(() => {
               this.notifyOtherTabs('login', {
                 email: response.data.email,
-                role: response.data.role
+                role: response.data.role,
+                roles: response.data.roles
               });
             }, 100);
-            
+
             // Programar el refresh automático para el nuevo token
             this.scheduleTokenRefresh(response.data.accessToken);
+
+            // 🔄 SINCRONIZACIÓN AUTOMÁTICA: Asegurar que el usuario tenga registro en tabla pacientes
+            // Esto es crítico para usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+            this.ensurePacienteExistsForCurrentUser(response.data.role);
           }
         }),
         catchError(this.handleError)
       );
+  }
+
+  /**
+   * Sincronización automática del usuario actual como paciente.
+   * 
+   * Este método garantiza que usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+   * tengan un registro en la tabla pacientes, permitiéndoles operar en el dashboard
+   * de pacientes y sacar turnos.
+   * 
+   * Características:
+   * - Solo se ejecuta para usuarios multi-rol (no para PACIENTE puro)
+   * - Es idempotente: puede llamarse múltiples veces sin crear duplicados
+   * - Almacena el pacienteId en localStorage para uso posterior
+   * - Maneja errores silenciosamente para no interrumpir el flujo de login
+   * 
+   * @param userRole Rol primario del usuario autenticado
+   */
+  private ensurePacienteExistsForCurrentUser(userRole: string): void {
+    // Solo sincronizar para usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+    // Los usuarios PACIENTE puros ya deberían tener su registro
+    if (userRole && userRole.toUpperCase() !== 'PACIENTE') {
+      this.pacienteService.syncCurrentUserAsPaciente().subscribe({
+        next: (response) => {
+          if (response.data && response.data.pacienteId) {
+            // Almacenar el pacienteId en localStorage para uso futuro
+            localStorage.setItem('pacienteId', response.data.pacienteId.toString());
+            console.log(`✅ Sincronización paciente exitosa - ID: ${response.data.pacienteId}`);
+          }
+        },
+        error: (error) => {
+          // Loggear el error pero no interrumpir el flujo de login
+          console.error('⚠️  Error en sincronización de paciente:', error);
+          // Nota: El usuario puede seguir operando normalmente en otras secciones
+        }
+      });
+    }
   }
 
   /**
@@ -229,11 +301,20 @@ export class AuthService {
     this.storeTokens(loginResponse, rememberMe);
     this.authStateSubject.next(true);
     
+    // Actualizar UserContext
+    this.userContextService.updateUserContext({
+      email: loginResponse.email,
+      nombre: loginResponse.nombre,
+      primaryRole: loginResponse.role,
+      allRoles: loginResponse.roles
+    });
+    
     // Notificar a otras pestañas sobre el login con delay
     setTimeout(() => {
       this.notifyOtherTabs('login', {
         email: loginResponse.email,
-        role: loginResponse.role
+        role: loginResponse.role,
+        roles: loginResponse.roles
       });
     }, 100);
     
@@ -598,6 +679,9 @@ export class AuthService {
 
     // Actualizar estado de autenticación
     this.authStateSubject.next(false);
+    
+    // Limpiar contexto de usuario
+    this.userContextService.clearUserContext();
 
     // Notificar a otras pestañas sobre el logout
     this.notifyOtherTabs('logout');
@@ -689,14 +773,9 @@ export class AuthService {
    * @returns Observable con la respuesta del servidor
    */
   changePassword(request: ChangePasswordRequest): Observable<DataPackage<any>> {
-    const headers = new HttpHeaders({
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.getToken()}`,
-    });
-
     return this.http
       .post<DataPackage<any>>(`${this.API_BASE_URL}/change-password`, request, {
-        headers,
+        headers: new HttpHeaders({ "Content-Type": "application/json" })
       })
       .pipe(catchError(this.handleError));
   }
@@ -707,14 +786,9 @@ export class AuthService {
    * @returns Observable con la respuesta del servidor
    */
   updateProfile(request: UpdateProfileRequest): Observable<DataPackage<UpdateProfileResponse>> {
-    const headers = new HttpHeaders({
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${this.getToken()}`,
-    });
-
     return this.http
       .put<DataPackage<UpdateProfileResponse>>(`${this.API_BASE_URL}/update-profile`, request, {
-        headers,
+        headers: new HttpHeaders({ "Content-Type": "application/json" })
       })
       .pipe(
         tap((response) => {
@@ -869,6 +943,45 @@ export class AuthService {
     } catch (error) {
       return { hasToken: true, isExpired: true, expiresAt: null, timeLeft: 'Error' };
     }
+  }
+
+  /**
+   * Obtiene todos los roles heredados por un rol dado, incluyendo el rol mismo
+   * @param role Rol base
+   * @returns Set de roles incluyendo el rol base y todos los heredados
+   */
+  getAllInheritedRoles(role: Role): Set<Role> {
+    const roles = new Set<Role>();
+    const visit = (r: Role) => {
+      if (!roles.has(r)) {
+        roles.add(r);
+        ROLE_HIERARCHY[r]?.forEach(visit);
+      }
+    };
+    visit(role);
+    return roles;
+  }
+
+  /**
+   * @deprecated Usar UserContextService.hasRole() en su lugar
+   * Verifica si el usuario actual tiene el rol requerido o lo hereda según la jerarquía
+   * @param required Rol requerido
+   * @returns true si el usuario tiene el rol o lo hereda
+   */
+  hasRole(required: Role): boolean {
+    console.warn('⚠️ AuthService.hasRole() está deprecado. Usar UserContextService.hasRole() en su lugar.');
+    return this.userContextService.hasRole(required);
+  }
+
+  /**
+   * @deprecated Usar UserContextService.hasAnyRole() en su lugar
+   * Verifica si el usuario actual tiene al menos uno de los roles requeridos o los hereda
+   * @param requiredRoles Array de roles requeridos
+   * @returns true si el usuario tiene al menos uno de los roles o los hereda
+   */
+  hasAnyRole(requiredRoles: Role[]): boolean {
+    console.warn('⚠️ AuthService.hasAnyRole() está deprecado. Usar UserContextService.hasAnyRole() en su lugar.');
+    return this.userContextService.hasAnyRole(requiredRoles);
   }
 
   /**
@@ -1114,11 +1227,21 @@ export class AuthService {
           );
           setTimeout(() => this.forceLogoutPreservingNewSession(data.data), 2000);
         }
+        // Si hay datos de usuario disponibles, actualizarlos en el contexto
+        else if (data.data) {
+          this.userContextService.updateUserContext({
+            email: data.data.email,
+            nombre: data.data.nombre || '',
+            primaryRole: data.data.role,
+            allRoles: data.data.roles || [data.data.role]
+          });
+        }
         break;
         
       case 'logout':
         if (this.isAuthenticated()) {
           console.log('🔄 Sincronizando logout desde otra pestaña');
+          this.userContextService.clearUserContext();
           this.forceLogout();
         }
         break;

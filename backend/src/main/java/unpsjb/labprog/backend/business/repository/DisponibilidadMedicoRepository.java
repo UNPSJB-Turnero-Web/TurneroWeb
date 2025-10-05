@@ -47,4 +47,17 @@ boolean existsByStaffMedicoAndHorariosDiaAndHorariosHoraInicioAndHorariosHoraFin
     // Método para encontrar disponibilidades por centro de atención
     List<DisponibilidadMedico> findByStaffMedico_CentroAtencionId(Integer centroAtencionId);
 
+    @Query("SELECT d FROM DisponibilidadMedico d " +
+           "JOIN d.staffMedico sm " +
+           "JOIN sm.medico m " +
+           "LEFT JOIN d.especialidad e " +
+           "WHERE (:staffMedico IS NULL OR LOWER(CONCAT(m.nombre, ' ', m.apellido)) LIKE LOWER(CONCAT('%', :staffMedico, '%'))) " +
+           "AND (:especialidad IS NULL OR e IS NULL OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :especialidad, '%'))) " +
+           "AND (:dia IS NULL OR EXISTS (SELECT 1 FROM d.horarios h WHERE h.dia = :dia))")
+    List<DisponibilidadMedico> findFiltered(
+        @Param("staffMedico") String staffMedico,
+        @Param("especialidad") String especialidad,
+        @Param("dia") String dia
+    );
+
 }

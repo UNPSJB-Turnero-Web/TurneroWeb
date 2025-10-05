@@ -2,8 +2,8 @@
   <div class="modern-card-header">
     <div class="d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center">
-        <div class="me-3">
-          <i class="fa fa-sitemap" style="font-size: 2rem; color: var(--primary-color);"></i>
+        <div class="header-icon me-3">
+          📊
         </div>
         <div>
           <h4 class="mb-0 fw-bold">Organigrama de Esquemas de Turno</h4>
@@ -13,26 +13,21 @@
       
       <!-- Controles de vista -->
       <div class="d-flex gap-2">
-        <div class="btn-group" role="group">
-          <button type="button" 
-                  class="btn btn-outline-primary btn-sm" 
-                  [class.active]="vistaActual === 'semanal'"
-                  (click)="cambiarVista('semanal')">
-            <i class="fa fa-calendar-week me-1"></i> Semanal
-          </button>
-          <button type="button" 
-                  class="btn btn-outline-primary btn-sm" 
-                  [class.active]="vistaActual === 'porConsultorio'"
-                  (click)="cambiarVista('porConsultorio')">
-            <i class="fa fa-building me-1"></i> Por Consultorio
-          </button>
-          <button type="button" 
-                  class="btn btn-outline-primary btn-sm" 
-                  [class.active]="vistaActual === 'matriz'"
-                  (click)="cambiarVista('matriz')">
-            <i class="fa fa-table me-1"></i> Matriz
-          </button>
-        </div>
+        <button class="btn-modern btn-success-modern"
+                [class.active]="vistaActual === 'semanal'"
+                (click)="cambiarVista('semanal')">
+          <i class="fa fa-calendar-week me-2"></i> Semanal
+        </button>
+        <button class="btn-modern btn-primary-modern"
+                [class.active]="vistaActual === 'porConsultorio'"
+                (click)="cambiarVista('porConsultorio')">
+          <i class="fa fa-building me-2"></i> Por Consultorio
+        </button>
+        <button class="btn-modern btn-secondary-modern"
+                [class.active]="vistaActual === 'matriz'"
+                (click)="cambiarVista('matriz')">
+          <i class="fa fa-table me-2"></i> Matriz
+        </button>
       </div>
     </div>
   </div>

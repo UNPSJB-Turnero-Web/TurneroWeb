@@ -27,8 +27,8 @@ public class User extends Persona implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
     private Role role;
     
     @Column(nullable = false)
@@ -71,7 +71,7 @@ public class User extends Persona implements UserDetails {
         this.setEmail(email);
         this.hashedPassword = hashedPassword; // Asignar directamente al campo de User
         this.setTelefono(telefono);
-        // El rol se debe asignar después de crear el usuario usando el RoleService
+        this.role = Role.PACIENTE; // Rol por defecto para nuevos usuarios
         this.enabled = true;
         this.accountNonExpired = true;
         this.accountNonLocked = true;

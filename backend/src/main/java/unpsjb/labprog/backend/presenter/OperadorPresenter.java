@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Page;
+
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.OperadorService;
 import unpsjb.labprog.backend.config.AuditContext;
@@ -45,7 +47,8 @@ public class OperadorPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody OperadorDTO operadorDTO) {
         try {
-            OperadorDTO saved = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO saved = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(saved, "Operador creado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -60,7 +63,8 @@ public class OperadorPresenter {
             if (operadorDTO.getId() == null || operadorDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            OperadorDTO updated = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO updated = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(updated, "Operador actualizado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -74,7 +78,8 @@ public class OperadorPresenter {
         try {
             // Asegurar que el ID del path coincida con el del DTO
             operadorDTO.setId(id);
-            OperadorDTO updated = service.saveOrUpdate(operadorDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            OperadorDTO updated = service.saveOrUpdate(operadorDTO, performedBy);
             return Response.ok(updated, "Operador actualizado correctamente");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -86,7 +91,8 @@ public class OperadorPresenter {
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Long id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok(null, "Operador eliminado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al eliminar el operador: " + e.getMessage());
@@ -108,21 +114,6 @@ public class OperadorPresenter {
         return service.findByDni(dni)
                 .map(operador -> Response.ok(operador, "Operador encontrado por DNI"))
                 .orElse(Response.notFound("Operador con DNI " + dni + " no encontrado"));
-    }
-
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageResult.getContent());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("totalElements", pageResult.getTotalElements());
-        response.put("currentPage", pageResult.getNumber());
-
-        return Response.ok(response);
     }
 
     /**
@@ -162,7 +153,7 @@ public class OperadorPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            OperadorDTO saved = service.saveOrUpdate(request);
+            OperadorDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Operador creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -200,6 +191,33 @@ public class OperadorPresenter {
             return Response.ok(operadores, "Operadores inactivos recuperados correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al recuperar operadores inactivos: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtener operadores paginados con filtros y ordenamiento dinámico
+     * GET /operadores/page?page=0&size=10&nombre=Juan&email=juan@example.com&estado=activo&sortBy=nombre&sortDir=asc
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Object> findByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        try {
+            Page<OperadorDTO> pageResult = service.findByPage(page, size, nombre, email, estado, sortBy, sortDir);
+            Map<String, Object> response = Map.of(
+                "content", pageResult.getContent(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber()
+            );
+            return Response.ok(response, "Operadores recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar operadores paginados: " + e.getMessage());
         }
     }
 }

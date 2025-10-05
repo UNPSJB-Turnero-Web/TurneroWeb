@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,7 +49,8 @@ public class MedicoPresenter {
             if (medicoDTO.getId() != null && medicoDTO.getId() != 0) {
                 return Response.error(medicoDTO, "El médico no puede tener un ID definido al crearse.");
             }
-            MedicoDTO saved = service.saveOrUpdate(medicoDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            MedicoDTO saved = service.saveOrUpdate(medicoDTO, performedBy);
             return Response.ok(saved, "Médico creado correctamente");
         } catch (IllegalArgumentException e) {           
             return Response.dbError(e.getMessage());
@@ -64,7 +66,8 @@ public class MedicoPresenter {
                 return Response.error(medicoDTO, "Debe proporcionar un ID válido para actualizar.");
             }
             medicoDTO.setId(id);
-            MedicoDTO updated = service.saveOrUpdate(medicoDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            MedicoDTO updated = service.saveOrUpdate(medicoDTO, performedBy);
             return Response.ok(updated, "Médico actualizado correctamente");
         } catch (org.springframework.web.server.ResponseStatusException e) {
             if (e.getStatusCode() == org.springframework.http.HttpStatus.CONFLICT) {
@@ -81,8 +84,14 @@ public class MedicoPresenter {
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String especialidad,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Page<MedicoDTO> pageResult = service.findByPage(page, size, nombre, especialidad, estado, sortBy, sortDir);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", pageResult.getContent());
@@ -95,7 +104,8 @@ public class MedicoPresenter {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable("id") Integer id) {
-        service.delete(id);
+        String performedBy = AuditContext.getCurrentUser();
+        service.delete(id, performedBy);
         return Response.ok("Médico " + id + " eliminado correctamente");
     }
 
@@ -136,7 +146,7 @@ public class MedicoPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            MedicoDTO saved = service.saveOrUpdate(request);
+            MedicoDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Médico creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -159,7 +169,7 @@ public class MedicoPresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            MedicoDTO saved = service.saveOrUpdate(request);
+            MedicoDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Médico creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());

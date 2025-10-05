@@ -30,6 +30,9 @@ public class ConsultorioService {
     @Autowired
     private CentroAtencionRepository centroRepo;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
     public List<ConsultorioDTO> findAll() {
         return repository.findAll().stream()
                 .map(this::toDTO)
@@ -46,7 +49,19 @@ public class ConsultorioService {
     }
 
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Integer id, String performedBy, String reason) {
+        Consultorio consultorio = repository.findById(id)
+                .orElseThrow(() -> new IllegalStateException("Consultorio no encontrado"));
+        
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+        
+        // Auditar eliminación antes de borrar
+        auditLogService.logConsultorioDeleted(id.longValue(), performedBy, 
+                                           reason != null ? reason : "Eliminación de consultorio");
+        
         repository.deleteById(id);
     }
 
@@ -145,8 +160,13 @@ public class ConsultorioService {
     }
 
     @Transactional
-    public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto) {
+    public ConsultorioDTO saveOrUpdate(ConsultorioDTO dto, String performedBy) {
         Consultorio consultorio = toEntity(dto);
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
 
         // Validar datos
         validateConsultorio(consultorio);
@@ -167,6 +187,13 @@ public class ConsultorioService {
             if (consultorio.getHorariosSemanales() == null || consultorio.getHorariosSemanales().isEmpty()) {
                 consultorio.setHorariosSemanales(crearHorariosDefault());
             }
+
+            // Auditar creación
+            Consultorio saved = repository.save(consultorio);
+            auditLogService.logConsultorioCreated(saved.getId().longValue(), saved.getNombre(), 
+                                                 saved.getCentroAtencion().getId().longValue(), performedBy);
+            return toDTO(saved);
+            
         } else {
             // MODIFICACIÓN
             Consultorio existente = repository.findById(consultorio.getId())
@@ -184,13 +211,26 @@ public class ConsultorioService {
                     throw new IllegalStateException("El nombre del consultorio ya está en uso");
                 }
             }
+
+            // Auditar actualización
+            Map<String, Object> oldData = Map.of(
+                "numero", existente.getNumero(),
+                "nombre", existente.getNombre()
+            );
+            Map<String, Object> newData = Map.of(
+                "numero", consultorio.getNumero(),
+                "nombre", consultorio.getNombre()
+            );
+
             existente.setNumero(consultorio.getNumero());
             existente.setNombre(consultorio.getNombre());
             existente.setHorariosSemanales(consultorio.getHorariosSemanales());
-            consultorio = existente;
+            Consultorio saved = repository.save(existente);
+            
+            auditLogService.logConsultorioUpdated(saved.getId().longValue(), performedBy, 
+                                                oldData, newData, "Actualización de consultorio");
+            return toDTO(saved);
         }
-
-        return toDTO(repository.save(consultorio));
     }
 
     private void validateConsultorio(Consultorio consultorio) {

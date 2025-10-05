@@ -2,7 +2,7 @@ export interface Operador {
   id: number;
   nombre: string;
   apellido: string;
-  dni: number;
+  dni: number | null;
   email: string;
   password?: string;
   activo: boolean;

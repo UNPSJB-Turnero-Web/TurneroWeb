@@ -13,14 +13,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.PacienteService;
+import unpsjb.labprog.backend.business.service.UserService;
 import unpsjb.labprog.backend.config.AuditContext;
 import unpsjb.labprog.backend.dto.PacienteDTO;
+import unpsjb.labprog.backend.model.User;
 
 @RestController
 @RequestMapping("pacientes")
@@ -29,12 +32,36 @@ public class PacientePresenter {
     @Autowired
     private PacienteService service;
 
+    @Autowired
+    private UserService userService;
+
 
 
     @GetMapping
     public ResponseEntity<Object> findAll() {
         List<PacienteDTO> pacientes = service.findAll();
         return Response.ok(pacientes, "Pacientes recuperados correctamente");
+    }
+
+    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    public ResponseEntity<Object> findByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String nombreApellido,
+            @RequestParam(required = false) String documento,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+
+        Page<PacienteDTO> pageResult = service.findByPage(page, size, nombreApellido, documento, email, sortBy, sortDir);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageResult.getContent());
+        response.put("totalPages", pageResult.getTotalPages());
+        response.put("totalElements", pageResult.getTotalElements());
+        response.put("currentPage", pageResult.getNumber());
+
+        return Response.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -47,7 +74,8 @@ public class PacientePresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody PacienteDTO pacienteDTO) {
         try {
-            PacienteDTO saved = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO saved = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(saved, "Paciente creado correctamente");
         } catch (IllegalStateException | IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
@@ -62,7 +90,8 @@ public class PacientePresenter {
             if (pacienteDTO.getId() <= 0) {
                 return Response.error(null, "Debe proporcionar un ID válido para actualizar");
             }
-            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(updated, "Paciente actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -76,7 +105,8 @@ public class PacientePresenter {
         try {
             // Asegurar que el ID del path coincida con el del DTO
             pacienteDTO.setId(id);
-            PacienteDTO updated = service.saveOrUpdate(pacienteDTO);
+            String performedBy = AuditContext.getCurrentUser();
+            PacienteDTO updated = service.saveOrUpdate(pacienteDTO, performedBy);
             return Response.ok(updated, "Paciente actualizado correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -88,27 +118,14 @@ public class PacientePresenter {
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok(null, "Paciente eliminado correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al eliminar el paciente: " + e.getMessage());
         }
     }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageResult.getContent());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("totalElements", pageResult.getTotalElements());
-        response.put("currentPage", pageResult.getNumber());
-
-        return Response.ok(response);
-    }
 
     @GetMapping("/dni/{dni}")
     public ResponseEntity<Object> findByDni(@PathVariable Integer dni) {
@@ -153,7 +170,7 @@ public class PacientePresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-            PacienteDTO saved = service.saveOrUpdate(request);
+            PacienteDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Paciente creado correctamente por administrador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -180,7 +197,7 @@ public class PacientePresenter {
             request.setPerformedBy(performedBy);
 
             // Usar el service que ahora maneja la lógica de auditoría
-           PacienteDTO saved = service.saveOrUpdate(request);
+           PacienteDTO saved = service.saveOrUpdate(request, performedBy);
             return Response.ok(saved, "Paciente creado correctamente por operador");
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -189,4 +206,61 @@ public class PacientePresenter {
         }
     }
 
+    /**
+     * Endpoint para sincronización automática de usuarios multi-rol en tabla pacientes.
+     * 
+     * Este endpoint garantiza que el usuario autenticado tenga un registro correspondiente
+     * en la tabla pacientes, permitiendo operar en el dashboard de pacientes.
+     * 
+     * Se invoca automáticamente desde el frontend tras login exitoso o antes de acceder
+     * al dashboard de pacientes para usuarios con roles MEDICO, OPERADOR o ADMINISTRADOR.
+     * 
+     * Características:
+     * - Idempotente: puede llamarse múltiples veces sin crear duplicados
+     * - Busca por DNI o email del usuario autenticado
+     * - Crea registro solo si no existe
+     * - Retorna el pacienteId correspondiente
+     * 
+     * GET /pacientes/sync-current-user
+     * 
+     * @return ResponseEntity con pacienteId y datos básicos del paciente
+     */
+    @GetMapping("/sync-current-user")
+    public ResponseEntity<Object> syncCurrentUserAsPaciente() {
+        try {
+            // Obtener el email del usuario autenticado desde el contexto de auditoría
+            String currentUserEmail = AuditContext.getCurrentUser();
+            
+            if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+                return Response.error(null, "No se pudo identificar al usuario autenticado");
+            }
+            
+            // Buscar el usuario completo para obtener todos sus datos
+            User user = userService.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new IllegalStateException("Usuario no encontrado en el sistema: " + currentUserEmail));
+
+            // Ejecutar sincronización
+            PacienteDTO pacienteDTO = service.ensurePacienteExistsForUser(user);
+
+            // Preparar respuesta con datos relevantes
+            Map<String, Object> response = new HashMap<>();
+            response.put("pacienteId", pacienteDTO.getId());
+            response.put("nombre", pacienteDTO.getNombre());
+            response.put("apellido", pacienteDTO.getApellido());
+            response.put("email", pacienteDTO.getEmail());
+            response.put("dni", pacienteDTO.getDni());
+            response.put("sincronizado", true);
+
+            return Response.ok(response, "Sincronización completada exitosamente");
+
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, "Error de validación: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error en sincronización de paciente: " + e.getMessage());
+        }
+    }
+
 }
+

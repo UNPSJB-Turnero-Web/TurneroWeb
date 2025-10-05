@@ -1,10 +1,8 @@
 package unpsjb.labprog.backend.model;
 
-import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.OneToMany;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

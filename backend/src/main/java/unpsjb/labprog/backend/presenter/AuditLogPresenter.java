@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.presenter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -371,5 +372,107 @@ public class AuditLogPresenter {
         } catch (Exception e) {
             return Response.error(null, "Error al recuperar los logs: " + e.getMessage());
         }
+    }
+
+    /**
+     * Endpoint paginado, filtrable y ordenable para consultar historial de auditoría general
+     * GET /audit/page?entidad=TURNO&usuario=admin&tipoAccion=CREATE&fechaDesde=2024-01-01&fechaHasta=2024-12-31&page=0&size=10&sortBy=fechaHora&sortDir=DESC
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Object> findAuditLogs(
+            @RequestParam(required = false) String entidad,
+            @RequestParam(required = false) String usuario,
+            @RequestParam(required = false) String tipoAccion,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaHasta,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "performedAt,DESC") String sort) {
+        try {
+            // Parsear el parámetro sort
+            String[] sortParts = sort.split(",");
+            String sortBy = sortParts[0];
+            String sortDir = sortParts.length > 1 ? sortParts[1] : "DESC";
+
+            // Validar parámetros de ordenamiento
+            if (!isValidSortBy(sortBy)) {
+                return Response.error(null, "Parámetro sortBy inválido. Valores permitidos: performedAt, performedBy, action, entityType");
+            }
+            if (!sortDir.equalsIgnoreCase("ASC") && !sortDir.equalsIgnoreCase("DESC")) {
+                return Response.error(null, "Parámetro sortDir debe ser 'ASC' o 'DESC'");
+            }
+
+            Page<AuditLog> pageResult = auditLogService.findByFilters(entidad, usuario, tipoAccion, fechaDesde, fechaHasta, page, size, sortBy, sortDir);
+
+            Map<String, Object> response = Map.of(
+                "content", pageResult.getContent(),
+                "totalPages", pageResult.getTotalPages(),
+                "totalElements", pageResult.getTotalElements(),
+                "currentPage", pageResult.getNumber(),
+                "pageSize", pageResult.getSize(),
+                "sortBy", sortBy,
+                "sortDir", sortDir
+            );
+
+            return Response.ok(response, "Historial de auditoría recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el historial de auditoría: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene el historial de auditoría de una entidad específica
+     * GET /audit/entidad/TURNO/123
+     */
+    @GetMapping("/entidad/{entityType}/{entityId}")
+    public ResponseEntity<Object> getEntityAuditHistory(
+            @PathVariable String entityType,
+            @PathVariable Long entityId) {
+        try {
+            List<AuditLog> auditHistory = auditLogService.getEntityAuditHistory(entityType, entityId);
+            return Response.ok(auditHistory, "Historial de auditoría de la entidad recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar el historial de auditoría: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene estadísticas de auditoría por tipo de entidad
+     * GET /audit/estadisticas/entidad
+     */
+    @GetMapping("/estadisticas/entidad")
+    public ResponseEntity<Object> getEntityAuditStatistics() {
+        try {
+            List<Map<String, Object>> statistics = auditLogService.getEntityAuditStatistics();
+            return Response.ok(statistics, "Estadísticas de auditoría por entidad recuperadas correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar las estadísticas: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Obtiene logs recientes de auditoría (últimas 24 horas)
+     * GET /audit/recientes
+     */
+    @GetMapping("/recientes")
+    public ResponseEntity<Object> getRecentAuditLogs() {
+        try {
+            List<AuditLog> recentLogs = auditLogService.getRecentLogs();
+            return Response.ok(recentLogs, "Logs recientes de auditoría recuperados correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al recuperar los logs recientes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Valida que el parámetro sortBy sea seguro y válido
+     */
+    private boolean isValidSortBy(String sortBy) {
+        return sortBy != null && (
+            sortBy.equals("performedAt") ||
+            sortBy.equals("performedBy") ||
+            sortBy.equals("action") ||
+            sortBy.equals("entityType")
+        );
     }
 }

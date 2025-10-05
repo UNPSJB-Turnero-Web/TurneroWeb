@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.EspecialidadService;
 import unpsjb.labprog.backend.dto.EspecialidadDTO;
+import unpsjb.labprog.backend.config.AuditContext;
 
 @RestController
 @RequestMapping("especialidades")
@@ -67,7 +68,8 @@ public class EspecialidadPresenter {
     @PostMapping
     public ResponseEntity<Object> create(@RequestBody EspecialidadDTO dto) {
         try {
-            EspecialidadDTO saved = service.saveOrUpdate(dto);
+            String performedBy = AuditContext.getCurrentUser();
+            EspecialidadDTO saved = service.saveOrUpdate(dto, performedBy);
             return Response.ok(saved, "Especialidad creada correctamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -80,7 +82,8 @@ public class EspecialidadPresenter {
     public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody EspecialidadDTO dto) {
         try {
             dto.setId(id);
-            EspecialidadDTO updated = service.saveOrUpdate(dto);
+            String performedBy = AuditContext.getCurrentUser();
+            EspecialidadDTO updated = service.saveOrUpdate(dto, performedBy);
             return Response.ok(updated, "Especialidad editada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());
@@ -92,7 +95,8 @@ public class EspecialidadPresenter {
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> delete(@PathVariable Integer id) {
         try {
-            service.delete(id);
+            String performedBy = AuditContext.getCurrentUser();
+            service.delete(id, performedBy);
             return Response.ok(null, "Especialidad eliminada exitosamente");
         } catch (IllegalStateException e) {
             return Response.dbError(e.getMessage());

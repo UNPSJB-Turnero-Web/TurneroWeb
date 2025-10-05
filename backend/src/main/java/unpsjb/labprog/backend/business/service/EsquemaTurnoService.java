@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,6 +96,36 @@ public class EsquemaTurnoService {
         PageRequest pageRequest = PageRequest.of(page, size);
         Page<EsquemaTurno> esquemaPage = esquemaTurnoRepository.findAll(pageRequest);
         return esquemaPage.map(this::toDTO);
+    }
+
+    /**
+     * Búsqueda paginada avanzada con filtros combinados y ordenamiento dinámico
+     * @param page Número de página (0-indexed)
+     * @param size Cantidad de elementos por página
+     * @param staffMedico Filtro por nombre del staff médico (opcional)
+     * @param consultorio Filtro por nombre del consultorio (opcional)
+     * @param centro Filtro por nombre del centro de atención (opcional)
+     * @param sortBy Campo por el cual ordenar (por defecto: id)
+     * @param sortDir Dirección del ordenamiento: asc|desc (por defecto: asc)
+     * @return Página de esquemas de turno filtrados y ordenados como DTOs
+     */
+    public Page<EsquemaTurnoDTO> findByPage(int page, int size, String staffMedico, String consultorio, 
+                                           String centro, String sortBy, String sortDir) {
+        // Configurar ordenamiento
+        String field = (sortBy != null && !sortBy.trim().isEmpty()) ? sortBy.trim() : "id";
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? 
+                                   Sort.Direction.DESC : Sort.Direction.ASC;
+        
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, field));
+        
+        // Normalizar filtros
+        String staffMedicoFilter = (staffMedico != null && !staffMedico.trim().isEmpty()) ? staffMedico.trim() : null;
+        String consultorioFilter = (consultorio != null && !consultorio.trim().isEmpty()) ? consultorio.trim() : null;
+        String centroFilter = (centro != null && !centro.trim().isEmpty()) ? centro.trim() : null;
+        
+        // Ejecutar búsqueda con filtros
+        return esquemaTurnoRepository.findByFiltros(staffMedicoFilter, consultorioFilter, centroFilter, pageRequest)
+                .map(this::toDTO);
     }
 
     /**

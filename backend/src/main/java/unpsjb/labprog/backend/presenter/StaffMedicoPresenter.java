@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,29 +51,17 @@ public class StaffMedicoPresenter {
         return Response.ok(staff, "Staff médico recuperado correctamente");
     }
 
-    // Listar médicos con paginación
-    @GetMapping("/page")
-    public ResponseEntity<Object> getByPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    // Obtener todos los staff médicos de un médico específico
+    @GetMapping("/medico/{medicoId}")
+    public ResponseEntity<Object> getStaffMedicoByMedico(@PathVariable Integer medicoId) {
         try {
-            var pageResult = service.findByPage(page, size);
-
-            var response = Map.of(
-                    "content", pageResult.getContent(),
-                    "totalPages", pageResult.getTotalPages(),
-                    "totalElements", pageResult.getTotalElements(),
-                    "number", pageResult.getNumber(),
-                    "size", pageResult.getSize(),
-                    "first", pageResult.isFirst(),
-                    "last", pageResult.isLast(),
-                    "numberOfElements", pageResult.getNumberOfElements());
-
-            return Response.ok(response, "Staff médico paginado recuperado correctamente");
+            List<StaffMedicoDTO> staffMedicos = service.findByMedicoId(medicoId);
+            return Response.ok(staffMedicos, "Staff médico recuperado correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al recuperar el staff médico paginado: " + e.getMessage());
+            return Response.error(null, "Error al recuperar staff médicos del médico: " + e.getMessage());
         }
     }
+
 
     // Asociar médico a centro
     @PostMapping
@@ -179,6 +168,47 @@ public class StaffMedicoPresenter {
             return Response.ok(medicos, "Médicos con porcentajes obtenidos correctamente");
         } catch (Exception e) {
             return Response.error(null, "Error al obtener médicos con porcentajes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Búsqueda paginada avanzada de staff médico con filtros y ordenamiento
+     * @param page Número de página (0-based, default: 0)
+     * @param size Tamaño de página (default: 10)
+     * @param medico Filtro por nombre/apellido/dni de médico (opcional)
+     * @param especialidad Filtro por nombre de especialidad (opcional)
+     * @param centro Filtro por nombre de centro de atención (opcional)
+     * @param consultorio Filtro por nombre/ID de consultorio (opcional)
+     * @param sortBy Campo para ordenar (opcional)
+     * @param sortDir Dirección del ordenamiento (asc/desc, default: asc)
+     * @return Response con lista paginada de StaffMedicoDTO
+     */
+    @GetMapping("/page")
+    public ResponseEntity<Object> getByPage(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(required = false) String medico,
+        @RequestParam(required = false) String especialidad,
+        @RequestParam(required = false) String centro,
+        @RequestParam(required = false) String consultorio,
+        @RequestParam(required = false) String sortBy,
+        @RequestParam(defaultValue = "asc") String sortDir) {
+
+        try {
+            Page<StaffMedicoDTO> result = service.findByPage(
+                page, size, medico, especialidad, centro, consultorio, sortBy, sortDir);
+
+            // Crear respuesta con estructura estándar
+            Map<String, Object> responseData = Map.of(
+                "content", result.getContent(),
+                "totalPages", result.getTotalPages(),
+                "totalElements", result.getTotalElements(),
+                "currentPage", result.getNumber()
+            );
+
+            return Response.ok(responseData, "Staff médico recuperado correctamente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener staff médico: " + e.getMessage());
         }
     }
 

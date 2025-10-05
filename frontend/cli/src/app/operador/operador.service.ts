@@ -45,6 +45,45 @@ export class OperadorService {
     );
   }
 
+  /**
+   * Obtiene operadores paginados con filtros y ordenamiento avanzado
+   * @param page Número de página (1-based)
+   * @param size Tamaño de página
+   * @param nombre Filtro por nombre (opcional, búsqueda parcial)
+   * @param email Filtro por email (opcional, búsqueda parcial)
+   * @param estado Filtro por estado: 'activo', 'inactivo' o undefined para todos
+   * @param sortBy Campo para ordenar (opcional)
+   * @param sortDir Dirección del orden: 'asc' o 'desc' (default: 'asc')
+   * @returns Observable con DataPackage que contiene la página de resultados
+   */
+  findByPage(
+    page: number,
+    size: number,
+    nombre?: string,
+    email?: string,
+    estado?: string,
+    sortBy?: string,
+    sortDir: string = 'asc'
+  ): Observable<DataPackage<ResultsPage>> {
+    // Construir parámetros de consulta
+    let params = `page=${page - 1}&size=${size}`;
+
+    if (nombre && nombre.trim()) {
+      params += `&nombre=${encodeURIComponent(nombre.trim())}`;
+    }
+    if (email && email.trim()) {
+      params += `&email=${encodeURIComponent(email.trim())}`;
+    }
+    if (estado && estado.trim()) {
+      params += `&estado=${encodeURIComponent(estado.trim())}`;
+    }
+    if (sortBy && sortBy.trim()) {
+      params += `&sortBy=${encodeURIComponent(sortBy.trim())}&sortDir=${sortDir}`;
+    }
+
+    return this.http.get<DataPackage<ResultsPage>>(`${this.url}/page?${params}`);
+  }
+
   /** Verifica si un operador existe por DNI */
   existsByDni(dni: number): Observable<boolean> {
     return this.http

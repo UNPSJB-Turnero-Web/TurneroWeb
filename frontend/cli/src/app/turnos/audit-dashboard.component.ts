@@ -2,35 +2,60 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TurnoService } from './turno.service';
-import { AuditLog } from './turno';
+import { AuditLog, AuditFilter, AuditPage } from './turno';
 import { DataPackage } from '../data.package';
+import { TurnoModalComponent } from './turno-modal.component';
 
 @Component({
   selector: 'app-audit-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TurnoModalComponent],
   templateUrl: './audit-dashboard.component.html',
   styleUrls: ['./audit-dashboard.component.css']
 })
 export class AuditDashboardComponent implements OnInit {
-  
-  // Datos del dashboard
+
+  // === DATOS DEL DASHBOARD ===
   auditStatistics: any = {};
-  recentLogs: AuditLog[] = [];
+  auditPage: AuditPage | null = null;
   loading: boolean = false;
   turnos: any[] = [];
-  
-  // Filtros para los logs recientes
+
+  // === FILTROS AVANZADOS ===
+  filters: AuditFilter = {
+    page: 0,
+    size: 10,
+    sort: 'performedAt,desc'
+  };
+
+  // Controles de filtro
+  dateFrom: string = '';
+  dateTo: string = '';
   selectedAction: string = '';
   selectedUser: string = '';
-  
-  // Opciones para filtros
-  availableActions: string[] = ['CREATE', 'UPDATE_STATUS', 'CANCEL', 'CONFIRM', 'RESCHEDULE', 'COMPLETE', 'DELETE'];
-  
+  selectedEntityType: string = '';
+
+  // === ORDENAMIENTO ===
+  sortField: string = 'performedAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
+  // === OPCIONES PARA FILTROS ===
+  availableActions: string[] = [
+    'CREATE', 'UPDATE_STATUS', 'CANCEL', 'CONFIRM',
+    'RESCHEDULE', 'COMPLETE', 'DELETE', 'LOGIN', 'LOGOUT'
+  ];
+
+  availableEntityTypes: string[] = [
+    'TURNO', 'USUARIO', 'OPERADOR', 'CONSULTORIO',
+    'CENTRO_ATENCION', 'ESPECIALIDAD', 'MEDICO'
+  ];
+
   constructor(
     private turnoService: TurnoService,
-    private router: Router
+    private router: Router,
+    private modalService: NgbModal
   ) {}
 
   ngOnInit(): void {
@@ -40,11 +65,11 @@ export class AuditDashboardComponent implements OnInit {
   /** Carga todos los datos del dashboard */
   loadDashboardData(): void {
     this.loading = true;
-    
-    // Cargar estadísticas y logs en paralelo
+
+    // Cargar estadísticas y logs paginados en paralelo
     Promise.all([
       this.loadAuditStatistics(),
-      this.loadRecentLogs(),
+      this.loadAuditLogs(),
       this.loadUserStatistics(),
       this.loadTurnos()
     ]).finally(() => {
@@ -81,27 +106,26 @@ export class AuditDashboardComponent implements OnInit {
     });
   }
 
-  /** Carga logs recientes */
-  loadRecentLogs(): Promise<void> {
+  /** Carga logs de auditoría paginados con filtros */
+  loadAuditLogs(): Promise<void> {
     return new Promise((resolve, reject) => {
-      console.log('Cargando logs recientes...');
-      this.turnoService.getRecentAuditLogs().subscribe({
+      console.log('Cargando logs de auditoría paginados...', this.filters);
+      this.turnoService.getAuditLogsPaged(this.filters).subscribe({
         next: (resp) => {
           const response = resp as any;
-          console.log('Respuesta de logs recientes:', response);
+          console.log('Respuesta de logs paginados:', response);
           if ((response.status && response.status === 1) || (response.status_code && response.status_code === 200)) {
-            this.recentLogs = response.data || [];
-            console.log('Logs recientes procesados:', this.recentLogs);
-            
-            // Extraer acciones únicas de los logs para el filtro
-            this.updateAvailableActions();
+            this.auditPage = response.data || null;
+            console.log('Página de auditoría procesada:', this.auditPage);
           } else {
             console.warn('Estado de respuesta no exitoso:', response.status || response.status_code);
+            this.auditPage = null;
           }
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar logs recientes:', error);
+          console.error('Error al cargar logs paginados:', error);
+          this.auditPage = null;
           reject(error);
         }
       });
@@ -217,18 +241,30 @@ export class AuditDashboardComponent implements OnInit {
     return stats;
   }
 
-  /** Filtra los logs recientes */
-  get filteredLogs(): AuditLog[] {
-    return this.recentLogs.filter(log => {
-      let matchesAction = !this.selectedAction || log.action === this.selectedAction;
-      let matchesUser = !this.selectedUser || log.performedBy.toLowerCase().includes(this.selectedUser.toLowerCase());
-      return matchesAction && matchesUser;
-    });
+  /** Filtra los logs de la página actual (ya filtrados por backend) */
+  get auditLogs(): AuditLog[] {
+    return this.auditPage?.content || [];
   }
 
-  /** Navega al detalle de un turno */
+  /** Abre modal con información del turno */
   goToTurnoDetail(turnoId: number): void {
-    this.router.navigate(['/turnos', turnoId]);
+    this.turnoService.get(turnoId).subscribe({
+      next: (response: DataPackage<any>) => {
+        if (response.status_code === 200) {
+          const modalRef = this.modalService.open(TurnoModalComponent, {
+            size: 'lg',
+            centered: true,
+            backdrop: 'static'
+          });
+          modalRef.componentInstance.turno = response.data;
+        } else {
+          console.error('Error al obtener información del turno:', response.status_text);
+        }
+      },
+      error: (error: any) => {
+        console.error('Error al cargar información del turno:', error);
+      }
+    });
   }
 
   /** Navega a la búsqueda avanzada */
@@ -241,11 +277,109 @@ export class AuditDashboardComponent implements OnInit {
     this.loadDashboardData();
   }
 
-  /** Actualiza las acciones disponibles basándose en los logs recientes */
-  private updateAvailableActions(): void {
-    const uniqueActions = [...new Set(this.recentLogs.map(log => log.action))];
-    this.availableActions = uniqueActions.sort();
-    console.log('Acciones disponibles actualizadas:', this.availableActions);
+  // === MÉTODOS DE FILTRADO Y BÚSQUEDA ===
+
+  /** Aplica los filtros y recarga los datos */
+  applyFilters(): void {
+    // Actualizar filtros desde controles
+    this.filters.action = this.selectedAction || undefined;
+    this.filters.user = this.selectedUser || undefined;
+    this.filters.entityType = this.selectedEntityType || undefined;
+    this.filters.dateFrom = this.dateFrom || undefined;
+    this.filters.dateTo = this.dateTo || undefined;
+    this.filters.page = 0; // Reset a primera página
+
+    // Actualizar ordenamiento
+    this.filters.sort = `${this.sortField},${this.sortDirection}`;
+
+    console.log('Aplicando filtros:', this.filters);
+    this.loadAuditLogs();
+  }
+
+  /** Limpia todos los filtros */
+  clearFilters(): void {
+    this.selectedAction = '';
+    this.selectedUser = '';
+    this.selectedEntityType = '';
+    this.dateFrom = '';
+    this.dateTo = '';
+    this.filters.page = 0;
+    this.sortField = 'performedAt';
+    this.sortDirection = 'desc';
+    this.filters.sort = `${this.sortField},${this.sortDirection}`;
+
+    // Limpiar filtros del objeto
+    this.filters.action = undefined;
+    this.filters.user = undefined;
+    this.filters.entityType = undefined;
+    this.filters.dateFrom = undefined;
+    this.filters.dateTo = undefined;
+
+    console.log('Filtros limpiados');
+    this.loadAuditLogs();
+  }
+
+  // === MÉTODOS DE PAGINACIÓN ===
+
+  /** Cambia a la página anterior */
+  previousPage(): void {
+    if (this.auditPage && this.filters.page! > 0) {
+      this.filters.page!--;
+      this.loadAuditLogs();
+    }
+  }
+
+  /** Cambia a la página siguiente */
+  nextPage(): void {
+    if (this.auditPage && this.filters.page! < this.auditPage.totalPages - 1) {
+      this.filters.page!++;
+      this.loadAuditLogs();
+    }
+  }
+
+  /** Cambia a una página específica */
+  goToPage(page: number): void {
+    if (this.auditPage && page >= 0 && page < this.auditPage.totalPages) {
+      this.filters.page = page;
+      this.loadAuditLogs();
+    }
+  }
+
+  /** Cambia el tamaño de página */
+  changePageSize(size: number): void {
+    this.filters.size = size;
+    this.filters.page = 0; // Reset a primera página
+    this.loadAuditLogs();
+  }
+
+  // === MÉTODOS DE ORDENAMIENTO ===
+
+  /** Ordena por una columna específica */
+  sortBy(field: string): void {
+    if (this.sortField === field) {
+      // Cambiar dirección si es la misma columna
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Nueva columna, orden ascendente por defecto
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+
+    this.filters.sort = `${this.sortField},${this.sortDirection}`;
+    this.filters.page = 0; // Reset a primera página
+    this.loadAuditLogs();
+  }
+
+  /** Obtiene la clase CSS para el indicador de ordenamiento */
+  getSortClass(field: string): string {
+    if (this.sortField !== field) return '';
+    return this.sortDirection === 'asc' ? 'sort-asc' : 'sort-desc';
+  }
+
+  /** Obtiene el icono de ordenamiento para una columna */
+  getSortIcon(field: string): string {
+    if (this.sortField !== field) return 'fas fa-sort';
+    return this.sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
   }
 
   // === MÉTODOS AUXILIARES ===
@@ -316,6 +450,43 @@ export class AuditDashboardComponent implements OnInit {
     return classes[action] || 'bg-secondary';
   }
 
+  // === GETTERS PARA PAGINACIÓN ===
+
+  /** Obtiene el rango de elementos mostrados */
+  get pageRange(): string {
+    if (!this.auditPage) return '';
+    const start = this.auditPage.currentPage * this.auditPage.size + 1;
+    const end = start + this.auditPage.numberOfElements - 1;
+    return `${start}-${end} de ${this.auditPage.totalElements}`;
+  }
+
+  /** Genera array de números de página para el paginador */
+  get pageNumbers(): number[] {
+    if (!this.auditPage) return [];
+    const pages: number[] = [];
+    const totalPages = this.auditPage.totalPages;
+    const currentPage = this.auditPage.currentPage;
+
+    // Mostrar máximo 5 páginas alrededor de la actual
+    let start = Math.max(0, currentPage - 2);
+    let end = Math.min(totalPages - 1, currentPage + 2);
+
+    // Ajustar para mostrar siempre 5 páginas si es posible
+    if (end - start < 4 && totalPages > 4) {
+      if (start === 0) {
+        end = Math.min(totalPages - 1, start + 4);
+      } else if (end === totalPages - 1) {
+        start = Math.max(0, end - 4);
+      }
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
   // === GETTERS PARA ESTADÍSTICAS DE TURNOS ===
 
   /** Obtiene el total de turnos */
@@ -357,5 +528,38 @@ export class AuditDashboardComponent implements OnInit {
     });
     
     return estadisticas;
+  }
+
+  /** Método trackBy para optimizar el renderizado de la tabla */
+  trackByLogId(index: number, log: AuditLog): any {
+    return log.id || index;
+  }
+
+  /** Determina el tipo de entidad afectada por el log */
+  getEntityType(log: AuditLog): string {
+    // Usar entityType directamente del backend
+    if (log.entityType) {
+      return log.entityType;
+    }
+
+    // Fallback: Si tiene turno, es una entidad TURNO
+    if (log.turno && log.turno.id) {
+      return 'TURNO';
+    }
+
+    // Para otros tipos de entidades, intentar inferir del contexto
+    // Esto podría expandirse basado en la lógica del backend
+    if (log.oldValues || log.newValues) {
+      // Intentar determinar el tipo basado en las propiedades
+      const values = log.oldValues || log.newValues;
+      if (values && typeof values === 'object') {
+        if ('nombre' in values && 'especialidades' in values) return 'MEDICO';
+        if ('nombre' in values && 'direccion' in values) return 'CENTRO_ATENCION';
+        if ('numero' in values && 'piso' in values) return 'CONSULTORIO';
+        if ('dni' in values && 'obraSocial' in values) return 'PACIENTE';
+      }
+    }
+
+    return 'DESCONOCIDO';
   }
 }

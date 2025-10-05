@@ -29,108 +29,160 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     // Verificar si existe un turno activo (no cancelado) en un slot específico
     boolean existsByFechaAndHoraInicioAndStaffMedicoIdAndEstadoNot(
-        LocalDate fecha, LocalTime horaInicio, Integer staffMedicoId, EstadoTurno estado);
+            LocalDate fecha, LocalTime horaInicio, Integer staffMedicoId, EstadoTurno estado);
 
     // Buscar turnos por paciente ID
     List<Turno> findByPaciente_Id(Integer pacienteId);
-    
+
     // Verificar si existen turnos en una fecha específica para un staff médico
     boolean existsByFechaAndStaffMedico_Id(LocalDate fecha, Integer staffMedicoId);
-    
+
     // Buscar turnos por fecha y staff médico
     List<Turno> findByFechaAndStaffMedico_Id(LocalDate fecha, Integer staffMedicoId);
 
     // === CONSULTAS AVANZADAS PARA FILTROS ===
-    
+
     // Filtros básicos
     List<Turno> findByEstado(EstadoTurno estado);
+
     Page<Turno> findByEstado(EstadoTurno estado, Pageable pageable);
-    
+
     List<Turno> findByStaffMedico_Id(Integer staffMedicoId);
+
+    /**
+     * Búsqueda paginada avanzada con filtros combinados y ordenamiento dinámico
+     * @param paciente Filtro por nombre o apellido del paciente (LIKE, opcional)
+     * @param medico Filtro por nombre o apellido del médico (LIKE, opcional)
+     * @param consultorio Filtro por nombre del consultorio (LIKE, opcional)
+     * @param estado Filtro por estado del turno (opcional)
+     * @param fechaDesde Filtro por fecha desde (opcional)
+     * @param fechaHasta Filtro por fecha hasta (opcional)
+     * @param pageable Configuración de paginación y ordenamiento
+     * @return Página de turnos filtrados y ordenados
+     */
+    @Query("""
+        SELECT t FROM Turno t
+        JOIN t.paciente p
+        JOIN t.staffMedico sm
+        JOIN sm.medico m
+        JOIN t.consultorio c
+        WHERE (:paciente IS NULL OR 
+               LOWER(p.nombre) LIKE LOWER(CONCAT('%', :paciente, '%')) OR
+               LOWER(p.apellido) LIKE LOWER(CONCAT('%', :paciente, '%')))
+           AND (:medico IS NULL OR
+                LOWER(m.nombre) LIKE LOWER(CONCAT('%', :medico, '%')) OR
+                LOWER(m.apellido) LIKE LOWER(CONCAT('%', :medico, '%')))
+           AND (:consultorio IS NULL OR 
+                LOWER(c.nombre) LIKE LOWER(CONCAT('%', :consultorio, '%')))
+           AND (:estado IS NULL OR t.estado = :estado)
+           AND (CAST(:fechaDesde AS date) IS NULL OR t.fecha >= CAST(:fechaDesde AS date))
+           AND (CAST(:fechaHasta AS date) IS NULL OR t.fecha <= CAST(:fechaHasta AS date))
+        """)
+    Page<Turno> findByFiltros(@Param("paciente") String paciente,
+                              @Param("medico") String medico,
+                              @Param("consultorio") String consultorio,
+                              @Param("estado") EstadoTurno estado,
+                              @Param("fechaDesde") LocalDate fechaDesde,
+                              @Param("fechaHasta") LocalDate fechaHasta,
+                              Pageable pageable);
+
     Page<Turno> findByStaffMedico_Id(Integer staffMedicoId, Pageable pageable);
-    
+
     List<Turno> findByStaffMedico_Especialidad_Id(Integer especialidadId);
+
     Page<Turno> findByStaffMedico_Especialidad_Id(Integer especialidadId, Pageable pageable);
-    
+
     List<Turno> findByConsultorio_CentroAtencion_Id(Integer centroId);
+
     Page<Turno> findByConsultorio_CentroAtencion_Id(Integer centroId, Pageable pageable);
-    
+
     List<Turno> findByConsultorio_Id(Integer consultorioId);
+
     Page<Turno> findByConsultorio_Id(Integer consultorioId, Pageable pageable);
-    
+
     // Filtros por fecha
     List<Turno> findByFechaBetween(LocalDate fechaDesde, LocalDate fechaHasta);
+
     Page<Turno> findByFechaBetween(LocalDate fechaDesde, LocalDate fechaHasta, Pageable pageable);
-    
+
     List<Turno> findByFecha(LocalDate fecha);
+
     Page<Turno> findByFecha(LocalDate fecha, Pageable pageable);
-    
-    // === CONSULTAS USANDO SPECIFICATIONS (Solucionan problemas con PostgreSQL y parámetros null) ===
-    
-    // Los métodos que usan Specifications están implementados automáticamente por JpaSpecificationExecutor
+
+    // En TurnoRepository
+    List<Turno> findByEstadoInAndFecha(List<EstadoTurno> estados, LocalDate fecha);
+
+    // === CONSULTAS USANDO SPECIFICATIONS (Solucionan problemas con PostgreSQL y
+    // parámetros null) ===
+
+    // Los métodos que usan Specifications están implementados automáticamente por
+    // JpaSpecificationExecutor
     // Se usan desde el service con repository.findAll(specification, pageable)
-    
+
     // === CONSULTAS LEGACY (DEPRECATED - mantener por compatibilidad) ===
     // Estas consultas pueden fallar con PostgreSQL cuando hay parámetros null
-    
+
     @Query("SELECT t FROM Turno t WHERE " +
-           "(:estado IS NULL OR t.estado = :estado) AND " +
-           "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
-           "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
-           "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
-           "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
-           "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
-           "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
-           "(:fechaHasta IS NULL OR t.fecha <= :fechaHasta)")
+            "(:estado IS NULL OR t.estado = :estado) AND " +
+            "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
+            "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
+            "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
+            "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
+            "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
+            "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
+            "(:fechaHasta IS NULL OR t.fecha <= :fechaHasta)")
     Page<Turno> findByFiltersLegacy(@Param("estado") EstadoTurno estado,
-                                   @Param("pacienteId") Integer pacienteId,
-                                   @Param("staffMedicoId") Integer staffMedicoId,
-                                   @Param("especialidadId") Integer especialidadId,
-                                   @Param("centroId") Integer centroId,
-                                   @Param("consultorioId") Integer consultorioId,
-                                   @Param("fechaDesde") LocalDate fechaDesde,
-                                   @Param("fechaHasta") LocalDate fechaHasta,
-                                   Pageable pageable);
-    
+            @Param("pacienteId") Integer pacienteId,
+            @Param("staffMedicoId") Integer staffMedicoId,
+            @Param("especialidadId") Integer especialidadId,
+            @Param("centroId") Integer centroId,
+            @Param("consultorioId") Integer consultorioId,
+            @Param("fechaDesde") LocalDate fechaDesde,
+            @Param("fechaHasta") LocalDate fechaHasta,
+            Pageable pageable);
+
     @Query("SELECT t FROM Turno t WHERE " +
-           "(:estado IS NULL OR t.estado = :estado) AND " +
-           "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
-           "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
-           "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
-           "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
-           "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
-           "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
-           "(:fechaHasta IS NULL OR t.fecha <= :fechaHasta)")
+            "(:estado IS NULL OR t.estado = :estado) AND " +
+            "(:pacienteId IS NULL OR t.paciente.id = :pacienteId) AND " +
+            "(:staffMedicoId IS NULL OR t.staffMedico.id = :staffMedicoId) AND " +
+            "(:especialidadId IS NULL OR t.staffMedico.especialidad.id = :especialidadId) AND " +
+            "(:centroId IS NULL OR t.consultorio.centroAtencion.id = :centroId) AND " +
+            "(:consultorioId IS NULL OR t.consultorio.id = :consultorioId) AND " +
+            "(:fechaDesde IS NULL OR t.fecha >= :fechaDesde) AND " +
+            "(:fechaHasta IS NULL OR t.fecha <= :fechaHasta)")
     List<Turno> findByFiltersForExportLegacy(@Param("estado") EstadoTurno estado,
-                                            @Param("pacienteId") Integer pacienteId,
-                                            @Param("staffMedicoId") Integer staffMedicoId,
-                                            @Param("especialidadId") Integer especialidadId,
-                                            @Param("centroId") Integer centroId,
-                                            @Param("consultorioId") Integer consultorioId,
-                                            @Param("fechaDesde") LocalDate fechaDesde,
-                                            @Param("fechaHasta") LocalDate fechaHasta);
-    
+            @Param("pacienteId") Integer pacienteId,
+            @Param("staffMedicoId") Integer staffMedicoId,
+            @Param("especialidadId") Integer especialidadId,
+            @Param("centroId") Integer centroId,
+            @Param("consultorioId") Integer consultorioId,
+            @Param("fechaDesde") LocalDate fechaDesde,
+            @Param("fechaHasta") LocalDate fechaHasta);
+
     // Búsquedas por texto (nombres parciales)
     @Query("SELECT t FROM Turno t " +
-           "LEFT JOIN t.paciente p " +
-           "LEFT JOIN t.staffMedico sm " +
-           "LEFT JOIN sm.medico m " +
-           "LEFT JOIN sm.especialidad e " +
-           "LEFT JOIN t.consultorio c " +
-           "LEFT JOIN c.centroAtencion ca " +
-           "WHERE " +
-           "(:nombrePaciente IS NULL OR LOWER(CONCAT(p.nombre, ' ', p.apellido)) LIKE LOWER(CONCAT('%', :nombrePaciente, '%'))) AND " +
-           "(:nombreMedico IS NULL OR LOWER(CONCAT(m.nombre, ' ', m.apellido)) LIKE LOWER(CONCAT('%', :nombreMedico, '%'))) AND " +
-           "(:nombreEspecialidad IS NULL OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombreEspecialidad, '%'))) AND " +
-           "(:nombreCentro IS NULL OR LOWER(ca.nombre) LIKE LOWER(CONCAT('%', :nombreCentro, '%')))")
+            "LEFT JOIN t.paciente p " +
+            "LEFT JOIN t.staffMedico sm " +
+            "LEFT JOIN sm.medico m " +
+            "LEFT JOIN sm.especialidad e " +
+            "LEFT JOIN t.consultorio c " +
+            "LEFT JOIN c.centroAtencion ca " +
+            "WHERE " +
+            "(:nombrePaciente IS NULL OR LOWER(CONCAT(p.nombre, ' ', p.apellido)) LIKE LOWER(CONCAT('%', :nombrePaciente, '%'))) AND "
+            +
+            "(:nombreMedico IS NULL OR LOWER(CONCAT(m.nombre, ' ', m.apellido)) LIKE LOWER(CONCAT('%', :nombreMedico, '%'))) AND "
+            +
+            "(:nombreEspecialidad IS NULL OR LOWER(e.nombre) LIKE LOWER(CONCAT('%', :nombreEspecialidad, '%'))) AND " +
+            "(:nombreCentro IS NULL OR LOWER(ca.nombre) LIKE LOWER(CONCAT('%', :nombreCentro, '%')))")
     Page<Turno> findByTextFilters(@Param("nombrePaciente") String nombrePaciente,
-                                 @Param("nombreMedico") String nombreMedico,
-                                 @Param("nombreEspecialidad") String nombreEspecialidad,
-                                 @Param("nombreCentro") String nombreCentro,
-                                 Pageable pageable);
+            @Param("nombreMedico") String nombreMedico,
+            @Param("nombreEspecialidad") String nombreEspecialidad,
+            @Param("nombreCentro") String nombreCentro,
+            Pageable pageable);
 
     // === SPECIFICATIONS PARA BÚSQUEDAS DINÁMICAS ===
-    // Estos métodos estáticos generan Specification<Turno> para evitar problemas con PostgreSQL y parámetros null
+    // Estos métodos estáticos generan Specification<Turno> para evitar problemas
+    // con PostgreSQL y parámetros null
 
     /**
      * Filtro por estado del turno
@@ -177,12 +229,12 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
                 return null;
             }
             return criteriaBuilder.equal(
-                root.join("staffMedico", JoinType.INNER)
-                    .join("medico", JoinType.INNER)
-                    .join("especialidad", JoinType.INNER)
-                    .get("id"), 
-                especialidadId
-            );
+                    root.join("staffMedico", JoinType.INNER)
+                            // .join("medico", JoinType.INNER)
+                            .get("especialidad") // FIX: Directo, sin medico
+                            // .join("especialidad", JoinType.INNER)
+                            .get("id"),
+                    especialidadId);
         };
     }
 
@@ -195,11 +247,10 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
                 return null;
             }
             return criteriaBuilder.equal(
-                root.join("consultorio", JoinType.INNER)
-                    .join("centroAtencion", JoinType.INNER)
-                    .get("id"), 
-                centroId
-            );
+                    root.join("consultorio", JoinType.INNER)
+                            .join("centroAtencion", JoinType.INNER)
+                            .get("id"),
+                    centroId);
         };
     }
 
@@ -261,14 +312,11 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             }
             String searchPattern = "%" + nombrePaciente.toLowerCase() + "%";
             return criteriaBuilder.like(
-                criteriaBuilder.lower(
-                    criteriaBuilder.concat(
-                        criteriaBuilder.concat(root.get("paciente").get("nombre"), " "),
-                        root.get("paciente").get("apellido")
-                    )
-                ),
-                searchPattern
-            );
+                    criteriaBuilder.lower(
+                            criteriaBuilder.concat(
+                                    criteriaBuilder.concat(root.get("paciente").get("nombre"), " "),
+                                    root.get("paciente").get("apellido"))),
+                    searchPattern);
         };
     }
 
@@ -282,21 +330,17 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             }
             String searchPattern = "%" + nombreMedico.toLowerCase() + "%";
             return criteriaBuilder.like(
-                criteriaBuilder.lower(
-                    criteriaBuilder.concat(
-                        criteriaBuilder.concat(
-                            root.join("staffMedico", JoinType.LEFT)
-                                .join("medico", JoinType.LEFT)
-                                .get("nombre"), 
-                            " "
-                        ),
-                        root.join("staffMedico", JoinType.LEFT)
-                            .join("medico", JoinType.LEFT)
-                            .get("apellido")
-                    )
-                ),
-                searchPattern
-            );
+                    criteriaBuilder.lower(
+                            criteriaBuilder.concat(
+                                    criteriaBuilder.concat(
+                                            root.join("staffMedico", JoinType.LEFT)
+                                                    .join("medico", JoinType.LEFT)
+                                                    .get("nombre"),
+                                            " "),
+                                    root.join("staffMedico", JoinType.LEFT)
+                                            .join("medico", JoinType.LEFT)
+                                            .get("apellido"))),
+                    searchPattern);
         };
     }
 
@@ -310,14 +354,13 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             }
             String searchPattern = "%" + nombreEspecialidad.toLowerCase() + "%";
             return criteriaBuilder.like(
-                criteriaBuilder.lower(
-                    root.join("staffMedico", JoinType.LEFT)
-                        .join("medico", JoinType.LEFT)
-                        .join("especialidad", JoinType.LEFT)
-                        .get("nombre")
-                ),
-                searchPattern
-            );
+                    criteriaBuilder.lower(
+                            root.join("staffMedico", JoinType.LEFT)
+                                    // .join("medico", JoinType.LEFT)
+                                    .get("especialidad") // FIX: Directo, sin medico
+                                    // .join("especialidad", JoinType.LEFT)
+                                    .get("nombre")),
+                    searchPattern);
         };
     }
 
@@ -331,35 +374,33 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             }
             String searchPattern = "%" + nombreCentro.toLowerCase() + "%";
             return criteriaBuilder.like(
-                criteriaBuilder.lower(
-                    root.join("consultorio", JoinType.LEFT)
-                        .join("centroAtencion", JoinType.LEFT)
-                        .get("nombre")
-                ),
-                searchPattern
-            );
+                    criteriaBuilder.lower(
+                            root.join("consultorio", JoinType.LEFT)
+                                    .join("centroAtencion", JoinType.LEFT)
+                                    .get("nombre")),
+                    searchPattern);
         };
     }
 
     /**
      * Combina todas las especificaciones usando AND
      */
-    static Specification<Turno> buildSpecification(EstadoTurno estado, 
-                                                   Integer pacienteId,
-                                                   Integer staffMedicoId,
-                                                   Integer especialidadId,
-                                                   Integer centroId,
-                                                   Integer consultorioId,
-                                                   LocalDate fechaDesde,
-                                                   LocalDate fechaHasta,
-                                                   LocalDate fechaExacta,
-                                                   String nombrePaciente,
-                                                   String nombreMedico,
-                                                   String nombreEspecialidad,
-                                                   String nombreCentro) {
-        
+    static Specification<Turno> buildSpecification(EstadoTurno estado,
+            Integer pacienteId,
+            Integer staffMedicoId,
+            Integer especialidadId,
+            Integer centroId,
+            Integer consultorioId,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            LocalDate fechaExacta,
+            String nombrePaciente,
+            String nombreMedico,
+            String nombreEspecialidad,
+            String nombreCentro) {
+
         Specification<Turno> spec = Specification.where(null);
-        
+
         // Si hay fecha exacta, usar solo esa (ignora desde/hasta)
         if (fechaExacta != null) {
             spec = spec.and(hasFechaExacta(fechaExacta));
@@ -368,7 +409,7 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
             spec = spec.and(hasFechaDesde(fechaDesde));
             spec = spec.and(hasFechaHasta(fechaHasta));
         }
-        
+
         // Agregar otros filtros
         spec = spec.and(hasEstado(estado));
         spec = spec.and(hasPacienteId(pacienteId));
@@ -380,49 +421,48 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
         spec = spec.and(hasNombreMedico(nombreMedico));
         spec = spec.and(hasNombreEspecialidad(nombreEspecialidad));
         spec = spec.and(hasNombreCentro(nombreCentro));
-        
+
         return spec;
     }
 
     /**
      * Encuentra turnos PROGRAMADOS que deben ser cancelados automáticamente
-     * Busca turnos cuya fecha/hora esté dentro del límite especificado y no hayan sido confirmados
+     * Busca turnos cuya fecha/hora esté dentro del límite especificado y no hayan
+     * sido confirmados
      * 
-     * @param estado Estado del turno (debe ser PROGRAMADO)
+     * @param estado      Estado del turno (debe ser PROGRAMADO)
      * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
      * @return Lista de turnos que deben ser cancelados
      */
     @Query("""
-        SELECT t FROM Turno t 
-        WHERE t.estado = :estado 
-        AND (t.fecha < CAST(:fechaLimite AS LocalDate) 
-             OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
-        AND (t.fecha > CURRENT_DATE 
-             OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
-        ORDER BY t.fecha ASC, t.horaInicio ASC
-        """)
+            SELECT t FROM Turno t
+            WHERE t.estado = :estado
+            AND (t.fecha < CAST(:fechaLimite AS LocalDate)
+                 OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
+            AND (t.fecha > CURRENT_DATE
+                 OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
+            ORDER BY t.fecha ASC, t.horaInicio ASC
+            """)
     List<Turno> findTurnosParaCancelacionAutomatica(
-        @Param("estado") EstadoTurno estado,
-        @Param("fechaLimite") java.time.LocalDateTime fechaLimite
-    );
+            @Param("estado") EstadoTurno estado,
+            @Param("fechaLimite") java.time.LocalDateTime fechaLimite);
 
     /**
      * Cuenta turnos que están por vencer para cancelación automática
      * 
-     * @param estado Estado del turno (debe ser PROGRAMADO)
+     * @param estado      Estado del turno (debe ser PROGRAMADO)
      * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
      * @return Cantidad de turnos que serían cancelados automáticamente
      */
     @Query("""
-        SELECT COUNT(t) FROM Turno t 
-        WHERE t.estado = :estado 
-        AND (t.fecha < CAST(:fechaLimite AS LocalDate) 
-             OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
-        AND (t.fecha > CURRENT_DATE 
-             OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
-        """)
+            SELECT COUNT(t) FROM Turno t
+            WHERE t.estado = :estado
+            AND (t.fecha < CAST(:fechaLimite AS LocalDate)
+                 OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
+            AND (t.fecha > CURRENT_DATE
+                 OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
+            """)
     long countTurnosParaCancelacionAutomatica(
-        @Param("estado") EstadoTurno estado,
-        @Param("fechaLimite") java.time.LocalDateTime fechaLimite
-    );
+            @Param("estado") EstadoTurno estado,
+            @Param("fechaLimite") java.time.LocalDateTime fechaLimite);
 }

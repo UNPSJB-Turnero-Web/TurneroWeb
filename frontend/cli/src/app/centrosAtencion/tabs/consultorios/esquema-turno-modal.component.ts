@@ -15,56 +15,531 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
   standalone: true,
   imports: [CommonModule, FormsModule],
   styles: [`
+    /* ==== MODAL PRINCIPAL ==== */
+    .modal-esquema-body {
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 1.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      transform: rotate(45deg);
+      pointer-events: none;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 1.3rem;
+      margin: 0;
+      z-index: 1;
+      position: relative;
+    }
+
+    .btn-close {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      opacity: 1;
+      color: white;
+      transition: all 0.3s ease;
+    }
+
+    .btn-close:hover {
+      background: rgba(255,255,255,0.3);
+      transform: scale(1.1);
+    }
+
+    /* ==== CARDS Y SECCIONES ==== */
+    .section-card {
+      background: white;
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      color: #2c3e50;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .section-icon {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.8rem;
+      font-size: 1.1rem;
+    }
+
+    /* ==== CONSULTORIO INFO ==== */
+    .consultorio-info {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      border: 1px solid #2196f3;
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+
+    .avatar-consultorio {
+      background: linear-gradient(135deg, #2196f3, #1976d2);
+      color: white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    /* ==== FORMULARIOS MODERNOS ==== */
+    .form-group-modern {
+      margin-bottom: 2rem;
+    }
+
+    .form-label-modern {
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .form-control-modern {
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .form-control-modern:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      outline: none;
+    }
+
+    .form-help {
+      font-size: 0.85rem;
+      color: #6c757d;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ==== ALERTAS MEJORADAS ==== */
+    .alert-esquema {
+      border: none;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+
+    .alert-danger {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    .alert-info {
+      background: linear-gradient(135deg, #cce7ff 0%, #b3d9ff 100%);
+      color: #004085;
+      border-left: 4px solid #007bff;
+    }
+
+    /* ==== ANÁLISIS VISUAL ==== */
     .interseccion-visual {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 20px;
-      margin: 15px 0;
+      background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(102, 126, 234, 0.1);
     }
     
     .interseccion-step {
-      margin-bottom: 25px;
-      padding: 15px;
-      border-left: 4px solid #007bff;
+      margin-bottom: 1.5rem;
+      padding: 1.2rem;
+      border-radius: 12px;
       background: white;
-      border-radius: 0 8px 8px 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      border-left: 4px solid transparent;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .interseccion-step:nth-child(1) { border-left-color: #007bff; }
+    .interseccion-step:nth-child(2) { border-left-color: #28a745; }
+    .interseccion-step:nth-child(3) { border-left-color: #ffc107; }
+    .interseccion-step:nth-child(4) { border-left-color: #17a2b8; }
+
+    .interseccion-step:hover {
+      transform: translateX(5px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.12);
     }
     
     .interseccion-title {
       display: flex;
       align-items: center;
-      margin-bottom: 15px;
-      color: #495057;
+      margin-bottom: 1rem;
+      color: #2c3e50;
       font-weight: 600;
+      font-size: 1rem;
     }
     
     .interseccion-title.resultado {
       color: #28a745;
+      font-size: 1.1rem;
     }
     
     .step-number {
-      background: #007bff;
+      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 35px;
+      height: 35px;
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-right: 0.8rem;
       font-weight: bold;
-      margin-right: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
     }
-    
-    .interseccion-resultado .step-number {
-      background: #28a745;
+
+    .step-number.resultado {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      animation: pulse 2s infinite;
     }
-    
+
+    @keyframes pulse {
+      0% { box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3); }
+      50% { box-shadow: 0 3px 15px rgba(40, 167, 69, 0.5); }
+      100% { box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3); }
+    }
+
+    /* ==== HORARIOS Y BADGES ==== */
     .horarios-referencia {
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .horario-ref {
+      margin-bottom: 0.8rem;
+      padding: 0.8rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+    }
+
+    .horario-ref:last-child {
+      margin-bottom: 0;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+    }
+
+    .bg-primary { background: linear-gradient(135deg, #007bff, #0056b3) !important; }
+    .bg-success { background: linear-gradient(135deg, #28a745, #1e7e34) !important; }
+    .bg-warning { background: linear-gradient(135deg, #ffc107, #e0a800) !important; }
+    .bg-info { background: linear-gradient(135deg, #17a2b8, #138496) !important; }
+
+    /* ==== TABLA MEJORADA ==== */
+    .horarios-tabla-container {
+      margin-top: 1rem;
+    }
+
+    .table {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+      margin-bottom: 0;
+    }
+
+    .table thead {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .table th {
+      border: none;
+      font-weight: 600;
+      padding: 1rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .table td {
+      padding: 0.8rem;
+      border-color: #f1f3f4;
+      vertical-align: middle;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+      background: rgba(102, 126, 234, 0.03);
+    }
+
+    .table-hover tbody tr:hover {
+      background: rgba(102, 126, 234, 0.08);
+      transform: scale(1.01);
+      transition: all 0.2s ease;
+    }
+
+    .form-check-input {
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      transition: all 0.2s ease;
+    }
+
+    .form-check-input:checked {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-color: #667eea;
+    }
+
+    /* ==== HORARIOS FORMATO HORIZONTAL ==== */
+    .horarios-horizontal {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 0.8rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 10px;
     }
+
+    .horario-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .horario-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-color: #667eea;
+    }
+
+    .dia-badge {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    .hora-range {
+      color: #495057;
+      font-weight: 500;
+      font-size: 0.9rem;
+      min-width: 85px;
+    }
+
+    .estado-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .estado-badge.activo {
+      background: #28a745;
+      color: white;
+    }
+
+    .estado-badge.inactivo {
+      background: #6c757d;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .horarios-horizontal {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .horario-chip {
+        justify-content: space-between;
+      }
+    }
+
+    /* ==== BOTONES ==== */
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.5rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #545b62;
+      transform: translateY(-1px);
+    }
+
+    /* ==== LOADING Y ESTADOS ==== */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      border-radius: 15px;
+    }
+
+    .spinner-border {
+      color: #667eea;
+    }
+
+    /* ==== MENSAJES VACÍOS ==== */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: #6c757d;
+      background: #f8f9fa;
+      border-radius: 10px;
+      margin: 1rem 0;
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #dee2e6;
+    }
+
+    /* ==== RESPONSIVE ==== */
+    @media (max-width: 768px) {
+      .modal-esquema-body {
+        padding: 1rem;
+      }
+      
+      .section-card {
+        padding: 1rem;
+      }
+      
+      .interseccion-step {
+        padding: 1rem;
+      }
+      
+      .step-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+      }
+    }
+
+    /* ==== ANIMACIONES ==== */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-in {
+      animation: slideIn 0.6s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
     
     .horario-ref {
       background: #f8f9fa;
@@ -97,17 +572,6 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
       padding: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    
-    .table-success {
-      background-color: rgba(40, 167, 69, 0.1) !important;
-    }
-    
-    .controles-rapidos {
-      text-align: center;
-      padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
-    }
   `],
   template: `
     <!-- Modal Header -->
@@ -122,16 +586,27 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
     </div>
 
     <!-- Modal Body -->
-    <div class="modal-body modal-esquema-body">
+    <div class="modal-body modal-esquema-body fade-in">
       <!-- Información del Consultorio -->
-      <div class="consultorio-info p-3 mb-4 rounded">
-        <div class="d-flex align-items-center">
-          <div class="avatar-consultorio me-3">
-            {{ consultorio?.nombre?.charAt(0) }}
+      <div class="section-card slide-in">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fa fa-building"></i>
           </div>
-          <div>
-            <h6 class="mb-1">{{ consultorio?.nombre }}</h6>
-            <small class="text-muted">Consultorio #{{ consultorio?.numero }}</small>
+          Información del Consultorio
+        </div>
+        <div class="consultorio-info">
+          <div class="d-flex align-items-center">
+            <div class="avatar-consultorio me-3">
+              {{ consultorio?.nombre?.charAt(0) }}
+            </div>
+            <div>
+              <h6 class="mb-1 text-primary fw-bold">{{ consultorio?.nombre }}</h6>
+              <small class="text-muted">
+                <i class="fa fa-hashtag me-1"></i>
+                Consultorio #{{ consultorio?.numero }}
+              </small>
+            </div>
           </div>
         </div>
       </div>
@@ -148,92 +623,104 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
       </div>
 
       <!-- Seleccionar Disponibilidad Médica -->
-      <div class="form-group-modern mb-4">
-        <label class="form-label-modern">
-          <i class="fa fa-user-md me-2"></i>
+      <div class="section-card slide-in">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fa fa-user-md"></i>
+          </div>
           Seleccionar Disponibilidad Médica
-        </label>
-        <select 
-          class="form-control form-control-modern"
-          [(ngModel)]="esquema.disponibilidadMedicoId"
-          name="disponibilidadMedico"
-          (change)="onDisponibilidadChange()"
-          required
-        >
-          <option [ngValue]="null">Seleccione una disponibilidad...</option>
-          <option *ngFor="let disp of disponibilidadesDisponibles" [value]="disp.id">
-            {{ disp.staffMedico?.medico?.nombre }} {{ disp.staffMedico?.medico?.apellido }} - 
-            {{ formatearHorarios(disp.horarios) }}
-          </option>
-        </select>
-        <div class="form-help mt-2">
-          <i class="fa fa-info-circle me-1 text-primary"></i>
-          Solo se muestran disponibilidades de médicos asignados a este centro.
+        </div>
+        <div class="form-group-modern">
+          <select 
+            class="form-control form-control-modern"
+            [(ngModel)]="esquema.disponibilidadMedicoId"
+            name="disponibilidadMedico"
+            (change)="onDisponibilidadChange()"
+            required
+          >
+            <option [ngValue]="null">
+              <i class="fa fa-hand-point-right"></i>
+              Seleccione una disponibilidad...
+            </option>
+            <option *ngFor="let disp of disponibilidadesDisponibles" [value]="disp.id">
+              👨‍⚕️ {{ disp.staffMedico?.medico?.nombre }} {{ disp.staffMedico?.medico?.apellido }} - 
+              🕐 {{ formatearHorarios(disp.horarios) }}
+            </option>
+          </select>
+          <div class="form-help mt-2">
+            <i class="fa fa-info-circle me-1 text-primary"></i>
+            Solo se muestran disponibilidades de médicos asignados a este centro.
+          </div>
         </div>
       </div>
 
       <!-- Horarios del Consultorio -->
-      <div class="form-group-modern mb-4">
-        <label class="form-label-modern">
-          <i class="fa fa-clock me-2"></i>
+      <div class="section-card slide-in">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fa fa-clock"></i>
+          </div>
           Horarios de Atención del Consultorio
-        </label>
+        </div>
         <div class="horarios-consultorio-info">
           <div *ngIf="consultorioHorarios.length > 0; else noHorariosConsultorio">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th>Hora Apertura</th>
-                  <th>Hora Cierre</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let horario of consultorioHorarios">
-                  <td>{{ getDiaNombre(horario.diaSemana) }}</td>
-                  <td>{{ horario.horaInicio }}</td>
-                  <td>{{ horario.horaFin }}</td>
-                  <td>
-                    <span class="badge" [class.badge-success]="horario.activo" [class.badge-secondary]="!horario.activo">
-                      {{ horario.activo ? 'Activo' : 'Inactivo' }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- Formato horizontal compacto -->
+            <div class="horarios-horizontal">
+              <div *ngFor="let horario of consultorioHorarios" class="horario-chip">
+                <span class="dia-badge">{{ getDiaNombre(horario.diaSemana) }}</span>
+                <span class="hora-range">
+                  {{ horario.horaInicio }} - {{ horario.horaFin }}
+                </span>
+                <span class="estado-badge" [class.activo]="horario.activo" [class.inactivo]="!horario.activo">
+                  <i class="fa" [class.fa-check]="horario.activo" [class.fa-times]="!horario.activo"></i>
+                </span>
+              </div>
+            </div>
           </div>
           <ng-template #noHorariosConsultorio>
-            <p class="text-muted mb-0">
-              <i class="fa fa-exclamation-triangle me-2"></i>
-              Este consultorio no tiene horarios de atención configurados.
-            </p>
+            <div class="empty-state">
+              <i class="fa fa-exclamation-triangle"></i>
+              <p class="mb-0">Este consultorio no tiene horarios de atención configurados.</p>
+            </div>
           </ng-template>
         </div>
       </div>
 
       <!-- Esquemas Existentes -->
-      <div class="form-group-modern mb-4">
-        <label class="form-label-modern">
-          <i class="fa fa-list me-2"></i>
+      <div class="section-card slide-in">
+        <div class="section-title">
+          <div class="section-icon">
+            <i class="fa fa-list"></i>
+          </div>
           Esquemas Existentes en este Consultorio
-        </label>
+        </div>
         <div class="horarios-consultorio-info">
           <div *ngIf="esquemasExistentes.length > 0; else noEsquemasExistentes">
-            <div *ngFor="let esquema of esquemasExistentes" class="mb-2">
-              <strong>{{ esquema.staffMedico?.medico?.nombre }} {{ esquema.staffMedico?.medico?.apellido }}</strong>
-              <div class="small text-muted">
-                <span *ngFor="let horario of esquema.horarios; let last = last">
-                  {{ getDiaNombre(horario.dia) }} {{ horario.horaInicio }}-{{ horario.horaFin }}{{ !last ? ', ' : '' }}
-                </span>
+            <div class="row">
+              <div *ngFor="let esquema of esquemasExistentes" class="col-md-6 mb-3">
+                <div class="horario-ref">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-user-md text-primary me-2"></i>
+                    <strong class="text-primary">
+                      {{ esquema.staffMedico?.medico?.nombre }} {{ esquema.staffMedico?.medico?.apellido }}
+                    </strong>
+                  </div>
+                  <div class="small">
+                    <span *ngFor="let horario of esquema.horarios; let last = last" class="me-2 mb-1 d-inline-block">
+                      <span class="badge bg-warning text-dark">
+                        {{ getDiaNombre(horario.dia) }} {{ horario.horaInicio }}-{{ horario.horaFin }}
+                      </span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <ng-template #noEsquemasExistentes>
-            <p class="text-muted mb-0">
-              <i class="fa fa-info-circle me-2"></i>
-              No hay esquemas configurados para este consultorio.
-            </p>
+            <div class="empty-state">
+              <i class="fa fa-calendar-check"></i>
+              <p class="mb-0">No hay esquemas configurados para este consultorio.</p>
+            </div>
           </ng-template>
         </div>
       </div>
@@ -274,30 +761,10 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             </div>
           </div>
 
-          <!-- 2. Horarios del Consultorio -->
+          <!-- 2. Esquemas Existentes -->
           <div class="interseccion-step">
             <h6 class="interseccion-title">
               <span class="step-number">2</span>
-              <i class="fa fa-building me-2"></i>
-              Horarios de Atención del Consultorio
-            </h6>
-            <div class="horarios-referencia consultorio-horarios">
-              <div *ngFor="let horario of consultorioHorarios" class="horario-ref">
-                <span class="badge bg-success">{{ getDiaNombre(horario.diaSemana) }}</span>
-                <span class="ms-2">{{ horario.horaInicio }} - {{ horario.horaFin }}</span>
-                <span class="badge bg-light text-dark ms-2">{{ horario.estado }}</span>
-              </div>
-              <div *ngIf="consultorioHorarios.length === 0" class="text-muted">
-                <i class="fa fa-exclamation-triangle me-2"></i>
-                No hay horarios configurados para este consultorio
-              </div>
-            </div>
-          </div>
-
-          <!-- 3. Esquemas Existentes -->
-          <div class="interseccion-step">
-            <h6 class="interseccion-title">
-              <span class="step-number">3</span>
               <i class="fa fa-calendar-times me-2"></i>
               Horarios ocupados
             </h6>
@@ -329,7 +796,19 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
               <div class="alert alert-success">
                 <i class="fa fa-lightbulb me-2"></i>
                 <strong>{{ horariosDisponibles.length }} horario(s) disponible(s)</strong> encontrado(s) para asignar al esquema.
-                Seleccione los que desea incluir:
+                Seleccione los que desea incluir y ajuste los horarios dentro del rango disponible:
+              </div>
+              
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle me-2"></i>
+                <strong>Tip:</strong> Puede personalizar las horas de inicio y fin dentro del rango disponible de cada médico. 
+                Los campos se habilitarán cuando seleccione el horario.
+              </div>
+              
+              <!-- Error de validación -->
+              <div *ngIf="errorValidacion" class="alert alert-danger">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> {{ errorValidacion }}
               </div>
               
               <!-- Tabla de horarios disponibles para seleccionar -->
@@ -345,8 +824,8 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                                (change)="toggleTodosSeleccionados()">
                       </th>
                       <th>Día</th>
-                      <th>Hora Inicio</th>
-                      <th>Hora Fin</th>
+                      <th>Hora Inicio (Personalizable)</th>
+                      <th>Hora Fin (Personalizable)</th>
                       <th>Duración</th>
                       <th>Acción</th>
                     </tr>
@@ -363,10 +842,28 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                       <td>
                         <span class="badge bg-primary">{{ getDiaNombre(horario.dia) }}</span>
                       </td>
-                      <td>{{ horario.horaInicio }}</td>
-                      <td>{{ horario.horaFin }}</td>
                       <td>
-                        <span class="badge bg-info">{{ calcularDuracion(horario.horaInicio, horario.horaFin) }}</span>
+                        <input type="time" 
+                               class="form-control form-control-sm"
+                               [value]="getHorarioPersonalizado(horario, 'inicio')"
+                               (change)="actualizarHorarioPersonalizado(horario, 'inicio', $event)"
+                               [disabled]="!isHorarioSeleccionado(horario)"
+                               style="min-width: 120px;"
+                               placeholder="Hora inicio">
+                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                      </td>
+                      <td>
+                        <input type="time" 
+                               class="form-control form-control-sm"
+                               [value]="getHorarioPersonalizado(horario, 'fin')"
+                               (change)="actualizarHorarioPersonalizado(horario, 'fin', $event)"
+                               [disabled]="!isHorarioSeleccionado(horario)"
+                               style="min-width: 120px;"
+                               placeholder="Hora fin">
+                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                      </td>
+                      <td>
+                        <span class="badge bg-info">{{ calcularDuracion(getHorarioPersonalizado(horario, 'inicio'), getHorarioPersonalizado(horario, 'fin')) }}</span>
                       </td>
                       <td>
                         <button type="button" 
@@ -463,6 +960,19 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             <span class="resumen-valor">{{ calcularTurnosEstimados() }} turnos</span>
           </div>
         </div>
+        
+        <!-- Advertencia de horarios inválidos -->
+        <div *ngIf="tieneHorariosInvalidos()" class="alert alert-warning mt-3">
+          <i class="fa fa-exclamation-triangle me-2"></i>
+          <strong>Advertencia:</strong> Algunos horarios están fuera del rango disponible del médico:
+          <ul class="mb-0 mt-2">
+            <li *ngFor="let horarioInvalido of getHorariosInvalidos()">{{ horarioInvalido }}</li>
+          </ul>
+          <small class="d-block mt-2">
+            <i class="fa fa-info-circle me-1"></i>
+            Ajuste los horarios dentro del rango disponible para poder guardar el esquema.
+          </small>
+        </div>
       </div>
     </div>
 
@@ -504,6 +1014,10 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   consultorioHorarios: any[] = [];
   horariosDisponibles: any[] = [];
   esquemasExistentes: EsquemaTurno[] = [];
+  
+  // Propiedades para manejar rangos personalizables
+  horariosPersonalizados: { [key: string]: { horaInicio: string; horaFin: string; } } = {};
+  errorValidacion = '';
   
   mensajeError = '';
   mensajeExito = '';
@@ -730,15 +1244,82 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
     console.log(`\n📋 Total horarios con intersección: ${horariosInterseccion.length}`);
 
-    // Filtrar horarios que no están ocupados por esquemas existentes
-    this.horariosDisponibles = horariosInterseccion.filter(horario => {
-      const ocupado = this.esQuemasOcupanHorario(horario);
-      console.log(`🔍 Horario ${horario.dia} ${horario.horaInicio}-${horario.horaFin} ocupado: ${ocupado}`);
-      return !ocupado;
-    });
+    // NUEVA LÓGICA: En lugar de filtrar completamente, dividir horarios en segmentos disponibles
+    this.horariosDisponibles = [];
+    for (const horario of horariosInterseccion) {
+      const segmentosLibres = this.calcularSegmentosLibres(horario);
+      this.horariosDisponibles.push(...segmentosLibres);
+    }
 
     console.log(`\n🎯 RESULTADO FINAL: ${this.horariosDisponibles.length} horarios disponibles:`, this.horariosDisponibles);
     console.log('🔍 === FIN CÁLCULO ===\n');
+  }
+
+  /**
+   * Nuevo método que divide un horario en segmentos libres, 
+   * excluyendo solo las partes ocupadas por esquemas existentes
+   */
+  private calcularSegmentosLibres(horario: any): any[] {
+    const segmentosLibres: any[] = [];
+    const inicioTotal = this.timeToMinutes(horario.horaInicio);
+    const finTotal = this.timeToMinutes(horario.horaFin);
+
+    // Obtener todos los horarios ocupados para este día, ordenados por hora
+    const horariosOcupados = this.esquemasExistentes
+      .flatMap(esquema => esquema.horarios)
+      .filter(h => h.dia === horario.dia)
+      .map(h => ({
+        inicio: this.timeToMinutes(h.horaInicio),
+        fin: this.timeToMinutes(h.horaFin)
+      }))
+      .sort((a, b) => a.inicio - b.inicio);
+
+    console.log(`🔍 Calculando segmentos libres para ${horario.dia} ${horario.horaInicio}-${horario.horaFin}`);
+    console.log(`📅 Horarios ocupados:`, horariosOcupados.map(h => `${this.minutesToTime(h.inicio)}-${this.minutesToTime(h.fin)}`));
+
+    if (horariosOcupados.length === 0) {
+      // No hay ocupación, todo el horario está libre
+      segmentosLibres.push(horario);
+      console.log(`✅ Todo libre: ${horario.horaInicio}-${horario.horaFin}`);
+      return segmentosLibres;
+    }
+
+    let puntoActual = inicioTotal;
+
+    for (const ocupado of horariosOcupados) {
+      // Si hay espacio libre antes de este horario ocupado
+      if (puntoActual < ocupado.inicio) {
+        const segmentoLibre = {
+          dia: horario.dia,
+          horaInicio: this.minutesToTime(puntoActual),
+          horaFin: this.minutesToTime(Math.min(ocupado.inicio, finTotal))
+        };
+        segmentosLibres.push(segmentoLibre);
+        console.log(`✅ Segmento libre: ${segmentoLibre.horaInicio}-${segmentoLibre.horaFin}`);
+      }
+
+      // Mover el punto actual al final de este horario ocupado
+      puntoActual = Math.max(puntoActual, ocupado.fin);
+
+      // Si ya cubrimos todo el horario, salir
+      if (puntoActual >= finTotal) {
+        break;
+      }
+    }
+
+    // Si queda tiempo libre después del último horario ocupado
+    if (puntoActual < finTotal) {
+      const segmentoLibre = {
+        dia: horario.dia,
+        horaInicio: this.minutesToTime(puntoActual),
+        horaFin: this.minutesToTime(finTotal)
+      };
+      segmentosLibres.push(segmentoLibre);
+      console.log(`✅ Segmento libre final: ${segmentoLibre.horaInicio}-${segmentoLibre.horaFin}`);
+    }
+
+    console.log(`� Total segmentos libres para ${horario.dia}: ${segmentosLibres.length}`);
+    return segmentosLibres;
   }
 
   private esQuemasOcupanHorario(horario: any): boolean {
@@ -814,11 +1395,17 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
         this.esquema.horarios.splice(index, 1);
       }
     } else {
-      // Agregar el horario
-      this.esquema.horarios.push({
-        dia: horario.dia,
+      // Agregar el horario (usar personalizado si existe, sino el original)
+      const key = this.getHorarioKey(horario);
+      const horarioAgregar = this.horariosPersonalizados[key] || {
         horaInicio: horario.horaInicio,
         horaFin: horario.horaFin
+      };
+      
+      this.esquema.horarios.push({
+        dia: horario.dia,
+        horaInicio: horarioAgregar.horaInicio,
+        horaFin: horarioAgregar.horaFin
       });
     }
   }
@@ -887,10 +1474,141 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     return Math.floor(totalMinutos / this.esquema.intervalo);
   }
 
+  // Métodos para manejar horarios personalizables
+  private getHorarioKey(horario: any): string {
+    return `${horario.dia}-${horario.horaInicio}-${horario.horaFin}`;
+  }
+
+  getHorarioPersonalizado(horario: any, tipo: 'inicio' | 'fin'): string {
+    const key = this.getHorarioKey(horario);
+    if (this.horariosPersonalizados[key]) {
+      return tipo === 'inicio' ? this.horariosPersonalizados[key].horaInicio : this.horariosPersonalizados[key].horaFin;
+    }
+    // Si no hay personalización, usar los valores originales
+    return tipo === 'inicio' ? horario.horaInicio : horario.horaFin;
+  }
+
+  actualizarHorarioPersonalizado(horario: any, tipo: 'inicio' | 'fin', event: any): void {
+    const key = this.getHorarioKey(horario);
+    const nuevoValor = event.target.value;
+    
+    if (!this.horariosPersonalizados[key]) {
+      this.horariosPersonalizados[key] = {
+        horaInicio: horario.horaInicio,
+        horaFin: horario.horaFin
+      };
+    }
+    
+    // Actualizar el valor correspondiente sin validaciones restrictivas
+    if (tipo === 'inicio') {
+      this.horariosPersonalizados[key].horaInicio = nuevoValor;
+      
+      // Solo asegurar que la hora de inicio no sea mayor o igual que la de fin
+      if (this.timeToMinutes(nuevoValor) >= this.timeToMinutes(this.horariosPersonalizados[key].horaFin)) {
+        // Ajustar la hora de fin para que sea al menos 30 minutos después
+        const nuevaHoraFin = this.addMinutes(nuevoValor, 30);
+        this.horariosPersonalizados[key].horaFin = nuevaHoraFin;
+      }
+    } else {
+      this.horariosPersonalizados[key].horaFin = nuevoValor;
+      
+      // Solo asegurar que la hora de fin no sea menor o igual que la de inicio
+      if (this.timeToMinutes(nuevoValor) <= this.timeToMinutes(this.horariosPersonalizados[key].horaInicio)) {
+        // Ajustar la hora de inicio para que sea al menos 30 minutos antes
+        const nuevaHoraInicio = this.subtractMinutes(nuevoValor, 30);
+        this.horariosPersonalizados[key].horaInicio = nuevaHoraInicio;
+      }
+    }
+    
+    // Limpiar mensaje de error anterior
+    this.limpiarErrorValidacion();
+    
+    // Actualizar el horario en el esquema si está seleccionado
+    this.actualizarEsquemaConHorarioPersonalizado(horario);
+  }
+
+  private actualizarEsquemaConHorarioPersonalizado(horarioOriginal: any): void {
+    if (this.isHorarioSeleccionado(horarioOriginal)) {
+      // Encontrar y actualizar el horario en el esquema
+      const index = this.esquema.horarios.findIndex(h => 
+        h.dia === horarioOriginal.dia && 
+        h.horaInicio === horarioOriginal.horaInicio && 
+        h.horaFin === horarioOriginal.horaFin
+      );
+      
+      if (index > -1) {
+        const key = this.getHorarioKey(horarioOriginal);
+        if (this.horariosPersonalizados[key]) {
+          this.esquema.horarios[index] = {
+            dia: horarioOriginal.dia,
+            horaInicio: this.horariosPersonalizados[key].horaInicio,
+            horaFin: this.horariosPersonalizados[key].horaFin
+          };
+        }
+      }
+    }
+  }
+
+  private addMinutes(time: string, minutes: number): string {
+    const totalMinutes = this.timeToMinutes(time) + minutes;
+    return this.minutesToTime(totalMinutes);
+  }
+
+  private subtractMinutes(time: string, minutes: number): string {
+    const totalMinutes = this.timeToMinutes(time) - minutes;
+    return this.minutesToTime(totalMinutes);
+  }
+
+  // Métodos para manejo de errores de validación
+  private mostrarErrorValidacion(mensaje: string): void {
+    this.errorValidacion = mensaje;
+    // Limpiar el error después de 5 segundos
+    setTimeout(() => {
+      this.limpiarErrorValidacion();
+    }, 5000);
+  }
+
+  private limpiarErrorValidacion(): void {
+    this.errorValidacion = '';
+  }
+
+  // Métodos para verificar si los horarios están dentro del rango (sin bloquear)
+  tieneHorariosInvalidos(): boolean {
+    return this.esquema.horarios.some(horario => this.esHorarioInvalido(horario));
+  }
+
+  private esHorarioInvalido(horario: any): boolean {
+    // Buscar el horario original disponible correspondiente
+    const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
+    if (!horarioOriginal) return true;
+    
+    const minutosInicio = this.timeToMinutes(horario.horaInicio);
+    const minutosFin = this.timeToMinutes(horario.horaFin);
+    const minutosOriginalInicio = this.timeToMinutes(horarioOriginal.horaInicio);
+    const minutosOriginalFin = this.timeToMinutes(horarioOriginal.horaFin);
+    
+    return minutosInicio < minutosOriginalInicio || 
+           minutosFin > minutosOriginalFin ||
+           minutosInicio >= minutosFin;
+  }
+
+  getHorariosInvalidos(): string[] {
+    const invalidos = this.esquema.horarios
+      .filter(horario => this.esHorarioInvalido(horario))
+      .map(horario => {
+        const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
+        const rangoDisponible = horarioOriginal ? `${horarioOriginal.horaInicio}-${horarioOriginal.horaFin}` : 'N/A';
+        return `${this.getDiaNombre(horario.dia)}: ${horario.horaInicio}-${horario.horaFin} (disponible: ${rangoDisponible})`;
+      });
+    
+    return invalidos;
+  }
+
   puedeGuardar(): boolean {
     return this.esquema.disponibilidadMedicoId > 0 &&
            this.esquema.horarios.length > 0 &&
-           this.esquema.intervalo > 0;
+           this.esquema.intervalo > 0 &&
+           !this.tieneHorariosInvalidos();
   }
 
   guardarEsquema(): void {

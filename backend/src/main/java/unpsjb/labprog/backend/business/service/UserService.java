@@ -34,9 +34,6 @@ public class UserService implements UserDetailsService {
     private PasswordEncoder passwordEncoder;
     
     @Autowired
-    private RoleService roleService;
-    
-    @Autowired
     private AuditLogService auditLogService;
     
     // ===============================
@@ -103,8 +100,8 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Ya existe un usuario con el DNI: " + dni);
         }
         
-        // Obtener o crear el rol
-        Role role = roleService.getOrCreateRole(roleName);
+        // Obtener el rol del enum
+        Role role = Role.valueOf(roleName.toUpperCase());
         
         User user = new User();
         user.setNombre(nombre);
@@ -223,8 +220,8 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("El usuario ya tiene el rol: " + newRoleName);
         }
         
-        // Obtener el nuevo rol
-        Role newRole = roleService.getOrCreateRole(newRoleName);
+        // Obtener el nuevo rol del enum
+        Role newRole = Role.valueOf(newRoleName.toUpperCase());
         
         // Cambiar el rol
         user.setRole(newRole);
@@ -269,7 +266,7 @@ public class UserService implements UserDetailsService {
         newData.put("telefono", telefono);
         
         // Registrar en auditoría
-        auditLogService.logUserUpdated(userId, performedBy, oldData, newData, "Actualización de información personal");
+        auditLogService.logUserUpdated(userId, performedBy, oldData, newData, user.getNombre(), user.getApellido());
         
         return updatedUser;
     }
@@ -289,7 +286,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         
         // Registrar en auditoría
-        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, false, reason);
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, false, user.getNombre(), user.getApellido());
     }
 
     /**
@@ -307,7 +304,7 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
         
         // Registrar en auditoría
-        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, true, reason);
+        auditLogService.logUserStatusChange(userId, performedBy, wasEnabled, true, user.getNombre(), user.getApellido());
     }
 
     /**
@@ -333,7 +330,7 @@ public class UserService implements UserDetailsService {
         User user = createUser(nombre, apellido, dni, email, hashedPassword, telefono, roleName, autoVerifyEmail);
         
         // Registrar en auditoría
-        auditLogService.logUserCreated(user.getId(), email, roleName, performedBy);
+        auditLogService.logUserCreated(user.getId(), email, roleName, user.getNombre(), user.getApellido(), performedBy);
         
         return user;
     }

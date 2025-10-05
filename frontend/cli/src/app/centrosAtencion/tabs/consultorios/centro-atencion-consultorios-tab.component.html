@@ -2,8 +2,8 @@
   <div class="modern-card-header">
     <div class="d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center">
-        <div class="me-3">
-          <i class="icon-consultorios"></i>
+        <div class="header-icon me-3">
+          🏥
         </div>
         <div>
           <h4 class="mb-0 fw-bold">Gestión de Consultorios</h4>
@@ -39,12 +39,12 @@
         <i class="fa fa-plus-circle me-2"></i>Crear Nuevo Consultorio
       </h5>
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label fw-semibold">Número:</label>
           <input type="number" [(ngModel)]="nuevoConsultorio.numero" name="numeroConsultorio"
                  class="form-control-modern" placeholder="Número del consultorio">
         </div>
-        <div class="col-md-8">
+        <div class="col-md-6">
           <label class="form-label fw-semibold">Nombre:</label>
           <input type="text" [(ngModel)]="nuevoConsultorio.nombre" name="nombreConsultorio"
                  class="form-control-modern" placeholder="Nombre descriptivo del consultorio">
@@ -129,7 +129,7 @@
           <div class="horarios-atencion-section">
             <div class="horarios-section-header">
               <h6 class="horarios-title">
-                <i class="fa fa-clock me-2"></i>Horarios de Atención
+                <i class="fa fa-clock me-2"></i>Horarios de Atención del consultorio
               </h6>
               <div class="horarios-actions">
                 <button *ngIf="editConsultorioIndex !== i" 
@@ -175,7 +175,7 @@
           <div class="esquemas-semanales-section">
             <div class="esquemas-section-header">
               <h6 class="esquemas-title">
-                <i class="fa fa-calendar me-2"></i>Esquemas Semanales
+                <i class="fa fa-calendar me-2"></i>Esquemas Semanales de medicos
               </h6>
             </div>
             

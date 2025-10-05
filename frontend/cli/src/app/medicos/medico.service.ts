@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DataPackage } from '../data.package';
 import { Medico } from './medico';
+import { ResultsPage } from '../results-page';
 
 @Injectable({
   providedIn: 'root'
@@ -88,5 +89,56 @@ export class MedicoService {
   /** Paginación */
   byPage(page: number, size: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.medicosUrl}/page?page=${page - 1}&size=${size}`);
+  }
+
+  /**
+   * Búsqueda paginada avanzada con filtros y ordenamiento
+   * @param page Número de página (0-based)
+   * @param size Tamaño de página
+   * @param nombre Filtro por nombre (opcional)
+   * @param especialidad Filtro por especialidad (opcional)
+   * @param estado Filtro por estado (activo/inactivo, opcional)
+   * @param sortBy Campo para ordenar (opcional)
+   * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
+   * @returns Observable con DataPackage<Page<Medico>>
+   */
+  findByPage(
+    page: number,
+    size: number,
+    nombre?: string,
+    especialidad?: string,
+    estado?: string,
+    sortBy?: string,
+    sortDir?: string
+  ): Observable<DataPackage<ResultsPage>> {
+    // Construir query string con parámetros opcionales
+    const params = new URLSearchParams();
+
+    params.append('page', page.toString());
+    params.append('size', size.toString());
+
+    if (nombre && nombre.trim()) {
+      params.append('nombre', nombre.trim());
+    }
+
+    if (especialidad && especialidad.trim()) {
+      params.append('especialidad', especialidad.trim());
+    }
+
+    if (estado && estado.trim()) {
+      params.append('estado', estado.trim());
+    }
+
+    if (sortBy && sortBy.trim()) {
+      params.append('sortBy', sortBy.trim());
+    }
+
+    if (sortDir && sortDir.trim()) {
+      params.append('sortDir', sortDir.trim());
+    }
+
+    const url = `${this.medicosUrl}/page?${params.toString()}`;
+
+    return this.http.get<DataPackage<ResultsPage>>(url);
   }
 }

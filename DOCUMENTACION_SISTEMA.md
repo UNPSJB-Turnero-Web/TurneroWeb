@@ -317,17 +317,50 @@ docker-compose run testing npm test
 
 ---
 
-## Consideraciones de Seguridad
+## Sistema de Roles y Autorización
 
-### Autenticación y Autorización
-- **Guards de Ruta**: Protección de endpoints sensibles
-- **Roles de Usuario**: Diferenciación entre Admin y Paciente
-- **Validación de Datos**: Sanitización en frontend y backend
+### Jerarquía de Roles
+El sistema implementa una jerarquía de roles centralizada que permite herencia de permisos:
 
-### Auditoría de Seguridad
-- **Logs Inmutables**: Prevención de manipulación de registros
-- **Trazabilidad**: Registro de todas las acciones de usuarios
-- **Validación de Integridad**: Verificación de consistencia de datos
+```
+ADMINISTRADOR
+├── MEDICO
+├── OPERADOR
+└── PACIENTE (base)
+
+MEDICO
+└── PACIENTE (base)
+
+OPERADOR  
+└── PACIENTE (base)
+```
+
+- **PACIENTE**: Rol base con permisos básicos
+- **MEDICO**: Hereda permisos de PACIENTE + permisos médicos
+- **OPERADOR**: Hereda permisos de PACIENTE + permisos operativos  
+- **ADMINISTRADOR**: Hereda permisos de PACIENTE, MEDICO y OPERADOR + permisos administrativos
+
+**Nota**: MEDICO y OPERADOR son roles independientes; no hay herencia entre ellos, solo comparten la base de PACIENTE.### Lógica de Autorización
+- **Método Centralizado**: `Role.hasAccessTo(Role required)` verifica permisos jerárquicos
+- **Uso Consistente**: Todos los checks de permisos usan la jerarquía, no comparaciones directas
+- **Ejemplo**: `user.getRole().hasAccessTo(Role.PACIENTE)` permite acceso a funcionalidades de paciente
+
+### Creación Automática de Pacientes
+Para usuarios multi-rol (médicos, operadores, administradores):
+- **Escenario**: Usuario sin registro de paciente intenta sacar un turno para sí mismo
+- **Proceso**: 
+  1. Verificar permisos usando jerarquía
+  2. Buscar paciente existente por DNI/email
+  3. Si no existe, crear automáticamente registro de paciente
+  4. Asociar turno al paciente creado/encontrado
+- **Beneficio**: Usuarios multi-rol pueden gestionar turnos personales sin registro manual
+
+### Implementación Técnica
+- **Enum Role**: Define roles y herencia en `Role.java`
+- **RoleHierarchy**: Clase utilitaria para operaciones jerárquicas
+- **User Model**: Campo `role` con `@Enumerated(EnumType.STRING)`
+- **Spring Security**: Configurado con `RoleHierarchy` para herencia automática
+- **Verificación**: `currentUser.getRole().hasAccessTo(Role.PACIENTE)` en lógica de aplicación
 
 ---
 

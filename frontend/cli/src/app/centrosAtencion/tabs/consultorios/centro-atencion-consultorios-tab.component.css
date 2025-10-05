@@ -2,49 +2,265 @@
 
 /* Variables CSS */
 :host {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --light-color: #f8f9fa;
-  --dark-color: #343a40;
-  --border-color: #dee2e6;
-  --consultorio-green: #28a745;
+  --primary-color: #10b981;
+  --primary-light: #34d399;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --lighter-color: #ffffff;
+  --dark-color: #1e293b;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --consultorio-green: #10b981;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Card principal */
+.modern-card {
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.modern-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
 }
 
 /* Contenedor principal de cards */
 .consultorios-cards-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 2rem;
+  padding: 1rem 0;
+}
+
+/* Header del modern-card */
+.modern-card-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 1.75rem 2rem;
+  position: relative;
+  color: white;
+}
+
+.modern-card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.modern-card-body {
+  padding: 2rem;
+}
+
+.modern-card-header h4 {
+  color: white !important;
+  font-weight: 800 !important;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.modern-card-header small {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Botones en el header */
+.modern-card-header .btn-modern {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modern-card-header .btn-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-card-header .btn-success-modern {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-success-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-primary-modern {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.modern-card-header .btn-primary-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Botones modernos base */
+.btn-modern {
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.025em;
+}
+
+.btn-success-modern {
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+  color: white;
+  border: 1px solid var(--success-color);
+}
+
+.btn-success-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-success-modern:hover::before {
+  left: 100%;
+}
+
+.btn-success-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success-modern:disabled {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-secondary-modern {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #94a3b8 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-secondary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #475569 0%, var(--secondary-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Inputs y selects modernos */
+.form-control-modern, .modern-select {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--lighter-color);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+.form-control-modern:focus, .modern-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.form-control-modern:hover, .modern-select:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+/* Labels modernos */
+.form-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
 }
 
 /* Card individual de consultorio */
 .consultorio-card {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 .consultorio-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-color);
 }
 
 /* Header del consultorio */
 .consultorio-header {
-  background: var(--light-color);
-  border-bottom: 1px solid var(--border-color);
-  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, var(--light-color) 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 1.75rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .consultorio-info {
@@ -54,24 +270,32 @@
 }
 
 .consultorio-numero-circle {
-  width: 50px;
-  height: 50px;
-  background: var(--consultorio-green);
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--consultorio-green) 0%, var(--success-light) 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
-  font-size: 1.25rem;
-  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+  font-weight: 700;
+  font-size: 1.4rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.consultorio-numero-circle:hover {
+  box-shadow: var(--shadow-xl);
 }
 
 .consultorio-details h5.consultorio-nombre {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--dark-color);
+  letter-spacing: -0.025em;
+  line-height: 1.3;
 }
 
 .consultorio-nombre-edit {
@@ -87,30 +311,32 @@
 }
 
 .badge-horario {
-  background: var(--info-color);
+  background: linear-gradient(135deg, var(--info-color) 0%, var(--primary-light) 100%);
   color: white;
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.85rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  transition: all 0.2s ease;
+  gap: 0.375rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .badge-horario:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(23, 162, 184, 0.3);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 .badge-horario.badge-semanal {
-  background: var(--success-color);
-  box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+  box-shadow: var(--shadow-sm);
 }
 
 .badge-horario.badge-semanal:hover {
-  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 /* Acciones del consultorio */
@@ -121,38 +347,56 @@
 }
 
 .btn-gestionar-esquemas {
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: white;
   border: 1px solid var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-gestionar-esquemas::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-gestionar-esquemas:hover::before {
+  left: 100%;
 }
 
 .btn-gestionar-esquemas:hover {
-  background: #0056b3;
-  border-color: #0056b3;
-  color: white;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-eliminar {
   background: white;
   color: var(--danger-color);
-  border: 1px solid var(--danger-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  border: 2px solid var(--danger-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-eliminar:hover {
   background: var(--danger-color);
   color: white;
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
 }
 
 /* Sección de esquemas semanales */
@@ -168,35 +412,60 @@
 
 .esquemas-title {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--primary-color);
   display: flex;
   align-items: center;
+  letter-spacing: -0.025em;
 }
 
 /* Calendario semanal simplificado */
 .calendario-semanal-simple {
-  background: #fff;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.calendario-semanal-simple:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .dias-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: white;
+  position: relative;
+}
+
+.dias-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
 }
 
 .dia-header {
-  padding: 0.75rem 0.5rem;
+  padding: 1rem 0.5rem;
   text-align: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.dia-header:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dia-header:last-child {
@@ -206,17 +475,36 @@
 .dias-content {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-height: 120px;
+  min-height: 140px;
+  background: var(--lighter-color);
 }
 
 .dia-column {
-  border-right: 1px solid var(--border-color);
-  padding: 0.75rem 0.5rem;
+  border-right: 1px solid var(--border-light);
+  padding: 1rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  background: #fff;
-  min-height: 120px;
+  gap: 0.75rem;
+  background: var(--lighter-color);
+  min-height: 140px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.dia-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(79, 70, 229, 0.02) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dia-column:hover::before {
+  opacity: 1;
 }
 
 .dia-column:last-child {
@@ -224,38 +512,58 @@
 }
 
 .dia-column:hover {
-  background: #f8f9fa;
+  background: var(--light-color);
+  transform: translateY(-1px);
 }
 
 /* Esquemas en los días */
 .esquema-dia-card {
-  background: #007bff;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: white;
-  border-radius: 6px;
-  padding: 0.5rem;
-  font-size: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 123, 255, 0.3);
-  transition: all 0.2s ease;
+  border-radius: 12px;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.8rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.esquema-dia-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.esquema-dia-card:hover::before {
+  left: 100%;
 }
 
 .esquema-dia-card:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.4);
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  box-shadow: var(--shadow-md);
 }
 
 .esquema-horario {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-weight: 700;
+  margin-bottom: 0.375rem;
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
 }
 
 .esquema-medico {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   text-align: center;
-  opacity: 0.9;
-  line-height: 1.2;
+  opacity: 0.95;
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 /* Día vacío */
@@ -300,80 +608,204 @@
 
 /* Responsivo */
 @media (max-width: 768px) {
+  .modern-card-header {
+    padding: 1.5rem 1.75rem;
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .modern-card-header .d-flex.align-items-center.justify-content-between {
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .modern-card-header .d-flex.align-items-center:first-child {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .modern-card-header .d-flex.gap-2 {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .modern-card-header .btn-modern {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+
+  .consultorios-cards-container {
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .consultorio-card {
+    border-radius: 12px;
+    margin: 0 0.5rem;
+  }
+
   .consultorio-header {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     text-align: center;
+    padding: 1.5rem 1rem;
   }
 
   .consultorio-info {
     flex-direction: column;
     text-align: center;
+    gap: 1rem;
+  }
+
+  .consultorio-numero-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
   }
 
   .consultorio-actions {
     flex-direction: column;
     width: 100%;
+    gap: 0.75rem;
   }
 
   .consultorio-actions .btn {
     width: 100%;
-  }
-
-  .dias-content {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .dia-column {
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem;
-  }
-
-  .dia-column:last-child {
-    border-bottom: none;
-  }
-
-  .dia-header {
-    display: none;
-  }
-
-  .dias-content .dia-column::before {
-    content: attr(data-dia);
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    display: block;
-  }
-}
-
-@media (max-width: 576px) {
-  .consultorios-cards-container {
-    gap: 1rem;
-  }
-
-  .consultorio-card {
-    border-radius: 8px;
-  }
-
-  .consultorio-header {
-    padding: 1rem;
+    justify-content: center;
   }
 
   .esquemas-semanales-section {
     padding: 1rem;
   }
 
+  .dias-content {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .dia-column {
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: var(--light-color);
+    margin-bottom: 0.5rem;
+  }
+
+  .dia-column:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .dia-header {
+    display: none;
+  }
+
+  .dias-content .dia-column::after {
+    content: attr(data-dia);
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: block;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .modern-card-header {
+    padding: 1.25rem 1.25rem;
+  }
+
+  .modern-card-header h4 {
+    font-size: 1.25rem;
+  }
+
+  .modern-card-header small {
+    font-size: 0.9rem;
+  }
+
+  .header-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+
+  .modern-card-header .btn-modern {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .consultorios-cards-container {
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .consultorio-card {
+    border-radius: 12px;
+    margin: 0;
+  }
+
+  .consultorio-header {
+    padding: 1.25rem 1rem;
+  }
+
+  .esquemas-semanales-section {
+    padding: 1rem 0.75rem;
+  }
+
   .consultorio-numero-circle {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+
+  .consultorio-details h5.consultorio-nombre {
+    font-size: 1.1rem;
+  }
+
+  .btn-gestionar-esquemas,
+  .btn-eliminar {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
   }
 
   .esquema-dia-card {
-    padding: 0.375rem;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .esquema-horario {
     font-size: 0.7rem;
+  }
+
+  .esquema-medico {
+    font-size: 0.65rem;
+  }
+
+  .calendario-semanal-simple {
+    border-radius: 12px;
+  }
+
+  .dia-column {
+    padding: 1rem;
   }
 }
 

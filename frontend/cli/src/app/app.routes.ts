@@ -4,6 +4,7 @@ import { InicioSesionComponent } from "./inicio-sesion/inicio-sesion.component";
 import { RegistroUsuarioComponent } from "./registro-usuario/registro-usuario.component";
 import { RecuperarContrasenaComponent } from "./recuperacionContrasena/recuperacionContrasena.component";
 import { ActivacionCuentaComponent } from "./activacion-cuenta/activacion-cuenta.component";
+import { DeepLinkBridgeComponent } from "./deep-link/deep-link-bridge.component";
 import { TurnosComponent } from "./turnos/turnos.component";
 import { TurnoDetailComponent } from "./turnos/turno-detail.component";
 import { AdminAgendaComponent } from "./agenda/admin-agenda.component";
@@ -56,9 +57,16 @@ import { OperadorPerfilComponent } from "./operador/operador-perfil.component";
 import { AdminPerfilComponent } from "./admin/admin-perfil.component";
 import { TokenStatusComponent } from "./components/token-status.component";
 import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
+import { AdminConfigComponent } from "./admin/admin-config.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
+  
+  // Ruta puente para deep linking (enlaces desde email)
+  { 
+    path: "link-verificacion", 
+    component: DeepLinkBridgeComponent 
+  },
 
   // Rutas de Operador (protegidas por OperadorGuard)
   {
@@ -169,7 +177,7 @@ export const routes: Routes = [
   {
     path: "turnos/advanced-search",
     component: TurnoAdvancedSearchComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "turnos/audit-dashboard",
@@ -229,12 +237,12 @@ export const routes: Routes = [
   {
     path: "especialidades",
     component: EspecialidadesComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "especialidades/new",
     component: EspecialidadDetailComponent,
-    canActivate: [AdminGuard],
+    canActivate: [AdminOperadorGuard],
   },
   {
     path: "especialidades/:id",
@@ -336,4 +344,9 @@ export const routes: Routes = [
     component: AdminDashboardComponent,
     canActivate: [AdminGuard],
   },
+  {
+  path: "config",  // O "admin-config" si prefieres algo más descriptivo
+  component: AdminConfigComponent,
+  canActivate: [AdminOperadorGuard],  // Protege para admins y operadores
+},
 ];

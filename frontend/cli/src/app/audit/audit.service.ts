@@ -1,6 +1,45 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { DataPackage } from '../data.package';
+
+// Interfaces para el sistema de auditoría
+export interface AuditLog {
+  id: number;
+  entityType?: string;
+  entityId?: number;
+  action: string;
+  performedBy: string;
+  performedAt: string;
+  estadoAnterior?: string;
+  estadoNuevo?: string;
+  oldValues?: string;
+  newValues?: string;
+  reason?: string;
+  turno?: any; // Para compatibilidad con logs de turnos
+}
+
+export interface AuditPage {
+  content: AuditLog[];
+  totalPages: number;
+  totalElements: number;
+  currentPage: number;
+  pageSize: number;
+  sortBy: string;
+  sortDir: string;
+}
+
+export interface AuditQueryParams {
+  page?: number;
+  size?: number;
+  entidad?: string;
+  usuario?: string;
+  tipoAccion?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  sortBy?: string;
+  sortDir?: string;
+}
 
 interface AuditStatistics {
   turnosCreados: number;
@@ -22,6 +61,39 @@ interface DashboardStatistics extends AuditStatistics {
   userStatistics: any[];
 }
 
+/**
+ * Servicio para gestionar consultas de auditoría del sistema TurneroWeb.
+ *
+ * Proporciona métodos para consultar logs de auditoría con filtros avanzados,
+ * paginación y ordenamiento. Todas las respuestas están tipadas usando
+ * DataPackage<T> para mantener consistencia con el resto de la aplicación.
+ *
+ * @example
+ * // Consulta básica con paginación
+ * const params: AuditQueryParams = { page: 0, size: 20 };
+ * this.auditService.getAuditLogs(params).subscribe(response => {
+ *   console.log('Página actual:', response.data.currentPage);
+ *   console.log('Total de elementos:', response.data.totalElements);
+ *   console.log('Logs:', response.data.content);
+ * });
+ *
+ * @example
+ * // Consulta con filtros y ordenamiento
+ * const params: AuditQueryParams = {
+ *   entidad: 'MEDICO',
+ *   usuario: 'admin',
+ *   tipoAccion: 'CREATE',
+ *   fechaDesde: '2024-01-01T00:00:00',
+ *   fechaHasta: '2024-12-31T23:59:59',
+ *   page: 0,
+ *   size: 10,
+ *   sortBy: 'performedAt',
+ *   sortDir: 'DESC'
+ * };
+ * this.auditService.getAuditLogs(params).subscribe(response => {
+ *   // Procesar respuesta paginada
+ * });
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -30,6 +102,140 @@ export class AuditService {
   private baseUrl = 'rest/audit';
 
   constructor(private http: HttpClient) { }
+
+  /**
+   * Obtiene logs de auditoría con filtros avanzados, paginación y ordenamiento
+   * @param params Parámetros de consulta para filtrar, paginar y ordenar
+   * @returns Observable con la respuesta tipada usando DataPackage<AuditPage>
+   */
+  getAuditLogs(params: AuditQueryParams): Observable<DataPackage<AuditPage>> {
+    let httpParams = new HttpParams();
+
+    // Paginación
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.size !== undefined) {
+      httpParams = httpParams.set('size', params.size.toString());
+    }
+
+    // Filtros
+    if (params.entidad && params.entidad.trim()) {
+      httpParams = httpParams.set('entidad', params.entidad.trim());
+    }
+    if (params.usuario && params.usuario.trim()) {
+      httpParams = httpParams.set('usuario', params.usuario.trim());
+    }
+    if (params.tipoAccion && params.tipoAccion.trim()) {
+      httpParams = httpParams.set('tipoAccion', params.tipoAccion.trim());
+    }
+    if (params.fechaDesde) {
+      httpParams = httpParams.set('fechaDesde', params.fechaDesde);
+    }
+    if (params.fechaHasta) {
+      httpParams = httpParams.set('fechaHasta', params.fechaHasta);
+    }
+
+    // Ordenamiento
+    if (params.sortBy && params.sortBy.trim()) {
+      httpParams = httpParams.set('sortBy', params.sortBy.trim());
+    }
+    if (params.sortDir && (params.sortDir === 'ASC' || params.sortDir === 'DESC')) {
+      httpParams = httpParams.set('sortDir', params.sortDir);
+    }
+
+    return this.http.get<DataPackage<AuditPage>>(`${this.baseUrl}/page`, { params: httpParams });
+  }
+
+  /**
+   * Obtiene logs de auditoría recientes (últimas 24 horas) con paginación
+   * @param page Número de página (default: 0)
+   * @param size Tamaño de página (default: 20)
+   */
+  getRecentAuditLogs(page: number = 0, size: number = 20): Observable<DataPackage<AuditPage>> {
+    const params: AuditQueryParams = {
+      page,
+      size,
+      sortBy: 'performedAt',
+      sortDir: 'DESC'
+    };
+    return this.getAuditLogs(params);
+  }
+
+  /**
+   * Obtiene logs de auditoría filtrados por usuario
+   * @param usuario Nombre del usuario
+   * @param page Número de página (default: 0)
+   * @param size Tamaño de página (default: 20)
+   */
+  getAuditLogsByUser(usuario: string, page: number = 0, size: number = 20): Observable<DataPackage<AuditPage>> {
+    const params: AuditQueryParams = {
+      usuario,
+      page,
+      size,
+      sortBy: 'performedAt',
+      sortDir: 'DESC'
+    };
+    return this.getAuditLogs(params);
+  }
+
+  /**
+   * Obtiene logs de auditoría filtrados por tipo de acción
+   * @param tipoAccion Tipo de acción (CREATE, UPDATE, DELETE, etc.)
+   * @param page Número de página (default: 0)
+   * @param size Tamaño de página (default: 20)
+   */
+  getAuditLogsByAction(tipoAccion: string, page: number = 0, size: number = 20): Observable<DataPackage<AuditPage>> {
+    const params: AuditQueryParams = {
+      tipoAccion,
+      page,
+      size,
+      sortBy: 'performedAt',
+      sortDir: 'DESC'
+    };
+    return this.getAuditLogs(params);
+  }
+
+  /**
+   * Obtiene logs de auditoría filtrados por entidad
+   * @param entidad Tipo de entidad (MEDICO, PACIENTE, TURNO, etc.)
+   * @param page Número de página (default: 0)
+   * @param size Tamaño de página (default: 20)
+   */
+  getAuditLogsByEntity(entidad: string, page: number = 0, size: number = 20): Observable<DataPackage<AuditPage>> {
+    const params: AuditQueryParams = {
+      entidad,
+      page,
+      size,
+      sortBy: 'performedAt',
+      sortDir: 'DESC'
+    };
+    return this.getAuditLogs(params);
+  }
+
+  /**
+   * Obtiene logs de auditoría recientes (últimas 24 horas) sin paginación
+   * Útil para dashboards o vistas simples
+   */
+  getRecentLogsSimple(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/recientes`);
+  }
+
+  /**
+   * Obtiene el historial de auditoría de una entidad específica
+   * @param entityType Tipo de entidad (TURNO, MEDICO, PACIENTE, etc.)
+   * @param entityId ID de la entidad
+   */
+  getEntityAuditHistory(entityType: string, entityId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/entidad/${entityType}/${entityId}`);
+  }
+
+  /**
+   * Obtiene estadísticas de auditoría por entidad
+   */
+  getEntityAuditStatistics(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/estadisticas/entidad`);
+  }
 
   /**
    * Obtiene estadísticas completas del dashboard
@@ -111,11 +317,11 @@ export class AuditService {
           stats.turnosCreados++;
           break;
         case 'STATUS_CHANGE':
-          if (log.newStatus === 'CONFIRMADO' || log.newStatus === 'COMPLETO') {
+          if (log.estadoNuevo === 'CONFIRMADO' || log.estadoNuevo === 'COMPLETO') {
             stats.turnosConfirmados++;
             // Estimar 45 minutos por turno confirmado/completado
             stats.horasTrabajadas += 0.75;
-          } else if (log.newStatus === 'CANCELADO') {
+          } else if (log.estadoNuevo === 'CANCELADO') {
             stats.turnosCancelados++;
           }
           stats.turnosModificados++;
@@ -212,10 +418,10 @@ export class AuditService {
       const dayData = groupedData.get(key);
       
       if (log.action === 'STATUS_CHANGE') {
-        if (log.newStatus === 'CONFIRMADO' || log.newStatus === 'COMPLETO') {
+        if (log.estadoNuevo === 'CONFIRMADO' || log.estadoNuevo === 'COMPLETO') {
           dayData.turnosRealizados++;
           dayData.horasTrabajadas += 0.75;
-        } else if (log.newStatus === 'CANCELADO') {
+        } else if (log.estadoNuevo === 'CANCELADO') {
           dayData.turnosCancelados++;
         }
       }

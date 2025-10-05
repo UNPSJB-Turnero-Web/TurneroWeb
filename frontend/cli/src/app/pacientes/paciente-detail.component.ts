@@ -237,6 +237,7 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     class="form-control form-control-modern"
                     placeholder="Email"
                     required
+                    [disabled]="esPacienteVendoSuPerfil()"
                     #email="ngModel"
                   />
                   <label for="email">
@@ -289,10 +290,11 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     [(ngModel)]="paciente.dni"
                     name="dni"
                     id="dni"
-                    type="number"
+                    type="text"
                     class="form-control form-control-modern"
                     placeholder="DNI"
                     required
+                    [disabled]="esPacienteVendoSuPerfil()"
                     #dni="ngModel"
                   />
                   <label for="dni">
@@ -319,6 +321,7 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     class="form-control form-control-modern"
                     placeholder="Fecha de Nacimiento"
                     required
+                    [disabled]="esPacienteVendoSuPerfil()"
                     #fechaNacimiento="ngModel"
                   />
                   <label for="fechaNacimiento">
@@ -344,7 +347,7 @@ import { AuthService } from "../inicio-sesion/auth.service";
                     class="form-select form-control-modern"
                     #obraSocial="ngModel"
                   >
-                    <option value="" selected>Sin obra social</option>
+                    <option [ngValue]="null" selected>Sin obra social</option>
                     <option
                       *ngFor="let obraSocial of obrasSociales"
                       [ngValue]="obraSocial"
@@ -358,6 +361,48 @@ import { AuthService } from "../inicio-sesion/auth.service";
                 </div>
               </div>
             </div>
+
+
+            <!-- Información sobre contraseña automática para nuevos pacientes -->
+            <div class="col-md-12 mt-2" *ngIf="esNuevo()">
+              <div class="alert alert-info d-flex align-items-center password-alert">
+                <i class="fas fa-info-circle me-3"></i>
+                <div>
+                  <strong>Contraseña automática:</strong> 
+                  Se generará una contraseña segura automáticamente y será enviada por correo electrónico al paciente.
+                </div>
+              </div>
+            </div>
+
+            <!-- Cambio de contraseña solo en edición de perfil propio -->
+            <div class="col-md-12 mt-4" *ngIf="modoEdicion && !esNuevo() && puedeCambiarContrasena()">
+              <div class="section-card p-4 mb-4">
+                <div class="section-header mb-3">
+                  <i class="fas fa-lock me-2"></i>
+                  <span class="fw-bold">Cambiar Contraseña</span>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="currentPassword" class="form-label">Contraseña Actual</label>
+                    <input type="password" id="currentPassword" [(ngModel)]="changePasswordForm.currentPassword" name="currentPassword" class="form-control" placeholder="Ingrese su contraseña actual">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="newPassword" class="form-label">Nueva Contraseña</label>
+                    <input type="password" id="newPassword" [(ngModel)]="changePasswordForm.newPassword" name="newPassword" class="form-control" placeholder="Ingrese la nueva contraseña">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="confirmPassword" class="form-label">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirmPassword" [(ngModel)]="changePasswordForm.confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirme la nueva contraseña">
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-primary-gradient px-4" (click)="changePassword()">
+                    <i class="fas fa-save me-2"></i>Cambiar Contraseña
+                  </button>
+                </div>
+              </div>
+            </div>
+  
 
             <!-- Botones de acción -->
             <div class="d-flex flex-wrap gap-3 mt-5 pt-4 border-top">
@@ -558,12 +603,19 @@ import { AuthService } from "../inicio-sesion/auth.service";
         font-weight: 500;
       }
 
-      .form-floating > .form-control-modern:focus ~ label,
-      .form-floating > .form-control-modern:not(:placeholder-shown) ~ label,
-      .form-floating > .form-select:focus ~ label,
-      .form-floating > .form-select:not([value=""]) ~ label {
-        color: var(--pacientes-primary);
-        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+      .form-control-modern:disabled,
+      .form-select:disabled {
+        background: #f5f5f5;
+        border-color: #d1d5db;
+        color: #6b7280;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      .form-control-modern:disabled:focus,
+      .form-select:disabled:focus {
+        border-color: #d1d5db;
+        box-shadow: none;
       }
 
       /* Botones con gradiente */
@@ -615,6 +667,13 @@ import { AuthService } from "../inicio-sesion/auth.service";
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
         color: white;
+      }
+
+      /* Espaciado extra para la alerta de contraseña automática */
+      .password-alert {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
       }
 
       /* Validación de formularios */
@@ -692,7 +751,7 @@ export class PacienteDetailComponent implements OnInit {
     apellido: "",
     email: "",
     telefono: "",
-    dni: 0,
+    dni: null,
     fechaNacimiento: "",
   };
   modoEdicion = false;
@@ -782,7 +841,7 @@ export class PacienteDetailComponent implements OnInit {
   }
 
   isInvalidField(field: any): boolean {
-    return field.invalid && (field.dirty || field.touched);
+    return field.invalid && (field.dirty || field.touched) && !field.disabled;
   }
 
   /**
@@ -814,7 +873,10 @@ export class PacienteDetailComponent implements OnInit {
   save(): void {
     if (this.form.invalid) {
       Object.keys(this.form.controls).forEach((key) => {
-        this.form.controls[key].markAsTouched();
+        const control = this.form.controls[key];
+        if (!control.disabled) {
+          control.markAsTouched();
+        }
       });
       return;
     }
@@ -852,7 +914,6 @@ export class PacienteDetailComponent implements OnInit {
     op.subscribe({
       next: (response) => {
         console.log("Respuesta recibida en next:", response);
-        
         // Verificar si la respuesta indica un error (status_code diferente de 200)
         if (response.status_code && response.status_code !== 200) {
           const errorMessage = response.status_text || "Error al guardar el paciente.";
@@ -867,9 +928,15 @@ export class PacienteDetailComponent implements OnInit {
         const successMessage = this.esNuevo() 
           ? `Paciente creado correctamente${roleText}`
           : "Paciente actualizado correctamente";
-          
+
         this.modalService.alert("Éxito", successMessage);
-        this.router.navigate(["/pacientes"]);
+        // Redirigir según el contexto
+        const path = this.route.snapshot.routeConfig?.path;
+        if (path === "paciente-perfil") {
+          this.router.navigate(["/paciente-dashboard"]);
+        } else {
+          this.router.navigate(["/pacientes"]);
+        }
       },
       error: (err) => {
         console.log("Respuesta recibida en error:", err);
@@ -952,5 +1019,64 @@ export class PacienteDetailComponent implements OnInit {
   esPacienteVendoSuPerfil(): boolean {
     const path = this.route.snapshot.routeConfig?.path;
     return path === "paciente-perfil";
+  }
+
+  /**
+   * Verifica si el usuario actual puede cambiar contraseña
+   * Los roles PACIENTE, OPERADOR y ADMINISTRADOR pueden cambiar su contraseña
+   */
+  puedeCambiarContrasena(): boolean {
+    const userRole = this.authService.getUserRole();
+    return userRole === "PACIENTE" || userRole === "OPERADOR" || userRole === "ADMINISTRADOR";
+  }
+
+  changePasswordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+
+  changePassword() {
+    if (!this.changePasswordForm.currentPassword ||
+        !this.changePasswordForm.newPassword ||
+        !this.changePasswordForm.confirmPassword) {
+      this.modalService.alert('Error', 'Todos los campos de contraseña son obligatorios');
+      return;
+    }
+
+    if (this.changePasswordForm.newPassword !== this.changePasswordForm.confirmPassword) {
+      this.modalService.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+
+    if (this.changePasswordForm.newPassword.length < 6) {
+      this.modalService.alert('Error', 'La nueva contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    const request = {
+      currentPassword: this.changePasswordForm.currentPassword,
+      newPassword: this.changePasswordForm.newPassword,
+      confirmPassword: this.changePasswordForm.confirmPassword
+    };
+
+    this.authService.changePassword(request).subscribe({
+      next: (response) => {
+        if (response.status_code === 200) {
+          this.modalService.alert('Éxito', 'Contraseña cambiada correctamente');
+          this.changePasswordForm = {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          };
+        } else {
+          this.modalService.alert('Error', response.status_text || 'Error al cambiar la contraseña');
+        }
+      },
+      error: (error) => {
+        const message = error?.error?.status_text || 'Error al cambiar la contraseña';
+        this.modalService.alert('Error', message);
+      }
+    });
   }
 }

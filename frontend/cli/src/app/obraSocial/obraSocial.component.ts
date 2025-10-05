@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ObraSocialService } from './obraSocial.service';
 import { ObraSocial } from './obraSocial';
 import { ModalService } from '../modal/modal.service';
@@ -10,7 +11,7 @@ import { PaginationComponent } from '../pagination/pagination.component';
 @Component({
   selector: 'app-obra-social',
   standalone: true,
-  imports: [CommonModule, RouterModule, PaginationComponent],
+  imports: [CommonModule, RouterModule, FormsModule, PaginationComponent],
   template: `
     <div class="container-fluid mt-4">
       <div class="modern-card">
@@ -35,6 +36,103 @@ import { PaginationComponent } from '../pagination/pagination.component';
             </button>
           </div>
         </div>
+
+        <!-- BARRA DE FILTROS Y BÚSQUEDA -->
+        <div class="card-body">
+          <div class="filters-section">
+            <h5 class="filters-title">
+              <i class="fas fa-filter me-2"></i>
+              Filtros de búsqueda
+            </h5>
+            
+            <div class="row g-3">
+              <!-- Filtro por Nombre -->
+              <div class="col-md-4">
+                <label for="nombreFilter" class="form-label">
+                  <i class="fas fa-heart-pulse me-1"></i>
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  id="nombreFilter"
+                  class="form-control"
+                  placeholder="Buscar por nombre"
+                  [(ngModel)]="filters.nombre"
+                  (input)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Filtro por Código -->
+              <div class="col-md-4">
+                <label for="codigoFilter" class="form-label">
+                  <i class="fas fa-barcode me-1"></i>
+                  Código
+                </label>
+                <input
+                  type="text"
+                  id="codigoFilter"
+                  class="form-control"
+                  placeholder="Buscar por código"
+                  [(ngModel)]="filters.codigo"
+                  (input)="onFilterChange()"
+                />
+              </div>
+
+              <!-- Ordenamiento -->
+              <div class="col-md-2">
+                <label for="sortByFilter" class="form-label">
+                  <i class="fas fa-sort me-1"></i>
+                  Ordenar por
+                </label>
+                <select
+                  id="sortByFilter"
+                  class="form-select"
+                  [(ngModel)]="filters.sortBy"
+                  (change)="onFilterChange()"
+                >
+                  <option value="nombre">Nombre</option>
+                  <option value="codigo">Código</option>
+                </select>
+              </div>
+
+              <!-- Dirección de ordenamiento -->
+              <div class="col-md-2">
+                <label for="sortDirFilter" class="form-label">
+                  <i class="fas fa-sort-amount-down me-1"></i>
+                  Dirección
+                </label>
+                <select
+                  id="sortDirFilter"
+                  class="form-select"
+                  [(ngModel)]="filters.sortDir"
+                  (change)="onFilterChange()"
+                >
+                  <option value="asc">Ascendente</option>
+                  <option value="desc">Descendente</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Botones de control -->
+            <div class="filters-controls mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="clearFilters()"
+              >
+                <i class="fas fa-times me-2"></i>
+                Limpiar filtros
+              </button>
+              
+              <div class="results-info">
+                <span class="badge bg-primary">
+                  {{ resultsPage.totalElements }} resultado(s) encontrado(s)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- TABLA MODERNA NORMALIZADA -->
         <div class="table-container">
           <table class="table modern-table">
@@ -49,20 +147,42 @@ import { PaginationComponent } from '../pagination/pagination.component';
                   </div>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle obra-social-header">
-                      <i class="fas fa-heart-pulse"></i>
+                  <button 
+                    class="header-button" 
+                    (click)="toggleSort('nombre')"
+                    [class.active]="filters.sortBy === 'nombre'"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle obra-social-header">
+                        <i class="fas fa-heart-pulse"></i>
+                      </div>
+                      Nombre
+                      <i class="fas" 
+                         [class.fa-sort-up]="filters.sortBy === 'nombre' && filters.sortDir === 'asc'"
+                         [class.fa-sort-down]="filters.sortBy === 'nombre' && filters.sortDir === 'desc'"
+                         [class.fa-sort]="filters.sortBy !== 'nombre'">
+                      </i>
                     </div>
-                    Nombre
-                  </div>
+                  </button>
                 </th>
                 <th>
-                  <div class="header-cell">
-                    <div class="icon-circle obra-social-header">
-                      <i class="fas fa-barcode"></i>
+                  <button 
+                    class="header-button" 
+                    (click)="toggleSort('codigo')"
+                    [class.active]="filters.sortBy === 'codigo'"
+                  >
+                    <div class="header-cell">
+                      <div class="icon-circle obra-social-header">
+                        <i class="fas fa-barcode"></i>
+                      </div>
+                      Código
+                      <i class="fas" 
+                         [class.fa-sort-up]="filters.sortBy === 'codigo' && filters.sortDir === 'asc'"
+                         [class.fa-sort-down]="filters.sortBy === 'codigo' && filters.sortDir === 'desc'"
+                         [class.fa-sort]="filters.sortBy !== 'codigo'">
+                      </i>
                     </div>
-                    Código
-                  </div>
+                  </button>
                 </th>
                 <th>
                   <div class="header-cell">
@@ -148,6 +268,65 @@ import { PaginationComponent } from '../pagination/pagination.component';
     </div>
   `,
   styles: [`
+    /* === ESTILOS DE FILTROS === */
+    .filters-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #dee2e6;
+    }
+
+    .filters-title {
+      color: #495057;
+      margin-bottom: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .filters-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .results-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* === ESTILOS DE ORDENAMIENTO === */
+    .header-button {
+      background: none;
+      border: none;
+      width: 100%;
+      padding: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: inherit;
+    }
+
+    .header-button:hover {
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+    }
+
+    .header-button.active {
+      background: var(--obra-social-light);
+      border-radius: 8px;
+    }
+
+    .header-button .header-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem;
+    }
+
     /* Estilos normalizados usando el sistema de colores global */
     .container-fluid {
       max-width: 1400px;
@@ -418,7 +597,18 @@ export class ObraSocialComponent {
     first: true,
     last: true
   };
+  
   currentPage: number = 1;
+  
+  // Filtros de búsqueda
+  filters = {
+    nombre: '',
+    codigo: '',
+    sortBy: 'nombre',
+    sortDir: 'asc'
+  };
+
+  private filterTimeout: any;
 
   constructor(
     private obraSocialService: ObraSocialService,
@@ -427,13 +617,94 @@ export class ObraSocialComponent {
   ) {}
 
   ngOnInit(): void {
-    this.getObrasSociales();
+    this.searchObrasSociales();
   }
 
-  getObrasSociales(): void {
-    this.obraSocialService.byPage(this.currentPage, 10).subscribe(dataPackage => {
-      this.resultsPage = <ResultsPage>dataPackage.data;
+  /**
+   * Búsqueda de obras sociales con filtros y paginación
+   */
+  searchObrasSociales(): void {
+    this.obraSocialService.byPageAdvanced(
+      this.currentPage,
+      this.resultsPage.size,
+      this.filters.nombre || undefined,
+      this.filters.codigo || undefined,
+      this.filters.sortBy,
+      this.filters.sortDir
+    ).subscribe({
+      next: (dataPackage) => {
+        console.log('DataPackage recibido:', dataPackage);
+        if (dataPackage.data) {
+          this.resultsPage = {
+            content: dataPackage.data.content || [],
+            totalElements: dataPackage.data.totalElements || 0,
+            totalPages: dataPackage.data.totalPages || 0,
+            number: dataPackage.data.currentPage || 0,
+            size: dataPackage.data.size || 10,
+            numberOfElements: dataPackage.data.numberOfElements || 0,
+            first: dataPackage.data.first || false,
+            last: dataPackage.data.last || false
+          };
+        }
+      },
+      error: (error) => {
+        console.error('Error al buscar obras sociales:', error);
+        this.resultsPage = {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 0,
+          size: 10,
+          numberOfElements: 0,
+          first: true,
+          last: true
+        };
+      }
     });
+  }
+
+  /**
+   * Manejo de cambios en filtros con debounce
+   */
+  onFilterChange(): void {
+    if (this.filterTimeout) {
+      clearTimeout(this.filterTimeout);
+    }
+    
+    this.filterTimeout = setTimeout(() => {
+      this.currentPage = 1; // Reset a primera página
+      this.searchObrasSociales();
+    }, 500); // Debounce de 500ms
+  }
+
+  /**
+   * Limpiar todos los filtros
+   */
+  clearFilters(): void {
+    this.filters = {
+      nombre: '',
+      codigo: '',
+      sortBy: 'nombre',
+      sortDir: 'asc'
+    };
+    this.currentPage = 1;
+    this.searchObrasSociales();
+  }
+
+  /**
+   * Toggle de ordenamiento por columna
+   */
+  toggleSort(column: string): void {
+    if (this.filters.sortBy === column) {
+      // Si ya está ordenando por esta columna, cambiar dirección
+      this.filters.sortDir = this.filters.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      // Si es una nueva columna, usar ascendente por defecto
+      this.filters.sortBy = column;
+      this.filters.sortDir = 'asc';
+    }
+    this.currentPage = 1;
+    this.searchObrasSociales();
   }
 
   confirmDelete(id: number): void {
@@ -449,7 +720,7 @@ export class ObraSocialComponent {
 
   remove(id: number): void {
     this.obraSocialService.remove(id).subscribe({
-      next: () => this.getObrasSociales(),
+      next: () => this.searchObrasSociales(),
       error: (err) => {
         const msg = err?.error?.message || "Error al eliminar la obra social.";
         this.modalService.alert("Error", msg);
@@ -460,7 +731,7 @@ export class ObraSocialComponent {
 
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
-    this.getObrasSociales();
+    this.searchObrasSociales();
   }
 
   goToDetail(id: number): void {

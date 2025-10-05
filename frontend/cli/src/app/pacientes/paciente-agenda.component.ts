@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, LOCALE_ID } from "@angular/core";
+import { CommonModule, registerLocaleData } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
@@ -11,6 +11,7 @@ import { StaffMedicoService } from "../staffMedicos/staffMedico.service";
 import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service";
 import { AgendaService } from "../agenda/agenda.service";
 import { DiasExcepcionalesService } from "../agenda/dias-excepcionales.service";
+import { DeepLinkService } from "../services/deep-link.service";
 import { CentrosMapaModalComponent } from "../modal/centros-mapa-modal.component";
 import { Turno } from "../turnos/turno";
 import { Especialidad } from "../especialidades/especialidad";
@@ -18,7 +19,7 @@ import { StaffMedico } from "../staffMedicos/staffMedico";
 import { CentroAtencion } from "../centrosAtencion/centroAtencion";
 import { DataPackage } from "../data.package";
 import { UsuarioAuthService } from "../services/UsuarioAuth.service";
-
+import localeEsAr from "@angular/common/locales/es-AR";
 interface SlotDisponible {
   id: number;
   fecha: string;
@@ -37,6 +38,8 @@ interface SlotDisponible {
   enMantenimiento?: boolean;
   titulo?: string;
 }
+
+registerLocaleData(localeEsAr);
 
 @Component({
   selector: "app-paciente-agenda",
@@ -73,13 +76,48 @@ interface SlotDisponible {
           <div class="filtros-card">
             <div class="filtros-header" *ngIf="esOperador">
               <span class="filtros-icon">🔍</span>
-              <h3>Filtrar Turnos Disponibles</h3>
+              <h3>Filtros Avanzados (Opcional)</h3>
             </div>
             <div class="filtros-header" *ngIf="!esOperador">
               <span class="filtros-icon">🔍</span>
-              <h3>Seleccione su Centro de Atencion mas cercano</h3>
+              <h3>Filtros Adicionales (Opcional)</h3>
             </div>
             <div class="filtros-body">
+
+            <!-- BUSCADOR DE TEXTO -->
+            <div class="buscador-container">
+              <div class="buscador-header">
+                <i class="fas fa-search"></i>
+                <h4>Búsqueda Rápida</h4>
+              </div>
+
+              <div class="buscador-input-group">
+                <input
+                  type="text"
+                  class="form-control-busqueda"
+                  [(ngModel)]="textoBusqueda"
+                  (input)="filtrarPorBusqueda()"
+                  placeholder="Buscar por especialidad o nombre de médico..."
+                />
+                <button
+                  *ngIf="textoBusqueda"
+                  class="btn-limpiar-busqueda"
+                  (click)="limpiarBusqueda()"
+                  type="button"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div class="buscador-sugerencias" *ngIf="textoBusqueda && textoBusqueda.length > 0">
+                <small>
+                  <i class="fas fa-info-circle"></i>
+                  Busca por ejemplo: "Cardiología", "Dr. Pérez", "Traumatología"
+                </small>
+              </div>
+            </div>
+
+            <div class="filtros-divider"></div>
               <!-- Filtro por Especialidad (solo para operadores) -->
               <div
                 class="filtro-step"
@@ -288,112 +326,132 @@ interface SlotDisponible {
           Cargando turnos disponibles...
         </div>
 
-        <!-- Turnos Agrupados por Fecha -->
-        <div
-          class="turnos-grouped"
-          *ngIf="!isLoadingTurnos && slotsDisponibles.length > 0"
-        >
-          <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
-            <!-- Header de fecha -->
-            <div
-              class="fecha-header"
-              [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
+        <!-- VISTA COMPACTA POR MÉDICO CON PAGINACIÓN -->
+        <div class="medicos-lista-compacta" *ngIf="!isLoadingTurnos && slotsDisponibles.length > 0">
+
+          <!-- Info de paginación -->
+          <div class="paginacion-info-header" *ngIf="getTotalPaginas() > 1">
+            <div class="info-medicos">
+              <i class="fas fa-users"></i>
+              <span>Mostrando médicos {{ getRangoPaginacion() }}</span>
+            </div>
+            <div class="info-pagina">
+              Página {{ paginaActual }} de {{ getTotalPaginas() }}
+            </div>
+          </div>
+
+          <!-- Lista de médicos paginada -->
+          <div *ngFor="let medicoEntry of getMedicosPaginados()" class="medico-item">
+            <div 
+              class="medico-header-compacto"
+              [class.expandido]="isMedicoExpandido(medicoEntry.key)"
+              (click)="toggleMedicoExpansion(medicoEntry.key)"
             >
-              <div class="fecha-info">
-                <h3 class="fecha-title">
-                  <i class="fas fa-calendar-day"></i>
-                  {{ formatearFecha(fecha) }}
-                </h3>
-                <!-- Solo mostrar feriados para pacientes -->
-                <div
-                  class="fecha-exception-badge"
-                  *ngIf="getTipoExcepcion(fecha) === 'FERIADO'"
-                >
-                  <span class="exception-icon">🏖️</span>
-                  <span class="exception-label">Feriado</span>
-                  <span
-                    class="exception-description"
-                    *ngIf="getDescripcionExcepcion(fecha)"
-                  >
-                    - {{ getDescripcionExcepcion(fecha) }}
+              <div class="medico-avatar">
+                <i class="fas fa-user-md"></i>
+              </div>
+
+              <div class="medico-info-compacta">
+                <h4 class="medico-nombre">
+                  {{ getMedicoInfo(medicoEntry.key).nombre }} {{ getMedicoInfo(medicoEntry.key).apellido }}
+                </h4>
+
+                <div class="medico-detalles">
+                  <span class="detalle-item">
+                    <i class="fas fa-stethoscope"></i>
+                    {{ getEspecialidadesUnicas(medicoEntry.value).join(', ') }}
+                  </span>
+                  <span class="detalle-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    {{ getCentrosUnicos(medicoEntry.value).length }} centro(s)
                   </span>
                 </div>
               </div>
-            </div>
 
-            <!-- Slots de la fecha -->
-            <div class="slots-grid">
-              <ng-container
-                *ngFor="let slot of slotsPorFecha[fecha]; let i = index"
-              >
-                <!-- Cabecera de médico unificada (primer slot o cambio de médico) -->
-                <div
-                  *ngIf="i === 0 || esCambioMedico(fecha, i)"
-                  class="medico-header"
-                >
-                  <i class="fas fa-user-md"></i>
-                  <span>{{ getNombreMedico(slot) }}</span>
+              <div class="medico-stats">
+                <div class="stat-badge">
+                  <span class="stat-number">{{ getTurnosDisponiblesPorMedico(medicoEntry.value) }}</span>
+                  <span class="stat-label">turnos</span>
                 </div>
 
-                <div
-                  class="slot-card"
-                  [class.selected]="slotSeleccionado?.id === slot.id"
-                  [class.slot-ocupado]="
-                    slot.ocupado || slotAfectadoPorExcepcion(slot)
-                  "
+                <div class="proximo-turno-badge" *ngIf="getProximoTurno(medicoEntry.value) as proximo">
+                  <i class="fas fa-clock"></i>
+                  {{ proximo.fecha | date:'dd/MM' }} - {{ proximo.horaInicio }}
+                </div>
+              </div>
+
+              <div class="expand-icon">
+                <i class="fas" [class.fa-chevron-down]="!isMedicoExpandido(medicoEntry.key)" [class.fa-chevron-up]="isMedicoExpandido(medicoEntry.key)"></i>
+              </div>
+            </div>
+
+            <!-- TURNOS EXPANDIBLES -->
+            <div class="medico-turnos-expandible" *ngIf="isMedicoExpandido(medicoEntry.key)">
+              <div class="turnos-grid-compacto">
+                <div 
+                  *ngFor="let slot of medicoEntry.value"
+                  class="turno-chip"
+                  [class.turno-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
+                  [class.turno-seleccionado]="slotSeleccionado?.id === slot.id"
                   (click)="seleccionarSlot(slot, $event)"
                 >
-                  <div class="slot-time">
+                  <div class="chip-fecha">
+                    <i class="fas fa-calendar"></i>
+                    {{ slot.fecha | date:'EEE dd/MM' }}
+                  </div>
+                  <div class="chip-hora">
                     <i class="fas fa-clock"></i>
                     {{ slot.horaInicio }} - {{ slot.horaFin }}
                   </div>
-
-                  <div class="slot-medico">
-                    <i class="fas fa-user-md"></i>
-                    <strong>{{ getNombreMedico(slot) }}</strong>
+                  <div class="chip-ubicacion">
+                    <i class="fas fa-door-open"></i>
+                    {{ slot.consultorioNombre }}
                   </div>
-
-                  <div class="slot-especialidad">
-                    <i class="fas fa-stethoscope"></i>
-                    {{ slot.especialidadStaffMedico }}
+                  <div class="chip-centro">
+                    <i class="fas fa-hospital"></i>
+                    {{ slot.nombreCentro }}
                   </div>
-
-                  <div class="slot-location">
-                    <div class="location-line">
-                      <i class="fas fa-door-open"></i>
-                      {{ slot.consultorioNombre }}
-                    </div>
-                    <div class="location-line">
-                      <i class="fas fa-map-marker-alt"></i>
-                      {{ slot.nombreCentro }}
-                    </div>
+                  <div class="chip-estado" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
+                    <i class="fas fa-check-circle"></i>
                   </div>
-
-                  <!-- Estado del slot simplificado para pacientes -->
-                  <div
-                    class="slot-status"
-                    *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)"
-                  >
+                  <div class="chip-estado ocupado" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
                     <i class="fas fa-lock"></i>
-                    Ocupado
-                  </div>
-                  <div
-                    class="slot-status disponible"
-                    *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)"
-                  >
-                    <i class="fas fa-check-circle"></i>
-                    Disponible
-                  </div>
-
-                  <div
-                    class="slot-check"
-                    *ngIf="slotSeleccionado?.id === slot.id"
-                  >
-                    <i class="fas fa-check-circle"></i>
                   </div>
                 </div>
-              </ng-container>
+              </div>
             </div>
+          </div>
+
+          <!-- CONTROLES DE PAGINACIÓN -->
+          <div class="paginacion-controles" *ngIf="getTotalPaginas() > 1">
+            <button
+              class="btn-paginacion"
+              [disabled]="paginaActual === 1"
+              (click)="cambiarPagina(paginaActual - 1)"
+            >
+              <i class="fas fa-chevron-left"></i>
+              Anterior
+            </button>
+
+            <div class="numeros-pagina">
+              <button
+                *ngFor="let numPagina of getNumeroPaginas()"
+                class="btn-numero-pagina"
+                [class.active]="paginaActual === numPagina"
+                (click)="cambiarPagina(numPagina)"
+              >
+                {{ numPagina }}
+              </button>
+            </div>
+
+            <button
+              class="btn-paginacion"
+              [disabled]="paginaActual === getTotalPaginas()"
+              (click)="cambiarPagina(paginaActual + 1)"
+            >
+              Siguiente
+              <i class="fas fa-chevron-right"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -425,7 +483,7 @@ interface SlotDisponible {
       <div class="col-12">
         <div class="legend-card">
           <div class="legend-content">
-            <h5>Leyenda:</h5>
+            <h5>Reserva tu Turno!</h5>
             <div class="legend-items">
               <div class="legend-item">
                 <div class="legend-color available"></div>
@@ -613,6 +671,124 @@ interface SlotDisponible {
       .filtros-body {
         padding: 2rem;
       }
+          
+      /* ==================== BUSCADOR ==================== */
+      .buscador-container {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+      }
+      
+      .buscador-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        color: #667eea;
+      }
+      
+      .buscador-header i {
+        font-size: 1.3rem;
+      }
+      
+      .buscador-header h4 {
+        margin: 0;
+        font-weight: 600;
+        color: #495057;
+      }
+      
+      .buscador-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      
+      .form-control-busqueda {
+        width: 100%;
+        padding: 1rem 3rem 1rem 1rem;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+      }
+      
+      .form-control-busqueda:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      }
+      
+      .form-control-busqueda::placeholder {
+        color: #adb5bd;
+      }
+      
+      .btn-limpiar-busqueda {
+        position: absolute;
+        right: 0.75rem;
+        background: #dc3545;
+        border: none;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-limpiar-busqueda:hover {
+        background: #c82333;
+        transform: scale(1.1);
+      }
+      
+      .buscador-sugerencias {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+      }
+      
+      .buscador-sugerencias small {
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+      }
+      
+      .buscador-sugerencias i {
+        color: #667eea;
+      }
+      
+      .filtros-divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        margin: 1.5rem 0;
+      }
+      
+      /* Ajustar margen de filtros cuando hay buscador */
+      .filtro-step:first-of-type {
+        margin-top: 0;
+      }
+      
+      /* RESPONSIVE BUSCADOR */
+      @media (max-width: 768px) {
+        .buscador-container {
+          padding: 1rem;
+        }
+      
+        .form-control-busqueda {
+          padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+          font-size: 0.95rem;
+        }
+      }
+
 
       /* STEPS */
       .filtro-step {
@@ -1488,8 +1664,488 @@ interface SlotDisponible {
           align-items: stretch;
         }
       }
+      /* ==================== VISTA COMPACTA POR MÉDICO ==================== */
+      .medicos-lista-compacta {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .medico-item {
+        background: white;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .medico-item:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+      }
+      
+      .medico-header-compacto {
+        display: grid;
+        grid-template-columns: 60px 1fr auto auto;
+        gap: 1rem;
+        padding: 1.25rem;
+        cursor: pointer;
+        align-items: center;
+        transition: background 0.3s ease;
+      }
+      
+      .medico-header-compacto:hover {
+        background: rgba(102, 126, 234, 0.03);
+      }
+      
+      .medico-header-compacto.expandido {
+        background: rgba(102, 126, 234, 0.05);
+        border-bottom: 2px solid #e9ecef;
+      }
+      
+      .medico-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      }
+      
+      .medico-info-compacta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .medico-nombre {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      
+      .medico-detalles {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+      
+      .detalle-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+      
+      .detalle-item i {
+        color: #667eea;
+      }
+      
+      .medico-stats {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      
+      .stat-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 8px;
+        color: white;
+        min-width: 70px;
+      }
+      
+      .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      
+      .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        opacity: 0.9;
+      }
+      
+      .proximo-turno-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 8px;
+        color: #667eea;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      
+      .expand-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        color: #6c757d;
+        transition: transform 0.3s ease;
+      }
+      
+      .medico-header-compacto.expandido .expand-icon {
+        transform: rotate(180deg);
+      }
+      
+      /* TURNOS EXPANDIBLES */
+      .medico-turnos-expandible {
+        padding: 1.25rem;
+        background: #f8f9fa;
+        animation: slideDown 0.3s ease;
+      }
+      
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          max-height: 0;
+        }
+        to {
+          opacity: 1;
+          max-height: 2000px;
+        }
+      }
+      
+      .turnos-grid-compacto {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 0.75rem;
+      }
+      
+      .turno-chip {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      
+      .turno-chip:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      }
+      
+      .turno-chip.turno-seleccionado {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+      }
+      
+      .turno-chip.turno-ocupado {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: #dc3545;
+        background: rgba(220, 53, 69, 0.03);
+      }
+      
+      .turno-chip.turno-ocupado:hover {
+        transform: none;
+        box-shadow: none;
+      }
+      
+      .chip-fecha,
+      .chip-hora,
+      .chip-ubicacion,
+      .chip-centro {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        color: #495057;
+      }
+      
+      .chip-fecha {
+        grid-column: 1 / -1;
+        font-weight: 600;
+        color: #667eea;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+      }
+      
+      .chip-hora {
+        font-weight: 600;
+      }
+      
+      .chip-fecha i,
+      .chip-hora i,
+      .chip-ubicacion i,
+      .chip-centro i {
+        color: #6c757d;
+        font-size: 0.8rem;
+      }
+      
+      .chip-estado {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #28a745;
+        color: white;
+        font-size: 0.7rem;
+      }
+      
+      .chip-estado.ocupado {
+        background: #dc3545;
+      }
+      
+      /* RESPONSIVE PARA VISTA COMPACTA */
+      @media (max-width: 768px) {
+        .medico-header-compacto {
+          grid-template-columns: 50px 1fr;
+          grid-template-rows: auto auto;
+          gap: 0.75rem;
+        }
+      
+        .medico-avatar {
+          grid-row: 1 / 3;
+        }
+      
+        .medico-info-compacta {
+          grid-column: 2;
+        }
+      
+        .medico-stats {
+          grid-column: 2;
+          justify-content: flex-start;
+        }
+      
+        .expand-icon {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+        }
+      
+        .turnos-grid-compacto {
+          grid-template-columns: 1fr;
+        }
+      
+        .stat-badge {
+          min-width: 60px;
+          padding: 0.4rem 0.75rem;
+        }
+      
+        .stat-number {
+          font-size: 1.25rem;
+        }
+      
+        .proximo-turno-badge {
+          font-size: 0.75rem;
+          padding: 0.4rem 0.75rem;
+        }
+      }
+            /* ==================== PAGINACIÓN VISTA COMPACTA ==================== */
+
+      .paginacion-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+      }
+
+      .info-medicos {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #667eea;
+        font-size: 1rem;
+      }
+
+      .info-medicos i {
+        font-size: 1.1rem;
+      }
+
+      .info-pagina {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
+      }
+
+      .paginacion-controles {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: sticky;
+        bottom: 0;
+        background: white;
+        z-index: 10;
+        gap: 1rem;
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 2px solid #e9ecef;
+      }
+
+      .btn-paginacion {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+      }
+
+      .btn-paginacion:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-paginacion:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #adb5bd;
+        transform: none;
+      }
+
+      .numeros-pagina {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 500px;
+      }
+
+      .btn-numero-pagina {
+        min-width: 40px;
+        height: 40px;
+        padding: 0.5rem;
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-weight: 600;
+        color: #495057;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .btn-numero-pagina:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+        background: rgba(102, 126, 234, 0.05);
+      }
+
+      .btn-numero-pagina.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        transform: translateY(0);
+      }
+
+      /* RESPONSIVE PAGINACIÓN */
+      @media (max-width: 768px) {
+        .paginacion-info-header {
+          flex-direction: column;
+          gap: 0.75rem;
+          text-align: center;
+        }
+      
+        .paginacion-controles {
+          flex-direction: column;
+          gap: 1rem;
+          padding: 1rem;
+        }
+      
+        .btn-paginacion {
+          width: 100%;
+          justify-content: center;
+        }
+      
+        .numeros-pagina {
+          width: 100%;
+          max-width: 100%;
+        }
+      
+        .btn-numero-pagina {
+          flex: 1;
+          min-width: 35px;
+          height: 35px;
+          font-size: 0.85rem;
+        }
+      
+        .info-medicos,
+        .info-pagina {
+          font-size: 0.85rem;
+        }
+      }
+
+      /* Optimización para muchas páginas */
+      @media (min-width: 769px) {
+        .numeros-pagina {
+          /* Si hay más de 10 páginas, limitar el ancho */
+          overflow-x: auto;
+          scrollbar-width: thin;
+          scrollbar-color: #667eea #f1f3f5;
+        }
+      
+        .numeros-pagina::-webkit-scrollbar {
+          height: 4px;
+        }
+      
+        .numeros-pagina::-webkit-scrollbar-track {
+          background: #f1f3f5;
+          border-radius: 2px;
+        }
+      
+        .numeros-pagina::-webkit-scrollbar-thumb {
+          background: #667eea;
+          border-radius: 2px;
+        }
+      }
     `,
   ],
+  providers: [
+    { provide: LOCALE_ID, useValue: "es-AR" } // 👈 Fuerza locale en este componente
+  ]
 })
 export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Estados de carga
@@ -1530,6 +2186,16 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Modal de mapa de centros
   showMapaModal = false;
+  // Para Filtrar
+  textoBusqueda: string = '';
+
+  // Agrupación por médico para vista compacta
+  medicosSlotsAgrupados: Map<string, SlotDisponible[]> = new Map();
+  medicosExpandidos: Set<string> = new Set();
+
+  // Paginación
+  paginaActual: number = 1;
+  medicosPorPagina: number = 5; // Cantidad de médicos a mostrar por página
 
   constructor(
     private turnoService: TurnoService,
@@ -1538,11 +2204,12 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     private centroAtencionService: CentroAtencionService,
     private agendaService: AgendaService,
     private diasExcepcionalesService: DiasExcepcionalesService,
+    private deepLinkService: DeepLinkService,
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private authService: UsuarioAuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Cargar todos los datos necesarios al inicio
@@ -1551,6 +2218,10 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.cargarTodosLosStaffMedicos(); // Cargar todos los staff médicos desde el inicio
     this.cargarCentrosAtencion();
     this.cargarTodosLosTurnos(); // Cargar TODOS los turnos disponibles al inicio (pero no mostrarlos)
+
+    // Verificar si hay contexto de deep link (usuario viene desde un email)
+    // TODO: Por ahora solo limpia el contexto, pendiente implementar filtros automáticos
+    this.aplicarContextoDeepLink();
 
     // Listener para reposicionar modal en resize
     this.resizeListener = () => {
@@ -2135,8 +2806,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
           excepcionAfectante.tipo === "FERIADO"
             ? "Feriado"
             : excepcionAfectante.tipo === "MANTENIMIENTO"
-            ? "Mantenimiento"
-            : "Atención Especial";
+              ? "Mantenimiento"
+              : "Atención Especial";
         alert(
           `Este horario no está disponible por ${tipoLabel}. Por favor, selecciona otro horario.`
         );
@@ -2582,6 +3253,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Agrupar slots por fecha para mostrar en el calendario
   private agruparSlotsPorFecha() {
     this.slotsPorFecha = {};
+    this.medicosSlotsAgrupados = new Map();
+    this.paginaActual = 1; // Resetear paginación
 
     // Agrupar slots por fecha
     this.slotsDisponibles.forEach((slot) => {
@@ -2589,6 +3262,13 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         this.slotsPorFecha[slot.fecha] = [];
       }
       this.slotsPorFecha[slot.fecha].push(slot);
+
+      // Agrupar por médico para vista compacta
+      const medicoKey = `${slot.staffMedicoId}-${slot.staffMedicoNombre}-${slot.staffMedicoApellido}`;
+      if (!this.medicosSlotsAgrupados.has(medicoKey)) {
+        this.medicosSlotsAgrupados.set(medicoKey, []);
+      }
+      this.medicosSlotsAgrupados.get(medicoKey)!.push(slot);
     });
 
     // Ordenar fechas y slots dentro de cada fecha
@@ -2597,15 +3277,180 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // Ordenar slots dentro de cada fecha por hora
     this.fechasOrdenadas.forEach((fecha) => {
       this.slotsPorFecha[fecha].sort((a, b) => {
-        // Primero por médico
         const medicoA = `${a.staffMedicoNombre} ${a.staffMedicoApellido}`;
         const medicoB = `${b.staffMedicoNombre} ${b.staffMedicoApellido}`;
         if (medicoA !== medicoB) {
           return medicoA.localeCompare(medicoB);
         }
-        // Luego por hora
         return a.horaInicio.localeCompare(b.horaInicio);
       });
     });
+
+    // Ordenar slots por médico (por fecha y hora)
+    this.medicosSlotsAgrupados.forEach((slots) => {
+      slots.sort((a, b) => {
+        if (a.fecha !== b.fecha) {
+          return a.fecha.localeCompare(b.fecha);
+        }
+        return a.horaInicio.localeCompare(b.horaInicio);
+      });
+    });
+  }
+
+  filtrarPorBusqueda() {
+    if (!this.textoBusqueda || this.textoBusqueda.trim() === '') {
+      // Si no hay texto de búsqueda, aplicar filtros normales
+      this.aplicarFiltros();
+      return;
+    }
+
+    const textoBuscar = this.textoBusqueda.toLowerCase().trim();
+
+    // Filtrar slots que coincidan con el texto de búsqueda
+    let slotsFiltrados = this.slotsOriginales.filter(slot => {
+      const nombreCompleto = `${slot.staffMedicoNombre} ${slot.staffMedicoApellido}`.toLowerCase();
+      const especialidad = slot.especialidadStaffMedico.toLowerCase();
+
+      return nombreCompleto.includes(textoBuscar) || especialidad.includes(textoBuscar);
+    });
+
+    // Aplicar filtros adicionales si están seleccionados
+    if (this.centroAtencionSeleccionado) {
+      slotsFiltrados = slotsFiltrados.filter(
+        slot => Number(slot.centroId) === Number(this.centroAtencionSeleccionado)
+      );
+    }
+
+    // Actualizar resultados
+    this.slotsDisponibles = slotsFiltrados;
+    this.turnosDisponibles = slotsFiltrados;
+    this.showCalendar = true;
+
+    // Reagrupar y mostrar
+    this.agruparSlotsPorFecha();
+    this.cdr.detectChanges();
+  }
+
+  limpiarBusqueda() {
+    this.textoBusqueda = '';
+    this.aplicarFiltros();
+  }
+
+
+
+
+  // Métodos para vista compacta por médico
+  toggleMedicoExpansion(medicoKey: string) {
+    if (this.medicosExpandidos.has(medicoKey)) {
+      this.medicosExpandidos.delete(medicoKey);
+    } else {
+      this.medicosExpandidos.add(medicoKey);
+    }
+  }
+
+  isMedicoExpandido(medicoKey: string): boolean {
+    return this.medicosExpandidos.has(medicoKey);
+  }
+
+  getMedicoInfo(medicoKey: string): { nombre: string; apellido: string; id: number } {
+    const [id, nombre, apellido] = medicoKey.split('-');
+    return { id: parseInt(id), nombre, apellido };
+  }
+
+  getTurnosDisponiblesPorMedico(slots: SlotDisponible[]): number {
+    return slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot)).length;
+  }
+
+  getCentrosUnicos(slots: SlotDisponible[]): string[] {
+    const centros = new Set(slots.map(slot => slot.nombreCentro));
+    return Array.from(centros);
+  }
+
+  getEspecialidadesUnicas(slots: SlotDisponible[]): string[] {
+    const especialidades = new Set(slots.map(slot => slot.especialidadStaffMedico));
+    return Array.from(especialidades);
+  }
+
+  // Métodos de paginación
+  getTotalPaginas(): number {
+    const totalMedicos = this.medicosSlotsAgrupados.size;
+    return Math.ceil(totalMedicos / this.medicosPorPagina);
+  }
+
+  getMedicosEntries(): Array<{ key: string; value: SlotDisponible[] }> {
+    return Array.from(this.medicosSlotsAgrupados.entries()).map(([key, value]) => ({
+      key,
+      value
+    }));
+  }
+
+  getMedicosPaginados(): Array<{ key: string; value: SlotDisponible[] }> {
+    const todosLosMedicos = this.getMedicosEntries();
+    const inicio = (this.paginaActual - 1) * this.medicosPorPagina;
+    const fin = inicio + this.medicosPorPagina;
+    return todosLosMedicos.slice(inicio, fin);
+  }
+
+  cambiarPagina(nuevaPagina: number) {
+    const totalPaginas = this.getTotalPaginas();
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+      this.paginaActual = nuevaPagina;
+
+      // Scroll suave al inicio de la lista de médicos
+      setTimeout(() => {
+        const elemento = document.querySelector('.medicos-lista-compacta');
+        if (elemento) {
+          elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }
+
+  getRangoPaginacion(): string {
+    const totalMedicos = this.medicosSlotsAgrupados.size;
+    const inicio = (this.paginaActual - 1) * this.medicosPorPagina + 1;
+    const fin = Math.min(this.paginaActual * this.medicosPorPagina, totalMedicos);
+    return `${inicio}-${fin} de ${totalMedicos}`;
+  }
+
+  getNumeroPaginas(): number[] {
+    const total = this.getTotalPaginas();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+
+  getProximoTurno(slots: SlotDisponible[]): SlotDisponible | null {
+    const disponibles = slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot));
+    return disponibles.length > 0 ? disponibles[0] : null;
+  }
+
+  /**
+   * Aplica el contexto de deep link si existe
+   * TODO: Implementar pre-selección automática de filtros basados en contexto del turno
+   */
+  private aplicarContextoDeepLink(): void {
+    const context = this.deepLinkService.getContext();
+
+    if (!context) {
+      return; // No hay contexto, no hacer nada
+    }
+
+    console.log('Contexto de deep link disponible:', context);
+
+    // TODO: Implementar pre-selección automática de filtros
+    // Funcionalidad pendiente:
+    // - Pre-seleccionar especialidad por ID o nombre
+    // - Pre-seleccionar centro de atención por ID
+    // - Pre-seleccionar médico por ID
+    // - Aplicar filtros automáticamente
+    // - Mostrar mensaje contextual según el tipo (CANCELACION, etc.)
+
+    // Por ahora solo mostramos mensaje informativo
+    if (context.tipo === 'CANCELACION') {
+      console.log('Su turno fue cancelado. Agenda disponible para reagendar.');
+    }
+
+    // Limpiar el contexto después de usarlo
+    this.deepLinkService.clearContext();
   }
 }

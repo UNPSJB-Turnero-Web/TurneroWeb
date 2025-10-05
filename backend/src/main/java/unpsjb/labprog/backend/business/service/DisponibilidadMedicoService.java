@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,39 @@ public class DisponibilidadMedicoService {
 
     public Page<DisponibilidadMedicoDTO> findByPage(int page, int size) {
         return repository.findAll(PageRequest.of(page, size))
+                .map(this::toDTO);
+    }
+
+    public Page<DisponibilidadMedicoDTO> findByPage(int page, int size, String staffMedico, String especialidad, String dia, String sortBy, String sortDir) {
+        // Crear Sort basado en sortBy y sortDir
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.isEmpty()) {
+            Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+            sort = Sort.by(direction, sortBy);
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Si no hay filtros, usar el método estándar
+        if ((staffMedico == null || staffMedico.trim().isEmpty()) &&
+            (especialidad == null || especialidad.trim().isEmpty()) &&
+            (dia == null || dia.trim().isEmpty())) {
+            return repository.findAll(pageable).map(this::toDTO);
+        }
+
+        // Usar el método filtrado
+        List<DisponibilidadMedico> filteredResults = repository.findFiltered(
+            staffMedico != null && !staffMedico.trim().isEmpty() ? staffMedico.trim() : null,
+            especialidad != null && !especialidad.trim().isEmpty() ? especialidad.trim() : null,
+            dia != null && !dia.trim().isEmpty() ? dia.trim() : null
+        );
+
+        // Aplicar paginación manualmente a los resultados filtrados
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredResults.size());
+        List<DisponibilidadMedico> pageContent = filteredResults.subList(start, end);
+
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, filteredResults.size())
                 .map(this::toDTO);
     }
 
@@ -105,9 +140,17 @@ public class DisponibilidadMedicoService {
         dto.setId(disponibilidad.getId());
         dto.setStaffMedicoId(disponibilidad.getStaffMedico().getId());
         
+        // Incluir nombre del staff médico
+        if (disponibilidad.getStaffMedico() != null && disponibilidad.getStaffMedico().getMedico() != null) {
+            String nombre = disponibilidad.getStaffMedico().getMedico().getNombre();
+            String apellido = disponibilidad.getStaffMedico().getMedico().getApellido();
+            dto.setStaffMedicoName(nombre + " " + apellido);
+        }
+        
         // Incluir especialidadId si existe la relación
         if (disponibilidad.getEspecialidad() != null) {
             dto.setEspecialidadId(disponibilidad.getEspecialidad().getId());
+            dto.setEspecialidadName(disponibilidad.getEspecialidad().getNombre());
         }
         
         dto.setHorarios(disponibilidad.getHorarios().stream().map(horario -> {

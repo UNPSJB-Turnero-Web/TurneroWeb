@@ -299,17 +299,6 @@
                       <button type="button" class="btn btn-outline-info" (click)="showAuditHistory(turno)" title="Ver auditoría">
                         <i class="fas fa-history"></i>
                       </button>
-                      <button type="button" class="btn btn-outline-secondary" (click)="openChangeStateModal(turno)" title="Cambiar estado"
-                              [disabled]="turno.estado === 'CANCELADO' || turno.estado === 'COMPLETADO' || turno.estado === 'COMPLETO' || turno.estado === 'REAGENDADO'">
-                        <i class="fas fa-exchange-alt"></i>
-                      </button>
-                
-                      <button type="button" class="btn btn-outline-success" 
-                              (click)="verifyIntegrity(turno.id!)" 
-                              title="Verificar integridad"
-                              *ngIf="turno.totalModificaciones && turno.totalModificaciones > 0">
-                        <i class="fas fa-shield-alt"></i>
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -427,12 +416,12 @@
                   <i class="fas fa-user"></i> {{log.performedBy}}
                 </td>
                 <td>
-                  <span class="badge bg-secondary" *ngIf="log.previousStatus">{{log.previousStatus}}</span>
-                  <span class="text-muted" *ngIf="!log.previousStatus">-</span>
+                  <span class="badge bg-secondary" *ngIf="log.estadoAnterior">{{log.estadoAnterior}}</span>
+                  <span class="text-muted" *ngIf="!log.estadoAnterior">-</span>
                 </td>
                 <td>
-                  <span class="badge bg-primary" *ngIf="log.newStatus">{{log.newStatus}}</span>
-                  <span class="text-muted" *ngIf="!log.newStatus">-</span>
+                  <span class="badge bg-primary" *ngIf="log.estadoNuevo">{{log.estadoNuevo}}</span>
+                  <span class="text-muted" *ngIf="!log.estadoNuevo">-</span>
                 </td>
                 <td>
                   <small>{{log.reason || 'Sin motivo especificado'}}</small>

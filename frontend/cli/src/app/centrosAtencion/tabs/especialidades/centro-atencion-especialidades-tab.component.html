@@ -1,109 +1,123 @@
 <div class="modern-card">
   <div class="modern-card-header">
-    <div class="d-flex align-items-center">
-      <div class="me-3">
-        <i class="icon-especialidades"></i>
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center">
+        <div class="header-icon me-3">
+          🩺
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold">Gestión de Especialidades</h4>
+          <small class="opacity-75">Administrar especialidades del centro de atención</small>
+        </div>
+      </div>
+      <div *ngIf="!modoAsociarEspecialidad" class="d-flex gap-2">
+        <button class="btn-modern btn-success-modern" (click)="onModoAsociarEspecialidad()">
+          <i class="fa fa-plus me-2"></i> Nueva Especialidad
+        </button>
       </div>
     </div>
   </div>
-  
+
   <div class="modern-card-body">
     <!-- Alert Messages -->
-    <div *ngIf="mensaje" class="modern-alert" 
-         [class.alert-success]="tipoMensaje === 'success'"
-         [class.alert-danger]="tipoMensaje === 'danger'"
-         [class.alert-info]="tipoMensaje === 'info'">
-      <i class="fa" [class.fa-check-circle]="tipoMensaje === 'success'"
-         [class.fa-exclamation-triangle]="tipoMensaje === 'danger'"
-         [class.fa-info-circle]="tipoMensaje === 'info'"></i>
-      {{ mensaje }}
+<div *ngIf="mensaje" class="modern-alert"
+     [class.alert-success]="tipoMensaje === 'success'"
+     [class.alert-danger]="tipoMensaje === 'danger'"
+     [class.alert-info]="tipoMensaje === 'info'">
+  <i class="fa" [class.fa-check-circle]="tipoMensaje === 'success'"
+     [class.fa-exclamation-triangle]="tipoMensaje === 'danger'"
+     [class.fa-info-circle]="tipoMensaje === 'info'"></i>
+  {{ mensaje }}
+</div>
+
+<!-- Add Especialidad Form -->
+<div *ngIf="modoAsociarEspecialidad" class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
+  <h5 class="mb-3 text-primary">
+    <i class="fa fa-plus-circle me-2"></i>Asociar Especialidad
+  </h5>
+  <div class="row g-3">
+    <div class="col-md-8">
+      <label class="form-label fw-semibold">Seleccionar Especialidad:</label>
+      <select [(ngModel)]="especialidadSeleccionada" (ngModelChange)="onEspecialidadSeleccionadaChange()" class="modern-select form-control">
+        <option [ngValue]="null">Seleccione una especialidad...</option>
+        <option *ngFor="let esp of especialidadesDisponibles" [ngValue]="esp">
+          {{ esp.nombre }}
+        </option>
+      </select>
     </div>
-    
-    <!-- Add Especialidad Form -->
-    <div class="mb-4 p-4" style="background: rgba(54, 185, 204, 0.05); border-radius: 15px; border: 2px solid rgba(54, 185, 204, 0.2);">
-      <h5 class="mb-3 text-primary">
-        <i class="fa fa-plus-circle me-2"></i>Asociar Especialidad
-      </h5>
-      <div class="row g-3 align-items-end">
-        <div class="col-md-8">
-          <label class="form-label fw-semibold">Seleccionar Especialidad:</label>
-          <select [(ngModel)]="especialidadSeleccionada" class="modern-select form-control">
-            <option [ngValue]="null">Seleccione una especialidad...</option>
-            <option *ngFor="let esp of especialidadesDisponibles" [ngValue]="esp">
-              {{ esp.nombre }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <button class="btn-modern btn-success-modern w-100" (click)="onAsociarEspecialidad()"
-                  [disabled]="!especialidadSeleccionada">
-            <i class="fa fa-plus me-2"></i> Asociar
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Especialidades Associated Table -->
-    <div *ngIf="especialidadesAsociadas.length > 0; else noEspecialidades">
-      <h5 class="mb-3 text-primary">
-        <i class="fa fa-list me-2"></i>Especialidades Asociadas
-      </h5>
-      <div class="modern-table">
-        <table class="table mb-0">
-          <thead>
-            <tr>
-              <th>
-                <div class="d-flex align-items-center">
-                  <div class="icon-centro-atencion me-2"></div>
-                  ID
-                </div>
-              </th>
-              <th>
-                <div class="d-flex align-items-center">
-                  <div class="icon-especialidades me-2"></div>
-                  Especialidad
-                </div>
-              </th>
-              <th>
-                <div class="d-flex align-items-center">
-                  <div class="icon-obra-social me-2"></div>
-                  Acciones
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let esp of especialidadesAsociadas">
-              <td>
-                <span class="badge-centro-atencion">
-                  <i class="fa fa-hashtag me-1"></i>{{ esp.id }}
-                </span>
-              </td>
-              <td>
-                <div class="d-flex align-items-center">
-                  <i class="icon-especialidades me-2"></i>
-                  <span class="fw-semibold">{{ esp.nombre }}</span>
-                </div>
-              </td>
-              <td>
-                <button class="action-btn btn-delete" 
-                        (click)="onDesasociarEspecialidad(esp)"
-                        title="Desasociar especialidad">
-                  <i class="fa fa-unlink"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    
-    <ng-template #noEspecialidades>
-      <div class="text-center py-5" style="opacity: 0.7;">
-        <i class="fa fa-user-md" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
-        <h5>No hay especialidades asociadas</h5>
-        <p class="text-muted">Asocie especialidades para que puedan atender en este centro</p>
-      </div>
-    </ng-template>
+  </div>
+  <div class="d-flex gap-2 mt-3">
+    <button class="btn-modern btn-success-modern" (click)="onAsociarEspecialidad()"
+            [disabled]="!especialidadSeleccionada">
+      <i class="fa fa-save me-2"></i> Asociar
+    </button>
+    <button class="btn-modern btn-secondary-modern" (click)="onCancelarAsociarEspecialidad()">
+      <i class="fa fa-times me-2"></i> Cancelar
+    </button>
+  </div>
+</div>
+
+<!-- Especialidades Associated Table -->
+<div *ngIf="especialidadesAsociadas.length > 0; else noEspecialidades">
+  <h5 class="mb-3 text-primary">
+    <i class="fa fa-list me-2"></i>Especialidades Asociadas
+  </h5>
+  <div class="modern-table">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>
+            <div class="d-flex align-items-center">
+              <div class="icon-centro-atencion me-2"></div>
+              ID
+            </div>
+          </th>
+          <th>
+            <div class="d-flex align-items-center">
+              <div class="icon-especialidades me-2"></div>
+              Especialidad
+            </div>
+          </th>
+          <th>
+            <div class="d-flex align-items-center">
+              <div class="icon-obra-social me-2"></div>
+              Acciones
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let esp of especialidadesAsociadas">
+          <td>
+            <span class="badge-centro-atencion">
+              <i class="fa fa-hashtag me-1"></i>{{ esp.id }}
+            </span>
+          </td>
+          <td>
+            <div class="d-flex align-items-center">
+              <i class="icon-especialidades me-2"></i>
+              <span class="fw-semibold">{{ esp.nombre }}</span>
+            </div>
+          </td>
+          <td>
+            <button class="action-btn btn-delete"
+                    (click)="onDesasociarEspecialidad(esp)"
+                    title="Desasociar especialidad">
+              <i class="fa fa-unlink"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<ng-template #noEspecialidades>
+  <div class="text-center py-5" style="opacity: 0.7;">
+    <i class="fa fa-user-md" style="font-size: 3rem; color: #36b9cc; margin-bottom: 1rem;"></i>
+    <h5>No hay especialidades asociadas</h5>
+    <p class="text-muted">Asocie especialidades para que puedan atender en este centro</p>
+  </div>
+</ng-template>
   </div>
 </div>

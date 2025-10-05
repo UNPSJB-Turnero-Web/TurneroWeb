@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Turno, TurnoFilter, AuditLog } from './turno';
+import { Turno, TurnoFilter, AuditLog, AuditFilter, AuditPage } from './turno';
 import { DataPackage } from '../data.package';
 
 @Injectable({
@@ -14,32 +14,96 @@ export class TurnoService {
 
   // === MÉTODOS UTILITARIOS ===
 
-  /** Obtiene la información del usuario actual desde localStorage */
+  /** Obtiene la información del usuario actual desde el JWT token */
   private getCurrentUser(): string {
+    try {
+      // Obtener el token JWT del localStorage (buscar en ambos storages)
+      const token = localStorage.getItem('access_token') || 
+                   sessionStorage.getItem('access_token') ||
+                   localStorage.getItem('token') || 
+                   localStorage.getItem('authToken') || 
+                   localStorage.getItem('jwt');
+      
+      if (!token) {
+        console.warn('⚠️ No hay token JWT disponible');
+        return 'UNKNOWN';
+      }
+
+      // Decodificar el payload del JWT (sin validar la firma - solo para extraer datos)
+      const payload = this.decodeJWTPayload(token);
+      
+      if (!payload) {
+        console.warn('⚠️ No se pudo decodificar el token JWT');
+        return 'UNKNOWN';
+      }
+
+      // Extraer el username (email) del token
+      const username = payload.sub || payload.username;
+      const role = payload.role;
+      const userId = payload.userId;
+
+      console.log('🔍 DEBUG TurnoService: Usuario obtenido del JWT:');
+      console.log('   - username:', username);
+      console.log('   - role:', role);
+      console.log('   - userId:', userId);
+
+      // Retornar el username (email) como identificador principal
+      // El backend ya tiene la lógica para obtener este mismo valor del JWT
+      return username || 'UNKNOWN';
+      
+    } catch (error) {
+      console.error('❌ Error al obtener usuario del JWT:', error);
+      // Fallback al método anterior solo en caso de error
+      return this.getCurrentUserFromLocalStorage();
+    }
+  }
+
+  /** Decodifica el payload de un JWT sin validar la firma */
+  private decodeJWTPayload(token: string): any {
+    try {
+      // Remover 'Bearer ' si está presente
+      const cleanToken = token.replace('Bearer ', '');
+      
+      // Un JWT tiene 3 partes separadas por puntos: header.payload.signature
+      const parts = cleanToken.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Token JWT inválido');
+      }
+
+      // Decodificar el payload (segunda parte)
+      const payload = parts[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Error al decodificar JWT payload:', error);
+      return null;
+    }
+  }
+
+  /** Método de fallback que usa localStorage (método anterior) */
+  private getCurrentUserFromLocalStorage(): string {
     const userRole = localStorage.getItem('userRole');
     const userName = localStorage.getItem('userName');
     
-    // // console.log('🔍 DEBUG TurnoService: Obteniendo información del usuario:');
-    // console.log('   - userRole:', userRole);
-    // console.log('   - userName:', userName);
+    console.log('🔄 FALLBACK: Usando localStorage para obtener usuario');
+    console.log('   - userRole:', userRole);
+    console.log('   - userName:', userName);
     
     let currentUser = 'UNKNOWN';
     
     if (userRole === 'patient') {
       const patientDNI = localStorage.getItem('patientDNI');
-      console.log('   - patientDNI:', patientDNI);
       currentUser = `PACIENTE_${patientDNI || 'UNKNOWN'}`;
     } else if (userRole === 'admin') {
       currentUser = 'ADMIN';
     } else if (userRole === 'medico') {
       currentUser = 'MEDICO';
     } else {
-      console.log('   - Rol no reconocido, usando AUDITOR_DASHBOARD');
       currentUser = 'AUDITOR_DASHBOARD';
     }
     
-    console.log('   - currentUser final:', currentUser);
-    
+    console.log('   - currentUser final (fallback):', currentUser);
     return currentUser;
   }
 
@@ -73,6 +137,51 @@ export class TurnoService {
     return this.http.get<DataPackage>(`${this.url}/page?page=${page - 1}&size=${size}`);
   }
 
+  /** Búsqueda avanzada paginada de turnos */
+  byPageAdvanced(
+    page: number,
+    size: number,
+    paciente?: string,
+    medico?: string,
+    consultorio?: string,
+    estado?: string,
+    fechaDesde?: string,
+    fechaHasta?: string,
+    sortBy?: string,
+    sortDir?: string
+  ): Observable<DataPackage> {
+    let params = new HttpParams()
+      .set('page', (page - 1).toString())
+      .set('size', size.toString());
+
+    if (paciente && paciente.trim()) {
+      params = params.set('paciente', paciente.trim());
+    }
+    if (medico && medico.trim()) {
+      params = params.set('medico', medico.trim());
+    }
+    if (consultorio && consultorio.trim()) {
+      params = params.set('consultorio', consultorio.trim());
+    }
+    if (estado && estado.trim()) {
+      params = params.set('estado', estado.trim());
+    }
+    if (fechaDesde && fechaDesde.trim()) {
+      params = params.set('fechaDesde', fechaDesde.trim());
+    }
+    if (fechaHasta && fechaHasta.trim()) {
+      params = params.set('fechaHasta', fechaHasta.trim());
+    }
+    if (sortBy && sortBy.trim()) {
+      params = params.set('sortBy', sortBy.trim());
+    }
+    if (sortDir && sortDir.trim()) {
+      params = params.set('sortDir', sortDir.trim());
+    }
+
+    return this.http.get<DataPackage>(`${this.url}/page`, { params });
+  }
+
   /** Búsqueda de turnos */
   search(term: string): Observable<DataPackage<Turno[]>> {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/search/${term}`);
@@ -83,7 +192,11 @@ export class TurnoService {
     return this.http.get<DataPackage<Turno[]>>(`${this.url}/paciente/${pacienteId}`);
   }
 
-  /** Cancela un turno */
+  /** 
+   * @deprecated Utilice updateEstado(id, "CANCELADO") en su lugar.
+   * Este método se mantiene por compatibilidad con versiones anteriores, pero updateEstado()
+   * proporciona la misma funcionalidad con una mejor consistencia de la API.
+   */
   cancelar(id: number): Observable<DataPackage<Turno>> {
     const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { usuario: currentUser });
@@ -216,6 +329,39 @@ export class TurnoService {
   /** Obtiene logs recientes del sistema */
   getRecentAuditLogs(): Observable<DataPackage<AuditLog[]>> {
     return this.http.get<DataPackage<AuditLog[]>>(`rest/audit/recent`);
+  }
+
+  /** Obtiene logs de auditoría paginados con filtros avanzados */
+  getAuditLogsPaged(filter: AuditFilter): Observable<DataPackage<AuditPage>> {
+    let httpParams = new HttpParams();
+
+    // Agregar parámetros no nulos con los nombres correctos para el backend
+    if (filter.page !== undefined && filter.page !== null) {
+      httpParams = httpParams.set('page', filter.page.toString());
+    }
+    if (filter.size !== undefined && filter.size !== null) {
+      httpParams = httpParams.set('size', filter.size.toString());
+    }
+    if (filter.sort) {
+      httpParams = httpParams.set('sort', filter.sort);
+    }
+    if (filter.dateFrom) {
+      httpParams = httpParams.set('fechaDesde', filter.dateFrom);
+    }
+    if (filter.dateTo) {
+      httpParams = httpParams.set('fechaHasta', filter.dateTo);
+    }
+    if (filter.action) {
+      httpParams = httpParams.set('tipoAccion', filter.action);
+    }
+    if (filter.user) {
+      httpParams = httpParams.set('usuario', filter.user);
+    }
+    if (filter.entityType) {
+      httpParams = httpParams.set('entidad', filter.entityType);
+    }
+
+    return this.http.get<DataPackage<AuditPage>>(`rest/audit/page`, { params: httpParams });
   }
 
   // === MÉTODOS DE CONSULTA AVANZADA ===
@@ -366,7 +512,11 @@ export class TurnoService {
 
   // === MÉTODOS DE GESTIÓN CON AUDITORÍA ===
 
-  /** Cancela un turno con motivo */
+  /** 
+   * @deprecated Utilice updateEstado(id, "CANCELADO", motivo) en su lugar.
+   * Este método se mantiene por compatibilidad con versiones anteriores, pero updateEstado()
+   * proporciona la misma funcionalidad con mayor consistencia de API.
+   */
   cancelarConMotivo(id: number, motivo: string): Observable<DataPackage<Turno>> {
     const currentUser = this.getCurrentUser();
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}/cancelar`, { 

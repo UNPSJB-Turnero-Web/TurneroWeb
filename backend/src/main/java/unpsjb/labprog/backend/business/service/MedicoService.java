@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,8 @@ import unpsjb.labprog.backend.dto.EspecialidadDTO;
 import unpsjb.labprog.backend.dto.MedicoDTO;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.User;
+import unpsjb.labprog.backend.model.AuditLog;
 
 @Service
 public class MedicoService {
@@ -37,6 +41,12 @@ public class MedicoService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private AuditLogService auditLogService;
+
+    @Autowired
+    private UserService userService;
 
     public List<MedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -59,7 +69,7 @@ public class MedicoService {
    
 
     @Transactional
-    public MedicoDTO saveOrUpdate(MedicoDTO dto) {
+    public MedicoDTO saveOrUpdate(MedicoDTO dto, String performedBy) {
         // Validar DNI en el DTO antes de convertir a entidad
         if (dto.getDni() == null || dto.getDni().isBlank()) {
             throw new IllegalArgumentException("El dni es obligatorio");
@@ -69,6 +79,11 @@ public class MedicoService {
         }
         if (dto.getDni().length() < 7 || dto.getDni().length() > 9) {
             throw new IllegalArgumentException("El dni debe tener entre 7 y 9 dígitos");
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
         }
 
         Medico medico = toEntity(dto);
@@ -181,6 +196,21 @@ public class MedicoService {
 
             // No manejamos contraseña en la entidad médico, solo en User
 
+            // Actualizar también el User correspondiente si existe
+            Optional<User> userOpt = userService.findByEmail(existente.getEmail());
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Actualizar los datos personales del usuario
+                user.setNombre(medico.getNombre());
+                user.setApellido(medico.getApellido());
+                user.setEmail(medico.getEmail());
+                user.setTelefono(medico.getTelefono());
+                user.setDni(medico.getDni());
+                
+                // Guardar el usuario actualizado
+                userService.save(user);
+            }
+
             // Actualizar campos editables
             existente.setNombre(medico.getNombre());
             existente.setApellido(medico.getApellido());
@@ -193,7 +223,19 @@ public class MedicoService {
             medico = existente;
         }
 
-        return toDTO(repository.save(medico));
+        Medico saved = repository.save(medico);
+
+        // 🎯 AUDITORÍA
+        if (medico.getId() == null || medico.getId() == 0) {
+            auditLogService.logMedicoCreated(saved.getId().longValue(), 
+                saved.getNombre(), saved.getApellido(), performedBy);
+        } else {
+            auditLogService.logGenericAction(AuditLog.EntityTypes.MEDICO, saved.getId().longValue(),
+                                           AuditLog.Actions.UPDATE, performedBy, null, null,
+                                           null, saved, "Médico actualizado");
+        }
+
+        return toDTO(saved);
     }
 
     /**
@@ -223,8 +265,57 @@ public class MedicoService {
                 .map(this::toDTO);
     }
 
+    /**
+     * Método de búsqueda paginada con filtros y ordenamiento dinámico para médicos
+     *
+     * @param page Número de página (0-based)
+     * @param size Tamaño de página
+     * @param nombre Filtro por nombre/apellido (búsqueda parcial, opcional)
+     * @param especialidad Filtro por especialidad (búsqueda parcial, opcional)
+     * @param estado Filtro por estado (activo/inactivo, opcional)
+     * @param sortBy Campo por el cual ordenar (opcional, default: nombre)
+     * @param sortDir Dirección del ordenamiento (asc/desc, default: asc)
+     * @return Página de médicos filtrados y ordenados
+     */
+    public Page<MedicoDTO> findByPage(int page, int size, String nombre, String especialidad, String estado, String sortBy, String sortDir) {
+        // Validar y configurar ordenamiento por defecto
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "nombre";
+        }
+
+        // Validar dirección de ordenamiento
+        Sort.Direction direction = "desc".equalsIgnoreCase(sortDir) ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+        // Configurar ordenamiento
+        Sort sort = Sort.by(direction, sortBy);
+
+        // Crear Pageable con paginación y ordenamiento
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Ejecutar consulta con filtros
+        Page<Medico> result = repository.findByFiltros(nombre, especialidad, estado, pageable);
+
+        // Convertir a DTOs
+        return result.map(this::toDTO);
+    }
+
     @Transactional
-    public void delete(Integer id) {
+    public void delete(Integer id, String performedBy) {
+        Medico medico = repository.findById(id).orElse(null);
+        if (medico == null) {
+            throw new IllegalStateException("No existe un médico con el ID: " + id);
+        }
+
+        // Para testing: si no hay usuario autenticado, usar valor por defecto
+        if (performedBy == null) {
+            performedBy = "SYSTEM_TEST";
+        }
+
+        // 🎯 AUDITORÍA
+        auditLogService.logGenericAction(AuditLog.EntityTypes.MEDICO, id.longValue(),
+                                       AuditLog.Actions.DELETE, performedBy, "ACTIVO", "ELIMINADO",
+                                       medico, null, "Médico eliminado");
+
         repository.deleteById(id);
     }
 

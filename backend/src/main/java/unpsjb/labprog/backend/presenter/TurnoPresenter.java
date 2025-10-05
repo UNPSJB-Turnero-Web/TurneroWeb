@@ -25,8 +25,10 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ExportService;
 import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.config.JwtTokenProvider;
+import unpsjb.labprog.backend.dto.CancelacionDataDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
+import unpsjb.labprog.backend.dto.ValidacionContactoDTO;
 import unpsjb.labprog.backend.model.AuditLog;
 import unpsjb.labprog.backend.model.EstadoTurno;
 
@@ -60,7 +62,7 @@ public class TurnoPresenter {
         }
         // Fallback: header X-User-ID (para compatibilidad)
         String user = request.getHeader("X-User-ID");
-        return user != null ? user : "ADMIN";
+        return user != null ? user : "UNKNOWN";
     }
 
     @GetMapping
@@ -83,52 +85,74 @@ public class TurnoPresenter {
     }
 
     @PostMapping
-    public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO) {
-        TurnoDTO saved = service.save(turnoDTO);
+    public ResponseEntity<Object> create(@RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
+        String currentUserEmail = getCurrentUser(request);
+        TurnoDTO saved = service.save(turnoDTO, currentUserEmail);
         return Response.ok(saved, "Turno creado correctamente");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody TurnoDTO turnoDTO) {
+    public ResponseEntity<Object> update(@PathVariable Integer id, @RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
         turnoDTO.setId(id);
-        TurnoDTO updated = service.save(turnoDTO);
+        String currentUserEmail = getCurrentUser(request);
+        TurnoDTO updated = service.save(turnoDTO, currentUserEmail);
         return Response.ok(updated, "Turno actualizado correctamente");
     }
 
-     @GetMapping("/page")
+    /**
+     * Endpoint de paginación avanzada con filtros y ordenamiento
+     * GET /turno/page?page=0&size=10&paciente=Juan&medico=Garcia&estado=PROGRAMADO&sortBy=fecha&sortDir=desc
+     */
+    @GetMapping("/page")
     public ResponseEntity<Object> getByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String paciente,
+            @RequestParam(required = false) String medico,
+            @RequestParam(required = false) String consultorio,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) String fechaDesde,
+            @RequestParam(required = false) String fechaHasta,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
         try {
-            var pageResult = service.findByPage(page, size);
+            Page<TurnoDTO> pageResult = service.findByPage(
+                page, size, paciente, medico, consultorio, 
+                estado, fechaDesde, fechaHasta, sortBy, sortDir);
 
             var response = Map.of(
                     "content", pageResult.getContent(),
                     "totalPages", pageResult.getTotalPages(),
                     "totalElements", pageResult.getTotalElements(),
-                    "number", pageResult.getNumber(),
+                    "currentPage", pageResult.getNumber(),
                     "size", pageResult.getSize(),
                     "first", pageResult.isFirst(),
                     "last", pageResult.isLast(),
                     "numberOfElements", pageResult.getNumberOfElements());
 
-            return Response.ok(response, "Staff médico paginado recuperado correctamente");
+            return Response.ok(response, "Turnos paginados recuperados correctamente");
         } catch (Exception e) {
-            return Response.error(null, "Error al recuperar el staff médico paginado: " + e.getMessage());
+            return Response.error(null, "Error al recuperar turnos paginados: " + e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Integer id) {
-        service.delete(id);
+    public ResponseEntity<Object> delete(@PathVariable Integer id, HttpServletRequest request) {
+        String currentUserEmail = getCurrentUser(request);
+        service.delete(id, "Eliminación desde API", currentUserEmail);
         return Response.ok(null, "Turno eliminado correctamente");
     }
 
 
     @PostMapping("/asignar")
-    public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO) {
+    public ResponseEntity<Object> asignarTurno(@RequestBody TurnoDTO turnoDTO, HttpServletRequest request) {
         try {
-            TurnoDTO savedTurno = service.save(turnoDTO);
+            
+            // Forzar que sea una creación: ignorar cualquier ID que venga en el DTO
+            turnoDTO.setId(null);
+            
+            String currentUserEmail = getCurrentUser(request);
+            TurnoDTO savedTurno = service.save(turnoDTO, currentUserEmail);
             return Response.ok(savedTurno, "Turno asignado correctamente.");
         } catch (IllegalArgumentException e) {
             return Response.dbError(e.getMessage());
@@ -138,25 +162,68 @@ public class TurnoPresenter {
     }
 
     // ========== ENDPOINTS PARA CAMBIOS DE ESTADO ==========
-    
+     
+    /**
+     * @deprecated Utilice PUT /turno/{id}/estado con el cuerpo {"estado": "CANCELADO", "motivo": "..."}.
+     * Este endpoint se mantiene por compatibilidad con versiones anteriores, pero el endpoint /estado
+     * ofrece la misma funcionalidad con una mejor consistencia de la API.
+     */
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<Object> cancelarTurno(@PathVariable Integer id, 
                                                @RequestBody Map<String, String> body,
                                                HttpServletRequest request) {
         try {
             String motivo = body.get("motivo");
-            String user = body.get("usuario"); // Usar el usuario del body
             
-            // Si no viene usuario en el body, usar el método anterior como fallback
-            if (user == null || user.trim().isEmpty()) {
-                user = getCurrentUser(request);
-            }
+            String user = getCurrentUser(request);
             
             TurnoDTO turno = service.cancelarTurno(id, motivo, user);
             return Response.ok(turno, "Turno cancelado correctamente");
         } catch (IllegalArgumentException e) {
             return Response.error(null, e.getMessage());
         } catch (IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para obtener datos completos de cancelación sin cancelar el turno
+     * Útil para previsualizar la información que se capturará en una cancelación
+     */
+    @GetMapping("/{id}/datos-cancelacion")
+    public ResponseEntity<Object> obtenerDatosCancelacion(@PathVariable Integer id,
+                                                         @RequestParam(value = "motivo", defaultValue = "Previsualización") String motivo,
+                                                         HttpServletRequest request) {
+        try {
+            String user = getCurrentUser(request);
+            CancelacionDataDTO cancelacionData = service.obtenerDatosCancelacion(id, motivo, user);
+            return Response.ok(cancelacionData, "Datos de cancelación obtenidos correctamente");
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Endpoint para validar medios de contacto antes de cancelar un turno
+     * Útil para advertir al usuario si el paciente no podrá recibir la notificación
+     */
+    @GetMapping("/{id}/validar-contacto")
+    public ResponseEntity<Object> validarMediosContacto(@PathVariable Integer id) {
+        try {
+            ValidacionContactoDTO validacion = service.validarMediosContacto(id);
+            
+            if (validacion.isTieneMediosValidos()) {
+                return Response.ok(validacion, "El paciente tiene medios de contacto válidos");
+            } else {
+                // Retornar código 200 pero con advertencia en el mensaje
+                return Response.ok(validacion, "Advertencia: Problemas con medios de contacto del paciente");
+            }
+            
+        } catch (IllegalArgumentException e) {
             return Response.error(null, e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error interno del servidor: " + e.getMessage());
@@ -237,6 +304,9 @@ public class TurnoPresenter {
         }
     }
 
+    /*
+     * Endpoint genérico para cambiar el estado del turno (confirmado, completado, cancelado, etc.)
+     */
     @PutMapping("/{id}/estado")
     public ResponseEntity<Object> cambiarEstado(@PathVariable Integer id,
                                                @RequestBody Map<String, String> body,
@@ -244,12 +314,8 @@ public class TurnoPresenter {
         try {
             String estadoStr = body.get("estado");
             String motivo = body.get("motivo");
-            String user = body.get("usuario"); // Usar el usuario del body
-            
-            // Si no viene usuario en el body, usar el método anterior como fallback
-            if (user == null || user.trim().isEmpty()) {
-                user = getCurrentUser(request);
-            }
+            String user = getCurrentUser(request);
+
             
             EstadoTurno newState = EstadoTurno.valueOf(estadoStr.toUpperCase());
             TurnoDTO turno = service.changeEstado(id, newState, motivo, user);

@@ -1,0 +1,572 @@
+/* ==================== ESTILOS PARA TAB DE ESPECIALIDADES ==================== */
+
+/* Variables CSS */
+:host {
+  --primary-color: #10b981;
+  --primary-light: #34d399;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --success-light: #34d399;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #06b6d4;
+  --light-color: #f8fafc;
+  --lighter-color: #ffffff;
+  --dark-color: #1e293b;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --especialidad-green: #10b981;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Card principal */
+.modern-card {
+  background: var(--lighter-color);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.modern-card:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+.modern-card-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 1.75rem 2rem;
+  position: relative;
+  color: white;
+}
+
+.modern-card-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+}
+
+/* Header icon styling */
+.header-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.header-icon:hover {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modern-card-header h4 {
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.modern-card-header small {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+/* Botones en el header */
+.modern-card-header .btn-modern {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  font-weight: 600;
+}
+
+.modern-card-header .btn-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.modern-card-header .btn-success-modern {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-success-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modern-card-header .btn-primary-modern {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.modern-card-header .btn-primary-modern:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.btn-primary-modern {
+  background: linear-gradient(135deg, var(--info-color) 0%, #38bdf8 100%);
+  color: white;
+  border: 1px solid var(--info-color);
+}
+
+.btn-primary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0891b2 0%, var(--info-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary-modern {
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #94a3b8 100%);
+  color: white;
+  border: 1px solid var(--secondary-color);
+}
+
+.btn-secondary-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #475569 0%, var(--secondary-color) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.modern-card-body {
+  padding: 2rem;
+}
+
+/* Alertas modernas */
+.modern-alert {
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.modern-alert:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border-color: var(--success-color);
+  color: #155724;
+}
+
+.alert-danger {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border-color: var(--danger-color);
+  color: #721c24;
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  border-color: var(--info-color);
+  color: #0c5460;
+}
+
+/* Formulario de asociar especialidad */
+.mb-4.p-4 {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.05) 100%) !important;
+  border: 2px solid rgba(16, 185, 129, 0.2) !important;
+  border-radius: 16px !important;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.mb-4.p-4:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.mb-4.p-4 h5 {
+  color: var(--primary-color) !important;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem !important;
+}
+
+/* Select moderno */
+.modern-select {
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--lighter-color);
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+
+.modern-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.modern-select:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+/* Botón moderno */
+.btn-modern {
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.025em;
+}
+
+.btn-success-modern {
+  background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+  color: white;
+  border: 1px solid var(--success-color);
+}
+
+.btn-success-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-success-modern:hover::before {
+  left: 100%;
+}
+
+.btn-success-modern:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success-modern:disabled {
+  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Labels modernos */
+.form-label {
+  font-weight: 600;
+  color: var(--dark-color);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.025em;
+}
+
+/* Tabla moderna */
+.modern-table {
+  background: var(--lighter-color);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  transition: all 0.3s ease;
+}
+
+.modern-table:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.modern-table .table {
+  margin: 0;
+  border: none;
+}
+
+.modern-table .table thead th {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 1.25rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+  position: relative;
+}
+
+.modern-table .table thead th::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.modern-table .table tbody td {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border-light);
+  vertical-align: middle;
+  transition: all 0.2s ease;
+}
+
+.modern-table .table tbody tr:hover {
+  background: linear-gradient(135deg, var(--light-color) 0%, rgba(79, 70, 229, 0.02) 100%);
+  transform: translateX(4px);
+}
+
+/* Badge moderno para ID */
+.badge-centro-atencion {
+  background: linear-gradient(135deg, var(--info-color) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.badge-centro-atencion:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+/* Botón de acción */
+.action-btn {
+  padding: 0.75rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--lighter-color);
+  color: var(--danger-color);
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--danger-color);
+}
+
+.action-btn:hover {
+  background: var(--danger-color);
+  color: white;
+  transform: translateY(-2px) scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Icono de especialidades */
+.icon-especialidades {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--especialidad-green) 0%, var(--primary-light) 100%);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.icon-especialidades::before {
+  content: '🩺';
+  font-size: 0.75rem;
+}
+
+/* Nombres con estilo */
+.fw-semibold {
+  font-weight: 600 !important;
+  color: var(--dark-color);
+  letter-spacing: 0.025em;
+}
+
+/* Estado sin especialidades */
+.text-center.py-5 {
+  padding: 3rem 1.5rem !important;
+  background: linear-gradient(135deg, var(--light-color) 0%, rgba(79, 70, 229, 0.02) 100%);
+  border-radius: 16px;
+  border: 2px dashed var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.text-center.py-5:hover {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%);
+}
+
+.text-center.py-5 i {
+  color: var(--info-color) !important;
+  margin-bottom: 1.5rem !important;
+  transition: all 0.3s ease;
+}
+
+.text-center.py-5:hover i {
+  color: var(--primary-color) !important;
+  transform: scale(1.1);
+}
+
+.text-center.py-5 h5 {
+  color: var(--dark-color);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.text-center.py-5 p {
+  color: var(--secondary-color);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+/* Títulos de sección */
+h5.mb-3.text-primary {
+  color: var(--primary-color) !important;
+  font-weight: 700 !important;
+  font-size: 1.3rem !important;
+  letter-spacing: -0.025em !important;
+  margin-bottom: 1.5rem !important;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+h5.mb-3.text-primary i {
+  color: var(--primary-light);
+  font-size: 1.1rem;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .modern-card-header {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .modern-card-body {
+    padding: 1.5rem;
+  }
+
+  .mb-4.p-4 {
+    padding: 1.25rem !important;
+  }
+
+  .btn-modern {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .modern-table .table thead th,
+  .modern-table .table tbody td {
+    padding: 1rem;
+  }
+
+  .action-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .modern-card {
+    border-radius: 12px;
+  }
+
+  .modern-card-header {
+    padding: 1rem;
+  }
+
+  .modern-card-body {
+    padding: 1rem;
+  }
+
+  .modern-select {
+    padding: 0.75rem 1rem;
+  }
+
+  .btn-modern {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  h5.mb-3.text-primary {
+    font-size: 1.1rem !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modern-table tbody tr {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Estados de hover mejorados */
+.modern-alert i {
+  transition: transform 0.2s ease;
+}
+
+.modern-alert:hover i {
+  transform: scale(1.1);
+}
+
+.btn-modern:focus {
+  box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}

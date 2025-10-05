@@ -106,8 +106,14 @@ public class DisponibilidadMedicoPresenter {
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        var pageResult = service.findByPage(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String staffMedico,    // búsqueda parcial por nombre/apellido de Staff Médico
+            @RequestParam(required = false) String especialidad,   // búsqueda parcial por nombre de Especialidad (opcional)
+            @RequestParam(required = false) String dia,            // filtro por día de la semana (ej. LUNES)
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        var pageResult = service.findByPage(page, size, staffMedico, especialidad, dia, sortBy, sortDir);
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", pageResult.getContent());
