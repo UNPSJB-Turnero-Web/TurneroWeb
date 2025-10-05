@@ -233,6 +233,12 @@ export const MENU_CONFIG: MenuSection[] = [
         icon: 'fa-briefcase-medical',
         description: 'Gestionar obras sociales'
       },
+       {
+        label: 'Operadores',
+        route: '/operadores',
+        icon: 'fa-user-circle',
+        description: 'Operadores',
+      },
       {
         divider: true,
         label: '',
