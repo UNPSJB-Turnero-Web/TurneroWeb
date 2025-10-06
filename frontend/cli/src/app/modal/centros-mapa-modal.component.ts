@@ -251,7 +251,7 @@ interface CentroMapaInfo extends CentroAtencion {
         </div>
 
         <!-- MAPA -->
-        <div class="centros-modal-body">
+        <div class="centros-modal-body" [class.modo-exploracion]="modoExploracion" [class.modo-compacto]="!modoExploracion">
           <div #mapContainer class="map-container">
             <!-- Ícono verde fijo en el centro para modo arrastre -->
             <div 
@@ -262,6 +262,17 @@ interface CentroMapaInfo extends CentroAtencion {
               <i class="fas fa-map-marker-alt"></i>
             </div>
           </div>
+          
+          <!-- Botón para confirmar ubicación (solo en modo exploración) -->
+          <div class="confirm-location-section" *ngIf="modoExploracion && userLocation && !ubicacionConfirmada">
+            <button 
+              class="btn btn-confirm-location"
+              (click)="confirmarUbicacion()"
+            >
+              <i class="fas fa-check-circle"></i>
+              Confirmar mi ubicación y ver centros cercanos
+            </button>
+          </div>
         </div>
 
         <!-- LISTA DE CENTROS -->
@@ -271,6 +282,17 @@ interface CentroMapaInfo extends CentroAtencion {
               <i class="fas fa-hospital"></i>
               Centros Encontrados ({{ centrosFiltrados.length }})
             </h4>
+            
+            <!-- Botón para volver a modo exploración (solo visible en modo compacto) -->
+            <button 
+              class="btn btn-expand-map" 
+              *ngIf="!modoExploracion"
+              (click)="volverModoExploracion()"
+              title="Expandir mapa"
+            >
+              <i class="fas fa-expand"></i>
+              Ver mapa completo
+            </button>
             <div class="sort-controls" *ngIf="userLocation">
               <button
                 class="btn btn-sort"
@@ -765,17 +787,90 @@ interface CentroMapaInfo extends CentroAtencion {
         font-weight: 500;
       }
 
-      /* MAPA */
+      /* MAPA - MODO EXPLORACIÓN (GRANDE) */
       .centros-modal-body {
         flex: 1;
-        min-height: 300px;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s ease;
+      }
+
+      .centros-modal-body.modo-exploracion {
+        min-height: 500px;
+        max-height: 70vh;
+      }
+
+      .centros-modal-body.modo-compacto {
+        min-height: 150px;
+        max-height: 150px;
+        flex: none;
       }
 
       .map-container {
         width: 100%;
         height: 100%;
         position: relative;
+        transition: all 0.4s ease;
+      }
+
+      /* BOTÓN CONFIRMAR UBICACIÓN */
+      .confirm-location-section {
+        padding: 15px;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        text-align: center;
+        border-top: 1px solid #dee2e6;
+        flex-shrink: 0;
+      }
+
+      .btn-confirm-location {
+        background: white;
+        color: #28a745;
+        border: 2px solid #28a745;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+      }
+
+      .btn-confirm-location:hover {
+        background: #28a745;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+      }
+
+      .btn-confirm-location i {
+        margin-right: 8px;
+        font-size: 18px;
+      }
+
+      /* BOTÓN EXPANDIR MAPA */
+      .btn-expand-map {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .btn-expand-map:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+        color: #007bff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+
+      .btn-expand-map i {
+        margin-right: 6px;
       }
 
       /* ÍCONO FIJO EN EL CENTRO PARA MODO ARRASTRE */
@@ -808,10 +903,22 @@ interface CentroMapaInfo extends CentroAtencion {
       .centros-modal-footer {
         background: #f8f9fa;
         border-top: 1px solid #dee2e6;
-        max-height: 400px;
         overflow-y: auto;
         display: flex;
         flex-direction: column;
+        transition: all 0.4s ease;
+      }
+
+      /* En modo exploración: lista limitada */
+      .modo-exploracion ~ .centros-modal-footer {
+        max-height: 300px;
+        flex: none;
+      }
+
+      /* En modo compacto: lista ocupa el espacio restante */
+      .modo-compacto ~ .centros-modal-footer {
+        flex: 1;
+        max-height: none;
       }
 
       .centros-list-header {
@@ -908,8 +1015,9 @@ interface CentroMapaInfo extends CentroAtencion {
       }
 
       .centro-item.highlighted {
-        background: rgba(102, 126, 234, 0.1);
-        border-left: 4px solid #667eea;
+        background: rgba(40, 167, 69, 0.05);
+        border-left: 4px solid #28a745;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.1);
       }
 
       .centro-info {
@@ -1348,6 +1456,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // Modo ubicación manual por arrastre
   modoArrastre = false;
   iconoCentroFijo: HTMLElement | null = null;
+
+  // Estado del mapa - CONTROL DE LAYOUT
+  modoExploracion = true; // true = mapa grande, false = mapa franja + lista grande
+  ubicacionConfirmada = false; // true cuando el usuario confirma su ubicación
 
   // Estado
   centrosFiltrados: CentroMapaInfo[] = [];
@@ -2035,6 +2147,44 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   formatDistance(distance: number): string {
     return this.geolocationService.formatDistance(distance);
+  }
+
+  // ================================
+  // GESTIÓN DE ESTADOS DEL MAPA
+  // ================================
+
+  confirmarUbicacion() {
+    console.log('🎯 Confirmando ubicación y cambiando a modo compacto...');
+    
+    this.ubicacionConfirmada = true;
+    this.modoExploracion = false;
+    
+    // Asegurar que la lista esté ordenada por distancia
+    if (this.userLocation && !this.ordenadoPorDistancia) {
+      this.toggleOrdenarPorDistancia();
+    }
+
+    // Redimensionar el mapa después de la transición CSS
+    setTimeout(() => {
+      if (this.map) {
+        console.log('📐 Redimensionando mapa para modo compacto...');
+        this.map.invalidateSize();
+      }
+    }, 450); // Ligeramente más que la transición CSS (0.4s)
+  }
+
+  volverModoExploracion() {
+    console.log('🗺️ Volviendo a modo exploración...');
+    
+    this.modoExploracion = true;
+    
+    // Redimensionar el mapa después de la transición CSS
+    setTimeout(() => {
+      if (this.map) {
+        console.log('📐 Redimensionando mapa para modo exploración...');
+        this.map.invalidateSize();
+      }
+    }, 450);
   }
 
   close() {
