@@ -1202,9 +1202,9 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       console.log(`\n🔍 Procesando día: ${horarioMedico.dia}`);
       console.log(`👨‍⚕️ Horario médico: ${horarioMedico.horaInicio} - ${horarioMedico.horaFin}`);
       
-      // CORRECCIÓN: Normalizar comparación de días (ignorar case)
-      const horarioConsultorio = this.consultorioHorarios.find(hc => 
-        hc.diaSemana.toUpperCase() === horarioMedico.dia.toUpperCase() && hc.activo
+      // CORRECCIÓN: Normalizar comparación de días (ignorar case y tildes)
+      const horarioConsultorio = this.consultorioHorarios.find(hc =>
+        this.normalizarDia(hc.diaSemana) === this.normalizarDia(horarioMedico.dia) && hc.activo
       );
       
       console.log(`🏥 Horario consultorio encontrado:`, horarioConsultorio);
@@ -1267,7 +1267,7 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     // Obtener todos los horarios ocupados para este día, ordenados por hora
     const horariosOcupados = this.esquemasExistentes
       .flatMap(esquema => esquema.horarios)
-      .filter(h => h.dia === horario.dia)
+      .filter(h => this.normalizarDia(h.dia) === this.normalizarDia(horario.dia))
       .map(h => ({
         inicio: this.timeToMinutes(h.horaInicio),
         fin: this.timeToMinutes(h.horaFin)
@@ -1325,7 +1325,7 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   private esQuemasOcupanHorario(horario: any): boolean {
     for (const esquema of this.esquemasExistentes) {
       for (const horarioEsquema of esquema.horarios) {
-        if (horarioEsquema.dia === horario.dia) {
+        if (this.normalizarDia(horarioEsquema.dia) === this.normalizarDia(horario.dia)) {
           const inicioNuevo = this.timeToMinutes(horario.horaInicio);
           const finNuevo = this.timeToMinutes(horario.horaFin);
           const inicioExistente = this.timeToMinutes(horarioEsquema.horaInicio);
@@ -1353,17 +1353,24 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   }
 
+  private normalizarDia(dia: string): string {
+    return dia
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''); // Elimina tildes y diacríticos
+  }
+
   getDiaNombre(dia: string): string {
     const nombres: { [key: string]: string } = {
-      'Lunes': 'Lunes',
-      'Martes': 'Martes',
-      'Miércoles': 'Miércoles',
-      'Jueves': 'Jueves',
-      'Viernes': 'Viernes',
-      'Sábado': 'Sábado',
-      'Domingo': 'Domingo'
+      'LUNES': 'Lunes',
+      'MARTES': 'Martes',
+      'MIERCOLES': 'Miércoles',
+      'JUEVES': 'Jueves',
+      'VIERNES': 'Viernes',
+      'SABADO': 'Sábado',
+      'DOMINGO': 'Domingo'
     };
-    return nombres[dia] || dia;
+    return nombres[this.normalizarDia(dia)] || dia;
   }
 
   formatearHorarios(horarios: { dia: string; horaInicio: string; horaFin: string }[]): string {
@@ -1372,9 +1379,9 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
   // Métodos para el manejo de selección de horarios
   isHorarioSeleccionado(horario: any): boolean {
-    return this.esquema.horarios.some(h => 
-      h.dia === horario.dia && 
-      h.horaInicio === horario.horaInicio && 
+    return this.esquema.horarios.some(h =>
+      this.normalizarDia(h.dia) === this.normalizarDia(horario.dia) &&
+      h.horaInicio === horario.horaInicio &&
       h.horaFin === horario.horaFin
     );
   }
@@ -1386,9 +1393,9 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     
     if (this.isHorarioSeleccionado(horario)) {
       // Quitar el horario
-      const index = this.esquema.horarios.findIndex(h => 
-        h.dia === horario.dia && 
-        h.horaInicio === horario.horaInicio && 
+      const index = this.esquema.horarios.findIndex(h =>
+        this.normalizarDia(h.dia) === this.normalizarDia(horario.dia) &&
+        h.horaInicio === horario.horaInicio &&
         h.horaFin === horario.horaFin
       );
       if (index > -1) {
@@ -1530,9 +1537,9 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   private actualizarEsquemaConHorarioPersonalizado(horarioOriginal: any): void {
     if (this.isHorarioSeleccionado(horarioOriginal)) {
       // Encontrar y actualizar el horario en el esquema
-      const index = this.esquema.horarios.findIndex(h => 
-        h.dia === horarioOriginal.dia && 
-        h.horaInicio === horarioOriginal.horaInicio && 
+      const index = this.esquema.horarios.findIndex(h =>
+        this.normalizarDia(h.dia) === this.normalizarDia(horarioOriginal.dia) &&
+        h.horaInicio === horarioOriginal.horaInicio &&
         h.horaFin === horarioOriginal.horaFin
       );
       
@@ -1579,15 +1586,22 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
   private esHorarioInvalido(horario: any): boolean {
     // Buscar el horario original disponible correspondiente
-    const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
-    if (!horarioOriginal) return true;
-    
+    // CORRECCIÓN: buscar por día Y rango de horas para manejar múltiples horarios del mismo día
     const minutosInicio = this.timeToMinutes(horario.horaInicio);
     const minutosFin = this.timeToMinutes(horario.horaFin);
+
+    const horarioOriginal = this.horariosDisponibles.find(h =>
+      this.normalizarDia(h.dia) === this.normalizarDia(horario.dia) &&
+      this.timeToMinutes(h.horaInicio) <= minutosInicio &&
+      this.timeToMinutes(h.horaFin) >= minutosFin
+    );
+
+    if (!horarioOriginal) return true;
+
     const minutosOriginalInicio = this.timeToMinutes(horarioOriginal.horaInicio);
     const minutosOriginalFin = this.timeToMinutes(horarioOriginal.horaFin);
-    
-    return minutosInicio < minutosOriginalInicio || 
+
+    return minutosInicio < minutosOriginalInicio ||
            minutosFin > minutosOriginalFin ||
            minutosInicio >= minutosFin;
   }
@@ -1596,11 +1610,20 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     const invalidos = this.esquema.horarios
       .filter(horario => this.esHorarioInvalido(horario))
       .map(horario => {
-        const horarioOriginal = this.horariosDisponibles.find(h => h.dia === horario.dia);
+        // CORRECCIÓN: buscar el horario disponible correcto para múltiples rangos del mismo día
+        const minutosInicio = this.timeToMinutes(horario.horaInicio);
+        const minutosFin = this.timeToMinutes(horario.horaFin);
+
+        const horarioOriginal = this.horariosDisponibles.find(h =>
+          this.normalizarDia(h.dia) === this.normalizarDia(horario.dia) &&
+          this.timeToMinutes(h.horaInicio) <= minutosInicio &&
+          this.timeToMinutes(h.horaFin) >= minutosFin
+        );
+
         const rangoDisponible = horarioOriginal ? `${horarioOriginal.horaInicio}-${horarioOriginal.horaFin}` : 'N/A';
         return `${this.getDiaNombre(horario.dia)}: ${horario.horaInicio}-${horario.horaFin} (disponible: ${rangoDisponible})`;
       });
-    
+
     return invalidos;
   }
 
@@ -1631,21 +1654,21 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
 
     this.guardando = true;
 
-    // Crear el esquema
+    // El backend ahora maneja automáticamente la actualización si ya existe un esquema
+    // con la misma disponibilidad, combinando los horarios
     this.esquemaTurnoService.create(this.esquema).subscribe({
       next: (response) => {
         this.guardando = false;
-        this.mensajeExito = 'Esquema de turno creado exitosamente';
-        
-        // Cerrar modal después de un breve delay
+        this.mensajeExito = 'Esquema de turno guardado exitosamente';
+
         setTimeout(() => {
           this.activeModal.close(response.data);
         }, 1000);
       },
       error: (error) => {
         this.guardando = false;
-        console.error('Error al crear el esquema:', error);
-        this.mensajeError = error?.error?.message || 'Error al crear el esquema de turno. Intente nuevamente.';
+        console.error('Error al guardar el esquema:', error);
+        this.mensajeError = error?.error?.message || error?.error?.status_text || 'Error al guardar el esquema de turno. Intente nuevamente.';
       }
     });
   }

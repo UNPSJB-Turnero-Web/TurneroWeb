@@ -185,6 +185,13 @@ export const MENU_CONFIG: MenuSection[] = [
         icon: 'fa-tachometer-alt',
         description: 'Panel de control administrativo'
       },
+         {
+        label: 'Panel Auditoria',
+        route: '/turnos/audit-dashboard',
+        icon: 'fa-shield-alt',
+        description: 'Panel de control administrativo'
+      },
+
       {
         label: 'Centros de Atención',
         route: '/centrosAtencion',
