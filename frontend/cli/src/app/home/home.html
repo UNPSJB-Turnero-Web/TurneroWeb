@@ -415,4 +415,16 @@
       </div>
     </div>
   </div>
+
+  <!-- MODAL DE MAPA DE CENTROS -->
+  <app-centros-mapa-modal
+    *ngIf="showMapaModal"
+    [centros]="centrosAtencionCompletos"
+    [especialidades]="especialidadesCompletas"
+    [slotsDisponibles]="slotsOriginales"
+    especialidadSeleccionadaInicial=""
+    (centroSeleccionado)="onCentroSeleccionadoDelMapa($event)"
+    (modalCerrado)="cerrarMapaModal()"
+  >
+  </app-centros-mapa-modal>
 </div>
