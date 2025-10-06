@@ -216,13 +216,13 @@ interface CentroMapaInfo extends CentroAtencion {
               </small>
             </div>
 
-            <!-- MENSAJE MODO ARRASTRE -->
+            <!-- MENSAJE MODO ARRASTRE 
             <div class="drag-mode-info" *ngIf="modoArrastre">
               <small class="drag-info-text">
                 <i class="fas fa-arrows-alt"></i>
                 🎯 Modo arrastre activo: Mueve el mapa para ajustar tu ubicación. El ícono verde marca tu posición.
               </small>
-            </div>
+            </div>-->
 
             <div class="location-error" *ngIf="locationError">
               <small class="error-text">
@@ -1877,6 +1877,9 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   calcularDistancias() {
     if (!this.userLocation) return;
+    
+    // SI ESTÁ EN MODO ARRASTRE, NO CALCULAR NADA
+    if (this.modoArrastre) return;
 
     this.centrosFiltrados.forEach((centro) => {
       if (centro.latitud && centro.longitud) {
@@ -1891,6 +1894,9 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   }
 
   aplicarFiltros() {
+    // SI ESTÁ EN MODO ARRASTRE, NO APLICAR FILTROS
+    if (this.modoArrastre) return;
+    
     let centrosFiltrados = [...this.centrosFiltrados] as CentroMapaInfo[];
 
     // Filtrar por especialidad
