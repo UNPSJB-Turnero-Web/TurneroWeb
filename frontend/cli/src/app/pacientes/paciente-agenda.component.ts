@@ -118,68 +118,13 @@ registerLocaleData(localeEsAr);
             </div>
 
             <div class="filtros-divider"></div>
-              <!-- Filtro por Especialidad (solo para operadores) -->
-              <div
-                class="filtro-step"
-                *ngIf="esOperador"
-                [class.active]="especialidadSeleccionada"
-              >
-                <div class="step-header">
-                  <div class="step-number">1</div>
-                  <h4>Especialidad (Opcional)</h4>
-                </div>
-                <select
-                  class="form-control-paciente"
-                  [(ngModel)]="especialidadSeleccionada"
-                  (change)="onEspecialidadChange()"
-                  [disabled]="isLoadingEspecialidades"
-                >
-                  <option value="">Seleccione una especialidad</option>
-                  <option
-                    *ngFor="let especialidad of especialidades"
-                    [value]="especialidad.nombre"
-                  >
-                    {{ especialidad.nombre }}
-                  </option>
-                </select>
-                <div class="loading-indicator" *ngIf="isLoadingEspecialidades">
-                  <i class="fas fa-spinner fa-spin"></i> Cargando
-                  especialidades...
-                </div>
-              </div>
-              <!-- Filtro por Staff Médico (Solo para operador y adm) -->
-              <div
-                class="filtro-step"
-                *ngIf="esOperador"
-                [class.active]="staffMedicoSeleccionado"
-              >
-                <div class="step-header">
-                  <div class="step-number">2</div>
-                  <h4>Médico (Opcional)</h4>
-                </div>
-                <select
-                  class="form-control-paciente"
-                  [(ngModel)]="staffMedicoSeleccionado"
-                  (change)="onStaffMedicoChange()"
-                  [disabled]="isLoadingStaffMedicos"
-                >
-                  <option value="">Todos los médicos</option>
-                  <option *ngFor="let staff of staffMedicos" [value]="staff.id">
-                    {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
-                  </option>
-                </select>
-                <div class="loading-indicator" *ngIf="isLoadingStaffMedicos">
-                  <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
-                </div>
-              </div>
-
-              <!-- Filtro por Centro de Atención (Opcional) -->
+              <!-- Filtro por Centro de Atención -->
               <div
                 class="filtro-step"
                 [class.active]="centroAtencionSeleccionado"
               >
                 <div class="step-header">
-                  <div class="step-number">3</div>
+                  <div class="step-number">1</div>
                   <h4>Centro de Atención (Opcional)</h4>
                 </div>
                 <select
@@ -201,11 +146,72 @@ registerLocaleData(localeEsAr);
                 </div>
               </div>
 
+              <!-- Filtro por Especialidad -->
+              <div
+                class="filtro-step"
+                [class.active]="especialidadSeleccionada"
+              >
+                <div class="step-header">
+                  <div class="step-number">2</div>
+                  <h4>Especialidad (Opcional)</h4>
+                </div>
+                <select
+                  class="form-control-paciente"
+                  [(ngModel)]="especialidadSeleccionada"
+                  (change)="onEspecialidadChange()"
+                  [disabled]="isLoadingEspecialidades"
+                >
+                  <option value="">Seleccione una especialidad</option>
+                  <option
+                    *ngFor="let especialidad of especialidades"
+                    [value]="especialidad.nombre"
+                  >
+                    {{ especialidad.nombre }}
+                  </option>
+                </select>
+                <div class="loading-indicator" *ngIf="isLoadingEspecialidades">
+                  <i class="fas fa-spinner fa-spin"></i> Cargando
+                  especialidades...
+                </div>
+              </div>
+
+              <!-- Filtro por Staff Médico -->
+              <div
+                class="filtro-step"
+                [class.active]="staffMedicoSeleccionado"
+              >
+                <div class="step-header">
+                  <div class="step-number">3</div>
+                  <h4>Médico (Opcional)</h4>
+                </div>
+                <select
+                  class="form-control-paciente"
+                  [(ngModel)]="staffMedicoSeleccionado"
+                  (change)="onStaffMedicoChange()"
+                  [disabled]="isLoadingStaffMedicos"
+                >
+                  <option value="">Todos los médicos</option>
+                  <option *ngFor="let staff of staffMedicos" [value]="staff.id">
+                    {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
+                  </option>
+                </select>
+                <div class="loading-indicator" *ngIf="isLoadingStaffMedicos">
+                  <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
+                </div>
+              </div>
+
               <!-- Filtros aplicados -->
-              <div class="filtros-aplicados" *ngIf="especialidadSeleccionada">
+              <div class="filtros-aplicados" *ngIf="centroAtencionSeleccionado || especialidadSeleccionada || staffMedicoSeleccionado">
                 <h5>Filtros aplicados:</h5>
                 <div class="filter-tags">
-                  <span class="filter-tag">
+                  <span class="filter-tag" *ngIf="centroAtencionSeleccionado">
+                    <i class="fas fa-hospital"></i>
+                    {{ getCentroAtencionNombre(centroAtencionSeleccionado) }}
+                    <button type="button" (click)="limpiarCentroAtencion()">
+                      ×
+                    </button>
+                  </span>
+                  <span class="filter-tag" *ngIf="especialidadSeleccionada">
                     <i class="fas fa-stethoscope"></i>
                     {{ especialidadSeleccionada }}
                     <button type="button" (click)="limpiarEspecialidad()">
@@ -216,13 +222,6 @@ registerLocaleData(localeEsAr);
                     <i class="fas fa-user-md"></i>
                     {{ getStaffMedicoNombre(staffMedicoSeleccionado) }}
                     <button type="button" (click)="limpiarStaffMedico()">
-                      ×
-                    </button>
-                  </span>
-                  <span class="filter-tag" *ngIf="centroAtencionSeleccionado">
-                    <i class="fas fa-hospital"></i>
-                    {{ getCentroAtencionNombre(centroAtencionSeleccionado) }}
-                    <button type="button" (click)="limpiarCentroAtencion()">
                       ×
                     </button>
                   </span>
@@ -295,6 +294,10 @@ registerLocaleData(localeEsAr);
                 filtros de arriba:
               </p>
               <ul>
+                 <li>
+                  <strong>Centro de Atención:</strong> Busca turnos en un centro
+                  específico
+                </li>
                 <li>
                   <strong>Especialidad:</strong> Busca turnos de una
                   especialidad específica
@@ -303,10 +306,7 @@ registerLocaleData(localeEsAr);
                   <strong>Médico:</strong> Busca turnos de un médico en
                   particular
                 </li>
-                <li>
-                  <strong>Centro de Atención:</strong> Busca turnos en un centro
-                  específico
-                </li>
+               
               </ul>
               <p>
                 <small
