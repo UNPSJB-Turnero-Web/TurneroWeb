@@ -126,13 +126,14 @@ interface CentroMapaInfo extends CentroAtencion {
                 [class.active]="userLocation"
                 (click)="obtenerUbicacionUsuario()"
                 [disabled]="isLoadingLocation"
+                [title]="userLocation ? 'Click para actualizar ubicación' : 'Obtener mi ubicación'"
               >
                 <i class="fas fa-map-marker-alt"></i>
                 {{
                   isLoadingLocation
                     ? "Ubicando..."
                     : userLocation
-                    ? "Ubicado"
+                    ? "Ubicado (Refrescar)"
                     : "Mi Ubicación"
                 }}
                 <i class="fas fa-spinner fa-spin" *ngIf="isLoadingLocation"></i>
@@ -144,6 +145,16 @@ interface CentroMapaInfo extends CentroAtencion {
               >
                 <i class="fas fa-edit"></i>
                 Ubicación Manual
+              </button>
+
+              <button
+                class="btn btn-drag-location"
+                [class.active]="modoArrastre"
+                (click)="toggleModoArrastre()"
+                title="Arrastra el mapa para ajustar tu ubicación"
+              >
+                <i class="fas fa-arrows-alt"></i>
+                {{ modoArrastre ? '✓ Modo Arrastre' : 'Ubicación por Arrastre' }}
               </button>
             </div>
 
@@ -205,6 +216,14 @@ interface CentroMapaInfo extends CentroAtencion {
               </small>
             </div>
 
+            <!-- MENSAJE MODO ARRASTRE -->
+            <div class="drag-mode-info" *ngIf="modoArrastre">
+              <small class="drag-info-text">
+                <i class="fas fa-arrows-alt"></i>
+                🎯 Modo arrastre activo: Mueve el mapa para ajustar tu ubicación. El ícono verde marca tu posición.
+              </small>
+            </div>
+
             <div class="location-error" *ngIf="locationError">
               <small class="error-text">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -233,7 +252,16 @@ interface CentroMapaInfo extends CentroAtencion {
 
         <!-- MAPA -->
         <div class="centros-modal-body">
-          <div #mapContainer class="map-container"></div>
+          <div #mapContainer class="map-container">
+            <!-- Ícono verde fijo en el centro para modo arrastre -->
+            <div 
+              class="center-crosshair" 
+              *ngIf="modoArrastre"
+              [style.display]="modoArrastre ? 'block' : 'none'"
+            >
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+          </div>
         </div>
 
         <!-- LISTA DE CENTROS -->
@@ -613,6 +641,24 @@ interface CentroMapaInfo extends CentroAtencion {
 
       .btn-location.active {
         background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+        cursor: pointer;
+        position: relative;
+      }
+
+      .btn-location.active:hover {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(23, 162, 184, 0.4);
+      }
+
+      .btn-location.active::after {
+        content: '🔄';
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+        opacity: 0.7;
       }
 
       .btn-location-manual {
@@ -622,6 +668,31 @@ interface CentroMapaInfo extends CentroAtencion {
 
       .btn-location-manual:hover {
         background: #5a6268;
+      }
+
+      .btn-drag-location {
+        background: #17a2b8;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-drag-location:hover {
+        background: #138496;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      }
+
+      .btn-drag-location.active {
+        background: #28a745;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+      }
+
+      .btn-drag-location.active:hover {
+        background: #218838;
       }
 
       .manual-location-form {
@@ -681,6 +752,19 @@ interface CentroMapaInfo extends CentroAtencion {
         color: #dc3545;
       }
 
+      .drag-mode-info {
+        background: #e7f3ff;
+        border: 1px solid #17a2b8;
+        border-radius: 4px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .drag-info-text {
+        color: #17a2b8;
+        font-weight: 500;
+      }
+
       /* MAPA */
       .centros-modal-body {
         flex: 1;
@@ -691,6 +775,33 @@ interface CentroMapaInfo extends CentroAtencion {
       .map-container {
         width: 100%;
         height: 100%;
+        position: relative;
+      }
+
+      /* ÍCONO FIJO EN EL CENTRO PARA MODO ARRASTRE */
+      .center-crosshair {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        font-size: 24px;
+        color: #28a745;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        pointer-events: none;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
       }
 
       /* LISTA DE CENTROS */
@@ -1233,6 +1344,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   direccionBusqueda = "";
   latitudManual: number | null = null;
   longitudManual: number | null = null;
+  
+  // Modo ubicación manual por arrastre
+  modoArrastre = false;
+  iconoCentroFijo: HTMLElement | null = null;
 
   // Estado
   centrosFiltrados: CentroMapaInfo[] = [];
@@ -1276,6 +1391,11 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Limpiar referencia global
     if ((window as any).centrosModalComponent === this) {
       delete (window as any).centrosModalComponent;
+    }
+
+    // Desactivar modo arrastre si está activo
+    if (this.modoArrastre) {
+      this.desactivarModoArrastre();
     }
 
     // Limpiar mapa
@@ -1603,15 +1723,29 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         useIPFallback: true,
       })
       .then((location) => {
+        const wasLocated = this.userLocation !== null;
         this.userLocation = location;
         this.isLoadingLocation = false;
         this.mostrarUbicacionUsuarioEnMapa();
         this.calcularDistancias();
         this.aplicarFiltros();
+        
+        // Feedback visual cuando se actualiza la ubicación
+        if (wasLocated) {
+          console.log('🗺️ Ubicación actualizada exitosamente');
+          // Hacer un pequeño efecto en el mapa centrándolo en la nueva ubicación
+          if (this.map) {
+            this.map.setView([location.latitude, location.longitude], 14, {
+              animate: true,
+              duration: 1
+            });
+          }
+        }
       })
       .catch((error) => {
         this.isLoadingLocation = false;
         this.locationError = error.message || "No se pudo obtener la ubicación";
+        console.error('❌ Error al obtener ubicación:', error);
       });
   }
 
@@ -1670,6 +1804,75 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
         this.locationError = "Error al buscar la dirección";
       },
     });
+  }
+
+  // MÉTODOS PARA MODO ARRASTRE
+  toggleModoArrastre() {
+    this.modoArrastre = !this.modoArrastre;
+    
+    if (this.modoArrastre) {
+      this.activarModoArrastre();
+    } else {
+      this.desactivarModoArrastre();
+    }
+  }
+
+  activarModoArrastre() {
+    if (!this.map) return;
+    
+    // Ocultar el marcador del usuario existente
+    if (this.userMarker) {
+      this.userMarker.remove();
+    }
+    
+    // Agregar event listener para cuando se mueve el mapa
+    this.map.on('moveend', this.onMapMoveEnd.bind(this));
+    
+    // Activar el centro del mapa para obtener coordenadas
+    this.actualizarUbicacionPorArrastre();
+    
+    console.log('🎯 Modo arrastre activado - Mueve el mapa para ajustar tu ubicación');
+  }
+
+  desactivarModoArrastre() {
+    if (!this.map) return;
+    
+    // Remover event listener
+    this.map.off('moveend', this.onMapMoveEnd.bind(this));
+    
+    // Mostrar nuevamente el marcador del usuario si existe
+    if (this.userLocation) {
+      this.mostrarUbicacionUsuarioEnMapa();
+    }
+    
+    console.log('🎯 Modo arrastre desactivado');
+  }
+
+  onMapMoveEnd() {
+    if (this.modoArrastre) {
+      this.actualizarUbicacionPorArrastre();
+    }
+  }
+
+  actualizarUbicacionPorArrastre() {
+    if (!this.map) return;
+    
+    const center = this.map.getCenter();
+    
+    // Actualizar la ubicación del usuario con las coordenadas del centro
+    this.userLocation = {
+      latitude: center.lat,
+      longitude: center.lng,
+      accuracy: 0,
+      source: 'manual',
+      timestamp: Date.now()
+    };
+    
+    // Recalcular distancias y filtros
+    this.calcularDistancias();
+    this.aplicarFiltros();
+    
+    console.log('📍 Ubicación actualizada por arrastre:', center.lat, center.lng);
   }
 
   calcularDistancias() {
