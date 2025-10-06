@@ -385,37 +385,66 @@ registerLocaleData(localeEsAr);
               </div>
             </div>
 
-            <!-- TURNOS EXPANDIBLES -->
+            <!-- TURNOS EXPANDIBLES POR DÍA -->
             <div class="medico-turnos-expandible" *ngIf="isMedicoExpandido(medicoEntry.key)">
-              <div class="turnos-grid-compacto">
-                <div 
-                  *ngFor="let slot of medicoEntry.value"
-                  class="turno-chip"
-                  [class.turno-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
-                  [class.turno-seleccionado]="slotSeleccionado?.id === slot.id"
-                  (click)="seleccionarSlot(slot, $event)"
+              <!-- Acordeón por día -->
+              <div *ngFor="let fecha of getFechasOrdenadas(medicoEntry.value)" class="dia-acordeon">
+                <div
+                  class="dia-header"
+                  [class.expandido]="isDiaExpandido(medicoEntry.key, fecha)"
+                  (click)="toggleDiaExpansion(medicoEntry.key, fecha)"
                 >
-                  <div class="chip-fecha">
-                    <i class="fas fa-calendar"></i>
-                    {{ slot.fecha | date:'EEE dd/MM' }}
+                  <div class="dia-fecha">
+                    <i class="fas fa-calendar-day"></i>
+                    <span class="fecha-texto">{{ fecha | date:'EEEE dd/MM/yyyy' }}</span>
                   </div>
-                  <div class="chip-hora">
-                    <i class="fas fa-clock"></i>
-                    {{ slot.horaInicio }} - {{ slot.horaFin }}
+
+                  <div class="dia-info">
+                    <div class="dia-badge">
+                      <span class="badge-number">{{ getTurnosDisponiblesPorDia(getSlotsPorDia(medicoEntry.value, fecha)) }}</span>
+                      <span class="badge-text">turnos</span>
+                    </div>
+
+                    <div class="dia-primer-turno" *ngIf="getPrimerTurnoDia(getSlotsPorDia(medicoEntry.value, fecha)) as primer">
+                      <i class="fas fa-clock"></i>
+                      {{ primer.horaInicio }}
+                    </div>
                   </div>
-                  <div class="chip-ubicacion">
-                    <i class="fas fa-door-open"></i>
-                    {{ slot.consultorioNombre }}
+
+                  <div class="dia-expand-icon">
+                    <i class="fas" [class.fa-chevron-down]="!isDiaExpandido(medicoEntry.key, fecha)" [class.fa-chevron-up]="isDiaExpandido(medicoEntry.key, fecha)"></i>
                   </div>
-                  <div class="chip-centro">
-                    <i class="fas fa-hospital"></i>
-                    {{ slot.nombreCentro }}
-                  </div>
-                  <div class="chip-estado" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
-                    <i class="fas fa-check-circle"></i>
-                  </div>
-                  <div class="chip-estado ocupado" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
-                    <i class="fas fa-lock"></i>
+                </div>
+
+                <!-- Turnos del día -->
+                <div class="dia-turnos" *ngIf="isDiaExpandido(medicoEntry.key, fecha)">
+                  <div class="turnos-grid-compacto">
+                    <div
+                      *ngFor="let slot of getSlotsPorDia(medicoEntry.value, fecha)"
+                      class="turno-chip"
+                      [class.turno-ocupado]="slot.ocupado || slotAfectadoPorExcepcion(slot)"
+                      [class.turno-seleccionado]="slotSeleccionado?.id === slot.id"
+                      (click)="seleccionarSlot(slot, $event)"
+                    >
+                      <div class="chip-hora">
+                        <i class="fas fa-clock"></i>
+                        {{ slot.horaInicio }} - {{ slot.horaFin }}
+                      </div>
+                      <div class="chip-ubicacion">
+                        <i class="fas fa-door-open"></i>
+                        {{ slot.consultorioNombre }}
+                      </div>
+                      <div class="chip-centro">
+                        <i class="fas fa-hospital"></i>
+                        {{ slot.nombreCentro }}
+                      </div>
+                      <div class="chip-estado" *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                      <div class="chip-estado ocupado" *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)">
+                        <i class="fas fa-lock"></i>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1809,7 +1838,7 @@ registerLocaleData(localeEsAr);
         background: #f8f9fa;
         animation: slideDown 0.3s ease;
       }
-      
+
       @keyframes slideDown {
         from {
           opacity: 0;
@@ -1820,7 +1849,155 @@ registerLocaleData(localeEsAr);
           max-height: 2000px;
         }
       }
-      
+
+      /* Acordeón de días */
+      .dia-acordeon {
+        margin-bottom: 1rem;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+      }
+
+      .dia-acordeon:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      }
+
+      .dia-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+      }
+
+      .dia-header:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left-color: #667eea;
+      }
+
+      .dia-header.expandido {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-left-color: #764ba2;
+      }
+
+      .dia-fecha {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .dia-fecha i {
+        font-size: 1.1rem;
+        color: #667eea;
+      }
+
+      .dia-header.expandido .dia-fecha i {
+        color: white;
+      }
+
+      .fecha-texto {
+        text-transform: capitalize;
+      }
+
+      .dia-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .dia-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.8rem;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+      }
+
+      .dia-header.expandido .dia-badge {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .badge-number {
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .dia-header.expandido .badge-number {
+        color: white;
+      }
+
+      .badge-text {
+        color: #6c757d;
+        font-size: 0.8rem;
+      }
+
+      .dia-header.expandido .badge-text {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .dia-primer-turno {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        background: rgba(40, 167, 69, 0.1);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #28a745;
+      }
+
+      .dia-header.expandido .dia-primer-turno {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      .dia-expand-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(102, 126, 234, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .dia-header:hover .dia-expand-icon {
+        background: rgba(102, 126, 234, 0.2);
+        transform: scale(1.1);
+      }
+
+      .dia-header.expandido .dia-expand-icon {
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(180deg);
+      }
+
+      .dia-expand-icon i {
+        color: #667eea;
+        font-size: 0.9rem;
+      }
+
+      .dia-header.expandido .dia-expand-icon i {
+        color: white;
+      }
+
+      .dia-turnos {
+        padding: 1.25rem;
+        background: #fafbfc;
+        animation: slideDown 0.3s ease;
+      }
+
       .turnos-grid-compacto {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -1916,6 +2093,27 @@ registerLocaleData(localeEsAr);
       
       /* RESPONSIVE PARA VISTA COMPACTA */
       @media (max-width: 768px) {
+        .dia-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+
+        .dia-info {
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .dia-expand-icon {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+        }
+
+        .turnos-grid-compacto {
+          grid-template-columns: 1fr;
+        }
+
         .medico-header-compacto {
           grid-template-columns: 50px 1fr;
           grid-template-rows: auto auto;
@@ -2192,6 +2390,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Agrupación por médico para vista compacta
   medicosSlotsAgrupados: Map<string, SlotDisponible[]> = new Map();
   medicosExpandidos: Set<string> = new Set();
+  diasExpandidos: Map<string, Set<string>> = new Map(); // medicoKey -> Set de fechas expandidas
 
   // Paginación
   paginaActual: number = 1;
@@ -3364,6 +3563,70 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   getCentrosUnicos(slots: SlotDisponible[]): string[] {
     const centros = new Set(slots.map(slot => slot.nombreCentro));
     return Array.from(centros);
+  }
+
+  // Agrupar slots de un médico por fecha
+  agruparSlotsPorDia(slots: SlotDisponible[]): Map<string, SlotDisponible[]> {
+    const slotsPorDia = new Map<string, SlotDisponible[]>();
+
+    slots.forEach(slot => {
+      if (!slotsPorDia.has(slot.fecha)) {
+        slotsPorDia.set(slot.fecha, []);
+      }
+      slotsPorDia.get(slot.fecha)!.push(slot);
+    });
+
+    // Ordenar los slots dentro de cada día por hora
+    slotsPorDia.forEach(slotsDelDia => {
+      slotsDelDia.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+    });
+
+    return slotsPorDia;
+  }
+
+  // Obtener fechas ordenadas de los slots de un médico
+  getFechasOrdenadas(slots: SlotDisponible[]): string[] {
+    const fechas = new Set(slots.map(slot => slot.fecha));
+    return Array.from(fechas).sort();
+  }
+
+  // Toggle expansión de un día para un médico
+  toggleDiaExpansion(medicoKey: string, fecha: string) {
+    if (!this.diasExpandidos.has(medicoKey)) {
+      this.diasExpandidos.set(medicoKey, new Set());
+    }
+
+    const diasSet = this.diasExpandidos.get(medicoKey)!;
+    if (diasSet.has(fecha)) {
+      diasSet.delete(fecha);
+    } else {
+      diasSet.add(fecha);
+    }
+  }
+
+  // Verificar si un día está expandido para un médico
+  isDiaExpandido(medicoKey: string, fecha: string): boolean {
+    const diasSet = this.diasExpandidos.get(medicoKey);
+    return diasSet ? diasSet.has(fecha) : false;
+  }
+
+  // Obtener slots de un día específico para un médico
+  getSlotsPorDia(slots: SlotDisponible[], fecha: string): SlotDisponible[] {
+    return slots.filter(slot => slot.fecha === fecha)
+               .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  }
+
+  // Contar turnos disponibles por día
+  getTurnosDisponiblesPorDia(slots: SlotDisponible[]): number {
+    return slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot)).length;
+  }
+
+  // Obtener el primer turno de un día
+  getPrimerTurnoDia(slots: SlotDisponible[]): SlotDisponible | null {
+    const slotsOrdenados = slots
+      .filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot))
+      .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+    return slotsOrdenados.length > 0 ? slotsOrdenados[0] : null;
   }
 
   getEspecialidadesUnicas(slots: SlotDisponible[]): string[] {
