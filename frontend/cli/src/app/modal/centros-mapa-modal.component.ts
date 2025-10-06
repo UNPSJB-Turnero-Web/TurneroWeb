@@ -1845,7 +1845,11 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       this.mostrarUbicacionUsuarioEnMapa();
     }
     
-    console.log('🎯 Modo arrastre desactivado');
+    // AHORA SÍ RECALCULAR las distancias cuando se desactiva el modo arrastre
+    this.calcularDistancias();
+    this.aplicarFiltros();
+    
+    console.log('🎯 Modo arrastre desactivado - Distancias recalculadas');
   }
 
   onMapMoveEnd() {
@@ -1964,8 +1968,8 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Ordenar por distancia si está habilitado
-    if (this.ordenadoPorDistancia && this.userLocation) {
+    // SIEMPRE ordenar por distancia cuando hay ubicación del usuario
+    if (this.userLocation) {
       centrosFiltrados.sort((a, b) => {
         const distanciaA = a.distanciaKm ?? Number.MAX_VALUE;
         const distanciaB = b.distanciaKm ?? Number.MAX_VALUE;
