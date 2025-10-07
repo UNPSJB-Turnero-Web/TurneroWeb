@@ -1544,14 +1544,14 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     horaInicio: string,
     horaFin: string,
     medico: string,
-    consultorio: string | null,
+    consultorio: string,
     medicoId: number
   }> {
     const horariosOcupados: Array<{
       horaInicio: string,
       horaFin: string,
       medico: string,
-      consultorio: string | null,
+      consultorio: string,
       medicoId: number
     }> = [];
 
@@ -1561,8 +1561,8 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
           horariosOcupados.push({
             horaInicio: horario.horaInicio,
             horaFin: horario.horaFin,
-            medico: `${esquema.staffMedico?.medico?.nombre || ''} ${esquema.staffMedico?.medico?.apellido || ''}`.trim(),
-            consultorio: esquema.consultorio?.nombre || null,
+            medico: `${esquema.staffMedico?.medico?.nombre} ${esquema.staffMedico?.medico?.apellido}`,
+            consultorio: esquema.consultorio?.nombre || 'Sin asignar',
             medicoId: esquema.staffMedicoId || 0
           });
         }
