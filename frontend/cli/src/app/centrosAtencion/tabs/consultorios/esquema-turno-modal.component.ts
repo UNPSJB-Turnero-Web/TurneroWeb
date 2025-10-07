@@ -686,62 +686,18 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
         </div>
       </div>
 
-      <!-- Esquemas Existentes -->
-      <div class="section-card slide-in">
+      <!-- Análisis de Intersección -->
+      <div *ngIf="disponibilidadSeleccionada" class="section-card slide-in">
         <div class="section-title">
           <div class="section-icon">
-            <i class="fa fa-list"></i>
+            <i class="fa fa-calculator"></i>
           </div>
-          Esquemas Existentes en este Consultorio
-        </div>
-        <div class="horarios-consultorio-info">
-          <div *ngIf="esquemasExistentes.length > 0; else noEsquemasExistentes">
-            <div class="row">
-              <div *ngFor="let esquema of esquemasExistentes" class="col-md-6 mb-3">
-                <div class="horario-ref">
-                  <div class="d-flex align-items-center mb-2">
-                    <i class="fa fa-user-md text-primary me-2"></i>
-                    <strong class="text-primary">
-                      {{ esquema.staffMedico?.medico?.nombre }} {{ esquema.staffMedico?.medico?.apellido }}
-                    </strong>
-                  </div>
-                  <div class="small">
-                    <span *ngFor="let horario of esquema.horarios; let last = last" class="me-2 mb-1 d-inline-block">
-                      <span class="badge bg-warning text-dark">
-                        {{ getDiaNombre(horario.dia) }} {{ horario.horaInicio }}-{{ horario.horaFin }}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <ng-template #noEsquemasExistentes>
-            <div class="empty-state">
-              <i class="fa fa-calendar-check"></i>
-              <p class="mb-0">No hay esquemas configurados para este consultorio.</p>
-            </div>
-          </ng-template>
-        </div>
-      </div>
-
-      <!-- Análisis de Intersección -->
-      <div *ngIf="disponibilidadSeleccionada" class="form-group-modern mb-4">
-        <label class="form-label-modern">
-          <i class="fa fa-calculator me-2"></i>
           Análisis de Intersección de Horarios
-        </label>
-        
-        <!-- Explicación del proceso -->
-        <div class="alert alert-info">
-          <i class="fa fa-info-circle me-2"></i>
-          <strong>Proceso de cálculo:</strong> Se analizan automáticamente los horarios del médico, 
-          del consultorio y los esquemas existentes para encontrar los períodos disponibles.
         </div>
 
         <!-- Visualización del proceso de intersección -->
         <div class="interseccion-visual">
-          
+
           <!-- 1. Disponibilidad del Médico -->
           <div class="interseccion-step">
             <h6 class="interseccion-title">
@@ -761,35 +717,45 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             </div>
           </div>
 
-          <!-- 2. Esquemas Existentes -->
+          <!-- 2. Horarios ocupados en este consultorio -->
           <div class="interseccion-step">
             <h6 class="interseccion-title">
               <span class="step-number">2</span>
               <i class="fa fa-calendar-times me-2"></i>
-              Horarios ocupados
+              Horarios ocupados en este consultorio
             </h6>
             <div class="horarios-referencia esquemas-existentes">
-              <div *ngFor="let esquema of esquemasExistentes" class="horario-ref ocupado">
+              <div *ngFor="let esquema of esquemasEnConsultorioActual" class="horario-ref ocupado">
                 <strong>{{ esquema.staffMedico?.medico?.nombre }} {{ esquema.staffMedico?.medico?.apellido }}</strong>
                 <br>
                 <span *ngFor="let horario of esquema.horarios; let last = last" class="me-1">
-                  <span class="badge bg-warning text-dark">{{ getDiaNombre(horario.dia) }}</span>
+                  <span class="badge bg-success">{{ getDiaNombre(horario.dia) }}</span>
                   <span class="ms-1">{{ horario.horaInicio }}-{{ horario.horaFin }}</span>{{ !last ? ', ' : '' }}
                 </span>
               </div>
-              <div *ngIf="esquemasExistentes.length === 0" class="text-muted">
+              <div *ngIf="esquemasEnConsultorioActual.length === 0" class="text-muted">
                 <i class="fa fa-check-circle me-2"></i>
                 No hay esquemas ocupando horarios en este consultorio
               </div>
             </div>
+
+            <!-- Información sobre otros consultorios -->
+            <div *ngIf="esquemasEnOtrosConsultorios.length > 0" class="mt-3">
+              <div class="alert alert-warning" style="padding: 0.75rem; font-size: 0.9rem;">
+                <i class="fa fa-info-circle me-2"></i>
+                <strong>ℹ️ Información:</strong>
+                Hay {{ esquemasEnOtrosConsultorios.length }} esquema(s) en otros consultorios del centro.
+                Revise la columna "Conflictos" en la tabla de abajo para evitar asignar el mismo médico en horarios ocupados.
+              </div>
+            </div>
           </div>
 
-          <!-- Resultado de la Intersección -->
-          <div class="interseccion-resultado">
+          <!-- 3. Resultado de la Intersección -->
+          <div class="interseccion-step">
             <h6 class="interseccion-title resultado">
-              <span class="step-number">⚡</span>
+              <span class="step-number resultado">⚡</span>
               <i class="fa fa-check-double me-2"></i>
-              Horarios Disponibles Resultantes
+              Horarios Disponibles para Asignar
             </h6>
             
             <div *ngIf="horariosDisponibles.length > 0; else noResultados" class="horarios-tabla-container">
@@ -799,12 +765,13 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                 Seleccione los que desea incluir y ajuste los horarios dentro del rango disponible:
               </div>
               
-              <div class="alert alert-info">
-                <i class="fa fa-info-circle me-2"></i>
-                <strong>Tip:</strong> Puede personalizar las horas de inicio y fin dentro del rango disponible de cada médico. 
-                Los campos se habilitarán cuando seleccione el horario.
+              <!-- Alerta informativa sobre conflictos -->
+              <div *ngIf="esquemasEnOtrosConsultorios.length > 0" class="alert alert-warning mb-3">
+                <i class="fa fa-exclamation-triangle me-2"></i>
+                <strong>⚠️ Atención:</strong> Hay {{ esquemasEnOtrosConsultorios.length }} esquema(s) en otros consultorios del centro.
+                Revise la columna <strong>"Conflictos"</strong> para evitar asignar el mismo médico en horarios ocupados.
               </div>
-              
+
               <!-- Error de validación -->
               <div *ngIf="errorValidacion" class="alert alert-danger">
                 <i class="fa fa-exclamation-triangle me-2"></i>
@@ -823,55 +790,68 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
                                [indeterminate]="algunosSeleccionados()"
                                (change)="toggleTodosSeleccionados()">
                       </th>
-                      <th>Día</th>
-                      <th>Hora Inicio (Personalizable)</th>
-                      <th>Hora Fin (Personalizable)</th>
-                      <th>Duración</th>
-                      <th>Acción</th>
+                      <th style="width: 80px;">Día</th>
+                      <th>Horario</th>
+                      <th style="width: 200px;">Conflictos</th>
+                      <th style="width: 100px;">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr *ngFor="let horario of horariosDisponibles; let i = index"
-                        [class.table-success]="isHorarioSeleccionado(horario)">
+                        [class.table-success]="isHorarioSeleccionado(horario)"
+                        [class.table-warning]="getConflictoEnOtrosConsultorios(horario).tieneConflicto && getConflictoEnOtrosConsultorios(horario).esElMismoMedico">
                       <td>
-                        <input type="checkbox" 
-                               class="form-check-input"
+                        <input type="checkbox"
+                               class="form-check-input me-2"
                                [checked]="isHorarioSeleccionado(horario)"
                                (change)="toggleHorarioSeleccionado(horario, null)">
-                      </td>
-                      <td>
                         <span class="badge bg-primary">{{ getDiaNombre(horario.dia) }}</span>
                       </td>
                       <td>
-                        <input type="time" 
-                               class="form-control form-control-sm"
-                               [value]="getHorarioPersonalizado(horario, 'inicio')"
-                               (change)="actualizarHorarioPersonalizado(horario, 'inicio', $event)"
-                               [disabled]="!isHorarioSeleccionado(horario)"
-                               style="min-width: 120px;"
-                               placeholder="Hora inicio">
-                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                        <div class="d-flex gap-2 align-items-center">
+                          <input type="time"
+                                 class="form-control form-control-sm"
+                                 [value]="getHorarioPersonalizado(horario, 'inicio')"
+                                 (change)="actualizarHorarioPersonalizado(horario, 'inicio', $event)"
+                                 [disabled]="!isHorarioSeleccionado(horario)"
+                                 style="max-width: 110px;">
+                          <span>-</span>
+                          <input type="time"
+                                 class="form-control form-control-sm"
+                                 [value]="getHorarioPersonalizado(horario, 'fin')"
+                                 (change)="actualizarHorarioPersonalizado(horario, 'fin', $event)"
+                                 [disabled]="!isHorarioSeleccionado(horario)"
+                                 style="max-width: 110px;">
+                        </div>
+                        <small class="text-muted">Rango disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
                       </td>
-                      <td>
-                        <input type="time" 
-                               class="form-control form-control-sm"
-                               [value]="getHorarioPersonalizado(horario, 'fin')"
-                               (change)="actualizarHorarioPersonalizado(horario, 'fin', $event)"
-                               [disabled]="!isHorarioSeleccionado(horario)"
-                               style="min-width: 120px;"
-                               placeholder="Hora fin">
-                        <small class="text-muted d-block">Disponible: {{ horario.horaInicio }} - {{ horario.horaFin }}</small>
+                      <td class="align-middle">
+                        <div *ngIf="getConflictoEnOtrosConsultorios(horario) as conflicto">
+                          <span *ngIf="conflicto.tieneConflicto">
+                            <span *ngIf="conflicto.esElMismoMedico"
+                                  class="badge bg-danger d-block mb-1"
+                                  [title]="'El mismo médico ya está asignado en ' + (conflicto.consultorio || 'otro consultorio') + ' en el horario ' + conflicto.horarioConflictivo">
+                              <i class="fa fa-exclamation-triangle"></i>
+                              ¡Conflicto!
+                            </span>
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">
+                              {{ conflicto.esElMismoMedico ? 'Mismo médico' : conflicto.medico }}
+                              <span *ngIf="conflicto.consultorio"> en {{ conflicto.consultorio }}</span>
+                              ({{ conflicto.horarioConflictivo }})
+                            </small>
+                          </span>
+                          <span *ngIf="!conflicto.tieneConflicto" class="badge bg-success">
+                            <i class="fa fa-check"></i> Disponible
+                          </span>
+                        </div>
                       </td>
-                      <td>
-                        <span class="badge bg-info">{{ calcularDuracion(getHorarioPersonalizado(horario, 'inicio'), getHorarioPersonalizado(horario, 'fin')) }}</span>
-                      </td>
-                      <td>
-                        <button type="button" 
+                      <td class="align-middle text-center">
+                        <button type="button"
                                 class="btn btn-sm"
                                 [class]="isHorarioSeleccionado(horario) ? 'btn-warning' : 'btn-success'"
-                                (click)="toggleHorarioSeleccionado(horario, null)">
+                                (click)="toggleHorarioSeleccionado(horario, null)"
+                                style="min-width: 40px;">
                           <i class="fa" [class]="isHorarioSeleccionado(horario) ? 'fa-minus' : 'fa-plus'"></i>
-                          {{ isHorarioSeleccionado(horario) ? 'Quitar' : 'Agregar' }}
                         </button>
                       </td>
                     </tr>
@@ -880,84 +860,69 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
               </div>
 
               <!-- Controles rápidos -->
-              <div class="controles-rapidos mt-3">
-                <button type="button" 
-                        class="btn btn-success me-2"
-                        (click)="seleccionarTodos()"
-                        [disabled]="todosSeleccionados()">
-                  <i class="fa fa-check-double me-2"></i>
-                  Seleccionar Todos
-                </button>
-                <button type="button" 
-                        class="btn btn-warning"
-                        (click)="limpiarTodos()"
-                        [disabled]="ningunoSeleccionado()">
-                  <i class="fa fa-eraser me-2"></i>
-                  Limpiar Selección
-                </button>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                  <button type="button"
+                          class="btn btn-sm btn-outline-success me-2"
+                          (click)="seleccionarTodos()"
+                          [disabled]="todosSeleccionados()">
+                    <i class="fa fa-check-double"></i>
+                    Todos
+                  </button>
+                  <button type="button"
+                          class="btn btn-sm btn-outline-secondary"
+                          (click)="limpiarTodos()"
+                          [disabled]="ningunoSeleccionado()">
+                    <i class="fa fa-times"></i>
+                    Ninguno
+                  </button>
+                </div>
+                <small class="text-muted">
+                  <strong>{{ esquema.horarios.length }}</strong> horario(s) seleccionado(s)
+                </small>
               </div>
             </div>
 
             <ng-template #noResultados>
               <div class="alert alert-warning">
                 <i class="fa fa-exclamation-triangle me-2"></i>
-                <strong>No hay horarios disponibles</strong>
-                <div class="mt-2">
-                  <div *ngIf="!disponibilidadSeleccionada">
-                    → Seleccione primero una disponibilidad médica.
-                  </div>
-                  <div *ngIf="disponibilidadSeleccionada && consultorioHorarios.length === 0">
-                    → El consultorio no tiene horarios de atención configurados.
-                  </div>
-                  <div *ngIf="disponibilidadSeleccionada && consultorioHorarios.length > 0">
-                    → No hay intersección entre la disponibilidad del médico y los horarios del consultorio, 
-                    o todos los horarios están ocupados por otros esquemas.
-                  </div>
-                </div>
+                <strong>No hay horarios disponibles.</strong>
+                No hay intersección entre la disponibilidad del médico y los horarios del consultorio,
+                o todos están ocupados.
               </div>
             </ng-template>
-          </div>
-        </div>
-      </div>
+          </div> <!-- Cierre interseccion-step resultado -->
+        </div> <!-- Cierre interseccion-visual -->
 
-      <!-- Configuración del Esquema -->
-      <div *ngIf="esquema.horarios.length > 0" class="form-group-modern mb-4">
-        <label class="form-label-modern">
-          <i class="fa fa-cog me-2"></i>
-          Configuración del Esquema
-        </label>
-        
-        <div class="row">
-          <div class="col-12">
-            <label class="form-label-small">Intervalo de Turnos (minutos)</label>
-            <select 
-              [(ngModel)]="esquema.intervalo"
-              name="intervalo"
-              class="form-control form-control-sm"
-              required
-            >
-              <option value="15">15 minutos</option>
-              <option value="20">20 minutos</option>
-              <option value="30">30 minutos</option>
-              <option value="45">45 minutos</option>
-              <option value="60">60 minutos</option>
-            </select>
-          </div>
-        </div>
+        <!-- Configuración del Esquema -->
+        <div *ngIf="esquema.horarios.length > 0" class="mt-4">
+          <h6 class="mb-3">
+            <i class="fa fa-cog me-2"></i>
+            Configuración
+          </h6>
 
-        <!-- Resumen de Turnos -->
-        <div class="resumen-turnos mt-3">
-          <div class="resumen-item">
-            <span class="resumen-label">Total de horarios seleccionados:</span>
-            <span class="resumen-valor">{{ esquema.horarios.length }}</span>
-          </div>
-          <div class="resumen-item">
-            <span class="resumen-label">Tiempo total disponible:</span>
-            <span class="resumen-valor">{{ calcularTiempoTotal() }} minutos</span>
-          </div>
-          <div class="resumen-item">
-            <span class="resumen-label">Turnos estimados ({{ esquema.intervalo }}min):</span>
-            <span class="resumen-valor">{{ calcularTurnosEstimados() }} turnos</span>
+          <div class="row align-items-end">
+            <div class="col-md-4">
+              <label class="form-label-small">Intervalo de Turnos</label>
+              <select
+                [(ngModel)]="esquema.intervalo"
+                name="intervalo"
+                class="form-control form-control-sm"
+                required
+              >
+                <option value="15">15 minutos</option>
+                <option value="20">20 minutos</option>
+                <option value="30">30 minutos</option>
+                <option value="45">45 minutos</option>
+                <option value="60">60 minutos</option>
+              </select>
+            </div>
+            <div class="col-md-8">
+              <div class="alert alert-info mb-0" style="padding: 0.5rem; font-size: 0.85rem;">
+                <strong>{{ calcularTurnosEstimados() }} turnos</strong> estimados
+                ({{ calcularTiempoTotal() }} min totales ÷ {{ esquema.intervalo }} min/turno)
+              </div>
+            </div>
           </div>
         </div>
         
@@ -973,8 +938,8 @@ import { DisponibilidadMedicoService } from '../../../disponibilidadMedicos/disp
             Ajuste los horarios dentro del rango disponible para poder guardar el esquema.
           </small>
         </div>
-      </div>
-    </div>
+      </div> <!-- Cierre section-card -->
+    </div> <!-- Cierre modal-body -->
 
     <!-- Modal Footer -->
     <div class="modal-footer">
@@ -1014,6 +979,8 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   consultorioHorarios: any[] = [];
   horariosDisponibles: any[] = [];
   esquemasExistentes: EsquemaTurno[] = [];
+  esquemasEnConsultorioActual: EsquemaTurno[] = [];
+  esquemasEnOtrosConsultorios: EsquemaTurno[] = [];
   
   // Propiedades para manejar rangos personalizables
   horariosPersonalizados: { [key: string]: { horaInicio: string; horaFin: string; } } = {};
@@ -1154,11 +1121,30 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   }
 
   private cargarEsquemasExistentes() {
-    if (this.consultorio && this.consultorio.id) {
-      this.esquemaTurnoService.getByConsultorio(this.consultorio.id).subscribe({
+    if (this.centroId) {
+      // CORRECCIÓN: Cargar TODOS los esquemas del centro (no solo del consultorio)
+      // para validar conflictos en otros consultorios del mismo centro
+      this.esquemaTurnoService.getByCentroAtencion(this.centroId).subscribe({
         next: (response) => {
           this.esquemasExistentes = response.data || [];
-          console.log('Esquemas existentes:', this.esquemasExistentes);
+
+          // Separar esquemas por consultorio para mostrar información más clara
+          this.esquemasEnConsultorioActual = this.esquemasExistentes.filter(
+            esq => esq.consultorioId === this.consultorio?.id
+          );
+
+          this.esquemasEnOtrosConsultorios = this.esquemasExistentes.filter(
+            esq => esq.consultorioId !== this.consultorio?.id && esq.consultorioId !== null
+          );
+
+          console.log('📋 Esquemas existentes en el centro:', this.esquemasExistentes.length);
+          console.log('🏥 Esquemas en consultorio actual:', this.esquemasEnConsultorioActual.length);
+          console.log('🏢 Esquemas en otros consultorios:', this.esquemasEnOtrosConsultorios.length);
+          console.log('🔍 Esquemas por consultorio:', this.esquemasExistentes.reduce((acc, esq) => {
+            const consultorio = esq.consultorio?.nombre || 'Sin asignar';
+            acc[consultorio] = (acc[consultorio] || 0) + 1;
+            return acc;
+          }, {} as any));
         },
         error: (error) => {
           console.error('Error al cargar esquemas existentes:', error);
@@ -1256,16 +1242,17 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Nuevo método que divide un horario en segmentos libres, 
-   * excluyendo solo las partes ocupadas por esquemas existentes
+   * Nuevo método que divide un horario en segmentos libres,
+   * excluyendo solo las partes ocupadas por esquemas existentes EN EL MISMO CONSULTORIO
    */
   private calcularSegmentosLibres(horario: any): any[] {
     const segmentosLibres: any[] = [];
     const inicioTotal = this.timeToMinutes(horario.horaInicio);
     const finTotal = this.timeToMinutes(horario.horaFin);
 
-    // Obtener todos los horarios ocupados para este día, ordenados por hora
-    const horariosOcupados = this.esquemasExistentes
+    // CORRECCIÓN: Solo considerar horarios ocupados en el MISMO CONSULTORIO
+    // Los horarios en otros consultorios no bloquean la disponibilidad
+    const horariosOcupados = this.esquemasEnConsultorioActual
       .flatMap(esquema => esquema.horarios)
       .filter(h => this.normalizarDia(h.dia) === this.normalizarDia(horario.dia))
       .map(h => ({
@@ -1275,7 +1262,7 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
       .sort((a, b) => a.inicio - b.inicio);
 
     console.log(`🔍 Calculando segmentos libres para ${horario.dia} ${horario.horaInicio}-${horario.horaFin}`);
-    console.log(`📅 Horarios ocupados:`, horariosOcupados.map(h => `${this.minutesToTime(h.inicio)}-${this.minutesToTime(h.fin)}`));
+    console.log(`📅 Horarios ocupados EN ESTE CONSULTORIO:`, horariosOcupados.map(h => `${this.minutesToTime(h.inicio)}-${this.minutesToTime(h.fin)}`));
 
     if (horariosOcupados.length === 0) {
       // No hay ocupación, todo el horario está libre
@@ -1322,25 +1309,6 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
     return segmentosLibres;
   }
 
-  private esQuemasOcupanHorario(horario: any): boolean {
-    for (const esquema of this.esquemasExistentes) {
-      for (const horarioEsquema of esquema.horarios) {
-        if (this.normalizarDia(horarioEsquema.dia) === this.normalizarDia(horario.dia)) {
-          const inicioNuevo = this.timeToMinutes(horario.horaInicio);
-          const finNuevo = this.timeToMinutes(horario.horaFin);
-          const inicioExistente = this.timeToMinutes(horarioEsquema.horaInicio);
-          const finExistente = this.timeToMinutes(horarioEsquema.horaFin);
-          
-          // Verificar si hay solapamiento
-          if (inicioNuevo < finExistente && finNuevo > inicioExistente) {
-            console.log(`❌ Horario ${horario.dia} ${horario.horaInicio}-${horario.horaFin} ocupado por esquema existente`);
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
 
   private timeToMinutes(time: string): number {
     const [hours, minutes] = time.split(':').map(Number);
@@ -1567,16 +1535,79 @@ export class EsquemaTurnoModalComponent implements OnInit, AfterViewInit {
   }
 
   // Métodos para manejo de errores de validación
-  private mostrarErrorValidacion(mensaje: string): void {
-    this.errorValidacion = mensaje;
-    // Limpiar el error después de 5 segundos
-    setTimeout(() => {
-      this.limpiarErrorValidacion();
-    }, 5000);
-  }
-
   private limpiarErrorValidacion(): void {
     this.errorValidacion = '';
+  }
+
+  // Métodos para obtener información de horarios ocupados en otros consultorios
+  getHorariosOcupadosEnOtrosConsultorios(dia: string): Array<{
+    horaInicio: string,
+    horaFin: string,
+    medico: string,
+    consultorio: string | null,
+    medicoId: number
+  }> {
+    const horariosOcupados: Array<{
+      horaInicio: string,
+      horaFin: string,
+      medico: string,
+      consultorio: string | null,
+      medicoId: number
+    }> = [];
+
+    for (const esquema of this.esquemasEnOtrosConsultorios) {
+      for (const horario of esquema.horarios) {
+        if (this.normalizarDia(horario.dia) === this.normalizarDia(dia)) {
+          horariosOcupados.push({
+            horaInicio: horario.horaInicio,
+            horaFin: horario.horaFin,
+            medico: `${esquema.staffMedico?.medico?.nombre || ''} ${esquema.staffMedico?.medico?.apellido || ''}`.trim(),
+            consultorio: esquema.consultorio?.nombre || null,
+            medicoId: esquema.staffMedicoId || 0
+          });
+        }
+      }
+    }
+
+    return horariosOcupados.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  }
+
+  tieneHorariosOcupadosEnOtrosConsultorios(dia: string): boolean {
+    return this.getHorariosOcupadosEnOtrosConsultorios(dia).length > 0;
+  }
+
+  /**
+   * Verifica si un horario específico tiene conflicto con horarios ocupados en otros consultorios
+   * Retorna información del conflicto si existe
+   */
+  getConflictoEnOtrosConsultorios(horario: any): {
+    tieneConflicto: boolean,
+    medico?: string,
+    consultorio?: string,
+    horarioConflictivo?: string,
+    esElMismoMedico?: boolean
+  } {
+    const horariosOcupados = this.getHorariosOcupadosEnOtrosConsultorios(horario.dia);
+    const inicioSeleccionado = this.timeToMinutes(horario.horaInicio);
+    const finSeleccionado = this.timeToMinutes(horario.horaFin);
+
+    for (const ocupado of horariosOcupados) {
+      const inicioOcupado = this.timeToMinutes(ocupado.horaInicio);
+      const finOcupado = this.timeToMinutes(ocupado.horaFin);
+
+      // Verificar si hay solapamiento
+      if (inicioSeleccionado < finOcupado && finSeleccionado > inicioOcupado) {
+        return {
+          tieneConflicto: true,
+          medico: ocupado.medico,
+          consultorio: ocupado.consultorio,
+          horarioConflictivo: `${ocupado.horaInicio}-${ocupado.horaFin}`,
+          esElMismoMedico: ocupado.medicoId === this.disponibilidadSeleccionada?.staffMedicoId
+        };
+      }
+    }
+
+    return { tieneConflicto: false };
   }
 
   // Métodos para verificar si los horarios están dentro del rango (sin bloquear)
