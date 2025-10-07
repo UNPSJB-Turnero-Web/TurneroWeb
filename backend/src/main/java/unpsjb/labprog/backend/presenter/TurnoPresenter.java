@@ -646,4 +646,19 @@ public class TurnoPresenter {
             return Response.error(null, "Error al ejecutar recordatorios: " + e.getMessage());
         }
     }
+
+    @Autowired
+    private unpsjb.labprog.backend.business.service.TurnoAutomationService turnoAutomationService;
+
+     // DEBUG - ejecutar curl -X POST http://localhost:8080/turno/ejecutar-cancelacion-automatica
+    @PostMapping("/ejecutar-cancelacion-automatica")
+    public ResponseEntity<Object> ejecutarCancelacionAutomaticaManual() {
+        try {
+            turnoAutomationService.ejecutarCancelacionManual();
+            return Response.ok(null, "Cancelación automática de turnos ejecutada manualmente");
+        } catch (Exception e) {
+            return Response.error(null, "Error al ejecutar cancelación automática: " + e.getMessage());
+        }
+    }
+    
 }

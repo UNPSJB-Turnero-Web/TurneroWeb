@@ -427,42 +427,46 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     /**
      * Encuentra turnos PROGRAMADOS que deben ser cancelados automáticamente
-     * Busca turnos cuya fecha/hora esté dentro del límite especificado y no hayan
-     * sido confirmados
+     * Busca turnos cuya fecha/hora esté a MENOS de 48 horas de la fecha actual
+     * y que aún no hayan ocurrido (no se confirmaron a tiempo)
      * 
      * @param estado      Estado del turno (debe ser PROGRAMADO)
+     * @param fechaHoraActual Fecha/hora actual en Argentina (UTC-3)
      * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
      * @return Lista de turnos que deben ser cancelados
      */
     @Query("""
             SELECT t FROM Turno t
             WHERE t.estado = :estado
+            AND (t.fecha > CAST(:fechaHoraActual AS LocalDate)
+                 OR (t.fecha = CAST(:fechaHoraActual AS LocalDate) AND t.horaInicio > CAST(:fechaHoraActual AS LocalTime)))
             AND (t.fecha < CAST(:fechaLimite AS LocalDate)
                  OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
-            AND (t.fecha > CURRENT_DATE
-                 OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
             ORDER BY t.fecha ASC, t.horaInicio ASC
             """)
     List<Turno> findTurnosParaCancelacionAutomatica(
             @Param("estado") EstadoTurno estado,
+            @Param("fechaHoraActual") java.time.LocalDateTime fechaHoraActual,
             @Param("fechaLimite") java.time.LocalDateTime fechaLimite);
 
     /**
      * Cuenta turnos que están por vencer para cancelación automática
      * 
      * @param estado      Estado del turno (debe ser PROGRAMADO)
+     * @param fechaHoraActual Fecha/hora actual en Argentina (UTC-3)
      * @param fechaLimite Fecha límite para cancelación (ej: ahora + 48 horas)
      * @return Cantidad de turnos que serían cancelados automáticamente
      */
     @Query("""
             SELECT COUNT(t) FROM Turno t
             WHERE t.estado = :estado
+            AND (t.fecha > CAST(:fechaHoraActual AS LocalDate)
+                 OR (t.fecha = CAST(:fechaHoraActual AS LocalDate) AND t.horaInicio > CAST(:fechaHoraActual AS LocalTime)))
             AND (t.fecha < CAST(:fechaLimite AS LocalDate)
                  OR (t.fecha = CAST(:fechaLimite AS LocalDate) AND t.horaInicio <= CAST(:fechaLimite AS LocalTime)))
-            AND (t.fecha > CURRENT_DATE
-                 OR (t.fecha = CURRENT_DATE AND t.horaInicio > CURRENT_TIME))
             """)
     long countTurnosParaCancelacionAutomatica(
             @Param("estado") EstadoTurno estado,
+            @Param("fechaHoraActual") java.time.LocalDateTime fechaHoraActual,
             @Param("fechaLimite") java.time.LocalDateTime fechaLimite);
 }
