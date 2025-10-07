@@ -611,17 +611,23 @@ public class TurnoService {
             return;
         }
 
-
         LocalDate hoy = LocalDate.now();
         int diasRecordatorio = configuracionService.getDiasRecordatorioConfirmacion();
-        LocalDate fechaObjetivo = hoy.plusDays(diasRecordatorio);
+        
+        // Calcular rango: desde mañana hasta diasRecordatorio días en el futuro
+        LocalDate fechaDesde = hoy.plusDays(1);
+        LocalDate fechaHasta = hoy.plusDays(diasRecordatorio);
 
-        System.out.println(String.format("Enviando recordatorios para turnos del: %s (%d días de anticipación)",
-                fechaObjetivo, diasRecordatorio));
+        System.out.println(String.format("Enviando recordatorios para turnos entre: %s y %s (%d días de anticipación)",
+                fechaDesde, fechaHasta, diasRecordatorio));
 
-        List<Turno> turnosParaRecordar = repository.findByEstadoInAndFecha(
-                Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.REAGENDADO),
-                fechaObjetivo);
+        // Buscar turnos en el rango de fechas y filtrar por estado
+        List<Turno> turnosPorFecha = repository.findByFechaBetween(fechaDesde, fechaHasta);
+        
+        // Filtrar solo turnos PROGRAMADOS y REAGENDADOS
+        List<Turno> turnosParaRecordar = turnosPorFecha.stream()
+                .filter(t -> t.getEstado() == EstadoTurno.PROGRAMADO || t.getEstado() == EstadoTurno.REAGENDADO)
+                .collect(Collectors.toList());
 
         System.out.println("Turnos encontrados para recordatorio: " + turnosParaRecordar.size());
 
