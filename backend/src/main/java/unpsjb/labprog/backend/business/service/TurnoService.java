@@ -1,7 +1,9 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -241,16 +243,17 @@ public class TurnoService {
 
     /**
      * Búsqueda paginada avanzada con filtros y ordenamiento
-     * @param page Número de página (0-based)
-     * @param size Tamaño de página
-     * @param paciente Filtro por nombre o apellido del paciente (opcional)
-     * @param medico Filtro por nombre o apellido del médico (opcional)
+     * 
+     * @param page        Número de página (0-based)
+     * @param size        Tamaño de página
+     * @param paciente    Filtro por nombre o apellido del paciente (opcional)
+     * @param medico      Filtro por nombre o apellido del médico (opcional)
      * @param consultorio Filtro por nombre del consultorio (opcional)
-     * @param estado Filtro por estado del turno (opcional)
-     * @param fechaDesde Filtro por fecha desde (formato: yyyy-MM-dd, opcional)
-     * @param fechaHasta Filtro por fecha hasta (formato: yyyy-MM-dd, opcional)
-     * @param sortBy Campo para ordenar (opcional)
-     * @param sortDir Dirección del ordenamiento (asc/desc, opcional)
+     * @param estado      Filtro por estado del turno (opcional)
+     * @param fechaDesde  Filtro por fecha desde (formato: yyyy-MM-dd, opcional)
+     * @param fechaHasta  Filtro por fecha hasta (formato: yyyy-MM-dd, opcional)
+     * @param sortBy      Campo para ordenar (opcional)
+     * @param sortDir     Dirección del ordenamiento (asc/desc, opcional)
      * @return Page<TurnoDTO> con los resultados paginados
      */
     public Page<TurnoDTO> findByPage(
@@ -306,8 +309,8 @@ public class TurnoService {
 
         // Ejecutar consulta con filtros
         Page<Turno> result = repository.findByFiltros(
-            paciente, medico, consultorio, estadoEnum, 
-            fechaDesdeParsed, fechaHastaParsed, pageable);
+                paciente, medico, consultorio, estadoEnum,
+                fechaDesdeParsed, fechaHastaParsed, pageable);
 
         // Mapear a DTO
         return result.map(this::toDTO);
@@ -510,57 +513,70 @@ public class TurnoService {
         return toDTO(savedTurno);
     }
 
-    // Método actualizado para validar ventana de confirmación
+    // Método mejorado para validar ventana de confirmación
     private void validarVentanaConfirmacion(Turno turno, String rol) {
-        // Los administradores y operadores pueden confirmar en cualquier momento
+        // Administradores y operadores pueden confirmar sin restricciones
         if ("ADMINISTRADOR".equals(rol) || "OPERADOR".equals(rol)) {
             return;
         }
 
-        // Validar que las configuraciones sean consistentes
+        // Validar consistencia de configuraciones
         configuracionService.validarConfiguracionesTurnos();
         configuracionService.validarConfiguracionesRecordatorios();
 
+        ZoneId zoneId = ZoneId.of("America/Argentina/Buenos_Aires");
         LocalDate hoy = LocalDate.now();
+        LocalTime horaActual = LocalTime.now(zoneId);
         long diasRestantes = ChronoUnit.DAYS.between(hoy, turno.getFecha());
 
         int diasMin = configuracionService.getDiasMinConfirmacion();
         int diasMax = configuracionService.getDiasMaxNoConfirm();
+        LocalTime horaCorte = configuracionService.getHoraCorteConfirmacion();
+        LocalTime ahoraHora = LocalTime.now(zoneId);
+
+        // 🧩 LOGS DE DEPURACIÓN
+        System.out.println("🕒 --- VALIDACIÓN DE CONFIRMACIÓN DE TURNO ---");
+        System.out.println("📅 Fecha actual: " + hoy);
+        System.out.println("🕓 Hora actual: " + horaActual);
+        System.out.println("📅 Fecha del turno: " + turno.getFecha());
+        System.out.println("🕑 Hora del turno: " + turno.getHoraInicio());
+        System.out.println("📉 Días restantes: " + diasRestantes);
+        System.out.println(
+                "⚙️  Configuración -> Mínimo: " + diasMin + ", Máximo: " + diasMax + ", Hora corte: " + horaCorte);
+        System.out.println("👤 Rol del usuario: " + rol);
+        System.out.println("🕓 Hora actual: " + ahoraHora);
+        System.out.println("--------------------------------------------------");
 
         // No se puede confirmar el mismo día o en el pasado
         if (diasRestantes <= 0) {
             throw new IllegalStateException("No se pueden confirmar turnos el mismo día o fechas pasadas");
         }
 
-        // No se puede confirmar con menos días de anticipación del mínimo
+        // No se puede confirmar con menos días de anticipación
         if (diasRestantes < diasMin) {
             throw new IllegalStateException(
-                    String.format("Los turnos deben confirmarse al menos %d días antes de la fecha programada",
-                            diasMin));
+                    String.format(
+                            "Los turnos deben confirmarse al menos %d días antes de la fecha programada: %d días restantes",
+                            diasMin, diasRestantes));
+        }
+
+        // Si justo estamos en el día mínimo, revisar la hora de corte
+        if (diasRestantes == diasMin && horaActual.isAfter(horaCorte)) {
+            throw new IllegalStateException(
+                    String.format("Ya pasó la hora límite para confirmar (%s). Son las %s.",
+                            horaCorte, horaActual));
         }
 
         // No se puede confirmar con demasiada anticipación
         if (diasRestantes > diasMax) {
             throw new IllegalStateException(
-                    String.format("Los turnos solo pueden confirmarse entre %d y %d días antes de la fecha", diasMin,
-                            diasMax));
-        }
-
-        // Validar hora de corte si es el último día permitido
-        if (diasRestantes == diasMin) {
-            LocalTime ahoraHora = LocalTime.now();
-            LocalTime horaCorte = configuracionService.getHoraCorteConfirmacion();
-
-            if (ahoraHora.isAfter(horaCorte)) {
-                throw new IllegalStateException(
-                        String.format(
-                                "Ya pasó la hora límite para confirmar (%s). Los turnos deben confirmarse antes de las %s del día %d previo.",
-                                horaCorte.toString(), horaCorte.toString(), diasMin));
-            }
+                    String.format("Los turnos solo pueden confirmarse entre %d y %d días antes de la fecha",
+                            diasMin, diasMax));
         }
     }
 
-    /* // Cancelación automática actualizada
+    // Cancelación automática actualizada
+
     @Scheduled(cron = "0 0 0 * * ?") // Diariamente a las 00:00
     @Transactional
     public void cancelarTurnosNoConfirmadosAutomaticamente() {
@@ -580,7 +596,8 @@ public class TurnoService {
                 Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.REAGENDADO),
                 fechaLimite);
 
-        System.out.println("Turnos a evaluar para cancelación: " + turnosACancelar.size());
+        System.out.println("Turnos a evaluar para cancelación: " +
+                turnosACancelar.size());
 
         for (Turno turno : turnosACancelar) {
             try {
@@ -591,7 +608,8 @@ public class TurnoService {
 
                 cancelarTurno(turno.getId(), motivo, "SYSTEM_AUTO");
 
-                System.out.println("Turno ID " + turno.getId() + " cancelado automáticamente");
+                System.out.println("Turno ID " + turno.getId() +
+                        " cancelado automáticamente");
 
             } catch (Exception e) {
                 System.err.println("Error al cancelar automáticamente turno ID " +
@@ -600,7 +618,7 @@ public class TurnoService {
         }
 
         System.out.println("Cancelación automática completada");
-    } */
+    }
 
     // === SISTEMA DE RECORDATORIOS ===
     @Scheduled(cron = "0 0 9 * * ?") // Por defecto a las 9:00 AM, pero configurable
@@ -613,7 +631,7 @@ public class TurnoService {
 
         LocalDate hoy = LocalDate.now();
         int diasRecordatorio = configuracionService.getDiasRecordatorioConfirmacion();
-        
+
         // Calcular rango: desde mañana hasta diasRecordatorio días en el futuro
         LocalDate fechaDesde = hoy.plusDays(1);
         LocalDate fechaHasta = hoy.plusDays(diasRecordatorio);
@@ -623,7 +641,7 @@ public class TurnoService {
 
         // Buscar turnos en el rango de fechas y filtrar por estado
         List<Turno> turnosPorFecha = repository.findByFechaBetween(fechaDesde, fechaHasta);
-        
+
         // Filtrar solo turnos PROGRAMADOS y REAGENDADOS
         List<Turno> turnosParaRecordar = turnosPorFecha.stream()
                 .filter(t -> t.getEstado() == EstadoTurno.PROGRAMADO || t.getEstado() == EstadoTurno.REAGENDADO)
@@ -1573,7 +1591,9 @@ public class TurnoService {
 
             // Registrar auditoría de notificación in-app exitosa
             registrarAuditoriaNotificacion(turno, "IN_APP", "SUCCESS",
-                    "Notificación in-app enviada exitosamente al paciente " + turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido(), performedBy);
+                    "Notificación in-app enviada exitosamente al paciente " + turno.getPaciente().getNombre() + " "
+                            + turno.getPaciente().getApellido(),
+                    performedBy);
 
         } catch (Exception e) {
             // Registrar auditoría de notificación fallida
@@ -2168,12 +2188,11 @@ public class TurnoService {
             // Enviar email de forma asíncrona con deep link
             // El EmailService generará automáticamente el deep link token
             emailService.sendAppointmentCancellationEmail(
-                patientEmail, 
-                patientName, 
-                cancellationDetails,
-                pacienteId, 
-                turnoId
-            );
+                    patientEmail,
+                    patientName,
+                    cancellationDetails,
+                    pacienteId,
+                    turnoId);
 
             System.out
                     .println("📧 Email de cancelación enviado a: " + patientEmail + " para turno ID: " + turno.getId());
@@ -2217,7 +2236,8 @@ public class TurnoService {
     /**
      * Registra auditoría para el envío de notificaciones de cancelación de turno
      */
-    private void registrarAuditoriaNotificacion(Turno turno, String notificationChannel, String status, String message, String performedBy) {
+    private void registrarAuditoriaNotificacion(Turno turno, String notificationChannel, String status, String message,
+            String performedBy) {
         try {
             System.out.println("🔍 DEBUG: performedBy = " + performedBy);
 
@@ -2227,30 +2247,37 @@ public class TurnoService {
             Map<String, Object> notificationDetails = new HashMap<>();
             notificationDetails.put("turnoId", turno.getId());
             notificationDetails.put("pacienteId", pacienteId);
-            notificationDetails.put("pacienteNombre", turno.getPaciente() != null ? turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido() : "N/A");
+            notificationDetails.put("pacienteNombre",
+                    turno.getPaciente() != null
+                            ? turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido()
+                            : "N/A");
             notificationDetails.put("notificationChannel", notificationChannel);
             notificationDetails.put("status", status);
             notificationDetails.put("message", message);
 
-            System.out.println("🔍 DEBUG: Intentando registrar auditoría - Turno: " + turno.getId() + ", Canal: " + notificationChannel + ", Status: " + status);
+            System.out.println("🔍 DEBUG: Intentando registrar auditoría - Turno: " + turno.getId() + ", Canal: "
+                    + notificationChannel + ", Status: " + status);
 
-            // TODO: BUG - El Map notificationDetails no se serializa correctamente en la DB.
+            // TODO: BUG - El Map notificationDetails no se serializa correctamente en la
+            // DB.
             // Actualmente se guarda el hashCode (ej. 29534) en lugar del JSON esperado.
-            // Necesario: Cambiar columna newValues en AuditLog a TEXT/JSON y serializar Map a JSON en AuditLogService.logGenericAction
+            // Necesario: Cambiar columna newValues en AuditLog a TEXT/JSON y serializar Map
+            // a JSON en AuditLogService.logGenericAction
             // Registrar auditoría genérica
             AuditLog auditLog = auditLogService.logGenericAction(
-                AuditLog.EntityTypes.TURNO,
-                turno.getId().longValue(),
-                AuditLog.Actions.CANCELACION_TURNO_NOTIFICACION,
-                performedBy,
-                null, // estadoAnterior
-                null, // estadoNuevo
-                null, // oldValues
-                notificationDetails, // newValues
-                message // reason
+                    AuditLog.EntityTypes.TURNO,
+                    turno.getId().longValue(),
+                    AuditLog.Actions.CANCELACION_TURNO_NOTIFICACION,
+                    performedBy,
+                    null, // estadoAnterior
+                    null, // estadoNuevo
+                    null, // oldValues
+                    notificationDetails, // newValues
+                    message // reason
             );
 
-            System.out.println("✅ Auditoría registrada exitosamente - ID: " + (auditLog != null ? auditLog.getId() : "NULL"));
+            System.out.println(
+                    "✅ Auditoría registrada exitosamente - ID: " + (auditLog != null ? auditLog.getId() : "NULL"));
 
         } catch (Exception e) {
             System.err.println("❌ ERROR al registrar auditoría de notificación: " + e.getMessage());
