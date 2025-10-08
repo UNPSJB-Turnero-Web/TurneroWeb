@@ -1,7 +1,6 @@
 package unpsjb.labprog.backend.business.service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -621,7 +620,8 @@ public class TurnoService {
     }
 
     // === SISTEMA DE RECORDATORIOS ===
-    @Scheduled(cron = "0 0 9 * * ?") // Por defecto a las 9:00 AM, pero configurable
+    @Scheduled(cron = "0 0 9 * * ?", zone = "America/Argentina/Buenos_Aires") // Por defecto a las 9:00 AM, pero
+                                                                              // configurable
     @Transactional
     public void enviarRecordatoriosConfirmacion() {
         if (!configuracionService.isHabilitadosRecordatorios()) {
