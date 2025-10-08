@@ -92,21 +92,8 @@ import { AuthService } from '../inicio-sesion/auth.service';
             <input type="checkbox" class="form-check-input" [(ngModel)]="configNotif.habilitar_email" id="email">
             <label class="form-check-label" for="email">Email habilitado</label>
           </div>
-          <div class="config-item col form-check">
-            <input type="checkbox" class="form-check-input" [(ngModel)]="configNotif.habilitar_sms" id="sms">
-            <label class="form-check-label" for="sms">SMS habilitado</label>
-          </div>
-          <div class="config-item col">
-            <label class="form-label">Nombre de la clínica:</label>
-            <input type="text" class="form-control" [(ngModel)]="configNotif.nombre_clinica">
-          </div>
-          <div class="config-item col">
-            <label class="form-label">Email para notificaciones:</label>
-            <input type="email" class="form-control" [(ngModel)]="configNotif.email_notificaciones">
-          </div>
         </div>
       </div>
-
       <div class="actions-footer mt-4">
         <button class="btn btn-save me-2" (click)="testClick($event)">
           <i class="fas fa-save me-2"></i>
