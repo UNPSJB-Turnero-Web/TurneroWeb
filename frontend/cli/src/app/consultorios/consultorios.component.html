@@ -1,0 +1,127 @@
+<div class="container-fluid mt-4">
+  <div class="modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-consultorios">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="header-icon">
+            <i class="fas fa-door-open"></i>
+          </div>
+          <div class="header-text">
+            <h1>Consultorios</h1>
+            <p>Gestión de consultorios médicos del sistema</p>
+          </div>
+        </div>
+        <button
+          class="btn btn-banner"
+          (click)="router.navigate(['/consultorios/new'])"
+        >
+          <i class="fas fa-plus me-2"></i>
+          Nuevo Consultorio
+        </button>
+      </div>
+    </div>
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container">
+      <table class="table modern-table">
+        <thead>
+          <tr>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle id-header">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                Número
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle centro-header">
+                  <i class="fas fa-hospital"></i>
+                </div>
+                Centro de Atención
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle consultorio-header">
+                  <i class="fas fa-door-open"></i>
+                </div>
+                Nombre del Consultorio
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle actions-header">
+                  <i class="fas fa-cogs"></i>
+                </div>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let c of resultsPage.content || []; let i = index"
+            class="table-row"
+            [class.even]="i % 2 === 0"
+            [class.odd]="i % 2 !== 0"
+            (click)="goToDetail(c.id)"
+          >
+            <td>
+              <span class="badge-consultorios">{{ c.numero }}</span>
+            </td>
+            <td>
+              <div class="centro-info">
+                <div class="ref-centro-atencion">
+                  <i class="fas fa-hospital me-2"></i>
+                  {{ c.centroAtencion }}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="consultorio-info">
+                <div class="consultorio-name">{{ c.nombre }}</div>
+                <div class="consultorio-type">Consultorio Médico</div>
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-action btn-edit"
+                  (click)="goToEdit(c.id); $event.stopPropagation()"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn-action btn-delete"
+                  (click)="confirmDelete(c.id); $event.stopPropagation()"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
+            <td colspan="4" class="text-center py-4 text-muted">
+              <i class="fas fa-door-open fa-3x mb-3 d-block opacity-50"></i>
+              No hay consultorios registrados
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <app-pagination
+    [totalPages]="resultsPage.totalPages"
+    [currentPage]="currentPage"
+    (pageChangeRequested)="onPageChangeRequested($event)"
+    [number]="resultsPage.number"
+    [last]="resultsPage.last"
+    [hidden]="resultsPage.numberOfElements < 1"
+  ></app-pagination>
+</div>

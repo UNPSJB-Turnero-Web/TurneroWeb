@@ -1,0 +1,251 @@
+<div class="container-fluid mt-4">
+  <div class="card modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-disponibilidad">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="icon-disponibilidad">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="header-text">
+            <h1>Disponibilidad Médica</h1>
+            <p>Gestión de horarios y disponibilidad de médicos</p>
+          </div>
+        </div>
+        <button
+          class="btn btn-new"
+          (click)="router.navigate(['/disponibilidades-medico/new'])"
+        >
+          <i class="fas fa-plus me-2"></i>
+          Nueva Disponibilidad
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTROS DE BÚSQUEDA -->
+    <div class="filters-section">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label for="staffMedicoFilter" class="form-label">Staff Médico</label>
+          <input
+            type="text"
+            class="form-control"
+            id="staffMedicoFilter"
+            placeholder="Buscar por nombre o apellido..."
+            [(ngModel)]="filters.staffMedico"
+            (input)="applyFilters()"
+          />
+        </div>
+        <div class="col-md-3">
+          <label for="especialidadFilter" class="form-label"
+            >Especialidad</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            id="especialidadFilter"
+            placeholder="Buscar por especialidad..."
+            [(ngModel)]="filters.especialidad"
+            (input)="applyFilters()"
+          />
+        </div>
+        <div class="col-md-2">
+          <label for="diaFilter" class="form-label">Día</label>
+          <select
+            class="form-select"
+            id="diaFilter"
+            [(ngModel)]="filters.dia"
+            (change)="applyFilters()"
+          >
+            <option value="">Todos los días</option>
+            <option *ngFor="let dia of diasSemana" [value]="dia.value">
+              {{ dia.label }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label for="pageSizeSelect" class="form-label">Mostrar</label>
+          <select
+            class="form-select"
+            id="pageSizeSelect"
+            [(ngModel)]="pageSize"
+            (change)="changePageSize($any($event.target).value)"
+          >
+            <option [value]="5">5</option>
+            <option [value]="10">10</option>
+            <option [value]="25">25</option>
+            <option [value]="50">50</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button
+            type="button"
+            class="btn btn-outline-secondary w-100"
+            (click)="clearFilters()"
+          >
+            <i class="fas fa-times me-1"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICADORES DE RESULTADOS -->
+    <div class="results-info" *ngIf="!loading">
+      <small class="text-muted">
+        Mostrando {{ disponibilidades.length }} de
+        {{ totalElements }} resultados (Página {{ currentPage + 1 }} de
+        {{ totalPages }})
+      </small>
+    </div>
+
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container">
+      <div class="table-responsive">
+        <table class="table modern-table">
+          <thead>
+            <tr>
+              <th class="sortable-header" (click)="sortByColumn('id')">
+                <div class="header-cell">
+                  <div class="icon-circle icon-centro-atencion">
+                    <i class="fas fa-hashtag"></i>
+                  </div>
+                  Identificador
+                  <span class="sort-indicator">{{
+                    getSortIndicator("id")
+                  }}</span>
+                </div>
+              </th>
+              <th
+                class="sortable-header"
+                (click)="sortByColumn('staffMedicoName')"
+              >
+                <div class="header-cell">
+                  <div class="icon-circle icon-medicos">
+                    <i class="fas fa-user-md"></i>
+                  </div>
+                  Staff Médico
+                  <span class="sort-indicator">{{
+                    getSortIndicator("staffMedicoName")
+                  }}</span>
+                </div>
+              </th>
+              <th>
+                <div class="header-cell">
+                  <div class="icon-circle icon-disponibilidad">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  Horarios de Disponibilidad
+                </div>
+              </th>
+              <th>
+                <div class="header-cell">
+                  <div class="icon-circle icon-obra-social">
+                    <i class="fas fa-cogs"></i>
+                  </div>
+                  Acciones
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading" class="text-center">
+              <td colspan="4">
+                <div class="spinner-border spinner-border-sm" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+                <span class="ms-2">Cargando disponibilidades...</span>
+              </td>
+            </tr>
+            <tr
+              *ngFor="let disp of disponibilidades; let i = index"
+              class="table-row"
+              [class.even]="i % 2 === 0"
+              [class.odd]="i % 2 !== 0"
+              (click)="goToDetail(disp.id)"
+            >
+              <td>
+                <span class="badge-centro-atencion">{{ disp.id }}</span>
+              </td>
+              <td>
+                <div class="staff-info">
+                  <div class="avatar-medicos">
+                    {{ getInitials(disp.staffMedicoId) }}
+                  </div>
+                  <div class="staff-details">
+                    <div class="staff-name">
+                      {{
+                        disp.staffMedicoName ||
+                          getStaffMedicoNombre(disp.staffMedicoId)
+                      }}
+                    </div>
+                    <div class="badge-especialidades">
+                      {{
+                        disp.especialidadName ||
+                          getStaffEspecialidad(disp.staffMedicoId)
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="horarios-container">
+                  <div
+                    *ngFor="let horario of disp.horarios"
+                    class="badge-disponibilidad"
+                  >
+                    <span class="dia-label">{{ horario.dia }}</span>
+                    <span class="hora-range"
+                      >{{ horario.horaInicio }} - {{ horario.horaFin }}</span
+                    >
+                  </div>
+                  <div
+                    *ngIf="!disp.horarios || disp.horarios.length === 0"
+                    class="no-horarios"
+                  >
+                    Sin horarios configurados
+                  </div>
+                </div>
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  <button
+                    (click)="goToEdit(disp.id); $event.stopPropagation()"
+                    class="btn-action btn-edit"
+                    title="Editar disponibilidad"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    (click)="confirmDelete(disp.id); $event.stopPropagation()"
+                    class="btn-action btn-delete"
+                    title="Eliminar disponibilidad"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="disponibilidades.length === 0">
+              <td colspan="4" class="text-center py-4 text-muted">
+                <i
+                  class="fas fa-calendar-times fa-3x mb-3 d-block opacity-50"
+                ></i>
+                No hay disponibilidades registradas
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINACIÓN -->
+      <div class="pagination-container" *ngIf="totalPages > 1">
+        <app-pagination
+          [currentPage]="currentPage + 1"
+          [totalPages]="totalPages"
+          (pageChangeRequested)="changePage($event - 1)"
+        ></app-pagination>
+      </div>
+    </div>
+  </div>
+</div>

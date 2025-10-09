@@ -1,0 +1,297 @@
+<div class="medico-dashboard">
+  <!-- Floating Particles Background -->
+  <div class="particles-bg">
+    <div
+      class="particle"
+      *ngFor="let p of particles; let i = index"
+      [style.left.px]="p.x"
+      [style.top.px]="p.y"
+      [style.animation-delay.s]="i * 0.2"
+    ></div>
+  </div>
+
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-glow"></div>
+    <div class="welcome-section">
+      <div class="welcome-content">
+        <div class="welcome-icon">
+          <i class="fas fa-user-md"></i>
+        </div>
+        <div class="welcome-text">
+          <h1>¡Bienvenido/a, Doctor/a!</h1>
+          <p class="doctor-info" *ngIf="medicoActual">
+            <i class="fas fa-user me-2"></i>
+            <strong
+              >{{ medicoActual.nombre }} {{ medicoActual.apellido }}</strong
+            >
+          </p>
+          <p class="doctor-info" *ngIf="medicoActual">
+            <i class="fas fa-id-badge me-2"></i>
+            Matrícula: {{ medicoActual.matricula }}
+          </p>
+          <p class="doctor-info" *ngIf="medicoActual">
+            <span
+              *ngIf="
+                medicoActual.especialidades &&
+                  medicoActual.especialidades.length > 0;
+                else especialidadUnica
+              "
+            >
+              <i class="fas fa-stethoscope me-2"></i>
+              Especialidades:
+              <span
+                *ngFor="let esp of medicoActual.especialidades; let last = last"
+              >
+                {{ esp.nombre }}<span *ngIf="!last">, </span>
+              </span>
+            </span>
+            <ng-template #especialidadUnica>
+              <span *ngIf="medicoActual.especialidad">
+                <i class="fas fa-stethoscope me-2"></i>
+                Especialidad: {{ medicoActual.especialidad.nombre }}
+              </span>
+            </ng-template>
+          </p>
+          <p class="tagline">Panel de control médico profesional</p>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn-logout" (click)="configurarPerfil()">
+          <i class="fas fa-cog"></i>
+          <span>Configuración</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-section">
+    <div class="section-background"></div>
+    <div class="section-title-container">
+      <h2><i class="fas fa-chart-line me-3"></i>Estadísticas del Día</h2>
+      <p class="section-description">Resumen de tu actividad médica</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card stat-today">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.turnosHoy }}</div>
+          <div class="stat-label">Turnos Hoy</div>
+          <div class="stat-subtitle">{{ fechaHoy | date : "dd/MM/yyyy" }}</div>
+        </div>
+        <div class="stat-glow"></div>
+      </div>
+
+      <div class="stat-card stat-tomorrow">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.turnosManana }}</div>
+          <div class="stat-label">Mañana</div>
+          <div class="stat-subtitle">Próxima jornada</div>
+        </div>
+        <div class="stat-glow"></div>
+      </div>
+
+      <div class="stat-card stat-week">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-week"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.turnosSemana }}</div>
+          <div class="stat-label">Esta Semana</div>
+          <div class="stat-subtitle">Total semanal</div>
+        </div>
+        <div class="stat-glow"></div>
+      </div>
+
+      <div class="stat-card stat-pending">
+        <div class="stat-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-number">{{ stats.turnosPendientes }}</div>
+          <div class="stat-label">Pendientes</div>
+          <div class="stat-subtitle">Por confirmar</div>
+        </div>
+        <div class="stat-glow"></div>
+        <div class="notification-badge" *ngIf="stats.turnosPendientes > 0">
+          <span>{{ stats.turnosPendientes }}</span>
+          <div class="notification-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <div class="section-background"></div>
+    <div class="section-title-container">
+      <h2><i class="fas fa-rocket me-3"></i>Acciones Rápidas</h2>
+      <p class="section-description">
+        Accede rápidamente a las funciones principales
+      </p>
+    </div>
+    <div class="actions-grid">
+      <div class="action-card action-horarios" (click)="gestionarHorarios()">
+        <div class="card-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="card-content">
+          <h3>Gestionar Horarios</h3>
+          <p>Configurar disponibilidad y horarios</p>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <div
+        class="action-card action-notificaciones"
+        (click)="verNotificaciones()"
+      >
+        <div class="card-icon">
+          <i class="fas fa-bell"></i>
+        </div>
+        <div class="card-content">
+          <h3>Notificaciones</h3>
+          <p>Ver alertas y mensajes importantes</p>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+        <div class="notification-badge" *ngIf="stats.turnosPendientes > 0">
+          <span>{{ stats.turnosPendientes }}</span>
+          <div class="notification-pulse"></div>
+        </div>
+      </div>
+
+      <div class="action-card action-estadisticas" (click)="verEstadisticas()">
+        <div class="card-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="card-content">
+          <h3>Estadísticas</h3>
+          <p>Análisis y reportes médicos</p>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="main-content">
+    <!-- Gestión de Turnos Médicos -->
+    <div class="turnos-management">
+      <div class="section-background"></div>
+      <div class="turnos-header">
+        <div class="turnos-title">
+          <i class="fas fa-calendar-medical"></i>
+          <span>Mis Turnos Médicos</span>
+        </div>
+        <div class="filter-tabs">
+          <button
+            class="filter-tab"
+            [class.active]="currentFilter === 'upcoming'"
+            (click)="setTurnosFilter('upcoming')"
+          >
+            <i class="fas fa-clock"></i>
+            <span>Próximos</span>
+            <span class="filter-count">{{ getFilterCount("upcoming") }}</span>
+          </button>
+          <button
+            class="filter-tab"
+            [class.active]="currentFilter === 'past'"
+            (click)="setTurnosFilter('past')"
+          >
+            <i class="fas fa-history"></i>
+            <span>Pasados</span>
+            <span class="filter-count">{{ getFilterCount("past") }}</span>
+          </button>
+          <button
+            class="filter-tab"
+            [class.active]="currentFilter === 'all'"
+            (click)="setTurnosFilter('all')"
+          >
+            <i class="fas fa-list"></i>
+            <span>Todos</span>
+            <span class="filter-count">{{ getFilterCount("all") }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div *ngIf="isLoadingTurnos" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Cargando turnos...</p>
+      </div>
+
+      <!-- Empty state -->
+      <div
+        *ngIf="!isLoadingTurnos && filteredTurnos.length === 0"
+        class="empty-state"
+      >
+        <i class="fas fa-calendar-times"></i>
+        <h3>{{ getEmptyStateMessage() }}</h3>
+        <p>No se encontraron turnos para mostrar.</p>
+      </div>
+
+      <!-- Turnos grid -->
+      <div
+        *ngIf="!isLoadingTurnos && filteredTurnos.length > 0"
+        class="turnos-grid"
+      >
+        <div
+          *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
+          class="turno-management-card"
+        >
+          <!-- Date section -->
+          <div class="turno-date-section">
+            <div class="date-bubble">
+              <div class="date-day">{{ formatDay(turno.fecha) }}</div>
+              <div class="date-month">{{ formatMonth(turno.fecha) }}</div>
+            </div>
+            <div class="turno-time-info">
+              <div class="turno-time">
+                {{ turno.horaInicio }} - {{ turno.horaFin }}
+              </div>
+              <div class="turno-duration">Duración: 15 min</div>
+            </div>
+          </div>
+
+          <!-- Patient info -->
+          <div class="turno-details">
+            <div class="patient-info">
+              <div class="patient-name">
+                <i class="fas fa-user"></i>
+                {{ turno.nombrePaciente }} {{ turno.apellidoPaciente }}
+              </div>
+              <div class="patient-details">
+                <div class="detail-item">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>{{ turno.nombreCentro || "Centro Médico" }}</span>
+                </div>
+                <div class="detail-item">
+                  <i class="fas fa-door-open"></i>
+                  <span>{{ turno.consultorioNombre || "Consultorio" }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="turno-status" [class]="turno.estado?.toUpperCase()">
+            <i [class]="getStatusIcon(turno.estado)"></i>
+            <span>{{ getStatusText(turno.estado) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

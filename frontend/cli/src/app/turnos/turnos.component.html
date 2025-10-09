@@ -1,0 +1,485 @@
+<div class="container-fluid mt-4">
+  <div class="modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-turnos">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="header-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <div class="header-text">
+            <h1>Turnos Médicos</h1>
+            <p>Gestión de citas y consultas médicas</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <div class="btn-group me-2">
+            <button
+              class="btn btn-outline-info"
+              (click)="router.navigate(['/turnos/audit-dashboard'])"
+              title="Dashboard de Auditoría"
+            >
+              <i class="fas fa-chart-bar me-2"></i>
+              Dashboard
+            </button>
+            <button
+              class="btn btn-outline-primary"
+              (click)="router.navigate(['/turnos/advanced-search'])"
+              title="Búsqueda Avanzada"
+            >
+              <i class="fas fa-search me-2"></i>
+              Búsqueda Avanzada
+            </button>
+          </div>
+          <button
+            class="btn btn-new"
+            (click)="router.navigate(['/turnos/new'])"
+          >
+            <i class="fas fa-plus me-2"></i>
+            Nuevo Turno
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BARRA DE FILTROS Y BÚSQUEDA -->
+    <div class="card-body">
+      <div class="filters-section">
+        <h5 class="filters-title">
+          <i class="fas fa-filter me-2"></i>
+          Filtros de búsqueda
+        </h5>
+
+        <div class="row g-3">
+          <!-- Filtro por Paciente -->
+          <div class="col-md-3">
+            <label for="pacienteFilter" class="form-label">
+              <i class="fas fa-user me-1"></i>
+              Paciente
+            </label>
+            <input
+              type="text"
+              id="pacienteFilter"
+              class="form-control"
+              placeholder="Buscar por nombre/apellido"
+              [(ngModel)]="filters.paciente"
+              (input)="onFilterChange()"
+            />
+          </div>
+
+          <!-- Filtro por Médico -->
+          <div class="col-md-3">
+            <label for="medicoFilter" class="form-label">
+              <i class="fas fa-user-md me-1"></i>
+              Médico
+            </label>
+            <input
+              type="text"
+              id="medicoFilter"
+              class="form-control"
+              placeholder="Buscar por nombre/apellido"
+              [(ngModel)]="filters.medico"
+              (input)="onFilterChange()"
+            />
+          </div>
+
+          <!-- Filtro por Consultorio -->
+          <div class="col-md-3">
+            <label for="consultorioFilter" class="form-label">
+              <i class="fas fa-hospital me-1"></i>
+              Consultorio
+            </label>
+            <input
+              type="text"
+              id="consultorioFilter"
+              class="form-control"
+              placeholder="Buscar consultorio"
+              [(ngModel)]="filters.consultorio"
+              (input)="onFilterChange()"
+            />
+          </div>
+
+          <!-- Filtro por Estado -->
+          <div class="col-md-3">
+            <label for="estadoFilter" class="form-label">
+              <i class="fas fa-info-circle me-1"></i>
+              Estado
+            </label>
+            <select
+              id="estadoFilter"
+              class="form-select"
+              [(ngModel)]="filters.estado"
+              (change)="onFilterChange()"
+            >
+              <option value="">Todos los estados</option>
+              <option value="PROGRAMADO">Programado</option>
+              <option value="CONFIRMADO">Confirmado</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </div>
+
+          <!-- Filtro Fecha Desde -->
+          <div class="col-md-3">
+            <label for="fechaDesdeFilter" class="form-label">
+              <i class="fas fa-calendar-alt me-1"></i>
+              Desde
+            </label>
+            <input
+              type="date"
+              id="fechaDesdeFilter"
+              class="form-control"
+              [(ngModel)]="filters.fechaDesde"
+              (change)="onFilterChange()"
+            />
+          </div>
+
+          <!-- Filtro Fecha Hasta -->
+          <div class="col-md-3">
+            <label for="fechaHastaFilter" class="form-label">
+              <i class="fas fa-calendar-alt me-1"></i>
+              Hasta
+            </label>
+            <input
+              type="date"
+              id="fechaHastaFilter"
+              class="form-control"
+              [(ngModel)]="filters.fechaHasta"
+              (change)="onFilterChange()"
+            />
+          </div>
+
+          <!-- Ordenamiento -->
+          <div class="col-md-3">
+            <label for="sortByFilter" class="form-label">
+              <i class="fas fa-sort me-1"></i>
+              Ordenar por
+            </label>
+            <select
+              id="sortByFilter"
+              class="form-select"
+              [(ngModel)]="filters.sortBy"
+              (change)="onFilterChange()"
+            >
+              <option value="fecha">Fecha</option>
+              <option value="estado">Estado</option>
+              <option value="horaInicio">Hora</option>
+            </select>
+          </div>
+
+          <!-- Dirección de ordenamiento -->
+          <div class="col-md-3">
+            <label for="sortDirFilter" class="form-label">
+              <i class="fas fa-sort-amount-down me-1"></i>
+              Dirección
+            </label>
+            <select
+              id="sortDirFilter"
+              class="form-select"
+              [(ngModel)]="filters.sortDir"
+              (change)="onFilterChange()"
+            >
+              <option value="asc">Ascendente</option>
+              <option value="desc">Descendente</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Botones de control -->
+        <div class="filters-controls mt-3">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="clearFilters()"
+          >
+            <i class="fas fa-times me-2"></i>
+            Limpiar filtros
+          </button>
+
+          <div class="results-info">
+            <span class="badge bg-primary">
+              {{ resultsPage.totalElements }} resultado(s) encontrado(s)
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container">
+      <table class="table modern-table">
+        <thead>
+          <tr>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-turnos">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                ID
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-pacientes">
+                  <i class="fas fa-user"></i>
+                </div>
+                Paciente
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-medicos">
+                  <i class="fas fa-user-md"></i>
+                </div>
+                Médico
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-especialidades">
+                  <i class="fas fa-stethoscope"></i>
+                </div>
+                Especialidad
+              </div>
+            </th>
+            <th>
+              <button
+                class="header-button"
+                (click)="toggleSort('fecha')"
+                [class.active]="filters.sortBy === 'fecha'"
+              >
+                <div class="header-cell">
+                  <div class="icon-circle icon-turnos">
+                    <i class="fas fa-calendar-alt"></i>
+                  </div>
+                  Fecha & Hora
+                  <i
+                    class="fas"
+                    [class.fa-sort-up]="
+                      filters.sortBy === 'fecha' && filters.sortDir === 'asc'
+                    "
+                    [class.fa-sort-down]="
+                      filters.sortBy === 'fecha' && filters.sortDir === 'desc'
+                    "
+                    [class.fa-sort]="filters.sortBy !== 'fecha'"
+                  >
+                  </i>
+                </div>
+              </button>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-centro-atencion">
+                  <i class="fas fa-hospital"></i>
+                </div>
+                Centro/Consultorio
+              </div>
+            </th>
+            <th>
+              <button
+                class="header-button"
+                (click)="toggleSort('estado')"
+                [class.active]="filters.sortBy === 'estado'"
+              >
+                <div class="header-cell">
+                  <div class="icon-circle icon-turnos">
+                    <i class="fas fa-info-circle"></i>
+                  </div>
+                  Estado
+                  <i
+                    class="fas"
+                    [class.fa-sort-up]="
+                      filters.sortBy === 'estado' && filters.sortDir === 'asc'
+                    "
+                    [class.fa-sort-down]="
+                      filters.sortBy === 'estado' && filters.sortDir === 'desc'
+                    "
+                    [class.fa-sort]="filters.sortBy !== 'estado'"
+                  >
+                  </i>
+                </div>
+              </button>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-medico">
+                  <i class="fas fa-history"></i>
+                </div>
+                Auditoría
+              </div>
+            </th>
+            <th>
+              <div class="header-cell text-center">
+                <div class="icon-circle icon-turnos">
+                  <i class="fas fa-cogs"></i>
+                </div>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let turno of resultsPage.content || []; let i = index"
+            class="table-row"
+            (click)="goToDetail(turno.id)"
+            [style.animation-delay]="i * 100 + 'ms'"
+          >
+            <td>
+              <div class="id-badge">
+                <span>{{ turno.id }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="paciente-info">
+                <div class="paciente-avatar">
+                  <span>{{
+                    getPacienteInitials(
+                      turno.nombrePaciente,
+                      turno.apellidoPaciente
+                    )
+                  }}</span>
+                </div>
+                <div class="paciente-details">
+                  <span class="paciente-name"
+                    >{{ turno.nombrePaciente }}
+                    {{ turno.apellidoPaciente }}</span
+                  >
+                  <span class="paciente-id">ID: {{ turno.pacienteId }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="medico-info">
+                <div class="medico-avatar">
+                  <span>{{
+                    getMedicoInitials(
+                      turno.staffMedicoNombre,
+                      turno.staffMedicoApellido
+                    )
+                  }}</span>
+                </div>
+                <div class="medico-details">
+                  <span class="medico-name"
+                    >{{ turno.staffMedicoNombre }}
+                    {{ turno.staffMedicoApellido }}</span
+                  >
+                  <span class="medico-id"
+                    >Staff ID: {{ turno.staffMedicoId }}</span
+                  >
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="badge-especialidades">
+                {{ turno.especialidadStaffMedico || "Sin especialidad" }}
+              </div>
+            </td>
+            <td>
+              <div class="fecha-info">
+                <div class="fecha-day">
+                  {{ turno.fecha | date : "dd/MM/yyyy" }}
+                </div>
+                <div class="fecha-time">
+                  {{ turno.horaInicio }} - {{ turno.horaFin }}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="centro-info">
+                <div class="centro-name">{{ turno.nombreCentro }}</div>
+                <div class="consultorio-name">
+                  Consultorio: {{ turno.consultorioNombre }}
+                </div>
+              </div>
+            </td>
+            <td>
+              <div
+                class="estado-badge"
+                [class]="getEstadoBadgeClass(turno.estado)"
+              >
+                <i class="fas" [class]="getEstadoIcon(turno.estado)"></i>
+                {{ turno.estado }}
+              </div>
+            </td>
+            <td>
+              <div class="audit-info">
+                <div
+                  class="audit-summary"
+                  *ngIf="
+                    turno.totalModificaciones && turno.totalModificaciones > 0
+                  "
+                >
+                  <span class="badge bg-warning">
+                    <i class="fas fa-edit"></i>
+                    {{ turno.totalModificaciones }} modificaciones
+                  </span>
+                  <div class="audit-details">
+                    <small class="text-muted">
+                      Último: {{ turno.ultimoUsuarioModificacion }}
+                    </small>
+                  </div>
+                </div>
+                <div
+                  class="audit-summary"
+                  *ngIf="
+                    !turno.totalModificaciones ||
+                    turno.totalModificaciones === 0
+                  "
+                >
+                  <span class="badge bg-success">
+                    <i class="fas fa-check"></i>
+                    Sin modificaciones
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-action btn-info"
+                  (click)="showAuditHistory(turno); $event.stopPropagation()"
+                  title="Ver historial de auditoría"
+                  *ngIf="
+                    turno.totalModificaciones && turno.totalModificaciones > 0
+                  "
+                >
+                  <i class="fas fa-history"></i>
+                </button>
+                <button
+                  class="btn-action btn-edit"
+                  (click)="goToEdit(turno.id); $event.stopPropagation()"
+                  title="Editar turno"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn-action btn-delete"
+                  (click)="confirmDelete(turno.id); $event.stopPropagation()"
+                  title="Eliminar turno"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="resultsPage.content?.length === 0">
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="fas fa-calendar-check fa-3x mb-3 opacity-50"></i>
+              <p class="mb-0">No hay turnos registrados</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer">
+      <app-pagination
+        [totalPages]="resultsPage.totalPages"
+        [currentPage]="currentPage"
+        (pageChangeRequested)="onPageChangeRequested($event)"
+        [number]="resultsPage.number"
+        [hidden]="resultsPage.numberOfElements < 1"
+      ></app-pagination>
+    </div>
+  </div>
+</div>

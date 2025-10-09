@@ -1,0 +1,33 @@
+.card {
+  border-radius: 1.15rem;
+  overflow: hidden;
+}
+.card-header {
+  border-top-left-radius: 1rem !important;
+  border-top-right-radius: 1rem !important;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-right: 0.7rem !important;
+  padding-left: 0.7rem !important;
+  overflow: hidden;
+}
+.form-control-lg {
+  border-radius: 0.7rem;
+  font-size: 1.1rem;
+}
+.form-control {
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+.badge {
+  font-size: 0.85rem;
+}
