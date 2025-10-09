@@ -26,6 +26,7 @@ import unpsjb.labprog.backend.business.repository.PacienteRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.CancelacionDataDTO;
+import unpsjb.labprog.backend.dto.HistorialTurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoFilterDTO;
 import unpsjb.labprog.backend.dto.ValidacionContactoDTO;
@@ -1033,6 +1034,9 @@ public class TurnoService {
         dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
         dto.setEspecialidadStaffMedico(turno.getStaffMedico().getEspecialidad().getNombre());
 
+        // Nuevo campo de observaciones
+        dto.setObservaciones(turno.getObservaciones());
+
         // Validar si consultorio no es null antes de acceder a sus propiedades
         if (turno.getConsultorio() != null) {
             dto.setConsultorioId(turno.getConsultorio().getId());
@@ -1057,6 +1061,9 @@ public class TurnoService {
         turno.setFecha(dto.getFecha());
         turno.setHoraInicio(dto.getHoraInicio());
         turno.setHoraFin(dto.getHoraFin());
+
+        // Nuevo campo de observaciones
+        turno.setObservaciones(dto.getObservaciones());
 
         // Si no se especifica estado, usar PROGRAMADO por defecto
         if (dto.getEstado() != null && !dto.getEstado().isEmpty()) {
@@ -1370,7 +1377,7 @@ public class TurnoService {
             List<AuditLog> auditHistory = auditLogService.getTurnoAuditHistory(turno.getId());
             if (!auditHistory.isEmpty()) {
                 // Obtener la última modificación
-                AuditLog lastAudit = auditHistory.get(0); // Ya están ordenados por fecha desc
+                AuditLog lastAudit = auditHistory.get(0); // Ya están ordenados por fecha
                 dto.setUltimoUsuarioModificacion(lastAudit.getPerformedBy());
                 dto.setFechaUltimaModificacion(lastAudit.getPerformedAt());
                 dto.setMotivoUltimaModificacion(lastAudit.getReason());
@@ -1381,7 +1388,8 @@ public class TurnoService {
             }
         } catch (Exception e) {
             // Si hay error al obtener auditoría, no fallar la consulta principal
-            System.err.println("Error al obtener auditoría para turno " + turno.getId() + ": " + e.getMessage());
+            System.err.println("Error al obtener auditoría para turno " + turno.getId() +
+                    ": " + e.getMessage());
             dto.setTotalModificaciones(0);
         }
 
@@ -2285,4 +2293,512 @@ public class TurnoService {
             // No re-lanzar para no afectar la operación principal
         }
     }
+
+    /**
+     * Convierte Turno a HistorialTurnoDTO con información completa de auditoría
+     */
+    private HistorialTurnoDTO toHistorialDTO(Turno turno) {
+        HistorialTurnoDTO dto = new HistorialTurnoDTO();
+
+        // Información básica del turno
+        dto.setId(turno.getId());
+        dto.setFecha(turno.getFecha());
+        dto.setHoraInicio(turno.getHoraInicio());
+        dto.setHoraFin(turno.getHoraFin());
+        dto.setEstado(turno.getEstado().name());
+        dto.setObservaciones(turno.getObservaciones());
+
+        // Información del paciente
+        if (turno.getPaciente() != null) {
+            dto.setPacienteId(turno.getPaciente().getId());
+            dto.setNombrePaciente(turno.getPaciente().getNombre());
+            dto.setApellidoPaciente(turno.getPaciente().getApellido());
+            dto.setDniPaciente(turno.getPaciente().getDni());
+            dto.setEmailPaciente(turno.getPaciente().getEmail());
+            dto.setTelefonoPaciente(turno.getPaciente().getTelefono());
+        }
+
+        // Información del médico
+        if (turno.getStaffMedico() != null) {
+            dto.setStaffMedicoId(turno.getStaffMedico().getId());
+            if (turno.getStaffMedico().getMedico() != null) {
+                dto.setStaffMedicoNombre(turno.getStaffMedico().getMedico().getNombre());
+                dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
+            }
+            if (turno.getStaffMedico().getEspecialidad() != null) {
+                dto.setEspecialidadStaffMedico(turno.getStaffMedico().getEspecialidad().getNombre());
+            }
+        }
+
+        // Información del consultorio y centro
+        if (turno.getConsultorio() != null) {
+            dto.setConsultorioId(turno.getConsultorio().getId());
+            dto.setConsultorioNombre(turno.getConsultorio().getNombre());
+
+            if (turno.getConsultorio().getCentroAtencion() != null) {
+                dto.setCentroId(turno.getConsultorio().getCentroAtencion().getId());
+                dto.setNombreCentro(turno.getConsultorio().getCentroAtencion().getNombre());
+                dto.setDireccionCentro(turno.getConsultorio().getCentroAtencion().getDireccion());
+            }
+        }
+
+        // Agregar información de auditoría
+        try {
+            List<AuditLog> auditHistory = auditLogService.getTurnoAuditHistory(turno.getId());
+            if (!auditHistory.isEmpty()) {
+                // Obtener la última modificación
+                AuditLog lastAudit = auditHistory.get(0);
+                dto.setUltimoUsuarioModificacion(lastAudit.getPerformedBy());
+                dto.setFechaUltimaModificacion(lastAudit.getPerformedAt());
+                dto.setMotivoUltimaModificacion(lastAudit.getReason());
+                dto.setTotalModificaciones(auditHistory.size());
+
+                // Información de creación (último elemento de la lista)
+                AuditLog firstAudit = auditHistory.get(auditHistory.size() - 1);
+                dto.setCreadoPor(firstAudit.getPerformedBy());
+                dto.setFechaCreacion(firstAudit.getPerformedAt());
+
+                // Buscar información específica de cancelación
+                auditHistory.stream()
+                        .filter(log -> log.getAction().contains("CANCELACION") ||
+                                log.getEstadoNuevo() != null && log.getEstadoNuevo().equals("CANCELADO"))
+                        .findFirst()
+                        .ifPresent(cancelLog -> {
+                            dto.setMotivoCancelacion(cancelLog.getReason());
+                            dto.setFechaCancelacion(cancelLog.getPerformedAt());
+                            dto.setUsuarioCancelacion(cancelLog.getPerformedBy());
+                            dto.setEstadoAnterior(cancelLog.getEstadoAnterior());
+                            dto.setFechaCambioEstado(cancelLog.getPerformedAt());
+                            dto.setUsuarioCambioEstado(cancelLog.getPerformedBy());
+                        });
+                // Buscar información específica de reagendamiento
+                auditHistory.stream()
+                        .filter(log -> log.getAction().contains("REAGENDAMIENTO") ||
+                                log.getEstadoNuevo() != null && log.getEstadoNuevo().equals("REAGENDADO"))
+                        .findFirst()
+                        .ifPresent(reagendaLog -> {
+                            dto.setMotivoReagendamiento(reagendaLog.getReason());
+                            // Intentar extraer fecha original del oldValues si está disponible
+                            if (reagendaLog.getOldValues() != null) {
+                                try {
+                                    // Aquí podrías parsear oldValues si contiene la fecha original
+                                    // Por ahora lo dejamos como null
+                                } catch (Exception e) {
+                                    System.err.println(
+                                            "Error al parsear fecha original de reagendamiento: " + e.getMessage());
+                                }
+                            }
+                        });
+            } else {
+                dto.setTotalModificaciones(0);
+            }
+        } catch (Exception e) {
+            System.err.println(
+                    "Error al obtener auditoría para historial de turno " + turno.getId() + ": " + e.getMessage());
+            dto.setTotalModificaciones(0);
+        }
+
+        return dto;
+    }
+
+    /**
+     * Obtiene el historial completo de turnos de un paciente
+     */
+    public List<HistorialTurnoDTO> getHistorialTurnosByPaciente(Integer pacienteId) {
+        List<Turno> turnos = repository.findByPaciente_Id(pacienteId);
+        return turnos.stream()
+                .map(this::toHistorialDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene el historial completo de turnos de un paciente con paginación
+     */
+    public Page<HistorialTurnoDTO> getHistorialTurnosByPacientePaged(Integer pacienteId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "fecha"));
+        Page<Turno> turnosPage = repository.findByPaciente_Id(pacienteId, pageRequest);
+        return turnosPage.map(this::toHistorialDTO);
+    }
+
+    /**
+     * Obtiene el historial de un turno específico con toda su información de
+     * auditoría
+     */
+    public HistorialTurnoDTO getHistorialTurnoById(Integer turnoId) {
+        Optional<Turno> turnoOpt = repository.findById(turnoId);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + turnoId);
+        }
+        return toHistorialDTO(turnoOpt.get());
+    }
+
+    /**
+     * Actualiza las observaciones de un turno
+     */
+    @Transactional
+    public TurnoDTO actualizarObservaciones(Integer turnoId, String observaciones, String performedBy) {
+        Optional<Turno> turnoOpt = repository.findById(turnoId);
+        if (turnoOpt.isEmpty()) {
+            throw new IllegalArgumentException("Turno no encontrado con ID: " + turnoId);
+        }
+
+        Turno turno = turnoOpt.get();
+        String observacionesAnteriores = turno.getObservaciones();
+
+        // Validar que el turno puede ser modificado
+        if (!canTurnoBeModified(turno)) {
+            throw new IllegalStateException("No se pueden modificar observaciones de un turno cancelado o completado");
+        }
+
+        turno.setObservaciones(observaciones);
+        Turno savedTurno = repository.save(turno);
+
+        // Registrar auditoría del cambio de observaciones
+        try {
+            Map<String, Object> oldValues = new HashMap<>();
+            oldValues.put("observaciones", observacionesAnteriores);
+
+            Map<String, Object> newValues = new HashMap<>();
+            newValues.put("observaciones", observaciones);
+
+            auditLogService.logGenericAction(
+                    AuditLog.EntityTypes.TURNO,
+                    turno.getId().longValue(),
+                    AuditLog.Actions.UPDATE,
+                    performedBy,
+                    null,
+                    null,
+                    oldValues,
+                    newValues,
+                    "Actualización de observaciones");
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de observaciones: " + e.getMessage());
+        }
+
+        return toDTO(savedTurno);
+    }
+
+    // ===============================
+    // MÉTODOS PARA HISTORIAL FILTRADO POR PACIENTE
+    // ===============================
+
+    /**
+     * Obtiene el historial de turnos de un paciente con filtros avanzados
+     * 
+     * @param pacienteId ID del paciente
+     * @param estado     Estado del turno (opcional)
+     * @param fechaDesde Fecha desde (opcional)
+     * @param fechaHasta Fecha hasta (opcional)
+     * @param page       Número de página
+     * @param size       Tamaño de página
+     * @param sortBy     Campo por el que ordenar (por defecto: "fecha")
+     * @param sortDir    Dirección del ordenamiento (ASC/DESC, por defecto: DESC)
+     * @return Página de HistorialTurnoDTO con los resultados filtrados
+     */
+    public Page<HistorialTurnoDTO> getHistorialPacienteFiltrado(
+            Integer pacienteId,
+            String estado,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta,
+            int page,
+            int size,
+            String sortBy,
+            String sortDir) {
+
+        System.out.println("🔍 DEBUG: Obteniendo historial filtrado para paciente ID: " + pacienteId);
+        System.out.println("   - Estado: " + estado);
+        System.out.println("   - Fecha desde: " + fechaDesde);
+        System.out.println("   - Fecha hasta: " + fechaHasta);
+        System.out.println("   - Página: " + page + ", Tamaño: " + size);
+
+        // Validar paciente
+        if (!pacienteRepository.existsById(pacienteId)) {
+            throw new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId);
+        }
+
+        // Configurar ordenamiento (por defecto: fecha descendente)
+        Sort.Direction direction = "ASC".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortField = sortBy != null && !sortBy.trim().isEmpty() ? sortBy : "fecha";
+        Sort sort = Sort.by(direction, sortField);
+
+        // Crear paginación
+        PageRequest pageable = PageRequest.of(page, size, sort);
+
+        // Parsear estado si viene como string
+        EstadoTurno estadoEnum = null;
+        if (estado != null && !estado.trim().isEmpty()) {
+            try {
+                estadoEnum = EstadoTurno.valueOf(estado.trim().toUpperCase());
+                System.out.println("   - Estado parseado: " + estadoEnum);
+            } catch (IllegalArgumentException e) {
+                System.err.println("⚠️ WARN: Estado inválido proporcionado: " + estado);
+                // Estado inválido, se ignora el filtro
+            }
+        }
+
+        // Construir especificación con filtros
+        Specification<Turno> spec = Specification.where(TurnoRepository.hasPacienteId(pacienteId));
+
+        // Agregar filtro de estado si está presente
+        if (estadoEnum != null) {
+            spec = spec.and(TurnoRepository.hasEstado(estadoEnum));
+        }
+
+        // Agregar filtros de fecha
+        if (fechaDesde != null) {
+            spec = spec.and(TurnoRepository.hasFechaDesde(fechaDesde));
+            System.out.println("   - Filtro fecha desde aplicado: " + fechaDesde);
+        }
+
+        if (fechaHasta != null) {
+            spec = spec.and(TurnoRepository.hasFechaHasta(fechaHasta));
+            System.out.println("   - Filtro fecha hasta aplicado: " + fechaHasta);
+        }
+
+        // Ejecutar consulta
+        Page<Turno> turnosPage = repository.findAll(spec, pageable);
+
+        System.out.println("✅ DEBUG: Historial obtenido - " + turnosPage.getTotalElements() +
+                " turnos encontrados, página " + (page + 1) + " de " + turnosPage.getTotalPages());
+
+        // Convertir a HistorialTurnoDTO con información completa de auditoría
+        return turnosPage.map(this::toHistorialDTO);
+    }
+
+    /**
+     * Obtiene el historial completo de un paciente sin filtros (versión
+     * simplificada)
+     * 
+     * @param pacienteId ID del paciente
+     * @param page       Número de página
+     * @param size       Tamaño de página
+     * @return Página de HistorialTurnoDTO
+     */
+    public Page<HistorialTurnoDTO> getHistorialPaciente(Integer pacienteId, int page, int size) {
+        return getHistorialPacienteFiltrado(pacienteId, null, null, null, page, size, "fecha", "DESC");
+    }
+
+    /**
+     * Obtiene estadísticas del historial de un paciente
+     * 
+     * @param pacienteId ID del paciente
+     * @return Map con estadísticas del historial
+     */
+    public Map<String, Object> getEstadisticasHistorialPaciente(Integer pacienteId) {
+        System.out.println("📊 DEBUG: Obteniendo estadísticas de historial para paciente ID: " + pacienteId);
+
+        // Validar paciente
+        if (!pacienteRepository.existsById(pacienteId)) {
+            throw new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId);
+        }
+
+        Map<String, Object> estadisticas = new HashMap<>();
+
+        try {
+            // Obtener todos los turnos del paciente
+            List<Turno> todosTurnos = repository.findByPaciente_Id(pacienteId);
+
+            // Contar por estado
+            Map<String, Long> turnosPorEstado = todosTurnos.stream()
+                    .collect(Collectors.groupingBy(
+                            t -> t.getEstado().name(),
+                            Collectors.counting()));
+
+            estadisticas.put("totalTurnos", todosTurnos.size());
+            estadisticas.put("turnosPorEstado", turnosPorEstado);
+            estadisticas.put("turnosProgramados", turnosPorEstado.getOrDefault("PROGRAMADO", 0L));
+            estadisticas.put("turnosConfirmados", turnosPorEstado.getOrDefault("CONFIRMADO", 0L));
+            estadisticas.put("turnosCompletados", turnosPorEstado.getOrDefault("COMPLETO", 0L));
+            estadisticas.put("turnosCancelados", turnosPorEstado.getOrDefault("CANCELADO", 0L));
+            estadisticas.put("turnosReagendados", turnosPorEstado.getOrDefault("REAGENDADO", 0L));
+
+            // Obtener fecha del primer y último turno
+            if (!todosTurnos.isEmpty()) {
+                LocalDate primerTurno = todosTurnos.stream()
+                        .map(Turno::getFecha)
+                        .min(LocalDate::compareTo)
+                        .orElse(null);
+
+                LocalDate ultimoTurno = todosTurnos.stream()
+                        .map(Turno::getFecha)
+                        .max(LocalDate::compareTo)
+                        .orElse(null);
+
+                estadisticas.put("primerTurno", primerTurno);
+                estadisticas.put("ultimoTurno", ultimoTurno);
+            }
+
+            // Contar turnos futuros y pasados
+            LocalDate hoy = LocalDate.now();
+            long turnosFuturos = todosTurnos.stream()
+                    .filter(t -> t.getFecha().isAfter(hoy))
+                    .count();
+            long turnosPasados = todosTurnos.stream()
+                    .filter(t -> t.getFecha().isBefore(hoy) || t.getFecha().equals(hoy))
+                    .count();
+
+            estadisticas.put("turnosFuturos", turnosFuturos);
+            estadisticas.put("turnosPasados", turnosPasados);
+
+            // Especialidades más frecuentes
+            Map<String, Long> especialidadesFrecuentes = todosTurnos.stream()
+                    .filter(t -> t.getStaffMedico() != null &&
+                            t.getStaffMedico().getEspecialidad() != null)
+                    .collect(Collectors.groupingBy(
+                            t -> t.getStaffMedico().getEspecialidad().getNombre(),
+                            Collectors.counting()));
+
+            estadisticas.put("especialidadesFrecuentes", especialidadesFrecuentes);
+
+            System.out.println("✅ DEBUG: Estadísticas calculadas: " + estadisticas);
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR: Error al calcular estadísticas: " + e.getMessage());
+            estadisticas.put("error", "Error al calcular estadísticas: " + e.getMessage());
+        }
+
+        return estadisticas;
+    }
+
+    /**
+     * Obtiene el resumen de turnos próximos de un paciente
+     * 
+     * @param pacienteId   ID del paciente
+     * @param diasAdelante Cantidad de días hacia adelante (por defecto 30)
+     * @return Lista de turnos próximos como HistorialTurnoDTO
+     */
+    public List<HistorialTurnoDTO> getTurnosProximosPaciente(Integer pacienteId, Integer diasAdelante) {
+        System.out.println("📅 DEBUG: Obteniendo turnos próximos para paciente ID: " + pacienteId);
+
+        // Validar paciente
+        if (!pacienteRepository.existsById(pacienteId)) {
+            throw new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId);
+        }
+
+        LocalDate hoy = LocalDate.now();
+        LocalDate fechaLimite = hoy.plusDays(diasAdelante != null ? diasAdelante : 30);
+
+        // Crear especificación para turnos futuros del paciente
+        Specification<Turno> spec = Specification.where(TurnoRepository.hasPacienteId(pacienteId))
+                .and(TurnoRepository.hasFechaDesde(hoy))
+                .and(TurnoRepository.hasFechaHasta(fechaLimite))
+                .and(TurnoRepository.hasEstado(EstadoTurno.PROGRAMADO)
+                        .or(TurnoRepository.hasEstado(EstadoTurno.CONFIRMADO))
+                        .or(TurnoRepository.hasEstado(EstadoTurno.REAGENDADO)));
+
+        // Ordenar por fecha ascendente
+        Sort sort = Sort.by(Sort.Direction.ASC, "fecha", "horaInicio");
+
+        List<Turno> turnosProximos = repository.findAll(spec, sort);
+
+        System.out.println("✅ DEBUG: " + turnosProximos.size() + " turnos próximos encontrados");
+
+        return turnosProximos.stream()
+                .map(this::toHistorialDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene turnos cancelados de un paciente con detalles de cancelación
+     * 
+     * @param pacienteId ID del paciente
+     * @param page       Número de página
+     * @param size       Tamaño de página
+     * @return Página de HistorialTurnoDTO con turnos cancelados
+     */
+    public Page<HistorialTurnoDTO> getTurnosCanceladosPaciente(Integer pacienteId, int page, int size) {
+        System.out.println("🚫 DEBUG: Obteniendo turnos cancelados para paciente ID: " + pacienteId);
+
+        return getHistorialPacienteFiltrado(
+                pacienteId,
+                "CANCELADO",
+                null,
+                null,
+                page,
+                size,
+                "fecha",
+                "DESC");
+    }
+
+    /**
+     * Verifica si un paciente tiene turnos pendientes (PROGRAMADO o CONFIRMADO)
+     * 
+     * @param pacienteId ID del paciente
+     * @return true si tiene turnos pendientes, false en caso contrario
+     */
+    public boolean tieneTurnosPendientes(Integer pacienteId) {
+        LocalDate hoy = LocalDate.now();
+
+        Specification<Turno> spec = Specification.where(TurnoRepository.hasPacienteId(pacienteId))
+                .and(TurnoRepository.hasFechaDesde(hoy))
+                .and(TurnoRepository.hasEstado(EstadoTurno.PROGRAMADO)
+                        .or(TurnoRepository.hasEstado(EstadoTurno.CONFIRMADO))
+                        .or(TurnoRepository.hasEstado(EstadoTurno.REAGENDADO)));
+
+        long count = repository.count(spec);
+
+        System.out.println("🔍 DEBUG: Paciente " + pacienteId + " tiene " + count + " turnos pendientes");
+
+        return count > 0;
+    }
+
+    /**
+     * Exporta el historial de un paciente a un formato específico
+     * 
+     * @param pacienteId ID del paciente
+     * @param estado     Estado del turno (opcional)
+     * @param fechaDesde Fecha desde (opcional)
+     * @param fechaHasta Fecha hasta (opcional)
+     * @return Lista completa de HistorialTurnoDTO para exportación
+     */
+    public List<HistorialTurnoDTO> exportarHistorialPaciente(
+            Integer pacienteId,
+            String estado,
+            LocalDate fechaDesde,
+            LocalDate fechaHasta) {
+
+        System.out.println("📤 DEBUG: Exportando historial para paciente ID: " + pacienteId);
+
+        // Validar paciente
+        if (!pacienteRepository.existsById(pacienteId)) {
+            throw new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId);
+        }
+
+        // Parsear estado si viene como string
+        EstadoTurno estadoEnum = null;
+        if (estado != null && !estado.trim().isEmpty()) {
+            try {
+                estadoEnum = EstadoTurno.valueOf(estado.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.err.println("⚠️ WARN: Estado inválido para exportación: " + estado);
+            }
+        }
+
+        // Construir especificación con filtros
+        Specification<Turno> spec = Specification.where(TurnoRepository.hasPacienteId(pacienteId));
+
+        if (estadoEnum != null) {
+            spec = spec.and(TurnoRepository.hasEstado(estadoEnum));
+        }
+
+        if (fechaDesde != null) {
+            spec = spec.and(TurnoRepository.hasFechaDesde(fechaDesde));
+        }
+
+        if (fechaHasta != null) {
+            spec = spec.and(TurnoRepository.hasFechaHasta(fechaHasta));
+        }
+
+        // Ordenar por fecha descendente para exportación
+        Sort sort = Sort.by(Sort.Direction.DESC, "fecha", "horaInicio");
+
+        List<Turno> turnos = repository.findAll(spec, sort);
+
+        System.out.println("✅ DEBUG: Exportando " + turnos.size() + " turnos");
+
+        return turnos.stream()
+                .map(this::toHistorialDTO)
+                .collect(Collectors.toList());
+    }
+
 }
