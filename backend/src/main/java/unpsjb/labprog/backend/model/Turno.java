@@ -46,7 +46,10 @@ public class Turno {
 
     @ManyToOne(optional = false)
     private Consultorio consultorio;
-    
+
+    // Nuevo campo para observaciones
+    @Column(length = 1000)
+    private String observaciones;
 
     public void confirmarTurno() {
         if (this.estado != EstadoTurno.PROGRAMADO) {
