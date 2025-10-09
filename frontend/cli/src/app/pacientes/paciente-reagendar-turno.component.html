@@ -1,0 +1,294 @@
+<div class="reagendar-turno-container">
+  <!-- Header -->
+  <div class="page-header">
+    <button class="btn btn-back" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      Volver
+    </button>
+    <h1>
+      <i class="fas fa-calendar-check"></i>
+      Reagendar Turno
+    </h1>
+  </div>
+
+  <!-- Current Appointment Info -->
+  <div class="current-appointment" *ngIf="currentTurno">
+    <h2>
+      <i class="fas fa-info-circle"></i>
+      Turno Actual
+    </h2>
+    <div class="appointment-info">
+      <div class="info-row">
+        <strong>Fecha actual:</strong> {{ formatDate(currentTurno.fecha) }}
+      </div>
+      <div class="info-row">
+        <strong>Hora:</strong> {{ currentTurno.horaInicio }} -
+        {{ currentTurno.horaFin }}
+      </div>
+      <div class="info-row">
+        <strong>Médico:</strong> {{ currentTurno.staffMedicoNombre }}
+        {{ currentTurno.staffMedicoApellido }}
+      </div>
+      <div class="info-row">
+        <strong>Especialidad:</strong>
+        {{ currentTurno.especialidadStaffMedico }}
+      </div>
+      <div class="info-row">
+        <strong>Consultorio:</strong> {{ currentTurno.consultorioNombre }}
+      </div>
+      <div class="info-row">
+        <strong>Centro:</strong> {{ currentTurno.nombreCentro }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Available Slots Section -->
+  <div class="available-slots">
+    <h2>
+      <i class="fas fa-calendar-alt"></i>
+      Horarios Disponibles del Mismo Médico
+    </h2>
+    <p class="slots-subtitle">Selecciona un nuevo horario disponible:</p>
+
+    <!-- Loading State -->
+    <div class="loading-slots" *ngIf="isLoadingSlots">
+      <i class="fas fa-spinner fa-spin"></i>
+      Cargando horarios disponibles...
+    </div>
+
+    <!-- No Slots Available -->
+    <div
+      class="no-slots"
+      *ngIf="!isLoadingSlots && slotsDisponibles.length === 0 && currentTurno"
+    >
+      <i class="fas fa-calendar-times"></i>
+      <h3>No hay horarios disponibles</h3>
+      <p>
+        No se encontraron horarios disponibles para este médico en las próximas
+        4 semanas.
+      </p>
+      <p class="help-text">
+        Puedes intentar contactar directamente con el centro médico para más
+        opciones.
+      </p>
+    </div>
+
+    <!-- Slots Agrupados por Fecha -->
+    <div
+      class="slots-grouped"
+      *ngIf="!isLoadingSlots && slotsDisponibles.length > 0"
+    >
+      <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
+        <!-- Header de fecha -->
+        <div
+          class="fecha-header"
+          [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
+        >
+          <div class="fecha-info">
+            <h3 class="fecha-title">
+              <i class="fas fa-calendar-day"></i>
+              {{ formatearFecha(fecha) }}
+            </h3>
+            <!-- Solo mostrar feriados para pacientes en reagendamiento -->
+            <div
+              class="fecha-exception-badge"
+              *ngIf="getTipoExcepcion(fecha) === 'FERIADO'"
+            >
+              <span class="exception-icon">🏖️</span>
+              <span class="exception-label">Feriado</span>
+              <span
+                class="exception-description"
+                *ngIf="getDescripcionExcepcion(fecha)"
+              >
+                - {{ getDescripcionExcepcion(fecha) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slots de la fecha -->
+        <div class="slots-grid">
+          <div
+            *ngFor="let slot of slotsPorFecha[fecha]"
+            class="slot-card"
+            [class.selected]="slotSeleccionado?.id === slot.id"
+            [class.slot-excepcional]="slotAfectadoPorExcepcion(slot)"
+            [class.slot-feriado]="
+              slotAfectadoPorExcepcion(slot) &&
+              getTipoExcepcion(slot.fecha) === 'FERIADO'
+            "
+            [class.slot-mantenimiento]="
+              slotAfectadoPorExcepcion(slot) &&
+              getTipoExcepcion(slot.fecha) === 'MANTENIMIENTO'
+            "
+            [class.slot-atencion-especial]="
+              slotAfectadoPorExcepcion(slot) &&
+              getTipoExcepcion(slot.fecha) === 'ATENCION_ESPECIAL'
+            "
+            [class.slot-no-disponible]="slotAfectadoPorExcepcion(slot)"
+            (click)="seleccionarSlot(slot)"
+          >
+            <div class="slot-time">
+              <i class="fas fa-clock"></i>
+              {{ slot.horaInicio }} - {{ slot.horaFin }}
+            </div>
+
+            <div class="slot-location">
+              <div class="location-line">
+                <i class="fas fa-door-open"></i>
+                {{ slot.consultorioNombre }}
+              </div>
+              <div class="location-line">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ slot.nombreCentro }}
+              </div>
+            </div>
+
+            <!-- Estado del slot -->
+            <div class="slot-status" *ngIf="slotAfectadoPorExcepcion(slot)">
+              <i class="fas fa-lock"></i>
+              No Disponible
+            </div>
+            <div
+              class="slot-status disponible"
+              *ngIf="!slotAfectadoPorExcepcion(slot)"
+            >
+              <i class="fas fa-check-circle"></i>
+              Disponible
+            </div>
+
+            <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+              <i class="fas fa-check-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Motivo del Reagendamiento -->
+  <div class="motivo-section" *ngIf="slotSeleccionado">
+    <h2>
+      <i class="fas fa-comment-alt"></i>
+      Motivo del Reagendamiento
+    </h2>
+    <div class="motivo-form">
+      <label for="motivoReagendamiento" class="form-label">
+        Indique el motivo por el cual reagenda su turno
+        <span class="required">*</span>
+        <small class="text-muted">(mínimo 5 caracteres)</small>
+      </label>
+      <textarea
+        id="motivoReagendamiento"
+        class="form-control motivo-textarea"
+        [(ngModel)]="motivoReagendamiento"
+        name="motivoReagendamiento"
+        rows="4"
+        placeholder="Ej: Cambio en mi horario de trabajo, emergencia familiar, conflicto con otra cita..."
+        maxlength="500"
+        required
+      >
+      </textarea>
+      <div class="char-counter">
+        {{ motivoReagendamiento.length || 0 }}/500 caracteres
+      </div>
+      <div
+        class="validation-message"
+        *ngIf="motivoReagendamiento && motivoReagendamiento.length < 5"
+      >
+        <i class="fas fa-exclamation-circle"></i>
+        El motivo debe tener al menos 5 caracteres
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Section -->
+  <div
+    class="confirmation-section"
+    *ngIf="
+      slotSeleccionado &&
+      motivoReagendamiento &&
+      motivoReagendamiento.length >= 5
+    "
+  >
+    <h2>
+      <i class="fas fa-check-circle"></i>
+      Confirmar Reagendamiento
+    </h2>
+
+    <div class="confirmation-details">
+      <div class="change-summary">
+        <div class="change-from">
+          <h4>Cambiar de:</h4>
+          <div class="appointment-summary old">
+            <i class="fas fa-calendar-minus"></i>
+            <div>
+              <strong>{{ formatDate(currentTurno?.fecha || "") }}</strong
+              ><br />
+              <span
+                >{{ currentTurno?.horaInicio }} -
+                {{ currentTurno?.horaFin }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="change-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+
+        <div class="change-to">
+          <h4>Cambiar a:</h4>
+          <div class="appointment-summary new">
+            <i class="fas fa-calendar-plus"></i>
+            <div>
+              <strong>{{ formatDate(slotSeleccionado.fecha) }}</strong
+              ><br />
+              <span
+                >{{ slotSeleccionado.horaInicio }} -
+                {{ slotSeleccionado.horaFin }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button
+        type="button"
+        class="btn btn-cancel"
+        (click)="cancelarSeleccion()"
+        [disabled]="isProcessing"
+      >
+        <i class="fas fa-times"></i>
+        Cancelar Selección
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="isProcessing"
+        (click)="confirmarReagendamiento()"
+      >
+        <i class="fas fa-calendar-check"></i>
+        Confirmar Reagendamiento
+      </button>
+    </div>
+  </div>
+
+  <!-- Processing and Error States -->
+  <div class="loading-message" *ngIf="isProcessing">
+    <i class="fas fa-spinner fa-spin"></i>
+    Procesando reagendamiento...
+  </div>
+
+  <div class="error-message" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ errorMessage }}
+    <button class="btn-retry" (click)="reintentar()" *ngIf="currentTurno">
+      <i class="fas fa-redo"></i>
+      Reintentar
+    </button>
+  </div>
+</div>

@@ -1,0 +1,286 @@
+<div class="container-fluid mt-4">
+  <div class="modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-staff-medico">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="header-icon">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <div class="header-text">
+            <h1>Staff Médico</h1>
+            <p>Gestión de médicos asociados a centros de atención</p>
+          </div>
+        </div>
+        <button
+          class="btn btn-new"
+          (click)="router.navigate(['/staffMedico/new'])"
+        >
+          <i class="fas fa-plus me-2"></i>
+          Nuevo Staff
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA DE FILTROS -->
+    <div class="filters-bar">
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="medico-filter" class="filter-label">
+            <i class="fas fa-user-md"></i>
+            Médico
+          </label>
+          <input
+            id="medico-filter"
+            type="text"
+            class="form-control filter-input"
+            placeholder="Buscar por nombre, apellido o DNI..."
+            [(ngModel)]="filtros.medico"
+            (input)="onFilterInput()"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="especialidad-filter" class="filter-label">
+            <i class="fas fa-stethoscope"></i>
+            Especialidad
+          </label>
+          <input
+            id="especialidad-filter"
+            type="text"
+            class="form-control filter-input"
+            placeholder="Buscar por especialidad..."
+            [(ngModel)]="filtros.especialidad"
+            (input)="onFilterInput()"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="centro-filter" class="filter-label">
+            <i class="fas fa-hospital"></i>
+            Centro
+          </label>
+          <input
+            id="centro-filter"
+            type="text"
+            class="form-control filter-input"
+            placeholder="Buscar por centro..."
+            [(ngModel)]="filtros.centro"
+            (input)="onFilterInput()"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label for="consultorio-filter" class="filter-label">
+            <i class="fas fa-door-open"></i>
+            Consultorio
+          </label>
+          <input
+            id="consultorio-filter"
+            type="text"
+            class="form-control filter-input"
+            placeholder="Buscar por consultorio..."
+            [(ngModel)]="filtros.consultorio"
+            (input)="onFilterInput()"
+          />
+        </div>
+
+        <div class="filter-actions">
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            (click)="clearFilters()"
+            [disabled]="
+              !filtros.medico &&
+              !filtros.especialidad &&
+              !filtros.centro &&
+              !filtros.consultorio
+            "
+          >
+            <i class="fas fa-times"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="mt-2 text-muted">Cargando staff médico...</p>
+    </div>
+
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container" *ngIf="!isLoading">
+      <table class="table modern-table">
+        <thead>
+          <tr>
+            <th (click)="onSortChange('id')" class="sortable-header">
+              <div class="header-cell">
+                <div class="icon-circle id-header">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                <span>Identificador</span>
+                <div class="sort-indicator">
+                  <i class="fas fa-sort" [class]="getSortClass('id')"></i>
+                </div>
+              </div>
+            </th>
+            <th (click)="onSortChange('centro.nombre')" class="sortable-header">
+              <div class="header-cell">
+                <div class="icon-circle icon-centro-atencion">
+                  <i class="fas fa-hospital"></i>
+                </div>
+                <span>Centro de Atención</span>
+                <div class="sort-indicator">
+                  <i
+                    class="fas fa-sort"
+                    [class]="getSortClass('centro.nombre')"
+                  ></i>
+                </div>
+              </div>
+            </th>
+            <th
+              (click)="onSortChange('medico.apellido')"
+              class="sortable-header"
+            >
+              <div class="header-cell">
+                <div class="icon-circle icon-medicos">
+                  <i class="fas fa-user-md"></i>
+                </div>
+                <span>Médico</span>
+                <div class="sort-indicator">
+                  <i
+                    class="fas fa-sort"
+                    [class]="getSortClass('medico.apellido')"
+                  ></i>
+                </div>
+              </div>
+            </th>
+            <th
+              (click)="onSortChange('especialidad.nombre')"
+              class="sortable-header"
+            >
+              <div class="header-cell">
+                <div class="icon-circle icon-especialidades">
+                  <i class="fas fa-stethoscope"></i>
+                </div>
+                <span>Especialidad</span>
+                <div class="sort-indicator">
+                  <i
+                    class="fas fa-sort"
+                    [class]="getSortClass('especialidad.nombre')"
+                  ></i>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle actions-header">
+                  <i class="fas fa-cogs"></i>
+                </div>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let staff of resultsPage.content || []; let i = index"
+            class="table-row"
+            [class.even]="i % 2 === 0"
+            [class.odd]="i % 2 !== 0"
+            (click)="goToDetail(staff.id)"
+          >
+            <td>
+              <span class="id-badge">{{ staff.id }}</span>
+            </td>
+            <td>
+              <div class="centro-info">
+                <div class="avatar-centro-atencion">
+                  {{ getCentroInitials(staff) }}
+                </div>
+                <div class="centro-details">
+                  <div class="centro-name">{{ getCentroNombre(staff) }}</div>
+                  <div class="centro-location">
+                    {{ getCentroUbicacion(staff) }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="medico-info">
+                <div class="avatar-medicos">
+                  {{ getMedicoInitials(staff) }}
+                </div>
+                <div class="medico-details">
+                  <div class="medico-name">{{ getMedicoNombre(staff) }}</div>
+                  <div class="medico-dni">DNI: {{ staff.medico?.dni }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge-especialidades">{{
+                getEspecialidadNombre(staff)
+              }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-action btn-edit"
+                  (click)="goToEdit(staff.id); $event.stopPropagation()"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn-action btn-delete"
+                  (click)="confirmDelete(staff.id); $event.stopPropagation()"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+                <button
+                  class="btn-action btn-add"
+                  (click)="goToDisponibilidad(staff); $event.stopPropagation()"
+                  title="Gestionar Disponibilidad"
+                >
+                  <i class="fas fa-calendar-plus"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoading && (resultsPage.content || []).length === 0">
+            <td colspan="5" class="text-center py-4 text-muted">
+              <i class="fas fa-user-md fa-3x mb-3 d-block opacity-50"></i>
+              <div
+                *ngIf="
+                  filtros.medico ||
+                    filtros.especialidad ||
+                    filtros.centro ||
+                    filtros.consultorio;
+                  else noData
+                "
+              >
+                No se encontraron resultados para la búsqueda
+              </div>
+              <ng-template #noData>
+                No hay staff médico registrado
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <app-pagination
+    [totalPages]="resultsPage.totalPages"
+    [currentPage]="currentPage"
+    (pageChangeRequested)="onPageChangeRequested($event)"
+    [number]="resultsPage.number"
+    [hidden]="resultsPage.numberOfElements < 1"
+  ></app-pagination>
+</div>
