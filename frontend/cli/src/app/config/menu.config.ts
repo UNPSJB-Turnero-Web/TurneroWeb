@@ -141,6 +141,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Administrar turnos del sistema'
       },
       {
+        label: 'Sobreturnos',
+        route: '/turnos/new',
+        icon: 'fa-calendar-plus',
+        description: 'Registrar sobreturno manual (fuera de agenda)'
+      },
+      {
         label: 'Pacientes',
         route: '/pacientes',
         icon: 'fa-users',

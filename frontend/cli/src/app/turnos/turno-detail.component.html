@@ -14,13 +14,20 @@
                   Turno #{{ turno.id }}
                 </ng-container>
                 <ng-template #nuevoTitle>
-                  Nuevo Turno
+                  <ng-container *ngIf="esSobreturno">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Crear Sobreturno
+                  </ng-container>
+                  <ng-container *ngIf="!esSobreturno">
+                    Nuevo Turno
+                  </ng-container>
                 </ng-template>
               </h4>
               <small class="opacity-75">
                 <ng-container *ngIf="!modoEdicion">Información del Turno</ng-container>
                 <ng-container *ngIf="modoEdicion && turno.id">Editando Turno</ng-container>
-                <ng-container *ngIf="modoEdicion && !turno.id">Creando Nuevo Turno</ng-container>
+                <ng-container *ngIf="modoEdicion && !turno.id && esSobreturno">Registro Manual - Fuera de Agenda</ng-container>
+                <ng-container *ngIf="modoEdicion && !turno.id && !esSobreturno">Creando Nuevo Turno</ng-container>
               </small>
             </div>
           </div>
@@ -28,6 +35,31 @@
 
         <!-- CUERPO DEL CARD -->
         <div class="card-body">
+          <!-- BANNER DE ADVERTENCIA - SOBRETURNO -->
+          <div *ngIf="esSobreturno" class="alert alert-warning border-warning shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-start">
+              <div class="me-3" style="font-size: 2rem;">⚠️</div>
+              <div>
+                <h5 class="alert-heading mb-2">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  Modo: Creación de Sobreturno
+                </h5>
+                <p class="mb-2">
+                  Está creando un <strong>sobreturno manual</strong> que <strong>no está vinculado a la agenda</strong> ni a los esquemas de turno predefinidos.
+                </p>
+                <ul class="mb-2">
+                  <li>Este turno se registrará <strong>fuera de los slots generados automáticamente</strong></li>
+                  <li>Puede generar <strong>conflictos de horarios</strong> si ya existe otro turno programado</li>
+                  <li>Se recomienda verificar disponibilidad del médico y consultorio</li>
+                </ul>
+                <div class="alert alert-info mb-0 mt-3">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Tip:</strong> Use esta opción para casos excepcionales, urgencias o turnos fuera de horario habitual.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- MODO VISTA -->
           <div *ngIf="!modoEdicion">
             <div class="row">
@@ -269,7 +301,23 @@
                   </div>
                 </div>
 
-                <div class="form-group-modern">
+                <!-- Estado: Fijo en CONFIRMADO para sobreturnos -->
+                <div class="form-group-modern" *ngIf="esSobreturno">
+                  <label class="form-label-modern">
+                    <span class="form-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">✅</span>
+                    Estado
+                  </label>
+                  <div class="alert alert-success d-flex align-items-center mb-0">
+                    <i class="fas fa-check-circle me-2" style="font-size: 1.5rem;"></i>
+                    <div>
+                      <strong>CONFIRMADO</strong>
+                      <br>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Estado: Select normal para turnos regulares -->
+                <div class="form-group-modern" *ngIf="!esSobreturno">
                   <label class="form-label-modern">
                     <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);">📊</span>
                     Estado
@@ -389,10 +437,16 @@
               <button 
                 type="submit" 
                 class="btn btn-modern btn-save" 
+                [class.btn-warning]="esSobreturno"
                 [disabled]="allFieldsEmpty()"
                 (click)="save()"
               >
-                💾 Guardar
+                <ng-container *ngIf="esSobreturno">
+                  <i class="fas fa-exclamation-triangle me-2"></i>Crear Sobreturno
+                </ng-container>
+                <ng-container *ngIf="!esSobreturno">
+                  💾 Guardar
+                </ng-container>
               </button>
               <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
                 ❌ Cancelar
