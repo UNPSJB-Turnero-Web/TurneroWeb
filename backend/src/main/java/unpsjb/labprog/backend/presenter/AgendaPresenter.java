@@ -25,6 +25,7 @@ import unpsjb.labprog.backend.business.service.AgendaService;
 import unpsjb.labprog.backend.business.service.ConfiguracionExcepcionalService;
 import unpsjb.labprog.backend.dto.ConfiguracionExcepcionalDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
+import unpsjb.labprog.backend.dto.TurnoPublicoDTO;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 
 @RestController
@@ -39,6 +40,35 @@ public class AgendaPresenter {
 
     @Autowired
     private EsquemaTurnoRepository esquemaTurnoRepository;
+
+    /**
+     * Endpoint público para listar turnos disponibles.
+     * NO requiere autenticación.
+     * NO expone información sensible del paciente.
+     * Genera slots dinámicamente desde esquemas de turno (igual que /eventos/todos)
+     * y filtra solo los disponibles.
+     * 
+     * @param centroId ID opcional del centro de atención para filtrar
+     * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
+     * @return Lista de turnos disponibles en formato público (sin datos del paciente)
+     */
+    @GetMapping("/publica")
+    public ResponseEntity<Object> obtenerTurnosPublicosDisponibles(
+            @RequestParam(name = "centroId", required = false) Integer centroId,
+            @RequestParam(name = "semanas", required = false, defaultValue = "4") Integer semanas) {
+        try {
+            List<TurnoPublicoDTO> turnosPublicos = 
+                agendaService.findTurnosPublicosDisponibles(centroId, semanas);
+            
+            String mensaje = centroId != null 
+                ? String.format("Turnos disponibles obtenidos para centro ID %d (%d semanas)", centroId, semanas)
+                : String.format("Todos los turnos disponibles obtenidos correctamente (%d semanas)", semanas);
+            
+            return Response.ok(turnosPublicos, mensaje);
+        } catch (Exception e) {
+            return Response.error(null, "Error al obtener turnos públicos: " + e.getMessage());
+        }
+    }
 
     
 
