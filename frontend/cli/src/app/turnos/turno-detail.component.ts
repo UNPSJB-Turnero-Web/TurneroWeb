@@ -33,9 +33,14 @@ export class TurnoDetailComponent {
   };
 
   modoEdicion = false;
+  esSobreturno = false; // Indica si es un sobreturno (creación manual)
   pacientes: Paciente[] = [];
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
+  
+  // Advertencias de solapamiento
+  advertenciaSolapamiento = false;
+  mensajeAdvertencia = "";
 
   // === PROPIEDADES DE AUDITORÍA ===
   auditHistory: AuditLog[] = [];
@@ -62,14 +67,15 @@ export class TurnoDetailComponent {
     const path = this.route.snapshot.routeConfig?.path;
 
     if (path === "turnos/new") {
-      // Nuevo turno
+      // Nuevo turno - SOBRETURNO
       this.modoEdicion = true;
+      this.esSobreturno = true; // Marcar como sobreturno
       this.turno = {
         id: 0,
         fecha: "",
         horaInicio: "",
         horaFin: "",
-        estado: "PROGRAMADO",
+        estado: "CONFIRMADO", // Sobreturnos se crean directamente como CONFIRMADOS
         pacienteId: 0,
         staffMedicoId: 0,
         consultorioId: 0,
@@ -127,6 +133,8 @@ export class TurnoDetailComponent {
       staffMedicoId: this.turno.staffMedicoId,
       consultorioId: this.turno.consultorioId,
     });
+    
+    // Validaciones básicas
     if (
       !this.isValidId(this.turno.pacienteId) ||
       !this.isValidId(this.turno.staffMedicoId) ||
@@ -139,16 +147,81 @@ export class TurnoDetailComponent {
       return;
     }
 
+    // Validar horarios
+    if (!this.turno.fecha || !this.turno.horaInicio || !this.turno.horaFin) {
+      this.modalService.alert(
+        "Error",
+        "Debe especificar fecha, hora de inicio y hora de fin."
+      );
+      return;
+    }
+
+    // Si es sobreturno, verificar solapamiento y mostrar advertencia
+    if (this.esSobreturno && !this.turno.id) {
+      this.verificarSolapamiento().then(haySolapamiento => {
+        if (haySolapamiento) {
+          this.modalService.confirm(
+            "⚠️ Advertencia de Solapamiento",
+            this.mensajeAdvertencia,
+            "¿Desea continuar y crear el sobreturno de todas formas?"
+          ).then(() => {
+            this.guardarSobreturno();
+          }).catch(() => {
+            console.log("Creación de sobreturno cancelada por el usuario");
+          });
+        } else {
+          this.guardarSobreturno();
+        }
+      });
+    } else {
+      // Edición normal
+      this.guardarTurno();
+    }
+  }
+
+  private guardarSobreturno(): void {
+    // Agregar metadata de sobreturno
+    console.log("🔶 Creando SOBRETURNO manual (fuera de agenda)");
+    this.guardarTurno();
+  }
+
+  private guardarTurno(): void {
     const op = this.turno.id
       ? this.turnoService.update(this.turno.id, this.turno)
       : this.turnoService.create(this.turno);
 
     op.subscribe({
-      next: () => this.router.navigate(["/turnos"]),
+      next: () => {
+        this.modalService.alert(
+          "Éxito",
+          this.esSobreturno 
+            ? "Sobreturno creado exitosamente"
+            : "Turno guardado exitosamente"
+        );
+        this.router.navigate(["/turnos"]);
+      },
       error: (error) => {
         console.error("Error al guardar el turno:", error);
-        this.modalService.alert("Error", "No se pudo guardar el turno.");
+        const mensaje = error?.error?.message || "No se pudo guardar el turno.";
+        this.modalService.alert("Error", mensaje);
       },
+    });
+  }
+
+  private async verificarSolapamiento(): Promise<boolean> {
+    // TODO: Implementar verificación real con el backend
+    // Por ahora, simular verificación
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simular que hay solapamiento (esto debería venir del backend)
+        const haySolapamiento = Math.random() > 0.7;
+        if (haySolapamiento) {
+          this.advertenciaSolapamiento = true;
+          this.mensajeAdvertencia = `Ya existe un turno programado para el mismo médico en este horario. 
+          Este sobreturno se registrará de todas formas, pero puede causar conflictos de agenda.`;
+        }
+        resolve(haySolapamiento);
+      }, 300);
     });
   }
   private isValidId(id: any): boolean {

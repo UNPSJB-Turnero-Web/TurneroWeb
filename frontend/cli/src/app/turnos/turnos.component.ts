@@ -141,25 +141,13 @@ export class TurnosComponent {
   }
 
   confirmDelete(id: number): void {
-    this.modalService
-      .confirm(
-        "Eliminar turno",
-        "¿Está seguro que desea eliminar este turno?",
-        "Esta acción no se puede deshacer"
-      )
-      .then(() => this.remove(id))
-      .catch(() => {});
+    // DEPRECATED: Método deshabilitado - pantalla de solo lectura
+    console.warn('Método confirmDelete deshabilitado - pantalla de solo lectura');
   }
 
   remove(id: number): void {
-    this.turnoService.remove(id).subscribe({
-      next: () => this.searchTurnos(),
-      error: (err) => {
-        const msg = err?.error?.message || "Error al eliminar el turno.";
-        this.modalService.alert("Error", msg);
-        console.error("Error al eliminar turno:", err);
-      }
-    });
+    // DEPRECATED: Método deshabilitado - pantalla de solo lectura
+    console.warn('Método remove deshabilitado - pantalla de solo lectura');
   }
 
   onPageChangeRequested(page: number): void {
@@ -168,11 +156,13 @@ export class TurnosComponent {
   }
 
   goToDetail(id: number): void {
-    this.router.navigate(['/turnos', id]);
+    // DEPRECATED: Navegación a detalle deshabilitada - pantalla de solo lectura
+    console.warn('Navegación a detalle deshabilitada - pantalla de solo lectura');
   }
 
   goToEdit(id: number): void {
-    this.router.navigate(['/turnos', id], { queryParams: { edit: true } });
+    // DEPRECATED: Edición deshabilitada - pantalla de solo lectura
+    console.warn('Edición deshabilitada - pantalla de solo lectura');
   }
 
   getEstadoBadgeClass(estado: string): string {
@@ -223,13 +213,8 @@ export class TurnosComponent {
 
   /** Muestra el historial de auditoría de un turno */
   showAuditHistory(turno: Turno): void {
-    // Navegar al componente de búsqueda avanzada con el turno preseleccionado
-    this.router.navigate(['/turnos/advanced-search'], { 
-      queryParams: { 
-        turnoId: turno.id,
-        showAudit: true 
-      } 
-    });
+    // DEPRECATED: Navegación deshabilitada - pantalla de solo lectura
+    console.warn('Navegación a auditoría deshabilitada - pantalla de solo lectura');
   }
 
   exportarCSV() {

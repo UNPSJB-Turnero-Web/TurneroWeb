@@ -13,7 +13,7 @@
           </div>
         </div>
         <div class="header-actions">
-          <div class="btn-group me-2">
+          <div class="btn-group">
             <button
               class="btn btn-outline-info"
               (click)="router.navigate(['/turnos/audit-dashboard'])"
@@ -31,13 +31,6 @@
               Búsqueda Avanzada
             </button>
           </div>
-          <button
-            class="btn btn-new"
-            (click)="router.navigate(['/turnos/new'])"
-          >
-            <i class="fas fa-plus me-2"></i>
-            Nuevo Turno
-          </button>
         </div>
       </div>
     </div>
@@ -300,20 +293,6 @@
               </button>
             </th>
             <th>
-              <div class="header-cell">
-                <div class="icon-circle icon-medico">
-                  <i class="fas fa-history"></i>
-                </div>
-                Auditoría
-              </div>
-            </th>
-            <th>
-              <div class="header-cell text-center">
-                <div class="icon-circle icon-turnos">
-                  <i class="fas fa-cogs"></i>
-                </div>
-                Acciones
-              </div>
             </th>
           </tr>
         </thead>
@@ -321,7 +300,6 @@
           <tr
             *ngFor="let turno of resultsPage.content || []; let i = index"
             class="table-row"
-            (click)="goToDetail(turno.id)"
             [style.animation-delay]="i * 100 + 'ms'"
           >
             <td>
@@ -419,46 +397,6 @@
                     </small>
                   </div>
                 </div>
-                <div
-                  class="audit-summary"
-                  *ngIf="
-                    !turno.totalModificaciones ||
-                    turno.totalModificaciones === 0
-                  "
-                >
-                  <span class="badge bg-success">
-                    <i class="fas fa-check"></i>
-                    Sin modificaciones
-                  </span>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div class="action-buttons">
-                <button
-                  class="btn-action btn-info"
-                  (click)="showAuditHistory(turno); $event.stopPropagation()"
-                  title="Ver historial de auditoría"
-                  *ngIf="
-                    turno.totalModificaciones && turno.totalModificaciones > 0
-                  "
-                >
-                  <i class="fas fa-history"></i>
-                </button>
-                <button
-                  class="btn-action btn-edit"
-                  (click)="goToEdit(turno.id); $event.stopPropagation()"
-                  title="Editar turno"
-                >
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button
-                  class="btn-action btn-delete"
-                  (click)="confirmDelete(turno.id); $event.stopPropagation()"
-                  title="Eliminar turno"
-                >
-                  <i class="fas fa-trash"></i>
-                </button>
               </div>
             </td>
           </tr>
