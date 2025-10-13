@@ -376,14 +376,16 @@
             </div>
           </div>
 
-          <div class="centro-actions" *ngIf="esOperador">
+          <div class="centro-actions">
             <button
-              class="btn btn-search-center"
-              (click)="buscarEnCentro(centro.id!); $event.stopPropagation()"
-              title="Buscar turnos en este centro"
+              class="btn btn-info btn-sm"
+              [routerLink]="['/paciente-agenda']"
+              [queryParams]="{ centroId: centro.id }"
+              (click)="close(); $event.stopPropagation()"
+              title="Ver turnos disponibles en este centro"
             >
-              <i class="fas fa-search"></i>
-              Buscar aquí
+              <i class="fas fa-calendar-check"></i>
+              Ver Turnos
             </button>
             <button
               class="btn btn-center-on-map"
@@ -395,6 +397,91 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PEQUEÑO DE INFORMACIÓN DEL CENTRO -->
+<div 
+  class="centro-info-modal-backdrop" 
+  *ngIf="mostrarModalInfoCentro && centroInfoModal"
+  (click)="cerrarModalInfoCentro()"
+>
+  <div class="centro-info-modal-content" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="centro-info-modal-header">
+      <h4>
+        <i class="fas fa-hospital"></i>
+        {{ centroInfoModal.nombre }}
+      </h4>
+      <button 
+        type="button" 
+        class="btn-close-small" 
+        (click)="cerrarModalInfoCentro()"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="centro-info-modal-body">
+      <div class="info-row" *ngIf="centroInfoModal.direccion">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>{{ centroInfoModal.direccion }}</span>
+      </div>
+      
+      <div class="info-row" *ngIf="centroInfoModal.localidad">
+        <i class="fas fa-city"></i>
+        <span>{{ centroInfoModal.localidad }}, {{ centroInfoModal.provincia }}</span>
+      </div>
+      
+      <div class="info-row" *ngIf="centroInfoModal.telefono">
+        <i class="fas fa-phone"></i>
+        <span>{{ centroInfoModal.telefono }}</span>
+      </div>
+      
+      <div class="info-row" *ngIf="centroInfoModal.distanciaKm !== undefined">
+        <i class="fas fa-route"></i>
+        <span>{{ formatDistance(centroInfoModal.distanciaKm) }}</span>
+      </div>
+
+      <!-- Especialidades -->
+      <div 
+        class="info-especialidades" 
+        *ngIf="centroInfoModal.especialidadesDisponibles && centroInfoModal.especialidadesDisponibles.length > 0"
+      >
+        <div class="info-especialidades-header">
+          <i class="fas fa-stethoscope"></i>
+          <strong>Especialidades disponibles:</strong>
+        </div>
+        <div class="info-especialidades-tags">
+          <span 
+            class="especialidad-tag-small" 
+            *ngFor="let esp of centroInfoModal.especialidadesDisponibles.slice(0, 5)"
+          >
+            {{ esp }}
+          </span>
+          <span 
+            class="especialidad-tag-small more-tag" 
+            *ngIf="centroInfoModal.especialidadesDisponibles.length > 5"
+          >
+            +{{ centroInfoModal.especialidadesDisponibles.length - 5 }} más
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer con botón -->
+    <div class="centro-info-modal-footer">
+      <button
+        class="btn btn-primary btn-block"
+        [routerLink]="['/paciente-agenda']"
+        [queryParams]="{ centroId: centroInfoModal.id }"
+        (click)="verTurnosCentro(centroInfoModal.id!)"
+      >
+        <i class="fas fa-calendar-check"></i>
+        Ver Turnos Disponibles
+      </button>
     </div>
   </div>
 </div>

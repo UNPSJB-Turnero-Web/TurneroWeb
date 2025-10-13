@@ -7,9 +7,11 @@ import {
   Input,
   OnInit,
   OnDestroy,
+  ChangeDetectionStrategy,
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { RouterModule } from "@angular/router";
 import * as L from "leaflet";
 import { HttpClient } from "@angular/common/http";
 import { CentroAtencion } from "../centrosAtencion/centroAtencion";
@@ -31,9 +33,10 @@ interface CentroMapaInfo extends CentroAtencion {
 @Component({
   selector: "app-centros-mapa-modal",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: "./centros-mapa-modal.component.html",
-  styleUrl: "./centros-mapa-modal.component.css", 
+  styleUrl: "./centros-mapa-modal.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   @Input() centros: CentroAtencion[] = [];
@@ -87,6 +90,10 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
   // Cache para conteo de especialidades
   private conteoEspecialidadesCache = new Map<string, number>();
   private lastCentrosFiltradosLength = 0;
+
+  // Modal pequeño de información del centro
+  mostrarModalInfoCentro = false;
+  centroInfoModal: CentroMapaInfo | null = null;
 
   constructor(
     private http: HttpClient,
@@ -351,9 +358,8 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
           .bindPopup(this.crearPopupCentro(centro, index + 1))
           .addTo(this.map);
 
-        marker.on("click", () => {
-          this.seleccionarCentro(centro);
-        });
+        // No agregar evento click aquí - el popup se abre automáticamente
+        // El modal solo se abrirá desde el botón del popup
 
         this.markers.push(marker);
       }
@@ -377,64 +383,37 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
           )}</div>`
         : "";
 
-    // Obtener las especialidades reales del centro
+    // Obtener las especialidades reales del centro (mostrar solo 2 en el popup)
     const especialidadesCentro = centro.especialidadesDisponibles || [];
-    const especialidades =
+    const especialidadesPreview =
       especialidadesCentro.length > 0
-        ? `<div class="popup-especialidades">
+        ? `<div class="popup-especialidades-preview">
            <i class="fas fa-stethoscope"></i> 
-           <strong>Especialidades disponibles:</strong>
-           <div class="popup-especialidades-list">
-             ${especialidadesCentro.slice(0, 3).join(", ")}
-             ${
-               especialidadesCentro.length > 3
-                 ? ` (+${especialidadesCentro.length - 3} más)`
-                 : ""
-             }
-           </div>
+           ${especialidadesCentro.slice(0, 2).join(", ")}
+           ${especialidadesCentro.length > 2 ? ` (+${especialidadesCentro.length - 2} más)` : ""}
          </div>`
-        : '<div class="popup-especialidades"><i class="fas fa-exclamation-triangle"></i> <em>Sin especialidades registradas</em></div>';
+        : "";
 
     return `
-      <div class="centro-popup">
-        <div class="popup-header">
+      <div class="centro-popup-compact">
+        <div class="popup-header-compact">
           <span class="popup-number">${numero}</span>
           <div class="popup-title">
             <strong>${centro.nombre}</strong>
           </div>
         </div>
-        <div class="popup-body">
-          <div class="popup-info">
-            <div class="popup-row"><i class="fas fa-map-marker-alt"></i> ${
-              centro.direccion
-            }</div>
-            ${
-              centro.localidad
-                ? `<div class="popup-row"><i class="fas fa-city"></i> ${centro.localidad}, ${centro.provincia}</div>`
-                : ""
-            }
-            ${
-              centro.telefono
-                ? `<div class="popup-row"><i class="fas fa-phone"></i> ${centro.telefono}</div>`
-                : ""
-            }
-            ${distancia}
+        <div class="popup-body-compact">
+          <div class="popup-row-compact">
+            <i class="fas fa-map-marker-alt"></i> 
+            ${centro.direccion}
           </div>
-          ${especialidades}
-          <div class="popup-actions">
+          ${distancia}
+          ${especialidadesPreview}
+          <div class="popup-actions-compact">
             <button 
-              class="btn btn-popup-search" 
-              onclick="window.centrosModalComponent.buscarEnCentro(${
-                centro.id
-              })">
-              <i class="fas fa-search"></i> Buscar aquí
-            </button>
-            <button 
-              class="btn btn-popup-info" 
-              onclick="window.centrosModalComponent.verDetallesCentro(${
-                centro.id
-              })">
-              <i class="fas fa-info-circle"></i> Ver detalles
+              class="btn-popup-compact btn-popup-primary" 
+              onclick="window.centrosModalComponent.abrirModalInfoCentro(${centro.id})">
+              <i class="fas fa-info-circle"></i> Ver más información
             </button>
           </div>
         </div>
@@ -727,7 +706,22 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
 
   seleccionarCentro(centro: CentroMapaInfo) {
     this.centroActualSeleccionado = centro;
-    this.centroSeleccionado.emit(centro);
+    this.centroInfoModal = centro;
+    this.mostrarModalInfoCentro = true;
+    // No emitir el evento aquí, solo mostrar el modal
+    // this.centroSeleccionado.emit(centro);
+  }
+
+  cerrarModalInfoCentro() {
+    this.mostrarModalInfoCentro = false;
+    this.centroInfoModal = null;
+  }
+
+  verTurnosCentro(centroId: number) {
+    // Este método será llamado desde el HTML con routerLink
+    // Solo cerrar los modales
+    this.cerrarModalInfoCentro();
+    this.close();
   }
 
   centrarEnMapa(centro: CentroMapaInfo, event: Event) {
@@ -809,24 +803,11 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     this.modalCerrado.emit();
   }
 
-  // Método llamado desde el popup cuando se hace clic en "Buscar en este centro"
-  buscarEnCentro(centroId: number) {
-    const centro = this.centros.find((c) => c.id === centroId);
-    if (centro) {
-      this.centroSeleccionado.emit(centro);
-      this.close();
-    }
-  }
-
-  // Método llamado desde el popup cuando se hace clic en "Más información"
-  verDetallesCentro(centroId: number) {
-    const centro = this.centros.find((c) => c.id === centroId);
+  // Método público llamado desde el popup de Leaflet
+  abrirModalInfoCentro(centroId: number) {
+    const centro = this.centrosFiltrados.find((c) => c.id === centroId);
     if (centro) {
       this.seleccionarCentro(centro);
-      // Centrar el mapa en el centro seleccionado
-      if (centro.latitud && centro.longitud) {
-        this.map.setView([centro.latitud, centro.longitud], 15);
-      }
     }
   }
 

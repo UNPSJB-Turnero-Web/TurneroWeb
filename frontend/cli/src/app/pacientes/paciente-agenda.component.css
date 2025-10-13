@@ -686,6 +686,30 @@
   margin-bottom: 0.5rem;
 }
 
+.filtros-aplicados-lista {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  text-align: left;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.filtros-aplicados-lista li {
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-left: 3px solid #6366f1;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  color: #495057;
+}
+
+.filtros-aplicados-lista li strong {
+  color: #6366f1;
+  margin-right: 0.5rem;
+}
+
 /* MODAL CONTEXTUAL */
 .modal-contextual {
   position: fixed !important;

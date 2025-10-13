@@ -80,6 +80,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   // Slots y calendario
   showCalendar = false;
+  filtrosAplicados = false; // Indica si se aplicaron filtros (para mostrar mensajes)
   slotsOriginales: SlotDisponible[] = []; // Slots sin filtrar del backend
   slotsDisponibles: SlotDisponible[] = []; // Slots filtrados que se muestran
   slotsPorFecha: { [fecha: string]: SlotDisponible[] } = {};
@@ -106,6 +107,11 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   // Paginación
   paginaActual: number = 1;
   medicosPorPagina: number = 5; // Cantidad de médicos a mostrar por página
+
+  // Propiedades cacheadas para evitar re-cálculos en cada change detection
+  medicosPaginadosCache: Array<{ key: string; value: SlotDisponible[] }> = [];
+  totalPaginasCache: number = 0;
+  rangoPaginacionCache: string = '';
 
   constructor(
     private turnoService: TurnoService,
@@ -678,8 +684,31 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.slotsDisponibles = slotsFiltrados;
     this.turnosDisponibles = slotsFiltrados;
 
-    // Mostrar calendario solo si hay filtros aplicados
-    this.showCalendar = true;
+    // Marcar que se aplicaron filtros
+    this.filtrosAplicados = true;
+
+    // Mostrar calendario solo si hay resultados
+    this.showCalendar = slotsFiltrados.length > 0;
+
+    // Si no hay resultados pero hay filtros aplicados, mostrar mensaje
+    if (slotsFiltrados.length === 0) {
+      const filtrosAplicados = [];
+      if (this.centroAtencionSeleccionado) {
+        const nombreCentro = this.getCentroAtencionNombre(this.centroAtencionSeleccionado);
+        filtrosAplicados.push(`Centro: ${nombreCentro}`);
+      }
+      if (this.especialidadSeleccionada) {
+        filtrosAplicados.push(`Especialidad: ${this.especialidadSeleccionada}`);
+      }
+      if (this.staffMedicoSeleccionado) {
+        const nombreMedico = this.getStaffMedicoNombre(this.staffMedicoSeleccionado);
+        filtrosAplicados.push(`Médico: ${nombreMedico}`);
+      }
+
+      if (filtrosAplicados.length > 0) {
+        console.log('⚠️ No se encontraron turnos con los filtros:', filtrosAplicados.join(', '));
+      }
+    }
 
     // Reagrupar y mostrar
     this.agruparSlotsPorFecha();
@@ -911,10 +940,12 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   mostrarMapaCentros() {
     this.showMapaModal = true;
+    this.cdr.detectChanges(); // Forzar detección de cambios para OnPush
   }
 
   cerrarMapaModal() {
     this.showMapaModal = false;
+    this.cdr.detectChanges(); // Forzar detección de cambios para OnPush
   }
 
   onCentroSeleccionadoDelMapa(centro: CentroAtencion) {
@@ -1104,12 +1135,26 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.staffMedicoSeleccionado = null;
     this.centroAtencionSeleccionado = null;
 
+    // Limpiar los query params de la URL
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      queryParamsHandling: '' // Reemplazar todos los query params
+    });
+
+    // Resetear estado de filtros
+    this.filtrosAplicados = false;
+
     // Ocultar calendario cuando no hay filtros
     this.slotsDisponibles = [];
     this.turnosDisponibles = [];
     this.showCalendar = false;
     this.slotsPorFecha = {};
     this.fechasOrdenadas = [];
+    this.medicosSlotsAgrupados = new Map();
+    
+    // Actualizar cache de paginación
+    this.actualizarCachePaginacion();
 
     this.cdr.detectChanges();
   }
@@ -1290,6 +1335,33 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
         return a.horaInicio.localeCompare(b.horaInicio);
       });
     });
+
+    // Actualizar cache de paginación después de agrupar
+    this.actualizarCachePaginacion();
+  }
+
+  /**
+   * Actualiza las propiedades cacheadas de paginación para evitar re-cálculos
+   * en cada ciclo de detección de cambios
+   */
+  private actualizarCachePaginacion() {
+    // Calcular total de páginas
+    const totalMedicos = this.medicosSlotsAgrupados.size;
+    this.totalPaginasCache = Math.ceil(totalMedicos / this.medicosPorPagina);
+
+    // Calcular médicos paginados
+    const todosLosMedicos = Array.from(this.medicosSlotsAgrupados.entries()).map(([key, value]) => ({
+      key,
+      value
+    }));
+    const inicio = (this.paginaActual - 1) * this.medicosPorPagina;
+    const fin = inicio + this.medicosPorPagina;
+    this.medicosPaginadosCache = todosLosMedicos.slice(inicio, fin);
+
+    // Calcular rango de paginación
+    const inicioRango = (this.paginaActual - 1) * this.medicosPorPagina + 1;
+    const finRango = Math.min(this.paginaActual * this.medicosPorPagina, totalMedicos);
+    this.rangoPaginacionCache = `${inicioRango}-${finRango} de ${totalMedicos}`;
   }
 
   filtrarPorBusqueda() {
@@ -1430,10 +1502,9 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     return Array.from(especialidades);
   }
 
-  // Métodos de paginación
+  // Métodos de paginación (ahora retornan valores cacheados)
   getTotalPaginas(): number {
-    const totalMedicos = this.medicosSlotsAgrupados.size;
-    return Math.ceil(totalMedicos / this.medicosPorPagina);
+    return this.totalPaginasCache;
   }
 
   getMedicosEntries(): Array<{ key: string; value: SlotDisponible[] }> {
@@ -1444,16 +1515,16 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   }
 
   getMedicosPaginados(): Array<{ key: string; value: SlotDisponible[] }> {
-    const todosLosMedicos = this.getMedicosEntries();
-    const inicio = (this.paginaActual - 1) * this.medicosPorPagina;
-    const fin = inicio + this.medicosPorPagina;
-    return todosLosMedicos.slice(inicio, fin);
+    return this.medicosPaginadosCache;
   }
 
   cambiarPagina(nuevaPagina: number) {
-    const totalPaginas = this.getTotalPaginas();
+    const totalPaginas = this.totalPaginasCache;
     if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
       this.paginaActual = nuevaPagina;
+      
+      // Actualizar cache de paginación
+      this.actualizarCachePaginacion();
 
       // Scroll suave al inicio de la lista de médicos
       setTimeout(() => {
@@ -1466,10 +1537,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   }
 
   getRangoPaginacion(): string {
-    const totalMedicos = this.medicosSlotsAgrupados.size;
-    const inicio = (this.paginaActual - 1) * this.medicosPorPagina + 1;
-    const fin = Math.min(this.paginaActual * this.medicosPorPagina, totalMedicos);
-    return `${inicio}-${fin} de ${totalMedicos}`;
+    return this.rangoPaginacionCache;
   }
 
   getNumeroPaginas(): number[] {
