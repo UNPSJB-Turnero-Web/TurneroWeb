@@ -822,33 +822,65 @@ public class AgendaService {
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
      * @return Lista de turnos públicos disponibles (TurnoPublicoDTO)
      */
-    public List<TurnoPublicoDTO> findTurnosPublicosDisponibles(Integer centroId, Integer semanas) {
+    public List<TurnoPublicoDTO> findTurnosPublicosDisponibles(
+            Integer centroId, 
+            String especialidad, 
+            Integer staffMedicoId, 
+            Integer semanas) {
+        
+        System.out.println("🔍 [AgendaService] Filtros recibidos:");
+        System.out.println("   - centroId: " + centroId);
+        System.out.println("   - especialidad: " + especialidad);
+        System.out.println("   - staffMedicoId: " + staffMedicoId);
+        System.out.println("   - semanas: " + semanas);
+        
         // Generar todos los eventos desde los esquemas de turno (misma lógica que /eventos/todos)
         List<EsquemaTurno> esquemas;
         int semanasAGenerar = semanas != null ? semanas : 4;
         
-        if (centroId != null) {
-            // Filtrar esquemas por centro de atención
-            esquemas = esquemaTurnoRepository.findAll().stream()
-                .filter(e -> e.getConsultorio() != null && 
-                           e.getConsultorio().getCentroAtencion() != null &&
-                           e.getConsultorio().getCentroAtencion().getId().equals(centroId))
-                .collect(Collectors.toList());
-        } else {
-            esquemas = esquemaTurnoRepository.findAll();
-        }
+        //  Filtrar esquemas según los parámetros (igual que /eventos/todos)
+        esquemas = esquemaTurnoRepository.findAll().stream()
+            .filter(e -> {
+                // Validar que tenga consultorio
+                if (e.getConsultorio() == null) {
+                    return false;
+                }
+                
+                //  FILTRAR POR CENTRO DE ATENCIÓN
+                if (centroId != null && e.getConsultorio().getCentroAtencion() != null) {
+                    if (!e.getConsultorio().getCentroAtencion().getId().equals(centroId)) {
+                        return false;
+                    }
+                }
+                
+                //  FILTRAR POR STAFF MÉDICO
+                if (staffMedicoId != null && e.getStaffMedico() != null) {
+                    if (!e.getStaffMedico().getId().equals(staffMedicoId)) {
+                        return false;
+                    }
+                }
+                
+                //  FILTRAR POR ESPECIALIDAD
+                if (especialidad != null && !especialidad.isEmpty() && 
+                    e.getStaffMedico() != null && 
+                    e.getStaffMedico().getEspecialidad() != null) {
+                    
+                    String especialidadEsquema = e.getStaffMedico().getEspecialidad().getNombre();
+                    if (!especialidadEsquema.equalsIgnoreCase(especialidad.trim())) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            })
+            .collect(Collectors.toList());
+        
+        System.out.println("✅ [AgendaService] Esquemas después de filtros: " + esquemas.size());
         
         List<TurnoDTO> todosLosSlots = new ArrayList<>();
         
         // Generar eventos desde cada esquema (lógica idéntica a obtenerTodosLosEventos)
         for (EsquemaTurno esquema : esquemas) {
-            // Skip schemes with null consultorio to prevent errors
-            if (esquema.getConsultorio() == null) {
-                System.err.println("⚠️ [Público] Skipping EsquemaTurno ID " + esquema.getId() + 
-                                 " - consultorio is null.");
-                continue;
-            }
-            
             try {
                 List<TurnoDTO> eventos = generarEventosDesdeEsquemaTurno(esquema, semanasAGenerar);
                 todosLosSlots.addAll(eventos);
@@ -859,10 +891,12 @@ public class AgendaService {
             }
         }
         
+        System.out.println("✅ [AgendaService] Total slots generados: " + todosLosSlots.size());
+        
         // Filtrar solo slots disponibles (no ocupados) y mapear a DTO público
         LocalDate fechaActual = LocalDate.now();
         
-        return todosLosSlots.stream()
+        List<TurnoPublicoDTO> resultado = todosLosSlots.stream()
             .filter(slot -> slot.getEsSlot() != null && slot.getEsSlot()) // Solo slots generados
             .filter(slot -> slot.getOcupado() == null || !slot.getOcupado()) // Solo disponibles
             .filter(slot -> slot.getEnMantenimiento() == null || !slot.getEnMantenimiento()) // Sin mantenimiento
@@ -875,6 +909,8 @@ public class AgendaService {
                 return t1.getHoraInicio().compareTo(t2.getHoraInicio());
             })
             .collect(Collectors.toList());
+                
+        return resultado;
     }
     
     /**

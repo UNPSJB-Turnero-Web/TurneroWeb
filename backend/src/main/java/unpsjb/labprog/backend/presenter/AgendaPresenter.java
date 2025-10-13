@@ -49,20 +49,23 @@ public class AgendaPresenter {
      * y filtra solo los disponibles.
      * 
      * @param centroId ID opcional del centro de atención para filtrar
+     * @param especialidad Nombre opcional de la especialidad para filtrar
+     * @param staffMedicoId ID opcional del staff médico para filtrar
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
      * @return Lista de turnos disponibles en formato público (sin datos del paciente)
      */
     @GetMapping("/publica")
     public ResponseEntity<Object> obtenerTurnosPublicosDisponibles(
             @RequestParam(name = "centroId", required = false) Integer centroId,
+            @RequestParam(name = "especialidad", required = false) String especialidad,
+            @RequestParam(name = "staffMedicoId", required = false) Integer staffMedicoId,
             @RequestParam(name = "semanas", required = false, defaultValue = "4") Integer semanas) {
         try {
-            List<TurnoPublicoDTO> turnosPublicos = 
-                agendaService.findTurnosPublicosDisponibles(centroId, semanas);
             
-            String mensaje = centroId != null 
-                ? String.format("Turnos disponibles obtenidos para centro ID %d (%d semanas)", centroId, semanas)
-                : String.format("Todos los turnos disponibles obtenidos correctamente (%d semanas)", semanas);
+            List<TurnoPublicoDTO> turnosPublicos = 
+                agendaService.findTurnosPublicosDisponibles(centroId, especialidad, staffMedicoId, semanas);
+            
+            String mensaje = String.format("Turnos disponibles obtenidos correctamente (%d semanas)", semanas);
             
             return Response.ok(turnosPublicos, mensaje);
         } catch (Exception e) {
@@ -73,7 +76,12 @@ public class AgendaPresenter {
     
 
     @GetMapping("/eventos/todos")
-    public List<TurnoDTO> obtenerTodosLosEventos(@RequestParam int semanas) {
+    public List<TurnoDTO> obtenerTodosLosEventos(
+            @RequestParam int semanas,
+            @RequestParam(required = false) String especialidad,
+            @RequestParam(required = false) Integer staffMedicoId,
+            @RequestParam(required = false) Integer centroId) {
+        
         List<EsquemaTurno> esquemas = esquemaTurnoRepository.findAll();
         List<TurnoDTO> todosLosEventos = new ArrayList<>();
 
@@ -83,6 +91,31 @@ public class AgendaPresenter {
                 System.err.println("⚠️ Skipping EsquemaTurno ID " + esquema.getId() + 
                                  " - consultorio is null. Please check database integrity.");
                 continue;
+            }
+            
+            // FILTRAR POR CENTRO DE ATENCIÓN
+            if (centroId != null && esquema.getConsultorio().getCentroAtencion() != null) {
+                if (!esquema.getConsultorio().getCentroAtencion().getId().equals(centroId)) {
+                    continue; // Skip este esquema si no coincide el centro
+                }
+            }
+            
+            // FILTRAR POR STAFF MÉDICO
+            if (staffMedicoId != null && esquema.getStaffMedico() != null) {
+                if (!esquema.getStaffMedico().getId().equals(staffMedicoId)) {
+                    continue; // Skip este esquema si no coincide el médico
+                }
+            }
+            
+            // FILTRAR POR ESPECIALIDAD
+            if (especialidad != null && !especialidad.isEmpty() && 
+                esquema.getStaffMedico() != null && 
+                esquema.getStaffMedico().getEspecialidad() != null) {
+                
+                String especialidadEsquema = esquema.getStaffMedico().getEspecialidad().getNombre();
+                if (!especialidadEsquema.equalsIgnoreCase(especialidad.trim())) {
+                    continue; // Skip este esquema si no coincide la especialidad
+                }
             }
             
             try {
@@ -95,6 +128,7 @@ public class AgendaPresenter {
             }
         }
 
+        System.out.println("✅ [AgendaPresenter] Total eventos generados después de filtros: " + todosLosEventos.size());
         return todosLosEventos;
     }
 

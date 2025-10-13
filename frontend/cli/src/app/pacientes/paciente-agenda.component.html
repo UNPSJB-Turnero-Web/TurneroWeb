@@ -73,77 +73,78 @@
           </div>
 
           <div class="filtros-divider"></div>
-          <!-- Filtro por Centro de Atención -->
-          <div class="filtro-step" [class.active]="centroAtencionSeleccionado">
-            <div class="step-header">
-              <div class="step-number">1</div>
-              <h4>Centro de Atención (Opcional)</h4>
-            </div>
-            <select
-              class="form-control-paciente"
-              [(ngModel)]="centroAtencionSeleccionado"
-              (change)="onCentroAtencionChange()"
-              [disabled]="isLoadingCentros"
-            >
-              <option value="">Todos los centros</option>
-              <option
-                *ngFor="let centro of centrosAtencion"
-                [value]="centro.id"
-              >
-                {{ centro.nombre }}
-              </option>
-            </select>
-            <div class="loading-indicator" *ngIf="isLoadingCentros">
-              <i class="fas fa-spinner fa-spin"></i> Cargando centros...
-            </div>
-          </div>
 
-          <!-- Filtro por Especialidad -->
-          <div class="filtro-step" [class.active]="especialidadSeleccionada">
-            <div class="step-header">
-              <div class="step-number">2</div>
-              <h4>Especialidad (Opcional)</h4>
-            </div>
-            <select
-              class="form-control-paciente"
-              [(ngModel)]="especialidadSeleccionada"
-              (change)="onEspecialidadChange()"
-              [disabled]="isLoadingEspecialidades"
-            >
-              <option value="">Seleccione una especialidad</option>
-              <option
-                *ngFor="let especialidad of especialidades"
-                [value]="especialidad.nombre"
+          <!--  FORMULARIO REACTIVO - Nueva implementación -->
+          <form [formGroup]="filtrosForm">
+            <!-- Filtro por Centro de Atención -->
+            <div class="filtro-step" [class.active]="centroAtencionSeleccionado">
+              <div class="step-header">
+                <div class="step-number">1</div>
+                <h4>Centro de Atención (Opcional)</h4>
+              </div>
+              <select
+                class="form-control-paciente"
+                formControlName="centroAtencion"
+                [disabled]="isLoadingCentros"
               >
-                {{ especialidad.nombre }}
-              </option>
-            </select>
-            <div class="loading-indicator" *ngIf="isLoadingEspecialidades">
-              <i class="fas fa-spinner fa-spin"></i> Cargando especialidades...
+                <option [ngValue]="null">Todos los centros</option>
+                <option
+                  *ngFor="let centro of centrosAtencion"
+                  [ngValue]="centro.id"
+                >
+                  {{ centro.nombre }}
+                </option>
+              </select>
+              <div class="loading-indicator" *ngIf="isLoadingCentros">
+                <i class="fas fa-spinner fa-spin"></i> Cargando centros...
+              </div>
             </div>
-          </div>
 
-          <!-- Filtro por Staff Médico -->
-          <div class="filtro-step" [class.active]="staffMedicoSeleccionado">
-            <div class="step-header">
-              <div class="step-number">3</div>
-              <h4>Médico (Opcional)</h4>
+            <!-- Filtro por Especialidad -->
+            <div class="filtro-step" [class.active]="especialidadSeleccionada">
+              <div class="step-header">
+                <div class="step-number">2</div>
+                <h4>Especialidad (Opcional)</h4>
+              </div>
+              <select
+                class="form-control-paciente"
+                formControlName="especialidad"
+                [disabled]="isLoadingEspecialidades"
+              >
+                <option value="">Seleccione una especialidad</option>
+                <option
+                  *ngFor="let especialidad of especialidades"
+                  [value]="especialidad.nombre"
+                >
+                  {{ especialidad.nombre }}
+                </option>
+              </select>
+              <div class="loading-indicator" *ngIf="isLoadingEspecialidades">
+                <i class="fas fa-spinner fa-spin"></i> Cargando especialidades...
+              </div>
             </div>
-            <select
-              class="form-control-paciente"
-              [(ngModel)]="staffMedicoSeleccionado"
-              (change)="onStaffMedicoChange()"
-              [disabled]="isLoadingStaffMedicos"
-            >
-              <option value="">Todos los médicos</option>
-              <option *ngFor="let staff of staffMedicos" [value]="staff.id">
-                {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
-              </option>
-            </select>
-            <div class="loading-indicator" *ngIf="isLoadingStaffMedicos">
-              <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
+
+            <!-- Filtro por Staff Médico -->
+            <div class="filtro-step" [class.active]="staffMedicoSeleccionado">
+              <div class="step-header">
+                <div class="step-number">3</div>
+                <h4>Médico (Opcional)</h4>
+              </div>
+              <select
+                class="form-control-paciente"
+                formControlName="medico"
+                [disabled]="isLoadingStaffMedicos"
+              >
+                <option [ngValue]="null">Todos los médicos</option>
+                <option *ngFor="let staff of staffMedicos" [ngValue]="staff.id">
+                  {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
+                </option>
+              </select>
+              <div class="loading-indicator" *ngIf="isLoadingStaffMedicos">
+                <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
+              </div>
             </div>
-          </div>
+          </form>
 
           <!-- Filtros aplicados -->
           <div

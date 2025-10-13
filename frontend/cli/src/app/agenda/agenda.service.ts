@@ -99,14 +99,26 @@ export class AgendaService {
 
   /**
    * Obtiene la agenda pública sin requerir autenticación
+   * Ahora acepta los mismos filtros que el endpoint privado
    * @param centroId (opcional) ID del centro de atención para filtrar
+   * @param especialidad (opcional) Nombre de la especialidad para filtrar
+   * @param staffMedicoId (opcional) ID del staff médico para filtrar
    * @returns Observable con los eventos de la agenda pública
    */
-  getAgendaPublica(centroId?: number): Observable<any> {
+  getAgendaPublica(centroId?: number, especialidad?: string, staffMedicoId?: number): Observable<any> {
     let params = new HttpParams();
+    
     if (centroId) {
       params = params.append('centroId', centroId.toString());
     }
+    if (especialidad) {
+      params = params.append('especialidad', especialidad);
+    }
+    if (staffMedicoId) {
+      params = params.append('staffMedicoId', staffMedicoId.toString());
+    }
+    
+    console.log('🌐 [AgendaService] Llamando /publica con params:', params.toString());
     return this.http.get(`${this.url}/publica`, { params });
   }
 
