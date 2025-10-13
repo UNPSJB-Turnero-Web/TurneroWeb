@@ -12,8 +12,8 @@ import { ModalService } from "../modal/modal.service";
 @Component({
   selector: "app-paciente-dashboard",
   imports: [CommonModule, FormsModule],
-  templateUrl: "./paciente-dashboard.component.html", 
-  styleUrl: "./paciente-dashboard.component.css", 
+  templateUrl: "./paciente-dashboard.component.html",
+  styleUrl: "./paciente-dashboard.component.css",
 })
 export class PacienteDashboardComponent implements OnInit, OnDestroy {
   patientDNI: string = "";
@@ -558,13 +558,13 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
             // Respuesta exitosa real
             console.log("Turno confirmado exitosamente:", response);
             turno.status = "confirmado";
-            
+
             // Mostrar modal de éxito en lugar de alert
             this.modalService.alert(
               'Turno Confirmado',
               'Turno confirmado exitosamente. Te esperamos en la fecha y hora programada.'
             );
-            
+
             this.cargarTurnosPaciente();
           },
           error: (error) => {
@@ -666,6 +666,10 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
 
   viewNotifications() {
     this.router.navigate(["/paciente-notificaciones"]);
+  }
+
+  viewHistorial() {
+    this.router.navigate(["/paciente-historial"]);
   }
 
 

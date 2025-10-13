@@ -61,6 +61,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Ver mis turnos programados'
       },
       {
+        label: 'Mi Historial',
+        route: '/paciente-historial',
+        icon: 'fa-history',
+        description: 'Ver historial de atenciones médicas'
+      },
+      {
         label: 'Mis Notificaciones',
         route: '/paciente-notificaciones',
         icon: 'fa-bell',

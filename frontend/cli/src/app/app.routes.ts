@@ -58,6 +58,7 @@ import { AdminPerfilComponent } from "./admin/admin-perfil.component";
 import { TokenStatusComponent } from "./components/token-status.component";
 import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
 import { AdminConfigComponent } from "./admin/admin-config.component";
+import { HistorialTurnosComponent } from "./turnos/historial-turnos.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -127,6 +128,11 @@ export const routes: Routes = [
   {
     path: "paciente-notificaciones",
     component: PacienteNotificacionesComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-historial",
+    component: HistorialTurnosComponent,
     canActivate: [PatientGuard],
   },
   {
