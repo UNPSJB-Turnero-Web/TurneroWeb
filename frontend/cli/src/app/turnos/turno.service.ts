@@ -122,6 +122,11 @@ export class TurnoService {
     return this.http.post<DataPackage<Turno>>(this.url, turno);
   }
 
+  /** Asigna un turno a un paciente (usado en reserva automática tras login) */
+  asignarTurno(turnoDTO: any): Observable<DataPackage<Turno>> {
+    return this.http.post<DataPackage<Turno>>(`${this.url}/asignar`, turnoDTO);
+  }
+
   /** Actualiza un turno existente */
   update(id: number, turno: Turno): Observable<DataPackage<Turno>> {
     return this.http.put<DataPackage<Turno>>(`${this.url}/${id}`, turno);

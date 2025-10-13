@@ -984,3 +984,365 @@
     opacity: 0;
   }
 }
+
+/* ============================================ */
+/* POPUP COMPACTO DE LEAFLET */
+/* ============================================ */
+
+:host ::ng-deep .centro-popup-compact {
+  font-family: inherit;
+  min-width: 260px;
+  max-width: 280px;
+}
+
+:host ::ng-deep .popup-header-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+:host ::ng-deep .popup-header-compact .popup-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+}
+
+:host ::ng-deep .popup-header-compact .popup-title strong {
+  font-size: 1rem;
+  color: #2c3e50;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+:host ::ng-deep .popup-body-compact {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+:host ::ng-deep .popup-row-compact {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  color: #495057;
+}
+
+:host ::ng-deep .popup-row-compact i {
+  width: 14px;
+  color: #667eea;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+:host ::ng-deep .popup-body-compact .popup-distance {
+  background: linear-gradient(
+    135deg,
+    rgba(40, 167, 69, 0.1) 0%,
+    rgba(32, 201, 151, 0.1) 100%
+  );
+  color: #28a745;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-weight: 600;
+  margin: 0.4rem 0;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+
+:host ::ng-deep .popup-especialidades-preview {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 6px;
+  border-left: 2px solid #667eea;
+  font-size: 0.8rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+:host ::ng-deep .popup-especialidades-preview i {
+  color: #667eea;
+  font-size: 0.85rem;
+}
+
+:host ::ng-deep .popup-actions-compact {
+  display: flex;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e9ecef;
+}
+
+:host ::ng-deep .btn-popup-compact {
+  width: 100%;
+  border: none;
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+:host ::ng-deep .btn-popup-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+:host ::ng-deep .btn-popup-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #66428e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================ */
+/* MODAL PEQUEÑO DE INFORMACIÓN DEL CENTRO */
+/* ============================================ */
+
+.centro-info-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1060; /* Mayor que el modal principal */
+  animation: fadeIn 0.2s ease-out;
+}
+
+.centro-info-modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Header del modal pequeño */
+.centro-info-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.centro-info-modal-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.centro-info-modal-header h4 i {
+  font-size: 1.3rem;
+}
+
+.btn-close-small {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.btn-close-small:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* Body del modal pequeño */
+.centro-info-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row i {
+  color: #667eea;
+  font-size: 1rem;
+  margin-top: 2px;
+  min-width: 20px;
+}
+
+.info-row span {
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Especialidades en modal pequeño */
+.info-especialidades {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.info-especialidades-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+  color: #495057;
+}
+
+.info-especialidades-header i {
+  color: #667eea;
+  font-size: 1rem;
+}
+
+.info-especialidades-header strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.info-especialidades-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.especialidad-tag-small {
+  background: white;
+  color: #667eea;
+  padding: 0.4rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  border: 1px solid #667eea;
+  font-weight: 500;
+}
+
+.especialidad-tag-small.more-tag {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Footer del modal pequeño */
+.centro-info-modal-footer {
+  padding: 1.2rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary i {
+  font-size: 1.1rem;
+}
+
+/* Responsive para modal pequeño */
+@media (max-width: 576px) {
+  .centro-info-modal-content {
+    width: 95%;
+    max-width: none;
+  }
+
+  .centro-info-modal-header h4 {
+    font-size: 1rem;
+  }
+
+  .info-row {
+    font-size: 0.9rem;
+  }
+
+  .btn-block {
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+  }
+}

@@ -22,20 +22,6 @@
     </div>
   </div>
 
-  <!-- Banner informativo para usuarios anónimos -->
-  <div class="row mb-3" *ngIf="!estaAutenticado">
-    <div class="col-12">
-      <div class="alert alert-info d-flex align-items-center" role="alert">
-        <i class="fas fa-info-circle me-2"></i>
-        <div>
-          <strong>Modo de vista pública</strong> - Puedes explorar los turnos disponibles. 
-          Para reservar un turno, necesitarás 
-          <a href="/ingresar" class="alert-link">iniciar sesión</a> o 
-          <a href="/registro-usuario" class="alert-link">crear una cuenta</a>.
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- FILTROS DE TURNOS -->
   <div class="row mb-4">
@@ -497,20 +483,31 @@
 </div>
 
 <!-- MENSAJE CUANDO NO HAY TURNOS -->
-<div class="row" *ngIf="showCalendar && turnosDisponibles.length === 0">
+<div class="row" *ngIf="filtrosAplicados && !showCalendar && turnosDisponibles.length === 0">
   <div class="col-12">
     <div class="no-turnos-card">
       <div class="no-turnos-content">
         <i class="fas fa-calendar-times"></i>
-        <h4>No hay turnos para mostrar</h4>
-        <p>No se encontraron turnos con los filtros seleccionados.</p>
-        <p>Intenta cambiar los filtros o seleccionar otra fecha.</p>
+        <h4>No hay turnos disponibles</h4>
+        <p>No se encontraron turnos con los filtros seleccionados:</p>
+        <ul class="filtros-aplicados-lista">
+          <li *ngIf="centroAtencionSeleccionado">
+            <strong>Centro:</strong> {{ getCentroAtencionNombre(centroAtencionSeleccionado) }}
+          </li>
+          <li *ngIf="especialidadSeleccionada">
+            <strong>Especialidad:</strong> {{ especialidadSeleccionada }}
+          </li>
+          <li *ngIf="staffMedicoSeleccionado">
+            <strong>Médico:</strong> {{ getStaffMedicoNombre(staffMedicoSeleccionado) }}
+          </li>
+        </ul>
+        <p class="mt-3">Intenta cambiar los filtros o seleccionar otras opciones.</p>
         <button
           class="btn btn-paciente-primary"
           (click)="limpiarTodosFiltros()"
         >
           <i class="fas fa-filter"></i>
-          Cambiar Filtros
+          Limpiar Filtros
         </button>
       </div>
     </div>

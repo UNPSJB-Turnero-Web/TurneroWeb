@@ -97,10 +97,6 @@ export class AgendaService {
     return this.http.get<DataPackage>(`${this.url}/slots-disponibles/${staffMedicoId}?semanas=${semanas}`);
   }
 
-  asignarTurno(turnoId: number, pacienteId: number): Observable<any> {
-    return this.http.post(`${this.url}/asignar-turno`, { turnoId, pacienteId });
-  }
-
   /**
    * Obtiene la agenda pública sin requerir autenticación
    * @param centroId (opcional) ID del centro de atención para filtrar
