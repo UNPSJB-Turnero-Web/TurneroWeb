@@ -20,7 +20,8 @@ import {
   GeolocationService,
   UserLocation,
 } from "../services/geolocation.service";
-import { UsuarioAuthService } from "../services/UsuarioAuth.service";
+import { UserContextService } from "../services/user-context.service";
+import { Role } from "../inicio-sesion/auth.service";
 
 interface CentroMapaInfo extends CentroAtencion {
   distanciaKm?: number;
@@ -91,7 +92,7 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private geolocationService: GeolocationService,
     private centroEspecialidadService: CentroEspecialidadService,
-    private authService: UsuarioAuthService
+    private userContextService: UserContextService
   ) {}
 
   ngOnInit() {
@@ -164,9 +165,13 @@ export class CentrosMapaModalComponent implements OnInit, OnDestroy {
     // Inicializar mapa
     setTimeout(() => this.inicializarMapa(), 100);
   }
-  // Método para verificar si el usuario es operador
+  
+    /**
+   * Verifica si el usuario tiene capacidades administrativas (staff médico u operador)
+   * Gracias a la jerarquía de roles, ADMINISTRADOR hereda automáticamente OPERADOR y MEDICO
+   */
   get esOperador(): boolean {
-    return this.authService.esOperador();
+    return this.userContextService.hasAnyRole([Role.OPERADOR, Role.MEDICO]);
   }
 
   cargarCentroEspecialidadesFromService() {

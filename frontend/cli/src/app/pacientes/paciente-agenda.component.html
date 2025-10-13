@@ -22,6 +22,21 @@
     </div>
   </div>
 
+  <!-- Banner informativo para usuarios anónimos -->
+  <div class="row mb-3" *ngIf="!estaAutenticado">
+    <div class="col-12">
+      <div class="alert alert-info d-flex align-items-center" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <div>
+          <strong>Modo de vista pública</strong> - Puedes explorar los turnos disponibles. 
+          Para reservar un turno, necesitarás 
+          <a href="/ingresar" class="alert-link">iniciar sesión</a> o 
+          <a href="/registro-usuario" class="alert-link">crear una cuenta</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- FILTROS DE TURNOS -->
   <div class="row mb-4">
     <div class="col-12">
@@ -563,8 +578,14 @@
       </div>
 
       <div class="confirmation-text">
-        <p><strong>¿Deseas reservar este turno?</strong></p>
-        <p>Una vez confirmado, el turno quedará reservado a tu nombre.</p>
+        <p *ngIf="estaAutenticado"><strong>¿Deseas reservar este turno?</strong></p>
+        <p *ngIf="estaAutenticado">Una vez confirmado, el turno quedará reservado a tu nombre.</p>
+        
+        <p *ngIf="!estaAutenticado"><strong>Inicia sesión para continuar</strong></p>
+        <p *ngIf="!estaAutenticado">
+          Para reservar este turno necesitas iniciar sesión con tu cuenta de paciente. 
+          El turno quedará guardado y podrás completar la reserva después del inicio de sesión.
+        </p>
       </div>
     </div>
 
@@ -576,7 +597,10 @@
       >
         Cancelar
       </button>
+      
+      <!-- Botón para usuarios autenticados -->
       <button
+        *ngIf="estaAutenticado"
         type="button"
         class="btn btn-paciente-primary"
         (click)="confirmarReservaTurno()"
@@ -584,6 +608,17 @@
       >
         <i class="fas fa-check"></i>
         {{ isBooking ? "Reservando..." : "Confirmar Reserva" }}
+      </button>
+      
+      <!-- Botón para usuarios anónimos -->
+      <button
+        *ngIf="!estaAutenticado"
+        type="button"
+        class="btn btn-paciente-primary"
+        (click)="seleccionarTurno(slotSeleccionado)"
+      >
+        <i class="fas fa-sign-in-alt"></i>
+        Iniciar sesión para reservar
       </button>
     </div>
   </div>
