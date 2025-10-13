@@ -2506,62 +2506,61 @@ public class TurnoService {
             String sortDir) {
 
         System.out.println("🔍 DEBUG: Obteniendo historial filtrado para paciente ID: " + pacienteId);
-        System.out.println("   - Estado: " + estado);
+        System.out.println("   - Estado recibido: [" + estado + "]");
         System.out.println("   - Fecha desde: " + fechaDesde);
         System.out.println("   - Fecha hasta: " + fechaHasta);
-        System.out.println("   - Página: " + page + ", Tamaño: " + size);
 
         // Validar paciente
         if (!pacienteRepository.existsById(pacienteId)) {
             throw new IllegalArgumentException("Paciente no encontrado con ID: " + pacienteId);
         }
 
-        // Configurar ordenamiento (por defecto: fecha descendente)
+        // Configurar ordenamiento
         Sort.Direction direction = "ASC".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
         String sortField = sortBy != null && !sortBy.trim().isEmpty() ? sortBy : "fecha";
         Sort sort = Sort.by(direction, sortField);
-
-        // Crear paginación
         PageRequest pageable = PageRequest.of(page, size, sort);
 
-        // Parsear estado si viene como string
+        // 🔥 CORRECCIÓN: Parsear estado correctamente
         EstadoTurno estadoEnum = null;
-        if (estado != null && !estado.trim().isEmpty()) {
+        if (estado != null && !estado.trim().isEmpty() && !"TODO".equalsIgnoreCase(estado.trim())) {
             try {
                 estadoEnum = EstadoTurno.valueOf(estado.trim().toUpperCase());
-                System.out.println("   - Estado parseado: " + estadoEnum);
+                System.out.println("   - ✅ Estado parseado correctamente: " + estadoEnum);
             } catch (IllegalArgumentException e) {
-                System.err.println("⚠️ WARN: Estado inválido proporcionado: " + estado);
-                // Estado inválido, se ignora el filtro
+                System.err.println("   - ⚠️ WARN: Estado inválido: [" + estado + "], se ignorará el filtro");
+                estadoEnum = null;
             }
+        } else {
+            System.out.println("   - ℹ️ Sin filtro de estado (mostrando todos)");
         }
 
-        // Construir especificación con filtros
+        // Construir especificación base: SIEMPRE filtrar por paciente
         Specification<Turno> spec = Specification.where(TurnoRepository.hasPacienteId(pacienteId));
 
-        // Agregar filtro de estado si está presente
+        // 🔥 CORRECCIÓN: Aplicar filtro de estado SOLO si estadoEnum no es null
         if (estadoEnum != null) {
+            System.out.println("   - 🎯 Aplicando filtro de estado: " + estadoEnum);
             spec = spec.and(TurnoRepository.hasEstado(estadoEnum));
         }
 
-        // Agregar filtros de fecha
+        // Aplicar filtros de fecha
         if (fechaDesde != null) {
             spec = spec.and(TurnoRepository.hasFechaDesde(fechaDesde));
-            System.out.println("   - Filtro fecha desde aplicado: " + fechaDesde);
+            System.out.println("   - 📅 Filtro fecha desde aplicado: " + fechaDesde);
         }
 
         if (fechaHasta != null) {
             spec = spec.and(TurnoRepository.hasFechaHasta(fechaHasta));
-            System.out.println("   - Filtro fecha hasta aplicado: " + fechaHasta);
+            System.out.println("   - 📅 Filtro fecha hasta aplicado: " + fechaHasta);
         }
 
         // Ejecutar consulta
         Page<Turno> turnosPage = repository.findAll(spec, pageable);
 
-        System.out.println("✅ DEBUG: Historial obtenido - " + turnosPage.getTotalElements() +
-                " turnos encontrados, página " + (page + 1) + " de " + turnosPage.getTotalPages());
+        System.out.println("✅ DEBUG: Query ejecutada - " + turnosPage.getTotalElements() +
+                " turnos encontrados (página " + (page + 1) + " de " + turnosPage.getTotalPages() + ")");
 
-        // Convertir a HistorialTurnoDTO con información completa de auditoría
         return turnosPage.map(this::toHistorialDTO);
     }
 

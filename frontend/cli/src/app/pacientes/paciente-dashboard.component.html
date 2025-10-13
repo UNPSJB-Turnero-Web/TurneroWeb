@@ -38,13 +38,8 @@
 <div class="patient-dashboard">
   <!-- Floating Particles Background -->
   <div class="particles-bg">
-    <div
-      class="particle"
-      *ngFor="let p of particles; let i = index"
-      [style.left.px]="p.x"
-      [style.top.px]="p.y"
-      [style.animation-delay.s]="i * 0.2"
-    ></div>
+    <div class="particle" *ngFor="let p of particles; let i = index" [style.left.px]="p.x" [style.top.px]="p.y"
+      [style.animation-delay.s]="i * 0.2"></div>
   </div>
 
   <!-- Header Section -->
@@ -117,10 +112,7 @@
         </div>
       </div>
 
-      <div
-        class="action-card action-notifications"
-        (click)="viewNotifications()"
-      >
+      <div class="action-card action-notifications" (click)="viewNotifications()">
         <div class="card-icon">
           <i class="fas fa-bell"></i>
         </div>
@@ -131,6 +123,19 @@
         <div class="notification-badge" *ngIf="contadorNotificaciones > 0">
           <span>{{ contadorNotificaciones }}</span>
           <div class="notification-pulse"></div>
+        </div>
+        <div class="card-arrow">
+          <i class="fas fa-arrow-right"></i>
+        </div>
+      </div>
+
+      <div class="action-card action-history" (click)="viewHistorial()">
+        <div class="card-icon">
+          <i class="fas fa-history"></i>
+        </div>
+        <div class="card-content">
+          <h3>Mi Historial</h3>
+          <p>Ver historial de turnos médicos</p>
         </div>
         <div class="card-arrow">
           <i class="fas fa-arrow-right"></i>
@@ -166,11 +171,7 @@
     <!-- Filtros Mejorados -->
     <div class="filter-container">
       <div class="filter-tabs">
-        <button
-          class="filter-tab"
-          [class.active]="currentFilter === 'upcoming'"
-          (click)="setFilter('upcoming')"
-        >
+        <button class="filter-tab" [class.active]="currentFilter === 'upcoming'" (click)="setFilter('upcoming')">
           <div class="tab-icon">
             <i class="fas fa-clock"></i>
           </div>
@@ -178,15 +179,11 @@
             <span class="tab-label">Próximos</span>
             <span class="tab-count" *ngIf="getFilterCount('upcoming') > 0">{{
               getFilterCount("upcoming")
-            }}</span>
+              }}</span>
           </div>
           <div class="tab-indicator"></div>
         </button>
-        <button
-          class="filter-tab"
-          [class.active]="currentFilter === 'past'"
-          (click)="setFilter('past')"
-        >
+        <button class="filter-tab" [class.active]="currentFilter === 'past'" (click)="setFilter('past')">
           <div class="tab-icon">
             <i class="fas fa-history"></i>
           </div>
@@ -194,15 +191,11 @@
             <span class="tab-label">Pasados</span>
             <span class="tab-count" *ngIf="getFilterCount('past') > 0">{{
               getFilterCount("past")
-            }}</span>
+              }}</span>
           </div>
           <div class="tab-indicator"></div>
         </button>
-        <button
-          class="filter-tab"
-          [class.active]="currentFilter === 'all'"
-          (click)="setFilter('all')"
-        >
+        <button class="filter-tab" [class.active]="currentFilter === 'all'" (click)="setFilter('all')">
           <div class="tab-icon">
             <i class="fas fa-list"></i>
           </div>
@@ -224,15 +217,9 @@
     </div>
 
     <!-- Appointments grid -->
-    <div
-      class="appointments-grid"
-      *ngIf="!isLoadingTurnos && filteredTurnos.length > 0"
-    >
-      <div
-        class="appointment-card"
-        *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
-        [class]="'status-' + turno.status"
-      >
+    <div class="appointments-grid" *ngIf="!isLoadingTurnos && filteredTurnos.length > 0">
+      <div class="appointment-card" *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
+        [class]="'status-' + turno.status">
         <!-- Card Header -->
         <div class="card-header">
           <div class="date-container">
@@ -281,72 +268,46 @@
               <span class="progress-text">Estado del Turno</span>
               <span class="progress-percentage">{{
                 getProgresoTurno(turno.status).texto
-              }}</span>
+                }}</span>
             </div>
 
             <!-- Barra de progreso SIEMPRE VISIBLE (incluso para terminales, con 100% y sin striped si es final) -->
             <div class="progress" style="height: 12px">
-              <div
-                class="progress-bar"
-                [ngClass]="getProgresoTurno(turno.status).colorClass"
+              <div class="progress-bar" [ngClass]="getProgresoTurno(turno.status).colorClass"
                 [class.progress-bar-striped]="
                   !getProgresoTurno(turno.status).isTerminal
-                "
-                [class.progress-bar-animated]="
+                " [class.progress-bar-animated]="
                   !getProgresoTurno(turno.status).isTerminal
-                "
-                role="progressbar"
-                [style.width.%]="getProgresoTurno(turno.status).progress"
-                [attr.aria-valuenow]="getProgresoTurno(turno.status).progress"
-                aria-valuemin="0"
-                aria-valuemax="100"
-              >
+                " role="progressbar" [style.width.%]="getProgresoTurno(turno.status).progress"
+                [attr.aria-valuenow]="getProgresoTurno(turno.status).progress" aria-valuemin="0" aria-valuemax="100">
                 <!-- Icono integrado para terminales (opcional, para feedback visual sin badge separado) -->
-                <span
-                  *ngIf="getProgresoTurno(turno.status).isTerminal"
-                  class="progress-icon"
-                >
-                  <i
-                    class="fas"
-                    [ngClass]="{
+                <span *ngIf="getProgresoTurno(turno.status).isTerminal" class="progress-icon">
+                  <i class="fas" [ngClass]="{
                       'fa-check-circle text-success':
                         turno.status === 'completo',
                       'fa-times-circle text-danger':
                         turno.status === 'cancelado'
-                    }"
-                  ></i>
+                    }"></i>
                 </span>
               </div>
             </div>
           </div>
           <!-- Card Actions -->
           <div class="card-actions" *ngIf="canPerformActions(turno)">
-            <button
-              class="action-btn confirm-btn"
-              *ngIf="canConfirm(turno)"
-              (click)="confirmarTurno(turno)"
-              title="Confirmar turno"
-            >
+            <button class="action-btn confirm-btn" *ngIf="canConfirm(turno)" (click)="confirmarTurno(turno)"
+              title="Confirmar turno">
               <i class="fas fa-check"></i>
               <span>Confirmar</span>
             </button>
 
-            <button
-              class="action-btn reschedule-btn"
-              *ngIf="canReschedule(turno)"
-              (click)="reprogramarTurno(turno)"
-              title="Reagendar turno"
-            >
+            <button class="action-btn reschedule-btn" *ngIf="canReschedule(turno)" (click)="reprogramarTurno(turno)"
+              title="Reagendar turno">
               <i class="fas fa-calendar-alt"></i>
               <span>Reagendar</span>
             </button>
 
-            <button
-              class="action-btn cancel-btn"
-              *ngIf="canCancel(turno)"
-              (click)="cancelarTurno(turno)"
-              title="Cancelar turno"
-            >
+            <button class="action-btn cancel-btn" *ngIf="canCancel(turno)" (click)="cancelarTurno(turno)"
+              title="Cancelar turno">
               <i class="fas fa-times"></i>
               <span>Cancelar</span>
             </button>
@@ -355,10 +316,7 @@
       </div>
 
       <!-- Empty state -->
-      <div
-        class="empty-state"
-        *ngIf="!isLoadingTurnos && filteredTurnos.length === 0"
-      >
+      <div class="empty-state" *ngIf="!isLoadingTurnos && filteredTurnos.length === 0">
         <div class="empty-illustration">
           <div class="empty-icon">
             <i class="fas fa-calendar-times"></i>
@@ -366,11 +324,8 @@
           <div class="empty-content">
             <h3>No tienes turnos {{ getEmptyStateText() }}</h3>
             <p>{{ getEmptyStateDescription() }}</p>
-            <button
-              class="btn btn-primary btn-lg"
-              (click)="scheduleAppointment()"
-              *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'"
-            >
+            <button class="btn btn-primary btn-lg" (click)="scheduleAppointment()"
+              *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'">
               <i class="fas fa-plus me-2"></i>
               Solicitar mi primer turno
             </button>
@@ -382,18 +337,13 @@
     <!-- Modal for Cancel -->
     <div class="modal" *ngIf="showReasonModal">
       <div class="modal-content">
-        <span
-          class="close"
-          (click)="closeModal()"
-          [style.display]="isSubmitting ? 'none' : 'block'"
-          >&times;</span
-        >
+        <span class="close" (click)="closeModal()" [style.display]="isSubmitting ? 'none' : 'block'">&times;</span>
         <h2>Cancelar Turno</h2>
 
         <div *ngIf="selectedTurno" class="turno-info">
           <p>
             <strong>Turno:</strong> {{ selectedTurno.day }}/{{
-              selectedTurno.month
+            selectedTurno.month
             }}
             a las {{ selectedTurno.time }}
           </p>
@@ -402,37 +352,22 @@
         </div>
 
         <p>Por favor, proporciona un motivo para cancelar el turno:</p>
-        <textarea
-          [(ngModel)]="motivo"
-          rows="4"
-          placeholder="Escribe tu motivo aquí (mínimo 5 caracteres)..."
-          [disabled]="isSubmitting"
-          class="form-control"
-        ></textarea>
-        <small class="text-muted"
-          >El motivo es obligatorio y debe tener al menos 5 caracteres</small
-        >
+        <textarea [(ngModel)]="motivo" rows="4" placeholder="Escribe tu motivo aquí (mínimo 5 caracteres)..."
+          [disabled]="isSubmitting" class="form-control"></textarea>
+        <small class="text-muted">El motivo es obligatorio y debe tener al menos 5 caracteres</small>
         <div *ngIf="motivo && motivo.length < 5" class="text-danger mt-1">
           ⚠️ El motivo debe tener al menos 5 caracteres
         </div>
 
         <div class="modal-actions">
-          <button
-            class="btn btn-primary"
-            (click)="submitReason()"
-            [disabled]="
+          <button class="btn btn-primary" (click)="submitReason()" [disabled]="
               !motivo.trim() || motivo.trim().length < 5 || isSubmitting
-            "
-          >
+            ">
             <span *ngIf="isSubmitting" class="spinner"></span>
             <i *ngIf="!isSubmitting" class="fas fa-times"></i>
             {{ isSubmitting ? "Procesando..." : "Cancelar Turno" }}
           </button>
-          <button
-            class="btn btn-secondary"
-            (click)="closeModal()"
-            [disabled]="isSubmitting"
-          >
+          <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
             <i class="fas fa-arrow-left"></i>
             Volver
           </button>
