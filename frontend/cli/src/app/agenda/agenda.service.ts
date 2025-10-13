@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { DataPackage } from '../data.package';
@@ -99,6 +99,19 @@ export class AgendaService {
 
   asignarTurno(turnoId: number, pacienteId: number): Observable<any> {
     return this.http.post(`${this.url}/asignar-turno`, { turnoId, pacienteId });
+  }
+
+  /**
+   * Obtiene la agenda pública sin requerir autenticación
+   * @param centroId (opcional) ID del centro de atención para filtrar
+   * @returns Observable con los eventos de la agenda pública
+   */
+  getAgendaPublica(centroId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (centroId) {
+      params = params.append('centroId', centroId.toString());
+    }
+    return this.http.get(`${this.url}/publica`, { params });
   }
 
 }

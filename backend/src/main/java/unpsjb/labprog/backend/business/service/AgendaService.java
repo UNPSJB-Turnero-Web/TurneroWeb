@@ -872,29 +872,39 @@ public class AgendaService {
                 // Ordenar por fecha y luego por hora
                 int fechaComp = t1.getFecha().compareTo(t2.getFecha());
                 if (fechaComp != 0) return fechaComp;
-                return t1.getHora().compareTo(t2.getHora());
+                return t1.getHoraInicio().compareTo(t2.getHoraInicio());
             })
             .collect(Collectors.toList());
     }
     
     /**
      * Método auxiliar privado para mapear un TurnoDTO (slot) a TurnoPublicoDTO
-     * Extrae solo la información pública y segura.
+     * Extrae solo la información pública y segura, sin datos del paciente.
      */
     private TurnoPublicoDTO mapearSlotATurnoPublico(TurnoDTO slot) {
         TurnoPublicoDTO dto = new TurnoPublicoDTO();
         
+        // Identificadores y metadata
         dto.setId(slot.getId());
         dto.setFecha(slot.getFecha());
-        dto.setHora(slot.getHoraInicio());
+        dto.setHoraInicio(slot.getHoraInicio());
+        dto.setHoraFin(slot.getHoraFin());
+        dto.setEsSlot(slot.getEsSlot());
+        dto.setOcupado(slot.getOcupado());
         
-        // Datos del médico desde el slot
-        dto.setNombreMedico(slot.getStaffMedicoNombre());
-        dto.setApellidoMedico(slot.getStaffMedicoApellido());
-        dto.setEspecialidad(slot.getEspecialidadStaffMedico());
+        // Datos del staff médico
+        dto.setStaffMedicoId(slot.getStaffMedicoId());
+        dto.setStaffMedicoNombre(slot.getStaffMedicoNombre());
+        dto.setStaffMedicoApellido(slot.getStaffMedicoApellido());
+        dto.setEspecialidadStaffMedico(slot.getEspecialidadStaffMedico());
+        
+        // Datos del consultorio
+        dto.setConsultorioId(slot.getConsultorioId());
+        dto.setConsultorioNombre(slot.getConsultorioNombre());
         
         // Datos del centro de atención
-        dto.setNombreCentroAtencion(slot.getNombreCentro());
+        dto.setCentroId(slot.getCentroId());
+        dto.setNombreCentro(slot.getNombreCentro());
         
         return dto;
     }

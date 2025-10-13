@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, LOCALE_ID } from "@angular/core";
 import { CommonModule, registerLocaleData } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { Router, ActivatedRoute } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
 
 // Services
@@ -12,13 +12,14 @@ import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service
 import { AgendaService } from "../agenda/agenda.service";
 import { DiasExcepcionalesService } from "../agenda/dias-excepcionales.service";
 import { DeepLinkService } from "../services/deep-link.service";
+import { AuthService, Role } from "../inicio-sesion/auth.service";
+import { UserContextService } from "../services/user-context.service";
 import { CentrosMapaModalComponent } from "../modal/centros-mapa-modal.component";
 import { Turno } from "../turnos/turno";
 import { Especialidad } from "../especialidades/especialidad";
 import { StaffMedico } from "../staffMedicos/staffMedico";
 import { CentroAtencion } from "../centrosAtencion/centroAtencion";
 import { DataPackage } from "../data.package";
-import { UsuarioAuthService } from "../services/UsuarioAuth.service";
 import localeEsAr from "@angular/common/locales/es-AR";
 
 interface SlotDisponible {
@@ -53,6 +54,9 @@ registerLocaleData(localeEsAr);
   ]
 })
 export class PacienteAgendaComponent implements OnInit, OnDestroy {
+  // Estado de autenticación
+  estaAutenticado: boolean = false;
+
   // Estados de carga
   isLoadingTurnos = false;
   isLoadingEspecialidades = false;
@@ -113,17 +117,38 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     private deepLinkService: DeepLinkService,
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
-    private authService: UsuarioAuthService
+    private authService: AuthService,
+    private userContextService: UserContextService
   ) { }
 
   ngOnInit() {
+    // Verificar estado de autenticación
+    this.estaAutenticado = this.authService.isAuthenticated();
+    console.log('🔐 Estado de autenticación:', this.estaAutenticado ? 'Autenticado' : 'Anónimo');
+
+    // Leer parámetro centroId de la URL si existe
+    const centroIdParam = this.route.snapshot.queryParamMap.get('centroId');
+    if (centroIdParam) {
+      this.centroAtencionSeleccionado = parseInt(centroIdParam, 10);
+      console.log('🏥 Centro seleccionado desde URL:', this.centroAtencionSeleccionado);
+    }
+
     // Cargar todos los datos necesarios al inicio
     this.cargarDiasExcepcionales();
     this.cargarEspecialidades();
     this.cargarTodosLosStaffMedicos(); // Cargar todos los staff médicos desde el inicio
     this.cargarCentrosAtencion();
-    this.cargarTodosLosTurnos(); // Cargar TODOS los turnos disponibles al inicio (pero no mostrarlos)
+    
+    // Cargar turnos según el estado de autenticación
+    if (this.estaAutenticado) {
+      console.log('✅ Usuario autenticado: cargando agenda privada');
+      this.cargarTodosLosTurnos(); // Cargar TODOS los turnos disponibles (método existente)
+    } else {
+      console.log('👤 Usuario anónimo: cargando agenda pública');
+      this.cargarAgendaPublica();
+    }
 
     // Verificar si hay contexto de deep link (usuario viene desde un email)
     // TODO: Por ahora solo limpia el contexto, pendiente implementar filtros automáticos
@@ -226,6 +251,65 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Cargar agenda pública (sin autenticación requerida)
+   * Usa el endpoint público del backend
+   */
+  cargarAgendaPublica() {
+    this.isLoadingTurnos = true;
+
+    // Llamar al servicio público con el centroId si está disponible
+    this.agendaService.getAgendaPublica(this.centroAtencionSeleccionado || undefined).subscribe({
+      next: (response: any) => {
+        console.log('📅 Agenda pública recibida:', response);
+        
+        // El backend puede devolver los eventos directamente o en un wrapper
+        const eventosBackend = response.data || response;
+        
+        // Guardar TODOS los slots sin filtrar
+        this.slotsOriginales = this.mapEventosToSlots(eventosBackend);
+
+        // NO mostrar los turnos hasta que se aplique algún filtro
+        this.slotsDisponibles = [];
+        this.turnosDisponibles = [];
+        this.showCalendar = false;
+
+        this.isLoadingTurnos = false;
+        this.cdr.detectChanges();
+
+        console.log("✅ Agenda pública cargada. Esperando filtros para mostrar.");
+      },
+      error: (err: unknown) => {
+        console.error("❌ Error al cargar agenda pública:", err);
+        this.isLoadingTurnos = false;
+        this.showCalendar = false;
+        this.slotsOriginales = [];
+        this.slotsDisponibles = [];
+        this.turnosDisponibles = [];
+      },
+    });
+  }
+
+  /**
+   * Método para seleccionar un turno cuando el usuario no está autenticado
+   * Guarda el turno seleccionado y redirige al login
+   */
+  seleccionarTurno(turno: any) {
+    console.log('📝 Usuario anónimo seleccionó turno:', turno);
+    
+    // Guardar información del turno en localStorage
+    if (turno.id) {
+      localStorage.setItem('turnoSeleccionadoId', turno.id.toString());
+      console.log('💾 Turno guardado en localStorage:', turno.id);
+    }
+    
+    // Redirigir al login
+    console.log('🔄 Redirigiendo a login...');
+    this.router.navigate(['/ingresar'], {
+      queryParams: { returnUrl: '/paciente-agenda' }
+    });
+  }
+
   // Cargar staff médicos filtrados por especialidad
   cargarStaffMedicosPorEspecialidad() {
     if (!this.especialidadSeleccionada) return;
@@ -280,8 +364,13 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
       },
     });
   }
+  
+  /**
+   * Verifica si el usuario tiene capacidades administrativas (staff médico u operador)
+   * Gracias a la jerarquía de roles, ADMINISTRADOR hereda automáticamente OPERADOR y MEDICO
+   */
   get esOperador(): boolean {
-    return this.authService.esOperador();
+    return this.userContextService.hasAnyRole([Role.OPERADOR, Role.MEDICO]);
   }
 
   // Método llamado cuando cambia la especialidad

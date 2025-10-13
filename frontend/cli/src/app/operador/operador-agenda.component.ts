@@ -12,6 +12,8 @@ import { CentroAtencionService } from "../centrosAtencion/centroAtencion.service
 import { AgendaService } from "../agenda/agenda.service";
 import { DiasExcepcionalesService } from "../agenda/dias-excepcionales.service";
 import { PacienteService } from "../pacientes/paciente.service";
+import { UserContextService } from "../services/user-context.service";
+import { Role } from "../inicio-sesion/auth.service";
 import { CentrosMapaModalComponent } from "../modal/centros-mapa-modal.component";
 import { Turno } from "../turnos/turno";
 import { Especialidad } from "../especialidades/especialidad";
@@ -19,7 +21,6 @@ import { StaffMedico } from "../staffMedicos/staffMedico";
 import { CentroAtencion } from "../centrosAtencion/centroAtencion";
 import { Paciente } from "../pacientes/paciente";
 import { DataPackage } from "../data.package";
-import { UsuarioAuthService } from "../services/UsuarioAuth.service";
 
 interface SlotDisponible {
   id: number;
@@ -106,7 +107,7 @@ export class OperadorAgendaComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private authService: UsuarioAuthService
+    private userContextService: UserContextService
   ) {}
 
   ngOnInit() {

@@ -122,7 +122,7 @@ export const routes: Routes = [
   {
     path: "paciente-agenda",
     component: PacienteAgendaComponent,
-    canActivate: [PatientGuard],
+    // Ruta pública - accesible sin autenticación
   },
   {
     path: "paciente-notificaciones",

@@ -1,7 +1,7 @@
 import { Component } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { PacienteService } from "../pacientes/paciente.service";
 import { Paciente } from "../pacientes/paciente";
 import { MedicoService } from "../medicos/medico.service";
@@ -15,7 +15,7 @@ import { Especialidad } from "../especialidades/especialidad";
 
 @Component({
   selector: "app-home",
-  imports: [CommonModule, FormsModule, CentrosMapaModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, CentrosMapaModalComponent],
   templateUrl: "./home.html",
   styleUrl: "./home.css",
 })

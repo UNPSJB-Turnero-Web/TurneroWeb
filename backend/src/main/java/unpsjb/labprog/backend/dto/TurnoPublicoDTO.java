@@ -33,25 +33,60 @@ public class TurnoPublicoDTO {
     /**
      * Hora de inicio del turno
      */
-    private LocalTime hora;
+    private LocalTime horaInicio;
+    
+    /**
+     * Hora de fin del turno
+     */
+    private LocalTime horaFin;
+    
+    /**
+     * Indica si es un slot generado (true) o un turno reservado (false)
+     */
+    private Boolean esSlot;
+    
+    /**
+     * ID del staff médico
+     */
+    private Integer staffMedicoId;
     
     /**
      * Nombre del médico
      */
-    private String nombreMedico;
+    private String staffMedicoNombre;
     
     /**
      * Apellido del médico
      */
-    private String apellidoMedico;
+    private String staffMedicoApellido;
     
     /**
-     * Especialidad médica
+     * Especialidad médica del staff
      */
-    private String especialidad;
+    private String especialidadStaffMedico;
+    
+    /**
+     * ID del consultorio
+     */
+    private Integer consultorioId;
+    
+    /**
+     * Nombre del consultorio
+     */
+    private String consultorioNombre;
+    
+    /**
+     * ID del centro de atención
+     */
+    private Integer centroId;
     
     /**
      * Nombre del centro de atención
      */
-    private String nombreCentroAtencion;
+    private String nombreCentro;
+    
+    /**
+     * Indica si el slot está ocupado
+     */
+    private Boolean ocupado;
 }
