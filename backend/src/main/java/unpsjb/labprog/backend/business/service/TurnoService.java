@@ -1029,10 +1029,24 @@ public class TurnoService {
         dto.setPacienteId(turno.getPaciente().getId());
         dto.setNombrePaciente(turno.getPaciente().getNombre());
         dto.setApellidoPaciente(turno.getPaciente().getApellido());
-        dto.setStaffMedicoId(turno.getStaffMedico().getId());
-        dto.setStaffMedicoNombre(turno.getStaffMedico().getMedico().getNombre());
-        dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
-        dto.setEspecialidadStaffMedico(turno.getStaffMedico().getEspecialidad().getNombre());
+
+        // Datos del médico: usar staffMedico si existe, sino usar campos de auditoría
+        if (turno.getStaffMedico() != null) {
+            dto.setStaffMedicoId(turno.getStaffMedico().getId());
+            dto.setStaffMedicoNombre(turno.getStaffMedico().getMedico().getNombre());
+            dto.setStaffMedicoApellido(turno.getStaffMedico().getMedico().getApellido());
+            dto.setEspecialidadStaffMedico(turno.getStaffMedico().getEspecialidad().getNombre());
+        } else {
+            // StaffMedico fue desvinculado, usar campos de auditoría
+            dto.setStaffMedicoId(null);
+            if (turno.getMedico() != null) {
+                dto.setStaffMedicoNombre(turno.getMedico().getNombre());
+                dto.setStaffMedicoApellido(turno.getMedico().getApellido());
+            }
+            if (turno.getEspecialidad() != null) {
+                dto.setEspecialidadStaffMedico(turno.getEspecialidad().getNombre());
+            }
+        }
 
         // Nuevo campo de observaciones
         dto.setObservaciones(turno.getObservaciones());
@@ -1046,8 +1060,14 @@ public class TurnoService {
         } else {
             dto.setConsultorioId(null);
             dto.setConsultorioNombre(null);
-            dto.setCentroId(null);
-            dto.setNombreCentro(null);
+            // Usar centro de auditoría como fallback si existe
+            if (turno.getCentroAtencion() != null) {
+                dto.setCentroId(turno.getCentroAtencion().getId());
+                dto.setNombreCentro(turno.getCentroAtencion().getNombre());
+            } else {
+                dto.setCentroId(null);
+                dto.setNombreCentro(null);
+            }
         }
 
         return dto;
@@ -1084,6 +1104,11 @@ public class TurnoService {
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Médico no encontrado con ID: " + dto.getStaffMedicoId()));
             turno.setStaffMedico(staffMedico);
+
+            // Campos de auditoría: preservar información histórica
+            turno.setMedico(staffMedico.getMedico());
+            turno.setEspecialidad(staffMedico.getEspecialidad());
+            turno.setCentroAtencion(staffMedico.getCentroAtencion());
         }
 
         if (dto.getConsultorioId() != null) {
