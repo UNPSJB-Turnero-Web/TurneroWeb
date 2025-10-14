@@ -8,6 +8,7 @@ import { Router } from "@angular/router";
 import { Observable, throwError, BehaviorSubject } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 import { JwtHelperService } from "@auth0/angular-jwt";
+import { SocialAuthService } from '@abacritt/angularx-social-login';
 import { DataPackage } from "../data.package";
 import { PacienteService } from "../pacientes/paciente.service";
 import { ModalService } from "../modal/modal.service";
@@ -143,7 +144,8 @@ export class AuthService {
     private router: Router,
     private pacienteService: PacienteService,
     private modalService: ModalService,
-    private userContextService: UserContextService
+    private userContextService: UserContextService,
+    private socialAuthService: SocialAuthService
   ) {
     // Inicializar sincronización de sesiones entre pestañas
     this.initializeSessionSync();
@@ -228,6 +230,56 @@ export class AuthService {
 
             // 🔄 SINCRONIZACIÓN AUTOMÁTICA: Asegurar que el usuario tenga registro en tabla pacientes
             // Esto es crítico para usuarios multi-rol (MEDICO, OPERADOR, ADMINISTRADOR)
+            this.ensurePacienteExistsForCurrentUser(response.data.role);
+          }
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Login con Google usando el idToken
+   * @param idToken Token de ID proporcionado por Google
+   * @returns Observable con la respuesta del backend
+   */
+  loginWithGoogle(idToken: string): Observable<DataPackage<LoginResponse>> {
+    const body = { idToken: idToken };
+    
+    return this.http
+      .post<DataPackage<LoginResponse>>(
+        `${this.API_BASE_URL}/google`,
+        body
+      )
+      .pipe(
+        tap((response) => {
+          if (response.data) {
+            // Reutilizar la misma lógica que el login normal
+            // Por defecto, mantener la sesión activa (rememberMe = true)
+            this.storeTokens(response.data, true);
+            this.authStateSubject.next(true);
+            this.updateSessionTimestamp();
+            
+            // Actualizar UserContext con datos completos incluyendo roles
+            this.userContextService.updateUserContext({
+              email: response.data.email,
+              nombre: response.data.nombre,
+              primaryRole: response.data.role,
+              allRoles: response.data.roles
+            });
+            
+            // Notificar a otras pestañas sobre el login
+            setTimeout(() => {
+              this.notifyOtherTabs('login', {
+                email: response.data.email,
+                role: response.data.role,
+                roles: response.data.roles
+              });
+            }, 100);
+
+            // Programar el refresh automático para el nuevo token
+            this.scheduleTokenRefresh(response.data.accessToken);
+
+            // Sincronización automática como paciente si es necesario
             this.ensurePacienteExistsForCurrentUser(response.data.role);
           }
         }),
@@ -668,6 +720,24 @@ export class AuthService {
    * Cierra la sesión del usuario
    */
   logout(): void {
+    // Primero cerrar la sesión de Google (si existe)
+    this.socialAuthService.signOut().then(() => {
+      // Esta lógica se ejecuta DESPUÉS de que Google ha cerrado la sesión.
+      this.clearSession();
+      this.router.navigate(['/ingresar']);
+      console.log('Sesión de Google y local cerradas correctamente.');
+    }).catch(error => {
+      // Incluso si hay un error al cerrar la sesión de Google, forzamos el logout local.
+      console.error('Error al cerrar la sesión de Google, forzando logout local:', error);
+      this.clearSession();
+      this.router.navigate(['/ingresar']);
+    });
+  }
+
+  /**
+   * Limpia la sesión local (método privado)
+   */
+  private clearSession(): void {
     // Cancelar el timer de refresh si existe
     if (this.tokenRefreshTimer) {
       clearTimeout(this.tokenRefreshTimer);
@@ -685,9 +755,6 @@ export class AuthService {
 
     // Notificar a otras pestañas sobre el logout
     this.notifyOtherTabs('logout');
-
-    // Redirigir al login
-    this.router.navigate(["/ingresar"]);
   }
 
   /**
@@ -1302,6 +1369,11 @@ export class AuthService {
    * Fuerza el cierre de sesión sin notificar a otras pestañas
    */
   private forceLogout(): void {
+    // Intentar cerrar sesión de Google también
+    this.socialAuthService.signOut().catch(error => {
+      console.error('Error al cerrar sesión de Google en forceLogout:', error);
+    });
+
     if (this.tokenRefreshTimer) {
       clearTimeout(this.tokenRefreshTimer);
       this.tokenRefreshTimer = null;

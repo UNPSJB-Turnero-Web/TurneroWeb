@@ -456,3 +456,28 @@
     margin-top: 0.5rem;
   }
 }
+
+/* Google Sign-In Button Styles */
+.divider-container {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.divider-container .line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: #ccc;
+}
+
+.divider-container .text {
+  padding: 0 15px;
+  color: #888;
+  font-weight: bold;
+}
+
+/* Estilos para el botón oficial de Google */
+asl-google-signin-button {
+  display: block;
+  width: 100%;
+}

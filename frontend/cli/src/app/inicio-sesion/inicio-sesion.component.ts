@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule, NgForm } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -12,6 +12,8 @@ import { AuthService, LoginData } from "./auth.service";
 import { AgendaService } from "../agenda/agenda.service";
 import { TurnoService } from "../turnos/turno.service";
 import { ModalService } from "../modal/modal.service";
+import { SocialAuthService, SocialUser, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { GoogleLoginProvider } from '@abacritt/angularx-social-login';
 
 interface User {
   email: string;
@@ -24,7 +26,7 @@ interface User {
 @Component({
   selector: "app-inicio-sesion",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, GoogleSigninButtonModule],
   templateUrl: "./inicio-sesion.component.html",
   styleUrl: "./inicio-sesion.component.css",
   animations: [
@@ -34,7 +36,7 @@ interface User {
     logoAnimation,
   ],
 })
-export class InicioSesionComponent {
+export class InicioSesionComponent implements OnInit {
   currentStep: "email" | "password" = "email";
   isLoading = false;
   showPassword = false;
@@ -56,7 +58,8 @@ export class InicioSesionComponent {
     private authService: AuthService,
     private agendaService: AgendaService,
     private turnoService: TurnoService,
-    private modalService: ModalService
+    private modalService: ModalService,
+    private socialAuthService: SocialAuthService
   ) {
     // Verificar si el usuario ya está autenticado
     if (this.authService.isAuthenticated()) {
@@ -64,6 +67,52 @@ export class InicioSesionComponent {
       return;
     }
 
+  }
+
+  ngOnInit(): void {
+    // Suscribirse al estado de autenticación social
+    this.socialAuthService.authState.subscribe((user: SocialUser) => {
+      if (user && user.idToken) {
+        console.log('Login con Google exitoso. ID Token recibido');
+        
+        // Activar estado de carga
+        this.isLoading = true;
+        
+        // Llamar al método del AuthService para enviar el token al backend
+        this.authService.loginWithGoogle(user.idToken).subscribe({
+          next: (response) => {
+            console.log('✅ Autenticación con el backend exitosa');
+            
+            // Guardar userRole en localStorage para compatibilidad con guards existentes
+            const role = this.authService.getUserRole();
+            if (role) {
+              const roleRoute = this.authService.mapRoleToRoute(role);
+              localStorage.setItem("userRole", roleRoute);
+            }
+
+            // ========================================
+            // VERIFICAR SI HAY UN TURNO PRE-SELECCIONADO
+            // ========================================
+            const turnoPreseleccionado = localStorage.getItem('turnoSeleccionadoId');
+            
+            if (turnoPreseleccionado) {
+              console.log('🎯 Turno preseleccionado detectado:', turnoPreseleccionado);
+              this.procesarReservaAutomatica(turnoPreseleccionado);
+            } else {
+              // Flujo normal: redirigir según el rol
+              this.authService.redirectByRole();
+              this.isLoading = false;
+            }
+          },
+          error: (err) => {
+            console.error('❌ Error durante el login con Google en el backend:', err);
+            this.errorMessage = err.error?.status_text || 'Hubo un problema al iniciar sesión con Google. Por favor, inténtelo de nuevo.';
+            this.showPasswordError = true;
+            this.isLoading = false;
+          }
+        });
+      }
+    });
   }
 
   handleSubmit(form: NgForm): void {
