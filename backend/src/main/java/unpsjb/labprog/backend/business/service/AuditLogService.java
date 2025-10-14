@@ -99,7 +99,10 @@ public class AuditLogService {
         turnoData.put("horaFin", turno.getHoraFin().toString()); // Convertir LocalTime a String
         turnoData.put("estado", turno.getEstado().name());
         turnoData.put("pacienteId", turno.getPaciente().getId());
-        turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        // StaffMedico puede ser null si fue desvinculado
+        if (turno.getStaffMedico() != null) {
+            turnoData.put("staffMedicoId", turno.getStaffMedico().getId());
+        }
         if (turno.getConsultorio() != null) {
             turnoData.put("consultorioId", turno.getConsultorio().getId());
         }

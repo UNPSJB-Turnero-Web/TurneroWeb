@@ -44,6 +44,8 @@ public class StaffMedicoService {
     private ConsultorioRepository consultorioRepository;
     @Autowired
     private unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository esquemaTurnoRepository;
+    @Autowired
+    private unpsjb.labprog.backend.business.repository.TurnoRepository turnoRepository;
 
     public List<StaffMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -100,13 +102,20 @@ public class StaffMedicoService {
 
     @Transactional
     public void deleteById(Integer id) {
-        // Primero eliminar los esquemas de turno asociados a este staff médico
+        // 1. Desvincular turnos existentes (setea staffMedico a null)
+        //    Esto preserva el historial del turno con la info del médico en los campos de auditoría
+        int turnosDesvinculados = turnoRepository.desvincularStaffMedico(id);
+        if (turnosDesvinculados > 0) {
+            System.out.println("Desvinculados " + turnosDesvinculados + " turnos del staff médico ID: " + id);
+        }
+
+        // 2. Eliminar los esquemas de turno asociados a este staff médico
         var esquemasAsociados = esquemaTurnoRepository.findByStaffMedicoId(id);
         if (!esquemasAsociados.isEmpty()) {
             esquemaTurnoRepository.deleteAll(esquemasAsociados);
         }
 
-        // La disponibilidad se eliminará automáticamente por CascadeType.REMOVE
+        // 3. La disponibilidad se eliminará automáticamente por CascadeType.REMOVE
         repository.deleteById(id);
     }
 
@@ -287,7 +296,35 @@ public class StaffMedicoService {
         return lista.stream().map(d -> {
             DisponibilidadMedicoDTO dto = new DisponibilidadMedicoDTO();
             dto.setId(d.getId());
-            // agrega otros campos si es necesario
+
+            // Mapear staffMedico info
+            if (d.getStaffMedico() != null) {
+                dto.setStaffMedicoId(d.getStaffMedico().getId());
+                if (d.getStaffMedico().getMedico() != null) {
+                    dto.setStaffMedicoName("Dr. " + d.getStaffMedico().getMedico().getNombre() +
+                                         " " + d.getStaffMedico().getMedico().getApellido());
+                }
+            }
+
+            // Mapear especialidad info
+            if (d.getEspecialidad() != null) {
+                dto.setEspecialidadId(d.getEspecialidad().getId());
+                dto.setEspecialidadName(d.getEspecialidad().getNombre());
+            }
+
+            // Mapear horarios
+            if (d.getHorarios() != null && !d.getHorarios().isEmpty()) {
+                List<DisponibilidadMedicoDTO.DiaHorarioDTO> horariosDTO = d.getHorarios().stream()
+                    .map(h -> {
+                        DisponibilidadMedicoDTO.DiaHorarioDTO horarioDTO = new DisponibilidadMedicoDTO.DiaHorarioDTO();
+                        horarioDTO.setDia(h.getDia());
+                        horarioDTO.setHoraInicio(h.getHoraInicio());
+                        horarioDTO.setHoraFin(h.getHoraFin());
+                        return horarioDTO;
+                    }).toList();
+                dto.setHorarios(horariosDTO);
+            }
+
             return dto;
         }).toList();
     }

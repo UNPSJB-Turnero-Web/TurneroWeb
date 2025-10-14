@@ -64,8 +64,8 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
     @Query("""
             SELECT t FROM Turno t
             JOIN t.paciente p
-            JOIN t.staffMedico sm
-            JOIN sm.medico m
+            LEFT JOIN t.staffMedico sm
+            LEFT JOIN sm.medico m
             JOIN t.consultorio c
             WHERE (:paciente IS NULL OR
                    LOWER(p.nombre) LIKE LOWER(CONCAT('%', :paciente, '%')) OR
@@ -473,4 +473,18 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
 
     // Búsqueda por paciente con paginación
     Page<Turno> findByPaciente_Id(Integer pacienteId, Pageable pageable);
+
+    // === GESTIÓN DE STAFFMEDICO (para permitir eliminación con auditoría) ===
+
+    /**
+     * Desvincula un StaffMedico de todos los turnos asociados (setea staffMedico a NULL)
+     * Esto permite eliminar el StaffMedico manteniendo el registro histórico del turno
+     * con la información del médico, especialidad y centro en los campos de auditoría
+     *
+     * @param staffMedicoId ID del StaffMedico a desvincular
+     * @return Cantidad de turnos actualizados
+     */
+    @Query("UPDATE Turno t SET t.staffMedico = NULL WHERE t.staffMedico.id = :staffMedicoId")
+    @org.springframework.data.jpa.repository.Modifying
+    int desvincularStaffMedico(@Param("staffMedicoId") Integer staffMedicoId);
 }
