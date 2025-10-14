@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -14,9 +15,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+
 import unpsjb.labprog.backend.business.repository.UserRepository;
 import unpsjb.labprog.backend.model.User;
 import unpsjb.labprog.backend.model.Role;
+import unpsjb.labprog.backend.dto.PacienteDTO;
 
 /**
  * Servicio para la gestión de usuarios.
@@ -35,6 +39,14 @@ public class UserService implements UserDetailsService {
     
     @Autowired
     private AuditLogService auditLogService;
+    
+    @Autowired
+    @Lazy
+    private PacienteService pacienteService;
+    
+    @Autowired
+    @Lazy
+    private RegistrationService registrationService;
     
     // ===============================
     // IMPLEMENTACIÓN DE UserDetailsService
@@ -342,5 +354,65 @@ public class UserService implements UserDetailsService {
      */
     public User save(User user) {
         return userRepository.save(user);
+    }
+    
+    /**
+     * Procesa el usuario de Google (busca o crea)
+     * @param payload datos del usuario de Google
+     * @return User usuario existente o recién creado
+     */
+    public User processGoogleUser(GoogleIdToken.Payload payload) {
+        String email = payload.getEmail();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            // Caso 1: El usuario ya existe en la base de datos.
+            System.out.println("Usuario existente encontrado para el email: " + email);
+            return userOptional.get();
+        } else {
+            // Caso 2: El usuario no existe. Creamos un nuevo User con rol PACIENTE.
+            // Copiando la lógica del método register() del AuthController
+            System.out.println("Creando nuevo usuario para el email: " + email);
+            
+            String nombre = (String) payload.get("given_name");
+            String apellido = (String) payload.get("family_name");
+
+            // Generamos una contraseña aleatoria y segura, ya que el campo no puede ser nulo.
+            String randomPassword = UUID.randomUUID().toString();
+            
+            // Generar un DNI temporal único (basado en timestamp)
+            Long dniTemporal = System.currentTimeMillis() % 99999999L;
+            
+            // Generar un teléfono temporal único
+            String telefonoTemporal = "GOOGLE_" + UUID.randomUUID().toString().substring(0, 8);
+            
+            // 1. Registrar usuario para autenticación usando RegistrationService
+            User newUser = registrationService.registrarPaciente(
+                email,
+                randomPassword,
+                dniTemporal,
+                nombre != null ? nombre : "Usuario",
+                apellido != null ? apellido : "Google",
+                telefonoTemporal
+            );
+
+            // 2. Crear la entidad Paciente usando PacienteService
+            PacienteDTO pacienteDTO = new PacienteDTO();
+            pacienteDTO.setNombre(nombre != null ? nombre : "Usuario");
+            pacienteDTO.setApellido(apellido != null ? apellido : "Google");
+            pacienteDTO.setDni(dniTemporal);
+            pacienteDTO.setEmail(email);
+            pacienteDTO.setTelefono(telefonoTemporal);
+            // No asignar fecha de nacimiento ni obra social en el registro básico
+            
+            // Crear la entidad Paciente sin auditoría (auto-registro de Google)
+            pacienteService.saveOrUpdate(pacienteDTO, "GOOGLE-AUTO-REGISTRO");
+
+            // Activar el email directamente ya que Google validó el correo
+            newUser.setEmailVerified(true);
+            newUser.setEmailVerifiedAt(java.time.LocalDateTime.now());
+
+            return userRepository.save(newUser);
+        }
     }
 }
