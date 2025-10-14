@@ -42,6 +42,8 @@ public class StaffMedicoService {
     private EspecialidadRepository especialidadRepository;
     @Autowired
     private ConsultorioRepository consultorioRepository;
+    @Autowired
+    private unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository esquemaTurnoRepository;
 
     public List<StaffMedicoDTO> findAll() {
         return repository.findAll().stream()
@@ -98,6 +100,13 @@ public class StaffMedicoService {
 
     @Transactional
     public void deleteById(Integer id) {
+        // Primero eliminar los esquemas de turno asociados a este staff médico
+        var esquemasAsociados = esquemaTurnoRepository.findByStaffMedicoId(id);
+        if (!esquemasAsociados.isEmpty()) {
+            esquemaTurnoRepository.deleteAll(esquemasAsociados);
+        }
+
+        // La disponibilidad se eliminará automáticamente por CascadeType.REMOVE
         repository.deleteById(id);
     }
 
