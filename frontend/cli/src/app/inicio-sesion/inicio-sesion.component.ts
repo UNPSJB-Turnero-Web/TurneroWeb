@@ -12,8 +12,10 @@ import { AuthService, LoginData } from "./auth.service";
 import { AgendaService } from "../agenda/agenda.service";
 import { TurnoService } from "../turnos/turno.service";
 import { ModalService } from "../modal/modal.service";
+import { UserContextService } from "../services/user-context.service";
 import { SocialAuthService, SocialUser, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 import { GoogleLoginProvider } from '@abacritt/angularx-social-login';
+import { CompleteProfileComponent } from "../modal/complete-profile/complete-profile.component";
 
 interface User {
   email: string;
@@ -59,6 +61,7 @@ export class InicioSesionComponent implements OnInit {
     private agendaService: AgendaService,
     private turnoService: TurnoService,
     private modalService: ModalService,
+    private userContextService: UserContextService,
     private socialAuthService: SocialAuthService
   ) {
     // Verificar si el usuario ya está autenticado
@@ -91,17 +94,34 @@ export class InicioSesionComponent implements OnInit {
             }
 
             // ========================================
-            // VERIFICAR SI HAY UN TURNO PRE-SELECCIONADO
+            // VERIFICAR SI EL PERFIL ESTÁ COMPLETO
             // ========================================
-            const turnoPreseleccionado = localStorage.getItem('turnoSeleccionadoId');
+            const profileCompleted = this.userContextService.isProfileCompleted();
             
-            if (turnoPreseleccionado) {
-              console.log('🎯 Turno preseleccionado detectado:', turnoPreseleccionado);
-              this.procesarReservaAutomatica(turnoPreseleccionado);
-            } else {
-              // Flujo normal: redirigir según el rol
-              this.authService.redirectByRole();
+            if (!profileCompleted) {
+              console.log('⚠️ Perfil incompleto detectado. Mostrando modal de completar perfil...');
               this.isLoading = false;
+              
+              // Abrir el modal de completar perfil
+              const modalRef = this.modalService.open(CompleteProfileComponent, {
+                backdrop: 'static',
+                keyboard: false
+              });
+              
+              // Cuando el modal se cierre (perfil completado), continuar con el flujo
+              modalRef.result.then(
+                () => {
+                  console.log('✅ Modal cerrado - Perfil completado');
+                  this.continuarDespuesDeCompletarPerfil();
+                },
+                (reason) => {
+                  console.log('Modal descartado:', reason);
+                  // No se debería llegar aquí ya que el modal no se puede cerrar sin completar
+                }
+              );
+            } else {
+              // Perfil completo, continuar con el flujo normal
+              this.continuarDespuesDeCompletarPerfil();
             }
           },
           error: (err) => {
@@ -113,6 +133,26 @@ export class InicioSesionComponent implements OnInit {
         });
       }
     });
+  }
+
+  /**
+   * Continúa con el flujo de redirección después de completar el perfil
+   * o si el perfil ya estaba completo
+   */
+  private continuarDespuesDeCompletarPerfil(): void {
+    // ========================================
+    // VERIFICAR SI HAY UN TURNO PRE-SELECCIONADO
+    // ========================================
+    const turnoPreseleccionado = localStorage.getItem('turnoSeleccionadoId');
+    
+    if (turnoPreseleccionado) {
+      console.log('🎯 Turno preseleccionado detectado:', turnoPreseleccionado);
+      this.procesarReservaAutomatica(turnoPreseleccionado);
+    } else {
+      // Flujo normal: redirigir según el rol
+      this.authService.redirectByRole();
+      this.isLoading = false;
+    }
   }
 
   handleSubmit(form: NgForm): void {

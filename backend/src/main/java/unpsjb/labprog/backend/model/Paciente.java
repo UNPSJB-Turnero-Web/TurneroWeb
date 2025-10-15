@@ -30,5 +30,8 @@ public class Paciente extends Persona {
     private Date fechaNacimiento;
 
     @ManyToOne
-    private ObraSocial obraSocial; 
+    private ObraSocial obraSocial;
+    
+    @Column(nullable = false)
+    private boolean profileCompleted = false;
 }
