@@ -84,6 +84,15 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // ========================================
+    // INICIALIZAR ESTADO DE AUTENTICACIÓN
+    // ========================================
+    // IMPORTANTE: Esto debe ejecutarse PRIMERO para que el authStateSubject
+    // tenga el valor correcto basado en el token almacenado.
+    // Si no se hace aquí, el BehaviorSubject se inicializa con 'false' por defecto
+    // y no refleja el estado real de autenticación.
+    this.authService.initAuthStatus();
+
     // Escuchar cambios de ruta para actualizar el estado activo
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))

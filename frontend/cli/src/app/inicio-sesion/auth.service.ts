@@ -130,9 +130,8 @@ export class AuthService {
   private readonly SESSION_TIMESTAMP_KEY = "session_timestamp";
 
   private jwtHelper = new JwtHelperService();
-  private authStateSubject = new BehaviorSubject<boolean>(
-    this.isAuthenticated()
-  );
+  // Inicializar con false por defecto - se actualizará en initAuthStatus()
+  private authStateSubject = new BehaviorSubject<boolean>(false);
   public authState$ = this.authStateSubject.asObservable();
 
   private tokenRefreshTimer: any = null;
@@ -155,6 +154,19 @@ export class AuthService {
     
     // Inicializar actualización periódica de timestamp para sessionStorage
     this.startPeriodicTimestampUpdate();
+  }
+
+  /**
+   * Inicializa el estado de autenticación del servicio
+   * DEBE ser llamado desde el ngOnInit del AppComponent después de que todas las dependencias estén inyectadas
+   * 
+   * Este método verifica si hay un token válido y actualiza el authStateSubject en consecuencia
+   */
+  public initAuthStatus(): void {
+    console.log('🔐 Inicializando estado de autenticación...');
+    const isAuth = this.isAuthenticated();
+    this.authStateSubject.next(isAuth);
+    console.log('✅ Estado de autenticación inicializado:', isAuth);
   }
 
   /**
@@ -259,12 +271,16 @@ export class AuthService {
             this.authStateSubject.next(true);
             this.updateSessionTimestamp();
             
-            // Actualizar UserContext con datos completos incluyendo roles
+            // Extraer profileCompleted del token recién recibido
+            const profileCompleted = this.isProfileCompleted();
+            
+            // Actualizar UserContext con datos completos incluyendo roles y profileCompleted
             this.userContextService.updateUserContext({
               email: response.data.email,
               nombre: response.data.nombre,
               primaryRole: response.data.role,
-              allRoles: response.data.roles
+              allRoles: response.data.roles,
+              profileCompleted: profileCompleted ?? true
             });
             
             // Notificar a otras pestañas sobre el login
@@ -606,6 +622,24 @@ export class AuthService {
       const decodedToken = this.jwtHelper.decodeToken(token);
       // El email viene en el subject del token JWT
       return decodedToken.sub || null;
+    } catch (error) {
+      console.error("Error decodificando token:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene el estado de profileCompleted desde el token JWT
+   * @returns true si el perfil está completo, false si no, null si no se puede determinar
+   */
+  isProfileCompleted(): boolean | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    try {
+      const decodedToken = this.jwtHelper.decodeToken(token);
+      // El claim profileCompleted viene del backend
+      return decodedToken.profileCompleted ?? null;
     } catch (error) {
       console.error("Error decodificando token:", error);
       return null;
