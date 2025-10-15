@@ -12,6 +12,7 @@ export interface UserContext {
   primaryRole: Role;
   allRoles: Role[];
   isAuthenticated: boolean;
+  profileCompleted?: boolean; // Indica si el perfil está completo (para usuarios de Google)
 }
 
 /**
@@ -38,7 +39,8 @@ export class UserContextService {
     nombre: '',
     primaryRole: Role.PACIENTE,
     allRoles: [],
-    isAuthenticated: false
+    isAuthenticated: false,
+    profileCompleted: true // Por defecto true para usuarios normales
   };
 
   // BehaviorSubject para estado reactivo
@@ -61,6 +63,7 @@ export class UserContextService {
     nombre: string;
     primaryRole: string;
     allRoles?: string[];
+    profileCompleted?: boolean;
   }): void {
     
     const primaryRole = this.parseRole(userData.primaryRole);
@@ -73,7 +76,8 @@ export class UserContextService {
       nombre: userData.nombre,
       primaryRole,
       allRoles,
-      isAuthenticated: true
+      isAuthenticated: true,
+      profileCompleted: userData.profileCompleted ?? true // Default true para usuarios normales
     };
 
     // Actualizar estado reactivo
@@ -108,6 +112,14 @@ export class UserContextService {
    */
   isAuthenticated(): boolean {
     return this.userContextSubject.value.isAuthenticated;
+  }
+
+  /**
+   * Verifica si el perfil del usuario está completo
+   * @returns true si el perfil está completo, false si no
+   */
+  isProfileCompleted(): boolean {
+    return this.userContextSubject.value.profileCompleted ?? true;
   }
 
   /**

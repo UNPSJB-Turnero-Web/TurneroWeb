@@ -260,6 +260,65 @@ public class PacienteService {
         repository.deleteById(id);
     }
 
+    /**
+     * Completa el perfil de un usuario que se registró con Google
+     * @param userEmail email del usuario autenticado
+     * @param dto datos para completar el perfil
+     * @throws IllegalStateException si el paciente no existe o el DNI ya está en uso
+     */
+    @Transactional
+    public void completeGoogleUserProfile(String userEmail, unpsjb.labprog.backend.dto.CompleteProfileDTO dto) {
+        // Buscar el paciente por email
+        Paciente paciente = repository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("No se encontró el paciente con email: " + userEmail));
+        
+        // Validar que el DNI no esté en uso por otro paciente
+        if (dto.getDni() != null) {
+            Optional<Paciente> existingByDni = repository.findByDni(dto.getDni());
+            if (existingByDni.isPresent() && !existingByDni.get().getId().equals(paciente.getId())) {
+                throw new IllegalStateException("Ya existe un paciente con el DNI: " + dto.getDni());
+            }
+            paciente.setDni(dto.getDni());
+        }
+        
+        // Actualizar datos
+        if (dto.getTelefono() != null && !dto.getTelefono().trim().isEmpty()) {
+            paciente.setTelefono(dto.getTelefono());
+        }
+        
+        if (dto.getFechaNacimiento() != null) {
+            paciente.setFechaNacimiento(dto.getFechaNacimiento());
+        }
+        
+        // Obra social es opcional
+        if (dto.getObraSocialId() != null) {
+            // TODO: Buscar y asignar obra social si existe
+            // ObraSocial obraSocial = obraSocialRepository.findById(dto.getObraSocialId()).orElse(null);
+            // paciente.setObraSocial(obraSocial);
+        }
+        
+        // Marcar perfil como completado
+        paciente.setProfileCompleted(true);
+        
+        // Guardar cambios
+        repository.save(paciente);
+        
+        // Actualizar también los datos en la tabla User
+        Optional<User> userOpt = userService.findByEmail(userEmail);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (dto.getDni() != null) {
+                user.setDni(dto.getDni());
+            }
+            if (dto.getTelefono() != null && !dto.getTelefono().trim().isEmpty()) {
+                user.setTelefono(dto.getTelefono());
+            }
+            userService.save(user);
+        }
+        
+        logger.info("✅ Perfil completado para usuario: {}", userEmail);
+    }
+
     private PacienteDTO toDTO(Paciente paciente) {
         PacienteDTO dto = new PacienteDTO();
         dto.setId(paciente.getId());
@@ -269,6 +328,7 @@ public class PacienteService {
         dto.setFechaNacimiento(paciente.getFechaNacimiento());
         dto.setEmail(paciente.getEmail());
         dto.setTelefono(paciente.getTelefono());
+        dto.setProfileCompleted(paciente.isProfileCompleted());
 
         // Mapear la relación con ObraSocial
         if (paciente.getObraSocial() != null) {
@@ -291,6 +351,7 @@ public class PacienteService {
         paciente.setFechaNacimiento(dto.getFechaNacimiento());
         paciente.setEmail(dto.getEmail());
         paciente.setTelefono(dto.getTelefono());
+        paciente.setProfileCompleted(dto.isProfileCompleted());
 
         if (dto.getObraSocial() != null) {
             ObraSocial obraSocial = new ObraSocial();

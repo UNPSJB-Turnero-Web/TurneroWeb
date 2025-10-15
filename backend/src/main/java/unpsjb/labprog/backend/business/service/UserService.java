@@ -403,6 +403,7 @@ public class UserService implements UserDetailsService {
             pacienteDTO.setDni(dniTemporal);
             pacienteDTO.setEmail(email);
             pacienteDTO.setTelefono(telefonoTemporal);
+            pacienteDTO.setProfileCompleted(false); // Marcar perfil como incompleto
             // No asignar fecha de nacimiento ni obra social en el registro básico
             
             // Crear la entidad Paciente sin auditoría (auto-registro de Google)

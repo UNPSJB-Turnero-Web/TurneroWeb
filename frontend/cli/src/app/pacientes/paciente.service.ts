@@ -176,4 +176,23 @@ export class PacienteService {
       sincronizado: boolean;
     }>>(`${this.url}/sync-current-user`);
   }
+
+  /**
+   * Completa el perfil de un usuario registrado con Google
+   * 
+   * Envía los datos faltantes (DNI, teléfono, fecha de nacimiento) al backend
+   * para completar el perfil del usuario autenticado.
+   * 
+   * @param data Datos del perfil a completar
+   * @returns Observable con la respuesta del backend
+   */
+  completeProfile(data: {
+    dni: number;
+    telefono: string;
+    fechaNacimiento: string;
+    obraSocialId?: number | null;
+  }): Observable<DataPackage<any>> {
+    return this.http.put<DataPackage<any>>(`${this.url}/me/complete-profile`, data);
+  }
 }
+

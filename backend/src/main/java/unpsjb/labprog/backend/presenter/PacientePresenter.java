@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.PacienteService;
 import unpsjb.labprog.backend.business.service.UserService;
 import unpsjb.labprog.backend.config.AuditContext;
+import unpsjb.labprog.backend.dto.CompleteProfileDTO;
 import unpsjb.labprog.backend.dto.PacienteDTO;
 import unpsjb.labprog.backend.model.User;
 
@@ -262,5 +264,32 @@ public class PacientePresenter {
         }
     }
 
+    /**
+     * Endpoint para completar el perfil de usuarios registrados con Google
+     * PUT /pacientes/me/complete-profile
+     * 
+     * Permite al usuario autenticado completar su perfil con DNI, teléfono y fecha de nacimiento
+     * Solo puede ser llamado por el propio usuario autenticado
+     * 
+     * @param dto Datos del perfil a completar
+     * @param authentication Contexto de autenticación Spring Security
+     * @return ResponseEntity con el resultado de la operación
+     */
+    @PutMapping("/me/complete-profile")
+    public ResponseEntity<Object> completeProfile(
+            @RequestBody CompleteProfileDTO dto, 
+            Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            service.completeGoogleUserProfile(userEmail, dto);
+            return Response.ok(null, "Perfil completado con éxito");
+        } catch (IllegalStateException e) {
+            return Response.dbError(e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al completar el perfil: " + e.getMessage());
+        }
+    }
+
 }
+
 
