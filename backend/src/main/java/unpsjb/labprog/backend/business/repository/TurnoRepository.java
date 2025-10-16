@@ -485,6 +485,6 @@ public interface TurnoRepository extends JpaRepository<Turno, Integer>, JpaSpeci
      * @return Cantidad de turnos actualizados
      */
     @Query("UPDATE Turno t SET t.staffMedico = NULL WHERE t.staffMedico.id = :staffMedicoId")
-    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
     int desvincularStaffMedico(@Param("staffMedicoId") Integer staffMedicoId);
 }
