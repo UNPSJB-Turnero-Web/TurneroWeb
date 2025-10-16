@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
+import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.ConsultorioDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
@@ -22,7 +23,10 @@ import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
+import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.Role;
 import unpsjb.labprog.backend.model.Turno;
+import unpsjb.labprog.backend.model.User;
 
 /**
  * Servicio refactorizado para Agenda aplicando principios SOLID.
@@ -37,6 +41,7 @@ public class AgendaService {
     private final ConsultorioService consultorioService;
     private final ConsultorioDistribucionService consultorioDistribucionService;
     private final ConfiguracionExcepcionalService configuracionExcepcionalService;
+    private final MedicoRepository medicoRepository;
 
     // === COMPONENTES ESPECIALIZADOS (SRP) ===
     private final SlotGenerator slotGenerator;
@@ -51,13 +56,15 @@ public class AgendaService {
             EsquemaTurnoRepository esquemaTurnoRepository,
             ConsultorioService consultorioService,
             ConsultorioDistribucionService consultorioDistribucionService,
-            ConfiguracionExcepcionalService configuracionExcepcionalService) {
+            ConfiguracionExcepcionalService configuracionExcepcionalService,
+            MedicoRepository medicoRepository) {
         
         this.turnoRepository = turnoRepository;
         this.esquemaTurnoRepository = esquemaTurnoRepository;
         this.consultorioService = consultorioService;
         this.consultorioDistribucionService = consultorioDistribucionService;
         this.configuracionExcepcionalService = configuracionExcepcionalService;
+        this.medicoRepository = medicoRepository;
         
         // Inicializar componentes especializados
         this.slotGenerator = new SlotGenerator();
@@ -819,32 +826,84 @@ public class AgendaService {
      * pero solo retorna los slots DISPONIBLES (no ocupados).
      * 
      * @param centroId ID del centro de atención (opcional). Si es null, busca en todos los centros.
+     * @param especialidad Nombre de la especialidad (opcional).
+     * @param staffMedicoId ID del staff médico (opcional).
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
+     * @param currentUser Usuario autenticado que realiza la petición (puede ser null si es anónimo)
      * @return Lista de turnos públicos disponibles (TurnoPublicoDTO)
      */
     public List<TurnoPublicoDTO> findTurnosPublicosDisponibles(
             Integer centroId, 
             String especialidad, 
             Integer staffMedicoId, 
-            Integer semanas) {
+            Integer semanas,
+            User currentUser) {
+        
+        // === INICIO: CONCIENCIA DEL USUARIO (TAREA 1) ===
+        // Usamos un array de un elemento para permitir modificación dentro del lambda
+        final Integer[] medicoIdToExcludeWrapper = {null}; // Por defecto, no excluimos a nadie.
+
+        if (currentUser != null) {
+            // === TAREA 2: Verificar si el usuario es un MÉDICO ===
+            
+            // Verificamos si el usuario tiene el rol de MEDICO
+            if (currentUser.getRole() == Role.MEDICO) {
+                // Buscar la entidad Medico asociada mediante el email
+                medicoRepository.findByEmail(currentUser.getEmail())
+                    .ifPresent(medico -> {
+                        // Si encontramos el médico, almacenamos su ID para exclusión
+                        medicoIdToExcludeWrapper[0] = medico.getId();
+                        System.out.println("👨‍⚕️ [AgendaService] Petición de un MÉDICO (ID: " + medicoIdToExcludeWrapper[0] + 
+                                         "). Se excluirán sus propios turnos de la agenda.");
+                    });
+                
+                if (medicoIdToExcludeWrapper[0] == null) {
+                    System.out.println("⚠️ [AgendaService] Usuario con rol MEDICO pero sin entidad Medico asociada: " + 
+                                     currentUser.getEmail());
+                }
+            } else {
+                System.out.println("✅ [AgendaService] Petición de agenda realizada por el usuario: " + 
+                                 currentUser.getEmail() + " (Rol: " + currentUser.getRole().getName() + ")");
+            }
+        } else {
+            System.out.println("🔓 [AgendaService] Petición de agenda anónima (sin autenticación)");
+        }
+        
+        // Extraer el valor del wrapper para usar en el resto del método
+        Integer medicoIdToExclude = medicoIdToExcludeWrapper[0];
+        // === FIN: CONCIENCIA DEL USUARIO (TAREA 2) ===
         
         System.out.println("🔍 [AgendaService] Filtros recibidos:");
         System.out.println("   - centroId: " + centroId);
         System.out.println("   - especialidad: " + especialidad);
         System.out.println("   - staffMedicoId: " + staffMedicoId);
         System.out.println("   - semanas: " + semanas);
+        System.out.println("   - medicoIdToExclude: " + medicoIdToExclude);
         
         // Generar todos los eventos desde los esquemas de turno (misma lógica que /eventos/todos)
         List<EsquemaTurno> esquemas;
         int semanasAGenerar = semanas != null ? semanas : 4;
         
-        //  Filtrar esquemas según los parámetros (igual que /eventos/todos)
+        // === TAREA 3: Filtrar esquemas excluyendo al médico autenticado ===
         esquemas = esquemaTurnoRepository.findAll().stream()
             .filter(e -> {
                 // Validar que tenga consultorio
                 if (e.getConsultorio() == null) {
                     return false;
                 }
+                
+                // === NUEVO: EXCLUIR TURNOS DEL MÉDICO AUTENTICADO ===
+                // Si medicoIdToExclude tiene valor, excluir esquemas de ese médico
+                if (medicoIdToExclude != null && e.getStaffMedico() != null && 
+                    e.getStaffMedico().getMedico() != null) {
+                    
+                    Integer medicoIdDelEsquema = e.getStaffMedico().getMedico().getId();
+                    if (medicoIdDelEsquema != null && medicoIdDelEsquema.equals(medicoIdToExclude)) {
+                        // Este esquema pertenece al médico autenticado, excluirlo
+                        return false;
+                    }
+                }
+                // === FIN: EXCLUSIÓN DE MÉDICO ===
                 
                 //  FILTRAR POR CENTRO DE ATENCIÓN
                 if (centroId != null && e.getConsultorio().getCentroAtencion() != null) {

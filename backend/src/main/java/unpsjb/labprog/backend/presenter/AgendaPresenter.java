@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,12 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.repository.EsquemaTurnoRepository;
+import unpsjb.labprog.backend.business.repository.MedicoRepository;
 import unpsjb.labprog.backend.business.service.AgendaService;
 import unpsjb.labprog.backend.business.service.ConfiguracionExcepcionalService;
 import unpsjb.labprog.backend.dto.ConfiguracionExcepcionalDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoPublicoDTO;
 import unpsjb.labprog.backend.model.EsquemaTurno;
+import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.Role;
+import unpsjb.labprog.backend.model.User;
 
 @RestController
 @RequestMapping("/agenda")
@@ -41,6 +47,9 @@ public class AgendaPresenter {
     @Autowired
     private EsquemaTurnoRepository esquemaTurnoRepository;
 
+    @Autowired
+    private MedicoRepository medicoRepository;
+
     /**
      * Endpoint público para listar turnos disponibles.
      * NO requiere autenticación.
@@ -52,6 +61,7 @@ public class AgendaPresenter {
      * @param especialidad Nombre opcional de la especialidad para filtrar
      * @param staffMedicoId ID opcional del staff médico para filtrar
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
+     * @param currentUser Usuario autenticado (puede ser null si el acceso es anónimo)
      * @return Lista de turnos disponibles en formato público (sin datos del paciente)
      */
     @GetMapping("/publica")
@@ -59,11 +69,12 @@ public class AgendaPresenter {
             @RequestParam(name = "centroId", required = false) Integer centroId,
             @RequestParam(name = "especialidad", required = false) String especialidad,
             @RequestParam(name = "staffMedicoId", required = false) Integer staffMedicoId,
-            @RequestParam(name = "semanas", required = false, defaultValue = "4") Integer semanas) {
+            @RequestParam(name = "semanas", required = false, defaultValue = "4") Integer semanas,
+            @AuthenticationPrincipal User currentUser) {
         try {
             
             List<TurnoPublicoDTO> turnosPublicos = 
-                agendaService.findTurnosPublicosDisponibles(centroId, especialidad, staffMedicoId, semanas);
+                agendaService.findTurnosPublicosDisponibles(centroId, especialidad, staffMedicoId, semanas, currentUser);
             
             String mensaje = String.format("Turnos disponibles obtenidos correctamente (%d semanas)", semanas);
             
@@ -80,7 +91,18 @@ public class AgendaPresenter {
             @RequestParam int semanas,
             @RequestParam(required = false) String especialidad,
             @RequestParam(required = false) Integer staffMedicoId,
-            @RequestParam(required = false) Integer centroId) {
+            @RequestParam(required = false) Integer centroId,
+            @AuthenticationPrincipal User currentUser) {
+        
+        // 🔒 FILTRO DE AUTO-EXCLUSIÓN: Si es un MÉDICO, obtener su medicoId
+        Integer medicoIdToExclude = null;
+        if (currentUser != null && currentUser.getRole() == Role.MEDICO) {
+            Optional<Medico> medicoOpt = medicoRepository.findByEmail(currentUser.getEmail());
+            if (medicoOpt.isPresent()) {
+                medicoIdToExclude = medicoOpt.get().getId();
+                System.out.println("👨‍⚕️ [AgendaPresenter] Médico autenticado detectado - Excluyendo medicoId: " + medicoIdToExclude);
+            }
+        }
         
         List<EsquemaTurno> esquemas = esquemaTurnoRepository.findAll();
         List<TurnoDTO> todosLosEventos = new ArrayList<>();
@@ -91,6 +113,16 @@ public class AgendaPresenter {
                 System.err.println("⚠️ Skipping EsquemaTurno ID " + esquema.getId() + 
                                  " - consultorio is null. Please check database integrity.");
                 continue;
+            }
+            
+            // 🚫 FILTRO DE AUTO-EXCLUSIÓN: Excluir esquemas del médico autenticado
+            if (medicoIdToExclude != null && 
+                esquema.getStaffMedico() != null && 
+                esquema.getStaffMedico().getMedico() != null &&
+                esquema.getStaffMedico().getMedico().getId().equals(medicoIdToExclude)) {
+                System.out.println("🚫 [AgendaPresenter] Excluyendo esquema ID " + esquema.getId() + 
+                                 " del médico autenticado (medicoId: " + medicoIdToExclude + ")");
+                continue; // Skip esquemas del médico autenticado
             }
             
             // FILTRAR POR CENTRO DE ATENCIÓN
