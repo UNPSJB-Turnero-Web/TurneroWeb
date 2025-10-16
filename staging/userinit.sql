@@ -93,16 +93,16 @@ ON CONFLICT (email) DO NOTHING;
 -- ON CONFLICT (email) DO NOTHING;
 
 -- Tabla Paciente
-INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) 
+INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, profile_completed, obra_social_id) 
 SELECT 99997, 'María', 'González', 22222222, 'paciente@turnero.com', '+5492804222222', 
-       '1990-05-15', os.id
+       '1990-05-15', true, os.id
 FROM obra_social os 
 WHERE os.codigo = 'OSDE001'
 AND NOT EXISTS (SELECT 1 FROM paciente WHERE dni = 22222222);
 
-INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, obra_social_id) 
+INSERT INTO paciente (id, nombre, apellido, dni, email, telefono, fecha_nacimiento, profile_completed, obra_social_id) 
 SELECT 89999, 'Agustin', 'Palma', 43808170, 'aguspalqui@hotmail.com', '+5492804432030', 
-       '1990-05-15', os.id
+       '1990-05-15', true, os.id
 FROM obra_social os 
 WHERE os.codigo = 'OSDE001'
 AND NOT EXISTS (SELECT 1 FROM paciente WHERE dni = 43808170);
