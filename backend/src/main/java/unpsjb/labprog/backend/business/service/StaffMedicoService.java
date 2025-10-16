@@ -10,6 +10,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import unpsjb.labprog.backend.business.repository.CentroAtencionRepository;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
@@ -31,6 +33,9 @@ import unpsjb.labprog.backend.model.StaffMedico;
 
 @Service
 public class StaffMedicoService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private StaffMedicoRepository repository;
@@ -108,6 +113,10 @@ public class StaffMedicoService {
         if (turnosDesvinculados > 0) {
             System.out.println("Desvinculados " + turnosDesvinculados + " turnos del staff médico ID: " + id);
         }
+
+        // Flush explícito para asegurar que los cambios se persistan antes de la eliminación
+        entityManager.flush();
+        entityManager.clear(); // Limpiar el contexto para evitar referencias en caché
 
         // 2. Eliminar los esquemas de turno asociados a este staff médico
         var esquemasAsociados = esquemaTurnoRepository.findByStaffMedicoId(id);
