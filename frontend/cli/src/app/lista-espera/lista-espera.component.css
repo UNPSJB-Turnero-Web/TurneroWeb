@@ -1,0 +1,115 @@
+.filtros-form {
+    border: 1px solid #e9ecef;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.estado-badge {
+    padding: 0.4em 0.8em;
+    border-radius: 1rem;
+    font-size: 0.85em;
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    font-weight: 500;
+}
+
+.badge-warning {
+    color: #856404;
+    background-color: #d7b23a;
+    border: 1px solid #ffeeba;
+}
+
+.badge-secondary {
+    color: #005eaa;
+    background-color: #ced6e7;
+    border: 1px solid #d6d8db;
+}
+.badge-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.badge-success {
+    color: #0c5771;
+    background-color: #03cd14;
+    border: 1px solid #13792b;
+}
+
+.badge-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border: 1px solid #00ceed;
+}
+
+.tabla-solicitudes {
+    position: relative;
+    background: white;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.btn-group .btn {
+    margin: 0 2px;
+}
+
+.btn-group .btn:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    color: #090b0d;
+    border-color: #77afe8;
+}
+
+.page-link:hover {
+    color: #495057;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.page-item.disabled .page-link {
+    color: #ced4da;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.text-muted {
+    font-size: 0.875rem;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.alert {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .table td {
+        font-size: 0.875rem;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+}

@@ -56,6 +56,9 @@ public class TurnoService {
     private StaffMedicoRepository staffMedicoRepository;
 
     @Autowired
+    private ListaEsperaService listaEsperaService;
+
+    @Autowired
     private ConsultorioRepository consultorioRepository;
 
     @Autowired
@@ -410,6 +413,10 @@ public class TurnoService {
 
         // Enviar notificación por email si el paciente tiene email verificado
         enviarNotificacionCancelacionEmail(savedTurno, cancelacionData, validacionContacto, performedBy);
+
+        // Buscar pacientes en lista de espera que coincidan con el turno cancelado
+        boolean buscarPacienteParaReasignar = listaEsperaService.buscarPacienteParaReasignar(savedTurno);
+        System.out.println("Estado buscarPacienteParaReasignar: " + buscarPacienteParaReasignar);
 
         return toDTO(savedTurno);
     }

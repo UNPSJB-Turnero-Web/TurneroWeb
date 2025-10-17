@@ -176,6 +176,12 @@ export const MENU_CONFIG: MenuSection[] = [
         route: '/agenda',
         icon: 'fa-calendar-plus',
         description: 'Reservar un nuevo turno médico'
+      },
+      {
+        label: 'Lista de Espera',
+        route: '/lista-espera',
+        icon: 'fa-clock',
+        description: 'Gestionar lista de espera de pacientes'
       }
     ]
   },
