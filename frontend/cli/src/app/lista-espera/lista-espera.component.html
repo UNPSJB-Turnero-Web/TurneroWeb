@@ -1,0 +1,215 @@
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Lista de Espera</h2>
+      <p class="text-muted">Total de solicitudes: {{totalElements}}</p>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" (click)="nuevaSolicitud()">Nueva Solicitud</button>
+    </div>
+  </div>
+
+  <!-- Formulario de filtros -->
+  <form [formGroup]="filtrosForm" class="filtros-form bg-light p-3 rounded mb-4">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="especialidadId">Especialidad</label>
+          <select class="form-control" id="especialidadId" formControlName="especialidadId">
+            <option value="">Todas</option>
+            <option *ngFor="let esp of especialidades" [value]="esp.id">
+              {{esp.nombre}}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="centroAtencionId">Centro de Atención</label>
+          <select class="form-control" id="centroAtencionId" formControlName="centroAtencionId">
+            <option value="">Todos</option>
+            <option *ngFor="let centro of centros" [value]="centro.id">
+              {{centro.nombre}}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="medicoId">Médico</label>
+          <select class="form-control" id="medicoId" formControlName="medicoId">
+            <option value="">Todos</option>
+            <option *ngFor="let medico of medicos" [value]="medico.id">
+              {{medico.nombre}} {{medico.apellido}}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="estado">Estado</label>
+          <select class="form-control" id="estado" formControlName="estado">
+            <option *ngFor="let estado of estados" [value]="estado.value">
+              {{estado.label}}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="row mt-3">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="fechaDesde">Fecha Desde</label>
+          <input type="date" class="form-control" id="fechaDesde" formControlName="fechaDesde">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label for="fechaHasta">Fecha Hasta</label>
+          <input type="date" class="form-control" id="fechaHasta" formControlName="fechaHasta">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label class="d-block">&nbsp;</label>
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="urgencia" formControlName="urgencia">
+            <label class="custom-control-label" for="urgencia">Solo Urgencias Médicas</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="form-group">
+          <label class="d-block">&nbsp;</label>
+          <button type="button" class="btn btn-secondary w-100" (click)="buscarSolicitudes()">
+            Actualizar Lista
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Tabla de resultados -->
+  <div class="tabla-solicitudes">
+    <div class="text-center py-4" *ngIf="cargando">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando && listaSolicitudes.length > 0">
+      <table class="table table-hover table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th>Paciente</th>
+            <th>Especialidad</th>
+            <th>Centro</th>
+            <th>Fecha Solicitud</th>
+            <th>Días en Espera</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let solicitud of listaSolicitudes">
+            <td>
+              {{solicitud.pacienteNombre}} {{solicitud.pacienteApellido}}
+              <br>
+              <small class="text-muted">DNI: {{solicitud.pacienteDni}}</small>
+            </td>
+            <td>{{solicitud.especialidadNombre}}</td>
+            <td>{{solicitud.centroAtencionNombre}}</td>
+            <td>{{solicitud.fechaSolicitud | date:'dd/MM/yyyy'}}</td>
+            <td>
+              <span class="badge" 
+                    [class.badge-warning]="solicitud.diasEnEspera > 30"
+                    [class.badge-danger]="solicitud.diasEnEspera > 60"
+                    [class.badge-info]="solicitud.diasEnEspera <= 30">
+                {{solicitud.diasEnEspera}} días
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class]="getEstadoClass(solicitud.estado)">
+                {{solicitud.estado}}
+              </span>
+              <span *ngIf="solicitud.urgenciaMedica" 
+                    class="badge badge-danger ml-1" 
+                    title="Urgencia Médica">
+                <i class="fas fa-exclamation-triangle"></i>
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-sm btn-outline-success" 
+                        (click)="marcarComoResueltaManual(solicitud.id)"
+                        *ngIf="solicitud.estado === 'PENDIENTE'">
+                  <i class="fas fa-check"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-info" 
+                        (click)="mostrarInfoContacto(solicitud)">
+                  <i class="fas fa-phone"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary"
+                        (click)="editarSolicitud(solicitud)"
+                        *ngIf="solicitud.estado === 'PENDIENTE'">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Paginador -->
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <div>
+          <span class="text-muted">
+            Mostrando {{listaSolicitudes.length}} de {{totalElements}} solicitudes
+          </span>
+        </div>
+        <nav aria-label="Page navigation">
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 0">
+              <a class="page-link" href="javascript:void(0)" (click)="cambiarPagina(0)">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === 0">
+              <a class="page-link" href="javascript:void(0)" (click)="cambiarPagina(currentPage - 1)">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let page of getPaginationArray()"
+                [class.active]="page === currentPage">
+              <a class="page-link" href="javascript:void(0)" (click)="cambiarPagina(page)">
+                {{page + 1}}
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages - 1">
+              <a class="page-link" href="javascript:void(0)" (click)="cambiarPagina(currentPage + 1)">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages - 1">
+              <a class="page-link" href="javascript:void(0)" (click)="cambiarPagina(totalPages - 1)">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <div class="alert alert-info" *ngIf="!cargando && listaSolicitudes.length === 0">
+      <i class="fas fa-info-circle mr-2"></i>
+      No se encontraron solicitudes con los filtros seleccionados.
+    </div>
+  </div>
+</div>

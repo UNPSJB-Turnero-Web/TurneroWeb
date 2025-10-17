@@ -59,14 +59,15 @@ import { TokenStatusComponent } from "./components/token-status.component";
 import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
 import { AdminConfigComponent } from "./admin/admin-config.component";
 import { HistorialTurnosComponent } from "./turnos/historial-turnos.component";
+import { ListaEsperaComponent } from "./lista-espera/lista-espera.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
-  
+
   // Ruta puente para deep linking (enlaces desde email)
-  { 
-    path: "link-verificacion", 
-    component: DeepLinkBridgeComponent 
+  {
+    path: "link-verificacion",
+    component: DeepLinkBridgeComponent
   },
 
   // Rutas de Operador (protegidas por OperadorGuard)
@@ -123,7 +124,7 @@ export const routes: Routes = [
   {
     path: "paciente-agenda",
     component: PacienteAgendaComponent,
-    // Ruta pública - accesible sin autenticación
+    canActivate: [PatientGuard],
   },
   {
     path: "paciente-notificaciones",
@@ -169,6 +170,13 @@ export const routes: Routes = [
   },
 
   { path: "debug/tokens", component: TokenStatusComponent }, // ruta para debug de tokens
+  // Lista de Espera Routes
+  {
+    path: "lista-espera",
+    component: ListaEsperaComponent,
+    canActivate: [AdminOperadorGuard],
+  },
+
   // Admin Routes (protected)
   {
     path: "turnos",
@@ -351,8 +359,8 @@ export const routes: Routes = [
     canActivate: [AdminGuard],
   },
   {
-  path: "config",  // O "admin-config" si prefieres algo más descriptivo
-  component: AdminConfigComponent,
-  canActivate: [AdminOperadorGuard],  // Protege para admins y operadores
-},
+    path: "config",  // O "admin-config" si prefieres algo más descriptivo
+    component: AdminConfigComponent,
+    canActivate: [AdminOperadorGuard],  // Protege para admins y operadores
+  },
 ];
