@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -21,9 +22,12 @@ import unpsjb.labprog.backend.dto.TurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoPublicoDTO;
 import unpsjb.labprog.backend.model.ConfiguracionExcepcional;
 import unpsjb.labprog.backend.model.Consultorio;
+import unpsjb.labprog.backend.model.DiaDeLaSemana;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.Paciente;
+import unpsjb.labprog.backend.model.PreferenciaHoraria;
 import unpsjb.labprog.backend.model.Role;
 import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.User;
@@ -42,6 +46,7 @@ public class AgendaService {
     private final ConsultorioDistribucionService consultorioDistribucionService;
     private final ConfiguracionExcepcionalService configuracionExcepcionalService;
     private final MedicoRepository medicoRepository;
+    private final PacienteService pacienteService;
 
     // === COMPONENTES ESPECIALIZADOS (SRP) ===
     private final SlotGenerator slotGenerator;
@@ -57,7 +62,8 @@ public class AgendaService {
             ConsultorioService consultorioService,
             ConsultorioDistribucionService consultorioDistribucionService,
             ConfiguracionExcepcionalService configuracionExcepcionalService,
-            MedicoRepository medicoRepository) {
+            MedicoRepository medicoRepository,
+            PacienteService pacienteService) {
         
         this.turnoRepository = turnoRepository;
         this.esquemaTurnoRepository = esquemaTurnoRepository;
@@ -65,6 +71,7 @@ public class AgendaService {
         this.consultorioDistribucionService = consultorioDistribucionService;
         this.configuracionExcepcionalService = configuracionExcepcionalService;
         this.medicoRepository = medicoRepository;
+        this.pacienteService = pacienteService;
         
         // Inicializar componentes especializados
         this.slotGenerator = new SlotGenerator();
@@ -829,6 +836,7 @@ public class AgendaService {
      * @param especialidad Nombre de la especialidad (opcional).
      * @param staffMedicoId ID del staff médico (opcional).
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
+     * @param filtrarPorPreferencia Si es true, filtra turnos según las preferencias horarias del paciente
      * @param currentUser Usuario autenticado que realiza la petición (puede ser null si es anónimo)
      * @return Lista de turnos públicos disponibles (TurnoPublicoDTO)
      */
@@ -837,6 +845,7 @@ public class AgendaService {
             String especialidad, 
             Integer staffMedicoId, 
             Integer semanas,
+            boolean filtrarPorPreferencia,
             User currentUser) {
         
         // === INICIO: CONCIENCIA DEL USUARIO (TAREA 1) ===
@@ -952,6 +961,32 @@ public class AgendaService {
         
         System.out.println("✅ [AgendaService] Total slots generados: " + todosLosSlots.size());
         
+        // === FILTRADO POR PREFERENCIAS HORARIAS (TAREA 7) ===
+        Set<PreferenciaHoraria> preferenciasDelPaciente = null;
+        
+        if (filtrarPorPreferencia && currentUser != null) {
+            System.out.println("🔍 [AgendaService] Filtrado por preferencias activado para usuario: " + currentUser.getEmail());
+            
+            // Obtener el paciente asociado al usuario autenticado
+            Paciente paciente = pacienteService.findByUser(currentUser);
+            
+            if (paciente != null) {
+                preferenciasDelPaciente = paciente.getPreferenciasHorarias();
+                
+                if (preferenciasDelPaciente != null && !preferenciasDelPaciente.isEmpty()) {
+                    System.out.println("✅ [AgendaService] Paciente encontrado con " + preferenciasDelPaciente.size() + " preferencias horarias");
+                } else {
+                    System.out.println("⚠️ [AgendaService] Paciente encontrado pero sin preferencias horarias configuradas");
+                }
+            } else {
+                System.out.println("⚠️ [AgendaService] No se encontró entidad Paciente para el usuario: " + currentUser.getEmail());
+            }
+        }
+        
+        // Crear una copia final de la variable para usar en el lambda
+        final Set<PreferenciaHoraria> preferenciasFinales = preferenciasDelPaciente;
+        // === FIN: FILTRADO POR PREFERENCIAS ===
+        
         // Filtrar solo slots disponibles (no ocupados) y mapear a DTO público
         LocalDate fechaActual = LocalDate.now();
         
@@ -960,6 +995,36 @@ public class AgendaService {
             .filter(slot -> slot.getOcupado() == null || !slot.getOcupado()) // Solo disponibles
             .filter(slot -> slot.getEnMantenimiento() == null || !slot.getEnMantenimiento()) // Sin mantenimiento
             .filter(slot -> !slot.getFecha().isBefore(fechaActual)) // Solo fechas futuras
+            .filter(slot -> {
+                // === APLICAR FILTRO DE PREFERENCIAS SI ESTÁ ACTIVADO ===
+                if (preferenciasFinales == null || preferenciasFinales.isEmpty()) {
+                    return true; // Sin preferencias, mostrar todos los turnos
+                }
+                
+                // Obtener el día de la semana del turno
+                DayOfWeek dayOfWeek = slot.getFecha().getDayOfWeek();
+                DiaDeLaSemana diaDelTurno = convertirDayOfWeekADiaDeLaSemana(dayOfWeek);
+                
+                // Verificar si alguna preferencia coincide con el turno
+                boolean coincideConPreferencia = preferenciasFinales.stream()
+                    .anyMatch(pref -> {
+                        // Verificar si el día coincide
+                        if (!pref.getDiaDeLaSemana().equals(diaDelTurno)) {
+                            return false;
+                        }
+                        
+                        // Verificar si la hora del turno está dentro del rango de la preferencia
+                        LocalTime horaInicioTurno = slot.getHoraInicio();
+                        LocalTime horaDesdePreferencia = pref.getHoraDesde();
+                        LocalTime horaHastaPreferencia = pref.getHoraHasta();
+                        
+                        // El turno debe empezar en o después de horaDesde y antes de horaHasta
+                        return !horaInicioTurno.isBefore(horaDesdePreferencia) && 
+                               horaInicioTurno.isBefore(horaHastaPreferencia);
+                    });
+                
+                return coincideConPreferencia;
+            })
             .map(this::mapearSlotATurnoPublico)
             .sorted((t1, t2) -> {
                 // Ordenar por fecha y luego por hora
@@ -968,8 +1033,28 @@ public class AgendaService {
                 return t1.getHoraInicio().compareTo(t2.getHoraInicio());
             })
             .collect(Collectors.toList());
+        
+        if (filtrarPorPreferencia && preferenciasFinales != null && !preferenciasFinales.isEmpty()) {
+            System.out.println("✅ [AgendaService] Turnos después de filtrar por preferencias: " + resultado.size());
+        }
                 
         return resultado;
+    }
+    
+    /**
+     * Convierte un DayOfWeek de Java a DiaDeLaSemana de nuestro modelo
+     */
+    private DiaDeLaSemana convertirDayOfWeekADiaDeLaSemana(DayOfWeek dayOfWeek) {
+        switch (dayOfWeek) {
+            case MONDAY: return DiaDeLaSemana.LUNES;
+            case TUESDAY: return DiaDeLaSemana.MARTES;
+            case WEDNESDAY: return DiaDeLaSemana.MIERCOLES;
+            case THURSDAY: return DiaDeLaSemana.JUEVES;
+            case FRIDAY: return DiaDeLaSemana.VIERNES;
+            case SATURDAY: return DiaDeLaSemana.SABADO;
+            case SUNDAY: return DiaDeLaSemana.DOMINGO;
+            default: throw new IllegalArgumentException("Día de la semana no válido: " + dayOfWeek);
+        }
     }
     
     /**

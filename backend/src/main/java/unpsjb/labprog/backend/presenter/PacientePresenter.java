@@ -3,10 +3,15 @@ package unpsjb.labprog.backend.presenter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +30,7 @@ import unpsjb.labprog.backend.business.service.UserService;
 import unpsjb.labprog.backend.config.AuditContext;
 import unpsjb.labprog.backend.dto.CompleteProfileDTO;
 import unpsjb.labprog.backend.dto.PacienteDTO;
+import unpsjb.labprog.backend.model.PreferenciaHoraria;
 import unpsjb.labprog.backend.model.User;
 
 @RestController
@@ -290,6 +296,90 @@ public class PacientePresenter {
         }
     }
 
-}
+    // ==================== ENDPOINTS DE PREFERENCIAS HORARIAS ====================
 
+    /**
+     * Obtener todas las preferencias horarias del paciente autenticado
+     * GET /pacientes/me/preferencias
+     * 
+     * @param user Usuario autenticado (inyectado automáticamente por Spring Security)
+     * @return ResponseEntity con el conjunto de preferencias del paciente
+     */
+    @GetMapping("/me/preferencias")
+    @PreAuthorize("hasRole('PACIENTE')")
+    public ResponseEntity<Object> getPreferencias(@AuthenticationPrincipal User user) {
+        try {
+            Set<PreferenciaHoraria> preferencias = service.getPreferenciasByUser(user);
+            return Response.ok(preferencias, "Preferencias horarias recuperadas correctamente");
+        } catch (IllegalStateException e) {
+            return Response.notFound(e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al obtener las preferencias: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Añadir una nueva preferencia horaria al paciente autenticado
+     * POST /pacientes/me/preferencias
+     * 
+     * @param user Usuario autenticado (inyectado automáticamente por Spring Security)
+     * @param nuevaPreferencia Datos de la preferencia a crear
+     * @return ResponseEntity con la preferencia creada (incluyendo su ID)
+     */
+    @PostMapping("/me/preferencias")
+    @PreAuthorize("hasRole('PACIENTE')")
+    public ResponseEntity<Object> addPreferencia(
+            @AuthenticationPrincipal User user, 
+            @RequestBody PreferenciaHoraria nuevaPreferencia) {
+        try {
+            Optional<PreferenciaHoraria> preferenciaOpt = service.addPreferencia(user, nuevaPreferencia);
+            
+            if (preferenciaOpt.isEmpty()) {
+                return Response.notFound("Paciente no encontrado para el usuario autenticado");
+            }
+            
+            PreferenciaHoraria preferenciaGuardada = preferenciaOpt.get();
+            return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(Map.of(
+                    "status_code", HttpStatus.CREATED.value(),
+                    "status_text", "Preferencia horaria creada correctamente",
+                    "data", preferenciaGuardada
+                ));
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, "Datos de preferencia inválidos: " + e.getMessage());
+        } catch (Exception e) {
+            return Response.serverError("Error al crear la preferencia: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Eliminar una preferencia horaria del paciente autenticado
+     * DELETE /pacientes/me/preferencias/{id}
+     * 
+     * Verifica que la preferencia pertenezca al paciente autenticado antes de eliminarla.
+     * 
+     * @param user Usuario autenticado (inyectado automáticamente por Spring Security)
+     * @param id ID de la preferencia a eliminar
+     * @return ResponseEntity vacío con status 204 No Content si se eliminó, 404 si no se encontró
+     */
+    @DeleteMapping("/me/preferencias/{id}")
+    @PreAuthorize("hasRole('PACIENTE')")
+    public ResponseEntity<Void> deletePreferencia(
+            @AuthenticationPrincipal User user, 
+            @PathVariable Long id) {
+        try {
+            boolean eliminado = service.deletePreferencia(user, id);
+            
+            if (eliminado) {
+                return ResponseEntity.noContent().build();
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+}
 

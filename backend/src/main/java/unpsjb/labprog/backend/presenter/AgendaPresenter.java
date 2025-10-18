@@ -61,6 +61,7 @@ public class AgendaPresenter {
      * @param especialidad Nombre opcional de la especialidad para filtrar
      * @param staffMedicoId ID opcional del staff médico para filtrar
      * @param semanas Número de semanas a futuro para generar slots (por defecto 4)
+     * @param filtrarPorPreferencia Si es true, filtra turnos según las preferencias horarias del paciente logueado (por defecto false)
      * @param currentUser Usuario autenticado (puede ser null si el acceso es anónimo)
      * @return Lista de turnos disponibles en formato público (sin datos del paciente)
      */
@@ -70,11 +71,12 @@ public class AgendaPresenter {
             @RequestParam(name = "especialidad", required = false) String especialidad,
             @RequestParam(name = "staffMedicoId", required = false) Integer staffMedicoId,
             @RequestParam(name = "semanas", required = false, defaultValue = "4") Integer semanas,
+            @RequestParam(name = "filtrarPorPreferencia", defaultValue = "false") boolean filtrarPorPreferencia,
             @AuthenticationPrincipal User currentUser) {
         try {
             
             List<TurnoPublicoDTO> turnosPublicos = 
-                agendaService.findTurnosPublicosDisponibles(centroId, especialidad, staffMedicoId, semanas, currentUser);
+                agendaService.findTurnosPublicosDisponibles(centroId, especialidad, staffMedicoId, semanas, filtrarPorPreferencia, currentUser);
             
             String mensaje = String.format("Turnos disponibles obtenidos correctamente (%d semanas)", semanas);
             
