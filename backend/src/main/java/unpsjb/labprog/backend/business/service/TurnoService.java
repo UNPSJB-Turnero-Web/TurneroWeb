@@ -3,6 +3,7 @@ package unpsjb.labprog.backend.business.service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
@@ -541,6 +542,13 @@ public class TurnoService {
         LocalTime horaCorte = configuracionService.getHoraCorteConfirmacion();
         LocalTime ahoraHora = LocalTime.now(zoneId);
 
+        // Calcular ventana de confirmación
+        LocalDate fechaInicioConfirmacion = turno.getFecha().minusDays(diasMax);
+        LocalDate fechaFinConfirmacion = turno.getFecha().minusDays(diasMin);
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
         // 🧩 LOGS DE DEPURACIÓN
         System.out.println("🕒 --- VALIDACIÓN DE CONFIRMACIÓN DE TURNO ---");
         System.out.println("📅 Fecha actual: " + hoy);
@@ -554,31 +562,40 @@ public class TurnoService {
         System.out.println("🕓 Hora actual: " + ahoraHora);
         System.out.println("--------------------------------------------------");
 
-        // No se puede confirmar el mismo día o en el pasado
+        // Validaciones
         if (diasRestantes <= 0) {
-            throw new IllegalStateException("No se pueden confirmar turnos el mismo día o fechas pasadas");
+            throw new IllegalStateException(
+                    "Este turno ya ocurrió o es para hoy. Solo se pueden confirmar turnos con anticipación. " +
+                            "Por favor, comunicate con el centro de atención si necesitás reprogramarlo.");
         }
 
-        // No se puede confirmar con menos días de anticipación
         if (diasRestantes < diasMin) {
-            throw new IllegalStateException(
-                    String.format(
-                            "Los turnos deben confirmarse al menos %d días antes de la fecha programada: %d días restantes",
-                            diasMin, diasRestantes));
+            throw new IllegalStateException(String.format(
+                    "No podés confirmar este turno porque faltan menos de %d días. " +
+                            "Los turnos deben confirmarse con al menos %d días de anticipación (hasta el %s antes de las %s).",
+                    diasMin, diasMin,
+                    fechaFinConfirmacion.format(dateFormatter),
+                    horaCorte.format(timeFormatter)));
         }
 
-        // Si justo estamos en el día mínimo, revisar la hora de corte
-        if (diasRestantes == diasMin && horaActual.isAfter(horaCorte)) {
-            throw new IllegalStateException(
-                    String.format("Ya pasó la hora límite para confirmar (%s). Son las %s.",
-                            horaCorte, horaActual));
-        }
-
-        // No se puede confirmar con demasiada anticipación
         if (diasRestantes > diasMax) {
-            throw new IllegalStateException(
-                    String.format("Los turnos solo pueden confirmarse entre %d y %d días antes de la fecha",
-                            diasMin, diasMax));
+            throw new IllegalStateException(String.format(
+                    "Aún no podés confirmar este turno. " +
+                            "Las confirmaciones se habilitan entre %d y %d días antes de la fecha del turno, " +
+                            "es decir, entre el %s y el %s (hora límite %s).",
+                    diasMax, diasMin,
+                    fechaInicioConfirmacion.format(dateFormatter),
+                    fechaFinConfirmacion.format(dateFormatter),
+                    horaCorte.format(timeFormatter)));
+        }
+
+        if (diasRestantes == diasMin && horaActual.isAfter(horaCorte)) {
+            throw new IllegalStateException(String.format(
+                    "Ya pasó la hora límite de confirmación (%s). " +
+                            "Podías confirmar este turno hasta las %s del día %s.",
+                    horaCorte.format(timeFormatter),
+                    horaCorte.format(timeFormatter),
+                    fechaFinConfirmacion.format(dateFormatter)));
         }
     }
 
