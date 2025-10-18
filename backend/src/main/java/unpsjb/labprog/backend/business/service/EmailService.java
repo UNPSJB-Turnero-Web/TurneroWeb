@@ -398,18 +398,24 @@ public class EmailService {
     }
 
     /**
-     * Envía un correo de recordatorio de turno.
+     * Envía un email de recordatorio de turno al paciente con deep-link de confirmación.
      * 
-     * @param to              Dirección de correo del paciente
+     * @param to              Correo electrónico del destinatario
      * @param patientName     Nombre del paciente
-     * @param reminderDetails Detalles del recordatorio (e.g., fecha, hora, médico,
-     *                        etc.)
+     * @param reminderDetails Detalles del recordatorio (e.g., fecha, hora, médico, etc.)
+     * @param pacienteId      ID del paciente para generar el deep-link
+     * @param turnoId         ID del turno para generar el deep-link
      * @return CompletableFuture<Void> para manejo asíncrono
      */
     @Async
-    public CompletableFuture<Void> sendAppointmentReminderEmail(String to, String patientName, String reminderDetails) {
+    public CompletableFuture<Void> sendAppointmentReminderEmail(String to, String patientName, String reminderDetails, Integer pacienteId, Integer turnoId) {
         String subject = appName + " - Recordatorio de turno";
-        String htmlBody = buildAppointmentReminderEmailBody(patientName, reminderDetails);
+        
+        // Generar deep-link para confirmación directa
+        String deepLinkToken = deepLinkService.generarDeepLinkToken(pacienteId, turnoId, "CONFIRMACION");
+        String confirmUrl = appUrl + "/link-verificacion?token=" + deepLinkToken;
+        
+        String htmlBody = buildAppointmentReminderEmailBody(patientName, reminderDetails, confirmUrl);
 
         return sendHtmlEmailAsync(to, subject, htmlBody);
     }
@@ -419,9 +425,10 @@ public class EmailService {
      * 
      * @param patientName     Nombre del paciente
      * @param reminderDetails Detalles formateados del turno
+     * @param confirmUrl      URL con deep-link para confirmación directa
      * @return String con el HTML del cuerpo del email
      */
-    private String buildAppointmentReminderEmailBody(String patientName, String reminderDetails) {
+    private String buildAppointmentReminderEmailBody(String patientName, String reminderDetails, String confirmUrl) {
         return String.format(
                 """
                         <!DOCTYPE html>
@@ -440,11 +447,10 @@ public class EmailService {
                                 </div>
                                 <p><strong>Importante:</strong> Si no confirmas en el plazo establecido, el turno podría cancelarse automáticamente.</p>
                                 <div style="text-align: center; margin: 30px 0;">
-                                    <a href="%s" style="background-color: #ffc107; color: #333; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">Confirmar turno</a>
+                                    <a href="%s" style="background-color: #ffc107; color: #333; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Confirmar turno</a>
                                 </div>
                                 <p style="font-size: 14px; color: #666;">
-                                    <!-- TODO: Aplicar filtros automáticos para confirmación directa del turno (e.g., agregar ID de turno al URL) -->
-                                    El enlace te llevará a tu agenda de turnos.
+                                    El enlace te llevará a tu agenda de turnos donde podrás confirmar automáticamente tu asistencia.
                                 </p>
                                 <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
                                 <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
@@ -453,9 +459,7 @@ public class EmailService {
                         </body>
                         </html>
                         """,
-                appName, patientName, reminderDetails, appUrl + "/paciente-agenda"); // URL provisional; ajusta si
-                                                                                     // necesitas uno específico para
-                                                                                     // confirmación
+                appName, patientName, reminderDetails, confirmUrl);
     }
 
     private String buildAutomaticCancellationEmailBody(String patientName, String appointmentDetails, String rescheduleUrl) {
