@@ -1631,9 +1631,26 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
 
   /**
    * Aplica el contexto de deep link si existe
-   * TODO: Implementar pre-selección automática de filtros basados en contexto del turno
+   * Maneja confirmación automática desde email y muestra modal de éxito
    */
   private aplicarContextoDeepLink(): void {
+    // Verificar si hay un turno confirmado desde el deep-link
+    const turnoConfirmadoStr = sessionStorage.getItem('turno_confirmado');
+    if (turnoConfirmadoStr) {
+      try {
+        const turnoConfirmado = JSON.parse(turnoConfirmadoStr);
+        console.log('✅ Turno confirmado desde email:', turnoConfirmado);
+        
+        // Mostrar modal de éxito
+        this.mostrarModalConfirmacionExitosa(turnoConfirmado.mensaje);
+        
+        // Limpiar el flag
+        sessionStorage.removeItem('turno_confirmado');
+      } catch (e) {
+        console.error('Error al parsear turno_confirmado:', e);
+      }
+    }
+    
     const context = this.deepLinkService.getContext();
 
     if (!context) {
@@ -1648,14 +1665,66 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     // - Pre-seleccionar centro de atención por ID
     // - Pre-seleccionar médico por ID
     // - Aplicar filtros automáticamente
-    // - Mostrar mensaje contextual según el tipo (CANCELACION, etc.)
+    // - Mostrar mensaje contextual según el tipo (CANCELACION, CONFIRMACION, etc.)
 
-    // Por ahora solo mostramos mensaje informativo
+    // Mensajes informativos según tipo
     if (context.tipo === 'CANCELACION') {
       console.log('Su turno fue cancelado. Agenda disponible para reagendar.');
+    } else if (context.tipo === 'CONFIRMACION') {
+      console.log('Acceso desde confirmación de turno.');
     }
 
     // Limpiar el contexto después de usarlo
     this.deepLinkService.clearContext();
+  }
+
+  /**
+   * Muestra un modal de confirmación exitosa
+   */
+  private mostrarModalConfirmacionExitosa(mensaje: string): void {
+    // Crear modal temporal con Bootstrap
+    const modalHtml = `
+      <div class="modal fade" id="confirmacionExitosaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+              <h5 class="modal-title">
+                <i class="fas fa-check-circle me-2"></i>
+                ¡Turno Confirmado!
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+              <i class="fas fa-calendar-check text-success mb-3" style="font-size: 4rem;"></i>
+              <p class="fs-5 mb-3">${mensaje}</p>
+              <p class="text-muted">Puedes ver todos tus turnos en esta página.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                <i class="fas fa-check me-2"></i>Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Insertar modal en el DOM
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = modalHtml;
+    document.body.appendChild(modalDiv.firstElementChild!);
+    
+    // Mostrar modal usando Bootstrap
+    const modalElement = document.getElementById('confirmacionExitosaModal');
+    if (modalElement) {
+      // @ts-ignore - Bootstrap está disponible globalmente
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+      
+      // Limpiar el modal del DOM cuando se cierre
+      modalElement.addEventListener('hidden.bs.modal', () => {
+        modalElement.remove();
+      });
+    }
   }
 }

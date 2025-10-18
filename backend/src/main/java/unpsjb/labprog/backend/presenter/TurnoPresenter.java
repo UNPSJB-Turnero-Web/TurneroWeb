@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ExportService;
+import unpsjb.labprog.backend.business.service.RecordatorioService;
 import unpsjb.labprog.backend.business.service.TurnoService;
 import unpsjb.labprog.backend.config.JwtTokenProvider;
 import unpsjb.labprog.backend.dto.CancelacionDataDTO;
@@ -41,6 +42,9 @@ public class TurnoPresenter {
 
     @Autowired
     private ExportService exportService;
+
+    @Autowired
+    private RecordatorioService recordatorioService;
 
     // Método auxiliar para auditoría
     @Autowired
@@ -639,14 +643,16 @@ public class TurnoPresenter {
         }
     }
 
-    // DEBUG - ejectuar curl -X POST
-    // http://localhost:8080/turno/ejecutar-recordatorios
-
+    /**
+     * DEBUG - Ejecutar recordatorios manualmente
+     * curl -X POST http://localhost:8080/turno/ejecutar-recordatorios
+     * Nota: Los recordatorios ahora son manejados por RecordatorioService
+     */
     @PostMapping("/ejecutar-recordatorios")
     public ResponseEntity<Object> ejecutarRecordatoriosManual() {
         try {
-            service.enviarRecordatoriosConfirmacion();
-            return Response.ok(null, "Recordatorios ejecutados manualmente");
+            recordatorioService.enviarRecordatoriosPendientes();
+            return Response.ok(null, "Recordatorios ejecutados manualmente por RecordatorioService");
         } catch (Exception e) {
             return Response.error(null, "Error al ejecutar recordatorios: " + e.getMessage());
         }

@@ -627,191 +627,13 @@ public class TurnoService {
         System.out.println("Cancelación automática completada");
     }
 
-    // === SISTEMA DE RECORDATORIOS ===
-    @Scheduled(cron = "0 0 9 * * ?", zone = "America/Argentina/Buenos_Aires") // Por defecto a las 9:00 AM, pero
-                                                                              // configurable
-    @Transactional
-    public void enviarRecordatoriosConfirmacion() {
-        if (!configuracionService.isHabilitadosRecordatorios()) {
-            System.out.println("Recordatorios de confirmación deshabilitados por configuración");
-            return;
-        }
-
-        LocalDate hoy = LocalDate.now();
-        int diasRecordatorio = configuracionService.getDiasRecordatorioConfirmacion();
-
-        // Calcular rango: desde mañana hasta diasRecordatorio días en el futuro
-        LocalDate fechaDesde = hoy.plusDays(1);
-        LocalDate fechaHasta = hoy.plusDays(diasRecordatorio);
-
-        System.out.println(String.format("Enviando recordatorios para turnos entre: %s y %s (%d días de anticipación)",
-                fechaDesde, fechaHasta, diasRecordatorio));
-
-        // Buscar turnos en el rango de fechas y filtrar por estado
-        List<Turno> turnosPorFecha = repository.findByFechaBetween(fechaDesde, fechaHasta);
-
-        // Filtrar solo turnos PROGRAMADOS y REAGENDADOS
-        List<Turno> turnosParaRecordar = turnosPorFecha.stream()
-                .filter(t -> t.getEstado() == EstadoTurno.PROGRAMADO || t.getEstado() == EstadoTurno.REAGENDADO)
-                .collect(Collectors.toList());
-
-        System.out.println("Turnos encontrados para recordatorio: " + turnosParaRecordar.size());
-
-        for (Turno turno : turnosParaRecordar) {
-            try {
-                enviarRecordatorioConfirmacion(turno);
-                System.out.println("Recordatorio enviado para turno ID: " + turno.getId());
-            } catch (Exception e) {
-                System.err.println("Error al enviar recordatorio para turno ID " +
-                        turno.getId() + ": " + e.getMessage());
-            }
-        }
-
-        System.out.println("Proceso de recordatorios completado");
-    }
-
-    private void enviarRecordatorioConfirmacion(Turno turno) {
-        try {
-            String fechaTurno = formatearFechaTurno(turno);
-            String especialidad = obtenerEspecialidadTurno(turno);
-            String medico = obtenerNombreMedico(turno);
-
-            int diasMin = configuracionService.getDiasMinConfirmacion();
-            LocalTime horaCorte = configuracionService.getHoraCorteConfirmacion();
-            LocalDate fechaLimite = LocalDate.now().plusDays(diasMin);
-
-            String mensaje = String.format(
-                    "RECORDATORIO: Debe confirmar su turno del %s con Dr/a %s (%s). " +
-                            "Tiene hasta el %s a las %s para confirmar. " +
-                            "De lo contrario, el turno será cancelado automáticamente.",
-                    fechaTurno, medico, especialidad, fechaLimite, horaCorte);
-
-            // Crear notificación en el sistema
-            notificacionService.crearNotificacion(
-                    turno.getPaciente().getId(),
-                    "Recordatorio de Confirmación",
-                    mensaje,
-                    TipoNotificacion.RECORDATORIO,
-                    turno.getId(),
-                    "SYSTEM_REMINDER");
-
-            // Enviar email si está habilitado
-            if (configuracionService.isHabilitadoEmailNotificaciones()) {
-                enviarEmailRecordatorio(turno, mensaje);
-            }
-
-            // TODO: Enviar SMS si está habilitado
-            if (configuracionService.isHabilitadoSmsNotificaciones()) {
-                // enviarSmsRecordatorio(turno, mensaje);
-                System.out.println("TODO: Implementar envío de SMS para turno ID: " + turno.getId());
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error al crear recordatorio: " + e.getMessage());
-            throw e; // Re-lanzar para que se registre el error
-        }
-    }
-
-    private void enviarEmailRecordatorio(Turno turno, String mensaje) {
-        try {
-            if (turno.getPaciente().getEmail() != null && !turno.getPaciente().getEmail().trim().isEmpty()) {
-                String patientEmail = turno.getPaciente().getEmail();
-                String patientName = turno.getPaciente().getNombre() + " " + turno.getPaciente().getApellido();
-
-                // Construir detalles más ricos para el email
-                String detallesEmail = construirDetallesRecordatorioEmail(turno);
-
-                emailService.sendAppointmentReminderEmail(patientEmail, patientName, detallesEmail);
-                System.out.println("Email de recordatorio enviado a: " + patientEmail +
-                        " para turno ID: " + turno.getId());
-            }
-        } catch (Exception e) {
-            System.err.println("Error al enviar email de recordatorio: " + e.getMessage());
-        }
-    }
-
-    private String construirDetallesRecordatorioEmail(Turno turno) {
-        StringBuilder detalles = new StringBuilder();
-
-        detalles.append("<h3>Recordatorio de Confirmación de Turno</h3>");
-        detalles.append("<p><strong>Fecha y Hora:</strong> ").append(formatearFechaTurno(turno)).append("</p>");
-        detalles.append("<p><strong>Especialidad:</strong> ").append(obtenerEspecialidadTurno(turno)).append("</p>");
-        detalles.append("<p><strong>Médico:</strong> Dr/a. ").append(obtenerNombreMedico(turno)).append("</p>");
-
-        if (turno.getConsultorio() != null) {
-            detalles.append("<p><strong>Consultorio:</strong> ").append(turno.getConsultorio().getNombre());
-            if (turno.getConsultorio().getCentroAtencion() != null) {
-                detalles.append(" - ").append(turno.getConsultorio().getCentroAtencion().getNombre());
-            }
-            detalles.append("</p>");
-        }
-
-        detalles.append("<p><strong>Número de Turno:</strong> #").append(turno.getId()).append("</p>");
-
-        // Información sobre límites de confirmación
-        int diasMin = configuracionService.getDiasMinConfirmacion();
-        LocalTime horaCorte = configuracionService.getHoraCorteConfirmacion();
-        LocalDate fechaLimite = LocalDate.now().plusDays(diasMin);
-
-        detalles.append("<hr>");
-        detalles.append(
-                "<p><strong style='color: #d32f2f;'>IMPORTANTE:</strong> Debe confirmar este turno antes del <strong>");
-        detalles.append(fechaLimite).append(" a las ").append(horaCorte).append("</strong></p>");
-        detalles.append("<p>Si no confirma a tiempo, el turno será cancelado automáticamente.</p>");
-
-        // Instrucciones de confirmación
-        detalles.append("<hr>");
-        detalles.append("<p><strong>¿Cómo confirmar?</strong></p>");
-        detalles.append("<ul>");
-        detalles.append("<li>Ingrese a su cuenta en el portal del paciente</li>");
-        detalles.append("<li>Llame al teléfono de la clínica</li>");
-        detalles.append("<li>Acérquese personalmente a recepción</li>");
-        detalles.append("</ul>");
-
-        return detalles.toString();
-    }
-    // === MÉTODOS AUXILIARES PARA RECORDATORIOS ===
+    // Nota: Los recordatorios automáticos ahora son manejados por RecordatorioService
+    // Los métodos de notificación individuales (confirmar, cancelar, etc.) permanecen aquí
 
     /**
-     * Obtiene estadísticas de recordatorios enviados
+     * Método para obtener configuración actual del sistema
+     * (las estadísticas de recordatorios ahora están en RecordatorioService)
      */
-    public Map<String, Object> getEstadisticasRecordatorios() {
-        Map<String, Object> stats = new HashMap<>();
-
-        try {
-            stats.put("recordatorios_habilitados", configuracionService.isHabilitadosRecordatorios());
-            stats.put("hora_envio", configuracionService.getHoraEnvioRecordatorios().toString());
-            stats.put("sistema_funcionando", true);
-        } catch (Exception e) {
-            stats.put("error", "Error al obtener estadísticas: " + e.getMessage());
-            stats.put("sistema_funcionando", false);
-        }
-
-        return stats;
-    }
-
-    /**
-     * Método para obtener turnos que necesitan recordatorio (para debugging)
-     */
-    public List<TurnoDTO> getTurnosParaRecordatorio() {
-        if (!configuracionService.isHabilitadosRecordatorios()) {
-            return Collections.emptyList();
-        }
-
-        LocalDate hoy = LocalDate.now();
-        int diasRecordatorio = configuracionService.getDiasRecordatorioConfirmacion();
-        LocalDate fechaObjetivo = hoy.plusDays(diasRecordatorio);
-
-        List<Turno> turnos = repository.findByEstadoInAndFecha(
-                Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.REAGENDADO),
-                fechaObjetivo);
-
-        return turnos.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    // Método para obtener configuración actual del sistema (actualizado)
     public Map<String, Object> getConfiguracionSistema() {
         Map<String, Object> config = new HashMap<>();
 
@@ -820,9 +642,6 @@ public class TurnoService {
 
         // Configuraciones de notificaciones
         config.putAll(configuracionService.getResumenConfiguracionNotificaciones());
-
-        // Estado del sistema de recordatorios
-        config.putAll(getEstadisticasRecordatorios());
 
         return config;
     }
