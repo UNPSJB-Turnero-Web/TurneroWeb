@@ -2,6 +2,7 @@ import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { map, Observable } from "rxjs";
 import { Paciente } from "./paciente";
+import { PreferenciaHoraria } from "./preferencia-horaria";
 import { DataPackage } from "../data.package";
 import { ResultsPage } from "../results-page";
 
@@ -193,6 +194,69 @@ export class PacienteService {
     obraSocialId?: number | null;
   }): Observable<DataPackage<any>> {
     return this.http.put<DataPackage<any>>(`${this.url}/me/complete-profile`, data);
+  }
+
+  // =========================================================================
+  // GESTIÓN DE PREFERENCIAS HORARIAS
+  // =========================================================================
+
+  /**
+   * Obtiene las preferencias horarias del paciente autenticado.
+   * 
+   * Realiza una petición GET al endpoint /pacientes/me/preferencias que retorna
+   * la lista de preferencias configuradas para el usuario actual.
+   * 
+   * Endpoint: GET /rest/pacientes/me/preferencias
+   * Autenticación: Requiere token JWT con rol PACIENTE (o superior en jerarquía)
+   * 
+   * @returns Observable con DataPackage que contiene el array de PreferenciaHoraria
+   */
+  getPreferencias(): Observable<DataPackage<PreferenciaHoraria[]>> {
+    const url = `${this.url}/me/preferencias`;
+    return this.http.get<DataPackage<PreferenciaHoraria[]>>(url);
+  }
+
+  /**
+   * Añade una nueva preferencia horaria para el paciente autenticado.
+   * 
+   * Envía una petición POST con los datos de la nueva preferencia. El backend
+   * validará los datos, verificará que no haya solapamientos, y retornará
+   * la preferencia guardada con su ID asignado.
+   * 
+   * Endpoint: POST /rest/pacientes/me/preferencias
+   * Autenticación: Requiere token JWT con rol PACIENTE (o superior en jerarquía)
+   * 
+   * Validaciones del backend:
+   * - horaDesde debe ser anterior a horaHasta
+   * - No puede haber solapamiento con preferencias existentes del mismo día
+   * 
+   * @param preferencia Objeto PreferenciaHoraria con los datos (sin ID)
+   * @returns Observable con DataPackage que contiene la PreferenciaHoraria creada (con ID)
+   */
+  addPreferencia(preferencia: PreferenciaHoraria): Observable<DataPackage<PreferenciaHoraria>> {
+    const url = `${this.url}/me/preferencias`;
+    return this.http.post<DataPackage<PreferenciaHoraria>>(url, preferencia);
+  }
+
+  /**
+   * Elimina una preferencia horaria específica del paciente autenticado.
+   * 
+   * Envía una petición DELETE al endpoint con el ID de la preferencia. El backend
+   * verificará que la preferencia pertenezca al usuario autenticado antes de eliminarla.
+   * 
+   * Endpoint: DELETE /rest/pacientes/me/preferencias/{id}
+   * Autenticación: Requiere token JWT con rol PACIENTE (o superior en jerarquía)
+   * 
+   * Respuesta del backend:
+   * - 204 No Content: Preferencia eliminada correctamente
+   * - 404 Not Found: Preferencia no encontrada o no pertenece al usuario
+   * 
+   * @param id ID de la preferencia horaria a eliminar
+   * @returns Observable<void> (sin cuerpo de respuesta en caso de éxito)
+   */
+  deletePreferencia(id: number): Observable<void> {
+    const url = `${this.url}/me/preferencias/${id}`;
+    return this.http.delete<void>(url);
   }
 }
 

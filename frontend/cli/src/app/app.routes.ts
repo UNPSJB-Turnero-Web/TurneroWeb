@@ -60,6 +60,7 @@ import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
 import { AdminConfigComponent } from "./admin/admin-config.component";
 import { HistorialTurnosComponent } from "./turnos/historial-turnos.component";
 import { ListaEsperaComponent } from "./lista-espera/lista-espera.component";
+import { PreferenciasPacienteComponent } from "./pacientes/preferencias-paciente/preferencias-paciente.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -124,7 +125,7 @@ export const routes: Routes = [
   {
     path: "paciente-agenda",
     component: PacienteAgendaComponent,
-    canActivate: [PatientGuard],
+    // ruta desprotegida para poder usar el banner anonimo
   },
   {
     path: "paciente-notificaciones",
@@ -134,6 +135,11 @@ export const routes: Routes = [
   {
     path: "paciente-historial",
     component: HistorialTurnosComponent,
+    canActivate: [PatientGuard],
+  },
+  {
+    path: "paciente-preferencias",
+    component: PreferenciasPacienteComponent,
     canActivate: [PatientGuard],
   },
   {

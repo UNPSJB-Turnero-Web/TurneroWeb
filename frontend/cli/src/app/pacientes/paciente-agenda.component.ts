@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, LOCALE_ID } from "@angular/core";
 import { CommonModule, registerLocaleData } from "@angular/common";
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from "@angular/forms";
-import { Router, ActivatedRoute } from "@angular/router";
+import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { HttpClient } from "@angular/common/http";
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -47,7 +47,7 @@ registerLocaleData(localeEsAr);
 @Component({
   selector: "app-paciente-agenda",
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, CentrosMapaModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, CentrosMapaModalComponent],
   templateUrl: "./paciente-agenda.component.html",
   styleUrl: "./paciente-agenda.component.css", 
   providers: [
@@ -164,7 +164,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.filtrosForm = this.fb.group({
       centroAtencion: [null],
       especialidad: [''],
-      medico: [null]
+      medico: [null],
+      filtrarPorPreferencia: [false] // Filtro de preferencias horarias del paciente
     });
 
     // PASO 2: Configurar suscripciones reactivas a cambios en filtros
@@ -300,6 +301,13 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     if (filtros.medico) {
       params.staffMedicoId = filtros.medico;
     }
+    
+    // 🕐 Agregar filtro por preferencias horarias si está activado
+    const filtrarPorPreferencia = filtros.filtrarPorPreferencia || false;
+    if (filtrarPorPreferencia) {
+      params.filtrarPorPreferencia = true;
+      console.log('🕐 Filtrado por preferencias horarias ACTIVADO en agenda privada');
+    }
 
     console.log('🔐 Cargando turnos privados con params:', params);
 
@@ -316,8 +324,7 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar turnos para usuarios anónimos
-   * Ahora el endpoint público acepta los mismos filtros que el privado
+   * Cargar turnos para usuarios anónimos (NO tiene filtro de preferencias)
    */
   private cargarTurnosPublicos(filtros: any): void {
     const params: any = {};
@@ -334,12 +341,15 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     
     console.log('👤 Cargando turnos públicos con params:', params);
 
-    this.agendaService.getAgendaPublica(params.centroId, params.especialidad, params.staffMedicoId).subscribe({
+    this.agendaService.getAgendaPublica(
+      params.centroId, 
+      params.especialidad, 
+      params.staffMedicoId
+    ).subscribe({
       next: (response: any) => {
         console.log('✅ Turnos públicos recibidos:', response);
         const eventos = response.data || response;
         
-        // 🔥 Ya no necesitamos filtrar en el frontend, el backend lo hace
         const eventosMapeados = this.mapEventosToSlots(eventos);
 
         // Guardar y mostrar resultados
