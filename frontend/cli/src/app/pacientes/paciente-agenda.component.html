@@ -144,6 +144,43 @@
                 <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
               </div>
             </div>
+            
+            <!-- Filtro por Preferencias Horarias -->
+            <div class="filtro-step filtro-preferencias" *ngIf="estaAutenticado">
+              <div class="step-header">
+                <div class="step-number">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <h4>Mis Horarios Preferidos</h4>
+              </div>
+              <div class="filtro-preferencias-content">
+                <div class="custom-checkbox-container">
+                  <label class="custom-checkbox">
+                    <input
+                      type="checkbox"
+                      formControlName="filtrarPorPreferencia"
+                      id="filtrarPorPreferencia"
+                    />
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-label">
+                      Mostrar solo turnos que coincidan con mis horarios preferidos
+                    </span>
+                  </label>
+                </div>
+                <div class="filtro-preferencias-info">
+                  <i class="fas fa-info-circle"></i>
+                  <small>
+                    Filtra los turnos según los horarios que configuraste en 
+                    <a routerLink="/paciente-preferencias" 
+                       class="link-preferencias" 
+                       title="Ir a configurar horarios preferidos"
+                       style="cursor: pointer;">
+                      Mis Horarios Preferidos
+                    </a>
+                  </small>
+                </div>
+              </div>
+            </div>
           </form>
 
           <!-- Filtros aplicados -->

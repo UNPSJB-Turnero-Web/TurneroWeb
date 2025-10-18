@@ -67,11 +67,12 @@ export class AgendaService {
   obtenerEventos(esquemaTurnoId: number, semanas: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/eventos?esquemaTurnoId=${esquemaTurnoId}&semanas=${semanas}`);
   }
-  // Obtener todos los eventos (con filtros opcionales)
+  // Obtener todos los eventos (con filtros opcionales) - AGENDA PRIVADA
   obtenerTodosLosEventos(semanas: number, filtros?: {
     especialidad?: string;
     staffMedicoId?: number;
     centroId?: number;
+    filtrarPorPreferencia?: boolean;
   }): Observable<any[]> {
     let url = `${this.url}/eventos/todos?semanas=${semanas}`;
     
@@ -86,6 +87,10 @@ export class AgendaService {
       if (filtros.centroId) {
         url += `&centroId=${filtros.centroId}`;
       }
+      if (filtros.filtrarPorPreferencia === true) {
+        url += `&filtrarPorPreferencia=true`;
+        console.log('🕐 [AgendaService] Filtrado por preferencias horarias ACTIVADO en agenda privada');
+      }
     }
     
     console.log('🌐 Llamando a agenda service:', url);
@@ -99,13 +104,16 @@ export class AgendaService {
 
   /**
    * Obtiene la agenda pública sin requerir autenticación
-   * Ahora acepta los mismos filtros que el endpoint privado
    * @param centroId (opcional) ID del centro de atención para filtrar
    * @param especialidad (opcional) Nombre de la especialidad para filtrar
    * @param staffMedicoId (opcional) ID del staff médico para filtrar
    * @returns Observable con los eventos de la agenda pública
    */
-  getAgendaPublica(centroId?: number, especialidad?: string, staffMedicoId?: number): Observable<any> {
+  getAgendaPublica(
+    centroId?: number, 
+    especialidad?: string, 
+    staffMedicoId?: number
+  ): Observable<any> {
     let params = new HttpParams();
     
     if (centroId) {

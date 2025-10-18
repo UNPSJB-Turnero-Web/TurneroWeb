@@ -265,6 +265,114 @@
   font-size: 0.9rem;
 }
 
+/* FILTRO DE PREFERENCIAS HORARIAS */
+.filtro-preferencias {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe5ec 100%);
+  border-color: #fa709a;
+}
+
+.filtro-preferencias .step-number {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  width: 40px;
+  height: 40px;
+}
+
+.filtro-preferencias-content {
+  margin-top: 1rem;
+}
+
+.custom-checkbox-container {
+  margin-bottom: 1rem;
+}
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.custom-checkbox:hover {
+  background: rgba(250, 112, 154, 0.1);
+}
+
+.custom-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-custom {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #fa709a;
+  border-radius: 6px;
+  background: white;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkbox-custom {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  border-color: #fa709a;
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkbox-custom::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.checkbox-label {
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.filtro-preferencias-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(250, 112, 154, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #fa709a;
+}
+
+.filtro-preferencias-info i {
+  color: #fa709a;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.filtro-preferencias-info small {
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.link-preferencias {
+  color: #fa709a;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.link-preferencias:hover {
+  color: #d6005f;
+  text-decoration: underline;
+}
+
 /* FILTROS APLICADOS */
 .filtros-aplicados {
   margin-top: 1.5rem;

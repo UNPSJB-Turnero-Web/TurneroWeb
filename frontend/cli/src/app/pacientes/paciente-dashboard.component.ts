@@ -664,6 +664,10 @@ export class PacienteDashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(["/paciente-perfil"]);
   }
 
+  viewPreferencias() {
+    this.router.navigate(["/paciente-preferencias"]);
+  }
+
   viewNotifications() {
     this.router.navigate(["/paciente-notificaciones"]);
   }
