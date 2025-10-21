@@ -22,9 +22,12 @@ BEGIN
     -- Asegúrate de que este centro exista en tu tabla centro_atencion
     SELECT id INTO v_centro_atencion_id FROM centro_atencion WHERE nombre = 'Centro Médico Esperanza';
 
-    -- Obtenemos el ID del consultorio
-    -- Asegúrate de que este consultorio exista en tu tabla consultorio
-    SELECT id INTO v_consultorio_id FROM consultorio WHERE nombre = 'Consultorio 1';
+    -- Obtenemos el ID del consultorio DEL CENTRO ESPECÍFICO
+    -- IMPORTANTE: Debe ser el Consultorio 1 que pertenece al Centro Médico Esperanza
+    SELECT id INTO v_consultorio_id 
+    FROM consultorio 
+    WHERE nombre = 'Consultorio 1' 
+      AND centro_atencion_id = v_centro_atencion_id;
 
     -- Insertamos en la tabla staff_medico con el ID manual
     INSERT INTO public.staff_medico (id, porcentaje, centro_atencion_id, consultorio_id, especialidad_id, medico_id)
