@@ -132,6 +132,12 @@ export class ListaEsperaFormComponent implements OnInit {
       const patch = { ...this.data } as any;
       if (patch.fechaDeseadaDesde) patch.fechaDeseadaDesde = this.normalizeDate(patch.fechaDeseadaDesde);
       if (patch.fechaDeseadaHasta) patch.fechaDeseadaHasta = this.normalizeDate(patch.fechaDeseadaHasta);
+
+      // Mapear medicoPreferidoId a medicoId para el formulario
+      if (patch.medicoPreferidoId !== undefined) {
+        patch.medicoId = patch.medicoPreferidoId;
+      }
+
       this.form.patchValue(patch);
     }
   }
@@ -192,9 +198,17 @@ export class ListaEsperaFormComponent implements OnInit {
 
   guardar() {
     if (this.form.valid) {
+      const formValue = this.form.value;
       const solicitud: ListaEspera = {
         ...(this.data || {}),
-        ...this.form.value
+        ...formValue,
+        // Asegurar que medicoPreferidoId se establezca desde el medicoId seleccionado
+        medicoPreferidoId: formValue.medicoId || null,
+        // Si hay un médico seleccionado, obtener su nombre del array de médicos
+        medicoPreferidoNombre: formValue.medicoId ?
+          this.medicos.find(m => m.id === parseInt(formValue.medicoId))?.nombre + ' ' +
+          this.medicos.find(m => m.id === parseInt(formValue.medicoId))?.apellido :
+          null
       } as ListaEspera;
       this.save.emit(solicitud);
     }
