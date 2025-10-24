@@ -37,7 +37,7 @@ export interface MenuSection {
  * según userContext.allRoles (incluyendo roles heredados).
  */
 export const MENU_CONFIG: MenuSection[] = [
-  
+
   // ========================================
   // SECCIÓN: PACIENTE
   // ========================================
@@ -82,6 +82,12 @@ export const MENU_CONFIG: MenuSection[] = [
         icon: 'account_circle',
         description: 'Datos personales y configuración',
         requiresPrimaryRole: true // Solo visible si el usuario es PACIENTE como rol primario
+      },
+      {
+        label: 'Lista de Espera',
+        route: '/lista-espera-form',
+        icon: 'fa-clock',
+        description: 'Agregarme a lista de espera de pacientes'
       }
     ]
   },
@@ -165,12 +171,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Configuración personal',
         requiresPrimaryRole: true // Solo visible si el usuario es OPERADOR como rol primario
       },
-     /*  {
-        label: 'Solicitar Turno',
-        route: '/turnos/new',
-        icon: 'add_box',
-        description: 'Reservar un nuevo turno médico'
-      } */
+      /*  {
+         label: 'Solicitar Turno',
+         route: '/turnos/new',
+         icon: 'add_box',
+         description: 'Reservar un nuevo turno médico'
+       } */
       {
         label: 'Agenda de turnos',
         route: '/agenda',
@@ -203,7 +209,7 @@ export const MENU_CONFIG: MenuSection[] = [
         icon: 'dashboard',
         description: 'Panel de control administrativo'
       },
-         {
+      {
         label: 'Panel Auditoria',
         route: '/turnos/audit-dashboard',
         icon: 'policy',
@@ -258,7 +264,7 @@ export const MENU_CONFIG: MenuSection[] = [
         icon: 'health_and_safety',
         description: 'Gestionar obras sociales'
       },
-       {
+      {
         label: 'Operadores',
         route: '/operadores',
         icon: 'support_agent',
@@ -346,7 +352,7 @@ export function getMenuSectionsForRoles(userRoles: Role[]): MenuSection[] {
 export function getAllMenuItems(userRoles: Role[]): MenuItem[] {
   const sections = getMenuSectionsForRoles(userRoles);
   const itemsMap = new Map<string, MenuItem>();
-  
+
   sections.forEach(section => {
     section.items.forEach(item => {
       if (item.route && !itemsMap.has(item.route)) {
@@ -354,7 +360,7 @@ export function getAllMenuItems(userRoles: Role[]): MenuItem[] {
       }
     });
   });
-  
+
   return Array.from(itemsMap.values());
 }
 
