@@ -1,98 +1,24 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { ListaEspera } from './lista-espera.model';
 import { PacienteService } from '../pacientes/paciente.service';
 import { EspecialidadService } from '../especialidades/especialidad.service';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
 import { MedicoService } from '../medicos/medico.service';
 import { DataPackage } from '../data.package';
+import { AuthService, Role } from '../inicio-sesion/auth.service';
+import { UserContextService } from '../services/user-context.service';
+import { ListaEsperaService } from './lista-espera.service';
+import { Router } from '@angular/router';
+import { ModalService } from '../modal/modal.service';
 
 
 @Component({
   selector: 'app-lista-espera-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
-    <div class="modal-header">
-      <h4 class="modal-title">{{data ? 'Editar' : 'Nueva'}} Solicitud en Lista de Espera</h4>
-      <button type="button" class="close" aria-label="Close" (click)="cerrar()">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    <div class="modal-body">
-      <form [formGroup]="form">
-        <!-- Campos del formulario -->
-        <div class="form-group">
-          <label for="pacienteId">Paciente*</label>
-          <select class="form-control" id="pacienteId" formControlName="pacienteId" required>
-            <option value="">Seleccione un paciente</option>
-            <option *ngFor="let paciente of pacientes" [value]="paciente.id">
-              {{paciente.nombre}} {{paciente.apellido}} - DNI: {{paciente.dni}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="especialidadId">Especialidad*</label>
-          <select class="form-control" id="especialidadId" formControlName="especialidadId" required>
-            <option value="">Seleccione una especialidad</option>
-            <option *ngFor="let esp of especialidades" [value]="esp.id">
-              {{esp.nombre}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="centroAtencionId">Centro de Atención*</label>
-          <select class="form-control" id="centroAtencionId" formControlName="centroAtencionId" required>
-            <option value="">Seleccione un centro</option>
-            <option *ngFor="let centro of centros" [value]="centro.id">
-              {{centro.nombre}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="medicoId">Médico Preferido</label>
-          <select class="form-control" id="medicoId" formControlName="medicoId">
-            <option value="">Sin preferencia</option>
-            <option *ngFor="let medico of medicos" [value]="medico.id">
-              {{medico.nombre}} {{medico.apellido}}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <label for="fechaDeseadaDesde">Fecha Deseada Desde</label>
-            <input type="date" class="form-control" id="fechaDeseadaDesde" 
-                   formControlName="fechaDeseadaDesde">
-          </div>
-          <div class="form-group col-md-6">
-            <label for="fechaDeseadaHasta">Fecha Deseada Hasta</label>
-            <input type="date" class="form-control" id="fechaDeseadaHasta" 
-                   formControlName="fechaDeseadaHasta">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <div class="custom-control custom-checkbox">
-            <input type="checkbox" class="custom-control-input" id="urgenciaMedica" 
-                   formControlName="urgenciaMedica">
-            <label class="custom-control-label" for="urgenciaMedica">
-              Urgencia Médica
-            </label>
-          </div>
-        </div>
-      </form>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="cerrar()">Cancelar</button>
-      <button type="button" class="btn btn-primary" (click)="guardar()" 
-              [disabled]="!form.valid">Guardar</button>
-    </div>
-  `
+  templateUrl: './lista-espera-form.component.html'
 })
 export class ListaEsperaFormComponent implements OnInit {
   @Input() data?: ListaEspera | null;
@@ -104,13 +30,20 @@ export class ListaEsperaFormComponent implements OnInit {
   especialidades: any[] = [];
   centros: any[] = [];
   medicos: any[] = [];
+  limite: number = 0;
+  isPatientMode: boolean = false; // Nueva propiedad para detectar modo paciente
 
   constructor(
     private fb: FormBuilder,
     private pacienteService: PacienteService,
     private especialidadService: EspecialidadService,
     private centroService: CentroAtencionService,
-    private medicoService: MedicoService
+    private medicoService: MedicoService,
+    private authService: AuthService, // Inyectar AuthService
+    private userContextService: UserContextService, // Inyectar UserContextService para acceder al primaryRole
+    private listaEsperaService: ListaEsperaService, // Inyectar para manejar create/update directamente en modo paciente
+    private router: Router, // Inyectar para redirigir después de guardar
+    private modalService: ModalService // Inyectar si el form se usa en modal (opcional, si aplica)
   ) {
     this.form = this.fb.group({
       pacienteId: ['', Validators.required],
@@ -124,6 +57,22 @@ export class ListaEsperaFormComponent implements OnInit {
   }
 
   ngOnInit() {
+
+
+    // 🚀 Recargar la página solo una vez para evitar bug de contexto no cargado
+    if (!sessionStorage.getItem('reloaded-lista-espera')) {
+      sessionStorage.setItem('reloaded-lista-espera', 'true');
+      window.location.reload();
+      return;
+    }
+
+    // Detectar si es modo paciente: asumiendo que AuthService tiene un método hasRole o similar,
+    // y que solo en modo creación (sin data) para pacientes
+    this.isPatientMode = (this.userContextService?.getPrimaryRole() === Role.PACIENTE) && !this.data;
+
+    // ✅ Inicializar el formulario correctamente aquí, según el modo
+    this.initForm();
+
     // Cargar datos necesarios (pacientes, especialidades, etc.)
     this.cargarDatos();
     // Si se pasó data por input, poblar el formulario
@@ -139,10 +88,44 @@ export class ListaEsperaFormComponent implements OnInit {
       }
 
       this.form.patchValue(patch);
+    } else if (this.isPatientMode) {
+      // En modo paciente nuevo: precargar el paciente actual
+      this.precargarPacienteActual();
     }
   }
+  /** ✅ Inicializa el formulario con el estado correcto (sin usar [disabled] en el HTML) */
+  private initForm() {
+    this.form = this.fb.group({
+      pacienteId: new FormControl(
+        { value: '', disabled: this.isPatientMode }, // 👈 Controla el “disabled” desde aquí
+        Validators.required
+      ),
+      especialidadId: ['', Validators.required],
+      centroAtencionId: ['', Validators.required],
+      medicoId: [''],
+      fechaDeseadaDesde: [''],
+      fechaDeseadaHasta: [''],
+      urgenciaMedica: [false]
+    });
+  }
+
 
   cargarDatos() {
+    // Pacientes: solo cargar todos si NO es modo paciente
+    if (!this.isPatientMode) {
+      this.pacienteService.all().subscribe({
+        next: (res: DataPackage<any[]>) => {
+          this.pacientes = res && res.data ? res.data : [];
+        },
+        error: (err) => {
+          console.error('Error cargando pacientes:', err);
+          this.pacientes = [];
+        }
+      });
+    } else {
+      // En modo paciente, pacientes será un array con solo el paciente actual (se setea en precargarPacienteActual)
+      this.pacientes = [];
+    }
     // Pacientes
     this.pacienteService.all().subscribe({
       next: (res: DataPackage<any[]>) => {
@@ -195,22 +178,87 @@ export class ListaEsperaFormComponent implements OnInit {
       }
     });
   }
+  /** Precarga el paciente actual en el formulario en modo paciente */
+  private precargarPacienteActual() {
+    const currentUserId = this.authService.getCurrentPatientId();
+    if (!currentUserId) {
+      console.error('No se pudo obtener el ID del paciente actual');
+      return;
+    }
+
+    this.pacienteService.get(+currentUserId).subscribe({
+      next: (res: DataPackage<any>) => {
+        const pacienteActual = res.data;
+        if (!pacienteActual) {
+          console.error('No se encontró el paciente con el ID:', currentUserId);
+          return;
+        }
+
+        this.pacientes = [pacienteActual];
+        this.form.patchValue({
+          pacienteId: pacienteActual.id
+        });
+        // Ya no hace falta llamar a disable() porque lo controla initForm()
+      },
+      error: (err) => console.error('Error cargando paciente actual por ID:', err)
+    });
+  }
+
+
+
 
   guardar() {
     if (this.form.valid) {
-      const formValue = this.form.value;
+      // 🔧 FIX CRÍTICO: Usar getRawValue() en lugar de value
+      // getRawValue() incluye campos deshabilitados (como pacienteId en modo paciente)
+      const formValue = this.form.getRawValue();
+
+      console.log('📝 Form Value (con campos deshabilitados):', formValue);
+
       const solicitud: ListaEspera = {
         ...(this.data || {}),
         ...formValue,
-        // Asegurar que medicoPreferidoId se establezca desde el medicoId seleccionado
+        id: this.data?.id || undefined,
         medicoPreferidoId: formValue.medicoId || null,
-        // Si hay un médico seleccionado, obtener su nombre del array de médicos
         medicoPreferidoNombre: formValue.medicoId ?
           this.medicos.find(m => m.id === parseInt(formValue.medicoId))?.nombre + ' ' +
           this.medicos.find(m => m.id === parseInt(formValue.medicoId))?.apellido :
           null
       } as ListaEspera;
-      this.save.emit(solicitud);
+
+
+      if (this.isPatientMode) {
+        // Modo paciente: llamar directamente a create y manejar respuesta
+        this.listaEsperaService.create(solicitud).subscribe({
+          next: (resp) => {
+            if (resp.status_code === 200) {
+              console.log('✅ Solicitud creada exitosamente:', resp.data);
+              alert('Solicitud guardada con éxito');
+              this.router.navigate(['/paciente-dashboard']);
+            } else {
+              console.error('❌ Error creando solicitud:', resp.status_text);
+              alert(`Error: ${resp.status_text}`);
+            }
+          },
+          error: (err) => {
+            console.error('❌ Error creando solicitud:', err);
+            alert('Error al guardar la solicitud');
+          }
+        });
+      } else {
+        // Modo operador/admin: emitir evento para que el padre lo maneje
+        this.save.emit(solicitud);
+      }
+    } else {
+      console.warn('⚠️ Formulario inválido:', this.form.errors);
+
+      // Mostrar qué campos están inválidos
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+        if (control?.invalid) {
+          console.warn(`  - Campo inválido: ${key}`, control.errors);
+        }
+      });
     }
   }
 

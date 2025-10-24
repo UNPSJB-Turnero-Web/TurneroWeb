@@ -1,0 +1,86 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        {{ data ? 'Editar' : 'Nueva' }} Solicitud en Lista de Espera
+    </h4>
+    <button type="button" class="close" aria-label="Close" (click)="cerrar()">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<div class="modal-body">
+    <form [formGroup]="form">
+        <!-- Paciente -->
+        <div class="form-group">
+            <label for="pacienteId">Paciente*</label>
+            <select class="form-control" id="pacienteId" formControlName="pacienteId" required>
+                <option value="">Seleccione un paciente</option>
+                <option *ngFor="let paciente of pacientes" [value]="paciente.id">
+                    {{ paciente.nombre }} {{ paciente.apellido }} - DNI: {{ paciente.dni || 'No disponible' }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Especialidad -->
+        <div class="form-group">
+            <label for="especialidadId">Especialidad*</label>
+            <select class="form-control" id="especialidadId" formControlName="especialidadId" required>
+                <option value="">Seleccione una especialidad</option>
+                <option *ngFor="let esp of especialidades" [value]="esp.id">
+                    {{ esp.nombre }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Centro de Atención -->
+        <div class="form-group">
+            <label for="centroAtencionId">Centro de Atención*</label>
+            <select class="form-control" id="centroAtencionId" formControlName="centroAtencionId" required>
+                <option value="">Seleccione un centro</option>
+                <option *ngFor="let centro of centros" [value]="centro.id">
+                    {{ centro.nombre }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Médico preferido -->
+        <div class="form-group">
+            <label for="medicoId">Médico Preferido</label>
+            <select class="form-control" id="medicoId" formControlName="medicoId">
+                <option value="">Sin preferencia</option>
+                <option *ngFor="let medico of medicos" [value]="medico.id">
+                    {{ medico.nombre }} {{ medico.apellido }}
+                </option>
+            </select>
+        </div>
+
+        <!-- Fechas deseadas -->
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="fechaDeseadaDesde">Fecha Deseada Desde</label>
+                <input type="date" class="form-control" id="fechaDeseadaDesde" formControlName="fechaDeseadaDesde" />
+            </div>
+            <div class="form-group col-md-6">
+                <label for="fechaDeseadaHasta">Fecha Deseada Hasta</label>
+                <input type="date" class="form-control" id="fechaDeseadaHasta" formControlName="fechaDeseadaHasta" />
+            </div>
+        </div>
+
+        <!-- Urgencia médica -->
+        <div class="form-group">
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="urgenciaMedica"
+                    formControlName="urgenciaMedica" />
+                <label class="custom-control-label" for="urgenciaMedica">
+                    Urgencia Médica
+                </label>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="cerrar()">Cancelar</button>
+    <button type="button" class="btn btn-primary" (click)="guardar()" [disabled]="!form.valid">
+        Guardar
+    </button>
+</div>
