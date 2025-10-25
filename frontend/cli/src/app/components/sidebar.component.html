@@ -6,7 +6,7 @@
   <!-- Header del Sidebar -->
   <div class="sidebar__header">
     <div class="sidebar__brand">
-      <i class="fas fa-calendar-check sidebar__brand-icon"></i>
+      <span class="material-symbols-outlined sidebar__brand-icon">event_available</span>
       <span class="sidebar__brand-text">CheTurno</span>
     </div>
     <button
@@ -14,14 +14,14 @@
       (click)="menuService.toggleSidebar()"
       aria-label="Toggle sidebar"
     >
-      <i class="fas fa-bars"></i>
+      <span class="material-symbols-outlined">menu</span>
     </button>
   </div>
 
   <!-- User Info -->
   <div class="sidebar__user" *ngIf="userContext$ | async as userContext">
     <div class="sidebar__user-avatar">
-      <i class="fas fa-user-circle"></i>
+      <span class="material-symbols-outlined">account_circle</span>
     </div>
     <div class="sidebar__user-info">
       <div class="sidebar__user-name">{{ userContext.nombre }}</div>
@@ -39,7 +39,7 @@
       *ngIf="(menuService.sharedItems$ | async)?.length"
     >
       <div class="sidebar__section-header">
-        <i class="fas fa-home sidebar__section-icon"></i>
+        <span class="material-symbols-outlined sidebar__section-icon">home</span>
         <span class="sidebar__section-title">General</span>
       </div>
       <ul class="sidebar__menu">
@@ -53,7 +53,7 @@
             class="sidebar__menu-link"
             [attr.title]="item.description"
           >
-            <i class="fas {{ item.icon }} sidebar__menu-icon"></i>
+            <span class="material-symbols-outlined sidebar__menu-icon">{{ item.icon }}</span>
             <span class="sidebar__menu-label">{{ item.label }}</span>
           </a>
         </li>
@@ -67,7 +67,7 @@
     >
       <!-- Header de Sección -->
       <div class="sidebar__section-header">
-        <i class="fas {{ section.icon }} sidebar__section-icon"></i>
+        <span class="material-symbols-outlined sidebar__section-icon">{{ section.icon }}</span>
         <span class="sidebar__section-title">{{ section.label }}</span>
       </div>
 
@@ -90,7 +90,7 @@
               [attr.title]="item.description"
               (click)="onItemClick()"
             >
-              <i class="fas {{ item.icon }} sidebar__menu-icon"></i>
+              <span class="material-symbols-outlined sidebar__menu-icon">{{ item.icon }}</span>
               <span class="sidebar__menu-label">{{ item.label }}</span>
 
               <!-- Badge de Notificaciones -->
@@ -109,7 +109,7 @@
               (click)="item.action(); onItemClick()"
               [attr.title]="item.description"
             >
-              <i class="fas {{ item.icon }} sidebar__menu-icon"></i>
+              <span class="material-symbols-outlined sidebar__menu-icon">{{ item.icon }}</span>
               <span class="sidebar__menu-label">{{ item.label }}</span>
             </button>
           </li>
@@ -125,7 +125,7 @@
       (click)="logout()"
       title="Cerrar sesión"
     >
-      <i class="fas fa-sign-out-alt"></i>
+      <span class="material-symbols-outlined">logout</span>
       <span>Cerrar Sesión</span>
     </button>
   </div>
