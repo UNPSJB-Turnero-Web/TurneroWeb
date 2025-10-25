@@ -1,32 +1,29 @@
 <div class="modal-header">
-  <h4 class="modal-title" id="modal-title">{{ title }}</h4>
+  <h3 class="modal-title" id="modal-title">{{ title }}</h3>
   <button
     type="button"
-    class="close"
+    class="modal-close-btn"
+    aria-label="Cerrar"
     aria-describedby="modal-title"
     (click)="modal.dismiss()"
   >
-    <span aria-hidden="true">&times;</span>
+    <span class="material-symbols-outlined">close</span>
   </button>
 </div>
 <div class="modal-body">
-  <p>
-    <strong>{{ message }}</strong>
-  </p>
-  <p *ngIf="description">
-    <strong>{{ description }}</strong>
-  </p>
+  <p class="modal-message">{{ message }}</p>
+  <p class="modal-description" *ngIf="description">{{ description }}</p>
 </div>
 <div class="modal-footer">
   <button
     *ngIf="!isAlert"
     type="button"
-    class="btn btn-outline-secondary"
+    class="btn btn-secondary"
     (click)="modal.dismiss()"
   >
     Cancelar
   </button>
-  <button type="button" class="btn btn-success" (click)="modal.close()">
+  <button type="button" class="btn btn-primary" (click)="modal.close()">
     Aceptar
   </button>
 </div>
