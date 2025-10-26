@@ -188,6 +188,12 @@ export const MENU_CONFIG: MenuSection[] = [
         route: '/lista-espera',
         icon: 'pending_actions',
         description: 'Gestionar lista de espera de pacientes'
+      },
+      {
+        label: 'Estadísticas Lista Espera', // 👈 NUEVO
+        route: '/lista-espera-estadisticas',
+        icon: 'fa-chart-line',
+        description: 'Métricas y análisis de lista de espera'
       }
     ]
   },
@@ -271,6 +277,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Operadores',
       },
       {
+        label: 'Estadísticas Lista Espera',
+        route: '/lista-espera-estadisticas',
+        icon: 'fa-chart-line',
+        description: 'Métricas y análisis de lista de espera'
+      },
+      {
         divider: true,
         label: '',
         icon: ''
@@ -282,6 +294,7 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Perfil de administrador',
         requiresPrimaryRole: true // Solo visible si el usuario es ADMINISTRADOR como rol primario
       }
+
     ]
   },
 

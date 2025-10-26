@@ -33,7 +33,7 @@ public class ListaEsperaDTO {
     private LocalDateTime fechaSolicitud;
 
     // Estado y urgencia
-    private boolean urgenciaMedica;
+    private String urgenciaMedica; // "BAJA", "MEDIA", "ALTA", "URGENTE"
     private String estado; // PENDIENTE, RESUELTA, CUBIERTA
 
     // Días en espera (calculado)
@@ -168,11 +168,11 @@ public class ListaEsperaDTO {
         this.fechaSolicitud = fechaSolicitud;
     }
 
-    public boolean isUrgenciaMedica() {
+    public String getUrgenciaMedica() {
         return urgenciaMedica;
     }
 
-    public void setUrgenciaMedica(boolean urgenciaMedica) {
+    public void setUrgenciaMedica(String urgenciaMedica) {
         this.urgenciaMedica = urgenciaMedica;
     }
 

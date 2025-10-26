@@ -31,7 +31,9 @@ public class ListaEspera {
     private LocalDate fechaDeseadaDesde;
     private LocalDate fechaDeseadaHasta;
     private LocalDateTime fechaSolicitud;
-    private boolean urgenciaMedica;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "urgencia_medica", nullable = false, length = 20)
+    private UrgenciaMedica urgenciaMedica;
     private String estado; // PENDIENTE, RESUELTA, CUBIERTA
 
     // Enums para estado
@@ -43,6 +45,24 @@ public class ListaEspera {
         private final String descripcion;
 
         EstadoListaEspera(String descripcion) {
+            this.descripcion = descripcion;
+        }
+
+        public String getDescripcion() {
+            return descripcion;
+        }
+    }
+
+    // Enums para urgencia médica
+    public enum UrgenciaMedica {
+        BAJA("Baja"),
+        MEDIA("Media"),
+        ALTA("Alta"),
+        URGENTE("Urgente");
+
+        private final String descripcion;
+
+        UrgenciaMedica(String descripcion) {
             this.descripcion = descripcion;
         }
 

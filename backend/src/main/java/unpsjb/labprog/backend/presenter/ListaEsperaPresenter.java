@@ -122,7 +122,7 @@ public class ListaEsperaPresenter {
             @RequestParam(required = false) Integer centroAtencionId,
             @RequestParam(required = false) Integer medicoId,
             @RequestParam(required = false) String estado,
-            @RequestParam(required = false) Boolean urgenciaMedica,
+            @RequestParam(required = false) String urgenciaMedica,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaDesde,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate fechaHasta,
             @RequestParam(required = false) Integer tiempoEsperaMinimo,

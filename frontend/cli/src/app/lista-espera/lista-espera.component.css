@@ -99,6 +99,281 @@
 .alert {
     margin-bottom: 0;
 }
+/* Estilos para niveles de urgencia */
+.badge-urgencia {
+  font-size: 0.85rem;
+  padding: 0.4em 0.6em;
+}
+
+/* Personalizar colores si es necesario */
+.badge-secondary {
+  background-color: #6c757d;
+}
+
+.badge-info {
+  background-color: #17a2b8;
+}
+
+.badge-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+}
+
+/* Animación para urgencias altas */
+.badge-danger {
+  animation: pulse 2s infinite;
+}
+/* ========================================
+   BUSCADOR DE PACIENTES - AUTOCOMPLETE
+   ======================================== */
+
+.patient-search-wrapper {
+  position: relative;
+}
+
+.patient-search-wrapper input[type="text"] {
+  padding-right: 3rem;
+}
+
+.patient-search-wrapper input:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Botón para limpiar búsqueda */
+.btn-clear-search {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s;
+  z-index: 10;
+}
+
+.btn-clear-search:hover {
+  color: #dc3545;
+}
+
+/* Spinner de búsqueda */
+.search-spinner {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  font-size: 1rem;
+}
+
+/* Contenedor de resultados */
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #667eea;
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: -2px;
+}
+
+/* Item de resultado */
+.search-result-item {
+  padding: 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f5;
+  transition: all 0.2s;
+}
+
+.search-result-item:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding-left: 1.25rem;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.result-name {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-name i {
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+.result-details {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.result-details .badge {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Sin resultados */
+.no-results {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+}
+
+.no-results i {
+  font-size: 2rem;
+  color: #adb5bd;
+  margin-bottom: 0.5rem;
+}
+
+.no-results p {
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 500;
+}
+
+.no-results small {
+  color: #adb5bd;
+}
+
+/* Badge de paciente seleccionado */
+.selected-patient-badge {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #e7f3ff 0%, #f0e7ff 100%);
+  border: 2px solid #667eea;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease-in-out;
+}
+
+.selected-patient-badge i {
+  color: #28a745;
+  font-size: 1.25rem;
+}
+
+.selected-patient-badge strong {
+  color: #495057;
+  font-size: 1rem;
+}
+
+.selected-patient-badge .text-muted {
+  margin-left: auto;
+  font-size: 0.875rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar personalizado para resultados */
+.search-results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-results::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}
+
+/* Responsive para búsqueda */
+@media (max-width: 576px) {
+  .search-results {
+    max-height: 250px;
+  }
+  
+  .search-result-item {
+    padding: 0.75rem;
+  }
+  
+  .result-details {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .selected-patient-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .selected-patient-badge .text-muted {
+    margin-left: 0;
+  }
+}
+
+/* Estado de focus del input de búsqueda */
+.patient-search-wrapper input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Animación de hover en resultados */
+.search-result-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.search-result-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: #667eea;
+  transform: scaleY(0);
+  transition: transform 0.2s;
+}
+
+.search-result-item:hover::before {
+  transform: scaleY(1);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
 
 @media (max-width: 768px) {
     .btn-group .btn {
