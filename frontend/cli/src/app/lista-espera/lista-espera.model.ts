@@ -15,7 +15,7 @@ export interface ListaEspera {
     fechaDeseadaDesde?: Date;
     fechaDeseadaHasta?: Date;
     fechaSolicitud: Date;
-    urgenciaMedica: boolean;
+    urgenciaMedica: string; // "BAJA", "MEDIA", "ALTA", "URGENTE"
     estado: string;
     diasEnEspera: number;
 }

@@ -62,6 +62,7 @@ import { HistorialTurnosComponent } from "./turnos/historial-turnos.component";
 import { ListaEsperaComponent } from "./lista-espera/lista-espera.component";
 import { PreferenciasPacienteComponent } from "./pacientes/preferencias-paciente/preferencias-paciente.component";
 import { ListaEsperaFormComponent } from "./lista-espera/lista-espera-form.component";
+import { ListaEsperaEstadisticasComponent } from "./lista-espera/lista-espera-estadisticas.component";
 
 export const routes: Routes = [
   { path: "", component: HomeComponent },
@@ -188,7 +189,11 @@ export const routes: Routes = [
     component: ListaEsperaFormComponent,
     canActivate: [PatientGuard],
   },
-
+  {
+    path: "lista-espera-estadisticas",
+    component: ListaEsperaEstadisticasComponent,
+    canActivate: [AdminOperadorGuard],
+  },
 
   // Admin Routes (protected)
   {

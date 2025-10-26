@@ -24,9 +24,10 @@ public interface ListaEsperaRepository extends JpaRepository<ListaEspera, Long> 
         List<ListaEspera> findByEstado(String estado);
 
         /**
-         * Busca todas las solicitudes urgentes
+         * Busca todas las solicitudes urgentes (ALTA o URGENTE)
          */
-        List<ListaEspera> findByUrgenciaMedicaTrue();
+        @Query("SELECT le FROM ListaEspera le WHERE le.urgenciaMedica IN ('ALTA', 'URGENTE')")
+        List<ListaEspera> findByUrgenciaMedicaAltaOUrgente();
 
         /**
          * Busca solicitudes por paciente
@@ -130,7 +131,7 @@ public interface ListaEsperaRepository extends JpaRepository<ListaEspera, Long> 
 
         @Query(value = "SELECT e.nombre, " +
                         "COUNT(le.id), " +
-                        "SUM(CASE WHEN le.urgencia_medica = true THEN 1 ELSE 0 END), " +
+                        "SUM(CASE WHEN le.urgencia_medica IN ('ALTA', 'URGENTE') THEN 1 ELSE 0 END), " +
                         "AVG(CURRENT_DATE - DATE(le.fecha_solicitud)) " +
                         "FROM lista_espera le " +
                         "JOIN especialidad e ON le.especialidad_id = e.id " +

@@ -9,15 +9,68 @@
 
 <div class="modal-body">
     <form [formGroup]="form">
-        <!-- Paciente -->
+        <!-- Búsqueda de Paciente -->
         <div class="form-group">
-            <label for="pacienteId">Paciente*</label>
-            <select class="form-control" id="pacienteId" formControlName="pacienteId" required>
-                <option value="">Seleccione un paciente</option>
+            <label for="searchPaciente">Paciente*</label>
+
+            <!-- Input de búsqueda -->
+            <div class="patient-search-wrapper" *ngIf="!isPatientMode">
+                <input type="text" class="form-control" id="searchPaciente" [value]="searchTerm"
+                    (input)="onSearchPaciente($event)" (focus)="onFocusSearch()" (blur)="onBlurSearch()"
+                    placeholder="Buscar por nombre, apellido o DNI..." autocomplete="off"
+                    [disabled]="pacienteSeleccionado !== null" />
+
+                <!-- Botón para limpiar selección -->
+                <button type="button" class="btn-clear-search" *ngIf="pacienteSeleccionado"
+                    (click)="limpiarSeleccionPaciente()" title="Cambiar paciente">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Indicador de carga -->
+                <div class="search-spinner" *ngIf="buscandoPacientes">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+
+                <!-- Resultados de búsqueda -->
+                <div class="search-results" *ngIf="showSearchResults && !buscandoPacientes">
+                    <div class="search-result-item" *ngFor="let paciente of pacientesBuscados"
+                        (click)="seleccionarPaciente(paciente)">
+                        <div class="result-name">
+                            <i class="fas fa-user"></i>
+                            {{ paciente.nombre }} {{ paciente.apellido }}
+                        </div>
+                        <div class="result-details">
+                            <span class="badge badge-secondary">DNI: {{ paciente.dni }}</span>
+                            <span class="badge badge-info" *ngIf="paciente.email">{{ paciente.email }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Sin resultados -->
+                    <div class="no-results" *ngIf="pacientesBuscados.length === 0">
+                        <i class="fas fa-search"></i>
+                        <p>No se encontraron pacientes con ese criterio</p>
+                        <small>Intenta buscar por nombre, apellido o DNI</small>
+                    </div>
+                </div>
+
+                <!-- Paciente seleccionado (badge) -->
+                <div class="selected-patient-badge" *ngIf="pacienteSeleccionado">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>{{ pacienteSeleccionado.nombre }} {{ pacienteSeleccionado.apellido }}</strong>
+                    <span class="text-muted">DNI: {{ pacienteSeleccionado.dni }}</span>
+                </div>
+            </div>
+
+            <!-- Modo paciente (deshabilitado) -->
+            <select class="form-control" id="pacienteId" formControlName="pacienteId" *ngIf="isPatientMode">
                 <option *ngFor="let paciente of pacientes" [value]="paciente.id">
                     {{ paciente.nombre }} {{ paciente.apellido }} - DNI: {{ paciente.dni || 'No disponible' }}
                 </option>
             </select>
+
+            <small class="form-text text-muted" *ngIf="!isPatientMode && !pacienteSeleccionado">
+                Escribe al menos 2 caracteres para buscar
+            </small>
         </div>
 
         <!-- Especialidad -->
@@ -65,15 +118,17 @@
             </div>
         </div>
 
-        <!-- Urgencia médica -->
+        <!-- Nivel de urgencia médica -->
         <div class="form-group">
-            <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="urgenciaMedica"
-                    formControlName="urgenciaMedica" />
-                <label class="custom-control-label" for="urgenciaMedica">
-                    Urgencia Médica
-                </label>
-            </div>
+            <label for="urgenciaMedica">Nivel de Urgencia Médica*</label>
+            <select class="form-control" id="urgenciaMedica" formControlName="urgenciaMedica" required>
+                <option *ngFor="let nivel of nivelesUrgencia" [value]="nivel.value">
+                    {{ nivel.label }}
+                </option>
+            </select>
+            <small class="form-text text-muted">
+                Seleccione el nivel de urgencia para esta solicitud
+            </small>
         </div>
     </form>
 </div>

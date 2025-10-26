@@ -18,7 +18,8 @@ import { ModalService } from '../modal/modal.service';
   selector: 'app-lista-espera-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  templateUrl: './lista-espera-form.component.html'
+  templateUrl: './lista-espera-form.component.html',
+  styleUrls: ['./lista-espera-form.component.css']
 })
 export class ListaEsperaFormComponent implements OnInit {
   @Input() data?: ListaEspera | null;
@@ -32,6 +33,19 @@ export class ListaEsperaFormComponent implements OnInit {
   medicos: any[] = [];
   limite: number = 0;
   isPatientMode: boolean = false; // Nueva propiedad para detectar modo paciente
+  nivelesUrgencia = [
+    { value: 'BAJA', label: 'Baja' },
+    { value: 'MEDIA', label: 'Media' },
+    { value: 'ALTA', label: 'Alta' },
+    { value: 'URGENTE', label: 'Urgente' }
+  ];
+
+  // Búsqueda de pacientes
+  searchTerm: string = '';
+  pacientesBuscados: any[] = [];
+  buscandoPacientes: boolean = false;
+  pacienteSeleccionado: any = null;
+  showSearchResults: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -52,7 +66,7 @@ export class ListaEsperaFormComponent implements OnInit {
       medicoId: [''],
       fechaDeseadaDesde: [''],
       fechaDeseadaHasta: [''],
-      urgenciaMedica: [false]
+      urgenciaMedica: ['BAJA', Validators.required] // Valor por defecto: BAJA
     });
   }
 
@@ -105,37 +119,18 @@ export class ListaEsperaFormComponent implements OnInit {
       medicoId: [''],
       fechaDeseadaDesde: [''],
       fechaDeseadaHasta: [''],
-      urgenciaMedica: [false]
+      urgenciaMedica: ['BAJA', Validators.required] // Valor por defecto: BAJA
     });
   }
 
 
   cargarDatos() {
-    // Pacientes: solo cargar todos si NO es modo paciente
+    // Pacientes: NO cargar todos, solo buscar bajo demanda
     if (!this.isPatientMode) {
-      this.pacienteService.all().subscribe({
-        next: (res: DataPackage<any[]>) => {
-          this.pacientes = res && res.data ? res.data : [];
-        },
-        error: (err) => {
-          console.error('Error cargando pacientes:', err);
-          this.pacientes = [];
-        }
-      });
+      this.pacientes = []; // Inicialmente vacío, se llenarán al buscar
     } else {
-      // En modo paciente, pacientes será un array con solo el paciente actual (se setea en precargarPacienteActual)
       this.pacientes = [];
     }
-    // Pacientes
-    this.pacienteService.all().subscribe({
-      next: (res: DataPackage<any[]>) => {
-        this.pacientes = res && res.data ? res.data : [];
-      },
-      error: (err) => {
-        console.error('Error cargando pacientes:', err);
-        this.pacientes = [];
-      }
-    });
 
     // Especialidades
     this.especialidadService.all().subscribe({
@@ -149,14 +144,12 @@ export class ListaEsperaFormComponent implements OnInit {
     });
 
     // Centros de Atención
-    // Algunos servicios usan `all()` y otros `getAll()`; aquí usamos `all()` y fallback a getAll
     this.centroService.all().subscribe({
       next: (res: DataPackage<any[]>) => {
         this.centros = res && res.data ? res.data : [];
       },
       error: (err) => {
         console.error('Error cargando centros:', err);
-        // Intentar alternativa getAll si existe
         try {
           (this.centroService as any).getAll()?.subscribe?.((r: any) => {
             this.centros = r && r.data ? r.data : r || [];
@@ -178,6 +171,7 @@ export class ListaEsperaFormComponent implements OnInit {
       }
     });
   }
+
   /** Precarga el paciente actual en el formulario en modo paciente */
   private precargarPacienteActual() {
     const currentUserId = this.authService.getCurrentPatientId();
@@ -279,5 +273,106 @@ export class ListaEsperaFormComponent implements OnInit {
       return parsed.toISOString().substring(0, 10);
     }
     return null;
+  }
+
+
+  /**
+   * Busca pacientes por nombre, apellido o DNI con debounce
+   */
+  onSearchPaciente(event: any) {
+    const term = event.target.value?.trim() || '';
+    this.searchTerm = term;
+
+    if (term.length < 2) {
+      this.pacientesBuscados = [];
+      this.showSearchResults = false;
+      return;
+    }
+
+    this.buscandoPacientes = true;
+    this.showSearchResults = true;
+
+    // 🔍 Determinar si el término es un número (DNI) o texto (nombre/apellido)
+    const esNumero = /^\d+$/.test(term);
+
+    const filtros: any = {};
+
+    if (esNumero) {
+      // Si es número, buscar por documento (DNI)
+      filtros.documento = term;
+    } else {
+      // Si es texto, buscar por nombre/apellido
+      filtros.nombreApellido = term;
+    }
+
+    // Buscar usando el método byPageAdvanced del servicio
+    this.pacienteService.byPageAdvanced(
+      1, // página 1
+      10, // máximo 10 resultados
+      filtros,
+      'apellido', // ordenar por apellido
+      'asc'
+    ).subscribe({
+      next: (res: DataPackage<any>) => {
+        this.buscandoPacientes = false;
+        if (res && res.data && res.data.content) {
+          this.pacientesBuscados = res.data.content;
+        } else {
+          this.pacientesBuscados = [];
+        }
+      },
+      error: (err) => {
+        console.error('Error buscando pacientes:', err);
+        this.buscandoPacientes = false;
+        this.pacientesBuscados = [];
+      }
+    });
+  }
+  /**
+   * Selecciona un paciente de los resultados de búsqueda
+   */
+  seleccionarPaciente(paciente: any) {
+    this.pacienteSeleccionado = paciente;
+    this.searchTerm = `${paciente.nombre} ${paciente.apellido} - DNI: ${paciente.dni}`;
+    this.showSearchResults = false;
+    this.pacientesBuscados = [];
+
+    // Actualizar el valor del formulario
+    this.form.patchValue({
+      pacienteId: paciente.id
+    });
+  }
+
+  /**
+   * Limpia la selección de paciente
+   */
+  limpiarSeleccionPaciente() {
+    this.pacienteSeleccionado = null;
+    this.searchTerm = '';
+    this.pacientesBuscados = [];
+    this.showSearchResults = false;
+
+    this.form.patchValue({
+      pacienteId: ''
+    });
+  }
+
+  /**
+   * Oculta los resultados cuando se pierde el foco
+   */
+  onBlurSearch() {
+    // Delay para permitir clicks en los resultados
+    setTimeout(() => {
+      this.showSearchResults = false;
+    }, 200);
+  }
+
+  /**
+   * Muestra los resultados cuando se enfoca el input
+   */
+  onFocusSearch() {
+    if (this.searchTerm.length >= 2 && this.pacientesBuscados.length > 0) {
+      this.showSearchResults = true;
+    }
   }
 }

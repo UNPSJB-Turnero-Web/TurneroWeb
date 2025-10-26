@@ -52,6 +52,13 @@ export class ListaEsperaComponent implements OnInit {
         { value: 'RESUELTA_POR_OTRO_MEDIO', label: 'Resuelta Manual' }
     ];
 
+    nivelesUrgencia = [
+        { value: '', label: 'Todos' },
+        { value: 'BAJA', label: 'Baja' },
+        { value: 'MEDIA', label: 'Media' },
+        { value: 'ALTA', label: 'Alta' },
+        { value: 'URGENTE', label: 'Urgente' }
+    ];
     constructor(
         private fb: FormBuilder,
         private listaEsperaService: ListaEsperaService,
@@ -68,7 +75,7 @@ export class ListaEsperaComponent implements OnInit {
             fechaDesde: [null],
             fechaHasta: [null],
             estado: [''],
-            urgencia: [false]
+            urgenciaMedica: [''] // String vacío para "Todos"
         });
     }
 
@@ -236,5 +243,22 @@ export class ListaEsperaComponent implements OnInit {
         });
 
         comp.cancel.subscribe(() => this.modalService.dismiss());
+    }
+
+
+
+    getUrgenciaClass(urgencia: string): string {
+        switch (urgencia) {
+            case 'BAJA': return 'badge-secondary';
+            case 'MEDIA': return 'badge-info';
+            case 'ALTA': return 'badge-warning';
+            case 'URGENTE': return 'badge-danger';
+            default: return 'badge-light';
+        }
+    }
+
+    getUrgenciaLabel(urgencia: string): string {
+        const nivel = this.nivelesUrgencia.find(n => n.value === urgencia);
+        return nivel ? nivel.label : urgencia;
     }
 }

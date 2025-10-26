@@ -55,7 +55,7 @@ export class ListaEsperaService {
       if (filtros.fechaDesde) params.push(`fechaDesde=${filtros.fechaDesde}`);
       if (filtros.fechaHasta) params.push(`fechaHasta=${filtros.fechaHasta}`);
       if (filtros.estado) params.push(`estado=${filtros.estado}`);
-      if (filtros.urgencia) params.push(`urgencia=${filtros.urgencia}`);
+      if (filtros.urgenciaMedica) params.push(`urgenciaMedica=${filtros.urgenciaMedica}`);
       if (params.length > 0) {
         queryParams = '?' + params.join('&');
       }

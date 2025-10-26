@@ -205,7 +205,8 @@ public class ListaEsperaService {
      */
     public List<ListaEsperaDTO> findUrgentes() {
         return repository.findAll().stream()
-                .filter(ListaEspera::isUrgenciaMedica)
+                .filter(le -> le.getUrgenciaMedica() == ListaEspera.UrgenciaMedica.ALTA
+                        || le.getUrgenciaMedica() == ListaEspera.UrgenciaMedica.URGENTE)
                 .map(this::convertToDTO)
                 .toList();
     }
@@ -241,7 +242,9 @@ public class ListaEsperaService {
         entity.setFechaSolicitud(dto.getFechaSolicitud() != null ? dto.getFechaSolicitud() : LocalDateTime.now());
 
         // Otros campos
-        entity.setUrgenciaMedica(dto.isUrgenciaMedica());
+        entity.setUrgenciaMedica(dto.getUrgenciaMedica() != null
+                ? ListaEspera.UrgenciaMedica.valueOf(dto.getUrgenciaMedica())
+                : ListaEspera.UrgenciaMedica.BAJA);
         entity.setEstado(dto.getEstado() != null ? dto.getEstado() : "PENDIENTE");
 
         return entity;
@@ -271,9 +274,12 @@ public class ListaEsperaService {
             // de solicitud)
             List<ListaEspera> candidatosOrdenados = candidatos.stream()
                     .sorted((a, b) -> {
-                        if (a.isUrgenciaMedica() != b.isUrgenciaMedica()) {
-                            return a.isUrgenciaMedica() ? -1 : 1;
+                        // Primero por nivel de urgencia médica (URGENTE > ALTA > MEDIA > BAJA)
+                        int urgenciaCompare = b.getUrgenciaMedica().compareTo(a.getUrgenciaMedica());
+                        if (urgenciaCompare != 0) {
+                            return urgenciaCompare;
                         }
+                        // Luego por antigüedad de la solicitud
                         return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
                     })
                     .toList();
@@ -315,9 +321,10 @@ public class ListaEsperaService {
                 .filter(le -> esFechaCompatibleDTO(convertToDTO(le), fechaTurno))
                 .filter(le -> esMedicoCompatibleDTO(convertToDTO(le), turnoDisponible.getStaffMedico().getMedico()))
                 .sorted((a, b) -> {
-                    // Primero por urgencia médica
-                    if (a.isUrgenciaMedica() != b.isUrgenciaMedica()) {
-                        return a.isUrgenciaMedica() ? -1 : 1;
+                    // Primero por nivel de urgencia médica (URGENTE > ALTA > MEDIA > BAJA)
+                    int urgenciaCompare = b.getUrgenciaMedica().compareTo(a.getUrgenciaMedica());
+                    if (urgenciaCompare != 0) {
+                        return urgenciaCompare;
                     }
                     // Luego por antigüedad de la solicitud
                     return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
@@ -333,7 +340,7 @@ public class ListaEsperaService {
             Integer centroAtencionId,
             Integer medicoId,
             String estado,
-            Boolean urgenciaMedica,
+            String urgenciaMedica,
             LocalDate fechaDesde,
             LocalDate fechaHasta,
             Integer tiempoEsperaMinimo,
@@ -357,7 +364,20 @@ public class ListaEsperaService {
                 .filter(le -> centroAtencion == null || centroAtencion.equals(le.getCentroAtencion()))
                 .filter(le -> medico == null || medico.equals(le.getMedicoPreferido()))
                 .filter(le -> estado == null || estado.equals(le.getEstado()))
-                .filter(le -> urgenciaMedica == null || urgenciaMedica.equals(le.isUrgenciaMedica()))
+                .filter(le -> {
+                    if (urgenciaMedica == null)
+                        return true;
+                    try {
+                        ListaEspera.UrgenciaMedica urgenciaEnum = ListaEspera.UrgenciaMedica
+                                .valueOf(urgenciaMedica.toUpperCase());
+                        return urgenciaEnum.equals(le.getUrgenciaMedica());
+                    } catch (IllegalArgumentException e) {
+                        // Si el valor del string no coincide con ningún enum, ignorar filtro o
+                        // manejarlo según tus reglas
+                        System.err.println("⚠️ Valor de urgencia médica inválido: " + urgenciaMedica);
+                        return true; // o false, si querés descartar en caso de valor inválido
+                    }
+                })
                 .filter(le -> fechaDesde == null || !le.getFechaSolicitud().toLocalDate().isBefore(fechaDesde))
                 .filter(le -> fechaHasta == null || !le.getFechaSolicitud().toLocalDate().isAfter(fechaHasta))
                 .filter(le -> {
@@ -370,16 +390,17 @@ public class ListaEsperaService {
                 .sorted((a, b) -> {
                     if ("URGENCIA_TIEMPO".equals(ordenamiento)) {
                         // Ordenar por urgencia primero, luego por tiempo de espera
-                        if (a.isUrgenciaMedica() != b.isUrgenciaMedica()) {
-                            return a.isUrgenciaMedica() ? -1 : 1;
+                        int urgenciaCompare = b.getUrgenciaMedica().compareTo(a.getUrgenciaMedica());
+                        if (urgenciaCompare != 0) {
+                            return urgenciaCompare;
                         }
                         return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
                     } else if ("TIEMPO_ESPERA".equals(ordenamiento)) {
                         // Ordenar solo por tiempo de espera
                         return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
                     } else if ("URGENCIA".equals(ordenamiento)) {
-                        // Ordenar solo por urgencia
-                        return Boolean.compare(b.isUrgenciaMedica(), a.isUrgenciaMedica());
+                        // Ordenar solo por urgencia (URGENTE > ALTA > MEDIA > BAJA)
+                        return b.getUrgenciaMedica().compareTo(a.getUrgenciaMedica());
                     }
                     // Por defecto, ordenar por fecha de solicitud
                     return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
@@ -399,8 +420,10 @@ public class ListaEsperaService {
                 .filter(le -> "PENDIENTE".equals(le.getEstado()))
                 .filter(le -> especialidad.equals(le.getEspecialidad()))
                 .sorted((a, b) -> {
-                    if (a.isUrgenciaMedica() != b.isUrgenciaMedica()) {
-                        return a.isUrgenciaMedica() ? -1 : 1;
+                    // Ordenar por nivel de urgencia (URGENTE > ALTA > MEDIA > BAJA)
+                    int urgenciaCompare = b.getUrgenciaMedica().compareTo(a.getUrgenciaMedica());
+                    if (urgenciaCompare != 0) {
+                        return urgenciaCompare;
                     }
                     return a.getFechaSolicitud().compareTo(b.getFechaSolicitud());
                 })
@@ -416,7 +439,8 @@ public class ListaEsperaService {
             info.put("pacienteId", solicitud.getPaciente().getId());
             info.put("pacienteNombre", solicitud.getPaciente().getNombre() + " " +
                     solicitud.getPaciente().getApellido());
-            info.put("urgente", solicitud.isUrgenciaMedica());
+            info.put("urgenciaMedica", solicitud.getUrgenciaMedica().name());
+            info.put("urgenciaDescripcion", solicitud.getUrgenciaMedica().getDescripcion());
             info.put("diasEspera",
                     ChronoUnit.DAYS.between(
                             solicitud.getFechaSolicitud().toLocalDate(),
@@ -592,7 +616,8 @@ public class ListaEsperaService {
                 detalles.put("fechaSolicitud", solicitud.getFechaSolicitud());
                 detalles.put("diasEspera",
                         ChronoUnit.DAYS.between(solicitud.getFechaSolicitud().toLocalDate(), LocalDate.now()));
-                detalles.put("urgenciaMedica", solicitud.isUrgenciaMedica());
+                detalles.put("urgenciaMedica", solicitud.getUrgenciaMedica().name());
+                detalles.put("urgenciaDescripcion", solicitud.getUrgenciaMedica().getDescripcion());
 
                 // Información del paciente
                 detalles.put("pacienteId", solicitud.getPaciente().getId());
@@ -616,7 +641,7 @@ public class ListaEsperaService {
                         "Turno reasignado automáticamente. Paciente en espera desde %s (días: %d). %s",
                         solicitud.getFechaSolicitud().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                         ChronoUnit.DAYS.between(solicitud.getFechaSolicitud().toLocalDate(), LocalDate.now()),
-                        solicitud.isUrgenciaMedica() ? "CASO URGENTE" : "");
+                        solicitud.getUrgenciaMedica() == ListaEspera.UrgenciaMedica.URGENTE ? "CASO URGENTE" : "");
 
                 auditLogService.logGenericAction(
                         "LISTA_ESPERA",
@@ -649,9 +674,18 @@ public class ListaEsperaService {
 
         long urgentes = todas.stream()
                 .filter(le -> "PENDIENTE".equals(le.getEstado()))
-                .filter(ListaEspera::isUrgenciaMedica)
+                .filter(le -> le.getUrgenciaMedica() == ListaEspera.UrgenciaMedica.ALTA
+                        || le.getUrgenciaMedica() == ListaEspera.UrgenciaMedica.URGENTE)
                 .count();
         estadisticas.put("urgentes", urgentes);
+
+        // Agregar estadísticas por nivel de urgencia
+        Map<String, Long> porNivel = todas.stream()
+                .filter(le -> "PENDIENTE".equals(le.getEstado()))
+                .collect(Collectors.groupingBy(
+                        le -> le.getUrgenciaMedica().name(),
+                        Collectors.counting()));
+        estadisticas.put("porNivelUrgencia", porNivel);
 
         // Tiempo promedio de espera
         OptionalDouble tiempoPromedioEspera = todas.stream()
@@ -682,7 +716,7 @@ public class ListaEsperaService {
                     coincidencia.put("pacienteId", dto.getPacienteId());
                     coincidencia.put("pacienteNombre", dto.getPacienteNombre() + " " + dto.getPacienteApellido());
                     coincidencia.put("especialidad", dto.getEspecialidadNombre());
-                    coincidencia.put("urgente", dto.isUrgenciaMedica());
+                    coincidencia.put("urgenciaMedica", dto.getUrgenciaMedica());
                     coincidencia.put("tiempoEsperaDias",
                             java.time.temporal.ChronoUnit.DAYS.between(
                                     dto.getFechaSolicitud().toLocalDate(),
@@ -953,7 +987,7 @@ public class ListaEsperaService {
         dto.setFechaSolicitud(entity.getFechaSolicitud());
 
         // Estado y urgencia
-        dto.setUrgenciaMedica(entity.isUrgenciaMedica());
+        dto.setUrgenciaMedica(entity.getUrgenciaMedica().name());
         dto.setEstado(entity.getEstado());
 
         // Calcular días en espera
