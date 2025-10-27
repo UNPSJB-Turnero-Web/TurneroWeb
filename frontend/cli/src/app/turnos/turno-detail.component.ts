@@ -30,6 +30,7 @@ export class TurnoDetailComponent {
     pacienteId: 0,
     staffMedicoId: 0,
     consultorioId: 0,
+    observaciones: "",
   };
 
   modoEdicion = false;
@@ -37,7 +38,7 @@ export class TurnoDetailComponent {
   pacientes: Paciente[] = [];
   staffMedicos: StaffMedico[] = [];
   consultorios: Consultorio[] = [];
-  
+
   // Advertencias de solapamiento
   advertenciaSolapamiento = false;
   mensajeAdvertencia = "";
@@ -56,7 +57,7 @@ export class TurnoDetailComponent {
     private staffMedicoService: StaffMedicoService,
     private consultorioService: ConsultorioService,
     private modalService: ModalService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadDropdownData();
@@ -79,6 +80,7 @@ export class TurnoDetailComponent {
         pacienteId: 0,
         staffMedicoId: 0,
         consultorioId: 0,
+        observaciones: "",
       } as Turno;
     } else if (path === "turnos/:id") {
       // Detalle o edición
@@ -133,7 +135,7 @@ export class TurnoDetailComponent {
       staffMedicoId: this.turno.staffMedicoId,
       consultorioId: this.turno.consultorioId,
     });
-    
+
     // Validaciones básicas
     if (
       !this.isValidId(this.turno.pacienteId) ||
@@ -194,7 +196,7 @@ export class TurnoDetailComponent {
       next: () => {
         this.modalService.alert(
           "Éxito",
-          this.esSobreturno 
+          this.esSobreturno
             ? "Sobreturno creado exitosamente"
             : "Turno guardado exitosamente"
         );

@@ -176,6 +176,11 @@ export const routes: Routes = [
     component: MedicoPerfilComponent,
     canActivate: [MedicoGuard],
   },
+  {
+    path: "turnos/new",
+    component: TurnoDetailComponent,
+    canActivate: [MedicoGuard],
+  },
 
   { path: "debug/tokens", component: TokenStatusComponent }, // ruta para debug de tokens
   // Lista de Espera Routes

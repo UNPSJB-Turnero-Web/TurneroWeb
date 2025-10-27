@@ -121,6 +121,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Métricas y reportes'
       },
       {
+        label: 'Sobreturnos',
+        route: '/turnos/new',
+        icon: 'event_busy',
+        description: 'Registrar sobreturno manual (fuera de agenda)'
+      },
+      {
         label: 'Mi Perfil',
         route: '/medico-perfil',
         icon: 'account_circle',
