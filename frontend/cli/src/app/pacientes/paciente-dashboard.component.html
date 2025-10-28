@@ -1,390 +1,315 @@
-<!-- Modal de Error de Confirmación (fuera del dashboard) -->
-<div class="error-modal" *ngIf="showErrorModal">
-  <div class="error-modal-content">
-    <div class="error-modal-header">
-      <div class="error-icon-container">
-        <i class="fas fa-exclamation-triangle"></i>
-      </div>
-      <h2>No se puede confirmar el turno</h2>
-      <span class="close" (click)="closeErrorModal()">&times;</span>
+<!-- Modal de Error de Confirmación -->
+<div class="modal-overlay" *ngIf="showErrorModal" (click)="closeErrorModal()">
+  <div class="card modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header-error">
+      <span class="material-symbols-outlined icon-status icon-danger">error</span>
+      <h3>No se puede confirmar el turno</h3>
+      <button class="btn-close-modal" (click)="closeErrorModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
-    <div class="error-modal-body">
-      <div class="error-message-container">
-        <p class="error-reason-label">
-          El turno no pudo ser confirmado por la siguiente razón:
-        </p>
-        <div class="error-message-box">
-          <i class="fas fa-info-circle me-2"></i>
-          <span>{{ errorMessage }}</span>
-        </div>
+    <div class="modal-body">
+      <p class="modal-message-label">El turno no pudo ser confirmado por la siguiente razón:</p>
+      <div class="alert-message alert-error">
+        <span class="material-symbols-outlined">info</span>
+        <span>{{ errorMessage }}</span>
       </div>
-      <div class="error-help-text">
-        <p>
-          <i class="fas fa-lightbulb me-2"></i>
-          Por favor, verifica los días permitidos para confirmar turnos según
-          las políticas de la clínica.
-        </p>
+      <div class="modal-help-text">
+        <span class="material-symbols-outlined">lightbulb</span>
+        <span>Por favor, verifica los días permitidos para confirmar turnos según las políticas de la clínica.</span>
       </div>
     </div>
-    <div class="error-modal-footer">
+    <div class="modal-footer">
       <button class="btn btn-primary" (click)="closeErrorModal()">
-        <i class="fas fa-check me-2"></i>
+        <span class="material-symbols-outlined">check</span>
         Entendido
       </button>
     </div>
   </div>
 </div>
 
-<div class="patient-dashboard">
-  <!-- Floating Particles Background -->
-  <div class="particles-bg">
-    <div class="particle" *ngFor="let p of particles; let i = index" [style.left.px]="p.x" [style.top.px]="p.y"
-      [style.animation-delay.s]="i * 0.2"></div>
-  </div>
-
-  <!-- Header Section -->
-  <div class="dashboard-header">
-    <div class="header-glow"></div>
-    <div class="welcome-section">
-      <div class="welcome-content">
-        <div class="welcome-icon">
-          <i class="fas fa-heartbeat"></i>
-        </div>
-        <div class="welcome-text">
-          <h1>¡Bienvenido/a a tu Portal de Salud!</h1>
-          <p class="patient-info">
-            <i class="fas fa-user me-2"></i>
-            {{ patientName }}
-          </p>
-          <p class="patient-info">
-            <i class="fas fa-envelope me-2"></i>
-            {{ patientEmail }}
-          </p>
-          <p class="patient-info" *ngIf="patientDNI">
-            <i class="fas fa-id-card me-2"></i>
-            DNI: {{ patientDNI }}
-          </p>
-          <p class="tagline">Gestiona tu salud de manera inteligente</p>
+<div class="dashboard-wrapper">  
+  <!-- Header del Dashboard -->
+  <div class="dashboard-header card">
+    <div class="header-content">
+      <div class="welcome-info">
+        <span class="material-symbols-outlined header-icon">health_and_safety</span>
+        <div>
+          <h1>Panel de Paciente</h1>
+          <p class="header-subtitle">Gestiona tu salud de manera inteligente</p>
         </div>
       </div>
-      <div class="user-actions">
-        <button class="btn-logout" (click)="logout()">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Cerrar Sesión</span>
-        </button>
+      <div class="user-info">
+        <div class="info-item">
+          <span class="material-symbols-outlined">person</span>
+          <span>{{ patientName }}</span>
+        </div>
+        <div class="info-item">
+          <span class="material-symbols-outlined">email</span>
+          <span>{{ patientEmail }}</span>
+        </div>
+        <div class="info-item" *ngIf="patientDNI">
+          <span class="material-symbols-outlined">badge</span>
+          <span>DNI: {{ patientDNI }}</span>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Quick Actions -->
-  <div class="quick-actions">
-    <div class="section-background"></div>
-    <div class="section-title-container">
-      <h2><i class="fas fa-rocket me-3"></i>Acciones Rápidas</h2>
-      <p class="section-description">
-        Accede rápidamente a las funciones principales
-      </p>
-    </div>
+  <!-- Sección Acciones Rápidas -->
+  <section class="quick-actions-section card">
+    <h2>
+      <span class="material-symbols-outlined">bolt</span>
+      Acciones Rápidas
+    </h2>
+    <p class="section-description">Accede rápidamente a las funciones principales</p>
+    
     <div class="actions-grid">
-      <div class="action-card action-agenda" (click)="viewAgenda()">
-        <div class="card-icon">
-          <i class="fas fa-calendar-alt"></i>
-        </div>
-        <div class="card-content">
-          <h3>Agenda de turnos</h3>
-          <p>Ver horarios disponibles y solicitar citas</p>
-        </div>
-        <div class="card-arrow">
-          <i class="fas fa-arrow-right"></i>
-        </div>
+      <div class="card action-card" (click)="viewAgenda()">
+        <span class="material-symbols-outlined card-icon">calendar_month</span>
+        <h3>Agenda de turnos</h3>
+        <p>Ver horarios disponibles y solicitar citas</p>
+        <span class="material-symbols-outlined card-arrow">arrow_forward</span>
       </div>
 
-      <div class="action-card action-profile" (click)="viewProfile()">
-        <div class="card-icon">
-          <i class="fas fa-user-circle"></i>
-        </div>
-        <div class="card-content">
-          <h3>Mi Perfil</h3>
-          <p>Ver y actualizar información personal</p>
-        </div>
-        <div class="card-arrow">
-          <i class="fas fa-arrow-right"></i>
-        </div>
+      <div class="card action-card" (click)="viewProfile()">
+        <span class="material-symbols-outlined card-icon">account_circle</span>
+        <h3>Mi Perfil</h3>
+        <p>Ver y actualizar información personal</p>
+        <span class="material-symbols-outlined card-arrow">arrow_forward</span>
       </div>
 
-      <div class="action-card action-preferences" (click)="viewPreferencias()">
-        <div class="card-icon">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="card-content">
-          <h3>Mis Horarios Preferidos</h3>
-          <p>Configurar horarios de preferencia para turnos</p>
-        </div>
-        <div class="card-arrow">
-          <i class="fas fa-arrow-right"></i>
-        </div>
+      <div class="card action-card" (click)="viewPreferencias()">
+        <span class="material-symbols-outlined card-icon">schedule</span>
+        <h3>Mis Horarios Preferidos</h3>
+        <p>Configurar horarios de preferencia</p>
+        <span class="material-symbols-outlined card-arrow">arrow_forward</span>
       </div>
 
-      <div class="action-card action-notifications" (click)="viewNotifications()">
-        <div class="card-icon">
-          <i class="fas fa-bell"></i>
-        </div>
-        <div class="card-content">
-          <h3>Notificaciones</h3>
-          <p>Ver mensajes y alertas del sistema</p>
-        </div>
-        <div class="notification-badge" *ngIf="contadorNotificaciones > 0">
-          <span>{{ contadorNotificaciones }}</span>
-          <div class="notification-pulse"></div>
-        </div>
-        <div class="card-arrow">
-          <i class="fas fa-arrow-right"></i>
-        </div>
+      <div class="card action-card" (click)="viewNotifications()">
+        <span class="material-symbols-outlined card-icon">notifications</span>
+        <h3>Notificaciones</h3>
+        <p>Ver mensajes y alertas del sistema</p>
+        <span class="notification-badge" *ngIf="contadorNotificaciones > 0">{{ contadorNotificaciones }}</span>
+        <span class="material-symbols-outlined card-arrow">arrow_forward</span>
       </div>
 
-      <div class="action-card action-history" (click)="viewHistorial()">
-        <div class="card-icon">
-          <i class="fas fa-history"></i>
-        </div>
-        <div class="card-content">
-          <h3>Mi Historial</h3>
-          <p>Ver historial de turnos médicos</p>
-        </div>
-        <div class="card-arrow">
-          <i class="fas fa-arrow-right"></i>
-        </div>
+      <div class="card action-card" (click)="viewHistorial()">
+        <span class="material-symbols-outlined card-icon">history</span>
+        <h3>Mi Historial</h3>
+        <p>Ver historial de turnos médicos</p>
+        <span class="material-symbols-outlined card-arrow">arrow_forward</span>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Mis Turnos -->
-  <div class="my-appointments">
-    <div class="appointments-background"></div>
+  <!-- Sección Mis Turnos -->
+  <section class="appointments-section card">
     <div class="section-header">
       <div class="section-title">
-        <div class="title-icon">
-          <i class="fas fa-calendar-check"></i>
-        </div>
-        <div class="title-content">
+        <span class="material-symbols-outlined">event_available</span>
+        <div>
           <h2>Mis Turnos Médicos</h2>
-          <p class="section-subtitle">
-            Gestiona tus citas médicas de forma inteligente
-          </p>
+          <p class="section-description">Gestiona tus citas médicas</p>
         </div>
       </div>
-      <button class="btn-schedule-appointment" (click)="scheduleAppointment()">
-        <div class="btn-icon">
-          <i class="fas fa-plus"></i>
-        </div>
-        <span>Solicitar Turno</span>
-        <div class="btn-shine"></div>
+      <button class="btn btn-primary" (click)="scheduleAppointment()">
+        <span class="material-symbols-outlined">add_circle</span>
+        Solicitar Turno
       </button>
     </div>
 
-    <!-- Filtros Mejorados -->
-    <div class="filter-container">
-      <div class="filter-tabs">
-        <button class="filter-tab" [class.active]="currentFilter === 'upcoming'" (click)="setFilter('upcoming')">
-          <div class="tab-icon">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="tab-content">
-            <span class="tab-label">Próximos</span>
-            <span class="tab-count" *ngIf="getFilterCount('upcoming') > 0">{{
-              getFilterCount("upcoming")
-              }}</span>
-          </div>
-          <div class="tab-indicator"></div>
-        </button>
-        <button class="filter-tab" [class.active]="currentFilter === 'past'" (click)="setFilter('past')">
-          <div class="tab-icon">
-            <i class="fas fa-history"></i>
-          </div>
-          <div class="tab-content">
-            <span class="tab-label">Pasados</span>
-            <span class="tab-count" *ngIf="getFilterCount('past') > 0">{{
-              getFilterCount("past")
-              }}</span>
-          </div>
-          <div class="tab-indicator"></div>
-        </button>
-        <button class="filter-tab" [class.active]="currentFilter === 'all'" (click)="setFilter('all')">
-          <div class="tab-icon">
-            <i class="fas fa-list"></i>
-          </div>
-          <div class="tab-content">
-            <span class="tab-label">Todos</span>
-            <span class="tab-count">{{ allTurnos.length }}</span>
-          </div>
-          <div class="tab-indicator"></div>
-        </button>
-      </div>
+    <!-- Filtros -->
+    <div class="filter-tabs">
+      <button 
+        class="filter-tab" 
+        [class.active]="currentFilter === 'upcoming'" 
+        (click)="setFilter('upcoming')">
+        <span class="material-symbols-outlined">schedule</span>
+        <span>Próximos</span>
+        <span class="tab-count" *ngIf="getFilterCount('upcoming') > 0">{{ getFilterCount("upcoming") }}</span>
+      </button>
+      <button 
+        class="filter-tab" 
+        [class.active]="currentFilter === 'past'" 
+        (click)="setFilter('past')">
+        <span class="material-symbols-outlined">history</span>
+        <span>Pasados</span>
+        <span class="tab-count" *ngIf="getFilterCount('past') > 0">{{ getFilterCount("past") }}</span>
+      </button>
+      <button 
+        class="filter-tab" 
+        [class.active]="currentFilter === 'all'" 
+        (click)="setFilter('all')">
+        <span class="material-symbols-outlined">list</span>
+        <span>Todos</span>
+        <span class="tab-count">{{ allTurnos.length }}</span>
+      </button>
     </div>
 
-    <!-- Loading state -->
-    <div class="loading-container" *ngIf="isLoadingTurnos">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Cargando turnos...</p>
-      </div>
+    <!-- Loading -->
+    <div class="loading-section" *ngIf="isLoadingTurnos">
+      <span class="material-symbols-outlined spinner-large">sync</span>
+      <p>Cargando turnos...</p>
     </div>
 
-    <!-- Appointments grid -->
+    <!-- Lista de Turnos -->
     <div class="appointments-grid" *ngIf="!isLoadingTurnos && filteredTurnos.length > 0">
-      <div class="appointment-card" *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
-        [class]="'status-' + turno.status">
-        <!-- Card Header -->
-        <div class="card-header">
-          <div class="date-container">
-            <div class="date-circle">
-              <span class="day">{{ turno.day }}</span>
-              <span class="month">{{ turno.month }}</span>
+      <div 
+        class="card appointment-card" 
+        *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
+        [class.status-programado]="turno.status === 'programado'"
+        [class.status-confirmado]="turno.status === 'confirmado'"
+        [class.status-completo]="turno.status === 'completo'"
+        [class.status-cancelado]="turno.status === 'cancelado'">
+        
+        <!-- Fecha y Estado -->
+        <div class="appointment-header">
+          <div class="date-info">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <div class="date-details">
+              <span class="date-day">{{ turno.day }}</span>
+              <span class="date-month">{{ turno.month }}</span>
+              <span class="date-year">{{ turno.year }}</span>
             </div>
-            <div class="year-time">
-              <span class="year">{{ turno.year }}</span>
-              <span class="time">
-                <i class="fas fa-clock me-1"></i>
-                {{ turno.time }}
-              </span>
+            <div class="time-details">
+              <span class="material-symbols-outlined">schedule</span>
+              <span class="time-value">{{ turno.time }}</span>
             </div>
           </div>
-
-          <div class="status-badge" [class]="'status-' + turno.status">
-            <i class="fas" [class]="getStatusIcon(turno.status)"></i>
-            <span>{{ getStatusText(turno.status) }}</span>
+          <div class="status-badge" [ngClass]="'status-' + turno.status">
+            <span class="material-symbols-outlined">{{ getStatusIcon(turno.status) }}</span>
           </div>
         </div>
 
-        <!-- Card Body -->
-        <div class="card-body">
-          <div class="doctor-section">
-            <div class="doctor-avatar">
-              <i class="fas fa-user-md"></i>
-            </div>
-            <div class="doctor-info">
-              <h4 class="doctor-name">{{ turno.doctor }}</h4>
-              <p class="specialty">
-                <i class="fas fa-stethoscope me-1"></i>
-                {{ turno.specialty }}
-              </p>
+        <!-- Información del Turno -->
+        <div class="appointment-info">
+          <!-- Médico -->
+          <div class="info-item doctor-info">
+            <span class="material-symbols-outlined">person</span>
+            <div class="info-content">
+              <strong class="info-value">{{ turno.doctor }}</strong>
             </div>
           </div>
 
-          <div class="location-info">
-            <i class="fas fa-map-marker-alt me-2"></i>
-            <span>{{ turno.location }}</span>
-          </div>
-
-          <!-- Barra de Progreso del Estado -->
-          <div class="turno-progress-container">
-            <div class="progress-label">
-              <span class="progress-text">Estado del Turno</span>
-              <span class="progress-percentage">{{
-                getProgresoTurno(turno.status).texto
-                }}</span>
-            </div>
-
-            <!-- Barra de progreso SIEMPRE VISIBLE (incluso para terminales, con 100% y sin striped si es final) -->
-            <div class="progress" style="height: 12px">
-              <div class="progress-bar" [ngClass]="getProgresoTurno(turno.status).colorClass"
-                [class.progress-bar-striped]="
-                  !getProgresoTurno(turno.status).isTerminal
-                " [class.progress-bar-animated]="
-                  !getProgresoTurno(turno.status).isTerminal
-                " role="progressbar" [style.width.%]="getProgresoTurno(turno.status).progress"
-                [attr.aria-valuenow]="getProgresoTurno(turno.status).progress" aria-valuemin="0" aria-valuemax="100">
-                <!-- Icono integrado para terminales (opcional, para feedback visual sin badge separado) -->
-                <span *ngIf="getProgresoTurno(turno.status).isTerminal" class="progress-icon">
-                  <i class="fas" [ngClass]="{
-                      'fa-check-circle text-success':
-                        turno.status === 'completo',
-                      'fa-times-circle text-danger':
-                        turno.status === 'cancelado'
-                    }"></i>
-                </span>
-              </div>
+          <!-- Especialidad -->
+          <div class="info-item specialty-info">
+            <span class="material-symbols-outlined">medical_services</span>
+            <div class="info-content">
+              <span class="info-value">{{ turno.specialty }}</span>
             </div>
           </div>
-          <!-- Card Actions -->
-          <div class="card-actions" *ngIf="canPerformActions(turno)">
-            <button class="action-btn confirm-btn" *ngIf="canConfirm(turno)" (click)="confirmarTurno(turno)"
-              title="Confirmar turno">
-              <i class="fas fa-check"></i>
-              <span>Confirmar</span>
-            </button>
 
-            <button class="action-btn reschedule-btn" *ngIf="canReschedule(turno)" (click)="reprogramarTurno(turno)"
-              title="Reagendar turno">
-              <i class="fas fa-calendar-alt"></i>
-              <span>Reagendar</span>
-            </button>
-
-            <button class="action-btn cancel-btn" *ngIf="canCancel(turno)" (click)="cancelarTurno(turno)"
-              title="Cancelar turno">
-              <i class="fas fa-times"></i>
-              <span>Cancelar</span>
-            </button>
+          <!-- Ubicación -->
+          <div class="info-item location-info">
+            <span class="material-symbols-outlined">location_on</span>
+            <div class="info-content">
+              <span class="info-value">{{ turno.location }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Empty state -->
-      <div class="empty-state" *ngIf="!isLoadingTurnos && filteredTurnos.length === 0">
-        <div class="empty-illustration">
-          <div class="empty-icon">
-            <i class="fas fa-calendar-times"></i>
-          </div>
-          <div class="empty-content">
-            <h3>No tienes turnos {{ getEmptyStateText() }}</h3>
-            <p>{{ getEmptyStateDescription() }}</p>
-            <button class="btn btn-primary btn-lg" (click)="scheduleAppointment()"
-              *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'">
-              <i class="fas fa-plus me-2"></i>
-              Solicitar mi primer turno
-            </button>
-          </div>
+        <!-- Acciones -->
+        <div class="appointment-actions" *ngIf="canPerformActions(turno)">
+          <button 
+            class="btn btn-success btn-sm" 
+            *ngIf="canConfirm(turno)" 
+            (click)="confirmarTurno(turno)">
+            <span class="material-symbols-outlined">check</span>
+            Confirmar
+          </button>
+
+          <button 
+            class="btn btn-secondary btn-sm" 
+            *ngIf="canReschedule(turno)" 
+            (click)="reprogramarTurno(turno)">
+            <span class="material-symbols-outlined">event_repeat</span>
+            Reagendar
+          </button>
+
+          <button 
+            class="btn btn-danger btn-sm" 
+            *ngIf="canCancel(turno)" 
+            (click)="cancelarTurno(turno)">
+            <span class="material-symbols-outlined">close</span>
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal for Cancel -->
-    <div class="modal" *ngIf="showReasonModal">
-      <div class="modal-content">
-        <span class="close" (click)="closeModal()" [style.display]="isSubmitting ? 'none' : 'block'">&times;</span>
-        <h2>Cancelar Turno</h2>
+    <!-- Estado vacío -->
+    <div class="empty-state card" *ngIf="!isLoadingTurnos && filteredTurnos.length === 0">
+      <span class="material-symbols-outlined empty-icon">event_busy</span>
+      <h3>No tienes turnos {{ getEmptyStateText() }}</h3>
+      <p>{{ getEmptyStateDescription() }}</p>
+      <button 
+        class="btn btn-primary" 
+        (click)="scheduleAppointment()"
+        *ngIf="currentFilter === 'upcoming' || currentFilter === 'all'">
+        <span class="material-symbols-outlined">add_circle</span>
+        Solicitar mi primer turno
+      </button>
+    </div>
+  </section>
 
-        <div *ngIf="selectedTurno" class="turno-info">
-          <p>
-            <strong>Turno:</strong> {{ selectedTurno.day }}/{{
-            selectedTurno.month
-            }}
-            a las {{ selectedTurno.time }}
-          </p>
-          <p><strong>Médico:</strong> {{ selectedTurno.doctor }}</p>
-          <p><strong>Lugar:</strong> {{ selectedTurno.location }}</p>
-        </div>
+  <!-- Modal de Cancelación -->
+  <div class="modal-overlay" *ngIf="showReasonModal" (click)="closeModal()">
+    <div class="card modal-card" (click)="$event.stopPropagation()">
+      <button class="btn-close-modal" (click)="closeModal()" *ngIf="!isSubmitting">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      
+      <h3>Cancelar Turno</h3>
 
-        <p>Por favor, proporciona un motivo para cancelar el turno:</p>
-        <textarea [(ngModel)]="motivo" rows="4" placeholder="Escribe tu motivo aquí (mínimo 5 caracteres)..."
-          [disabled]="isSubmitting" class="form-control"></textarea>
-        <small class="text-muted">El motivo es obligatorio y debe tener al menos 5 caracteres</small>
-        <div *ngIf="motivo && motivo.length < 5" class="text-danger mt-1">
-          ⚠️ El motivo debe tener al menos 5 caracteres
+      <div class="turno-info-box" *ngIf="selectedTurno">
+        <div class="info-row">
+          <strong>Turno:</strong> 
+          <span>{{ selectedTurno.day }}/{{ selectedTurno.month }} a las {{ selectedTurno.time }}</span>
         </div>
+        <div class="info-row">
+          <strong>Médico:</strong> 
+          <span>{{ selectedTurno.doctor }}</span>
+        </div>
+        <div class="info-row">
+          <strong>Lugar:</strong> 
+          <span>{{ selectedTurno.location }}</span>
+        </div>
+      </div>
 
-        <div class="modal-actions">
-          <button class="btn btn-primary" (click)="submitReason()" [disabled]="
-              !motivo.trim() || motivo.trim().length < 5 || isSubmitting
-            ">
-            <span *ngIf="isSubmitting" class="spinner"></span>
-            <i *ngIf="!isSubmitting" class="fas fa-times"></i>
-            {{ isSubmitting ? "Procesando..." : "Cancelar Turno" }}
-          </button>
-          <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
-            <i class="fas fa-arrow-left"></i>
-            Volver
-          </button>
-        </div>
+      <div class="form-group">
+        <label for="motivo" class="form-label">Motivo de cancelación</label>
+        <textarea 
+          id="motivo"
+          [(ngModel)]="motivo" 
+          rows="4" 
+          class="form-control"
+          [class.is-invalid]="motivo && motivo.length < 5"
+          placeholder="Escribe tu motivo aquí (mínimo 5 caracteres)..."
+          [disabled]="isSubmitting">
+        </textarea>
+        <small class="form-text">* El motivo es obligatorio</small>
+        <small class="invalid-feedback" *ngIf="motivo && motivo.length < 5">
+          El motivo debe tener al menos 5 caracteres
+        </small>
+      </div>
+
+      <div class="modal-actions">
+        <button 
+          class="btn btn-danger btn-full-width" 
+          (click)="submitReason()" 
+          [disabled]="!motivo.trim() || motivo.trim().length < 5 || isSubmitting">
+          <span class="material-symbols-outlined spinner" *ngIf="isSubmitting">sync</span>
+          <span class="material-symbols-outlined" *ngIf="!isSubmitting">close</span>
+          {{ isSubmitting ? "Procesando..." : "Cancelar Turno" }}
+        </button>
+        <button 
+          class="btn btn-secondary btn-full-width" 
+          (click)="closeModal()" 
+          [disabled]="isSubmitting">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver
+        </button>
       </div>
     </div>
   </div>
