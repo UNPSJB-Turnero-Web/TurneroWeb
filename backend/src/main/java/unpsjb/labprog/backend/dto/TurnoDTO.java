@@ -49,4 +49,6 @@ public class TurnoDTO {
     // Nuevo campo de observaciones
     private String observaciones;
 
+    private Boolean asistio;
+
 }

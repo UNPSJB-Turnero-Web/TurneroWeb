@@ -1,0 +1,156 @@
+<div class="container-fluid mt-4">
+    <!-- HEADER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="banner-historial">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="header-text">
+                        <h1>Historial de Turnos</h1>
+                        <p>Consulta tu historial de atenciones médicas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filtros-card">
+                <div class="filtros-header">
+                    <span class="filtros-icon">🔍</span>
+                    <h3>Filtros de Búsqueda</h3>
+                </div>
+                <div class="filtros-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Fecha Desde</label>
+                                <input type="date" class="form-control-paciente" [(ngModel)]="filtro.fechaDesde"
+                                    (change)="aplicarFiltros()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Fecha Hasta</label>
+                                <input type="date" class="form-control-paciente" [(ngModel)]="filtro.fechaHasta"
+                                    (change)="aplicarFiltros()">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Estado</label>
+                                <select class="form-control-paciente" [(ngModel)]="filtro.estado"
+                                    (change)="aplicarFiltros()">
+                                    <option value="undefined">Todos</option>
+                                    <option value="PROGRAMADO">Programado</option>
+                                    <option value="CONFIRMADO">Confirmado</option>
+                                    <option value="CANCELADO">Cancelado</option>
+                                    <option value="COMPLETO">Completado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTA DE TURNOS -->
+    <div class="row">
+        <div class="col-12">
+            <div class="turnos-card">
+                <div class="turnos-header">
+                    <h3>
+                        <i class="fas fa-calendar-check"></i>
+                        Turnos Históricos
+                    </h3>
+                    <div class="turnos-info" *ngIf="totalElements > 0">
+                        {{ totalElements }} turnos encontrados
+                    </div>
+                </div>
+
+                <div class="turnos-body">
+                    <!-- Loading State -->
+                    <div class="loading-turnos" *ngIf="isLoading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Cargando historial...
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="no-turnos-content" *ngIf="!isLoading && turnos.length === 0">
+                        <i class="fas fa-calendar-times"></i>
+                        <h4>No hay turnos para mostrar</h4>
+                        <p>No se encontraron turnos con los filtros seleccionados.</p>
+                    </div>
+
+                    <!-- Turnos List -->
+                    <div class="turnos-grid" *ngIf="!isLoading && turnos.length > 0">
+                        <div class="turno-card clickable" *ngFor="let turno of turnos" (click)="abrirDetalle(turno)">
+                            <div class="turno-header" [ngClass]="getEstadoClass(turno.estado)">
+                                <div class="estado-badge">
+                                    {{ turno.estado }}
+                                </div>
+                                <div class="fecha-info">
+                                    {{ turno.fecha | date:'dd/MM/yyyy' }} - {{ turno.horaInicio }}
+                                </div>
+                            </div>
+
+                            <div class="turno-body">
+                                <div class="turno-detail">
+                                    <i class="fas fa-user-md"></i>
+                                    <strong>Médico: </strong> {{ turno.staffMedicoNombre }}
+                                </div>
+                                <div class="turno-detail">
+                                    <i class="fas fa-stethoscope"></i>
+                                    <strong>Especialidad: </strong> {{ turno.especialidadStaffMedico }}
+                                </div>
+                                <div class="turno-detail" *ngIf="turno.observaciones">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <strong>Observaciones: </strong>
+                                    <div class="observaciones-text">{{ turno.observaciones }}</div>
+                                </div>
+                                <div class="turno-footer">
+                                    <!-- Asistencia Badge - Lógica Opción 2 -->
+                                    <div class="asistencia-badge" [ngClass]="{
+         'asistio': turno.asistio !== false,
+         'no-asistio': turno.asistio === false
+       }">
+                                        <i
+                                            [class]="turno.asistio === false ? 'fas fa-times-circle' : 'fas fa-check-circle'"></i>
+                                        {{ turno.asistio === false ? 'No asistió' : 'Asistió' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paginación -->
+                    <div class="paginacion-controles" *ngIf="!isLoading && totalPages > 1">
+                        <button class="btn-paginacion" [disabled]="currentPage === 0"
+                            (click)="cambiarPagina(currentPage - 1)">
+                            <i class="fas fa-chevron-left"></i>
+                            Anterior
+                        </button>
+
+                        <div class="numeros-pagina">
+                            <button *ngFor="let num of getPaginasArray()" class="btn-numero-pagina"
+                                [class.active]="currentPage === num" (click)="cambiarPagina(num)">
+                                {{ num + 1 }}
+                            </button>
+                        </div>
+
+                        <button class="btn-paginacion" [disabled]="currentPage === totalPages - 1"
+                            (click)="cambiarPagina(currentPage + 1)">
+                            Siguiente
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

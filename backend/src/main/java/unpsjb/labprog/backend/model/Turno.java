@@ -43,13 +43,11 @@ public class Turno {
     @ManyToOne(optional = false)
     private Paciente paciente;
 
-    // Referencia al StaffMedico - puede ser null si el staff fue desvinculado del centro
+    // Referencia al StaffMedico - puede ser null si el staff fue desvinculado del
+    // centro
     // El constraint de FK permite SET NULL al eliminar el StaffMedico
     @ManyToOne(optional = true)
-    @JoinColumn(
-        name = "staff_medico_id",
-        foreignKey = @ForeignKey(name = "fk_turno_staff_medico")
-    )
+    @JoinColumn(name = "staff_medico_id", foreignKey = @ForeignKey(name = "fk_turno_staff_medico"))
     private StaffMedico staffMedico;
 
     // Referencia al médico que atendió - SIEMPRE se mantiene para auditoría
@@ -60,7 +58,8 @@ public class Turno {
     private Consultorio consultorio;
 
     // ==================== CAMPOS DE AUDITORÍA ====================
-    // Estos campos preservan información histórica del momento en que se creó el turno
+    // Estos campos preservan información histórica del momento en que se creó el
+    // turno
     // incluso si el StaffMedico es eliminado posteriormente
 
     @ManyToOne(optional = false)
@@ -71,7 +70,10 @@ public class Turno {
 
     // Nuevo campo para observaciones
     @Column(length = 1000)
-    private String observaciones;
+    private String observaciones; // Observaciones generales
+
+    @Column(name = "asistio")
+    private Boolean asistio; // null = no informado, true = asistió, false = no asistió
 
     public void confirmarTurno() {
         if (this.estado != EstadoTurno.PROGRAMADO) {

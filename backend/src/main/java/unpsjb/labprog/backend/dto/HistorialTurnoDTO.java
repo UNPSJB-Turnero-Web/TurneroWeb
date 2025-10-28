@@ -46,6 +46,8 @@ public class HistorialTurnoDTO {
 
     // Observaciones del turno
     private String observaciones;
+    private Boolean asistio; // null = pendiente/presente por defecto, true = asistió, false = no asistió
+    // private LocalDateTime fechaRegistroAsistencia;
 
     // Información de auditoría
     private String creadoPor;

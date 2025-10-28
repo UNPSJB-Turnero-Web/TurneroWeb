@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.service.ExportService;
@@ -279,6 +280,38 @@ public class TurnoPresenter {
             return Response.error(null, e.getMessage());
         } catch (Exception e) {
             return Response.error(null, "Error interno del servidor: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/asistencia")
+    public ResponseEntity<Object> marcarAsistencia(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Boolean> body,
+            HttpServletRequest request) {
+        try {
+            // Validar que el body contenga el campo asistio
+            if (!body.containsKey("asistio") || body.get("asistio") == null) {
+                return Response.error(null, "El campo 'asistio' es obligatorio y no puede ser nulo");
+            }
+
+            Boolean asistio = body.get("asistio");
+            String user = getCurrentUser(request);
+
+            TurnoDTO updated = service.marcarAsistencia(id, asistio, user);
+
+            String mensaje = asistio ? "Paciente marcado como PRESENTE correctamente"
+                    : "Paciente marcado como AUSENTE correctamente";
+
+            return Response.ok(updated, mensaje);
+
+        } catch (EntityNotFoundException e) {
+            return Response.error(null, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return Response.error(null, e.getMessage());
+        } catch (IllegalStateException e) {
+            return Response.error(null, e.getMessage());
+        } catch (Exception e) {
+            return Response.error(null, "Error al registrar asistencia: " + e.getMessage());
         }
     }
 
@@ -643,11 +676,6 @@ public class TurnoPresenter {
         }
     }
 
-    /**
-     * DEBUG - Ejecutar recordatorios manualmente
-     * curl -X POST http://localhost:8080/turno/ejecutar-recordatorios
-     * Nota: Los recordatorios ahora son manejados por RecordatorioService
-     */
     @PostMapping("/ejecutar-recordatorios")
     public ResponseEntity<Object> ejecutarRecordatoriosManual() {
         try {
