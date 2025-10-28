@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import unpsjb.labprog.backend.business.repository.AuditLogRepository;
 import unpsjb.labprog.backend.model.AuditLog;
+import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.Turno;
 
 /**
@@ -187,6 +188,33 @@ public class AuditLogService {
         return logTurnoAction(turno, "DELETE", performedBy,
                 turno.getEstado().name(), "DELETED",
                 turno, null, reason);
+    }
+
+    /**
+     * Registra el marcado de asistencia de un turno
+     */
+    @Transactional
+    public AuditLog logAsistenciaRegistrada(Turno turno, EstadoTurno previousStatus,
+            Boolean previousAsistio, String performedBy, String reason) {
+        // Crear mapa con valores anteriores
+        Map<String, Object> oldValues = new HashMap<>();
+        oldValues.put("estado", previousStatus.name());
+        oldValues.put("asistio", previousAsistio);
+
+        // Crear mapa con valores nuevos
+        Map<String, Object> newValues = new HashMap<>();
+        newValues.put("estado", turno.getEstado().name());
+        newValues.put("asistio", turno.getAsistio());
+
+        return logTurnoAction(
+                turno,
+                "MARK_ATTENDANCE",
+                performedBy,
+                previousStatus.name(),
+                turno.getEstado().name(),
+                oldValues,
+                newValues,
+                reason);
     }
 
     /**
@@ -1088,9 +1116,12 @@ public class AuditLogService {
     public AuditLog logGenericAction(String entityType, Long entityId, String action,
             String performedBy, String estadoAnterior, String estadoNuevo,
             Object oldValues, Object newValues, String reason) {
-        // TODO: BUG - Verificar serialización de newValues. Actualmente se guarda hashCode (ej. 29534) en lugar de JSON.
-        // Posibles causas: Columna DB es INTEGER en lugar de TEXT/JSON, o problema en mapeo JPA.
-        // Solución: Asegurar que columna sea TEXT y que ObjectMapper serialice correctamente el Map.
+        // TODO: BUG - Verificar serialización de newValues. Actualmente se guarda
+        // hashCode (ej. 29534) en lugar de JSON.
+        // Posibles causas: Columna DB es INTEGER en lugar de TEXT/JSON, o problema en
+        // mapeo JPA.
+        // Solución: Asegurar que columna sea TEXT y que ObjectMapper serialice
+        // correctamente el Map.
         try {
             String oldValuesJson = oldValues != null ? objectMapper.writeValueAsString(oldValues) : null;
             String newValuesJson = newValues != null ? objectMapper.writeValueAsString(newValues) : null;

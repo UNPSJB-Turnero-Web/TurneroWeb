@@ -1,13 +1,8 @@
 <div class="medico-dashboard">
   <!-- Floating Particles Background -->
   <div class="particles-bg">
-    <div
-      class="particle"
-      *ngFor="let p of particles; let i = index"
-      [style.left.px]="p.x"
-      [style.top.px]="p.y"
-      [style.animation-delay.s]="i * 0.2"
-    ></div>
+    <div class="particle" *ngFor="let p of particles; let i = index" [style.left.px]="p.x" [style.top.px]="p.y"
+      [style.animation-delay.s]="i * 0.2"></div>
   </div>
 
   <!-- Header Section -->
@@ -22,27 +17,21 @@
           <h1>¡Bienvenido/a, Doctor/a!</h1>
           <p class="doctor-info" *ngIf="medicoActual">
             <i class="fas fa-user me-2"></i>
-            <strong
-              >{{ medicoActual.nombre }} {{ medicoActual.apellido }}</strong
-            >
+            <strong>{{ medicoActual.nombre }} {{ medicoActual.apellido }}</strong>
           </p>
           <p class="doctor-info" *ngIf="medicoActual">
             <i class="fas fa-id-badge me-2"></i>
             Matrícula: {{ medicoActual.matricula }}
           </p>
           <p class="doctor-info" *ngIf="medicoActual">
-            <span
-              *ngIf="
+            <span *ngIf="
                 medicoActual.especialidades &&
                   medicoActual.especialidades.length > 0;
                 else especialidadUnica
-              "
-            >
+              ">
               <i class="fas fa-stethoscope me-2"></i>
               Especialidades:
-              <span
-                *ngFor="let esp of medicoActual.especialidades; let last = last"
-              >
+              <span *ngFor="let esp of medicoActual.especialidades; let last = last">
                 {{ esp.nombre }}<span *ngIf="!last">, </span>
               </span>
             </span>
@@ -150,10 +139,7 @@
         </div>
       </div>
 
-      <div
-        class="action-card action-notificaciones"
-        (click)="verNotificaciones()"
-      >
+      <div class="action-card action-notificaciones" (click)="verNotificaciones()">
         <div class="card-icon">
           <i class="fas fa-bell"></i>
         </div>
@@ -196,29 +182,18 @@
           <span>Mis Turnos Médicos</span>
         </div>
         <div class="filter-tabs">
-          <button
-            class="filter-tab"
-            [class.active]="currentFilter === 'upcoming'"
-            (click)="setTurnosFilter('upcoming')"
-          >
+          <button class="filter-tab" [class.active]="currentFilter === 'upcoming'"
+            (click)="setTurnosFilter('upcoming')">
             <i class="fas fa-clock"></i>
             <span>Próximos</span>
             <span class="filter-count">{{ getFilterCount("upcoming") }}</span>
           </button>
-          <button
-            class="filter-tab"
-            [class.active]="currentFilter === 'past'"
-            (click)="setTurnosFilter('past')"
-          >
+          <button class="filter-tab" [class.active]="currentFilter === 'past'" (click)="setTurnosFilter('past')">
             <i class="fas fa-history"></i>
             <span>Pasados</span>
             <span class="filter-count">{{ getFilterCount("past") }}</span>
           </button>
-          <button
-            class="filter-tab"
-            [class.active]="currentFilter === 'all'"
-            (click)="setTurnosFilter('all')"
-          >
+          <button class="filter-tab" [class.active]="currentFilter === 'all'" (click)="setTurnosFilter('all')">
             <i class="fas fa-list"></i>
             <span>Todos</span>
             <span class="filter-count">{{ getFilterCount("all") }}</span>
@@ -233,24 +208,15 @@
       </div>
 
       <!-- Empty state -->
-      <div
-        *ngIf="!isLoadingTurnos && filteredTurnos.length === 0"
-        class="empty-state"
-      >
+      <div *ngIf="!isLoadingTurnos && filteredTurnos.length === 0" class="empty-state">
         <i class="fas fa-calendar-times"></i>
         <h3>{{ getEmptyStateMessage() }}</h3>
         <p>No se encontraron turnos para mostrar.</p>
       </div>
 
       <!-- Turnos grid -->
-      <div
-        *ngIf="!isLoadingTurnos && filteredTurnos.length > 0"
-        class="turnos-grid"
-      >
-        <div
-          *ngFor="let turno of filteredTurnos; trackBy: trackByTurno"
-          class="turno-management-card"
-        >
+      <div *ngIf="!isLoadingTurnos && filteredTurnos.length > 0" class="turnos-grid">
+        <div *ngFor="let turno of filteredTurnos; trackBy: trackByTurno" class="turno-management-card">
           <!-- Date section -->
           <div class="turno-date-section">
             <div class="date-bubble">
@@ -285,10 +251,18 @@
             </div>
           </div>
 
-          <!-- Status -->
-          <div class="turno-status" [class]="turno.estado?.toUpperCase()">
-            <i [class]="getStatusIcon(turno.estado)"></i>
-            <span>{{ getStatusText(turno.estado) }}</span>
+          <!-- Attendance Toggle Switch -->
+          <div class="attendance-controls" *ngIf="isTurnoCompletado(turno)">
+
+            <div class="toggle-container">
+              <label class="toggle-label-text">{{ getAsistenciaLabel(turno) }}</label>
+
+              <label class="toggle-switch" [class.checked]="esPresente(turno)">
+                <input type="checkbox" [checked]="esPresente(turno)" (change)="toggleAsistencia(turno)"
+                  [disabled]="turno._cargando">
+                <span class="slider round"></span>
+              </label>
+            </div>
           </div>
         </div>
       </div>

@@ -22,10 +22,12 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityNotFoundException;
 import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.PacienteRepository;
 import unpsjb.labprog.backend.business.repository.StaffMedicoRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
+
 import unpsjb.labprog.backend.dto.CancelacionDataDTO;
 import unpsjb.labprog.backend.dto.HistorialTurnoDTO;
 import unpsjb.labprog.backend.dto.TurnoDTO;
@@ -644,8 +646,10 @@ public class TurnoService {
         System.out.println("Cancelación automática completada");
     }
 
-    // Nota: Los recordatorios automáticos ahora son manejados por RecordatorioService
-    // Los métodos de notificación individuales (confirmar, cancelar, etc.) permanecen aquí
+    // Nota: Los recordatorios automáticos ahora son manejados por
+    // RecordatorioService
+    // Los métodos de notificación individuales (confirmar, cancelar, etc.)
+    // permanecen aquí
 
     /**
      * Método para obtener configuración actual del sistema
@@ -731,6 +735,90 @@ public class TurnoService {
         }
 
         return getValidNextStates(turnoOpt.get().getEstado());
+    }
+
+    @Transactional
+    public TurnoDTO marcarAsistencia(Integer turnoId, Boolean asistio, String performedBy) {
+        // Validar que asistio no sea null
+        if (asistio == null) {
+            throw new IllegalArgumentException("El parámetro 'asistio' no puede ser nulo");
+        }
+
+        // Buscar el turno
+        Turno turno = repository.findById(turnoId)
+                .orElseThrow(() -> new EntityNotFoundException("Turno no encontrado con ID: " + turnoId));
+
+        // Guardar estado anterior ANTES de modificar
+        EstadoTurno previousStatus = turno.getEstado();
+        Boolean previousAsistio = turno.getAsistio();
+
+        // Validar que el turno pueda ser modificado
+        validarMarcadoAsistencia(turno);
+
+        // ============ OPCIÓN 2: LÓGICA SEPARADA ============
+        // Actualizar solo el campo de asistencia
+        turno.setAsistio(asistio);
+
+        // El estado NO cambia automáticamente
+        // Solo sincronizamos el estado AUSENTE para mantener compatibilidad
+        if (!asistio && (turno.getEstado() == EstadoTurno.CONFIRMADO ||
+                turno.getEstado() == EstadoTurno.PROGRAMADO)) {
+            // Si marca como no asistido, cambiar a AUSENTE (backward compatibility)
+            turno.setEstado(EstadoTurno.AUSENTE);
+        }
+        // Si asistió, el médico debe marcarlo como COMPLETO manualmente después
+        // NO lo marcamos automáticamente como COMPLETO aquí
+
+        // Guardar cambios
+        Turno savedTurno = repository.save(turno);
+
+        // Registrar auditoría con contexto correcto
+        try {
+            String mensaje = asistio ? "Paciente marcado como PRESENTE - Pendiente atención"
+                    : "Paciente marcado como AUSENTE";
+
+            auditLogService.logAsistenciaRegistrada(
+                    savedTurno,
+                    previousStatus,
+                    previousAsistio,
+                    performedBy,
+                    mensaje);
+        } catch (Exception e) {
+            System.err.println("Error al registrar auditoría de asistencia: " + e.getMessage());
+        }
+
+        return toDTO(savedTurno);
+    }
+
+    private void validarMarcadoAsistencia(Turno turno) {
+        // No se puede modificar turnos cancelados
+        if (turno.getEstado() == EstadoTurno.CANCELADO) {
+            throw new IllegalStateException("No se puede marcar asistencia en un turno cancelado");
+        }
+
+        // No se puede modificar turnos reagendados
+        if (turno.getEstado() == EstadoTurno.REAGENDADO) {
+            throw new IllegalStateException("No se puede marcar asistencia en un turno reagendado");
+        }
+
+        // Validar que sea un turno del día actual o pasado
+        LocalDate today = LocalDate.now();
+        if (turno.getFecha().isAfter(today)) {
+            throw new IllegalStateException(
+                    "No se puede marcar asistencia para un turno futuro. Fecha del turno: " +
+                            turno.getFecha());
+        }
+
+        // OPCIÓN 2: Permitir marcar asistencia en estados relevantes
+        // Incluimos AUSENTE y COMPLETO porque pueden necesitar corrección
+        if (turno.getEstado() != EstadoTurno.CONFIRMADO &&
+                turno.getEstado() != EstadoTurno.PROGRAMADO &&
+                turno.getEstado() != EstadoTurno.COMPLETO &&
+                turno.getEstado() != EstadoTurno.AUSENTE) {
+            throw new IllegalStateException(
+                    "Solo se puede marcar asistencia en turnos PROGRAMADOS, CONFIRMADOS, COMPLETOS o AUSENTES. Estado actual: "
+                            + turno.getEstado());
+        }
     }
 
     /**
@@ -2175,6 +2263,8 @@ public class TurnoService {
         dto.setHoraFin(turno.getHoraFin());
         dto.setEstado(turno.getEstado().name());
         dto.setObservaciones(turno.getObservaciones());
+        dto.setAsistio(turno.getAsistio());
+        // dto.setFechaRegistroAsistencia(turno.getFechaRegistroAsistencia());
 
         // Información del paciente
         if (turno.getPaciente() != null) {

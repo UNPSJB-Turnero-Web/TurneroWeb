@@ -7,6 +7,10 @@ export interface Turno {
     estado: string;                 // "PROGRAMADO", "CONFIRMADO", "CANCELADO"
     observaciones?: string;         // Observaciones del SobreTurno
 
+    // ⭐ CAMPOS DE ASISTENCIA (ACTUALIZADOS)
+    asistio?: boolean;             // Indica si el paciente asistió al turno
+
+
     // Campos de paciente
     pacienteId?: number;
     nombrePaciente?: string;

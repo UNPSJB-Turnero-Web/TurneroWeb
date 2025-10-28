@@ -34,6 +34,7 @@ export interface HistorialTurnoDTO {
   // Observaciones y estados
   observaciones: string;
   asistio?: boolean;
+  // fechaRegistroAsistencia?: string;
   performedBy: string;
   updatedAt: string;
   motivoCancelacion?: string;
