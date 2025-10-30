@@ -5,13 +5,13 @@
       <div class="banner-paciente-agenda">
         <div class="header-content">
           <div class="header-actions">
-            <button class="btn btn-header-glass" (click)="goBack()">
-              <i class="fas fa-arrow-left"></i>
+            <button class="btn btn-secondary btn-header-glass" (click)="goBack()">
+              <span class="material-symbols-outlined">arrow_back</span>
               Volver
             </button>
           </div>
           <div class="header-icon">
-            <i class="fas fa-calendar-check"></i>
+            <span class="material-symbols-outlined">event_available</span>
           </div>
           <div class="header-text">
             <h1>Turnos Disponibles</h1>
@@ -23,41 +23,41 @@
   </div>
 
 
-  <!-- FILTROS DE TURNOS -->
+    <!-- FILTROS DE TURNOS -->
   <div class="row mb-4">
     <div class="col-12">
-      <div class="filtros-card">
+      <div class="filtros-card card">
         <div class="filtros-header" *ngIf="esOperador">
-          <span class="filtros-icon">🔍</span>
+          <span class="material-symbols-outlined filtros-icon">filter_alt</span>
           <h3>Filtros Avanzados (Opcional)</h3>
         </div>
         <div class="filtros-header" *ngIf="!esOperador">
-          <span class="filtros-icon">🔍</span>
+          <span class="material-symbols-outlined filtros-icon">filter_alt</span>
           <h3>Filtros Adicionales (Opcional)</h3>
         </div>
         <div class="filtros-body">
           <!-- BUSCADOR DE TEXTO -->
           <div class="buscador-container">
             <div class="buscador-header">
-              <i class="fas fa-search"></i>
+              <span class="material-symbols-outlined">search</span>
               <h4>Búsqueda Rápida</h4>
             </div>
 
             <div class="buscador-input-group">
               <input
                 type="text"
-                class="form-control-busqueda"
+                class="form-control"
                 [(ngModel)]="textoBusqueda"
                 (input)="filtrarPorBusqueda()"
                 placeholder="Buscar por especialidad o nombre de médico..."
               />
               <button
                 *ngIf="textoBusqueda"
-                class="btn-limpiar-busqueda"
+                class="btn btn-secondary btn-limpiar-busqueda"
                 (click)="limpiarBusqueda()"
                 type="button"
               >
-                <i class="fas fa-times"></i>
+                <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
@@ -66,7 +66,7 @@
               *ngIf="textoBusqueda && textoBusqueda.length > 0"
             >
               <small>
-                <i class="fas fa-info-circle"></i>
+                <span class="material-symbols-outlined">info</span>
                 Busca por ejemplo: "Cardiología", "Dr. Pérez", "Traumatología"
               </small>
             </div>
@@ -82,21 +82,23 @@
                 <div class="step-number">1</div>
                 <h4>Centro de Atención (Opcional)</h4>
               </div>
-              <select
-                class="form-control-paciente"
-                formControlName="centroAtencion"
-                [disabled]="isLoadingCentros"
-              >
-                <option [ngValue]="null">Todos los centros</option>
-                <option
-                  *ngFor="let centro of centrosAtencion"
-                  [ngValue]="centro.id"
+              <div class="form-group">
+                <select
+                  class="form-control"
+                  formControlName="centroAtencion"
+                  [disabled]="isLoadingCentros"
                 >
-                  {{ centro.nombre }}
-                </option>
-              </select>
+                  <option [ngValue]="null">Todos los centros</option>
+                  <option
+                    *ngFor="let centro of centrosAtencion"
+                    [ngValue]="centro.id"
+                  >
+                    {{ centro.nombre }}
+                  </option>
+                </select>
+              </div>
               <div class="loading-indicator" *ngIf="isLoadingCentros">
-                <i class="fas fa-spinner fa-spin"></i> Cargando centros...
+                <span class="material-symbols-outlined">sync</span> Cargando centros...
               </div>
             </div>
 
@@ -106,21 +108,23 @@
                 <div class="step-number">2</div>
                 <h4>Especialidad (Opcional)</h4>
               </div>
-              <select
-                class="form-control-paciente"
-                formControlName="especialidad"
-                [disabled]="isLoadingEspecialidades"
-              >
-                <option value="">Seleccione una especialidad</option>
-                <option
-                  *ngFor="let especialidad of especialidades"
-                  [value]="especialidad.nombre"
+              <div class="form-group">
+                <select
+                  class="form-control"
+                  formControlName="especialidad"
+                  [disabled]="isLoadingEspecialidades"
                 >
-                  {{ especialidad.nombre }}
-                </option>
-              </select>
+                  <option value="">Seleccione una especialidad</option>
+                  <option
+                    *ngFor="let especialidad of especialidades"
+                    [value]="especialidad.nombre"
+                  >
+                    {{ especialidad.nombre }}
+                  </option>
+                </select>
+              </div>
               <div class="loading-indicator" *ngIf="isLoadingEspecialidades">
-                <i class="fas fa-spinner fa-spin"></i> Cargando especialidades...
+                <span class="material-symbols-outlined">sync</span> Cargando especialidades...
               </div>
             </div>
 
@@ -130,18 +134,20 @@
                 <div class="step-number">3</div>
                 <h4>Médico (Opcional)</h4>
               </div>
-              <select
-                class="form-control-paciente"
-                formControlName="medico"
-                [disabled]="isLoadingStaffMedicos"
-              >
-                <option [ngValue]="null">Todos los médicos</option>
-                <option *ngFor="let staff of staffMedicos" [ngValue]="staff.id">
-                  {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
-                </option>
-              </select>
+              <div class="form-group">
+                <select
+                  class="form-control"
+                  formControlName="medico"
+                  [disabled]="isLoadingStaffMedicos"
+                >
+                  <option [ngValue]="null">Todos los médicos</option>
+                  <option *ngFor="let staff of staffMedicos" [ngValue]="staff.id">
+                    {{ staff.medico?.nombre }} {{ staff.medico?.apellido }}
+                  </option>
+                </select>
+              </div>
               <div class="loading-indicator" *ngIf="isLoadingStaffMedicos">
-                <i class="fas fa-spinner fa-spin"></i> Cargando médicos...
+                <span class="material-symbols-outlined">sync</span> Cargando médicos...
               </div>
             </div>
             
@@ -149,7 +155,7 @@
             <div class="filtro-step filtro-preferencias" *ngIf="estaAutenticado">
               <div class="step-header">
                 <div class="step-number">
-                  <i class="fas fa-clock"></i>
+                  <span class="material-symbols-outlined">schedule</span>
                 </div>
                 <h4>Mis Horarios Preferidos</h4>
               </div>
@@ -168,13 +174,12 @@
                   </label>
                 </div>
                 <div class="filtro-preferencias-info">
-                  <i class="fas fa-info-circle"></i>
+                  <span class="material-symbols-outlined">info</span>
                   <small>
                     Filtra los turnos según los horarios que configuraste en 
                     <a routerLink="/paciente-preferencias" 
                        class="link-preferencias" 
-                       title="Ir a configurar horarios preferidos"
-                       style="cursor: pointer;">
+                       title="Ir a configurar horarios preferidos">
                       Mis Horarios Preferidos
                     </a>
                   </small>
@@ -195,28 +200,28 @@
             <h5>Filtros aplicados:</h5>
             <div class="filter-tags">
               <span class="filter-tag" *ngIf="centroAtencionSeleccionado">
-                <i class="fas fa-hospital"></i>
+                <span class="material-symbols-outlined">local_hospital</span>
                 {{ getCentroAtencionNombre(centroAtencionSeleccionado) }}
                 <button type="button" (click)="limpiarCentroAtencion()">
                   ×
                 </button>
               </span>
               <span class="filter-tag" *ngIf="especialidadSeleccionada">
-                <i class="fas fa-stethoscope"></i>
+                <span class="material-symbols-outlined">medical_services</span>
                 {{ especialidadSeleccionada }}
                 <button type="button" (click)="limpiarEspecialidad()">×</button>
               </span>
               <span class="filter-tag" *ngIf="staffMedicoSeleccionado">
-                <i class="fas fa-user-md"></i>
+                <span class="material-symbols-outlined">person</span>
                 {{ getStaffMedicoNombre(staffMedicoSeleccionado) }}
                 <button type="button" (click)="limpiarStaffMedico()">×</button>
               </span>
               <button
                 type="button"
-                class="btn btn-clear-filters"
+                class="btn btn-secondary btn-clear-filters"
                 (click)="limpiarTodosFiltros()"
               >
-                <i class="fas fa-times"></i> Limpiar filtros
+                <span class="material-symbols-outlined">close</span> Limpiar filtros
               </button>
             </div>
           </div>
@@ -225,21 +230,21 @@
           <div class="filtros-actions">
             <button
               type="button"
-              class="btn btn-paciente-primary"
+              class="btn btn-secondary btn-paciente-primary"
               (click)="aplicarFiltros()"
               [disabled]="isLoadingTurnos"
             >
-              <i class="fas fa-search"></i>
+              <span class="material-symbols-outlined">search</span>
               {{ isLoadingTurnos ? "Buscando..." : "Aplicar Filtros" }}
             </button>
 
             <button
               type="button"
-              class="btn btn-paciente-mapa"
+              class="btn btn-secondary btn-paciente-mapa"
               (click)="mostrarMapaCentros()"
               [disabled]="isLoadingCentros"
             >
-              <i class="fas fa-map-marked-alt"></i>
+              <span class="material-symbols-outlined">map</span>
               Ver Mapa de Centros Medicos
             </button>
           </div>
@@ -247,6 +252,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- TURNOS DISPONIBLES AGRUPADOS POR FECHA -->
   <div class="row" *ngIf="showCalendar">
@@ -317,7 +323,7 @@
       <!-- Info de paginación -->
       <div class="paginacion-info-header" *ngIf="getTotalPaginas() > 1">
         <div class="info-medicos">
-          <i class="fas fa-users"></i>
+          <span class="material-symbols-outlined">groups</span>
           <span>Mostrando médicos {{ getRangoPaginacion() }}</span>
         </div>
         <div class="info-pagina">
@@ -336,7 +342,7 @@
           (click)="toggleMedicoExpansion(medicoEntry.key)"
         >
           <div class="medico-avatar">
-            <i class="fas fa-user-md"></i>
+            <span class="material-symbols-outlined">person</span>
           </div>
 
           <div class="medico-info-compacta">
@@ -347,11 +353,11 @@
 
             <div class="medico-detalles">
               <span class="detalle-item">
-                <i class="fas fa-stethoscope"></i>
+                <span class="material-symbols-outlined">medical_services</span>
                 {{ getEspecialidadesUnicas(medicoEntry.value).join(", ") }}
               </span>
               <span class="detalle-item">
-                <i class="fas fa-map-marker-alt"></i>
+                <span class="material-symbols-outlined">location_on</span>
                 {{ getCentrosUnicos(medicoEntry.value).length }} centro(s)
               </span>
             </div>
@@ -369,17 +375,20 @@
               class="proximo-turno-badge"
               *ngIf="getProximoTurno(medicoEntry.value) as proximo"
             >
-              <i class="fas fa-clock"></i>
+              <span class="material-symbols-outlined">schedule</span>
               {{ proximo.fecha | date : "dd/MM" }} - {{ proximo.horaInicio }}
             </div>
           </div>
 
           <div class="expand-icon">
-            <i
-              class="fas"
-              [class.fa-chevron-down]="!isMedicoExpandido(medicoEntry.key)"
-              [class.fa-chevron-up]="isMedicoExpandido(medicoEntry.key)"
-            ></i>
+            <span
+              class="material-symbols-outlined"
+              *ngIf="!isMedicoExpandido(medicoEntry.key)"
+            >expand_more</span>
+            <span
+              class="material-symbols-outlined"
+              *ngIf="isMedicoExpandido(medicoEntry.key)"
+            >expand_less</span>
           </div>
         </div>
 
@@ -399,7 +408,7 @@
               (click)="toggleDiaExpansion(medicoEntry.key, fecha)"
             >
               <div class="dia-fecha">
-                <i class="fas fa-calendar-day"></i>
+                <span class="material-symbols-outlined">calendar_today</span>
                 <span class="fecha-texto">{{
                   fecha | date : "EEEE dd/MM/yyyy"
                 }}</span>
@@ -423,19 +432,20 @@
                     ) as primer
                   "
                 >
-                  <i class="fas fa-clock"></i>
+                  <span class="material-symbols-outlined">schedule</span>
                   {{ primer.horaInicio }}
                 </div>
               </div>
 
               <div class="dia-expand-icon">
-                <i
-                  class="fas"
-                  [class.fa-chevron-down]="
-                    !isDiaExpandido(medicoEntry.key, fecha)
-                  "
-                  [class.fa-chevron-up]="isDiaExpandido(medicoEntry.key, fecha)"
-                ></i>
+                <span
+                  class="material-symbols-outlined"
+                  *ngIf="!isDiaExpandido(medicoEntry.key, fecha)"
+                >expand_more</span>
+                <span
+                  class="material-symbols-outlined"
+                  *ngIf="isDiaExpandido(medicoEntry.key, fecha)"
+                >expand_less</span>
               </div>
             </div>
 
@@ -447,7 +457,7 @@
               <div class="turnos-grid-compacto">
                 <div
                   *ngFor="let slot of getSlotsPorDia(medicoEntry.value, fecha)"
-                  class="turno-chip"
+                  class="turno-chip btn"
                   [class.turno-ocupado]="
                     slot.ocupado || slotAfectadoPorExcepcion(slot)
                   "
@@ -455,28 +465,28 @@
                   (click)="seleccionarSlot(slot, $event)"
                 >
                   <div class="chip-hora">
-                    <i class="fas fa-clock"></i>
+                    <span class="material-symbols-outlined">schedule</span>
                     {{ slot.horaInicio }} - {{ slot.horaFin }}
                   </div>
                   <div class="chip-ubicacion">
-                    <i class="fas fa-door-open"></i>
+                    <span class="material-symbols-outlined">door_open</span>
                     {{ slot.consultorioNombre }}
                   </div>
                   <div class="chip-centro">
-                    <i class="fas fa-hospital"></i>
+                    <span class="material-symbols-outlined">local_hospital</span>
                     {{ slot.nombreCentro }}
                   </div>
                   <div
                     class="chip-estado"
                     *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)"
                   >
-                    <i class="fas fa-check-circle"></i>
+                    <span class="material-symbols-outlined">check_circle</span>
                   </div>
                   <div
                     class="chip-estado ocupado"
                     *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)"
                   >
-                    <i class="fas fa-lock"></i>
+                    <span class="material-symbols-outlined">lock</span>
                   </div>
                 </div>
               </div>
@@ -488,18 +498,18 @@
       <!-- CONTROLES DE PAGINACIÓN -->
       <div class="paginacion-controles" *ngIf="getTotalPaginas() > 1">
         <button
-          class="btn-paginacion"
+          class="btn btn-secondary btn-paginacion"
           [disabled]="paginaActual === 1"
           (click)="cambiarPagina(paginaActual - 1)"
         >
-          <i class="fas fa-chevron-left"></i>
+          <span class="material-symbols-outlined">arrow_back_ios</span>
           Anterior
         </button>
 
         <div class="numeros-pagina">
           <button
             *ngFor="let numPagina of getNumeroPaginas()"
-            class="btn-numero-pagina"
+            class="btn btn-secondary btn-numero-pagina"
             [class.active]="paginaActual === numPagina"
             (click)="cambiarPagina(numPagina)"
           >
@@ -508,12 +518,12 @@
         </div>
 
         <button
-          class="btn-paginacion"
+          class="btn btn-secondary btn-paginacion"
           [disabled]="paginaActual === getTotalPaginas()"
           (click)="cambiarPagina(paginaActual + 1)"
         >
           Siguiente
-          <i class="fas fa-chevron-right"></i>
+          <span class="material-symbols-outlined">arrow_forward_ios</span>
         </button>
       </div>
     </div>
@@ -575,37 +585,46 @@
 
 <!-- MODAL RESERVAR TURNO -->
 <div *ngIf="showBookingModal" class="modal-contextual">
-  <div class="modal-content paciente-modal" (click)="$event.stopPropagation()">
+  <div class="modal-content card" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h4><i class="fas fa-calendar-plus"></i> Reservar Turno</h4>
-      <button type="button" class="btn-close" (click)="closeBookingModal()">
-        ×
+      <h3 class="modal-title">
+        <span class="material-symbols-outlined">event_available</span>
+        Reservar Turno
+      </h3>
+      <button type="button" class="btn btn-close" (click)="closeBookingModal()">
+        <span class="material-symbols-outlined">close</span>
       </button>
     </div>
 
     <div class="modal-body">
       <div class="turno-details">
         <div class="detail-item">
+          <span class="material-symbols-outlined">medical_services</span>
           <strong>Especialidad:</strong>
           {{ selectedTurnoDisponible?.meta?.especialidad }}
         </div>
         <div class="detail-item">
+          <span class="material-symbols-outlined">person</span>
           <strong>Médico:</strong>
           {{ selectedTurnoDisponible?.meta?.medico }}
         </div>
         <div class="detail-item">
+          <span class="material-symbols-outlined">local_hospital</span>
           <strong>Centro:</strong>
           {{ selectedTurnoDisponible?.meta?.centro }}
         </div>
         <div class="detail-item">
+          <span class="material-symbols-outlined">door_open</span>
           <strong>Consultorio:</strong>
           {{ selectedTurnoDisponible?.meta?.consultorio }}
         </div>
         <div class="detail-item">
+          <span class="material-symbols-outlined">calendar_today</span>
           <strong>Fecha:</strong>
           {{ selectedTurnoDisponible?.start | date : "EEEE, dd MM yyyy" }}
         </div>
         <div class="detail-item">
+          <span class="material-symbols-outlined">schedule</span>
           <strong>Horario:</strong>
           {{ selectedTurnoDisponible?.start | date : "HH:mm" }} -
           {{ selectedTurnoDisponible?.end | date : "HH:mm" }}
@@ -613,10 +632,16 @@
       </div>
 
       <div class="confirmation-text">
-        <p *ngIf="estaAutenticado"><strong>¿Deseas reservar este turno?</strong></p>
+        <p *ngIf="estaAutenticado">
+          <span class="material-symbols-outlined">info</span>
+          <strong>¿Deseas reservar este turno?</strong>
+        </p>
         <p *ngIf="estaAutenticado">Una vez confirmado, el turno quedará reservado a tu nombre.</p>
         
-        <p *ngIf="!estaAutenticado"><strong>Inicia sesión para continuar</strong></p>
+        <p *ngIf="!estaAutenticado">
+          <span class="material-symbols-outlined">info</span>
+          <strong>Inicia sesión para continuar</strong>
+        </p>
         <p *ngIf="!estaAutenticado">
           Para reservar este turno necesitas iniciar sesión con tu cuenta de paciente. 
           El turno quedará guardado y podrás completar la reserva después del inicio de sesión.
@@ -627,7 +652,7 @@
     <div class="modal-footer">
       <button
         type="button"
-        class="btn btn-paciente-secondary"
+        class="btn btn-secondary"
         (click)="closeBookingModal()"
       >
         Cancelar
@@ -637,11 +662,11 @@
       <button
         *ngIf="estaAutenticado"
         type="button"
-        class="btn btn-paciente-primary"
+        class="btn btn-primary"
         (click)="confirmarReservaTurno()"
         [disabled]="isBooking"
       >
-        <i class="fas fa-check"></i>
+        <span class="material-symbols-outlined">check</span>
         {{ isBooking ? "Reservando..." : "Confirmar Reserva" }}
       </button>
       
@@ -649,10 +674,10 @@
       <button
         *ngIf="!estaAutenticado"
         type="button"
-        class="btn btn-paciente-primary"
+        class="btn btn-primary"
         (click)="seleccionarTurno(slotSeleccionado)"
       >
-        <i class="fas fa-sign-in-alt"></i>
+        <span class="material-symbols-outlined">login</span>
         Iniciar sesión para reservar
       </button>
     </div>

@@ -943,6 +943,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     };
 
     this.showBookingModal = true;
+    // Bloquear scroll del body cuando se abre el modal
+    document.body.style.overflow = 'hidden';
   }
 
   // Calcular posición del modal cerca del elemento clickeado
@@ -1183,6 +1185,8 @@ export class PacienteAgendaComponent implements OnInit, OnDestroy {
     this.selectedTurnoDisponible = null;
     this.slotSeleccionado = null;
     this.isBooking = false;
+    // Restaurar scroll del body cuando se cierra el modal
+    document.body.style.overflow = 'auto';
   }
 
   // Métodos de limpieza de filtros
