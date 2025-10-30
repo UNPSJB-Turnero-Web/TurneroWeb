@@ -169,6 +169,35 @@ export class PacienteNotificacionesComponent implements OnInit, OnDestroy {
       });
   }
 
+  eliminarNotificacion(notificacion: NotificacionDTO, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!confirm('¿Está seguro de que desea eliminar esta notificación?')) {
+      return;
+    }
+
+    const pacienteId = this.getPacienteId();
+    if (!pacienteId) {
+      return;
+    }
+
+    this.notificacionService.eliminarNotificacion(notificacion.id, pacienteId)
+      .subscribe({
+        next: () => {
+          // Remover de la lista local
+          this.notificaciones = this.notificaciones.filter(n => n.id !== notificacion.id);
+          this.totalElements--;
+          this.aplicarFiltros();
+        },
+        error: (error) => {
+          console.error('Error al eliminar notificación:', error);
+          alert('No se pudo eliminar la notificación. Intente nuevamente.');
+        }
+      });
+  }
+
   actualizarNotificaciones(): void {
     this.cargarNotificaciones();
     this.cargarContadorNoLeidas();
@@ -219,47 +248,9 @@ export class PacienteNotificacionesComponent implements OnInit, OnDestroy {
       'CANCELACION': 'cancel',
       'REAGENDAMIENTO': 'event_repeat',
       'NUEVO_TURNO': 'event_available',
-      'RECORDATORIO': 'notifications'
+      'RECORDATORIO': 'event_upcoming',
+      'INFO': 'info'
     };
     return iconos[tipo] || 'notifications';
-  }
-
-  obtenerColorTipo(tipo: string): string {
-    const colores: { [key: string]: string } = {
-      'CONFIRMACION': 'var(--color-success)',
-      'CANCELACION': 'var(--color-danger)',
-      'REAGENDAMIENTO': 'var(--color-warning)',
-      'NUEVO_TURNO': 'var(--color-info)',
-      'RECORDATORIO': 'var(--color-accent)'
-    };
-    return colores[tipo] || 'var(--color-text-secondary)';
-  }
-
-  eliminarNotificacion(notificacion: NotificacionDTO, event: Event): void {
-    event.stopPropagation();
-
-    if (!confirm('¿Está seguro de que desea eliminar esta notificación?')) {
-      return;
-    }
-
-    const pacienteId = this.getPacienteId();
-    if (!pacienteId) {
-      return;
-    }
-
-    this.notificacionService.eliminarNotificacion(notificacion.id, pacienteId)
-      .subscribe({
-        next: () => {
-          this.notificaciones = this.notificaciones.filter(n => n.id !== notificacion.id);
-          this.aplicarFiltros();
-          if (!notificacion.leida) {
-            this.cargarContadorNoLeidas();
-          }
-        },
-        error: (error) => {
-          console.error('Error al eliminar notificación:', error);
-          alert('Error al eliminar la notificación. Por favor, intente nuevamente.');
-        }
-      });
   }
 }
