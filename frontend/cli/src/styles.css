@@ -75,7 +75,7 @@
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 16px;
-  --border-radius-xl: 20px;
+  --border-radius-xl: 25px;
   --border-radius-full: 50%;
   
   /* Colores de texto y superficie */
@@ -169,9 +169,30 @@ a:hover {
   font-size: 20px;
 }
 
-/* Modal Backdrop z-index fix */
+/* Modal Backdrop con blur */
 .modal-backdrop {
-  z-index: 1051;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 1040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop.show {
+  opacity: 1;
+}
+
+/* Modal Content - Esquinas redondeadas */
+.modal-content {
+  border-radius: var(--border-radius-xl) !important;
+  overflow: hidden;
+  border: none;
 }
 
 /* ============================================
