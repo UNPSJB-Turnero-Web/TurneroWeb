@@ -291,6 +291,10 @@
     background: #dc3545;
 }
 
+.estado-ausente .estado-badge {
+    background: #ff3c00;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     .header-content {
