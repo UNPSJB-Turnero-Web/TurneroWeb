@@ -212,4 +212,54 @@ export class PacienteNotificacionesComponent implements OnInit, OnDestroy {
   obtenerClaseTipo(tipo: string): string {
     return this.notificacionService.obtenerClaseTipo(tipo);
   }
+
+  obtenerIconoTipo(tipo: string): string {
+    const iconos: { [key: string]: string } = {
+      'CONFIRMACION': 'check_circle',
+      'CANCELACION': 'cancel',
+      'REAGENDAMIENTO': 'event_repeat',
+      'NUEVO_TURNO': 'event_available',
+      'RECORDATORIO': 'notifications'
+    };
+    return iconos[tipo] || 'notifications';
+  }
+
+  obtenerColorTipo(tipo: string): string {
+    const colores: { [key: string]: string } = {
+      'CONFIRMACION': 'var(--color-success)',
+      'CANCELACION': 'var(--color-danger)',
+      'REAGENDAMIENTO': 'var(--color-warning)',
+      'NUEVO_TURNO': 'var(--color-info)',
+      'RECORDATORIO': 'var(--color-accent)'
+    };
+    return colores[tipo] || 'var(--color-text-secondary)';
+  }
+
+  eliminarNotificacion(notificacion: NotificacionDTO, event: Event): void {
+    event.stopPropagation();
+
+    if (!confirm('¿Está seguro de que desea eliminar esta notificación?')) {
+      return;
+    }
+
+    const pacienteId = this.getPacienteId();
+    if (!pacienteId) {
+      return;
+    }
+
+    this.notificacionService.eliminarNotificacion(notificacion.id, pacienteId)
+      .subscribe({
+        next: () => {
+          this.notificaciones = this.notificaciones.filter(n => n.id !== notificacion.id);
+          this.aplicarFiltros();
+          if (!notificacion.leida) {
+            this.cargarContadorNoLeidas();
+          }
+        },
+        error: (error) => {
+          console.error('Error al eliminar notificación:', error);
+          alert('Error al eliminar la notificación. Por favor, intente nuevamente.');
+        }
+      });
+  }
 }
