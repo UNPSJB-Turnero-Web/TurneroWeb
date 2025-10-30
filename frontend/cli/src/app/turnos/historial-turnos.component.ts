@@ -36,7 +36,9 @@ export class HistorialTurnosComponent implements OnInit {
   abrirDetalle(turno: HistorialTurnoDTO) {
     const modalRef = this.modalService.open(HistorialTurnoDetalleComponent, {
       size: 'lg',
-      centered: true
+      centered: true,
+      backdrop: true, // Permite cerrar clickeando fuera
+      keyboard: true  // Permite cerrar con ESC
     });
     modalRef.componentInstance.turno = turno;
   }

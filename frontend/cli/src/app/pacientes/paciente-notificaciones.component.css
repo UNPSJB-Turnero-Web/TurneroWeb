@@ -1,36 +1,251 @@
-.border-5 {
-  border-width: 5px !important;
+/* ============================================
+   NOTIFICACIONES - ESTILOS PRINCIPALES
+   ============================================ */
+
+/* Header Section */
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
 }
 
-.list-group-item {
+.header-section h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.badge-container {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+/* Filters Section */
+.filters-section {
+  background: color-mix(in srgb, var(--color-accent) 5%, white);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 20%, transparent);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.filters-section h5 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.filters-section h5 .material-symbols-outlined {
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+}
+
+.filters-section .form-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+/* Notificaciones List */
+.notificacion-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
   cursor: pointer;
+  position: relative;
+}
+
+.notificacion-item:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 5%, white) !important;
+  border-left-color: var(--color-accent);
+  transform: translateX(2px);
+}
+
+.notificacion-item.no-leida {
+  background-color: color-mix(in srgb, var(--color-info) 8%, white) !important;
+  border-left-color: var(--color-info);
+  font-weight: var(--font-weight-medium);
+}
+
+.notificacion-item.leida {
+  background-color: white !important;
+  opacity: 0.85;
+}
+
+.notificacion-item.leida:hover {
+  opacity: 1;
+}
+
+/* Notificacion Content */
+.notificacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-xs);
+}
+
+.notificacion-titulo {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.notificacion-titulo .material-symbols-outlined {
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+}
+
+.notificacion-mensaje {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+  line-height: 1.5;
+}
+
+.notificacion-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.notificacion-fecha {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.notificacion-fecha .material-symbols-outlined {
+  font-size: var(--font-size-base);
+}
+
+/* Action Buttons */
+.notificacion-acciones {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.notificacion-acciones .btn-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-sm);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   transition: all 0.2s ease;
 }
 
-.list-group-item:hover {
-  background-color: #f8f9fa !important;
+.notificacion-acciones .btn-sm .material-symbols-outlined {
+  font-size: var(--font-size-base);
 }
 
-.list-group-item.bg-light {
-  background-color: #f8f9fa !important;
-}
-
+/* Badges */
 .badge {
-  font-size: 0.75rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
-.text-success {
-  color: #198754 !important;
+.badge .material-symbols-outlined {
+  font-size: var(--font-size-base);
 }
-.text-danger {
-  color: #dc3545 !important;
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  gap: var(--space-md);
 }
-.text-warning {
-  color: #fd7e14 !important;
+
+.loading-icon {
+  font-size: 48px;
+  color: var(--color-accent);
+  animation: spin 1s linear infinite;
 }
-.text-info {
-  color: #0dcaf0 !important;
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
-.text-primary {
-  color: #0d6efd !important;
+
+.loading-text {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+/* Empty State */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  gap: var(--space-md);
+  text-align: center;
+}
+
+.estado-vacio-icon {
+  font-size: 64px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.estado-vacio h4 {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.estado-vacio p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Pagination */
+.pagination {
+  margin-top: var(--space-lg);
+  margin-bottom: 0;
+}
+
+.pagination .page-link {
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 10%, white);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--color-text-muted);
+  border-color: color-mix(in srgb, var(--color-text-muted) 30%, transparent);
 }
