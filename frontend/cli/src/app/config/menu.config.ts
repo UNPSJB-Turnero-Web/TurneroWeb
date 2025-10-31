@@ -86,7 +86,7 @@ export const MENU_CONFIG: MenuSection[] = [
       {
         label: 'Lista de Espera',
         route: '/lista-espera-form',
-        icon: 'fa-clock',
+        icon: 'schedule',
         description: 'Agregarme a lista de espera de pacientes'
       }
     ]
@@ -198,7 +198,7 @@ export const MENU_CONFIG: MenuSection[] = [
       {
         label: 'Estadísticas Lista Espera', // 👈 NUEVO
         route: '/lista-espera-estadisticas',
-        icon: 'fa-chart-line',
+        icon: 'trending_up',
         description: 'Métricas y análisis de lista de espera'
       }
     ]
@@ -285,7 +285,7 @@ export const MENU_CONFIG: MenuSection[] = [
       {
         label: 'Estadísticas Lista Espera',
         route: '/lista-espera-estadisticas',
-        icon: 'fa-chart-line',
+        icon: 'trending_up',
         description: 'Métricas y análisis de lista de espera'
       },
       {
