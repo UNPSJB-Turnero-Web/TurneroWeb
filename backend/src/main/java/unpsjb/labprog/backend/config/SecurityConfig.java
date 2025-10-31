@@ -199,7 +199,6 @@ public class SecurityConfig {
                                 // Rutas que requieren OperadorGuard en el frontend
                                 .requestMatchers("/operador-dashboard/**").hasRole("OPERADOR")
                                 .requestMatchers("/operador-agenda/**").hasRole("OPERADOR")
-                                .requestMatchers("/operadores/**").hasRole("OPERADOR")
                                 .requestMatchers("/operador-perfil/**").hasRole("OPERADOR")
 
                                 // ========== ENDPOINTS ADMIN + OPERADOR ==========
@@ -214,6 +213,8 @@ public class SecurityConfig {
                                 .requestMatchers("/staffMedico/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
                                 .requestMatchers("/disponibilidades-medico/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
                                 .requestMatchers("/esquema-turno/**").hasAnyRole("ADMINISTRADOR", "OPERADOR")
+                                .requestMatchers("/operadores/**").hasAnyRole("OPERADOR", "ADMINISTRADOR")
+
 
                                 // ========== NUEVA REGLA PARA CONFIGURACIONES ==========
                                 // Rutas para la pantalla de configuración (/rest/config/**)
