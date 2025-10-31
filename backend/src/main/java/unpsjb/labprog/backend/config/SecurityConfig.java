@@ -175,6 +175,8 @@ public class SecurityConfig {
                                 .requestMatchers("/especialidades/**").hasRole("ADMINISTRADOR")
                                 .requestMatchers("/admin-dashboard/**").hasRole("ADMINISTRADOR")
                                 .requestMatchers("/admin-perfil/**").hasRole("ADMINISTRADOR")
+                                // Gestión de administradores (solo admin puede gestionar otros admins)
+                                .requestMatchers("/api/admins/**").hasRole("ADMINISTRADOR")
                                 // Creación de operadores (solo admin puede crear otros operadores)
                                 .requestMatchers("/operadores/create-by-admin").hasRole("ADMINISTRADOR")
 

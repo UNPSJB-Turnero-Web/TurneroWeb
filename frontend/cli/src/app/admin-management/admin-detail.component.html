@@ -1,0 +1,29 @@
+<div class="admin-detail container">
+  <h3>{{ route.snapshot.params['id'] ? 'Editar Administrador' : 'Crear Administrador' }}</h3>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="mb-3">
+      <label class="form-label">Nombre</label>
+      <input class="form-control" formControlName="nombre" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Apellido</label>
+      <input class="form-control" formControlName="apellido" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input class="form-control" formControlName="email" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">DNI</label>
+      <input class="form-control" formControlName="dni" />
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Teléfono</label>
+      <input class="form-control" formControlName="telefono" />
+    </div>
+
+    <button class="btn btn-primary" type="submit" [disabled]="isSubmitting">Guardar</button>
+    <button class="btn btn-secondary ms-2" type="button" (click)="router.navigate(['/admin/users'])">Cancelar</button>
+  </form>
+</div>
