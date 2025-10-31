@@ -283,6 +283,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Operadores',
       },
       {
+        label: 'Gestionar Admins',
+        route: '/admin/users',
+        icon: 'admin_panel_settings',
+        description: 'Crear y administrar cuentas de administrador'
+      },
+      {
         label: 'Estadísticas Lista Espera',
         route: '/lista-espera-estadisticas',
         icon: 'trending_up',

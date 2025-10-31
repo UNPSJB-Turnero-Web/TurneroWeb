@@ -58,6 +58,8 @@ import { AdminPerfilComponent } from "./admin/admin-perfil.component";
 import { TokenStatusComponent } from "./components/token-status.component";
 import { AdminDashboardComponent } from "./admin/admin-dashboard.component";
 import { AdminConfigComponent } from "./admin/admin-config.component";
+import { AdminListComponent } from "./admin-management/admin-list.component";
+import { AdminDetailComponent } from "./admin-management/admin-detail.component";
 import { HistorialTurnosComponent } from "./turnos/historial-turnos.component";
 import { ListaEsperaComponent } from "./lista-espera/lista-espera.component";
 import { PreferenciasPacienteComponent } from "./pacientes/preferencias-paciente/preferencias-paciente.component";
@@ -67,7 +69,8 @@ import { ListaEsperaEstadisticasComponent } from "./lista-espera/lista-espera-es
 export const routes: Routes = [
   { path: "", component: HomeComponent },
 
-  // Ruta puente para deep linking (enlaces desde email)
+  // Ruta puente para deep linking (enlimport { ListaEsperaFormComponent } from "./lista-espera/lista-espera-form.component";
+  //aces desde email)
   {
     path: "link-verificacion",
     component: DeepLinkBridgeComponent
@@ -380,6 +383,22 @@ export const routes: Routes = [
     path: "admin-dashboard",
     component: AdminDashboardComponent,
     canActivate: [AdminGuard],
+  },
+  // Admin management (admins list / create / edit)
+  {
+    path: "admin/users",
+    component: AdminListComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: "admin/users/new",
+    component: AdminDetailComponent,
+    canActivate: [AdminGuard]
+  },
+  {
+    path: "admin/users/:id",
+    component: AdminDetailComponent,
+    canActivate: [AdminGuard]
   },
   {
     path: "config",  // O "admin-config" si prefieres algo más descriptivo

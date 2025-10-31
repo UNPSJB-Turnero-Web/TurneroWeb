@@ -1,0 +1,32 @@
+<div class="admin-list">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Administradores</h3>
+    <button class="btn btn-primary" (click)="goToCreate()">Crear Administrador</button>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>DNI</th>
+        <th>Teléfono</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let a of admins">
+        <td>{{ a.nombre }} {{ a.apellido }}</td>
+        <td>{{ a.email }}</td>
+        <td>{{ a.dni }}</td>
+        <td>{{ a.telefono }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" (click)="goToEdit(a.id)">Editar</button>
+        </td>
+      </tr>
+      <tr *ngIf="admins.length === 0">
+        <td colspan="5">No hay administradores registrados.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
