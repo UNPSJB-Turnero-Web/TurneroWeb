@@ -195,6 +195,10 @@ export class ListaEsperaComponent implements OnInit {
         const modalRef = this.modalService.open(ListaEsperaFormComponent, { size: 'lg' });
         // no data => nuevo
         const comp = modalRef.componentInstance as any;
+        
+        // 🎭 IMPORTANTE: Setear contexto de operador para habilitar búsqueda de pacientes
+        comp.operatorContext = true;
+        
         // Suscribir eventos
         comp.save.subscribe((solicitud: ListaEspera) => {
             // crear mediante servicio
@@ -224,6 +228,9 @@ export class ListaEsperaComponent implements OnInit {
         const modalRef = this.modalService.open(ListaEsperaFormComponent, { size: 'lg' });
         const comp = modalRef.componentInstance as any;
         comp.data = solicitud;
+        
+        // 🎭 IMPORTANTE: Setear contexto de operador para habilitar búsqueda (si es necesario editar paciente)
+        comp.operatorContext = true;
 
         comp.save.subscribe((updated: ListaEspera) => {
             this.listaEsperaService.update(solicitud.id!, updated).subscribe({

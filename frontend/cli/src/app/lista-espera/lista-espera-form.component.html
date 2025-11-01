@@ -61,12 +61,14 @@
                 </div>
             </div>
 
-            <!-- Modo paciente (deshabilitado) -->
-            <select class="form-control" id="pacienteId" formControlName="pacienteId" *ngIf="isPatientMode">
-                <option *ngFor="let paciente of pacientes" [value]="paciente.id">
-                    {{ paciente.nombre }} {{ paciente.apellido }} - DNI: {{ paciente.dni || 'No disponible' }}
-                </option>
-            </select>
+            <!-- Modo paciente (deshabilitado y autocompleto) -->
+            <div *ngIf="isPatientMode">
+                <select class="form-control" id="pacienteId" formControlName="pacienteId">
+                    <option *ngFor="let paciente of pacientes" [value]="paciente.id">
+                        {{ paciente.nombre }} {{ paciente.apellido }} - DNI: {{ paciente.dni || 'No disponible' }}
+                    </option>
+                </select>
+            </div>
 
             <small class="form-text text-muted" *ngIf="!isPatientMode && !pacienteSeleccionado">
                 Escribe al menos 2 caracteres para buscar

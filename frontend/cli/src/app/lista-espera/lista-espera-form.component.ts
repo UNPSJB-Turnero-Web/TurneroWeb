@@ -23,6 +23,8 @@ import { ModalService } from '../modal/modal.service';
 })
 export class ListaEsperaFormComponent implements OnInit {
   @Input() data?: ListaEspera | null;
+  @Input() operatorContext: boolean = false;
+
   @Output() save = new EventEmitter<ListaEspera>();
   @Output() cancel = new EventEmitter<void>();
 
@@ -32,7 +34,29 @@ export class ListaEsperaFormComponent implements OnInit {
   centros: any[] = [];
   medicos: any[] = [];
   limite: number = 0;
-  isPatientMode: boolean = false; // Nueva propiedad para detectar modo paciente
+  
+  /**
+   * 🔐 isPatientMode: Determina si el campo paciente debe estar bloqueado y autocompleto.
+   * 
+   * Se calcula en base a dos factores:
+   * 
+   * - TRUE (campo bloqueado) cuando:
+   *   1. NO está en contexto de operador (operatorContext === false) Y
+   *   2. El usuario tiene paciente asociado (getCurrentPatientId() !== null) Y
+   *   3. NO se está editando una solicitud existente (data === null)
+   * 
+   * - FALSE (campo de búsqueda) cuando:
+   *   1. Está en contexto de operador (operatorContext === true) O
+   *   2. El usuario NO tiene paciente asociado O
+   *   3. Se está editando una solicitud existente
+   * 
+   * Casos de uso:
+   * - Panel Paciente + Paciente asociado → Bloqueado
+   * - Panel Paciente + Admin/Médico con paciente → Bloqueado
+   * - Panel Operador (cualquier usuario) → Búsqueda habilitada
+   */
+  isPatientMode: boolean = false;
+  
   nivelesUrgencia = [
     { value: 'BAJA', label: 'Baja' },
     { value: 'MEDIA', label: 'Media' },
@@ -80,9 +104,25 @@ export class ListaEsperaFormComponent implements OnInit {
       return;
     }
 
-    // Detectar si es modo paciente: asumiendo que AuthService tiene un método hasRole o similar,
-    // y que solo en modo creación (sin data) para pacientes
-    this.isPatientMode = (this.userContextService?.getPrimaryRole() === Role.PACIENTE) && !this.data;
+    // 🔧 FIX: Determinar modo paciente basado en el contexto de uso.
+    // 
+    // Si operatorContext === true → El formulario se abrió desde el panel de operador
+    //   → Campo de búsqueda habilitado (puede buscar pacientes)
+    // 
+    // Si operatorContext === false (default) → Panel de paciente
+    //   → Campo bloqueado si tiene paciente asociado
+    const pacienteId = this.authService.getCurrentPatientId();
+    
+    // Modo paciente SI:
+    // 1. NO está en contexto de operador Y
+    // 2. El usuario tiene paciente asociado (pacienteId existe) Y
+    // 3. NO se está editando una solicitud existente (data === null/undefined)
+    this.isPatientMode = (
+      !this.operatorContext &&        // NO es contexto de operador
+      pacienteId !== null &&           // Tiene paciente asociado
+      !this.data                       // NO está editando
+    );
+
 
     // ✅ Inicializar el formulario correctamente aquí, según el modo
     this.initForm();
