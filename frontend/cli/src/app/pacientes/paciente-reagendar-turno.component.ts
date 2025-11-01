@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { TurnoService } from '../turnos/turno.service';
 import { Turno } from '../turnos/turno';
 import { DataPackage } from '../data.package';
@@ -28,6 +29,41 @@ interface SlotDisponible {
   imports: [CommonModule, FormsModule],
   templateUrl: './paciente-reagendar-turno.component.html', 
   styleUrl: './paciente-reagendar-turno.component.css',
+  animations: [
+    trigger('slideDown', [
+      state('collapsed', style({
+        height: '0',
+        opacity: '0',
+        overflow: 'hidden'
+      })),
+      state('expanded', style({
+        height: '*',
+        opacity: '1',
+        overflow: 'visible'
+      })),
+      transition('collapsed <=> expanded', [
+        animate('300ms ease-in-out')
+      ])
+    ]),
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0 }))
+      ])
+    ]),
+    trigger('slideUp', [
+      transition(':enter', [
+        style({ transform: 'translateY(50px)', opacity: 0 }),
+        animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ transform: 'translateY(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ transform: 'translateY(30px)', opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class PacienteReagendarTurnoComponent implements OnInit {
   turnoId: number = 0;
@@ -40,6 +76,8 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   isLoadingSlots: boolean = false;
   errorMessage: string = '';
   motivoReagendamiento: string = '';
+  fechaExpandida: string | null = null; // Para controlar el acordeón
+  mostrarModal: boolean = false; // Para controlar el modal
 
   constructor(
     private router: Router,
@@ -145,6 +183,11 @@ export class PacienteReagendarTurnoComponent implements OnInit {
     // Ordenar fechas y horarios dentro de cada fecha
     this.fechasOrdenadas = Object.keys(this.slotsPorFecha).sort();
     
+    // Expandir automáticamente el primer día si hay slots disponibles
+    if (this.fechasOrdenadas.length > 0) {
+      this.fechaExpandida = this.fechasOrdenadas[0];
+    }
+    
     // Ordenar por médico y luego por horarios dentro de cada fecha
     Object.keys(this.slotsPorFecha).forEach(fecha => {
       this.slotsPorFecha[fecha].sort((a, b) => {
@@ -174,9 +217,13 @@ export class PacienteReagendarTurnoComponent implements OnInit {
   }
 
   seleccionarSlot(slot: SlotDisponible) {
-    // Verificar si el slot específico está afectado por una excepción usando el servicio centralizado
+    // Este método ya no se usa, se reemplaza por abrirModalConfirmacion
+    this.abrirModalConfirmacion(slot);
+  }
+
+  abrirModalConfirmacion(slot: SlotDisponible) {
+    // Verificar si el slot específico está afectado por una excepción
     if (this.slotAfectadoPorExcepcion(slot)) {
-      // Obtener información detallada de la afectación usando métodos centralizados
       const informacion = this.diasExcepcionalesService.getInformacionAfectacionSlot(slot);
       if (informacion) {
         alert(`Este horario no está disponible por ${informacion.tipo}. Por favor, selecciona otro horario.`);
@@ -186,13 +233,24 @@ export class PacienteReagendarTurnoComponent implements OnInit {
       return;
     }
 
+    // Seleccionar slot y abrir modal
     this.slotSeleccionado = slot;
+    this.mostrarModal = true;
+    this.motivoReagendamiento = ''; // Limpiar motivo anterior
     console.log('Slot seleccionado:', slot);
   }
 
+  cerrarModal() {
+    this.mostrarModal = false;
+    // No limpiamos slotSeleccionado inmediatamente para mantener la referencia
+    setTimeout(() => {
+      this.slotSeleccionado = null;
+      this.motivoReagendamiento = '';
+    }, 300); // Esperar a que termine la animación
+  }
+
   cancelarSeleccion() {
-    this.slotSeleccionado = null;
-    this.motivoReagendamiento = '';
+    this.cerrarModal();
   }
 
   confirmarReagendamiento() {
@@ -224,6 +282,9 @@ export class PacienteReagendarTurnoComponent implements OnInit {
         console.log('Turno reagendado exitosamente:', response);
         this.isProcessing = false;
         
+        // Cerrar modal
+        this.mostrarModal = false;
+        
         alert(`Turno reagendado exitosamente!\n\nNueva fecha: ${this.formatDate(this.slotSeleccionado!.fecha)}\nHorario: ${this.slotSeleccionado!.horaInicio} - ${this.slotSeleccionado!.horaFin}\nMédico: ${this.slotSeleccionado!.staffMedicoNombre} ${this.slotSeleccionado!.staffMedicoApellido}`);
         
         this.router.navigate(['/paciente-dashboard']);
@@ -237,6 +298,8 @@ export class PacienteReagendarTurnoComponent implements OnInit {
           errorMessage += ': ' + error.error.status_text;
         }
         this.errorMessage = errorMessage;
+        
+        // Mantener el modal abierto en caso de error para que el usuario pueda reintentar
       }
     });
   }
@@ -281,6 +344,15 @@ export class PacienteReagendarTurnoComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/paciente-dashboard']);
+  }
+
+  // Método para controlar el acordeón de fechas
+  toggleFecha(fecha: string) {
+    if (this.fechaExpandida === fecha) {
+      this.fechaExpandida = null; // Colapsar si ya está expandida
+    } else {
+      this.fechaExpandida = fecha; // Expandir la fecha seleccionada
+    }
   }
 
   // Métodos para manejo de días excepcionales
