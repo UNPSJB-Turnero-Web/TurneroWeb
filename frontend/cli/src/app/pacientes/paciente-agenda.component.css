@@ -31,7 +31,7 @@
 }
 
 .header-icon {
-  font-size: 3rem;
+  font-size: 2rem;
   color: var(--text-on-accent);
   opacity: 1;
   display: flex;
@@ -633,119 +633,158 @@
   font-size: var(--font-size-base);
 }
 
+/* ========================================
+   SLOT BUTTON (CHIP STYLE - del reagendamiento)
+   ======================================== */
+
 .slot-card {
-  background: var(--color-surface);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-lg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
-  box-shadow: var(--box-shadow-soft);
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .slot-card:hover {
   border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.15);
   transform: translateY(-2px);
-  box-shadow: var(--box-shadow-md);
 }
 
 .slot-card.selected {
   border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  background: linear-gradient(135deg, #f8f5ff 0%, #ffffff 100%);
+  box-shadow: 0 4px 16px rgba(98, 0, 234, 0.2);
 }
 
 .slot-card.slot-ocupado {
-  border-color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 3%, transparent);
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
+  background: #f5f5f5;
+  border-color: #ccc;
 }
 
 .slot-card.slot-ocupado:hover {
   transform: none;
-  box-shadow: var(--box-shadow-soft);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
+
+/* ========================================
+   SLOT CONTENT LAYOUT
+   ======================================== */
 
 .slot-time {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.slot-time .material-symbols-outlined {
+  font-size: 1.5rem;
   color: var(--color-accent);
-  margin-bottom: var(--space-sm);
 }
 
 .slot-medico {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
   color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.slot-medico .material-symbols-outlined {
+  font-size: 1.1rem;
+  color: #757575;
 }
 
 .slot-especialidad {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: 0.9rem;
+}
+
+.slot-especialidad .material-symbols-outlined {
+  font-size: 1.1rem;
+  color: #757575;
 }
 
 .slot-location {
-  margin-bottom: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: var(--space-sm);
+  border-left: 2px solid #e0e0e0;
 }
 
 .location-line {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
+  gap: 0.5rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
 }
+
+.location-line .material-symbols-outlined {
+  font-size: 1.1rem;
+  color: #757575;
+}
+
+/* ========================================
+   SLOT STATUS BADGES
+   ======================================== */
 
 .slot-status {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--border-radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-}
-
-.slot-status:not(.disponible) {
-  background: var(--color-danger);
-  color: var(--text-on-accent);
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: var(--space-xs);
+  background: #ffebee;
+  color: #c62828;
 }
 
 .slot-status.disponible {
-  background: var(--color-success);
-  color: var(--text-on-accent);
+  background: #e8f5e9;
+  color: #2e7d32;
 }
+
+.slot-status .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+/* ========================================
+   SELECTION INDICATOR
+   ======================================== */
 
 .slot-check {
   position: absolute;
   top: var(--space-sm);
   right: var(--space-sm);
   color: var(--color-accent);
-  font-size: var(--font-size-xl);
-  background: var(--color-surface);
-  border-radius: var(--border-radius-full);
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--box-shadow-md);
+  background: white;
+  border-radius: 50%;
+  padding: 0.25rem;
+  box-shadow: 0 2px 8px rgba(98, 0, 234, 0.3);
+}
+
+.slot-check .material-symbols-outlined {
+  font-size: 1.75rem;
+  font-variation-settings: 'FILL' 1;
 }
 
 /* NO TURNOS */
@@ -1581,99 +1620,110 @@
 .turnos-grid-compacto {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
+
+/* ========================================
+   TURNO CHIP (EXACTO A .slot-btn DE REAGENDAR)
+   ======================================== */
 
 .turno-chip {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+   position: relative;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-sm);
   padding: var(--space-md);
-  background: var(--color-surface);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius-md);
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
-.turno-chip:hover {
+.turno-chip:hover:not(.turno-ocupado) {
   border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(98, 0, 234, 0.15);
   transform: translateY(-2px);
-  box-shadow: var(--box-shadow-md);
 }
 
 .turno-chip.turno-seleccionado {
   border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 20%, transparent);
+  background: linear-gradient(135deg, #f8f5ff 0%, #ffffff 100%);
+  box-shadow: 0 4px 16px rgba(98, 0, 234, 0.2);
 }
 
 .turno-chip.turno-ocupado {
-  opacity: 0.5;
   cursor: not-allowed;
-  border-color: var(--color-danger);
-  background: color-mix(in srgb, var(--color-danger) 3%, transparent);
+  opacity: 0.6;
+  background: #f5f5f5;
 }
 
-.turno-chip.turno-ocupado:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.chip-fecha,
-.chip-hora,
-.chip-ubicacion,
-.chip-centro {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--font-size-sm);
-  color: var(--text-main);
-}
-
-.chip-fecha {
-  grid-column: 1 / -1;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-accent);
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--border-color);
-}
+/* ========================================
+   CHIP CONTENT (EXACTO A .slot-btn DE REAGENDAR)
+   ======================================== */
 
 .chip-hora {
-  font-weight: var(--font-weight-semibold);
-}
-
-.chip-fecha .material-symbols-outlined,
-.chip-hora .material-symbols-outlined,
-.chip-ubicacion .material-symbols-outlined,
-.chip-centro .material-symbols-outlined {
-  color: var(--color-accent);
-  font-size: 1.25rem;
-}
-
-.chip-estado {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  width: 32px;
-  height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--border-radius-full);
-  background: transparent;
-  color: var(--color-success);
-  font-size: var(--font-size-base);
+  gap: var(--space-sm);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chip-hora .material-symbols-outlined {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+}
+
+/* Ubicación agrupada (exacto a .slot-location-info) */
+.chip-location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: var(--space-sm);
+  border-left: 2px solid #e0e0e0;
+}
+
+.chip-location-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.chip-location-item .material-symbols-outlined {
+  font-size: 1.1rem;
+  color: #757575;
+}
+
+/* ========================================
+   CHIP ESTADO (EXACTO A .slot-status-badge)
+   ======================================== */
+
+.chip-estado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: var(--space-xs);
+  background: #ffebee;
+  color: #c62828;
+}
+
+.chip-estado.disponible {
+  background: #e8f5e9;
+  color: #2e7d32;
 }
 
 .chip-estado .material-symbols-outlined {
-  font-size: 1.25rem;
-}
-
-.chip-estado.ocupado {
-  background: transparent;
-  color: var(--color-danger);
+  font-size: 1.1rem;
 }
 
 /* RESPONSIVE PARA VISTA COMPACTA */
