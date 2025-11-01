@@ -24,13 +24,31 @@
   gap: var(--space-md);
 }
 
+/* 🔧 FIX: Dimensiones fijas para evitar distorsión oval en primer render */
 .brand-icon {
+  /* Tamaño fijo para círculo perfecto desde el inicio */
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
+  
+  /* Centrado del ícono */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Estilos visuales */
   font-size: 48px !important;
   color: var(--text-on-accent);
   background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
-  padding: var(--space-md);
   border-radius: 50%;
   box-shadow: var(--box-shadow-soft);
+  
+  /* Sin transiciones de forma/tamaño para evitar glitches */
+  transition: box-shadow 0.2s ease, background 0.3s ease;
+  
+  /* Previene deformación por contenido */
+  flex-shrink: 0;
 }
 
 .brand-logo h1 {
@@ -287,6 +305,14 @@ asl-google-signin-button {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .brand-icon {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    font-size: 36px !important;
+  }
+
   .brand-logo h1 {
     font-size: 28px;
   }
