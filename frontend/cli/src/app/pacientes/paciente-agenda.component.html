@@ -457,7 +457,7 @@
               <div class="turnos-grid-compacto">
                 <div
                   *ngFor="let slot of getSlotsPorDia(medicoEntry.value, fecha)"
-                  class="turno-chip btn"
+                  class="turno-chip"
                   [class.turno-ocupado]="
                     slot.ocupado || slotAfectadoPorExcepcion(slot)
                   "
@@ -468,25 +468,35 @@
                     <span class="material-symbols-outlined">schedule</span>
                     {{ slot.horaInicio }} - {{ slot.horaFin }}
                   </div>
-                  <div class="chip-ubicacion">
-                    <span class="material-symbols-outlined">door_open</span>
-                    {{ slot.consultorioNombre }}
+                  
+                  <!-- Ubicación agrupada -->
+                  <div class="chip-location-info">
+                    <div class="chip-location-item">
+                      <span class="material-symbols-outlined">door_open</span>
+                      {{ slot.consultorioNombre }}
+                    </div>
+                    <div class="chip-location-item">
+                      <span class="material-symbols-outlined">local_hospital</span>
+                      {{ slot.nombreCentro }}
+                    </div>
                   </div>
-                  <div class="chip-centro">
-                    <span class="material-symbols-outlined">local_hospital</span>
-                    {{ slot.nombreCentro }}
-                  </div>
+                  
+                  <!-- Estado disponible -->
                   <div
-                    class="chip-estado"
+                    class="chip-estado disponible"
                     *ngIf="!slot.ocupado && !slotAfectadoPorExcepcion(slot)"
                   >
                     <span class="material-symbols-outlined">check_circle</span>
+                    <span>Disponible</span>
                   </div>
+                  
+                  <!-- Estado ocupado -->
                   <div
                     class="chip-estado ocupado"
                     *ngIf="slot.ocupado || slotAfectadoPorExcepcion(slot)"
                   >
                     <span class="material-symbols-outlined">lock</span>
+                    <span>No Disponible</span>
                   </div>
                 </div>
               </div>
