@@ -1,220 +1,187 @@
-.profile-container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+/* ===================================
+   ADMIN PERFIL COMPONENT
+   Estilos ESPECÍFICOS del componente
+   (Los estilos globales como .btn, .form-control, .card están en styles.css)
+   =================================== */
 
-    .profile-header {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-      color: white;
-      padding: 30px;
-      border-radius: 15px;
-      margin-bottom: 30px;
-    }
+/* ===================================
+   1. CONTENEDOR PRINCIPAL
+   =================================== */
+.admin-detail-card {
+  max-width: 1200px;
+}
 
-    .header-content {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
+/* ===================================
+   2. HEADER DEL COMPONENTE
+   =================================== */
+.admin-detail-header {
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
+}
 
-    .btn-back {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.3s;
-    }
+.admin-detail-header .header-icon {
+  font-size: 3rem;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
 
-    .btn-back:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
+.admin-detail-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-main);
+}
 
-    .header-info h1 {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 600;
-    }
+.admin-detail-header .text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
 
-    .header-info p {
-      margin: 8px 0 0 0;
-      opacity: 0.9;
-    }
+/* ===================================
+   3. MODO VISTA (INFO VIEW)
+   =================================== */
+.admin-info-view {
+  margin-top: var(--space-lg);
+}
 
-    .section-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      margin-bottom: 25px;
-      overflow: hidden;
-    }
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+}
 
-    .section-header {
-      background: #f8f9fa;
-      padding: 20px;
-      border-bottom: 1px solid #e9ecef;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+.info-item:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-accent);
+  box-shadow: var(--box-shadow-soft);
+}
 
-    .section-header i {
-      color: #ff6b6b;
-      font-size: 1.2rem;
-    }
+.info-icon {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
 
-    .section-header h2 {
-      margin: 0;
-      font-size: 1.3rem;
-      color: #2c3e50;
-    }
+.info-content {
+  flex: 1;
+  min-width: 0;
+}
 
-    .section-body {
-      padding: 25px;
-    }
+.info-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
+}
 
-    .info-group {
-      margin-bottom: 20px;
-    }
+.info-value {
+  font-size: var(--font-size-base);
+  color: var(--text-main);
+  font-weight: var(--font-weight-regular);
+  word-break: break-word;
+}
 
-    .info-group label {
-      font-weight: 600;
-      color: #495057;
-      display: block;
-      margin-bottom: 5px;
-    }
+/* ===================================
+   4. SOBRESCRITURAS ESPECÍFICAS DE FORMULARIO
+   =================================== */
+/* Override solo para los iconos en labels de ESTE componente */
+.admin-detail-card .form-label .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: var(--color-accent);
+  margin: 0 !important;
+  margin-right: var(--space-xs) !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
 
-    .info-group p {
-      margin: 0;
-      color: #6c757d;
-      font-size: 1.1rem;
-    }
+/* Override solo para los iconos en mensajes de error de ESTE componente */
+.admin-detail-card .text-danger .material-symbols-outlined.error-icon {
+  font-size: 1rem !important;
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 1, 'wght' 500;
+}
 
-    .role-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
+/* ===================================
+   5. SECCIÓN DE CONTRASEÑA
+   =================================== */
+.password-section {
+  background-color: var(--color-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+}
 
-    .role-badge.admin {
-      background: #ffebee;
-      color: #c62828;
-    }
+.password-section h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-main);
+}
 
-    .form-group {
-      margin-bottom: 20px;
-    }
+.password-section h3 .material-symbols-outlined {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
 
-    .form-group label {
-      font-weight: 600;
-      color: #495057;
-      display: block;
-      margin-bottom: 8px;
-    }
+/* ===================================
+   6. ICONOS EN CHECKBOXES
+   =================================== */
+.checkbox-icon {
+  font-size: 1.25rem;
+  vertical-align: middle;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
 
-    .form-control {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #e9ecef;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.3s;
-    }
+/* ===================================
+   7. SOBRESCRITURAS DE ICONOS EN BOTONES
+   =================================== */
+/* Override solo para los iconos en botones de ESTE componente */
+.admin-detail-card .btn .material-symbols-outlined {
+  font-size: 1.25rem;
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
 
-    .form-control:focus {
-      outline: none;
-      border-color: #ff6b6b;
-    }
+/* ===================================
+   8. RESPONSIVE DESIGN
+   =================================== */
+@media (max-width: 768px) {
+  .admin-detail-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: var(--space-md);
+  }
 
-    .config-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+  .admin-detail-header .header-icon {
+    font-size: 2.5rem;
+  }
 
-    .config-option input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: #ff6b6b;
-    }
+  .admin-detail-header h2 {
+    font-size: var(--font-size-xl);
+  }
 
-    .config-option label {
-      font-weight: 500;
-      color: #495057;
-      cursor: pointer;
-    }
+  .info-item {
+    padding: var(--space-sm);
+  }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: transform 0.2s;
-    }
+  .info-icon {
+    font-size: 1.25rem;
+  }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-    }
+  .password-section h3 {
+    font-size: var(--font-size-base);
+  }
+}
 
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: transform 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background: #545b62;
-      transform: translateY(-2px);
-    }
-
-    .quick-actions {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-    }
-
-    .action-btn {
-      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-      color: white;
-      border: none;
-      padding: 15px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: transform 0.2s;
-    }
-
-    .action-btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .action-btn i {
-      font-size: 1.1rem;
-    }
+@media (max-width: 576px) {
+  .admin-detail-header .header-icon {
+    font-size: 2rem;
+  }
+}
