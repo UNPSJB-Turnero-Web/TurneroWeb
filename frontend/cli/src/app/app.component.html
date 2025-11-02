@@ -1,5 +1,9 @@
 <!-- SIDEBAR DINÁMICO (Menú lateral basado en roles) - Solo visible para usuarios autenticados -->
-<app-sidebar *ngIf="isAuthenticated()"></app-sidebar>
+<app-sidebar 
+  *ngIf="isAuthenticated()" 
+  [class.sidebar-closed]="!sidebarOpen"
+  (toggleSidebar)="sidebarOpen = !sidebarOpen">
+</app-sidebar>
 
 <!-- NAVBAR SUPERIOR SIMPLIFICADO -->
 <nav class="modern-navbar">
@@ -7,9 +11,9 @@
     <!-- LOGO Y BRAND -->
     <div class="brand-section">
       <a href="/" class="brand-link">
-        <div class="brand-icon">
-          <i class="fas fa-calendar-check"></i>
-        </div>
+        <span class="material-symbols-outlined brand-icon">
+          event_available
+        </span>
         <div class="brand-text">
           <h5 class="brand-title">CheTurno</h5>
           <span class="brand-subtitle">Sistema de Turnos</span>
@@ -26,17 +30,17 @@
           (click)="navigateTo('/turnos/audit-dashboard')"
           title="Dashboard de Auditoría"
         >
-          <i class="fas fa-shield-alt"></i>
+          <span class="material-symbols-outlined">shield</span>
         </button>
       </div>
 
       <!-- Login Button (for non-authenticated users) -->
       <button
-        class="login-button"
+        class="btn btn-primary login-button"
         *ngIf="!isAuthenticated()"
         (click)="goToLogin()"
       >
-        <i class="fas fa-sign-in-alt me-2"></i>
+        <span class="material-symbols-outlined">login</span>
         <span>Iniciar Sesión</span>
       </button>
 
@@ -44,7 +48,7 @@
       <div ngbDropdown class="nav-dropdown" *ngIf="isAuthenticated()">
         <button class="user-button" ngbDropdownToggle id="userDropdown">
           <div class="user-avatar">
-            <i class="fas fa-user"></i>
+            <span class="material-symbols-outlined">person</span>
           </div>
           <div class="user-info">
             <span class="user-name">{{ getUserName() }}</span>
@@ -60,15 +64,18 @@
             ngbDropdownItem
             class="dropdown-item"
             (click)="goToUserProfile()"
-            style="cursor: pointer"
           >
-            <i class="fas fa-cog icon-item icon-configuracion"></i>
+            <span class="material-symbols-outlined icon-item icon-configuracion">
+              settings
+            </span>
             <div class="item-content">
               <span class="item-title">Configuración</span>
             </div>
           </a>
           <a ngbDropdownItem class="dropdown-item" (click)="logout()">
-            <i class="fas fa-sign-out-alt icon-item icon-logout"></i>
+            <span class="material-symbols-outlined icon-item icon-logout">
+              logout
+            </span>
             <div class="item-content">
               <span class="item-title">Cerrar Sesión</span>
             </div>
@@ -83,6 +90,7 @@
 <main
   class="main-content"
   [class.main-content--no-sidebar]="!isAuthenticated()"
+  [class.sidebar-closed]="!sidebarOpen && isAuthenticated()"
 >
   <router-outlet></router-outlet>
 </main>

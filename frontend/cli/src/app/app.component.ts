@@ -27,6 +27,9 @@ export class AppComponent implements OnInit, OnDestroy {
   currentRoute = "";
   patientNotificationCount = 0;
   private subscriptions: Subscription[] = [];
+  
+  // Control del estado del sidebar
+  sidebarOpen = true;
 
   // Observables reactivos para el estado del usuario
   public userContext$: Observable<UserContext | null>;

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { Subscription, Observable } from 'rxjs';
@@ -17,6 +17,7 @@ import { MenuSection, MenuItem } from '../config/menu.config';
  * - Badges de notificaciones
  * - Responsive (mobile/desktop)
  * - Highlighting de ruta activa
+ * - Mini-sidebar estilo Google Gemini cuando está colapsado
  */
 @Component({
   selector: 'app-sidebar',
@@ -29,6 +30,8 @@ import { MenuSection, MenuItem } from '../config/menu.config';
   ]
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  
+  @Output() toggleSidebar = new EventEmitter<void>();
   
   public userContext$!: Observable<UserContext | null>;
   public menuSectionsWithBadges$!: Observable<MenuSection[]>;
@@ -89,6 +92,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       }).unsubscribe();
     }, 100);
+  }
+
+  /**
+   * Emite evento para toggle del sidebar (controla el parent)
+   */
+  onToggleSidebar(): void {
+    this.toggleSidebar.emit();
   }
 
   /**

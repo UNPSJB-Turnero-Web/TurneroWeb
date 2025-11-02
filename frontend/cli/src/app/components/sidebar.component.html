@@ -1,3 +1,25 @@
+<!-- BOTÓN TOGGLE FLOTANTE (siempre visible) -->
+<button
+  class="sidebar-toggle-floating"
+  (click)="onToggleSidebar()"
+  [attr.aria-label]="'Alternar menú lateral'"
+  [title]="'Alternar menú lateral'"
+>
+  <span class="material-symbols-outlined">menu</span>
+</button>
+
+<!-- MINI SIDEBAR (visible cuando está cerrado) -->
+<aside class="mini-sidebar">
+  <button
+    class="mini-sidebar__logout"
+    (click)="logout()"
+    title="Cerrar sesión"
+  >
+    <span class="material-symbols-outlined">logout</span>
+  </button>
+</aside>
+
+<!-- SIDEBAR PRINCIPAL -->
 <aside
   class="sidebar"
   [class.sidebar--open]="(menuService.sidebarState$ | async)?.isOpen"
@@ -8,26 +30,6 @@
     <div class="sidebar__brand">
       <span class="material-symbols-outlined sidebar__brand-icon">event_available</span>
       <span class="sidebar__brand-text">CheTurno</span>
-    </div>
-    <button
-      class="sidebar__toggle"
-      (click)="menuService.toggleSidebar()"
-      aria-label="Toggle sidebar"
-    >
-      <span class="material-symbols-outlined">menu</span>
-    </button>
-  </div>
-
-  <!-- User Info -->
-  <div class="sidebar__user" *ngIf="userContext$ | async as userContext">
-    <div class="sidebar__user-avatar">
-      <span class="material-symbols-outlined">account_circle</span>
-    </div>
-    <div class="sidebar__user-info">
-      <div class="sidebar__user-name">{{ userContext.nombre }}</div>
-      <div class="sidebar__user-role">
-        {{ getRoleDisplay(userContext.primaryRole) }}
-      </div>
     </div>
   </div>
 
