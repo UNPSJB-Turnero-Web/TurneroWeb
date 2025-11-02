@@ -1,60 +1,46 @@
-<div class="container-fluid mt-4">
-  <div class="modern-card">
-    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
-    <div class="banner-consultorios">
-      <div class="header-content">
-        <div class="title-section">
-          <div class="header-icon">
-            <i class="fas fa-door-open"></i>
-          </div>
-          <div class="header-text">
-            <h1>Consultorios</h1>
-            <p>Gestión de consultorios médicos del sistema</p>
-          </div>
+<div class="consultorios-container">
+  <div class="card p-xl mb-xl mx-auto">
+    <!-- Header -->
+    <div class="listado-header d-flex align-items-center justify-content-between mb-lg">
+      <div class="d-flex align-items-center gap-md">
+        <span class="material-symbols-outlined header-icon" aria-hidden="true">meeting_room</span>
+        <div>
+          <h2 class="mb-0">Consultorios</h2>
+          <p class="text-muted mb-0 mt-sm">Gestión de consultorios médicos del sistema</p>
         </div>
-        <button
-          class="btn btn-banner"
-          (click)="router.navigate(['/consultorios/new'])"
-        >
-          <i class="fas fa-plus me-2"></i>
-          Nuevo Consultorio
-        </button>
       </div>
+      
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="router.navigate(['/consultorios/new'])"
+        aria-label="Crear nuevo consultorio"
+      >
+        <span class="material-symbols-outlined me-2" aria-hidden="true">add</span>
+        <span class="d-none d-sm-inline">Nuevo Consultorio</span>
+      </button>
     </div>
-    <!-- TABLA MODERNA NORMALIZADA -->
-    <div class="table-container">
-      <table class="table modern-table">
+
+    <!-- Tabla -->
+    <div class="table-responsive">
+      <table class="table table-hover">
         <thead>
           <tr>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <div class="icon-circle id-header">
-                  <i class="fas fa-hashtag"></i>
-                </div>
-                Número
-              </div>
-            </th>
-            <th>
-              <div class="header-cell">
-                <div class="icon-circle centro-header">
-                  <i class="fas fa-hospital"></i>
-                </div>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">local_hospital</span>
                 Centro de Atención
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <div class="icon-circle consultorio-header">
-                  <i class="fas fa-door-open"></i>
-                </div>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">meeting_room</span>
                 Nombre del Consultorio
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <div class="icon-circle actions-header">
-                  <i class="fas fa-cogs"></i>
-                </div>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">settings</span>
                 Acciones
               </div>
             </th>
@@ -63,65 +49,71 @@
         <tbody>
           <tr
             *ngFor="let c of resultsPage.content || []; let i = index"
-            class="table-row"
-            [class.even]="i % 2 === 0"
-            [class.odd]="i % 2 !== 0"
+            [class.selected]="c.id === selectedId"
             (click)="goToDetail(c.id)"
+            role="button"
+            [attr.aria-label]="'Ver detalles del consultorio ' + c.nombre"
+            tabindex="0"
           >
             <td>
-              <span class="badge-consultorios">{{ c.numero }}</span>
-            </td>
-            <td>
-              <div class="centro-info">
-                <div class="ref-centro-atencion">
-                  <i class="fas fa-hospital me-2"></i>
-                  {{ c.centroAtencion }}
-                </div>
+              <div class="d-flex align-items-center gap-sm">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">local_hospital</span>
+                <strong>{{ c.centroAtencion }}</strong>
               </div>
             </td>
             <td>
-              <div class="consultorio-info">
-                <div class="consultorio-name">{{ c.nombre }}</div>
-                <div class="consultorio-type">Consultorio Médico</div>
+              <div class="d-flex align-items-center gap-sm">
+                <span class="material-symbols-outlined text-muted" aria-hidden="true">meeting_room</span>
+                {{ c.nombre }}
               </div>
             </td>
             <td>
-              <div class="action-buttons">
+              <div class="d-flex gap-xs">
                 <button
-                  class="btn-action btn-edit"
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
                   (click)="goToEdit(c.id); $event.stopPropagation()"
-                  title="Editar"
+                  [attr.aria-label]="'Editar ' + c.nombre"
+                  title="Editar consultorio"
                 >
-                  <i class="fas fa-edit"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                 </button>
                 <button
-                  class="btn-action btn-delete"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
                   (click)="confirmDelete(c.id); $event.stopPropagation()"
-                  title="Eliminar"
+                  [attr.aria-label]="'Eliminar ' + c.nombre"
+                  title="Eliminar consultorio"
                 >
-                  <i class="fas fa-trash"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                 </button>
               </div>
             </td>
           </tr>
+          
+          <!-- Estado vacío -->
           <tr *ngIf="!resultsPage.content || resultsPage.content.length === 0">
-            <td colspan="4" class="text-center py-4 text-muted">
-              <i class="fas fa-door-open fa-3x mb-3 d-block opacity-50"></i>
-              No hay consultorios registrados
+            <td colspan="4" class="text-center py-5">
+              <div class="d-flex flex-column align-items-center gap-md">
+                <span class="material-symbols-outlined empty-state-icon" aria-hidden="true">meeting_room</span>
+                <p class="text-muted mb-0">No hay consultorios registrados</p>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-  </div>
 
-  <!-- PAGINACIÓN -->
-  <app-pagination
-    [totalPages]="resultsPage.totalPages"
-    [currentPage]="currentPage"
-    (pageChangeRequested)="onPageChangeRequested($event)"
-    [number]="resultsPage.number"
-    [last]="resultsPage.last"
-    [hidden]="resultsPage.numberOfElements < 1"
-  ></app-pagination>
+    <!-- Footer/Paginación -->
+    <div class="d-flex justify-content-center mt-lg pt-lg border-top" *ngIf="resultsPage.numberOfElements > 0">
+      <app-pagination
+        [totalPages]="resultsPage.totalPages"
+        [currentPage]="currentPage"
+        (pageChangeRequested)="onPageChangeRequested($event)"
+        [number]="resultsPage.number"
+        [last]="resultsPage.last"
+      >
+      </app-pagination>
+    </div>
+  </div>
 </div>

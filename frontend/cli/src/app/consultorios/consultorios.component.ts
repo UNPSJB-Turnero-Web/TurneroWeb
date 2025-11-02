@@ -26,6 +26,7 @@ export class ConsultoriosComponent implements OnInit {
     last: true
   };
   currentPage: number = 1;
+  selectedId: number | null = null;
 
   constructor(
     private consultorioService: ConsultorioService,
