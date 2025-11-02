@@ -1,77 +1,70 @@
-<div class="container-fluid mt-4">
-  <div class="card modern-card">
-    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
-    <div class="banner-centro-atencion">
-      <div class="header-content">
-        <div class="title-section">
-          <div class="icon-centro-atencion">
-            <i class="fas fa-hospital"></i>
-          </div>
-          <div class="header-text">
-            <h1>Centros de Atención</h1>
-            <p>Gestión de centros médicos y establecimientos de salud</p>
-          </div>
+<div class="centros-atencion-container">
+  <div class="card p-xl mb-xl mx-auto">
+    <!-- Header -->
+    <div class="listado-header d-flex align-items-center justify-content-between mb-lg">
+      <div class="d-flex align-items-center gap-md">
+        <span class="material-symbols-outlined header-icon" aria-hidden="true">local_hospital</span>
+        <div>
+          <h2 class="mb-0">Centros de Atención</h2>
+          <p class="text-muted mb-0 mt-sm">Gestión de centros médicos y establecimientos de salud</p>
         </div>
-        <button
-          class="btn btn-new"
-          (click)="router.navigate(['/centrosAtencion/new'])"
-        >
-          <i class="fas fa-plus me-2"></i>
-          Nuevo Centro
-        </button>
       </div>
+      
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="router.navigate(['/centrosAtencion/new'])"
+        aria-label="Crear nuevo centro de atención"
+      >
+        <span class="material-symbols-outlined me-2" aria-hidden="true">add</span>
+        <span class="d-none d-sm-inline">Nuevo Centro</span>
+      </button>
     </div>
 
-    <!-- TABLA NORMALIZADA -->
-    <div class="table-container">
-      <table class="table modern-table">
+    <!-- Tabla -->
+    <div class="table-responsive">
+      <table class="table table-hover">
         <thead>
           <tr>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">ID</span>
-                Identificador
-              </div>
-            </th>
-            <th>
-              <div class="header-cell">
-                <span class="icon-centro-atencion">🏥</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">local_hospital</span>
                 Nombre
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">📍</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">location_on</span>
                 Dirección
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">🏙️</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">location_city</span>
                 Localidad
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">🗺️</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">map</span>
                 Provincia
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">📞</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">call</span>
                 Teléfono
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">🌍</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">travel_explore</span>
                 Coordenadas
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <span class="icon-centro-atencion">⚙️</span>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">settings</span>
                 Acciones
               </div>
             </th>
@@ -80,80 +73,76 @@
         <tbody>
           <tr
             *ngFor="let centro of resultsPage.content || []; let i = index"
-            class="table-row"
-            [class.even]="i % 2 === 0"
-            [class.odd]="i % 2 !== 0"
             [class.selected]="centro.id === selectedId"
             (click)="goToDetail(centro.id)"
+            role="button"
+            [attr.aria-label]="'Ver detalles de ' + centro.nombre"
+            tabindex="0"
           >
             <td>
-              <span class="badge-centro-atencion">{{ centro.id }}</span>
+              <div class="d-flex align-items-center gap-sm">
+                <span class="material-symbols-outlined text-primary" aria-hidden="true">local_hospital</span>
+                <strong>{{ centro.nombre }}</strong>
+              </div>
             </td>
+            <td>{{ centro.direccion }}</td>
+            <td>{{ centro.localidad }}</td>
+            <td>{{ centro.provincia }}</td>
             <td>
-              <div class="nombre-info">
-                <div class="avatar-centro-atencion">🏥</div>
-                <span class="nombre-text">{{ centro.nombre }}</span>
+              <div class="d-flex align-items-center gap-xs">
+                <span class="material-symbols-outlined text-muted phone-icon" aria-hidden="true">call</span>
+                {{ centro.telefono }}
               </div>
             </td>
             <td>
-              <span class="badge-centro-atencion">{{ centro.direccion }}</span>
-            </td>
-            <td>
-              <span class="badge-centro-atencion">{{ centro.localidad }}</span>
-            </td>
-            <td>
-              <span class="badge-centro-atencion">{{ centro.provincia }}</span>
-            </td>
-            <td>
-              <div class="telefono-info">
-                <i class="fas fa-phone"></i>
-                <span>{{ centro.telefono }}</span>
+              <div class="d-flex align-items-center gap-xs">
+                <span class="text-muted">{{ centro.latitud }}, {{ centro.longitud }}</span>
               </div>
             </td>
             <td>
-              <div class="coords-info">
-                <span class="coord-lat">{{ centro.latitud }}</span>
-                <span class="coord-separator">,</span>
-                <span class="coord-lng">{{ centro.longitud }}</span>
-              </div>
-            </td>
-            <td class="actions-cell">
-              <div class="action-buttons">
+              <div class="d-flex gap-xs">
                 <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
                   (click)="goToEdit(centro.id); $event.stopPropagation()"
-                  class="btn-action btn-edit"
+                  [attr.aria-label]="'Editar ' + centro.nombre"
                   title="Editar centro"
                 >
-                  <i class="fas fa-edit"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                 </button>
                 <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
                   (click)="remove(centro); $event.stopPropagation()"
-                  class="btn-action btn-delete"
+                  [attr.aria-label]="'Eliminar ' + centro.nombre"
                   title="Eliminar centro"
                 >
-                  <i class="fas fa-trash"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                 </button>
               </div>
             </td>
           </tr>
+          
+          <!-- Estado vacío -->
           <tr *ngIf="resultsPage.content?.length === 0">
-            <td colspan="8" class="text-center py-4 text-muted">
-              <i class="fas fa-hospital fa-3x mb-3 d-block opacity-50"></i>
-              No hay centros de atención registrados
+            <td colspan="8" class="text-center py-5">
+              <div class="d-flex flex-column align-items-center gap-md">
+                <span class="material-symbols-outlined empty-state-icon" aria-hidden="true">local_hospital</span>
+                <p class="text-muted mb-0">No hay centros de atención registrados</p>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- FOOTER MODERNO -->
-    <div class="card-footer modern-footer">
+    <!-- Footer/Paginación -->
+    <div class="d-flex justify-content-center mt-lg pt-lg border-top" *ngIf="resultsPage.numberOfElements > 0">
       <app-pagination
         [totalPages]="resultsPage.totalPages"
         [currentPage]="currentPage"
         (pageChangeRequested)="onPageChangeRequested($event)"
         [number]="resultsPage.number"
-        [hidden]="resultsPage.numberOfElements < 1"
       >
       </app-pagination>
     </div>
