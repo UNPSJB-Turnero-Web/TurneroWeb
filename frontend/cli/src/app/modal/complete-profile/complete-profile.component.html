@@ -1,147 +1,144 @@
 <div class="modal-overlay">
-  <div class="modal-container">
+  <div class="card modal-card">
     <!-- Header -->
     <div class="modal-header">
-      <h2 class="modal-title">
-        <i class="fas fa-user-edit"></i>
-        Completar Perfil
-      </h2>
-      <p class="modal-subtitle">
-        Para utilizar el sistema, necesitamos que complete su información personal
-      </p>
+      <div class="modal-header-content">
+        <span class="material-symbols-outlined modal-icon">person_edit</span>
+        <div>
+          <h2 class="modal-title">Completar Perfil</h2>
+          <p class="modal-subtitle">Complete su información personal para utilizar el sistema</p>
+        </div>
+      </div>
     </div>
 
     <!-- Body -->
     <div class="modal-body">
       <!-- Mensaje de bienvenida -->
-      <div class="welcome-message">
-        <p>
-          <i class="fas fa-info-circle text-primary"></i>
-          Bienvenido/a. Por favor, complete los siguientes datos para poder acceder a todas las funcionalidades del sistema.
-        </p>
+      <div class="alert-message alert-info">
+        <span class="material-symbols-outlined">info</span>
+        <span>Bienvenido/a. Por favor, complete los siguientes datos para acceder a todas las funcionalidades del sistema.</span>
       </div>
 
       <!-- Mensaje de error -->
-      <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
-        <i class="fas fa-exclamation-triangle"></i>
-        {{ errorMessage }}
+      <div *ngIf="errorMessage" class="alert-message alert-error" role="alert">
+        <span class="material-symbols-outlined">error</span>
+        <span>{{ errorMessage }}</span>
       </div>
 
       <!-- Formulario -->
-      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" novalidate>
         
         <!-- DNI -->
-        <div class="form-group mb-3">
+        <div class="form-group">
           <label for="dni" class="form-label">
-            <i class="fas fa-id-card"></i>
-            DNI <span class="text-danger">*</span>
+            <span class="material-symbols-outlined">badge</span>
+            DNI*
           </label>
           <input
-            type="number"
+            type="text"
             id="dni"
+            name="dni"
             class="form-control"
             formControlName="dni"
             placeholder="Ej: 12345678"
+            autocomplete="off"
+            aria-label="Documento Nacional de Identidad"
             [class.is-invalid]="profileForm.get('dni')?.invalid && profileForm.get('dni')?.touched"
           />
-          <div class="invalid-feedback" *ngIf="profileForm.get('dni')?.invalid && profileForm.get('dni')?.touched">
-            {{ getErrorMessage('dni') }}
-          </div>
-          <small class="form-text text-muted">
+          <small class="form-text">
             Ingrese su DNI sin puntos ni espacios
           </small>
         </div>
 
         <!-- Teléfono -->
-        <div class="form-group mb-3">
+        <div class="form-group">
           <label for="telefono" class="form-label">
-            <i class="fas fa-phone"></i>
-            Teléfono <span class="text-danger">*</span>
+            <span class="material-symbols-outlined">phone</span>
+            Teléfono*
           </label>
           <input
             type="tel"
             id="telefono"
+            name="telefono"
             class="form-control"
             formControlName="telefono"
             placeholder="Ej: 2804123456"
+            autocomplete="tel"
+            aria-label="Número de teléfono"
             [class.is-invalid]="profileForm.get('telefono')?.invalid && profileForm.get('telefono')?.touched"
           />
-          <div class="invalid-feedback" *ngIf="profileForm.get('telefono')?.invalid && profileForm.get('telefono')?.touched">
-            {{ getErrorMessage('telefono') }}
-          </div>
-          <small class="form-text text-muted">
+          <small class="form-text">
             Ingrese un número de teléfono válido con código de área
           </small>
         </div>
 
         <!-- Fecha de Nacimiento -->
-        <div class="form-group mb-3">
+        <div class="form-group">
           <label for="fechaNacimiento" class="form-label">
-            <i class="fas fa-calendar-alt"></i>
-            Fecha de Nacimiento <span class="text-danger">*</span>
+            <span class="material-symbols-outlined">calendar_today</span>
+            Fecha de Nacimiento*
           </label>
           <input
             type="date"
             id="fechaNacimiento"
+            name="fechaNacimiento"
             class="form-control"
             formControlName="fechaNacimiento"
             [max]="getMaxDate()"
+            autocomplete="bday"
+            aria-label="Fecha de nacimiento"
             [class.is-invalid]="profileForm.get('fechaNacimiento')?.invalid && profileForm.get('fechaNacimiento')?.touched"
           />
-          <div class="invalid-feedback" *ngIf="profileForm.get('fechaNacimiento')?.invalid && profileForm.get('fechaNacimiento')?.touched">
-            {{ getErrorMessage('fechaNacimiento') }}
-          </div>
-          <small class="form-text text-muted">
+          <small class="form-text">
             Seleccione su fecha de nacimiento
           </small>
         </div>
 
         <!-- Obra Social (Opcional) -->
-        <div class="form-group mb-4">
+        <div class="form-group">
           <label for="obraSocialId" class="form-label">
-            <i class="fas fa-hospital"></i>
-            Obra Social <span class="text-muted">(Opcional)</span>
+            <span class="material-symbols-outlined">local_hospital</span>
+            Obra Social <span class="optional-label">(Opcional)</span>
           </label>
           <select
             id="obraSocialId"
-            class="form-select"
+            name="obraSocialId"
+            class="form-control"
             formControlName="obraSocialId"
+            aria-label="Seleccionar obra social"
           >
             <option [value]="null">Sin obra social</option>
             <!-- TODO: Cargar obras sociales desde el backend -->
             <!-- <option *ngFor="let os of obrasSociales" [value]="os.id">{{ os.nombre }}</option> -->
           </select>
-          <small class="form-text text-muted">
+          <small class="form-text">
             Puede seleccionar una obra social o dejarlo sin asignar
           </small>
         </div>
 
-        <!-- Botones de acción -->
-        <div class="modal-actions">
+        <!-- Nota de seguridad -->
+        <div class="security-note">
+          <span class="material-symbols-outlined">lock</span>
+          <small>Sus datos están protegidos y solo serán utilizados para gestionar sus turnos médicos</small>
+        </div>
+
+        <!-- Botón de acción -->
+        <div class="modal-footer">
           <button
             type="submit"
             class="btn btn-primary btn-lg w-100"
             [disabled]="isSubmitting || profileForm.invalid"
+            aria-label="Completar perfil y guardar información"
           >
             <span *ngIf="!isSubmitting">
-              <i class="fas fa-check"></i>
+              <span class="material-symbols-outlined">check_circle</span>
               Completar Perfil
             </span>
             <span *ngIf="isSubmitting">
-              <i class="fas fa-spinner fa-spin"></i>
+              <span class="material-symbols-outlined spinning">progress_activity</span>
               Guardando...
             </span>
           </button>
-        </div>
-
-        <!-- Nota informativa -->
-        <div class="info-note mt-3">
-          <p class="mb-0 text-center">
-            <i class="fas fa-lock text-muted"></i>
-            <small class="text-muted">
-              Sus datos están protegidos y solo serán utilizados para gestionar sus turnos médicos
-            </small>
-          </p>
         </div>
       </form>
     </div>
