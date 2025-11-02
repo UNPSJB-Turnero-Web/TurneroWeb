@@ -394,4 +394,17 @@ export class TurnoDetailComponent {
     };
     return icons[action] || "fas fa-question-circle";
   }
+
+  /** Obtiene el icono Material Symbol para el tipo de acción */
+  getActionIconMaterial(action: string): string {
+    const icons: any = {
+      CREATED: "add_circle",
+      STATUS_CHANGED: "edit",
+      CANCELED: "cancel",
+      CONFIRMED: "check_circle",
+      RESCHEDULED: "event_repeat",
+      DELETED: "delete",
+    };
+    return icons[action] || "help";
+  }
 }

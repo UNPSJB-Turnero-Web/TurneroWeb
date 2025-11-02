@@ -1,429 +1,153 @@
-/* Estilos modernos para el detail component */
-.card {
-  border-radius: 1.15rem;
-  overflow: hidden;
-  border: none;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  background: white;
+/* ============================================
+   TURNO DETAIL - ESTILOS MODERNOS
+   Sistema unificado con variables globales
+   ============================================ */
+
+/* ============================================
+   ICONOS MATERIAL SYMBOLS
+   ============================================ */
+
+/* Icono de header principal */
+.header-icon {
+  font-size: 2.5rem;
+  color: var(--color-accent);
 }
 
-.card-header {
-  background: var(--turnos-gradient);
-  border: none;
-  padding: 1.5rem 2rem;
-  position: relative;
-  overflow: hidden;
+/* Iconos en labels */
+.label-icon {
+  font-size: 1.25rem;
+  color: var(--color-accent);
 }
 
-.card-header::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100px;
-  height: 100px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  transform: translate(30px, -30px);
+/* Icono de warning en banner */
+.warning-icon {
+  font-size: 2rem;
+  color: var(--color-warning);
 }
 
-.card-body {
-  padding: 2rem;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+/* Icono de success en estado confirmado */
+.success-icon {
+  color: var(--color-success);
 }
 
-.info-item {
-  background: white;
-  border-radius: 15px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid #007bff;
-  transition: all 0.3s ease;
-}
-
-.info-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  border-left-color: #28a745;
-}
-
+/* Icono de info en panel auditoría */
 .info-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 1rem;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 2.5rem;
+  color: var(--color-info);
 }
 
-.info-label {
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
+/* Icono de loading */
+.loading-icon {
+  font-size: 3rem;
+  color: var(--color-accent);
 }
 
-.info-value {
-  font-size: 1.1rem;
-  color: #212529;
-  font-weight: 500;
+/* Icono de empty state */
+.empty-icon {
+  font-size: 4rem;
+  color: var(--color-text-secondary);
+  opacity: 0.3;
 }
 
-.turno-id-display {
-  background: var(--turnos-gradient);
-  color: white;
-  padding: 12px 20px;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 1.3rem;
-  box-shadow: 0 4px 16px var(--turnos-shadow);
-  display: inline-block;
-}
-
-.paciente-display {
-  background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(32, 201, 151, 0.3);
-  display: inline-block;
-}
-
-.medico-display {
-  background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
-  display: inline-block;
-}
-
-.fecha-display {
-  background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(253, 126, 20, 0.3);
-  display: inline-block;
-}
-
-.hora-display {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
-  display: inline-block;
-}
-
-.estado-display {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: inline-block;
-}
-
-.estado-programado {
-  background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
-  color: #212529;
-}
-
-.estado-confirmado {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-}
-
-.estado-cancelado {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  color: white;
-}
-
-.estado-completado {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-  color: white;
-}
-
-.card-footer {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: none;
-  padding: 1.5rem 2rem;
-}
-
-.btn-modern {
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
-  border: none;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.btn-modern:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.btn-modern:active {
-  transform: translateY(0);
-}
-
-.btn-back {
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-}
-
-.btn-edit {
-  background: var(--turnos-gradient);
-  color: white;
-}
-
-.btn-save {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-}
-
-.btn-cancel {
-  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
-}
-
-.btn-delete {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  color: white;
-}
-
-/* Estilos del formulario */
-.form-control-modern {
-  border: 2px solid #e9ecef;
-  border-radius: 15px;
-  padding: 1rem 1.25rem;
+/* Icono pequeño inline */
+.inline-icon {
   font-size: 1rem;
-  transition: all 0.3s ease;
-  background: white;
+  vertical-align: middle;
 }
 
-.form-control-modern:focus {
-  border-color: var(--turnos-primary);
-  box-shadow: 0 0 0 0.2rem var(--turnos-shadow);
-  background: #f8f9ff;
+/* ============================================
+   TEXTOS Y TIPOGRAFÍA
+   ============================================ */
+
+.text-sm {
+  font-size: var(--font-size-sm);
 }
 
-.form-label-modern {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
+.min-height-textarea {
+  min-height: 80px;
 }
 
-.form-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0.75rem;
-  font-size: 0.8rem;
-  color: white;
+/* ============================================
+   BADGES DE ESTADO
+   ============================================ */
+
+.badge.bg-primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-gradient-purple) 100%);
+  color: var(--text-on-accent);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--border-radius-full);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  box-shadow: var(--box-shadow-soft);
 }
 
-.form-group-modern {
-  margin-bottom: 2rem;
-  position: relative;
+.badge.bg-secondary {
+  background: var(--color-text-secondary);
+  color: var(--text-on-accent);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--border-radius-full);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
 }
 
-.form-help {
-  background: #e3f2fd;
-  border: 1px solid #bbdefb;
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #1976d2;
+/* ============================================
+   MATERIAL SYMBOLS - SPINNER
+   ============================================ */
+
+.spin {
+  animation: spin 1s linear infinite;
 }
 
-.alert-modern {
-  border: none;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  margin-top: 0.75rem;
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  border-left: 4px solid #dc3545;
-  color: #721c24;
-}
-
-/* === ESTILOS PARA AUDITORÍA === */
-.audit-section {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 15px;
-  padding: 1.5rem;
-  border-left: 4px solid #17a2b8;
-}
-
-.audit-title {
-  color: #17a2b8;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.audit-timeline {
-  position: relative;
-  padding-left: 2rem;
-}
-
-.audit-timeline::before {
-  content: "";
-  position: absolute;
-  left: 15px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-}
-
-.audit-entry {
-  position: relative;
-  margin-bottom: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-left: 3px solid #17a2b8;
-}
-
-.audit-entry::before {
-  content: "";
-  position: absolute;
-  left: -23px;
-  top: 20px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #17a2b8;
-  border: 2px solid white;
-  box-shadow: 0 0 0 2px #17a2b8;
-}
-
-.audit-entry-content {
-  position: relative;
-}
-
-.audit-header {
-  display: flex;
-  justify-content: between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 0.5rem;
-}
-
-.audit-details {
-  font-size: 0.9rem;
-  color: #495057;
-}
-
-.audit-details strong {
-  color: #212529;
-  font-weight: 600;
-}
-
-.audit-details .badge {
-  font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
-}
-
-.audit-entry:last-child {
-  margin-bottom: 0;
-}
-
-.audit-entry:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-}
-
-/* Botón de verificación de integridad */
-.btn-info {
-  background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-  color: white;
-  border: none;
-}
-
-.btn-info:hover {
-  background: linear-gradient(135deg, #138496 0%, #17a2b8 100%);
-  transform: translateY(-2px);
-}
-
-.btn-success {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  color: white;
-}
-
-.btn-success:hover {
-  background: linear-gradient(135deg, #218838 0%, #17a2b8 100%);
-  transform: translateY(-2px);
-}
-
-/* Animaciones */
-@keyframes slideInUp {
+@keyframes spin {
   from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: rotate(0deg);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
-.info-item {
-  animation: slideInUp 0.4s ease-out;
-}
+/* ============================================
+   RESPONSIVIDAD
+   ============================================ */
 
-.form-group-modern {
-  animation: slideInUp 0.3s ease-out;
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-  .card-body {
-    padding: 1.5rem;
+  .card {
+    padding: var(--space-md) !important;
   }
 
-  .card-header {
-    padding: 1.25rem 1.5rem;
+  .form-group {
+    margin-bottom: var(--space-md) !important;
   }
 
-  .card-footer {
-    padding: 1.25rem 1.5rem;
+  .d-flex.gap-md {
+    flex-direction: column;
+    gap: var(--space-sm) !important;
   }
 
-  .info-item {
-    padding: 1.25rem;
-    margin-bottom: 1rem;
+  .btn {
+    width: 100%;
   }
+}
 
-  .btn-modern {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9rem;
-  }
+/* ============================================
+   ACCESIBILIDAD
+   ============================================ */
+
+.form-control:focus,
+.form-select:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Estados readonly */
+.form-control[readonly] {
+  background-color: var(--color-background);
+  cursor: default;
+  opacity: 0.9;
 }
