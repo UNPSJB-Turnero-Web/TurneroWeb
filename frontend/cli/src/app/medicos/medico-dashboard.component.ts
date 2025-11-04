@@ -809,11 +809,11 @@ Posible problema de configuración. Verifique:
     // 🧪 TESTING: Permite marcar asistencia en turnos de hoy + mañana
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    const dosdiasAdelante = new Date(hoy);
-    dosdiasAdelante.setDate(dosdiasAdelante.getDate() + 1); // +1 día = mañana
-
+    const fechaActual = new Date(hoy);
+/*     dosdiasAdelante.setDate(dosdiasAdelante.getDate() + 1); // +1 día = mañana
+ */
     const fechaTurno = new Date(turno.fecha);
-    const esPasadoOHoy = fechaTurno <= dosdiasAdelante;
+    const esPasadoOHoy = fechaTurno <= fechaActual;
     // Estados válidos para marcar asistencia
     const estadosValidos = ['PROGRAMADO', 'CONFIRMADO', 'COMPLETO', 'AUSENTE'];
     const tieneEstadoValido = estadosValidos.includes(turno.estado?.toUpperCase());
