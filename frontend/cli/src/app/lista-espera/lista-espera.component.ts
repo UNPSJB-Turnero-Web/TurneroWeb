@@ -182,11 +182,23 @@ export class ListaEsperaComponent implements OnInit {
 
     getEstadoClass(estado: string): string {
         switch (estado) {
-            case 'PENDIENTE': return 'badge-warning';
-            case 'CUBIERTA': return 'badge-success';
-            case 'RESUELTA': return 'badge-info';
-            case 'RESUELTA_POR_OTRO_MEDIO': return 'badge-info';
-            default: return 'badge-secondary';
+            case 'PENDIENTE': return 'badge-estado-pendiente';
+            case 'CUBIERTA': return 'badge-estado-resuelta';
+            case 'RESUELTA': return 'badge-estado-resuelta';
+            case 'RESUELTA_POR_OTRO_MEDIO': return 'badge-estado-resuelta';
+            case 'CANCELADA': return 'badge-estado-cancelada';
+            default: return 'badge-estado-pendiente';
+        }
+    }
+
+    getEstadoIcon(estado: string): string {
+        switch (estado) {
+            case 'PENDIENTE': return 'pending';
+            case 'CUBIERTA': return 'check_circle';
+            case 'RESUELTA': return 'task_alt';
+            case 'RESUELTA_POR_OTRO_MEDIO': return 'verified';
+            case 'CANCELADA': return 'cancel';
+            default: return 'help';
         }
     }
 
@@ -256,11 +268,21 @@ export class ListaEsperaComponent implements OnInit {
 
     getUrgenciaClass(urgencia: string): string {
         switch (urgencia) {
-            case 'BAJA': return 'badge-secondary';
-            case 'MEDIA': return 'badge-info';
-            case 'ALTA': return 'badge-warning';
-            case 'URGENTE': return 'badge-danger';
-            default: return 'badge-light';
+            case 'BAJA': return 'badge-urgencia-baja';
+            case 'MEDIA': return 'badge-urgencia-media';
+            case 'ALTA': return 'badge-urgencia-alta';
+            case 'URGENTE': return 'badge-urgencia-alta';
+            default: return 'badge-urgencia-baja';
+        }
+    }
+
+    getUrgenciaIcon(urgencia: string): string {
+        switch (urgencia) {
+            case 'BAJA': return 'priority_low';
+            case 'MEDIA': return 'priority_high';
+            case 'ALTA': return 'warning';
+            case 'URGENTE': return 'emergency';
+            default: return 'help';
         }
     }
 

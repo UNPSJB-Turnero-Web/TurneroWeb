@@ -1,131 +1,459 @@
-.filtros-form {
-    border: 1px solid #e9ecef;
-    border-radius: 0.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+/* ============================================
+   HEADER LVE NORMALIZADO
+============================================ */
+
+.listado-header {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-gradient-purple) 100%);
+  color: var(--text-on-accent);
+  padding: var(--space-xl);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+  margin: calc(var(--space-xl) * -1) calc(var(--space-xl) * -1) var(--space-lg);
 }
 
-.estado-badge {
-    padding: 0.4em 0.8em;
-    border-radius: 1rem;
-    font-size: 0.85em;
+.listado-header .header-icon {
+  font-size: 32px;
+  color: var(--text-on-accent);
+  opacity: 0.95;
 }
 
-.badge {
-    padding: 0.4em 0.8em;
-    font-weight: 500;
+.listado-header h2 {
+  color: var(--text-on-accent);
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-h1);
 }
 
-.badge-warning {
-    color: #856404;
-    background-color: #d7b23a;
-    border: 1px solid #ffeeba;
+/* ============================================
+   INFO BADGE
+============================================ */
+
+.info-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: color-mix(in srgb, var(--color-info) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-info) 30%, transparent);
+  border-radius: var(--border-radius-md);
+  color: color-mix(in srgb, var(--color-info) 100%, black 30%);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
-.badge-secondary {
-    color: #005eaa;
-    background-color: #ced6e7;
-    border: 1px solid #d6d8db;
-}
-.badge-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
+.info-badge .material-symbols-outlined {
+  font-size: var(--font-size-lg);
 }
 
-.badge-success {
-    color: #0c5771;
-    background-color: #03cd14;
-    border: 1px solid #13792b;
+/* ============================================
+   FILTROS DE BÚSQUEDA
+============================================ */
+
+.filters-section {
+  background: var(--color-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--box-shadow-soft);
 }
 
-.badge-info {
-    color: #0c5460;
-    background-color: #d1ecf1;
-    border: 1px solid #00ceed;
+.filters-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-main);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-h3);
+  margin-bottom: var(--space-md);
 }
 
-.tabla-solicitudes {
-    position: relative;
-    background: white;
-    border-radius: 0.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.filters-title .material-symbols-outlined {
+  color: var(--color-accent);
+  font-size: var(--font-size-xl);
 }
 
-.btn-group .btn {
-    margin: 0 2px;
+.filters-form .form-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-main);
+  margin-bottom: var(--space-sm);
 }
 
-.btn-group .btn:hover {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.filters-form .material-symbols-outlined {
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+}
+
+.filters-form .form-select,
+.filters-form .form-control {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  transition: all 0.2s ease;
+}
+
+.filters-form .form-select:focus,
+.filters-form .form-control:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+
+/* ============================================
+   TABLA DE SOLICITUDES
+============================================ */
+
+.agenda-section {
+  background: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow-soft);
+  overflow: hidden;
+}
+
+.lista-espera-table {
+  margin-bottom: 0;
+}
+
+.lista-espera-table thead {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-gradient-purple) 100%);
+  color: var(--text-on-accent);
+}
+
+.lista-espera-table thead th {
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+  vertical-align: middle;
+}
+
+.lista-espera-table thead th .material-symbols-outlined {
+  font-size: var(--font-size-lg);
+  vertical-align: middle;
+  margin-right: var(--space-xs);
+}
+
+.lista-espera-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.lista-espera-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 5%, var(--color-surface));
+}
+
+.lista-espera-table tbody td {
+  padding: var(--space-md) var(--space-lg);
+  vertical-align: middle;
+}
+
+/* ============================================
+   ENTITY INFO (Avatar + Detalles)
+============================================ */
+
+.entity-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.entity-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.entity-avatar-paciente {
+  background: var(--color-success);
+  color: var(--text-on-accent);
+}
+
+.entity-details strong {
+  display: block;
+  color: var(--text-main);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ============================================
+   BADGES DE DÍAS EN ESPERA
+============================================ */
+
+.badge-dias {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-dias .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.badge-dias-info {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.badge-dias-warning {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-dias-danger {
+  background: #ffebee;
+  color: #c62828;
+  animation: pulse 2s infinite;
+}
+
+/* ============================================
+   BADGES DE URGENCIA
+============================================ */
+
+.badge-urgencia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-urgencia .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.badge-urgencia-baja {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-urgencia-media {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-urgencia-alta {
+  background: #ffebee;
+  color: #c62828;
+  animation: pulse 2s infinite;
+}
+
+/* ============================================
+   BADGES DE ESTADO
+============================================ */
+
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-estado .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.badge-estado-pendiente {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badge-estado-resuelta {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-estado-cancelada {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+/* ============================================
+   ACCIONES
+============================================ */
+
+.acciones-group {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: center;
+}
+
+.acciones-group .btn {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
+}
+
+.acciones-group .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-md);
+}
+
+.acciones-group .btn .material-symbols-outlined {
+  font-size: var(--font-size-lg);
+}
+
+/* ============================================
+   LOADING STATE
+============================================ */
+
+.loading-state {
+  padding: var(--space-xxl);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+}
+
+.loading-content .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--color-accent);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-content h6 {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin: 0;
+}
+
+/* ============================================
+   EMPTY STATE
+============================================ */
+
+.empty-state {
+  padding: var(--space-xxl);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  text-align: center;
+}
+
+.empty-state-content .empty-icon {
+  font-size: 120px;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.empty-state-content h3 {
+  color: var(--text-main);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.empty-state-content p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+/* ============================================
+   PAGINACIÓN
+============================================ */
+
+.paginacion-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  background: var(--color-background);
+  border-top: 1px solid var(--border-color);
+}
+
+.paginacion-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.paginacion-info .material-symbols-outlined {
+  color: var(--color-accent);
 }
 
 .pagination {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .page-link {
-    color: #090b0d;
-    border-color: #77afe8;
+  color: var(--color-accent);
+  border-color: var(--border-color);
+  padding: var(--space-xs) var(--space-sm);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .page-link:hover {
-    color: #495057;
-    background-color: #e9ecef;
-    border-color: #dee2e6;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--text-on-accent);
 }
 
 .page-item.active .page-link {
-    background-color: #6c757d;
-    border-color: #6c757d;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--text-on-accent);
 }
 
 .page-item.disabled .page-link {
-    color: #ced4da;
+  color: var(--text-secondary);
+  cursor: not-allowed;
 }
 
-.table td {
-    vertical-align: middle;
+.page-link .material-symbols-outlined {
+  font-size: var(--font-size-lg);
 }
 
-.text-muted {
-    font-size: 0.875rem;
-}
+/* ============================================
+   ANIMACIONES
+============================================ */
 
-.spinner-border {
-    width: 3rem;
-    height: 3rem;
-}
-
-.alert {
-    margin-bottom: 0;
-}
-/* Estilos para niveles de urgencia */
-.badge-urgencia {
-  font-size: 0.85rem;
-  padding: 0.4em 0.6em;
-}
-
-/* Personalizar colores si es necesario */
-.badge-secondary {
-  background-color: #6c757d;
-}
-
-.badge-info {
-  background-color: #17a2b8;
-}
-
-.badge-warning {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.badge-danger {
-  background-color: #dc3545;
-}
-
-/* Animación para urgencias altas */
-.badge-danger {
-  animation: pulse 2s infinite;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 /* ========================================
    BUSCADOR DE PACIENTES - AUTOCOMPLETE
