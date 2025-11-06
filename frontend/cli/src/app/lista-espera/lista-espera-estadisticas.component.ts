@@ -53,10 +53,10 @@ export class ListaEsperaEstadisticasComponent implements OnInit {
 
     // Configuración de niveles de urgencia
     nivelesUrgencia = [
-        { value: 'BAJA', label: 'Baja', color: '#6c757d', icon: 'fa-circle' },
-        { value: 'MEDIA', label: 'Media', color: '#17a2b8', icon: 'fa-circle' },
-        { value: 'ALTA', label: 'Alta', color: '#ffc107', icon: 'fa-exclamation-circle' },
-        { value: 'URGENTE', label: 'Urgente', color: '#dc3545', icon: 'fa-exclamation-triangle' }
+        { value: 'BAJA', label: 'Baja', color: '#4caf50', icon: 'priority' },
+        { value: 'MEDIA', label: 'Media', color: '#ff9800', icon: 'priority_high' },
+        { value: 'ALTA', label: 'Alta', color: '#f44336', icon: 'warning' },
+        { value: 'URGENTE', label: 'Urgente', color: '#d32f2f', icon: 'emergency' }
     ];
 
     constructor(
