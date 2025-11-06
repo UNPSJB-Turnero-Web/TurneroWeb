@@ -283,13 +283,13 @@ export class OperadorDashboardComponent implements OnInit {
 
   getStatusIcon(status: string): string {
     const iconMap: { [key: string]: string } = {
-      confirmado: "fa-check-circle",
-      programado: "fa-clock",
-      reagendado: "fa-calendar-alt",
-      completo: "fa-check-square",
-      cancelado: "fa-times-circle",
+      confirmado: "check_circle",
+      programado: "schedule",
+      reagendado: "event_repeat",
+      completo: "task_alt",
+      cancelado: "cancel",
     };
-    return iconMap[status] || "fa-clock";
+    return iconMap[status] || "schedule";
   }
 
   getEmptyStateText(): string {
