@@ -8,13 +8,18 @@
    ============================================ */
 
 .audit-dashboard-wrapper {
+  max-width: 1400px;
   min-height: 100vh;
   background: var(--color-background);
-  padding: var(--space-lg);
+  padding: var(--space-xl);
   position: relative;
   overflow-x: hidden;
-}
+  margin: 0 auto;
 
+}
+.dashboard-wrapper {
+  min-height: 100vh;
+}
 /* ============================================
    HEADER DEL DASHBOARD
    ============================================ */

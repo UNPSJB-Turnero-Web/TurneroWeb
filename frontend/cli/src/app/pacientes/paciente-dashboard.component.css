@@ -110,12 +110,11 @@
   }
 }
 
-.patient-dashboard {
+.dashboard-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-xl);
   min-height: 100vh;
-  background: var(--color-background);
-  padding: var(--space-lg);
-  position: relative;
-  overflow-x: hidden;
 }
 
 .dashboard-header {

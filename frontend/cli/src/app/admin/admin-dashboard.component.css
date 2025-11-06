@@ -8,6 +8,13 @@
    1. DASHBOARD HEADER
    ========================= */
 
+  .dashboard-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+  min-height: 100vh;
+}
+
 .dashboard-header {
   margin-bottom: 48px;
   background: var(--color-surface);
