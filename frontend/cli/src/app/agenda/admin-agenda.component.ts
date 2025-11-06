@@ -60,6 +60,10 @@ export class AdminAgendaComponent implements OnInit {
   turnosAfectados: SlotDisponible[] = []; // Turnos afectados por días excepcionales
   semanas: number = 4;
 
+  // Estados de expansión para vista por médico
+  medicosExpandidos: Set<string> = new Set();
+  diasExpandidos: Map<string, Set<string>> = new Map(); // medicoKey -> Set<fecha>
+
   // Modal y selección
   showModal = false;
   slotSeleccionado: SlotDisponible | null = null;
@@ -701,5 +705,172 @@ export class AdminAgendaComponent implements OnInit {
     
     // Fallback al servicio original
     return this.diasExcepcionalesService.getIconoExcepcion(fecha, slot);
+  }
+
+  // ================================================
+  // MÉTODOS PARA VISTA EXPANDIBLE POR MÉDICO
+  // ================================================
+
+  /**
+   * Agrupa los slots por médico (staffMedicoId-nombre-apellido)
+   */
+  agruparSlotsPorMedico(): Map<string, SlotDisponible[]> {
+    const slotsPorMedico = new Map<string, SlotDisponible[]>();
+    
+    this.slotsDisponibles.forEach(slot => {
+      const medicoKey = `${slot.staffMedicoId}-${slot.staffMedicoNombre}-${slot.staffMedicoApellido}`;
+      
+      if (!slotsPorMedico.has(medicoKey)) {
+        slotsPorMedico.set(medicoKey, []);
+      }
+      
+      slotsPorMedico.get(medicoKey)!.push(slot);
+    });
+    
+    return slotsPorMedico;
+  }
+
+  /**
+   * Toggle expansión de médico
+   */
+  toggleMedicoExpansion(medicoKey: string) {
+    if (this.medicosExpandidos.has(medicoKey)) {
+      this.medicosExpandidos.delete(medicoKey);
+      // Limpiar días expandidos cuando se colapsa el médico
+      this.diasExpandidos.delete(medicoKey);
+    } else {
+      this.medicosExpandidos.add(medicoKey);
+    }
+  }
+
+  /**
+   * Verifica si un médico está expandido
+   */
+  isMedicoExpandido(medicoKey: string): boolean {
+    return this.medicosExpandidos.has(medicoKey);
+  }
+
+  /**
+   * Toggle expansión de día dentro de un médico
+   */
+  toggleDiaExpansion(medicoKey: string, fecha: string) {
+    if (!this.diasExpandidos.has(medicoKey)) {
+      this.diasExpandidos.set(medicoKey, new Set());
+    }
+    
+    const diasSet = this.diasExpandidos.get(medicoKey)!;
+    
+    if (diasSet.has(fecha)) {
+      diasSet.delete(fecha);
+    } else {
+      diasSet.add(fecha);
+    }
+  }
+
+  /**
+   * Verifica si un día está expandido dentro de un médico
+   */
+  isDiaExpandido(medicoKey: string, fecha: string): boolean {
+    return this.diasExpandidos.get(medicoKey)?.has(fecha) || false;
+  }
+
+  /**
+   * Obtiene información del médico desde la key
+   */
+  getMedicoInfo(medicoKey: string): { nombre: string; apellido: string; id: number } {
+    const [id, nombre, apellido] = medicoKey.split('-');
+    return { id: parseInt(id), nombre, apellido };
+  }
+
+  /**
+   * Obtiene especialidades únicas de un conjunto de slots
+   */
+  getEspecialidadesUnicas(slots: SlotDisponible[]): string[] {
+    const especialidades = new Set(slots.map(slot => slot.especialidadStaffMedico));
+    return Array.from(especialidades);
+  }
+
+  /**
+   * Obtiene turnos disponibles (no ocupados y no afectados) por médico
+   */
+  getTurnosDisponiblesPorMedico(slots: SlotDisponible[]): number {
+    return slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot)).length;
+  }
+
+  /**
+   * Obtiene centros únicos donde atiende el médico
+   */
+  getCentrosUnicos(slots: SlotDisponible[]): string[] {
+    const centros = new Set(slots.map(slot => slot.nombreCentro));
+    return Array.from(centros);
+  }
+
+  /**
+   * Obtiene el próximo turno disponible de un médico
+   */
+  getProximoTurno(slots: SlotDisponible[]): SlotDisponible | null {
+    const slotsDisponibles = slots
+      .filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot))
+      .sort((a, b) => {
+        if (a.fecha !== b.fecha) {
+          return a.fecha.localeCompare(b.fecha);
+        }
+        return a.horaInicio.localeCompare(b.horaInicio);
+      });
+    
+    return slotsDisponibles.length > 0 ? slotsDisponibles[0] : null;
+  }
+
+  /**
+   * Agrupa slots por fecha
+   */
+  agruparSlotsPorDia(slots: SlotDisponible[]): Map<string, SlotDisponible[]> {
+    const slotsPorDia = new Map<string, SlotDisponible[]>();
+    
+    slots.forEach(slot => {
+      if (!slotsPorDia.has(slot.fecha)) {
+        slotsPorDia.set(slot.fecha, []);
+      }
+      slotsPorDia.get(slot.fecha)!.push(slot);
+    });
+    
+    // Ordenar slots por hora dentro de cada día
+    slotsPorDia.forEach((slotsDelDia) => {
+      slotsDelDia.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+    });
+    
+    return slotsPorDia;
+  }
+
+  /**
+   * Obtiene fechas ordenadas de los slots de un médico
+   */
+  getFechasOrdenadas(slots: SlotDisponible[]): string[] {
+    const fechas = new Set(slots.map(slot => slot.fecha));
+    return Array.from(fechas).sort();
+  }
+
+  /**
+   * Obtiene slots de un médico para una fecha específica
+   */
+  getSlotsPorDia(slots: SlotDisponible[], fecha: string): SlotDisponible[] {
+    return slots
+      .filter(slot => slot.fecha === fecha)
+      .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+  }
+
+  /**
+   * Cuenta turnos disponibles en un día
+   */
+  getTurnosDisponiblesPorDia(slots: SlotDisponible[]): number {
+    return slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot)).length;
+  }
+
+  /**
+   * Obtiene el primer turno disponible de un día
+   */
+  getPrimerTurnoDia(slots: SlotDisponible[]): SlotDisponible | null {
+    const disponibles = slots.filter(slot => !slot.ocupado && !this.slotAfectadoPorExcepcion(slot));
+    return disponibles.length > 0 ? disponibles[0] : null;
   }
 }
