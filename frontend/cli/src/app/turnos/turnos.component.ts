@@ -209,6 +209,19 @@ export class TurnosComponent {
     return `${n}${a}`.toUpperCase() || 'M';
   }
 
+  // === MÉTODO PARA ICONOS MATERIAL SYMBOLS ===
+  
+  getEstadoIconMaterial(estado: string): string {
+    const iconMap: { [key: string]: string } = {
+      'PROGRAMADO': 'schedule',
+      'CONFIRMADO': 'check_circle',
+      'CANCELADO': 'cancel',
+      'COMPLETO': 'task_alt',
+      'REAGENDADO': 'event_repeat'
+    };
+    return iconMap[estado] || 'info';
+  }
+
   // === MÉTODOS DE AUDITORÍA ===
 
   /** Muestra el historial de auditoría de un turno */
