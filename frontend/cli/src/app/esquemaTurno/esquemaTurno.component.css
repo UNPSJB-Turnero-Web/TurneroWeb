@@ -1,443 +1,775 @@
-/* Estilos normalizados usando el sistema de colores global */
-.container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1rem;
+/* ================================================
+   ESQUEMA TURNO COMPONENT - ESTILOS LVE NORMALIZADOS
+   ================================================
+   Sistema 100% basado en variables globales (styles.css)
+   Material Symbols para todos los iconos
+   ================================================ */
+
+/* ================================================
+   SECCIÓN 1: CONTENEDOR PRINCIPAL
+   ================================================ */
+
+.esquema-turno-container .card {
+  max-width: 1600px;
 }
 
-.modern-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-  border: none;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
+/* ================================================
+   SECCIÓN 2: HEADER LVE
+   ================================================ */
+
+.listado-header {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-gradient-purple) 100%);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  color: var(--text-on-accent);
 }
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  z-index: 2;
+.listado-header .header-icon {
+  font-size: 64px;
+  opacity: 0.95;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
 }
 
-.title-section {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+.listado-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-on-accent);
 }
 
-.header-text h1 {
-  color: white;
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.listado-header .text-muted {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: var(--font-size-sm);
 }
 
-.header-text p {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-size: 1rem;
-}
-
-.table-container {
-  padding: 0;
-  overflow-x: auto;
-}
-
-.table-row {
+.listado-header .btn-primary {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-on-accent);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--border-radius-md);
+  font-weight: var(--font-weight-medium);
   transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-  border-bottom: 1px solid #f8f9fa;
-}
-
-.table-row:hover {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.table-row td {
-  padding: 1.25rem 1rem;
-  vertical-align: middle;
-  border: none;
-}
-
-/* ID BADGE usando sistema global */
-.id-badge {
-  background: var(--esquema-turno-gradient);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 15px var(--esquema-turno-shadow);
-  display: inline-block;
-}
-
-/* STAFF INFO usando sistema global */
-.staff-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-sm);
 }
 
-.avatar-medicos {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--medicos-gradient);
+.listado-header .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-soft);
+}
+
+.listado-header .btn-primary .material-symbols-outlined {
+  font-size: 20px;
+}
+
+/* ================================================
+   SECCIÓN 3: FILTROS
+   ================================================ */
+
+.filters-section {
+  background: var(--color-background);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  border: 1px solid var(--border-color);
+}
+
+.filters-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.filters-title .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--color-accent);
+}
+
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.form-label .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--color-accent);
+}
+
+.form-control,
+.form-select {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.1);
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border: 1px solid var(--border-color);
+  color: var(--color-text);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 600;
-  box-shadow: 0 4px 12px var(--medicos-shadow);
+  gap: var(--space-xs);
 }
 
-.medico-details {
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-background);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-gradient-purple) 100%);
+  border: none;
+  color: var(--text-on-accent);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-soft);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary .material-symbols-outlined,
+.btn-primary .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.info-badge {
+  background: linear-gradient(135deg, rgba(var(--color-info-rgb), 0.15) 0%, rgba(var(--color-info-rgb), 0.05) 100%);
+  border: 1px solid rgba(var(--color-info-rgb), 0.3);
+  color: var(--color-info);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.info-badge .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* ================================================
+   SECCIÓN 4: TABLA
+   ================================================ */
+
+.table-responsive {
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.table {
+  margin-bottom: 0;
+  background: var(--color-surface);
+}
+
+.table thead {
+  background: var(--color-background);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table thead th {
+  padding: var(--space-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  border: none;
+  vertical-align: middle;
+}
+
+.header-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.header-cell .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.header-button {
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.header-button:hover {
+  opacity: 0.8;
+}
+
+.header-button.active .header-cell {
+  color: var(--color-accent);
+}
+
+.header-button .sort-icon {
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  transition: all 0.3s ease;
+}
+
+.header-button .sort-icon.inactive {
+  opacity: 0.4;
+}
+
+.header-button:hover .sort-icon.inactive {
+  opacity: 0.7;
+}
+
+.header-button.active .sort-icon {
+  color: var(--color-accent);
+  opacity: 1;
+}
+
+/* ================================================
+   SECCIÓN 5: FILAS DE TABLA
+   ================================================ */
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr.table-row:hover {
+  background: var(--color-background);
+  cursor: pointer;
+}
+
+.table tbody td {
+  padding: var(--space-md);
+  vertical-align: middle;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* ================================================
+   SECCIÓN 6: BADGES
+   ================================================ */
+
+.badge {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+}
+
+.badge-id {
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.15) 0%, rgba(var(--color-accent-rgb), 0.05) 100%);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  color: var(--color-accent);
+}
+
+.badge-especialidad {
+  background: linear-gradient(135deg, rgba(var(--color-success-rgb), 0.15) 0%, rgba(var(--color-success-rgb), 0.05) 100%);
+  border: 1px solid rgba(var(--color-success-rgb), 0.3);
+  color: var(--color-success);
+}
+
+.badge-horario {
+  background: linear-gradient(135deg, rgba(var(--color-info-rgb), 0.15) 0%, rgba(var(--color-info-rgb), 0.05) 100%);
+  border: 1px solid rgba(var(--color-info-rgb), 0.3);
+  color: var(--color-info);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  gap: var(--space-sm);
+  min-width: 200px;
+}
+
+.badge-horario .material-symbols-outlined {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.horario-content {
   display: flex;
   flex-direction: column;
-}
-
-.medico-name {
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-
-.medico-especialidad {
-  font-size: 0.8rem;
-  color: #6c757d;
-  line-height: 1.2;
-}
-
-/* BADGES usando sistema global */
-.badge-consultorios {
-  background: var(--consultorios-gradient);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  box-shadow: 0 4px 15px var(--consultorios-shadow);
-  display: inline-flex;
-  align-items: center;
-}
-
-.badge-centro-atencion {
-  background: var(--centro-atencion-gradient);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  box-shadow: 0 4px 15px var(--centro-atencion-shadow);
-  display: inline-flex;
-  align-items: center;
-}
-
-.badge-esquema-turno {
-  background: var(--esquema-turno-gradient);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  box-shadow: 0 4px 15px var(--esquema-turno-shadow);
-  display: inline-flex;
-  align-items: center;
-}
-
-/* HORARIOS con el mismo estilo que disponibilidadMedico */
-.horarios-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.horario-badge {
-  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 2px;
-  min-width: 80px;
+  flex: 1;
+}
+
+.badge-muted {
+  background: linear-gradient(135deg, rgba(var(--color-text-secondary-rgb), 0.15) 0%, rgba(var(--color-text-secondary-rgb), 0.05) 100%);
+  border: 1px solid rgba(var(--color-text-secondary-rgb), 0.3);
+  color: var(--color-text-secondary);
+}
+
+.badge .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .dia-label {
-  font-size: 0.7rem;
-  opacity: 0.9;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: var(--color-info);
 }
 
 .hora-range {
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
-.no-horarios {
-  color: #636e72;
-  font-style: italic;
-  font-size: 0.9rem;
-  background: linear-gradient(135deg, #f1f2f6 0%, #e3e4e8 100%);
-  padding: 8px 12px;
-  border-radius: 12px;
+
+/* ================================================
+   SECCIÓN 7: ENTIDADES (AVATAR, INFO)
+   ================================================ */
+
+.entity-info-full {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
-/* BOTONES DE ACCIÓN usando sistema global */
+.entity-avatar-medico {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.entity-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.entity-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.entity-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.horarios-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: flex-start;
+}
+
+.badge-intervalo {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  color: var(--color-warning);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.badge-intervalo .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.entity-info-compact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.entity-info-compact .entity-icon {
+  font-size: 20px;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+.entity-info-compact .entity-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ================================================
+   SECCIÓN 8: BOTONES DE ACCIÓN
+   ================================================ */
+
+.table tbody td:last-child {
+  text-align: center;
+}
+
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   justify-content: center;
 }
 
 .btn-action {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--color-surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
   transition: all 0.3s ease;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  padding: 0;
 }
 
-.btn-edit {
-  background: var(--action-edit);
-  color: white;
+.btn-action .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--color-text);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
 }
 
-.btn-edit:hover {
-  background: var(--action-edit);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+.btn-action-edit:hover {
+  background: linear-gradient(135deg, rgba(var(--color-info-rgb), 0.15) 0%, rgba(var(--color-info-rgb), 0.05) 100%);
+  border-color: var(--color-info);
 }
 
-.btn-delete {
-  background: var(--action-delete);
-  color: white;
+.btn-action-edit:hover .material-symbols-outlined {
+  color: var(--color-info);
 }
 
-.btn-delete:hover {
-  background: var(--action-delete);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+.btn-action-delete:hover {
+  background: linear-gradient(135deg, rgba(var(--color-danger-rgb), 0.15) 0%, rgba(var(--color-danger-rgb), 0.05) 100%);
+  border-color: var(--color-danger);
 }
 
-/* ANIMACIONES */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.btn-action-delete:hover .material-symbols-outlined {
+  color: var(--color-danger);
 }
 
-.table-row {
-  animation: fadeInUp 0.5s ease-out;
+/* ================================================
+   SECCIÓN 9: ESTADO DE CARGA
+   ================================================ */
+
+.loading-state {
+  text-align: center;
+  padding: var(--space-2xl);
 }
 
-.table-row:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.table-row:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.table-row:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.table-row:nth-child(4) {
-  animation-delay: 0.4s;
-}
-.table-row:nth-child(5) {
-  animation-delay: 0.5s;
-}
-
-/* RESPONSIVE */
-@media (max-width: 1200px) {
-  .header-content {
-    padding: 1.5rem;
-  }
-
-  .header-text h1 {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .title-section {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .modern-table {
-    min-width: 800px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .btn-action {
-    width: 35px;
-    height: 35px;
-    font-size: 0.8rem;
-  }
-
-  .horarios-container {
-    justify-content: center;
-  }
-
-  .horario-badge {
-    min-width: 70px;
-    font-size: 0.7rem;
-  }
-}
-
-/* FILTROS */
-.filters-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.filters-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  align-items: end;
-}
-
-.filter-group {
+.loading-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  gap: var(--space-md);
 }
 
-.filter-group .form-label {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 0.9rem;
+.loading-content .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--color-accent);
+}
+
+.loading-content h6 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
-.filter-group .form-control {
-  padding: 0.75rem 1rem;
-  border: 2px solid #e3e6ea;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.9);
+/* ================================================
+   SECCIÓN 10: ESTADO VACÍO
+   ================================================ */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-2xl);
 }
 
-.filter-group .form-control:focus {
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-  outline: none;
-}
-
-.filter-actions {
+.empty-state-content {
   display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-}
-
-.btn-clear {
-  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-md);
 }
 
-.btn-clear:hover {
-  background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(127, 140, 141, 0.3);
+.empty-state-content .empty-icon {
+  font-size: 140px;
+  color: var(--color-text-secondary);
+  opacity: 0.3;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
 }
 
-/* CABECERAS ORDENABLES */
-.sortable-header {
-  background: none;
-  border: none;
-  width: 100%;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.3s ease;
+.empty-state-content h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0;
 }
 
-.sortable-header:hover {
-  background: rgba(52, 152, 219, 0.05);
-  border-radius: 8px;
+.empty-state-content p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 400px;
 }
 
-.sortable-header.active {
-  background: rgba(52, 152, 219, 0.1);
-  border-radius: 8px;
+.empty-state-content .btn-primary {
+  margin-top: var(--space-md);
 }
 
-.sort-icon {
-  margin-left: 0.5rem;
-  font-size: 0.8rem;
-  opacity: 0.7;
-  transition: all 0.3s ease;
+/* ================================================
+   SECCIÓN 11: PAGINADOR
+   ================================================ */
+
+.pagination-container {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--space-lg);
+  margin-top: var(--space-lg);
 }
 
-.sortable-header.active .sort-icon {
-  opacity: 1;
-  color: #3498db;
-}
+/* ================================================
+   SECCIÓN 12: RESPONSIVE
+   ================================================ */
 
-/* RESPONSIVE PARA FILTROS */
-@media (max-width: 768px) {
-  .filters-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+@media (max-width: 992px) {
+  .listado-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: center;
   }
 
-  .filter-actions {
+  .listado-header .btn-primary {
+    width: 100%;
     justify-content: center;
   }
+
+  .filters-section {
+    padding: var(--space-md);
+  }
+
+  .table thead th {
+    padding: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  .table tbody td {
+    padding: var(--space-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  .header-cell .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  .entity-avatar-medico {
+    width: 36px;
+    height: 36px;
+  }
+
+  .badge {
+    padding: calc(var(--space-xs) * 0.75) var(--space-xs);
+    font-size: calc(var(--font-size-xs) * 0.9);
+  }
+
+  .horarios-container {
+    gap: var(--space-xs);
+  }
+
+  .badge-horario {
+    min-width: 180px;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .badge-horario .material-symbols-outlined {
+    font-size: 18px;
+  }
 }
+
+@media (max-width: 768px) {
+  .listado-header .header-icon {
+    font-size: 48px;
+  }
+
+  .listado-header h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .filters-section {
+    padding: var(--space-sm);
+  }
+
+  .filters-title {
+    font-size: var(--font-size-base);
+  }
+
+  .btn-action {
+    width: 32px;
+    height: 32px;
+  }
+
+  .btn-action .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  .action-buttons {
+    gap: var(--space-xs);
+  }
+
+  .badge-horario {
+    padding: var(--space-xs);
+    min-width: 160px;
+  }
+
+  .dia-label {
+    font-size: var(--font-size-xs);
+  }
+
+  .hora-range {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 576px) {
+  .listado-header {
+    padding: var(--space-md);
+  }
+
+  .listado-header h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .listado-header .btn-primary span:not(.material-symbols-outlined) {
+    display: none;
+  }
+
+  .filters-section {
+    padding: var(--space-sm);
+  }
+
+  .table-responsive {
+    font-size: var(--font-size-xs);
+  }
+
+  .empty-state-content .empty-icon {
+    font-size: 100px;
+  }
+
+  .empty-state-content h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  .entity-info-full {
+    gap: var(--space-xs);
+  }
+
+  .entity-avatar-medico {
+    width: 32px;
+    height: 32px;
+  }
+
+  .entity-details {
+    gap: 2px;
+  }
+
+  .horarios-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .badge-horario {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .entity-info-compact .entity-icon {
+    font-size: 18px;
+  }
+
+  .entity-info-compact .entity-text {
+    font-size: var(--font-size-xs);
+  }
+}
+
