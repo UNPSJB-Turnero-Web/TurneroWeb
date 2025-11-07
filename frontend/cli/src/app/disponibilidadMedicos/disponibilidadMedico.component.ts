@@ -160,15 +160,6 @@ export class DisponibilidadMedicoComponent {
     return staff?.especialidad?.nombre || "Sin especialidad";
   }
 
-  getInitials(staffMedicoId: number): string {
-    const staff = this.staffMedicos.find((s) => s.id === staffMedicoId);
-    if (!staff || !staff.medico) return "?";
-
-    const nombre = staff.medico.nombre?.charAt(0) || "";
-    const apellido = staff.medico.apellido?.charAt(0) || "";
-    return (nombre + apellido).toUpperCase();
-  }
-
   goToDetail(id: number): void {
     this.router.navigate(["/disponibilidades-medico", id]);
   }
