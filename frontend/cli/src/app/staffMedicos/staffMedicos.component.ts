@@ -49,6 +49,9 @@ export class StaffMedicosComponent implements OnInit, OnDestroy {
   // Loading state
   isLoading = false;
 
+  // Selected row for hover effect
+  selectedId: number | null = null;
+
   // Debounce para filtros
   private filterSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
@@ -201,11 +204,22 @@ export class StaffMedicosComponent implements OnInit, OnDestroy {
       });
   }
 
-  // Métodos auxiliares para el sistema de colores
-  getCentroInitials(staff: StaffMedico): string {
-    if (!staff.centro?.nombre) return '?';
-    return staff.centro.nombre.split(' ').map(word => word.charAt(0)).join('').toUpperCase().substring(0, 2);
+  /**
+   * Maneja hover sobre fila
+   * @param id ID del registro
+   */
+  onRowHover(id: number): void {
+    this.selectedId = id;
   }
+
+  /**
+   * Maneja salida del hover
+   */
+  onRowLeave(): void {
+    this.selectedId = null;
+  }
+
+  // Métodos auxiliares para información de entidades
 
   getCentroNombre(staff: StaffMedico): string {
     return staff.centro?.nombre || 'Sin centro asignado';
@@ -217,13 +231,6 @@ export class StaffMedicosComponent implements OnInit, OnDestroy {
     if (staff.centro.localidad) partes.push(staff.centro.localidad);
     if (staff.centro.provincia) partes.push(staff.centro.provincia);
     return partes.join(', ') || 'Sin ubicación';
-  }
-
-  getMedicoInitials(staff: StaffMedico): string {
-    if (!staff.medico) return '?';
-    const nombre = staff.medico.nombre?.charAt(0) || '';
-    const apellido = staff.medico.apellido?.charAt(0) || '';
-    return (nombre + apellido).toUpperCase();
   }
 
   getMedicoNombre(staff: StaffMedico): string {
