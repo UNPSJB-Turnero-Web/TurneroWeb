@@ -1,211 +1,121 @@
-/* === ESPECIALIDADES CON SISTEMA DE COLORES GLOBAL === */
+/* ===================================
+   ESPECIALIDADES LISTADO COMPONENT
+   Estilos ESPECÍFICOS del componente
+   (Los estilos globales como .btn, .table, .card están en styles.css)
+   =================================== */
 
-/* Banner header structure - uses global banner-especialidades */
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-  z-index: 2;
+/* ===================================
+   1. CONTENEDOR PRINCIPAL
+   =================================== */
+.especialidades-container .card {
+  max-width: 1600px;
 }
 
-.title-section {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+/* ===================================
+   2. HEADER DEL LISTADO
+   =================================== */
+.listado-header {
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.header-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: white;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.listado-header .header-icon {
+  font-size: 3rem;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 1, 'wght' 400;
 }
 
-.header-text h1 {
-  color: white;
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
+.listado-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-main);
 }
 
-.header-text p {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  font-size: 1rem;
+.listado-header .text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 
-/* Table structure */
-.table-container {
-  padding: 0;
-  overflow-x: auto;
-}
-
-.table-row {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-  border-bottom: 1px solid #f8f9fa;
-}
-
-.table-row:hover {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.table-row td {
-  padding: 1.25rem 1rem;
-  vertical-align: middle;
-  border: none;
-}
-
-/* ID BADGE usando sistema global */
-.id-badge {
-  background: var(--especialidades-gradient);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 15px var(--especialidades-shadow);
-  display: inline-block;
-}
-
-/* Especialidad info usando avatares globales */
-.especialidad-info {
+/* ===================================
+   3. TABLA
+   =================================== */
+.header-cell {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-main);
 }
 
-.especialidad-details {
-  display: flex;
-  flex-direction: column;
+.header-cell .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
 }
 
-.especialidad-name {
-  font-weight: 600;
-  color: #495057;
-  font-size: 0.95rem;
-  line-height: 1.2;
+/* Fila seleccionada */
+.table tbody tr.selected {
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  border-left: 3px solid var(--color-accent);
 }
 
-/* Descripción text styling */
-.descripcion-text {
-  color: #6c757d;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.table tbody tr.selected:hover {
+  background-color: rgba(var(--color-accent-rgb), 0.15);
 }
 
-/* Action buttons usando sistema global */
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
+/* ===================================
+   4. ESTADO VACÍO
+   =================================== */
+.empty-state-icon {
+  font-size: 4rem;
+  color: var(--text-secondary);
+  opacity: 0.3;
+  font-variation-settings: 'FILL' 0, 'wght' 300;
 }
 
-.btn-action {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+/* ===================================
+   5. SOBRESCRITURAS DE ICONOS EN BOTONES
+   =================================== */
+/* Override solo para los iconos en botones de acciones de tabla */
+.especialidades-container .btn .material-symbols-outlined {
+  font-size: 1.25rem;
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
 }
 
-.btn-edit {
-  background: var(--action-edit);
-  color: white;
-}
-
-.btn-edit:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 20px var(--action-edit-shadow);
-}
-
-.btn-delete {
-  background: var(--action-delete);
-  color: white;
-}
-
-.btn-delete:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 20px var(--action-delete-shadow);
-}
-
-/* Animaciones */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.table-row {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-/* Responsive design */
+/* ===================================
+   6. RESPONSIVE DESIGN
+   =================================== */
 @media (max-width: 768px) {
-  .container-fluid {
-    padding: 1rem;
-  }
-
-  .header-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.2rem;
-  }
-
-  .header-text h1 {
-    font-size: 1.5rem;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .modern-table {
-    min-width: 600px;
-  }
-
-  .descripcion-text {
-    max-width: 150px;
-  }
-
-  .especialidad-info {
-    gap: 0.5rem;
-  }
-
-  .action-buttons {
+  .listado-header {
     flex-direction: column;
-    gap: 0.25rem;
+    align-items: flex-start !important;
+    gap: var(--space-md);
   }
 
-  .btn-action {
-    width: 35px;
-    height: 35px;
-    font-size: 0.8rem;
+  .listado-header .header-icon {
+    font-size: 2.5rem;
+  }
+
+  .listado-header h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .header-cell {
+    font-size: var(--font-size-xs);
+  }
+
+  .header-cell .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .listado-header .header-icon {
+    font-size: 2rem;
+  }
+  
+  .listado-header h2 {
+    font-size: var(--font-size-lg);
   }
 }

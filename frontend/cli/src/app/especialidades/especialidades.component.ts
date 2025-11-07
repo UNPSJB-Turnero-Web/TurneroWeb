@@ -27,6 +27,7 @@ export class EspecialidadesComponent {
     last: true
   };
   currentPage: number = 1;
+  selectedId: number | null = null;
 
   constructor(
     private especialidadService: EspecialidadService,
@@ -86,5 +87,13 @@ export class EspecialidadesComponent {
           }
         });
       });
+  }
+
+  onRowHover(id: number): void {
+    this.selectedId = id;
+  }
+
+  onRowLeave(): void {
+    this.selectedId = null;
   }
 }

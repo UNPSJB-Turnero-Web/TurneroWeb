@@ -1,61 +1,46 @@
-<div class="container-fluid mt-4">
-  <div class="modern-card">
-    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
-    <div class="banner-especialidades">
-      <div class="header-content">
-        <div class="title-section">
-          <div class="header-icon">
-            <i class="fas fa-stethoscope"></i>
-          </div>
-          <div class="header-text">
-            <h1>Especialidades</h1>
-            <p>Gestión de especialidades médicas del sistema</p>
-          </div>
+<div class="especialidades-container">
+  <div class="card p-xl mb-xl mx-auto">
+    <!-- Header -->
+    <div class="listado-header d-flex align-items-center justify-content-between mb-lg">
+      <div class="d-flex align-items-center gap-md">
+        <span class="material-symbols-outlined header-icon" aria-hidden="true">medical_services</span>
+        <div>
+          <h2 class="mb-0">Especialidades</h2>
+          <p class="text-white mb-0 mt-sm">Gestión de especialidades médicas del sistema</p>
         </div>
-        <button
-          class="btn btn-new"
-          (click)="router.navigate(['/especialidades/new'])"
-        >
-          <i class="fas fa-plus me-2"></i>
-          Nueva Especialidad
-        </button>
       </div>
+      
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="router.navigate(['/especialidades/new'])"
+        aria-label="Crear nueva especialidad"
+      >
+        <span class="material-symbols-outlined me-2" aria-hidden="true">add</span>
+        <span class="d-none d-sm-inline">Nueva Especialidad</span>
+      </button>
     </div>
 
-    <!-- TABLA MODERNA NORMALIZADA -->
-    <div class="table-container">
-      <table class="table modern-table">
+    <!-- Tabla -->
+    <div class="table-responsive">
+      <table class="table table-hover">
         <thead>
           <tr>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <div class="icon-circle id-header">
-                  <i class="fas fa-hashtag"></i>
-                </div>
-                ID
-              </div>
-            </th>
-            <th>
-              <div class="header-cell">
-                <div class="icon-circle icon-especialidades">
-                  <i class="fas fa-stethoscope"></i>
-                </div>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">medical_services</span>
                 Nombre
               </div>
             </th>
-            <th>
+            <th scope="col">
               <div class="header-cell">
-                <div class="icon-circle icon-obra-social">
-                  <i class="fas fa-file-text"></i>
-                </div>
+                <span class="material-symbols-outlined me-2" aria-hidden="true">description</span>
                 Descripción
               </div>
             </th>
-            <th>
-              <div class="header-cell text-center">
-                <div class="icon-circle actions-header">
-                  <i class="fas fa-cogs"></i>
-                </div>
+            <th scope="col">
+              <div class="header-cell">
+                <span class="material-symbols-outlined me-2" aria-hidden="true">settings</span>
                 Acciones
               </div>
             </th>
@@ -63,52 +48,58 @@
         </thead>
         <tbody>
           <tr
-            *ngFor="
-              let especialidad of resultsPage.content || [];
-              let i = index
-            "
-            class="table-row"
+            *ngFor="let especialidad of resultsPage.content || []; let i = index"
+            [class.selected]="especialidad.id === selectedId"
             (click)="goToDetail(especialidad.id)"
-            [style.animation-delay]="i * 100 + 'ms'"
+            role="button"
+            [attr.aria-label]="'Ver detalles de ' + especialidad.nombre"
+            tabindex="0"
           >
             <td>
-              <div class="id-badge">
-                <span>{{ especialidad.id }}</span>
-              </div>
-            </td>
-            <td>
-              <div class="especialidad-info">
-                <div class="avatar-especialidades">
-                  <i class="fas fa-stethoscope"></i>
+              <div class="d-flex align-items-center gap-sm">
+                <div class="entity-avatar entity-avatar-especialidad">
+                  <span class="material-symbols-outlined text-primary" aria-hidden="true">medical_services</span>
                 </div>
-                <div class="especialidad-details">
-                  <span class="especialidad-name">{{
-                    especialidad.nombre
-                  }}</span>
+                <div class="entity-details">
+                  <strong>{{ especialidad.nombre }}</strong>
                 </div>
               </div>
             </td>
             <td>
-              <div class="descripcion-text">
-                {{ especialidad.descripcion || "Sin descripción" }}
+              <div class="descripcion-text text-muted">
+                {{ especialidad.descripcion || 'Sin descripción' }}
               </div>
             </td>
             <td>
-              <div class="action-buttons">
+              <div class="d-flex gap-xs">
                 <button
-                  class="btn-action btn-edit"
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
                   (click)="goToEdit(especialidad.id); $event.stopPropagation()"
+                  [attr.aria-label]="'Editar ' + especialidad.nombre"
                   title="Editar especialidad"
                 >
-                  <i class="fas fa-edit"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">edit</span>
                 </button>
                 <button
-                  class="btn-action btn-delete"
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
                   (click)="remove(especialidad); $event.stopPropagation()"
+                  [attr.aria-label]="'Eliminar ' + especialidad.nombre"
                   title="Eliminar especialidad"
                 >
-                  <i class="fas fa-trash"></i>
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                 </button>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Estado vacío -->
+          <tr *ngIf="resultsPage.content?.length === 0">
+            <td colspan="4" class="text-center py-5">
+              <div class="d-flex flex-column align-items-center gap-md">
+                <span class="material-symbols-outlined empty-state-icon" aria-hidden="true">medical_services</span>
+                <p class="text-muted mb-0">No hay especialidades registradas</p>
               </div>
             </td>
           </tr>
@@ -116,14 +107,15 @@
       </table>
     </div>
 
-    <div class="card-footer">
+    <!-- Footer/Paginación -->
+    <div class="d-flex justify-content-center mt-lg pt-lg border-top" *ngIf="resultsPage.numberOfElements > 0">
       <app-pagination
         [totalPages]="resultsPage.totalPages"
         [currentPage]="currentPage"
         (pageChangeRequested)="onPageChangeRequested($event)"
         [number]="resultsPage.number"
-        [hidden]="resultsPage.numberOfElements < 1"
-      ></app-pagination>
+      >
+      </app-pagination>
     </div>
   </div>
 </div>
