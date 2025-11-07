@@ -1,0 +1,15 @@
+<div class="filtros-dashboard card p-2">
+  <div class="row g-2 align-items-end">
+    <div class="col-auto">
+      <label class="form-label">Desde</label>
+      <input class="form-control" type="date" [(ngModel)]="fechaDesde">
+    </div>
+    <div class="col-auto">
+      <label class="form-label">Hasta</label>
+      <input class="form-control" type="date" [(ngModel)]="fechaHasta">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" (click)="submit()">Aplicar</button>
+    </div>
+  </div>
+</div>

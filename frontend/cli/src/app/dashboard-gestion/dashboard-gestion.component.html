@@ -1,0 +1,40 @@
+<div class="dashboard-gestion container py-3">
+  <h3>Dashboard de métricas</h3>
+
+  <app-filtros-dashboard (aplicar)="onAplicarFiltros($event)"></app-filtros-dashboard>
+
+  <div *ngIf="loading">Cargando métricas...</div>
+
+  <div class="row g-2 mt-3">
+    <div class="col-12 col-md-3" *ngIf="metricas.totalTurnos !== undefined">
+      <app-kpi-card title="Turnos totales" [value]="metricas.totalTurnos"></app-kpi-card>
+    </div>
+    <div class="col-12 col-md-3" *ngIf="metricas.tasaAsistencia !== undefined">
+      <app-kpi-card title="Tasa asistencia (%)" [value]="metricas.tasaAsistencia | number:'1.0-1'"></app-kpi-card>
+    </div>
+    <div class="col-12 col-md-3" *ngIf="metricas.porcentajeCancelaciones !== undefined">
+      <app-kpi-card title="Cancelaciones (%)" [value]="metricas.porcentajeCancelaciones | number:'1.0-1'"></app-kpi-card>
+    </div>
+    <div class="col-12 col-md-3" *ngIf="metricas.porcentajeAusentismo !== undefined">
+      <app-kpi-card title="Ausentismo (%)" [value]="metricas.porcentajeAusentismo | number:'1.0-1'"></app-kpi-card>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col-12 col-md-6">
+      <app-grafico-torta title="Turnos por estado" [labels]="turnosLabels" [data]="turnosData"></app-grafico-torta>
+    </div>
+
+    <div class="col-12 col-md-6">
+      <h6>Ocupación por consultorio</h6>
+      <div *ngIf="ocupacionEntries && ocupacionEntries.length">
+        <div *ngFor="let c of ocupacionEntries">
+          <div class="d-flex justify-content-between">
+            <div>Consultorio {{c.key}}</div>
+            <div>{{ (c.value * 100) | number:'1.0-1' }} %</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

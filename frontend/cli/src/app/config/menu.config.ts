@@ -295,6 +295,12 @@ export const MENU_CONFIG: MenuSection[] = [
         description: 'Métricas y análisis de lista de espera'
       },
       {
+        label: 'Metricas',
+        route: '/dashboard-gestion',
+        icon: 'leaderboard',
+        description: 'Métricas y análisis de gestión'
+      },
+      {
         divider: true,
         label: '',
         icon: ''

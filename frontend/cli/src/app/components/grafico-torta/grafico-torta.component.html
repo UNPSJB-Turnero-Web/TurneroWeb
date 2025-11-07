@@ -1,0 +1,9 @@
+<div class="grafico-torta card">
+  <div class="card-body">
+    <h6 *ngIf="title">{{ title }}</h6>
+    <canvas baseChart
+      [data]="chartData"
+      [type]="'pie'">
+    </canvas>
+  </div>
+</div>

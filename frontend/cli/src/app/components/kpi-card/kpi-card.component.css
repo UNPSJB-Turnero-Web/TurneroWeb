@@ -1,0 +1,5 @@
+.kpi-card { width: 100%; }
+.kpi-title { font-size: 0.9rem; color: #666; }
+.kpi-value { font-size: 1.6rem; font-weight: 600; }
+.kpi-delta { font-size: 0.9rem; }
+.icon i { font-size: 1.6rem; }
