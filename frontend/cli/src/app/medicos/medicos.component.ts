@@ -44,6 +44,9 @@ export class MedicosComponent {
   // Loading state
   isLoading: boolean = false;
 
+  // Selected row for hover effect
+  selectedId: number | null = null;
+
   constructor(
     private medicoService: MedicoService,
     private modalService: ModalService,
@@ -75,13 +78,6 @@ export class MedicosComponent {
         this.isLoading = false;
       }
     });
-  }
-
-  getMedicoInitials(medico: Medico): string {
-    if (!medico.nombre && !medico.apellido) return 'M';
-    const firstInitial = medico.nombre ? medico.nombre.charAt(0).toUpperCase() : '';
-    const lastInitial = medico.apellido ? medico.apellido.charAt(0).toUpperCase() : '';
-    return firstInitial + lastInitial || 'M';
   }
 
   confirmDelete(id: number): void {
@@ -165,5 +161,13 @@ export class MedicosComponent {
 
   goToEdit(id: number): void {
     this.router.navigate(['/medicos', id], { queryParams: { edit: true } });
+  }
+
+  onRowHover(id: number): void {
+    this.selectedId = id;
+  }
+
+  onRowLeave(): void {
+    this.selectedId = null;
   }
 }
