@@ -13,6 +13,7 @@ export class GraficoTortaComponent {
   @Input() labels: string[] = [];
   @Input() data: number[] = [];
   @Input() title: string = '';
+  @Input() icon: string = '';
 
   public get chartData() {
     return {

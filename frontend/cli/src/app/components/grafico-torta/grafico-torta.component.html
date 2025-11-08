@@ -1,6 +1,11 @@
-<div class="grafico-torta card">
-  <div class="card-body">
-    <h6 *ngIf="title">{{ title }}</h6>
+<div class="grafico-torta">
+  <div class="chart-header" *ngIf="title || icon">
+    <div class="chart-title-wrapper">
+      <span class="material-symbols-outlined" *ngIf="icon">{{ icon }}</span>
+      <h6 *ngIf="title">{{ title }}</h6>
+    </div>
+  </div>
+  <div class="chart-canvas-wrapper">
     <canvas baseChart
       [data]="chartData"
       [type]="'pie'">

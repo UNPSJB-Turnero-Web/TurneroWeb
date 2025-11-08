@@ -1,12 +1,14 @@
-<div class="kpi-card card shadow-sm">
-  <div class="card-body d-flex align-items-center">
-    <div class="me-3 icon" *ngIf="icon">
-      <i [class]="icon"></i>
+<div class="kpi-card">
+  <div class="kpi-content">
+    <div class="kpi-icon" *ngIf="icon">
+      <span class="material-symbols-outlined">{{ icon }}</span>
     </div>
-    <div class="flex-grow-1">
+    <div class="kpi-body">
       <div class="kpi-title">{{ title }}</div>
       <div class="kpi-value">{{ value }}</div>
     </div>
-    <div class="kpi-delta text-muted" *ngIf="delta !== null">{{ delta }}</div>
+    <div class="kpi-delta" *ngIf="delta !== null && delta !== undefined">
+      <span class="delta-badge">{{ delta }}</span>
+    </div>
   </div>
 </div>

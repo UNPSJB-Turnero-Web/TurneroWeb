@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../services/dashboard.service';
+import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
+import { CentroAtencion } from '../centrosAtencion/centroAtencion';
 import { KpiCardComponent } from '../components/kpi-card/kpi-card.component';
 import { GraficoTortaComponent } from '../components/grafico-torta/grafico-torta.component';
 import { FiltrosDashboardComponent } from '../components/filtros-dashboard/filtros-dashboard.component';
@@ -15,17 +17,33 @@ import { FiltrosDashboardComponent } from '../components/filtros-dashboard/filtr
 })
 export class DashboardGestionComponent implements OnInit {
   loading = false;
+  centrosAtencion: CentroAtencion[] = [];
   metricas: any = {};
   ocupacion: any = {};
   ocupacionEntries: Array<{ key: string, value: number }> = [];
   turnosLabels: string[] = [];
   turnosData: number[] = [];
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private centroAtencionService: CentroAtencionService
+  ) {}
 
   ngOnInit(): void {
+    this.cargarCentrosAtencion();
     this.cargarMetricas();
     this.cargarOcupacion();
+  }
+
+  cargarCentrosAtencion() {
+    this.centroAtencionService.getAll().subscribe({
+      next: (res) => {
+        this.centrosAtencion = res.data || [];
+      },
+      error: () => {
+        this.centrosAtencion = [];
+      }
+    });
   }
 
   onAplicarFiltros(filters: any) {
