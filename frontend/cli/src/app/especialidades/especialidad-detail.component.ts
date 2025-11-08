@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EspecialidadService } from './especialidad.service';
@@ -22,8 +22,7 @@ export class EspecialidadDetailComponent {
     private route: ActivatedRoute,
     private router: Router,
     private especialidadService: EspecialidadService,
-    private modalService: ModalService,
-    private location: Location
+    private modalService: ModalService
   ) { }
 
   ngOnInit(): void {
@@ -95,8 +94,55 @@ export class EspecialidadDetailComponent {
     }
   }
 
-  activarEdicion() {
+  activarEdicion(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { edit: true },
+      queryParamsHandling: 'merge'
+    });
     this.modoEdicion = true;
+  }
+
+  cancelar(): void {
+    if (!this.esNuevo) {
+      // Si estamos editando una especialidad existente, solo salimos del modo edición
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        queryParamsHandling: 'merge'
+      });
+      this.modoEdicion = false;
+    } else {
+      // Si es una nueva especialidad, volvemos al listado
+      this.router.navigate(['/especialidades']);
+    }
+  }
+
+  confirmDelete(): void {
+    this.modalService
+      .confirm(
+        'Eliminar especialidad',
+        'Confirmar eliminación',
+        `¿Está seguro que desea eliminar la especialidad ${this.especialidad.nombre}?`
+      )
+      .then(() => this.remove())
+      .catch(() => {});
+  }
+
+  remove(): void {
+    if (!this.especialidad.id) return;
+
+    this.especialidadService.remove(this.especialidad.id).subscribe({
+      next: () => {
+        this.modalService.alert('Éxito', 'Especialidad eliminada correctamente');
+        this.router.navigate(['/especialidades']);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Error al eliminar la especialidad.';
+        this.modalService.alert('Error', msg);
+        console.error('Error al eliminar especialidad:', err);
+      }
+    });
   }
 
   allFieldsEmpty(): boolean {
@@ -104,6 +150,6 @@ export class EspecialidadDetailComponent {
   }
 
   goBack(): void {
-    this.location.back();
+    this.router.navigate(['/especialidades']);
   }
 }
