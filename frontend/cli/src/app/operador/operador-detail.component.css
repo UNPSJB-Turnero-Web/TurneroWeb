@@ -1,81 +1,169 @@
-.bg-gradient-blue {
-  background: var(--operadores-gradient);
-  position: relative;
-  overflow: hidden;
+/* ===================================
+   OPERADOR DETAIL COMPONENT
+   Estilos ESPECÍFICOS del componente
+   (Los estilos globales como .btn, .form-control, .card están en styles.css)
+   =================================== */
+
+/* ===================================
+   1. HEADER DEL COMPONENTE
+   =================================== */
+.operador-detail-header {
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border-color);
 }
-.gradient-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.05) 100%
-  );
-  pointer-events: none;
+
+.operador-detail-header .header-icon {
+  font-size: 3rem;
+  color: var(--color-accent);
+  font-variation-settings: 'FILL' 1, 'wght' 400;
 }
-.icon-container {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+
+.operador-detail-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-main);
+}
+
+.operador-detail-header .text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   2. MODO VISTA (INFO VIEW)
+   =================================== */
+.operador-info-view {
+  margin-top: var(--space-lg);
+}
+
+.info-item {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background-color: var(--color-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  transition: all 0.2s ease;
 }
-.icon-main {
-  font-size: 2.5rem;
-  color: white;
+
+.info-item:hover {
+  background-color: var(--color-surface);
+  border-color: var(--color-accent);
+  box-shadow: var(--box-shadow-soft);
 }
-.badge-glass {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  backdrop-filter: blur(10px);
-  padding: 0.5rem 1rem;
-  border-radius: 1rem;
-  font-weight: 500;
-}
-.info-card {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  transition: all 0.3s ease;
-  height: 100%;
-}
+
 .info-icon {
-  width: 50px;
-  height: 50px;
-  background: var(--operadores-gradient);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 1rem;
-  color: white;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  color: var(--color-accent);
   flex-shrink: 0;
+  margin-top: var(--space-xs);
+  font-variation-settings: 'FILL' 0, 'wght' 400;
 }
+
+.info-content {
+  flex: 1;
+  min-width: 0;
+}
+
 .info-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.25rem;
   display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-xs);
 }
+
 .info-value {
-  font-size: 1.1rem;
-  color: #1f2937;
-  font-weight: 600;
+  font-size: var(--font-size-base);
+  color: var(--text-main);
+  font-weight: var(--font-weight-regular);
   word-break: break-word;
+}
+
+/* ===================================
+   3. BADGE INFORMATIVO
+   =================================== */
+.info-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: var(--border-radius-md);
+  color: #0d47a1;
+}
+
+.info-badge .material-symbols-outlined {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+.info-badge strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ===================================
+   4. SOBRESCRITURAS ESPECÍFICAS DE FORMULARIO
+   =================================== */
+/* Override solo para los iconos en labels de ESTE componente */
+.operador-detail-card .form-label .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: var(--color-accent);
+  margin: 0 !important;
+  margin-right: var(--space-xs) !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400;
+}
+
+/* Override solo para los iconos en mensajes de error de ESTE componente */
+.operador-detail-card .text-danger .material-symbols-outlined {
+  font-size: 1rem !important;
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 1, 'wght' 500;
+}
+
+/* Override para switch de estado activo */
+.operador-detail-card .form-check-label .material-symbols-outlined {
+  font-size: 1.25rem !important;
+  margin: 0 !important;
+  font-variation-settings: 'FILL' 1, 'wght' 400;
+}
+
+/* ===================================
+   5. RESPONSIVE
+   =================================== */
+@media (max-width: 768px) {
+  .operador-detail-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: var(--space-md);
+  }
+
+  .operador-detail-header .d-flex.gap-md {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .operador-detail-header h2 {
+    font-size: var(--font-size-xl);
+  }
+}
+
+@media (max-width: 576px) {
+  .operador-detail-header .header-icon {
+    font-size: 2.5rem;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .info-icon {
+    margin-top: 0;
+  }
 }
