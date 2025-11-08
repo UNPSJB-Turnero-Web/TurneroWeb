@@ -21,4 +21,8 @@ export class GraficoTortaComponent {
       datasets: [{ data: this.data }]
     };
   }
+
+  public hasData(): boolean {
+    return this.data && this.data.length > 0 && this.data.some(value => value > 0);
+  }
 }

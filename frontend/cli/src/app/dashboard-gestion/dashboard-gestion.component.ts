@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../services/dashboard.service';
 import { CentroAtencionService } from '../centrosAtencion/centroAtencion.service';
 import { CentroAtencion } from '../centrosAtencion/centroAtencion';
+import { OcupacionConsultorio } from './ocupacion-consultorio';
 import { KpiCardComponent } from '../components/kpi-card/kpi-card.component';
 import { GraficoTortaComponent } from '../components/grafico-torta/grafico-torta.component';
 import { FiltrosDashboardComponent } from '../components/filtros-dashboard/filtros-dashboard.component';
@@ -20,7 +21,7 @@ export class DashboardGestionComponent implements OnInit {
   centrosAtencion: CentroAtencion[] = [];
   metricas: any = {};
   ocupacion: any = {};
-  ocupacionEntries: Array<{ key: string, value: number }> = [];
+  ocupacionEntries: OcupacionConsultorio[] = [];
   turnosLabels: string[] = [];
   turnosData: number[] = [];
 
@@ -66,8 +67,8 @@ export class DashboardGestionComponent implements OnInit {
   cargarOcupacion(filters?: any) {
     this.dashboardService.getMetricasOcupacion(filters).subscribe({ next: (res) => {
       this.ocupacion = res.data || {};
-      const byCons: any = this.ocupacion.ocupacionPorConsultorio || {};
-      this.ocupacionEntries = Object.keys(byCons).map(k => ({ key: k, value: Number(byCons[k] || 0) }));
+      // Usar ocupacionDetallada que viene del backend con información completa
+      this.ocupacionEntries = this.ocupacion.ocupacionDetallada || [];
     }, error: () => {} });
   }
 }

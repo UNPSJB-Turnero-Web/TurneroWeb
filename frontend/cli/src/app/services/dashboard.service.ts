@@ -17,7 +17,10 @@ export class DashboardService {
     if (params) {
       Object.keys(params).forEach(k => {
         const v = (params as any)[k];
-        if (v !== undefined && v !== null) httpParams = httpParams.set(k, String(v));
+        // No enviar parámetros null, undefined o string vacío
+        if (v !== undefined && v !== null && v !== '' && v !== 'null') {
+          httpParams = httpParams.set(k, String(v));
+        }
       });
     }
     return this.http.get<DataPackage<any>>(`${this.base}/metricas-basicas`, { params: httpParams });
@@ -28,7 +31,10 @@ export class DashboardService {
     if (params) {
       Object.keys(params).forEach(k => {
         const v = (params as any)[k];
-        if (v !== undefined && v !== null) httpParams = httpParams.set(k, String(v));
+        // No enviar parámetros null, undefined o string vacío
+        if (v !== undefined && v !== null && v !== '' && v !== 'null') {
+          httpParams = httpParams.set(k, String(v));
+        }
       });
     }
     return this.http.get<DataPackage<any>>(`${this.base}/metricas-ocupacion`, { params: httpParams });

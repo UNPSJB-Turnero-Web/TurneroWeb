@@ -31,7 +31,7 @@ export class FiltrosDashboardComponent {
     this.aplicar.emit({ 
       fechaDesde: this.fechaDesde, 
       fechaHasta: this.fechaHasta,
-      centroAtencionId: this.centroAtencionId
+      centroId: this.centroAtencionId
     });
   }
 

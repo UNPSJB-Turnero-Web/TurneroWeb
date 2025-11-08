@@ -81,11 +81,13 @@
               <div class="ocupacion-item" *ngFor="let c of ocupacionEntries">
                 <div class="consultorio-info">
                   <span class="material-symbols-outlined">door_front</span>
-                  <span class="consultorio-nombre">Consultorio {{ c.key }}</span>
+                  <div class="consultorio-detalles">
+                    <span class="consultorio-nombre">{{ c.consultorioNombre }}</span>
+                  </div>
                 </div>
                 <div class="ocupacion-value">
                   <span class="badge-ocupacion">
-                    {{ (c.value * 100) | number:'1.0-1' }}%
+                    {{ c.porcentajeOcupacion | number:'1.0-1' }}%
                   </span>
                 </div>
               </div>

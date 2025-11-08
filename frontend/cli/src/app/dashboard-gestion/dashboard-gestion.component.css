@@ -221,10 +221,23 @@
   font-variation-settings: 'FILL' 0, 'wght' 400;
 }
 
+.consultorio-detalles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .consultorio-nombre {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
+}
+
+.consultorio-numero {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-text-secondary);
+  font-family: 'Courier New', monospace;
 }
 
 .ocupacion-value {

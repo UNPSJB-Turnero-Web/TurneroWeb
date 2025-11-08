@@ -5,10 +5,18 @@
       <h6 *ngIf="title">{{ title }}</h6>
     </div>
   </div>
-  <div class="chart-canvas-wrapper">
+  
+  <!-- Canvas cuando hay datos -->
+  <div class="chart-canvas-wrapper" *ngIf="hasData()">
     <canvas baseChart
       [data]="chartData"
       [type]="'pie'">
     </canvas>
+  </div>
+  
+  <!-- Mensaje cuando no hay datos -->
+  <div class="empty-state-chart" *ngIf="!hasData()">
+    <span class="material-symbols-outlined">pie_chart_outline</span>
+    <p>No hay registros disponibles</p>
   </div>
 </div>

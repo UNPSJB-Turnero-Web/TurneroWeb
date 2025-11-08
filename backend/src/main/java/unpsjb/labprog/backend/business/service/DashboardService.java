@@ -3,6 +3,7 @@ package unpsjb.labprog.backend.business.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import unpsjb.labprog.backend.business.repository.ConsultorioRepository;
 import unpsjb.labprog.backend.business.repository.TurnoRepository;
 import unpsjb.labprog.backend.dto.FiltrosDashboardDTO;
 import unpsjb.labprog.backend.dto.MetricasDashboardDTO;
+import unpsjb.labprog.backend.dto.OcupacionConsultorioDTO;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.EstadoTurno;
@@ -121,6 +123,7 @@ public class DashboardService {
         }
 
         Map<Integer, Double> ocupacionMap = new HashMap<>();
+        List<OcupacionConsultorioDTO> ocupacionDetallada = new ArrayList<>();
 
         // Obtener todos los turnos en el rango para eficiencia
         var spec = TurnoRepository.buildSpecification(
@@ -152,9 +155,22 @@ public class DashboardService {
                 porcentaje = 100.0;
 
             ocupacionMap.put(c.getId(), porcentaje);
+
+            // Crear DTO detallado
+            OcupacionConsultorioDTO ocupacionDTO = new OcupacionConsultorioDTO();
+            ocupacionDTO.setConsultorioId(c.getId());
+            ocupacionDTO.setConsultorioNombre(c.getNombre());
+            ocupacionDTO.setConsultorioNumero(c.getNumero());
+            ocupacionDTO.setPorcentajeOcupacion(porcentaje);
+            if (c.getCentroAtencion() != null) {
+                ocupacionDTO.setCentroAtencionId(c.getCentroAtencion().getId());
+                ocupacionDTO.setCentroAtencionNombre(c.getCentroAtencion().getNombre());
+            }
+            ocupacionDetallada.add(ocupacionDTO);
         }
 
         dto.setOcupacionPorConsultorio(ocupacionMap);
+        dto.setOcupacionDetallada(ocupacionDetallada);
 
         // Eficiencia de asignación: % de turnos futuros sin consultorio asignado
         LocalDate hoy = LocalDate.now();

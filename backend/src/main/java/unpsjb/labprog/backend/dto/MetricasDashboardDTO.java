@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.dto;
 
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -21,7 +22,8 @@ public class MetricasDashboardDTO {
     private Double confirmadosVsProgramados; // CONFIRMADO / (CONFIRMADO + PROGRAMADO) *100
 
     // Datos de ocupación y asignación
-    private Map<Integer, Double> ocupacionPorConsultorio; // consultorioId -> porcentaje ocupación (0..100)
+    private Map<Integer, Double> ocupacionPorConsultorio; // consultorioId -> porcentaje ocupación (0..100) - DEPRECATED
+    private List<OcupacionConsultorioDTO> ocupacionDetallada; // Lista detallada con info completa
     private Integer turnosSinConsultorio; // count
     private Double eficienciaAsignacion; // 0..100, heurística usando ConsultorioDistribucionService
 }
