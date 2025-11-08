@@ -154,8 +154,8 @@ export class StaffMedicoDetailComponent {
     this.router.navigate(['/staffMedico']);
   }
 
-  remove(staffMedico: StaffMedico): void {
-    if (staffMedico.id === undefined) {
+  confirmDelete(): void {
+    if (this.staffMedico.id === undefined) {
       this.modalService.alert('Error', 'No se puede eliminar: el staff médico no tiene ID.');
       return;
     }
@@ -166,16 +166,21 @@ export class StaffMedicoDetailComponent {
         "Si elimina el staff médico no lo podrá utilizar luego"
       )
       .then(() => {
-        this.staffMedicoService.remove(staffMedico.id!).subscribe({
-          next: () => {
-            this.goBack();
-          },
-          error: (err) => {
-            console.error('Error al eliminar el staff médico:', err);
-            this.modalService.alert('Error', 'No se pudo eliminar el staff médico. Intente nuevamente.');
-          }
-        });
+        this.remove();
       });
+  }
+
+  remove(): void {
+    this.staffMedicoService.remove(this.staffMedico.id!).subscribe({
+      next: () => {
+        this.modalService.alert('Éxito', 'El staff médico fue eliminado correctamente.');
+        this.goBack();
+      },
+      error: (err) => {
+        console.error('Error al eliminar el staff médico:', err);
+        this.modalService.alert('Error', 'No se pudo eliminar el staff médico. Intente nuevamente.');
+      }
+    });
   }
 
   loadCentros(): void {
