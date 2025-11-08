@@ -298,26 +298,31 @@ export class MedicoDetailComponent implements OnInit {
     return e1 && e2 ? e1.id === e2.id : e1 === e2;
   }
 
-  remove(): void {
-    if (!this.medico.id) return;
-    
+  confirmDelete(): void {
     this.modalService
       .confirm(
-        "Eliminar médico",
-        "Eliminar médico",
+        'Eliminar médico',
+        'Confirmar eliminación',
         `¿Está seguro que desea eliminar al médico ${this.medico.nombre} ${this.medico.apellido}?`
       )
-      .then(() => {
-        this.medicoService.delete(this.medico.id).subscribe({
-          next: () => this.goBack(),
-          error: (err) => {
-            const mensaje = err?.error?.message || "No se pudo eliminar el médico. Puede que tenga registros asociados.";
-            this.modalService.alert("Error", mensaje);
-            console.error('Error al eliminar médico:', err);
-          }
-        });
-      })
-      .catch(() => { /* Usuario canceló la operación */ });
+      .then(() => this.remove())
+      .catch(() => {});
+  }
+
+  remove(): void {
+    if (!this.medico.id) return;
+
+    this.medicoService.delete(this.medico.id).subscribe({
+      next: () => {
+        this.modalService.alert('Éxito', 'Médico eliminado correctamente');
+        this.goBack();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'No se pudo eliminar el médico. Puede que tenga registros asociados.';
+        this.modalService.alert('Error', msg);
+        console.error('Error al eliminar médico:', err);
+      }
+    });
   }
 
   // Métodos para manejar múltiples especialidades
