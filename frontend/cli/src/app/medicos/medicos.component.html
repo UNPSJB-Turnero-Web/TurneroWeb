@@ -1,0 +1,249 @@
+<div class="container-fluid mt-4">
+  <div class="modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-medicos">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="header-icon">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <div class="header-text">
+            <h1>Médicos</h1>
+            <p>Gestión de profesionales médicos del sistema</p>
+          </div>
+        </div>
+        <button class="btn btn-new" (click)="router.navigate(['/medicos/new'])">
+          <i class="fas fa-plus me-2"></i>
+          Nuevo Médico
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+    <div class="filters-section">
+      <div class="search-container">
+        <div class="search-input-group">
+          <i class="fas fa-search search-icon"></i>
+          <input
+            type="text"
+            class="form-control search-input"
+            placeholder="Buscar por nombre..."
+            [(ngModel)]="filtros.nombre"
+            (input)="onSearchChange()"
+          />
+        </div>
+        <div class="search-input-group">
+          <i class="fas fa-stethoscope search-icon"></i>
+          <input
+            type="text"
+            class="form-control search-input"
+            placeholder="Buscar por especialidad..."
+            [(ngModel)]="filtros.especialidad"
+            (input)="onSearchChange()"
+          />
+        </div>
+        <button
+          class="btn btn-clear"
+          (click)="clearFilters()"
+          [disabled]="!hasActiveFilters()"
+        >
+          <i class="fas fa-times me-2"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container" [class.loading]="isLoading">
+      <table class="table modern-table">
+        <thead>
+          <tr>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle id-header">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                Identificador
+              </div>
+            </th>
+            <th>
+              <div
+                class="header-cell sortable"
+                (click)="onSortChange('apellido')"
+              >
+                <div class="icon-circle medico-header">
+                  <i class="fas fa-user-md"></i>
+                </div>
+                Médico
+                <div class="sort-indicators">
+                  <i
+                    class="fas fa-chevron-up"
+                    [class.active]="
+                      sortConfig.field === 'apellido' &&
+                      sortConfig.direction === 'asc'
+                    "
+                  ></i>
+                  <i
+                    class="fas fa-chevron-down"
+                    [class.active]="
+                      sortConfig.field === 'apellido' &&
+                      sortConfig.direction === 'desc'
+                    "
+                  ></i>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle dni-header">
+                  <i class="fas fa-id-card"></i>
+                </div>
+                DNI
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle matricula-header">
+                  <i class="fas fa-certificate"></i>
+                </div>
+                Matrícula
+              </div>
+            </th>
+            <th>
+              <div
+                class="header-cell sortable"
+                (click)="onSortChange('especialidad')"
+              >
+                <div class="icon-circle especialidad-header">
+                  <i class="fas fa-stethoscope"></i>
+                </div>
+                Especialidades
+                <div class="sort-indicators">
+                  <i
+                    class="fas fa-chevron-up"
+                    [class.active]="
+                      sortConfig.field === 'especialidad' &&
+                      sortConfig.direction === 'asc'
+                    "
+                  ></i>
+                  <i
+                    class="fas fa-chevron-down"
+                    [class.active]="
+                      sortConfig.field === 'especialidad' &&
+                      sortConfig.direction === 'desc'
+                    "
+                  ></i>
+                </div>
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle actions-header">
+                  <i class="fas fa-cogs"></i>
+                </div>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let medico of resultsPage.content || []; let i = index"
+            class="table-row"
+            [class.even]="i % 2 === 0"
+            [class.odd]="i % 2 !== 0"
+            (click)="goToDetail(medico.id)"
+          >
+            <td>
+              <span class="id-badge">{{ medico.id }}</span>
+            </td>
+            <td>
+              <div class="medico-info">
+                <div class="avatar-medicos">
+                  {{ getMedicoInitials(medico) }}
+                </div>
+                <div class="medico-details">
+                  <div class="medico-name">
+                    {{ medico.nombre }} {{ medico.apellido }}
+                  </div>
+                  <div class="medico-subtitle">Profesional médico</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="badge-badge">{{ medico.dni }}</span>
+            </td>
+            <td>
+              <span class="badge-badge">{{ medico.matricula }}</span>
+            </td>
+            <td>
+              <div
+                class="especialidades-container"
+                *ngIf="
+                  medico.especialidades && medico.especialidades.length > 0;
+                  else sinEsp
+                "
+              >
+                <span
+                  *ngFor="let esp of medico.especialidades; let isLast = last"
+                  class="badge-especialidades"
+                >
+                  {{ esp.nombre }}<span *ngIf="!isLast">, </span>
+                </span>
+              </div>
+              <!-- Fallback para compatibilidad con especialidad única -->
+              <div
+                *ngIf="
+                  (!medico.especialidades ||
+                    medico.especialidades.length === 0) &&
+                  medico.especialidad
+                "
+                class="especialidades-container"
+              >
+                <span class="badge-especialidades">{{
+                  medico.especialidad.nombre
+                }}</span>
+              </div>
+              <ng-template #sinEsp>
+                <span class="badge-none">Sin especialidades</span>
+              </ng-template>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-action btn-edit"
+                  (click)="goToEdit(medico.id); $event.stopPropagation()"
+                  title="Editar"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn-action btn-delete"
+                  (click)="confirmDelete(medico.id); $event.stopPropagation()"
+                  title="Eliminar"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Loading overlay -->
+      <div *ngIf="isLoading" class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <app-pagination
+    [totalPages]="resultsPage.totalPages"
+    [currentPage]="currentPage"
+    (pageChangeRequested)="onPageChangeRequested($event)"
+    [number]="resultsPage.number"
+    [last]="resultsPage.last"
+    [hidden]="resultsPage.numberOfElements < 1"
+  ></app-pagination>
+</div>
