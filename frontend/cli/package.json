@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "start": "node api.js && ng serve",
+    "build": "node api.js && ng build",
     "watch": "ng build --watch --configuration development"
   },
   "private": true,
@@ -31,8 +31,7 @@
     "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.15.0"
-    ,
+    "zone.js": "~0.15.0",
     "ng2-charts": "^4.0.0",
     "chart.js": "^4.4.0"
   },
