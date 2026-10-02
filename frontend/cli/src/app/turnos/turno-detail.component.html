@@ -14,13 +14,21 @@
                   Turno #{{ turno.id }}
                 </ng-container>
                 <ng-template #nuevoTitle>
-                  Nuevo Turno
+                  <ng-container *ngIf="esSobreturno">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Crear Sobreturno
+                  </ng-container>
+                  <ng-container *ngIf="!esSobreturno">
+                    Nuevo Turno
+                  </ng-container>
                 </ng-template>
               </h4>
               <small class="opacity-75">
                 <ng-container *ngIf="!modoEdicion">Información del Turno</ng-container>
                 <ng-container *ngIf="modoEdicion && turno.id">Editando Turno</ng-container>
-                <ng-container *ngIf="modoEdicion && !turno.id">Creando Nuevo Turno</ng-container>
+                <ng-container *ngIf="modoEdicion && !turno.id && esSobreturno">Registro Manual - Fuera de
+                  Agenda</ng-container>
+                <ng-container *ngIf="modoEdicion && !turno.id && !esSobreturno">Creando Nuevo Turno</ng-container>
               </small>
             </div>
           </div>
@@ -28,6 +36,33 @@
 
         <!-- CUERPO DEL CARD -->
         <div class="card-body">
+          <!-- BANNER DE ADVERTENCIA - SOBRETURNO -->
+          <div *ngIf="esSobreturno" class="alert alert-warning border-warning shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-start">
+              <div class="me-3" style="font-size: 2rem;">⚠️</div>
+              <div>
+                <h5 class="alert-heading mb-2">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  Modo: Creación de Sobreturno
+                </h5>
+                <p class="mb-2">
+                  Está creando un <strong>sobreturno manual</strong> que <strong>no está vinculado a la agenda</strong>
+                  ni a los esquemas de turno predefinidos.
+                </p>
+                <ul class="mb-2">
+                  <li>Este turno se registrará <strong>fuera de los slots generados automáticamente</strong></li>
+                  <li>Puede generar <strong>conflictos de horarios</strong> si ya existe otro turno programado</li>
+                  <li>Se recomienda verificar disponibilidad del médico y consultorio</li>
+                </ul>
+                <div class="alert alert-info mb-0 mt-3">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Tip:</strong> Use esta opción para casos excepcionales, urgencias o turnos fuera de horario
+                  habitual.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- MODO VISTA -->
           <div *ngIf="!modoEdicion">
             <div class="row">
@@ -141,6 +176,18 @@
                 </div>
               </div>
 
+              <div class="col-12" *ngIf="turno.observaciones">
+                <div class="info-item d-flex align-items-center">
+                  <div class="info-icon" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">
+                    💬
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="info-label">Observaciones</div>
+                    <div class="info-value">{{ turno.observaciones }}</div>
+                  </div>
+                </div>
+              </div>
+
               <!-- INFORMACIÓN DE AUDITORÍA -->
               <div class="col-12" *ngIf="turno.id && (turno.totalModificaciones || turno.fechaUltimaModificacion)">
                 <div class="audit-section mt-4">
@@ -208,15 +255,12 @@
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">👤</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);">👤</span>
                     Paciente
                   </label>
-                  <select
-                    [(ngModel)]="turno.pacienteId"
-                    name="pacienteId"
-                    class="form-control form-control-modern"
-                    required
-                  >
+                  <select [(ngModel)]="turno.pacienteId" name="pacienteId" class="form-control form-control-modern"
+                    required>
                     <option value="">Seleccione un paciente...</option>
                     <option *ngFor="let paciente of pacientes" [value]="paciente.id">
                       {{ paciente.nombre }} {{ paciente.apellido }}
@@ -229,15 +273,12 @@
 
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">👨‍⚕️</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">👨‍⚕️</span>
                     Staff Médico
                   </label>
-                  <select
-                    [(ngModel)]="turno.staffMedicoId"
-                    name="staffMedicoId"
-                    class="form-control form-control-modern"
-                    required
-                  >
+                  <select [(ngModel)]="turno.staffMedicoId" name="staffMedicoId"
+                    class="form-control form-control-modern" required>
                     <option value="">Seleccione un staff médico...</option>
                     <option *ngFor="let staff of staffMedicos" [value]="staff.id">
                       {{ staff.medico?.nombre }} {{ staff.medico?.apellido }} - {{ staff.especialidad?.nombre }}
@@ -250,15 +291,12 @@
 
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🚪</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🚪</span>
                     Consultorio
                   </label>
-                  <select
-                    [(ngModel)]="turno.consultorioId"
-                    name="consultorioId"
-                    class="form-control form-control-modern"
-                    required
-                  >
+                  <select [(ngModel)]="turno.consultorioId" name="consultorioId"
+                    class="form-control form-control-modern" required>
                     <option value="">Seleccione un consultorio...</option>
                     <option *ngFor="let consultorio of consultorios" [value]="consultorio.id">
                       {{ consultorio.nombre }} - {{ consultorio.centroAtencion?.nombre }}
@@ -269,17 +307,30 @@
                   </div>
                 </div>
 
-                <div class="form-group-modern">
+                <!-- Estado: Fijo en CONFIRMADO para sobreturnos -->
+                <div class="form-group-modern" *ngIf="esSobreturno">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);">📊</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">✅</span>
                     Estado
                   </label>
-                  <select
-                    [(ngModel)]="turno.estado"
-                    name="estado"
-                    class="form-control form-control-modern"
-                    required
-                  >
+                  <div class="alert alert-success d-flex align-items-center mb-0">
+                    <i class="fas fa-check-circle me-2" style="font-size: 1.5rem;"></i>
+                    <div>
+                      <strong>CONFIRMADO</strong>
+                      <br>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Estado: Select normal para turnos regulares -->
+                <div class="form-group-modern" *ngIf="!esSobreturno">
+                  <label class="form-label-modern">
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);">📊</span>
+                    Estado
+                  </label>
+                  <select [(ngModel)]="turno.estado" name="estado" class="form-control form-control-modern" required>
                     <option value="PROGRAMADO">PROGRAMADO</option>
                     <option value="CONFIRMADO">Confirmado</option>
                     <option value="CANCELADO">Cancelado</option>
@@ -291,19 +342,30 @@
                 </div>
               </div>
 
+              <div class="form-group-modern" *ngIf="esSobreturno">
+                <label class="form-label-modern">
+                  <span class="form-icon"
+                    style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">💬</span>
+                  Observaciones
+                </label>
+                <textarea [(ngModel)]="turno.observaciones" name="observaciones" rows="3"
+                  class="form-control form-control-modern"
+                  placeholder="Ingrese observaciones o detalles del sobreturno..."></textarea>
+                <div class="form-help">
+                  Añada información adicional relevante para este sobreturno.
+                </div>
+              </div>
+
+
               <div class="col-md-6">
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">📅</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">📅</span>
                     Fecha
                   </label>
-                  <input
-                    [(ngModel)]="turno.fecha"
-                    name="fecha"
-                    type="date"
-                    class="form-control form-control-modern"
-                    required
-                  />
+                  <input [(ngModel)]="turno.fecha" name="fecha" type="date" class="form-control form-control-modern"
+                    required />
                   <div class="form-help">
                     Fecha del turno médico.
                   </div>
@@ -311,16 +373,12 @@
 
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
                     Hora de Inicio
                   </label>
-                  <input
-                    [(ngModel)]="turno.horaInicio"
-                    name="horaInicio"
-                    type="time"
-                    class="form-control form-control-modern"
-                    required
-                  />
+                  <input [(ngModel)]="turno.horaInicio" name="horaInicio" type="time"
+                    class="form-control form-control-modern" required />
                   <div class="form-help">
                     Hora de inicio del turno.
                   </div>
@@ -328,16 +386,12 @@
 
                 <div class="form-group-modern">
                   <label class="form-label-modern">
-                    <span class="form-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
+                    <span class="form-icon"
+                      style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">🕐</span>
                     Hora de Fin
                   </label>
-                  <input
-                    [(ngModel)]="turno.horaFin"
-                    name="horaFin"
-                    type="time"
-                    class="form-control form-control-modern"
-                    required
-                  />
+                  <input [(ngModel)]="turno.horaFin" name="horaFin" type="time" class="form-control form-control-modern"
+                    required />
                   <div class="form-help">
                     Hora de finalización del turno.
                   </div>
@@ -358,41 +412,29 @@
               <button type="button" class="btn btn-modern btn-edit" (click)="activarEdicion()">
                 ✏️ Editar
               </button>
-              <button 
-                type="button" 
-                class="btn btn-modern btn-info" 
-                (click)="toggleAuditPanel()"
-                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0"
-              >
+              <button type="button" class="btn btn-modern btn-info" (click)="toggleAuditPanel()"
+                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0">
                 📊 Auditoría ({{ turno.totalModificaciones }})
               </button>
-              <button 
-                type="button" 
-                class="btn btn-modern btn-success" 
-                (click)="verifyAuditIntegrity()"
-                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0"
-              >
+              <button type="button" class="btn btn-modern btn-success" (click)="verifyAuditIntegrity()"
+                *ngIf="turno.id && turno.totalModificaciones && turno.totalModificaciones > 0">
                 🛡️ Verificar
               </button>
-              <button 
-                type="button" 
-                class="btn btn-modern btn-delete ms-auto" 
-                (click)="remove(turno)"
-                *ngIf="turno.id"
-              >
+              <button type="button" class="btn btn-modern btn-delete ms-auto" (click)="remove(turno)" *ngIf="turno.id">
                 🗑️ Eliminar
               </button>
             </ng-container>
 
             <!-- Botones en modo edición -->
             <ng-container *ngIf="modoEdicion">
-              <button 
-                type="submit" 
-                class="btn btn-modern btn-save" 
-                [disabled]="allFieldsEmpty()"
-                (click)="save()"
-              >
-                💾 Guardar
+              <button type="submit" class="btn btn-modern btn-save" [class.btn-warning]="esSobreturno"
+                [disabled]="allFieldsEmpty()" (click)="save()">
+                <ng-container *ngIf="esSobreturno">
+                  <i class="fas fa-exclamation-triangle me-2"></i>Crear Sobreturno
+                </ng-container>
+                <ng-container *ngIf="!esSobreturno">
+                  💾 Guardar
+                </ng-container>
               </button>
               <button type="button" class="btn btn-modern btn-cancel" (click)="cancelar()">
                 ❌ Cancelar
@@ -420,7 +462,7 @@
             </button>
           </div>
         </div>
-        
+
         <div class="card-body">
           <div *ngIf="loadingAudit" class="text-center py-4">
             <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -443,7 +485,7 @@
                     </span>
                     <small class="text-muted">{{ formatDateTime(log.performedAt) }}</small>
                   </div>
-                  
+
                   <div class="audit-details">
                     <div class="row">
                       <div class="col-md-6" *ngIf="log.performedBy">
@@ -463,7 +505,7 @@
                     </div>
                   </div>
                 </div>
-                
+
                 <div class="audit-line" *ngIf="i < auditHistory.length - 1"></div>
               </div>
             </div>

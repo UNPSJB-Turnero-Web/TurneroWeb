@@ -1,0 +1,129 @@
+<div class="container-fluid mt-4">
+  <div class="modern-card">
+    <!-- HEADER NORMALIZADO CON SISTEMA DE COLORES -->
+    <div class="banner-especialidades">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="header-icon">
+            <i class="fas fa-stethoscope"></i>
+          </div>
+          <div class="header-text">
+            <h1>Especialidades</h1>
+            <p>Gestión de especialidades médicas del sistema</p>
+          </div>
+        </div>
+        <button
+          class="btn btn-new"
+          (click)="router.navigate(['/especialidades/new'])"
+        >
+          <i class="fas fa-plus me-2"></i>
+          Nueva Especialidad
+        </button>
+      </div>
+    </div>
+
+    <!-- TABLA MODERNA NORMALIZADA -->
+    <div class="table-container">
+      <table class="table modern-table">
+        <thead>
+          <tr>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle id-header">
+                  <i class="fas fa-hashtag"></i>
+                </div>
+                ID
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-especialidades">
+                  <i class="fas fa-stethoscope"></i>
+                </div>
+                Nombre
+              </div>
+            </th>
+            <th>
+              <div class="header-cell">
+                <div class="icon-circle icon-obra-social">
+                  <i class="fas fa-file-text"></i>
+                </div>
+                Descripción
+              </div>
+            </th>
+            <th>
+              <div class="header-cell text-center">
+                <div class="icon-circle actions-header">
+                  <i class="fas fa-cogs"></i>
+                </div>
+                Acciones
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let especialidad of resultsPage.content || [];
+              let i = index
+            "
+            class="table-row"
+            (click)="goToDetail(especialidad.id)"
+            [style.animation-delay]="i * 100 + 'ms'"
+          >
+            <td>
+              <div class="id-badge">
+                <span>{{ especialidad.id }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="especialidad-info">
+                <div class="avatar-especialidades">
+                  <i class="fas fa-stethoscope"></i>
+                </div>
+                <div class="especialidad-details">
+                  <span class="especialidad-name">{{
+                    especialidad.nombre
+                  }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="descripcion-text">
+                {{ especialidad.descripcion || "Sin descripción" }}
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-action btn-edit"
+                  (click)="goToEdit(especialidad.id); $event.stopPropagation()"
+                  title="Editar especialidad"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  class="btn-action btn-delete"
+                  (click)="remove(especialidad); $event.stopPropagation()"
+                  title="Eliminar especialidad"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-footer">
+      <app-pagination
+        [totalPages]="resultsPage.totalPages"
+        [currentPage]="currentPage"
+        (pageChangeRequested)="onPageChangeRequested($event)"
+        [number]="resultsPage.number"
+        [hidden]="resultsPage.numberOfElements < 1"
+      ></app-pagination>
+    </div>
+  </div>
+</div>

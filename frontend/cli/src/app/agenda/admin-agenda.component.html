@@ -1,0 +1,408 @@
+<div class="container mt-4">
+      <div class="card modern-card">
+        <!-- HEADER MODERNO -->
+        <div class="card-header">
+          <div class="header-content">
+            <div class="header-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="header-text">                <h1>Agenda Administrativa</h1>
+                <p>Vista completa para administradores - Gestione turnos, días excepcionales y asignaciones</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- BODY DEL CARD -->
+        <div class="card-body">
+          <!-- Formulario de búsqueda modernizado -->
+          <div class="search-section">
+            <div class="search-card">
+              <div class="search-header">
+                <span class="search-icon">🔍</span>
+                <h3>Filtros de Búsqueda</h3>
+              </div>
+              <form class="search-form">
+                <div class="search-row">
+                  <div class="search-field">
+                    <label class="search-label">
+                      <span class="label-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎯</span>
+                      Filtrar por
+                    </label>
+                    <select class="form-control-modern" [(ngModel)]="filterType" name="filterType">
+                      <option value="staffMedico">Staff Médico</option>
+                      <option value="centroAtencion">Centro de Atención</option>
+                      <option value="consultorio">Consultorio</option>
+                      <option value="especialidad">Especialidad</option>
+                    </select>
+                  </div>
+                  
+                  <div class="search-field">
+                    <label class="search-label">
+                      <span class="label-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">✍️</span>
+                      Valor de búsqueda
+                    </label> 
+                    <input
+                      type="text"
+                      class="form-control-modern"
+                      [(ngModel)]="filterValue"
+                      name="filterValue"
+                      placeholder="Ingrese el valor a buscar"
+                      list="filterOptions"
+                    />
+                    <datalist id="filterOptions">
+                      <option *ngFor="let option of getFilterOptions()" [value]="option"></option>
+                    </datalist>
+                  </div>
+                </div>
+                
+                <div class="search-actions">
+                  <button type="button" class="btn btn-modern btn-search" (click)="applyFilter()">
+                    🔍 Buscar
+                  </button>
+                  <button type="button" class="btn btn-modern btn-clear" (click)="clearFilter()">
+                    🧹 Limpiar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- INFORMACIÓN DE TURNOS AFECTADOS -->
+          <div class="turnos-afectados-info" *ngIf="turnosAfectados.length > 0">
+            <div class="alert">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>{{ turnosAfectados.length }} turnos afectados por días excepcionales se muestran en sus fechas correspondientes con indicadores especiales</span>
+            </div>
+          </div>
+          <!-- TURNOS DISPONIBLES AGRUPADOS POR FECHA -->
+          <div class="turnos-card">
+            <div class="turnos-header">
+              <div class="header-info">
+                <h3><i class="fas fa-calendar-alt"></i> Agenda de Turnos</h3>
+                <div class="turnos-info">
+                  <span class="info-text">{{ slotsDisponibles.length }} turnos encontrados</span>
+                  <span class="info-text" *ngIf="turnosAfectados.length > 0">
+                    | {{ turnosAfectados.length }} afectados por días excepcionales
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="turnos-body">
+              <!-- Loading State -->
+              <div class="loading-turnos" *ngIf="isLoading">
+                <i class="fas fa-spinner fa-spin"></i>
+                Cargando agenda...
+              </div>
+
+              <!-- Turnos Agrupados por Fecha -->
+              <div class="turnos-grouped" *ngIf="!isLoading && slotsDisponibles.length > 0">
+                <div *ngFor="let fecha of fechasOrdenadas" class="fecha-group">
+                  <!-- Header de fecha -->
+                  <div class="fecha-header" 
+                       [class.fecha-excepcional]="esDiaExcepcional(fecha)"
+                       [class.fecha-feriado]="getTipoExcepcion(fecha) === 'FERIADO'"
+                       [class.fecha-mantenimiento]="getTipoExcepcion(fecha) === 'MANTENIMIENTO'"
+                       [class.fecha-atencion-especial]="getTipoExcepcion(fecha) === 'ATENCION_ESPECIAL'">
+                    <div class="fecha-info">
+                      <h3 class="fecha-title">
+                        <i class="fas fa-calendar-day"></i>
+                        {{ formatearFecha(fecha) }}
+                      </h3>
+                      <!-- Indicador de día excepcional en header (solo para días excepcionales completos, no slots individuales) -->
+                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha) && !tieneFranjaHoraria(fecha)">
+                        <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
+                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }} - Día Completo</span>
+                        <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
+                          - {{ getDescripcionExcepcion(fecha) }}
+                        </span>
+                      </div>
+                      <!-- Indicador si es día con configuración especial pero con franja horaria -->
+                      <div class="fecha-exception-badge" *ngIf="esDiaExcepcional(fecha) && tieneFranjaHoraria(fecha)">
+                        <span class="exception-icon">{{ getIconoExcepcion(fecha) }}</span>
+                        <span class="exception-label">{{ getTipoExcepcionLabel(fecha) }} programado para este día</span>
+                        <span class="exception-description" *ngIf="getDescripcionExcepcion(fecha)">
+                          - {{ getDescripcionExcepcion(fecha) }}
+                        </span>
+                      </div>
+                      <!-- Indicador si hay slots en mantenimiento en esta fecha -->
+                      <div class="fecha-maintenance-badge" *ngIf="!esDiaExcepcional(fecha) && tieneSlotsEnMantenimiento(fecha)">
+                        <span class="maintenance-icon">🔧</span>
+                        <span class="maintenance-label">Mantenimiento programado para algunos horarios</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Slots de la fecha -->
+                  <div class="slots-grid">
+                    <ng-container *ngFor="let slot of slotsPorFecha[fecha]; let i = index">
+                      <!-- Etiqueta de médico para el primer slot del día o cuando cambia el médico -->
+                      <div *ngIf="i === 0 || esCambioMedico(fecha, i)" class="medico-header">
+                        <i class="fas fa-user-md"></i>
+                        <span>{{ getNombreMedico(slot) }}</span>
+                      </div>
+                      
+                      <div 
+                        class="slot-card admin-slot"
+                        [class.selected]="slotSeleccionado?.id === slot.id"
+                        [class.slot-excepcional]="esConfiguracionEspecial(slot)"
+                        [class.slot-feriado]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'FERIADO'"
+                        [class.slot-mantenimiento-individual]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO'"
+                        [class.slot-atencion-especial]="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'ATENCION_ESPECIAL'"
+                        [class.slot-ocupado]="!esConfiguracionEspecial(slot) && slot.ocupado"
+                        (click)="seleccionarSlot(slot, $event)">
+                  
+                      
+                      <div class="slot-time">
+                        <i class="fas fa-clock"></i>
+                        {{ slot.horaInicio }} - {{ slot.horaFin }}
+                      </div>
+                      
+                      <div class="slot-medico">
+                        <i class="fas fa-user-md"></i>
+                        <strong>{{ getNombreMedico(slot) }}</strong>
+                      </div>
+                      
+                      <div class="slot-especialidad">
+                        <i class="fas fa-stethoscope"></i>
+                        {{ slot.especialidadStaffMedico }}
+                      </div>
+                      
+                      <div class="slot-location">
+                        <div class="location-line">
+                          <i class="fas fa-door-open"></i>
+                          {{ slot.consultorioNombre }}
+                        </div>
+                        <div class="location-line">
+                          <i class="fas fa-map-marker-alt"></i>
+                          {{ slot.nombreCentro }}
+                        </div>
+                      </div>
+
+                      <!-- Información del paciente si está ocupado -->
+                      <div class="slot-patient" *ngIf="slot.ocupado && slot.pacienteNombre">
+                        <div class="patient-info">
+                          <i class="fas fa-user"></i>
+                          <strong>{{ slot.pacienteNombre }} {{ slot.pacienteApellido }}</strong>
+                        </div>
+                      </div>
+
+                      <!-- Información de configuración especial -->
+                      <div class="slot-exception" *ngIf="esConfiguracionEspecial(slot)">
+                        <div class="exception-badge">
+                          <span class="exception-icon">{{ getIconoExcepcion(slot.fecha, slot) }}</span>
+                          <div class="exception-info">
+                            <span class="exception-type">{{ getTipoExcepcionLabel(slot.fecha, slot) }}</span>
+                            <span class="exception-description" *ngIf="getDescripcionExcepcion(slot.fecha, slot)">
+                              {{ getDescripcionExcepcion(slot.fecha, slot) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="exception-warning">
+                          <i class="fas fa-exclamation-triangle"></i>
+                          <span>{{ getTipoConfiguracionEspecial(slot) === 'FERIADO' ? 'No disponible por feriado' : 
+                                   getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO' ? 'Consultorio en mantenimiento' : 
+                                   'Reservado para atención especial' }}</span>
+                        </div>
+                      </div>  
+
+                      <!-- Estado del slot mejorado -->
+                      <!-- Configuración especial: Atención Especial -->
+                      <div class="slot-status special-attention" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'ATENCION_ESPECIAL'">
+                        <i class="fas fa-hospital"></i>
+                        Atención Especial
+                      </div>
+                      <!-- Configuración especial: Mantenimiento -->
+                      <div class="slot-status maintenance" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'MANTENIMIENTO'">
+                        <i class="fas fa-wrench"></i>
+                        Mantenimiento
+                      </div>
+                      <!-- Configuración especial: Feriado -->
+                      <div class="slot-status no-disponible" *ngIf="esConfiguracionEspecial(slot) && getTipoConfiguracionEspecial(slot) === 'FERIADO'">
+                        <i class="fas fa-calendar-times"></i>
+                        Feriado
+                      </div>
+                      <!-- Turno realmente ocupado por paciente -->
+                      <div class="slot-status" *ngIf="!esConfiguracionEspecial(slot) && slot.ocupado">
+                        <i class="fas fa-user-check"></i>
+                        Asignado
+                      </div>
+                      <!-- Slot disponible -->
+                      <div class="slot-status disponible" *ngIf="!esConfiguracionEspecial(slot) && !slot.ocupado">
+                        <i class="fas fa-plus-circle"></i>
+                        Disponible
+                      </div>
+
+                      <div class="slot-check" *ngIf="slotSeleccionado?.id === slot.id">
+                        <i class="fas fa-check-circle"></i>
+                      </div>
+                    </div>
+                  
+                </ng-container>
+              </div>
+
+              <!-- MENSAJE CUANDO NO HAY TURNOS -->
+              <div class="no-turnos-content" *ngIf="!isLoading && slotsDisponibles.length === 0">
+                <i class="fas fa-calendar-times"></i>
+                <h4>No hay turnos para mostrar</h4>
+                <p>No se encontraron turnos con los filtros seleccionados.</p>
+                <p>Intenta cambiar los filtros o seleccionar otra fecha.</p>
+                <button class="btn btn-modern btn-clear" (click)="clearFilter()">
+                  <i class="fas fa-filter"></i>
+                  Limpiar Filtros
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODAL PARA ASIGNAR PACIENTE -->
+          <div *ngIf="showModal" 
+               class="modal-contextual">
+            <div class="modern-modal" (click)="$event.stopPropagation()">
+              <div class="modal-header-modern">
+                <div class="header-content">
+                  <div class="header-icon">
+                    <i class="fas fa-calendar-check"></i>
+                  </div>
+                  <div class="header-text">
+                    <h3>{{ slotSeleccionado?.ocupado ? 'Detalle del Turno' : 'Asignar Turno' }}</h3>
+                    <p>{{ slotSeleccionado?.ocupado ? 'Información completa del turno médico' : 'Asignar un paciente a este turno' }}</p>
+                  </div>
+                </div>
+                <button type="button" class="modal-close-btn" (click)="closeModal()">×</button>
+              </div>
+              
+              <div class="modal-body-modern">
+                <div class="info-grid-modal">
+                  <div class="info-item-modal">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">👨‍⚕️</span>
+                      Médico
+                    </div>
+                    <div class="info-value-modal">{{ slotSeleccionado?.staffMedicoNombre }} {{ slotSeleccionado?.staffMedicoApellido }}</div>
+                  </div>
+
+                  <div class="info-item-modal">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #fd7e14 0%, #e8630a 100%);">🏥</span>
+                      Especialidad
+                    </div>
+                    <div class="info-value-modal">{{ slotSeleccionado?.especialidadStaffMedico }}</div>
+                  </div>
+
+                  <div class="info-item-modal">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">🚪</span>
+                      Consultorio
+                    </div>
+                    <div class="info-value-modal">{{ slotSeleccionado?.consultorioNombre }}</div>
+                  </div>
+
+                  <div class="info-item-modal">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">🏢</span>
+                      Centro de Atención
+                    </div>
+                    <div class="info-value-modal">{{ slotSeleccionado?.nombreCentro }}</div>
+                  </div>
+
+                  <div class="info-item-modal">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">📅</span>
+                      Fecha y Hora
+                    </div>
+                    <div class="info-value-modal">{{ formatearFecha(slotSeleccionado?.fecha || '') }} - {{ slotSeleccionado?.horaInicio }} a {{ slotSeleccionado?.horaFin }}</div>
+                  </div>
+
+                  <!-- Mostrar paciente asignado solo si realmente está ocupado por un paciente -->
+                  <div class="info-item-modal" *ngIf="slotSeleccionado && !esConfiguracionEspecial(slotSeleccionado) && slotSeleccionado?.ocupado && slotSeleccionado?.pacienteNombre">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal" style="background: linear-gradient(135deg, #e83e8c 0%, #e91e63 100%);">👤</span>
+                      Paciente Asignado
+                    </div>
+                    <div class="info-value-modal">{{ slotSeleccionado?.pacienteNombre }} {{ slotSeleccionado?.pacienteApellido }}</div>
+                  </div>
+
+                  <!-- Información de configuración especial -->
+                  <div class="info-item-modal exception-modal" *ngIf="slotSeleccionado && esConfiguracionEspecial(slotSeleccionado)">
+                    <div class="info-label-modal">
+                      <span class="info-icon-modal exception-icon">{{ getIconoExcepcion(slotSeleccionado.fecha, slotSeleccionado) }}</span>
+                      Configuración Especial
+                    </div>
+                    <div class="info-value-modal exception-details">
+                      <div class="exception-type-modal">{{ getTipoExcepcionLabel(slotSeleccionado.fecha, slotSeleccionado) }}</div>
+                      <div class="exception-description-modal" *ngIf="getDescripcionExcepcion(slotSeleccionado.fecha, slotSeleccionado)">
+                        {{ getDescripcionExcepcion(slotSeleccionado.fecha, slotSeleccionado) }}
+                      </div>
+                      <div class="exception-warning-modal">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Este turno no puede realizarse {{ slotSeleccionado.enMantenimiento ? 'debido a mantenimiento programado' : 'en la fecha programada' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sección de asignación de paciente (solo si no está ocupado y no es configuración especial) -->
+                <div class="patient-assignment" *ngIf="slotSeleccionado && !slotSeleccionado.ocupado && !esConfiguracionEspecial(slotSeleccionado)">
+                  <div class="assignment-header">
+                    <span class="assignment-icon">👥</span>
+                    <h4>Asignar Paciente</h4>
+                  </div>
+                  <div class="assignment-field">
+                    <label class="assignment-label">
+                      <span class="label-icon" style="background: linear-gradient(135deg, #e83e8c 0%, #e91e63 100%);">👤</span>
+                      Seleccionar Paciente
+                    </label>
+                    <select
+                      class="form-control-modern"
+                      [(ngModel)]="pacienteId"
+                    >
+                      <option value="">Seleccione un paciente...</option>
+                      <option *ngFor="let paciente of pacientes" [value]="paciente.id">
+                        {{ paciente.nombre }} {{ paciente.apellido }} (ID: {{ paciente.id }})
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Mensaje informativo para configuraciones especiales -->
+                <div class="special-config-info" *ngIf="slotSeleccionado && esConfiguracionEspecial(slotSeleccionado)">
+                  <div class="info-header">
+                    <span class="info-icon">ℹ️</span>
+                    <h4>Información de Configuración</h4>
+                  </div>
+                  <p>Este horario no está disponible para asignar pacientes debido a la configuración especial del sistema.</p>
+                  <div class="config-details">
+                    <strong>Tipo:</strong> {{ getTipoExcepcionLabel(slotSeleccionado.fecha, slotSeleccionado) }}
+                    <br>
+                    <strong>Descripción:</strong> {{ getDescripcionExcepcion(slotSeleccionado.fecha, slotSeleccionado) || 'Sin descripción adicional' }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="modal-footer-modern">
+                <button 
+                  type="button" 
+                  class="btn btn-modern btn-assign" 
+                  (click)="asignarTurno()"
+                  *ngIf="slotSeleccionado && !slotSeleccionado.ocupado && !esConfiguracionEspecial(slotSeleccionado)"
+                  [disabled]="!pacienteId || isAssigning">
+                  <i class="fas fa-save"></i>
+                  {{ isAssigning ? 'Asignando...' : 'Asignar Turno' }}
+                </button>
+                <button type="button" class="btn btn-modern btn-cancel" (click)="closeModal()">
+                  <i class="fas fa-times"></i>
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Backdrop para cerrar modal cuando se hace clic fuera -->
+          <div *ngIf="showModal" 
+               class="modal-backdrop" 
+               (click)="closeModal()">
+          </div>
+        </div>
+      </div>
+    </div>
